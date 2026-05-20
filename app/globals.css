@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #eef6f2;
-  --foreground: #17231f;
-  --emerald-deep: #073f37;
-  --emerald: #0f766e;
-  --mist: #eef6f2;
-  --gold: #d6a13d;
-  --coral: #d36b4b;
+  --background: #FFF8EF;
+  --foreground: #17212B;
+  --teal: #0A6B62;
+  --coral: #D36B4B;
+  --gold: #D6A13D;
+  --cream: #FFF8EF;
+  --ink: #17212B;
 }
 
 * {
@@ -22,8 +22,14 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Prompt", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--teal);
+  color: white;
 }
 
 a {
@@ -36,25 +42,41 @@ input {
   font: inherit;
 }
 
+/* ─── Typography ─── */
+
+.body-text {
+  font-family: "Sarabun", sans-serif;
+}
+
+/* ─── Layout ─── */
+
 .tourism-container {
-  width: min(1120px, calc(100% - 32px));
+  width: min(1280px, calc(100% - 32px));
   margin-inline: auto;
 }
 
+/* ─── Masonry Feed ─── */
+
 .masonry-feed {
-  column-count: 1;
+  column-count: 2;
   column-gap: 1rem;
 }
 
-@media (min-width: 720px) {
+@media (min-width: 768px) {
   .masonry-feed {
-    column-count: 2;
+    column-count: 3;
   }
 }
 
 @media (min-width: 1024px) {
   .masonry-feed {
-    column-count: 3;
+    column-count: 4;
+  }
+}
+
+@media (min-width: 1280px) {
+  .masonry-feed {
+    column-count: 5;
   }
 }
 
@@ -63,12 +85,91 @@ input {
   margin-bottom: 1rem;
 }
 
-.phone-safe-bottom {
-  padding-bottom: calc(92px + env(safe-area-inset-bottom));
+/* ─── Scrollbar ─── */
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-@media (min-width: 768px) {
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── Glass / Blur ─── */
+
+.glass {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* ─── Decorative Patterns ─── */
+
+.soft-pattern {
+  background-image:
+    radial-gradient(circle at 18px 18px, rgba(10, 107, 98, 0.08) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 58px 58px, rgba(214, 161, 61, 0.10) 1.2px, transparent 1.2px);
+  background-size: 76px 76px;
+}
+
+.woven-pattern {
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12) 25%, transparent 25%),
+    linear-gradient(225deg, rgba(255, 255, 255, 0.10) 25%, transparent 25%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%),
+    linear-gradient(315deg, rgba(255, 255, 255, 0.10) 25%, rgba(255, 255, 255, 0.02) 25%);
+  background-position: 18px 0, 18px 0, 0 0, 0 0;
+  background-size: 36px 36px;
+  background-repeat: repeat;
+}
+
+/* ─── Section Label Badge ─── */
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #D36B4B;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
+}
+
+/* ─── Filter Chips ─── */
+
+.active-chip {
+  background: linear-gradient(135deg, #0A6B62, #0E8274) !important;
+  color: white !important;
+  box-shadow: 0 14px 32px rgba(10, 107, 98, 0.25);
+}
+
+/* ─── Phone Safe Bottom ─── */
+
+.phone-safe-bottom {
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
   .phone-safe-bottom {
     padding-bottom: 0;
   }
+}
+
+/* ─── Share Sheet ─── */
+
+.share-sheet-open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.share-sheet-closed {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
 }

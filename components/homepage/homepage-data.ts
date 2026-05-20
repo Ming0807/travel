@@ -3,93 +3,174 @@ import type { AttractionCard, DashboardMetricCard } from "@/types/tourism";
 export const homepageAttractions: AttractionCard[] = [
   {
     slug: "aiyerweng-skywalk",
-    name: "Aiyerweng Skywalk",
-    province: "Yala",
+    name: "จุดชมวิวทะเลหมอกอัยเยอร์เวง",
+    province: "ยะลา",
     category: "Mountain view",
-    description: "A misty Betong viewpoint suited for a QR certificate photo spot and route discovery.",
-    imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=85",
-    imageAlt: "Mountain viewpoint with mist at sunrise",
-    tags: ["Certificate spot", "Nature", "Yala"]
+    description: "จุดชมวิวทะเลหมอกที่เบตง เหมาะสำหรับถ่ายรูปรับใบประกาศดิจิทัลและสะสมตราประทับ",
+    imageUrl:
+      "https://images.unsplash.com/photo-1549880181-56a44cf4a9a1?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "Betong Skywalk",
+    tags: ["Certificate spot", "Nature", "Yala"],
   },
   {
     slug: "pattani-central-mosque",
-    name: "Pattani Cultural Landmark",
-    province: "Pattani",
+    name: "มัสยิดกลางปัตตานี",
+    province: "ปัตตานี",
     category: "Culture",
-    description: "A heritage-focused discovery card for stories, respectful travel guidance, and local routes.",
-    imageUrl: "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=900&q=85",
-    imageAlt: "Mosque architecture with blue sky",
-    tags: ["Heritage", "Stories", "Pattani"]
+    description: "มัสยิดกลางประจำจังหวัดปัตตานี สถาปัตยกรรมอันโดดเด่นและเรื่องราวทางวัฒนธรรม",
+    imageUrl:
+      "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "Pattani Mosque",
+    tags: ["Heritage", "Stories", "Pattani"],
+  },
+  {
+    slug: "pru-sirinthorn-forest",
+    name: "ป่าพรุสิรินธร",
+    province: "นราธิวาส",
+    category: "Nature",
+    description: "ป่าพรุสิรินธร ป่าพรุน้ำจืดที่ใหญ่ที่สุดในประเทศไทย ธรรมชาติที่อุดมสมบูรณ์",
+    imageUrl:
+      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "Forest",
+    tags: ["Nature", "Eco", "Narathiwat"],
+  },
+  {
+    slug: "southern-local-food",
+    name: "อาหารพื้นถิ่นชายแดนใต้",
+    province: "ปัตตานี",
+    category: "Food",
+    description: "สำรวจอาหารพื้นถิ่นและรสชาติที่หลากหลายของชายแดนใต้",
+    imageUrl:
+      "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "Local food",
+    tags: ["Food", "Culture", "Pattani"],
+  },
+  {
+    slug: "yala-waterfall",
+    name: "น้ำตกและธรรมชาติ",
+    province: "ยะลา",
+    category: "Waterfall",
+    description: "น้ำตกและธรรมชาติที่สวยงามในพื้นที่ยะลา เหมาะกับการท่องเที่ยวเชิงนิเวศ",
+    imageUrl:
+      "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "Waterfall",
+    tags: ["Nature", "Waterfall", "Yala"],
   },
   {
     slug: "narathiwat-coast",
-    name: "Narathiwat Coast",
-    province: "Narathiwat",
-    category: "Coastal route",
-    description: "A coastal discovery prompt for future route planning and community tourism content.",
-    imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=85",
-    imageAlt: "Tropical beach and sea",
-    tags: ["Route", "Sea", "Narathiwat"]
+    name: "ชายหาดและวิถีประมง",
+    province: "นราธิวาส",
+    category: "Coastal",
+    description: "ชายหาดสวยงามและวิถีชีวิตชาวประมงท้องถิ่นที่นราธิวาส",
+    imageUrl:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "Beach",
+    tags: ["Sea", "Coastal", "Narathiwat"],
   },
   {
-    slug: "songkhla-old-town",
-    name: "Songkhla Old Town",
-    province: "Songkhla",
-    category: "Future expansion",
-    description: "The data model can expand to wider southern border travel areas without changing the MVP core loop.",
-    imageUrl: "https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=900&q=85",
-    imageAlt: "Colorful old town street in Southeast Asia",
-    tags: ["Future", "Stories", "Songkhla"]
+    slug: "betong-city-route",
+    name: "เส้นทางเมืองเบตง",
+    province: "ยะลา",
+    category: "City",
+    description: "สำรวจเส้นทางในเมืองเบตง เมืองท่องเที่ยวสำคัญของยะลา",
+    imageUrl:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "City and mountains",
+    tags: ["City", "Route", "Yala"],
   },
   {
-    slug: "satun-geopark-route",
-    name: "Satun Geopark Route",
-    province: "Satun",
-    category: "Future route",
-    description: "Future route cards can connect nearby southern provinces while preserving dashboard filters.",
-    imageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=85",
-    imageAlt: "Limestone landscape and water",
-    tags: ["Future", "Nature", "Satun"]
-  }
+    slug: "pattani-community-market",
+    name: "ตลาดและวิถีชุมชน",
+    province: "ปัตตานี",
+    category: "Community",
+    description: "ตลาดท้องถิ่นและวิถีชุมชนที่สะท้อนวัฒนธรรมของปัตตานี",
+    imageUrl:
+      "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "Floating market",
+    tags: ["Community", "Market", "Pattani"],
+  },
+  {
+    slug: "narathiwat-culture",
+    name: "วัฒนธรรมและเรื่องเล่าท้องถิ่น",
+    province: "นราธิวาส",
+    category: "Culture",
+    description: "เรื่องเล่าท้องถิ่น ศิลปะ และวัฒนธรรมของนราธิวาส",
+    imageUrl:
+      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "People and culture",
+    tags: ["Culture", "Stories", "Narathiwat"],
+  },
+  {
+    slug: "yala-360-tour",
+    name: "360° Tour จุดชมวิว",
+    province: "ยะลา",
+    category: "Virtual tour",
+    description: "ชมจุดชมวิวแบบ 360 องศา สัมผัสบรรยากาศทะเลหมอกเสมือนจริง",
+    imageUrl:
+      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=700&q=85",
+    imageAlt: "360 tour",
+    tags: ["360°", "Virtual", "Yala"],
+  },
 ];
 
 export const dashboardPreviewMetrics: DashboardMetricCard[] = [
   {
-    label: "QR Scans",
-    value: "Separate",
-    note: "Entry interest, not visits."
-  },
-  {
     label: "Tourist Profiles",
-    value: "Estimated",
-    note: "System profiles, not verified people."
+    value: "5,240",
+    note: "ไม่ใช่จำนวนคนยืนยันตัวตนจริง",
   },
   {
-    label: "Estimated Spending",
-    value: "Range",
-    note: "Planning estimate, not revenue."
+    label: "Total Visits",
+    value: "8,942",
+    note: "นับจาก visit ไม่ใช่ QR scan",
+  },
+  {
+    label: "Certificates",
+    value: "7,880",
+    note: "ใบประกาศที่สร้างสำเร็จ",
   },
   {
     label: "Satisfaction",
-    value: "No data",
-    note: "Missing answers are never zero."
-  }
+    value: "4.6/5",
+    note: "เฉลี่ยจากคนที่ตอบเท่านั้น",
+  },
 ];
 
-export const suggestedRoutes = [
+export type TravelStory = {
+  slug: string;
+  title: string;
+  category: string;
+  province: string;
+  imageUrl: string;
+  imageAlt: string;
+};
+
+export const travelStories: TravelStory[] = [
   {
-    name: "Mist to Culture",
-    summary: "Yala mountain viewpoint, Pattani heritage stop, local food story cards.",
-    status: "Phase 2 content"
+    slug: "pattani-5-checkin-spots",
+    title: "5 จุดเช็กอินปัตตานีที่สายถ่ายรูปไม่ควรพลาด",
+    category: "Pattani · Culture",
+    province: "Pattani",
+    imageUrl:
+      "https://images.unsplash.com/photo-1580974511812-4b7196271a93?auto=format&fit=crop&w=800&q=85",
+    imageAlt: "Pattani story",
   },
   {
-    name: "Coast and Community",
-    summary: "Narathiwat coastal discovery with community attraction prompts.",
-    status: "Phase 2 content"
+    slug: "digital-passport-guide",
+    title: "ทำความรู้จัก Digital Passport สำหรับนักเดินทาง",
+    category: "Passport · Guide",
+    province: "All",
+    imageUrl:
+      "https://images.unsplash.com/photo-1628151015968-3a4429e9ef04?auto=format&fit=crop&w=800&q=85",
+    imageAlt: "Passport story",
   },
   {
-    name: "Southern Border Plus",
-    summary: "Future extension for Songkhla and Satun while keeping core analytics province-aware.",
-    status: "Future"
-  }
+    slug: "narathiwat-eco-tourism",
+    title: "ท่องเที่ยวเชิงนิเวศและวิถีชุมชนชายแดนใต้",
+    category: "Narathiwat · Eco",
+    province: "Narathiwat",
+    imageUrl:
+      "https://images.unsplash.com/photo-1563492065599-3520f775eeed?auto=format&fit=crop&w=800&q=85",
+    imageAlt: "Eco tourism",
+  },
 ];
