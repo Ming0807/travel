@@ -13,6 +13,8 @@ import { requirePermission } from "@/lib/auth/guards";
 import { listAdminAttractions } from "@/lib/repositories/admin-attraction.repository";
 import { adminAttractionFiltersSchema } from "@/lib/validation/admin-attraction";
 import { AttractionStatusActions } from "@/components/admin/attractions/AttractionStatusActions";
+import Link from "next/link";
+import { Plus } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = {
   title: "Attractions Management | Admin",
@@ -47,11 +49,20 @@ export default async function AdminAttractionsPage({
   return (
     <AdminShell>
       <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="Content Management"
-          title="แหล่งท่องเที่ยว"
-          description="จัดการข้อมูลสถานที่ท่องเที่ยวในยะลา ปัตตานี และนราธิวาส"
-        />
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <AdminPageHeader
+            eyebrow="Content Management"
+            title="แหล่งท่องเที่ยว"
+            description="จัดการข้อมูลสถานที่ท่องเที่ยวในยะลา ปัตตานี และนราธิวาส"
+          />
+          <Link
+            href="/admin/attractions/new"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#075049]"
+          >
+            <Plus size={16} weight="bold" />
+            เพิ่มสถานที่ใหม่
+          </Link>
+        </div>
 
         <FilterBar>
           <div className="min-w-[220px] flex-1">

@@ -270,3 +270,49 @@ export async function updateAdminAttractionStatus(
 
   return mapAttraction(data);
 }
+
+export async function deleteAdminAttraction(attractionId: number): Promise<void> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { error } = await supabase
+    .from("attractions")
+    .delete()
+    .eq("attraction_id", attractionId);
+
+  if (error) {
+    throw new Error("ADMIN_ATTRACTION_DELETE_FAILED");
+  }
+}
+
+export async function getAdminProvinces() {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.from("provinces").select("province_id, province_name_th").order("province_name_th");
+  if (error) throw new Error("FAILED_TO_FETCH_PROVINCES");
+  return data;
+}
+
+export async function getAdminAttractionTypes() {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.from("attraction_types").select("attraction_type_id, type_name_th").order("type_name_th");
+  if (error) throw new Error("FAILED_TO_FETCH_ATTRACTION_TYPES");
+  return data;
+}
+
+export async function getAdminAttractionsList() {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("attractions")
+    .select("attraction_id, name_th")
+    .order("name_th");
+  if (error) throw new Error("ADMIN_ATTRACTIONS_LIST_FAILED");
+  return data || [];
+}
+
+export async function getAdminPhotoSpotsList() {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("photo_spots")
+    .select("photo_spot_id, attraction_id, spot_name_th")
+    .order("spot_name_th");
+  if (error) throw new Error("ADMIN_PHOTO_SPOTS_LIST_FAILED");
+  return data || [];
+}

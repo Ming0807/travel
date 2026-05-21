@@ -13,6 +13,8 @@ import { requirePermission } from "@/lib/auth/guards";
 import { listAdminCheckinCodes } from "@/lib/repositories/admin-checkin-code.repository";
 import { adminCheckinCodeFiltersSchema } from "@/lib/validation/checkin-code";
 import { CheckinCodeStatusAction } from "@/components/admin/checkin-codes/CheckinCodeStatusAction";
+import Link from "next/link";
+import { Plus } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = {
   title: "QR Check-in Codes | Admin",
@@ -51,11 +53,20 @@ export default async function AdminCheckinCodesPage({
   return (
     <AdminShell>
       <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="Content Management"
-          title="QR Check-in Codes"
-          description="สร้างและจัดการ QR Code สำหรับนักท่องเที่ยว Check-in ที่สถานที่"
-        />
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <AdminPageHeader
+            eyebrow="Content Management"
+            title="QR Check-in Codes"
+            description="สร้างและจัดการ QR Code สำหรับนักท่องเที่ยว Check-in ที่สถานที่"
+          />
+          <Link
+            href="/admin/checkin-codes/new"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#075049]"
+          >
+            <Plus size={16} weight="bold" />
+            สร้างรหัสใหม่
+          </Link>
+        </div>
 
         <FilterBar>
           <div className="min-w-[220px] flex-1">
@@ -98,10 +109,15 @@ export default async function AdminCheckinCodesPage({
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge
-                      label={code.is_active ? "Active" : "Inactive"}
-                      tone={code.is_active ? "green" : "red"}
-                    />
+                    <div className="flex flex-col gap-1">
+                      <StatusBadge
+                        label={code.is_active ? "Active" : "Inactive"}
+                        tone={code.is_active ? "green" : "red"}
+                      />
+                      {code.ends_at && new Date(code.ends_at) < new Date() && (
+                        <StatusBadge label="Expired" tone="gray" />
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <CheckinCodeStatusAction

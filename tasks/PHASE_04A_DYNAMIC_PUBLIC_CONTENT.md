@@ -37,11 +37,11 @@ This phase focuses on:
 - [x] Connect `/attractions/[slug]` to public attraction detail repository.
 - [x] Connect `/stories` and `/stories/[id]` to public story repository.
 - [x] Connect homepage attraction/story sections to public repository data.
-- [ ] Connect suggested routes section to `suggested_routes` and `suggested_route_stops`.
-- [ ] Add public-safe DTO tests for attraction cards, stories, and routes.
-- [ ] Add filters/search using server-side query params where practical.
-- [ ] Replace remaining homepage static metrics with dashboard-safe public summary or clearly label as preview.
-- [ ] Add not-found states for unpublished or missing content instead of silent mock fallback where appropriate.
+- [x] Connect suggested routes section to `suggested_routes` and `suggested_route_stops`.
+- [x] Add public-safe DTO tests for attraction cards, stories, and routes.
+- [x] Add filters/search using server-side query params where practical.
+- [x] Replace remaining homepage static metrics with dashboard-safe public summary or clearly label as preview.
+- [x] Add not-found states for unpublished or missing content instead of silent mock fallback where appropriate.
 
 ---
 

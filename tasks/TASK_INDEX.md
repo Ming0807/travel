@@ -9,12 +9,12 @@
 | `PHASE_02A_DATABASE_DDL_DML_TEST_DATA.md` | Implemented / local reset blocked | Database-first DDL/DML hardening and complete development seed |
 | `PHASE_03_AUTH_IDENTITY.md` | Implemented / hardening needed | Admin auth and guest tourist identity |
 | `PHASE_04_PUBLIC_ATTRACTION_PAGES.md` | Implemented / dynamic data wiring needed | Public tourism portal pages |
-| `PHASE_04A_DYNAMIC_PUBLIC_CONTENT.md` | Started | Database-backed homepage, attractions, stories, routes, and public-safe DTOs |
+| `PHASE_04A_DYNAMIC_PUBLIC_CONTENT.md` | Completed | Database-backed homepage, attractions, stories, routes, and public-safe DTOs |
 | `PHASE_05_QR_CHECKIN_FLOW.md` | Implemented / E2E verification needed | QR landing and minimal form entry |
 | `PHASE_06_CERTIFICATE_GENERATION.md` | Implemented / rendering hardening needed | Certificate reward flow |
 | `PHASE_07_SURVEY_EXPENSE_SATISFACTION.md` | Implemented / seeded data verification needed | Optional post-certificate survey |
 | `PHASE_08_ADMIN_BACKOFFICE.md` | Implemented / CRUD expansion needed | Admin CMS foundation |
-| `PHASE_08A_DYNAMIC_ADMIN_CRUD.md` | Planned | Admin CRUD for frontend-managed public content |
+| `PHASE_08A_DYNAMIC_ADMIN_CRUD.md` | Completed | Admin CRUD for frontend-managed public content |
 | `PHASE_09_DASHBOARD.md` | Implemented / seeded metric verification needed | Aggregated dashboard analytics |
 | `PHASE_10_REPORT_EXPORT.md` | Implemented / privacy regression testing needed | Privacy-safe report export |
 | `PHASE_11_LINE_LIFF_OPTIONAL.md` | Implemented foundation | Optional LINE passport linking |

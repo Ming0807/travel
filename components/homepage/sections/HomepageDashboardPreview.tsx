@@ -7,9 +7,14 @@ export function HomepageDashboardPreview() {
     <section id="dashboard" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
       <div className="mb-12 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-coral">
-            Live Tourism Insights
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-coral">
+              Live Tourism Insights
+            </p>
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Preview Data
+            </span>
+          </div>
           <h2 className="mt-3 text-4xl font-bold leading-tight lg:text-5xl text-ink">
             ข้อมูลอินไซต์สำหรับการวางแผน
           </h2>

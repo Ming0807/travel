@@ -16,9 +16,17 @@ import { listPublicAttractionCards } from "@/lib/repositories/public-content.rep
 
 export const dynamic = "force-dynamic";
 
-export default async function AttractionsPage() {
-  const attractions = await listPublicAttractionCards(16);
-  const featured = attractions[0];
+export default async function AttractionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const resolvedParams = await searchParams;
+  const search = typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined;
+  const province = typeof resolvedParams.province === 'string' ? resolvedParams.province : undefined;
+
+  const attractions = await listPublicAttractionCards(16, { search, province });
+  const featured = attractions[0] || null;
   const topDestinations = attractions.slice(1, 7);
   const trending = attractions.slice(7, 9).length > 0 ? attractions.slice(7, 9) : attractions.slice(0, 2);
 
@@ -52,17 +60,19 @@ export default async function AttractionsPage() {
             </p>
 
             {/* Search & Filters */}
-            <div className="bg-white p-2 rounded-full shadow-sm border border-ink/5 flex items-center mb-6 max-w-xl">
+            <form action="/attractions" method="GET" className="bg-white p-2 rounded-full shadow-sm border border-ink/5 flex items-center mb-6 max-w-xl">
               <MagnifyingGlass size={20} className="text-muted ml-3" weight="bold" />
               <input 
                 type="text" 
+                name="q"
+                defaultValue={search || ""}
                 placeholder="Search destinations, provinces or keywords..."
                 className="w-full bg-transparent px-3 py-2 text-sm text-ink outline-none"
               />
-              <button className="bg-[#E18868] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#D07757] transition-colors whitespace-nowrap">
+              <button type="submit" className="bg-[#E18868] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#D07757] transition-colors whitespace-nowrap">
                 Search
               </button>
-            </div>
+            </form>
 
             <div className="flex flex-wrap gap-3">
               <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
@@ -82,36 +92,42 @@ export default async function AttractionsPage() {
           
           {/* Featured Destination Card */}
           <div className="lg:w-1/2 w-full">
-            <div className="relative w-full h-[350px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 group">
-              <Image 
-                src={featured.imageUrl} 
-                alt={featured.imageAlt} 
-                fill 
-                className="object-cover transition-transform duration-700 group-hover:scale-105" 
-                unoptimized
-              />
-              
-              {/* Gradient Overlay for Text Readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent"></div>
-              
-              <div className="absolute top-6 left-6">
-                <span className="inline-flex items-center rounded-full bg-[#E18868] text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
-                  Featured Destination
-                </span>
+            {featured ? (
+              <div className="relative w-full h-[350px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 group">
+                <Image 
+                  src={featured.imageUrl} 
+                  alt={featured.imageAlt} 
+                  fill 
+                  className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                  unoptimized
+                />
+                
+                {/* Gradient Overlay for Text Readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent"></div>
+                
+                <div className="absolute top-6 left-6">
+                  <span className="inline-flex items-center rounded-full bg-[#E18868] text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
+                    Featured Destination
+                  </span>
+                </div>
+                
+                <div className="absolute bottom-8 left-8 right-8 text-white">
+                  <h2 className="text-3xl font-black mb-2 leading-tight">
+                    {featured.name}, {featured.province}
+                  </h2>
+                  <p className="text-sm text-white/90 line-clamp-2 mb-6 max-w-sm">
+                    {featured.description}
+                  </p>
+                  <Link href={`/attractions/${featured.slug}`} className="bg-white text-ink px-5 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2">
+                    Explore Destination <span>›</span>
+                  </Link>
+                </div>
               </div>
-              
-              <div className="absolute bottom-8 left-8 right-8 text-white">
-                <h2 className="text-3xl font-black mb-2 leading-tight">
-                  {featured.name}, {featured.province}
-                </h2>
-                <p className="text-sm text-white/90 line-clamp-2 mb-6 max-w-sm">
-                  {featured.description}
-                </p>
-                <button className="bg-white text-ink px-5 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2">
-                  Explore Destination <span>›</span>
-                </button>
+            ) : (
+              <div className="w-full h-[350px] rounded-[2rem] bg-cream flex items-center justify-center text-muted">
+                No destinations found.
               </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -120,7 +136,7 @@ export default async function AttractionsPage() {
           <h2 className="text-2xl font-black text-ink mb-6">Popular Provinces</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {provinces.map((prov, idx) => (
-              <div key={idx} className="group relative h-40 md:h-48 rounded-[1.5rem] overflow-hidden shadow-sm cursor-pointer border border-ink/5">
+              <Link href={`/attractions?province=${prov.name}`} key={idx} className="group relative h-40 md:h-48 rounded-[1.5rem] overflow-hidden shadow-sm cursor-pointer border border-ink/5 block">
                 <Image 
                   src={prov.image} 
                   alt={prov.name} 
@@ -138,7 +154,7 @@ export default async function AttractionsPage() {
                     <span className="text-xs">›</span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>

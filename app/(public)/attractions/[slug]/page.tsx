@@ -7,12 +7,17 @@ import { AttractionTips } from "@/components/attractions/attraction-tips";
 import { AttractionReviews } from "@/components/attractions/attraction-reviews";
 import { AttractionCTA } from "@/components/attractions/attraction-cta";
 import { getPublicAttractionDetail } from "@/lib/repositories/public-content.repository";
+import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AttractionDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const data = await getPublicAttractionDetail(slug);
+
+  if (!data) {
+    notFound();
+  }
 
   return (
     <main className="bg-white min-h-screen pb-12">

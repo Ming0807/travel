@@ -1,69 +1,58 @@
+"use client";
+
 import Link from "next/link";
+import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { createAttractionAction, updateAttractionAction } from "@/app/actions/admin-attraction-actions";
+import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
 
 export type AdminSelectOption = {
   id: number;
   label: string;
 };
 
-export type AttractionFormState = {
-  success?: boolean;
-  message?: string;
-  fieldErrors?: Record<string, string[] | undefined>;
-};
-
-export type AttractionFormData = {
-  attraction_id?: number;
-  name_th?: string | null;
-  name_en?: string | null;
-  slug?: string | null;
-  province_id?: number | null;
-  district_id?: number | null;
-  attraction_type_id?: number | null;
-  short_description_th?: string | null;
-  short_description_en?: string | null;
-  description_th?: string | null;
-  description_en?: string | null;
-  address_text?: string | null;
-  opening_hours?: string | null;
-  contact_info?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  sustainability_category?: string | null;
-  estimated_capacity_per_day?: number | null;
-  is_published?: boolean | null;
-  is_active?: boolean | null;
-};
-
 type AttractionFormProps = {
-  action: (formData: FormData) => void | Promise<void>;
-  state: AttractionFormState;
-  attraction?: AttractionFormData | null;
+  attraction?: AdminAttractionRow | null;
   provinces: AdminSelectOption[];
   districts: AdminSelectOption[];
   attractionTypes: AdminSelectOption[];
-  submitLabel: string;
+  submitLabel?: string;
 };
 
-function fieldError(state: AttractionFormState, name: string) {
-  return state.fieldErrors?.[name]?.[0];
-}
-
 export function AttractionForm({
-  action,
-  state,
   attraction,
   provinces,
   districts,
   attractionTypes,
-  submitLabel
+  submitLabel = "บันทึกข้อมูล"
 }: AttractionFormProps) {
+  const router = useRouter();
+  const isEditing = !!attraction;
+  const action = isEditing ? updateAttractionAction.bind(null, attraction.attraction_id) : createAttractionAction;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+    success: false,
+    error: undefined,
+    fieldErrors: undefined,
+  });
+
+  if (state?.success) {
+    router.push("/admin/attractions");
+    router.refresh();
+  }
+
+  function fieldError(name: string) {
+    return state?.fieldErrors?.[name]?.[0];
+  }
+
   return (
-    <form action={action} className="space-y-6">
+    <form action={formAction} className="space-y-6">
       {attraction?.attraction_id ? <input name="attractionId" type="hidden" value={attraction.attraction_id} /> : null}
 
-      {state.message ? (
-        <div className={`rounded-2xl p-4 text-sm font-bold ${state.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
-          {state.message}
+      {state?.error ? (
+        <div className="rounded-2xl p-4 text-sm font-bold bg-rose-50 text-rose-700">
+          {state.error}
         </div>
       ) : null}
 
@@ -79,7 +68,7 @@ export function AttractionForm({
               name="nameTh"
               required
             />
-            {fieldError(state, "nameTh") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError(state, "nameTh")}</span> : null}
+            {fieldError("nameTh") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("nameTh")}</span> : null}
           </label>
 
           <label className="block">
@@ -101,7 +90,7 @@ export function AttractionForm({
               name="slug"
               required
             />
-            {fieldError(state, "slug") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError(state, "slug")}</span> : null}
+            {fieldError("slug") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("slug")}</span> : null}
           </label>
 
           <label className="block">
@@ -207,8 +196,8 @@ export function AttractionForm({
         <Link className="rounded-full border border-slate-200 bg-white px-5 py-3 text-center text-sm font-black text-slate-700" href="/admin/attractions">
           ยกเลิก
         </Link>
-        <button className="rounded-full bg-[#073F37] px-5 py-3 text-sm font-black text-white shadow-card hover:bg-[#0A6B62]" type="submit">
-          {submitLabel}
+        <button disabled={isPending} className="rounded-full bg-[#073F37] px-5 py-3 text-sm font-black text-white shadow-card hover:bg-[#0A6B62] disabled:opacity-50" type="submit">
+          {isPending ? "กำลังบันทึก..." : submitLabel}
         </button>
       </div>
     </form>

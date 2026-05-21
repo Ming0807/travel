@@ -14,12 +14,19 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { getPublicStory } from "@/lib/repositories/public-content.repository";
+import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function StoryDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { story, relatedStories } = await getPublicStory(id);
+  const data = await getPublicStory(id);
+
+  if (!data) {
+    notFound();
+  }
+
+  const { story, relatedStories } = data;
 
   return (
     <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">

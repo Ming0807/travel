@@ -1,7 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
-import { Eye, EyeSlash, Power } from "@phosphor-icons/react";
+import { Eye, EyeSlash, Power, Image, PencilSimple } from "@phosphor-icons/react";
+import Link from "next/link";
 import {
   toggleAttractionPublishAction,
   toggleAttractionActiveAction,
@@ -33,7 +34,21 @@ export function AttractionStatusActions({
   };
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center justify-end gap-1">
+      <Link
+        href={`/admin/attractions/${attractionId}/edit`}
+        title="Edit Attraction"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0A6B62]"
+      >
+        <PencilSimple size={16} weight="bold" />
+      </Link>
+      <Link
+        href={`/admin/attractions/${attractionId}/media`}
+        title="Manage Media"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0A6B62]"
+      >
+        <Image size={16} weight="bold" />
+      </Link>
       <button
         onClick={handleTogglePublish}
         disabled={isPending}

@@ -88,10 +88,10 @@ function fallbackStories(): PublicStoryCard[] {
   }));
 }
 
-export async function listPublicAttractionCards(limit = 16): Promise<AttractionCard[]> {
+export async function listPublicAttractionCards(limit = 16, options?: { search?: string; province?: string }): Promise<AttractionCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
+    let query = supabase
       .from("attractions")
       .select(`
         slug,
@@ -99,12 +99,22 @@ export async function listPublicAttractionCards(limit = 16): Promise<AttractionC
         name_en,
         short_description_th,
         short_description_en,
-        provinces (province_name_th, province_name_en),
+        provinces!inner (province_name_th, province_name_en),
         attraction_types (type_name_th, type_name_en),
         attraction_media (storage_path, alt_text_th, alt_text_en, is_cover, display_order)
       `)
       .eq("is_published", true)
-      .eq("is_active", true)
+      .eq("is_active", true);
+
+    if (options?.search) {
+      query = query.or(`name_th.ilike.%${options.search}%,name_en.ilike.%${options.search}%`);
+    }
+
+    if (options?.province) {
+      query = query.eq('provinces.province_name_en', options.province);
+    }
+
+    const { data, error } = await query
       .order("created_at", { ascending: true })
       .limit(limit);
 
@@ -140,7 +150,7 @@ export async function getPublicAttractionDetail(slug: string): Promise<PublicAtt
       .eq("is_active", true)
       .maybeSingle();
 
-    if (error || !data) return attractionDetailsMock;
+    if (error || !data) return null;
 
     const row = data as DbRecord;
     const province = one(row.provinces);
@@ -168,7 +178,7 @@ export async function getPublicAttractionDetail(slug: string): Promise<PublicAtt
       }
     };
   } catch {
-    return attractionDetailsMock;
+    return null;
   }
 }
 
@@ -192,7 +202,116 @@ export async function listPublicStories(limit = 12): Promise<PublicStoryCard[]> 
 
 export async function getPublicStory(slug: string) {
   const stories = await listPublicStories(24);
-  const story = stories.find((item) => item.id === slug) ?? stories[0];
+  const story = stories.find((item) => item.id === slug);
+  if (!story) return null;
+  
   const relatedStories = stories.filter((item) => item.id !== story.id).slice(0, 3);
   return { story, relatedStories };
+}
+
+export type PublicRouteCard = {
+  slug: string;
+  name: string;
+  description: string;
+  days: number;
+  imageUrl: string;
+};
+
+export async function listPublicRoutes(limit = 10): Promise<PublicRouteCard[]> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("suggested_routes")
+      .select("slug, route_name_th, route_name_en, short_description_th, short_description_en, estimated_days")
+      .eq("is_published", true)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error || !data) return [];
+    
+    return (data as DbRecord[]).map(row => ({
+      slug: text(row.slug),
+      name: text(row.route_name_th, text(row.route_name_en)),
+      description: text(row.short_description_th, text(row.short_description_en)),
+      days: numberValue(row.estimated_days, 1),
+      imageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=85", // Placeholder until media is linked to routes
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export type PublicRouteDetail = PublicRouteCard & {
+  fullDescription: string;
+  stops: {
+    dayNumber: number;
+    sequence: number;
+    attractionName: string;
+    attractionSlug: string;
+    attractionImage: string;
+  }[];
+};
+
+export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDetail | null> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("suggested_routes")
+      .select(`
+        route_id,
+        slug,
+        route_name_th,
+        route_name_en,
+        short_description_th,
+        short_description_en,
+        description_th,
+        description_en,
+        estimated_days,
+        suggested_route_stops (
+          day_number,
+          sequence_number,
+          attractions (
+            name_th,
+            name_en,
+            slug,
+            attraction_media (storage_path, is_cover)
+          )
+        )
+      `)
+      .eq("slug", slug)
+      .eq("is_published", true)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const row = data as DbRecord;
+    const stopsArray = Array.isArray(row.suggested_route_stops) ? (row.suggested_route_stops as DbRecord[]) : [];
+    
+    // Process and sort stops
+    const mappedStops = stopsArray.map(stop => {
+      const attraction = one(stop.attractions);
+      return {
+        dayNumber: numberValue(stop.day_number, 1),
+        sequence: numberValue(stop.sequence_number, 1),
+        attractionName: text(attraction?.name_th, text(attraction?.name_en, "Unknown")),
+        attractionSlug: text(attraction?.slug, ""),
+        attractionImage: publicImage(attraction ?? {}, "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=85")
+      };
+    }).sort((a, b) => {
+      if (a.dayNumber !== b.dayNumber) return a.dayNumber - b.dayNumber;
+      return a.sequence - b.sequence;
+    });
+
+    return {
+      slug: text(row.slug),
+      name: text(row.route_name_th, text(row.route_name_en)),
+      description: text(row.short_description_th, text(row.short_description_en)),
+      fullDescription: text(row.description_th, text(row.description_en, text(row.short_description_th))),
+      days: numberValue(row.estimated_days, 1),
+      imageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=85",
+      stops: mappedStops
+    };
+  } catch {
+    return null;
+  }
 }
