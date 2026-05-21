@@ -1,31 +1,113 @@
-import { LockKeyhole, Settings, ShieldCheck } from "lucide-react";
-import { PageShell } from "@/components/layout/page-shell";
-import { StatusCard } from "@/components/ui/status-card";
+export const dynamic = "force-dynamic";
 
-export default function AdminPage() {
+import type { Metadata } from "next";
+import Link from "next/link";
+import {
+  MapPin,
+  QrCode,
+  Image as ImageIcon,
+  ClipboardText,
+  ChartLineUp,
+  ChatCircleText,
+} from "@phosphor-icons/react/dist/ssr";
+import { AdminShell } from "@/components/admin/AdminShell";
+import { requireAdmin } from "@/lib/auth/guards";
+
+export const metadata: Metadata = {
+  title: "Admin Overview | Southern Border Tourism",
+};
+
+const modules = [
+  {
+    href: "/admin/dashboard",
+    label: "Analytics Dashboard",
+    description: "ภาพรวมข้อมูลนักท่องเที่ยว เชิงวิเคราะห์",
+    icon: ChartLineUp,
+    tone: "bg-emerald-50 text-emerald-700",
+  },
+  {
+    href: "/admin/attractions",
+    label: "แหล่งท่องเที่ยว",
+    description: "จัดการข้อมูลสถานที่ท่องเที่ยว 3 จังหวัด",
+    icon: MapPin,
+    tone: "bg-blue-50 text-blue-700",
+  },
+  {
+    href: "/admin/photo-spots",
+    label: "จุดถ่ายภาพ",
+    description: "จัดการจุดถ่ายภาพในแต่ละสถานที่",
+    icon: ImageIcon,
+    tone: "bg-amber-50 text-amber-700",
+  },
+  {
+    href: "/admin/checkin-codes",
+    label: "QR Check-in Codes",
+    description: "สร้างและจัดการ QR Code สำหรับ Check-in",
+    icon: QrCode,
+    tone: "bg-violet-50 text-violet-700",
+  },
+  {
+    href: "/admin/visits",
+    label: "Visit Records",
+    description: "ดูบันทึกการเข้าชม ใบประกาศ ตราประทับ",
+    icon: ClipboardText,
+    tone: "bg-rose-50 text-rose-700",
+  },
+  {
+    href: "/admin/surveys",
+    label: "Survey Responses",
+    description: "ดูข้อมูลแบบสอบถามความพึงพอใจ",
+    icon: ChatCircleText,
+    tone: "bg-teal-50 text-teal-700",
+  },
+];
+
+export default async function AdminPage() {
+  const guard = await requireAdmin();
+  const admin = { displayName: guard.displayName, email: guard.email };
+
   return (
-    <PageShell
-      description="A Phase 01 admin shell. Phase 03 will add real admin authentication and permission guards before admin data is connected."
-      eyebrow="Admin back office"
-      title="Admin"
-    >
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatusCard
-          description="Supabase Auth and an admin user/role lookup will be required before protected workflows are implemented."
-          icon={<LockKeyhole aria-hidden="true" />}
-          title="Authentication planned"
-        />
-        <StatusCard
-          description="Attraction, photo spot, and QR management will use server-side validation, guards, services, and repositories."
-          icon={<Settings aria-hidden="true" />}
-          title="CMS boundary ready"
-        />
-        <StatusCard
-          description="Admin operations must not rely on hidden UI controls. Backend permission checks are mandatory."
-          icon={<ShieldCheck aria-hidden="true" />}
-          title="Permission-safe design"
-        />
+    <AdminShell admin={admin}>
+      <div className="space-y-8">
+        {/* Header */}
+        <header className="border-b border-slate-200 pb-6">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#D6A13D]">
+            Admin Backoffice
+          </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-[#073F37]">
+            ภาพรวมระบบ
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Southern Border Tourism Data & Intelligence Platform — ระบบจัดการข้อมูลและวิเคราะห์การท่องเที่ยว ยะลา ปัตตานี นราธิวาส
+          </p>
+        </header>
+
+        {/* Module Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {modules.map((mod) => {
+            const Icon = mod.icon;
+            return (
+              <Link
+                key={mod.href}
+                href={mod.href}
+                className="group flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#0A6B62]/30 hover:shadow-md"
+              >
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${mod.tone}`}>
+                  <Icon size={22} weight="fill" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-black text-[#073F37] group-hover:text-[#0A6B62]">
+                    {mod.label}
+                  </h3>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    {mod.description}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
-    </PageShell>
+    </AdminShell>
   );
 }

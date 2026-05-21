@@ -159,6 +159,30 @@ save passport and access stamps later
 
 This is separate from certificate generation.
 
+For Phase 11 LINE linking, consent must be explicit before the system links the verified LINE identity to the current tourist profile.
+
+Minimum notice:
+
+```text
+LINE is optional.
+LINE helps save/recover the digital passport across devices.
+Certificate download, stamp earning, passport guest mode, and survey access still work without LINE.
+The system stores a verified LINE identity reference for account linking only.
+LINE linking is not communication or marketing consent.
+```
+
+The stored consent record should include:
+
+```text
+consent_type = line_account_linking
+purpose_key = passport_recovery
+consent_version = line_linking_v1
+source = line_liff
+language
+has_consented = true
+consented_at
+```
+
 ## 5.4 Optional Communication Consent
 
 Future only.

@@ -420,8 +420,12 @@ LINE passport is useful for Thai users.
 Rules:
 
 - Optional.
-- Do not require before certificate generation.
-- Link LINE identity to existing tourist.
+- Do not require before certificate generation, certificate download, stamp award, or optional survey.
+- Offer LINE linking only after the tourist already receives value, such as certificate/download/stamp, or on the passport page.
+- Verify LINE token server-side before linking.
+- Link server-derived LINE identity to the existing tourist.
+- Do not expose LINE ID or `provider_user_id` in passport UI, dashboard, share URL, or default exports.
+- Do not claim returning LINE recovery, unlinking, or LINE messaging is production-complete unless separately implemented and verified.
 
 ## 16.3 Google Passport
 
@@ -972,6 +976,7 @@ Make stamp the same as visit.
 Apply unique tourist-attraction rule to visits.
 Require survey completion to earn stamp.
 Require LINE to save stamp.
+Require LINE before certificate download, stamp award, passport view, or optional survey.
 Require Google to save stamp.
 Create duplicate stamps for same tourist and attraction.
 Store stamp progress only in local storage.
@@ -1015,6 +1020,8 @@ This module is done when:
 [ ] Passport can display earned stamps.
 [ ] Guest users are supported.
 [ ] Google/LINE are optional.
+[ ] LINE linking, if offered, happens after reward and uses server-side token verification.
+[ ] LINE ID and provider_user_id are not exposed.
 [ ] Dashboard can count stamps.
 [ ] Privacy rules are followed.
 [ ] Documentation and tests are updated.

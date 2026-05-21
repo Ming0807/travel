@@ -93,6 +93,9 @@ Known Issues
 - Added contribution workflow guidance for production-oriented development.
 - Added changelog structure for future release tracking.
 - Added Phase 01 Next.js App Router project foundation with TypeScript, Tailwind CSS, Supabase client boundaries, route shells, homepage shell, and basic test configuration.
+- Added Phase 09 MVP dashboard analytics foundation with protected `/admin/dashboard`, server-side filter validation, dashboard service/repository aggregation, KPI cards, profile/behavior/expense/satisfaction/funnel sections, sustainable tourism insight cards, and dashboard metric unit tests.
+- Added Phase 08 admin backoffice documentation alignment for Next.js fullstack admin pages, server-side authorization guards, attraction CMS, photo spot CMS, check-in code CMS, read-only visits, read-only surveys, audit logging, and privacy-safe admin tables.
+- Added Phase 11 optional LINE LIFF linking foundation with browser LIFF helper, optional linking UI, server-side LINE token verification routes, current guest profile linking, and LINE validation tests.
 
 ### Changed
 
@@ -110,6 +113,14 @@ Known Issues
 
 - Added repository-level contribution rules to prevent exposing service role keys, private identifiers, unsafe exports, and privacy-sensitive dashboard responses.
 - Added server-only Supabase service-role client boundary and `.env.example` placeholders without real secrets.
+- Added dashboard privacy guardrails through `dashboard.read` permission checks and aggregated dashboard responses that exclude provider IDs, guest tokens, private storage paths, raw comments, tourist IDs, and visit IDs.
+- Documented Phase 08 server-side permission guard requirements for admin pages and mutations.
+- Documented Phase 08 audit logging expectations for attraction, photo spot, check-in code, and sensitive denied admin actions.
+- Added provider-specific LINE linking security so client-submitted LINE user IDs are not trusted and the legacy generic tourist identity-linking endpoint is disabled.
+
+### Migration
+
+- Added migration support for LINE identity linking metadata and dedicated consent fields for optional passport recovery consent.
 
 ### Performance
 
@@ -119,15 +130,15 @@ Known Issues
 
 - Added development contribution rules.
 - Added changelog policy and release note structure.
-
-### Migration
-
-- None.
+- Updated Phase 09 dashboard task/module/metric/privacy documentation to reflect the implemented MVP analytics route and live-query limitations.
+- Updated Phase 08 admin documentation to avoid claiming full dashboard analytics, report/export jobs, LINE LIFF, or official data import automation as implemented.
+- Aligned admin page, authorization, role/permission, audit logging, and Admin Attraction CMS docs around privacy-safe operational backoffice behavior.
 
 ### Known Issues
 
 - Implementation status depends on future code phases.
 - This changelog currently documents documentation/process setup only, not a completed application release.
+- Full Phase 09 dashboard analytics and Phase 10 report/export workflows remain future work unless implemented and verified in a later change.
 
 ---
 

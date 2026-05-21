@@ -8,7 +8,7 @@
 
 ## 2. Module Purpose
 
-The Optional LINE LIFF Integration Module allows tourists to save and recover their digital passport through LINE.
+The Optional LINE LIFF Integration Module allows tourists to save their digital passport through LINE and supports future recovery once the returning-user flow is implemented and verified.
 
 This module is optional and must never block the core tourist flow.
 
@@ -33,9 +33,9 @@ LINE can improve:
 
 - returning tourist recognition
 - passport recovery
-- certificate link delivery
-- campaign engagement
-- future notification workflows
+- certificate link delivery in a future communication feature
+- campaign engagement only after separate consent
+- future notification workflows only after separate communication consent
 
 However, foreign tourists or users without LINE must still be able to use the system.
 
@@ -96,7 +96,7 @@ Can continue as guest or email later.
 
 ## 5.4 Returning LINE User
 
-Can recover profile/passport through LINE identity.
+Can recover profile/passport through LINE identity only after the returning LINE recovery flow is implemented and verified.
 
 ## 5.5 Admin
 
@@ -106,35 +106,41 @@ Configures LINE integration and may view channel analytics in future.
 
 ## 6. Module Scope
 
-## 6.1 In Scope for MVP
+## 6.1 In Scope for Phase 11 Optional Foundation
 
-MVP does not require full LINE LIFF.
+Phase 11 does not require full LINE LIFF production behavior.
 
-However, the system design must prepare for it.
+It prepares the optional LINE linking foundation while preserving the guest-first tourist flow.
 
-MVP can include:
+Phase 11 can include:
 
-- optional "Save with LINE" button placeholder
+- optional "Save with LINE" button or hook after certificate/download/stamp or on the passport page
 - identity table support for provider = line
+- environment variable naming for `NEXT_PUBLIC_LIFF_ID`, `LINE_CHANNEL_ID`, and `LINE_CHANNEL_SECRET`
+- server-side token verification contract before linking
+- separate LINE linking consent/notice
+- dashboard/export rules that hide LINE ID and `provider_user_id`
 - no forced LINE login
 - no forced Google login for tourist certificate creation
 - architecture documentation
 - environment variable plan
 
-## 6.2 In Scope for Phase 2
+## 6.2 Future Production Work
 
-Phase 2 includes:
+After the Phase 11 foundation, optional LINE integration may include:
 
 - LINE LIFF app setup
 - LIFF login
-- LINE user ID retrieval
+- server-verified LINE user ID retrieval
 - link LINE identity to tourist profile
 - returning LINE user detection
 - save passport through LINE
-- optional certificate link message
-- LINE share button
+- optional certificate link message with separate communication consent
+- LINE share button initiated by the tourist
 - consent for communication
 - LINE error handling
+
+Do not describe these as production-complete until they are implemented and verified.
 
 ## 6.3 Out of Scope
 
@@ -191,6 +197,8 @@ notification_preferences
 communication_consents
 ```
 
+These future tables are not required for the Phase 11 linking foundation and must not be used to imply that LINE messaging is complete.
+
 ---
 
 ## 9. LINE Identity Model
@@ -212,6 +220,12 @@ is_primary
 last_seen_at
 created_at
 ```
+
+Rules:
+
+- derive `provider_user_id` only after server-side token verification.
+- do not trust a client-submitted LINE user ID by itself.
+- do not expose `provider_user_id` in public UI, dashboard, certificate, share URL, or default export.
 
 Do not store LINE data directly in `tourists` table.
 
@@ -236,11 +250,11 @@ System offers "Save passport with LINE"
     |
 Tourist opens LIFF authorization
     |
-System gets LINE user ID
+Server verifies LINE token and derives LINE user ID
     |
 System links LINE identity to existing tourist_id
     |
-Passport becomes recoverable via LINE
+Passport can support recovery after returning-user flow is implemented
 ```
 
 Why this is good:
@@ -254,7 +268,7 @@ Why this is good:
 
 ## 10.2 LINE Login Before Flow
 
-Not recommended for MVP.
+Not recommended for Phase 11.
 
 Problem:
 
@@ -263,7 +277,7 @@ Problem:
 - foreign tourists may abandon
 - weakens QR universality
 
-Use only as optional shortcut for returning users.
+Use only as an optional shortcut for returning users after that flow is implemented and verified.
 
 The same principle applies to Google: tourist Google login may be useful for cross-device passport recovery, but it must not be required before certificate generation or download.
 
@@ -281,20 +295,19 @@ Current Campaign
 Help
 ```
 
-Not required for MVP.
+Not required for Phase 11.
 
 ---
 
 ## 11. LINE LIFF Technical Requirements
 
-Phase 2 requires:
+Phase 11 foundation documents:
 
 ```text
 LINE Developers account
 LINE Login channel
 LIFF app
 LIFF ID
-Callback URL
 Allowed endpoint URL
 Environment variables
 Frontend LIFF SDK
@@ -307,10 +320,10 @@ Environment variables:
 NEXT_PUBLIC_LIFF_ID
 LINE_CHANNEL_ID
 LINE_CHANNEL_SECRET
-LINE_CALLBACK_URL
 ```
 
 Do not expose channel secret to frontend.
+Do not use `NEXT_PUBLIC_LINE_LIFF_ID`.
 
 ---
 
@@ -330,13 +343,13 @@ send identity token to server
 Server should:
 
 ```text
-verify LINE identity/token if applicable
+verify LINE identity/token server-side
 extract LINE user ID
 link to tourist profile
 store provider identity
 ```
 
-MVP placeholder does not need this.
+The client must not send a raw LINE user ID as the trusted linking value.
 
 ---
 
@@ -344,22 +357,24 @@ MVP placeholder does not need this.
 
 ## 13.1 Guest to LINE
 
-If current tourist exists as guest:
+If current tourist exists as guest and the LINE token is verified server-side:
 
 ```text
 link LINE identity to same tourist_id
 ```
 
-Do not create new tourist.
+Do not create a new tourist or expose `provider_user_id`.
 
 ## 13.2 Returning LINE User
 
-If LINE identity exists:
+If LINE identity exists and returning LINE recovery is implemented:
 
 ```text
 load existing tourist profile
 load passport
 ```
+
+Phase 11 foundation may prepare this contract, but should not claim returning LINE recovery is production-complete unless the full flow is implemented and verified.
 
 ## 13.3 LINE Identity Conflict
 
@@ -369,24 +384,25 @@ If LINE identity is already linked to another tourist:
 - show safe error.
 - allow support/admin resolution later.
 
-MVP can avoid complex merge.
+Phase 11 can avoid complex merge.
 
 ---
 
 ## 14. Consent Requirements
 
-LINE can be used only for identity unless user consents to communication.
+LINE can be used only for optional identity linking unless user separately consents to communication.
 
 Separate consent purposes:
 
 ```text
 identity_linking
-certificate_delivery
-passport_recovery
-marketing_or_campaign_notifications
+certificate_delivery future
+passport_recovery future
+marketing_or_campaign_notifications future
 ```
 
 Do not send promotional messages without consent.
+Do not bundle LINE linking consent with certificate generation, survey, or communication consent.
 
 ---
 
@@ -394,7 +410,7 @@ Do not send promotional messages without consent.
 
 ## 15.1 Button Placement
 
-Show LINE option after the user receives value.
+Show LINE option after the user receives value and certificate download is already available.
 
 Suggested locations:
 
@@ -403,6 +419,8 @@ certificate success page
 passport page
 stamp earned page
 ```
+
+Do not place LINE linking before certificate generation, certificate download, stamp award, or optional survey access.
 
 Button text:
 
@@ -445,9 +463,9 @@ Thai:
 
 ## 16. LINE Messaging
 
-## 16.1 MVP Status
+## 16.1 Phase 11 Status
 
-Not required.
+Not part of Phase 11. LINE messaging, notification preferences, and message logs are future work.
 
 ## 16.2 Future Message Types
 
@@ -464,6 +482,7 @@ survey reminder
 
 ## 16.3 Messaging Rules
 
+- implement only after separate communication consent exists.
 - send only with consent.
 - allow opt-out.
 - log messages.
@@ -560,15 +579,15 @@ to frontend.
 
 ## 19.2 Token Verification
 
-Server should verify LINE identity before linking.
+Server must verify LINE identity before linking.
 
-Do not trust only client-submitted user ID.
+Do not trust a client-submitted user ID. The browser may send a LINE ID token or access token, but the server must verify it with LINE and derive the LINE user ID server-side.
 
 ## 19.3 Provider User ID
 
-Store LINE user ID as provider_user_id in `tourist_identities`.
+Store LINE user ID as `provider_user_id` in `tourist_identities`.
 
-Do not expose it in dashboard or exports.
+Do not expose it in public UI, certificates, share URLs, dashboards, logs, or default exports.
 
 ## 19.4 Access Control
 
@@ -585,9 +604,10 @@ Rules:
 - optional.
 - explain why LINE is used.
 - do not require for certificate.
-- do not export LINE ID by default.
+- do not require for certificate download, stamp award, or optional survey.
+- do not export LINE ID or `provider_user_id` by default.
 - do not send messages without consent.
-- allow future unlink or delete request.
+- allow future unlink or delete request without claiming it is complete in Phase 11.
 
 ---
 
@@ -600,7 +620,7 @@ guest users
 LINE-linked users
 Google-linked or future email-linked users
 passport save rate
-returning LINE tourists
+returning LINE tourists future
 certificate-to-LINE-save conversion
 ```
 
@@ -633,7 +653,7 @@ Restricted field:
 provider_user_id
 ```
 
-Only export provider_user_id with high permission and clear purpose.
+Only export `provider_user_id` with high permission, clear purpose, and documented approval.
 
 ---
 
@@ -682,9 +702,9 @@ Warn user earlier.
 
 ## 24.6 Same LINE Used on Multiple Devices
 
-This is a benefit.
+This is a future benefit after returning LINE recovery is implemented.
 
-LINE identity should recover passport.
+Phase 11 foundation may store the linked identity, but must not claim cross-device recovery is production-complete unless verified.
 
 ## 24.7 Existing Guest and Existing LINE Profile Conflict
 
@@ -705,7 +725,9 @@ Acceptance:
 ```text
 Given I completed certificate flow as guest
 When I choose Save Passport with LINE
-Then my LINE identity is linked to my existing tourist profile
+Then the server verifies my LINE token
+And my LINE identity is linked to my existing tourist profile
+And provider_user_id is not exposed to the browser, dashboard, or default exports
 ```
 
 ## 25.2 Foreign Tourist Continues Without LINE
@@ -720,16 +742,16 @@ When I scan QR
 Then I can continue as guest or email
 ```
 
-## 25.3 Returning LINE User Opens Passport
+## 25.3 Future Returning LINE User Opens Passport
 
-As a returning LINE user, I want to see my saved passport.
+As a returning LINE user, I may want to see my saved passport in a future verified recovery flow.
 
 Acceptance:
 
 ```text
 Given my LINE identity is linked
 When I open passport through LINE
-Then the system loads my tourist profile and stamps
+Then the system loads my tourist profile and stamps if the returning-user flow is implemented and authorized
 ```
 
 ## 25.4 User Cancels LINE Login
@@ -746,31 +768,34 @@ Then the system lets me continue as guest
 
 ---
 
-## 26. MVP Acceptance Checklist
+## 26. Phase 11 Acceptance Checklist
 
-For MVP preparation:
+For Phase 11 optional foundation:
 
 ```text
-[ ] tourist_identities supports provider = line.
-[ ] Core flow does not require LINE.
-[ ] QR code design does not split LINE/non-LINE users.
-[ ] UI has optional LINE save placeholder or future hook.
-[ ] Guest flow works without LINE.
-[ ] Foreign users are supported without LINE.
-[ ] Documentation explains LINE as optional.
+[x] tourist_identities supports provider = line.
+[x] Core flow does not require LINE before certificate, download, stamp, or survey.
+[x] QR code design does not split LINE/non-LINE users.
+[x] UI has optional LINE save CTA after reward and on passport/profile.
+[x] Guest flow works without LINE.
+[x] Foreign users are supported without LINE.
+[x] Server-side token verification is documented before linking.
+[x] Separate LINE linking consent is documented.
+[x] LINE ID and provider_user_id are not exposed in dashboard/export.
+[x] Documentation explains LINE as optional.
 ```
 
-For Phase 2 implementation:
+For future production completion:
 
 ```text
 [ ] LIFF app is configured.
 [ ] LIFF ID is set in environment.
-[ ] LINE identity is verified server-side.
-[ ] LINE identity links to existing tourist.
-[ ] Returning LINE user can load passport.
-[ ] User can cancel and continue as guest.
+[x] LINE identity is verified server-side when `/api/line/link` is called.
+[x] LINE identity links to existing guest tourist when current guest identity exists.
+[ ] Returning LINE user can load passport, if implemented.
+[x] User can cancel and continue as guest.
 [ ] Communication consent is separated.
-[ ] LINE ID is not exposed in dashboard/export.
+[x] LINE ID is not exposed in dashboard/export.
 ```
 
 ---
@@ -781,6 +806,7 @@ Do not:
 
 ```text
 Force LINE login before certificate.
+Force LINE before certificate download, stamp award, or optional survey.
 Force Google login before certificate.
 Create separate QR code for LINE users.
 Block foreign tourists without LINE.
@@ -788,6 +814,7 @@ Store LINE user ID directly in tourists table.
 Expose LINE user ID in dashboard.
 Expose Google subject or provider_user_id in dashboard.
 Send LINE messages without consent.
+Claim LINE notifications, unlinking, or returning recovery are production-complete without implementation evidence.
 Auto-merge conflicting profiles.
 Load LINE SDK in a way that breaks guest flow.
 Treat LINE as the only identity strategy.
@@ -815,24 +842,26 @@ admin LINE message log
 
 ## 29. Definition of Done
 
-For MVP planning, this module is done when:
+For Phase 11 optional foundation, this module is done when:
 
 ```text
-[ ] LINE is documented as optional.
-[ ] Database can support LINE identity.
-[ ] Core flow works without LINE.
-[ ] QR strategy remains one universal QR.
-[ ] Guest and foreign tourist flows are protected.
+[x] LINE is documented as optional.
+[x] Database can support LINE identity.
+[x] Core flow works without LINE.
+[x] QR strategy remains one universal QR.
+[x] Guest and foreign tourist flows are protected.
+[x] Environment docs use NEXT_PUBLIC_LIFF_ID, LINE_CHANNEL_ID, and LINE_CHANNEL_SECRET.
+[x] Server-side token verification and separate LINE linking consent are documented.
 ```
 
-For Phase 2 implementation, this module is done when:
+For future production implementation, this module is done when:
 
 ```text
 [ ] LIFF login works.
-[ ] LINE identity is verified.
-[ ] LINE identity links to tourist profile.
-[ ] Returning LINE passport works.
-[ ] Consent rules are followed.
-[ ] Error handling is friendly.
-[ ] Documentation and tests are updated.
+[x] LINE identity is verified server-side by the Phase 11 foundation route.
+[x] LINE identity links to tourist profile for current guest passport.
+[ ] Returning LINE passport works if included in that release.
+[x] Consent rules are followed for LINE linking.
+[x] Error handling is friendly.
+[x] Documentation and tests are updated.
 ```

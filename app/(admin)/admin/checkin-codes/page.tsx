@@ -1,0 +1,121 @@
+export const dynamic = "force-dynamic";
+
+import type { Metadata } from "next";
+import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { DataTable } from "@/components/admin/DataTable";
+import { StatusBadge } from "@/components/admin/StatusBadge";
+import { EmptyState } from "@/components/admin/EmptyState";
+import { Pagination } from "@/components/admin/Pagination";
+import { SearchInput } from "@/components/admin/SearchInput";
+import { FilterBar } from "@/components/admin/FilterBar";
+import { requirePermission } from "@/lib/auth/guards";
+import { listAdminCheckinCodes } from "@/lib/repositories/admin-checkin-code.repository";
+import { adminCheckinCodeFiltersSchema } from "@/lib/validation/checkin-code";
+import { CheckinCodeStatusAction } from "@/components/admin/checkin-codes/CheckinCodeStatusAction";
+
+export const metadata: Metadata = {
+  title: "QR Check-in Codes | Admin",
+};
+
+const columns = [
+  { key: "code", label: "รหัส Check-in" },
+  { key: "attraction", label: "แหล่งท่องเที่ยว", className: "hidden md:table-cell" },
+  { key: "spot", label: "จุดถ่ายภาพ", className: "hidden lg:table-cell" },
+  { key: "label", label: "Label", className: "hidden lg:table-cell" },
+  { key: "period", label: "ช่วงเวลา", className: "hidden xl:table-cell" },
+  { key: "status", label: "สถานะ" },
+  { key: "actions", label: "", className: "w-10" },
+];
+
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("th-TH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export default async function AdminCheckinCodesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  await requirePermission("checkin_code.read");
+  const raw = await searchParams;
+  const parsed = adminCheckinCodeFiltersSchema.safeParse(raw);
+  const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
+  const { items, total, page, pageSize } = await listAdminCheckinCodes(filters);
+
+  return (
+    <AdminShell>
+      <div className="space-y-6">
+        <AdminPageHeader
+          eyebrow="Content Management"
+          title="QR Check-in Codes"
+          description="สร้างและจัดการ QR Code สำหรับนักท่องเที่ยว Check-in ที่สถานที่"
+        />
+
+        <FilterBar>
+          <div className="min-w-[220px] flex-1">
+            <SearchInput placeholder="ค้นหารหัส, label..." />
+          </div>
+        </FilterBar>
+
+        {items.length === 0 ? (
+          <EmptyState
+            title="ไม่พบ Check-in Code"
+            description="ลองเปลี่ยนเงื่อนไขการค้นหาหรือตัวกรอง"
+          />
+        ) : (
+          <>
+            <DataTable columns={columns}>
+              {items.map((code) => (
+                <tr key={code.checkin_code_id} className="hover:bg-slate-50/50">
+                  <td className="px-4 py-3">
+                    <p className="font-mono text-sm font-bold text-[#073F37]">{code.code}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-400">
+                      /c/{code.code}
+                    </p>
+                  </td>
+                  <td className="hidden px-4 py-3 md:table-cell">
+                    <span className="text-xs font-semibold text-slate-600">
+                      {code.attraction_name_th ?? "—"}
+                    </span>
+                  </td>
+                  <td className="hidden px-4 py-3 lg:table-cell">
+                    <span className="text-xs text-slate-500">
+                      {code.photo_spot_name_th ?? "—"}
+                    </span>
+                  </td>
+                  <td className="hidden px-4 py-3 lg:table-cell">
+                    <span className="text-xs text-slate-500">{code.label ?? "—"}</span>
+                  </td>
+                  <td className="hidden px-4 py-3 xl:table-cell">
+                    <span className="text-[11px] text-slate-400">
+                      {formatDate(code.starts_at)} – {formatDate(code.ends_at)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge
+                      label={code.is_active ? "Active" : "Inactive"}
+                      tone={code.is_active ? "green" : "red"}
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <CheckinCodeStatusAction
+                      checkinCodeId={code.checkin_code_id}
+                      isActive={code.is_active}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </DataTable>
+            <Pagination page={page} pageSize={pageSize} total={total} />
+          </>
+        )}
+      </div>
+    </AdminShell>
+  );
+}

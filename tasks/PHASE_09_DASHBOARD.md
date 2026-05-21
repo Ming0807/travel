@@ -2,7 +2,9 @@
 
 ## Status
 
-Planned
+MVP implementation completed.
+
+Phase 09 now provides a protected `/admin/dashboard` route backed by server-side filter validation, `dashboard.read` permission checks, live database aggregation services, CSS-based dashboard cards/charts, and unit tests for key metric rules. Report export, official data import, and advanced cached summary tables remain future phases.
 
 ## Objective
 
@@ -48,6 +50,19 @@ Phase 2:
 - route and community tourism insights
 - official data comparison
 
+Implemented in MVP:
+
+- funnel analytics from `funnel_events.event_type`
+- sustainable tourism heuristic insight cards
+- live database aggregation through dashboard repository/service
+
+Still future:
+
+- export/download reports
+- official data comparison
+- materialized views / scheduled summary refresh
+- public dashboard
+
 ## Acceptance Criteria
 
 - Every metric has a definition in the metrics dictionary.
@@ -55,4 +70,5 @@ Phase 2:
 - Funnel shows QR scan, landing view, certificate generation, certificate download, optional sharing, and optional survey.
 - Dashboard supports planning questions for Yala, Pattani, and Narathiwat.
 - Exports are permission-controlled and privacy-safe by default.
-
+- `/admin/dashboard` requires `dashboard.read`.
+- Dashboard responses are aggregated and exclude tourist/visit/private storage identifiers.

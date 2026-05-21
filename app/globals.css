@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ink: #17212B;
+  --color-muted: #6B7280;
+  --color-cream: #FFF8EF;
+  --color-sand: #F0DFC8;
+  --color-teal: #0A6B62;
+  --color-tealSoft: #E6F4EF;
+  --color-leaf: #3E7A4F;
+  --color-coral: #D36B4B;
+  --color-gold: #D6A13D;
+  --color-skySoft: #EAF6F7;
+
+  --font-sans: var(--font-prompt), sans-serif;
+  --font-body: var(--font-sarabun), sans-serif;
+
+  --shadow-soft: 0 18px 60px rgba(15, 23, 42, 0.10);
+  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 20px 50px rgba(7, 94, 99, 0.20);
+}
+
 :root {
   --background: #FFF8EF;
   --foreground: #17212B;

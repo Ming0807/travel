@@ -10,3 +10,5 @@ export const checkinCodeSchema = z
   .regex(/^[a-zA-Z0-9_-]+$/, "Check-in code must be URL-safe.");
 
 export const displayNameSchema = z.string().trim().min(1).max(150);
+
+export const uuidSchema = z.uuid();

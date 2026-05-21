@@ -135,11 +135,11 @@ MVP includes:
 - Identity table design
 - Duplicate prevention by provider identity
 
-## 6.2 In Scope for Phase 2
+## 6.2 In Scope for Phase 11 and Future Phases
 
-Phase 2 may include:
+Phase 11 may include optional LINE LIFF identity linking foundation only. Future phases may include:
 
-- LINE LIFF identity linking
+- optional LINE LIFF identity linking foundation
 - Email magic link identity
 - Passport recovery by email
 - Profile edit page
@@ -401,11 +401,14 @@ Improve returning user experience for Thai tourists.
 Rules:
 
 - Optional.
-- Never required before certificate generation.
-- Link LINE user ID to existing tourist when possible.
+- Never required before certificate generation, certificate download, stamp award, or optional survey.
+- Verify LINE token server-side before linking.
+- Link server-derived LINE user ID to existing tourist when possible.
 - Do not create a new tourist if the current guest profile already exists.
-- Store only necessary LINE identity data.
-- Communication requires consent.
+- Store only necessary LINE identity data in `tourist_identities`.
+- Do not show LINE ID or `provider_user_id` in public UI, dashboard, certificate, share URL, or default exports.
+- LINE linking requires separate consent from certificate, survey, and communication consent.
+- Communication requires separate consent and is not part of the Phase 11 linking foundation.
 
 ---
 
@@ -452,8 +455,9 @@ Example:
 ```text
 Step 1: Tourist starts as guest.
 Step 2: Tourist receives certificate.
-Step 3: Tourist chooses "Save passport with LINE".
-Step 4: System links LINE identity to same tourist_id.
+Step 3: Certificate download and stamp remain available without LINE.
+Step 4: Tourist chooses "Save passport with LINE".
+Step 5: Server verifies LINE token and links LINE identity to same tourist_id.
 ```
 
 Rules:
@@ -461,7 +465,7 @@ Rules:
 - Link new identity to existing tourist profile.
 - Do not create duplicate tourist profile.
 - If identity already belongs to another tourist, require careful handling.
-- MVP may avoid complex merge and only link if safe.
+- Phase 11 may avoid complex merge and only link if safe.
 
 ---
 
@@ -576,7 +580,7 @@ Continue as new guest
 
 ## 14.2 Returning LINE or Email User
 
-If identity is found, show:
+If the optional returning-user flow is implemented and identity is found, show:
 
 ```text
 Welcome back.
@@ -589,6 +593,8 @@ Then allow:
 Use saved information
 Edit profile
 ```
+
+Do not claim production-complete LINE recovery until server-side token verification, authorization, and passport loading are implemented and tested.
 
 ## 14.3 Data Reuse Rules
 
@@ -956,8 +962,11 @@ Acceptance:
 
 ```text
 Given I completed as guest
+And certificate download, stamp, and survey options remain available without LINE
 When I connect LINE
-Then LINE identity is linked to my existing tourist profile
+Then the server verifies my LINE token
+And LINE identity is linked to my existing tourist profile
+And provider_user_id is not exposed in public UI, dashboard, or default exports
 ```
 
 ---
@@ -977,7 +986,9 @@ Then LINE identity is linked to my existing tourist profile
 [ ] Age group uses controlled values.
 [ ] No full address is required.
 [ ] No email is required.
-[ ] No LINE login is required.
+[ ] No LINE login is required before certificate, download, stamp, or survey.
+[ ] Optional LINE linking requires server-side token verification and separate consent.
+[ ] LINE ID and provider_user_id are not exposed.
 [ ] Duplicate identity is prevented.
 [ ] Tourist profile is separate from visits.
 ```
@@ -991,6 +1002,7 @@ Do not:
 ```text
 Create a new tourist every time QR is scanned.
 Force LINE login.
+Require LINE before certificate download, stamp award, or optional survey.
 Force email.
 Ask for full address.
 Ask for national ID.

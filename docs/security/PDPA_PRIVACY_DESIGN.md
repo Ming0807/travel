@@ -606,16 +606,15 @@ Google and LINE linking are optional for tourists.
 
 Rules:
 
-- verify Google/LINE identity server-side.
+- verify Google/LINE identity server-side before linking.
+- for LINE, verify the LINE token server-side and derive the LINE user ID on the server.
 - store provider identity only in tourist_identities.
-- do not show Google subject, LINE ID, or provider_user_id in dashboard.
-- do not export Google subject, LINE ID, or provider_user_id by default.
-- verify LINE identity server-side.
-- store LINE identity only in tourist_identities.
-- do not show LINE ID in dashboard.
-- do not export LINE ID by default.
+- record separate consent/notice for LINE linking.
+- do not show Google subject, LINE ID, or `provider_user_id` in public UI, certificates, share URLs, dashboards, or default exports.
 - do not send LINE messages without separate communication consent.
 - do not make Google or LINE required because guest mode must work first.
+- do not require LINE before certificate generation, certificate download, stamp award, or optional survey.
+- do not describe returning LINE recovery, unlinking, or notifications as production-complete until implemented and verified.
 
 ---
 
@@ -699,6 +698,13 @@ ranked attraction/province metrics
 Small group caution:
 
 If dashboard becomes public, consider suppressing very small groups.
+
+Phase 09 implementation note:
+
+```text
+The admin dashboard route returns aggregated DTOs only and requires dashboard.read.
+It does not expose display_name, provider_user_id, Google subject, LINE user ID, guest token, raw comments, photo paths, certificate paths, tourist_id, or visit_id in the rendered dashboard model.
+```
 
 ---
 

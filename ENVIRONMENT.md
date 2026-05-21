@@ -659,6 +659,8 @@ Security:
 Public-safe.
 Optional.
 LINE must not be required for certificate flow.
+Used only to initialize LIFF when the tourist chooses optional LINE linking.
+Do not use NEXT_PUBLIC_LINE_LIFF_ID.
 ```
 
 ---
@@ -681,7 +683,8 @@ Security:
 
 ```text
 Server-side preferred.
-Do not expose unless required and safe.
+Required for server-side LINE ID token verification when LINE linking is enabled.
+Do not expose to browser code.
 ```
 
 ---
@@ -707,6 +710,7 @@ Server-only.
 Never expose to browser.
 Never commit.
 Never log.
+Reserved for server-side LINE integration flows that require the channel secret.
 ```
 
 ---

@@ -185,6 +185,30 @@ completion_status
 
 Date field must be specified per metric.
 
+## 5.1 Phase 09 Implementation Notes
+
+The MVP dashboard implementation uses:
+
+```text
+Route: /admin/dashboard
+Permission: dashboard.read
+Filter validation: server-side Zod schema
+Data source: live Supabase PostgreSQL tables
+Aggregation: server-side repository/service layer
+Response shape: aggregated privacy-safe DTO
+```
+
+Schema alignment:
+
+- `funnel_events.event_type` is the implemented event column, even where older docs use `event_name`.
+- `satisfaction_surveys.submitted_at` is the current timestamp column in the initial schema.
+- Spending estimates use `visit_expenses.spending_range_id -> spending_ranges.min_value/max_value` when range data exists.
+- The dashboard does not expose `tourist_id`, `visit_id`, provider identifiers, guest tokens, private photo paths, certificate paths, or raw comments.
+
+Future optimization:
+
+- Move heavy aggregations to summary tables/materialized views when real data volume grows.
+
 ---
 
 # Executive Metrics

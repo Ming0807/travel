@@ -96,6 +96,34 @@ MVP includes:
 - Empty states
 - Basic export link or export integration
 
+## 6.1.1 Phase 09 Implementation Status
+
+Implemented for the MVP foundation:
+
+- protected `/admin/dashboard` route
+- `dashboard.read` server-side permission guard
+- validated URL filters
+- dashboard repository and service layer
+- executive KPI cards
+- visits by province and visit trend
+- top attractions
+- tourist profile distribution
+- travel behavior distribution
+- expense and estimated spending summary
+- satisfaction summary
+- funnel analytics
+- sustainable tourism heuristic insight cards
+- metric definitions/tooltips
+- No data and data limitation states
+
+Not implemented in Phase 09:
+
+- report export/download
+- official data comparison
+- advanced AI insights
+- public dashboard
+- scheduled summary-table refresh
+
 ## 6.2 In Scope for Phase 2
 
 Phase 2 may include:

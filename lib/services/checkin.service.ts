@@ -1,0 +1,49 @@
+import "server-only";
+import { getCheckinCodeByCode, CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
+import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
+
+export interface ResolvedCheckinContext {
+  status: "valid" | "not_found" | "inactive" | "expired" | "unavailable";
+  details?: CheckinCodeDetails;
+}
+
+export async function resolveAndValidateCheckinCode(code: string): Promise<ResolvedCheckinContext> {
+  const details = await getCheckinCodeByCode(code);
+  
+  if (!details) {
+    return { status: "not_found" };
+  }
+
+  if (!details.is_active) {
+    return { status: "inactive", details };
+  }
+
+  const now = new Date();
+  if (details.starts_at && new Date(details.starts_at) > now) {
+    return { status: "inactive", details };
+  }
+  if (details.ends_at && new Date(details.ends_at) < now) {
+    return { status: "expired", details };
+  }
+
+  if (!details.attraction || !details.attraction.is_active || !details.attraction.is_published) {
+    return { status: "unavailable", details };
+  }
+
+  if (details.photo_spot && !details.photo_spot.is_active) {
+    return { status: "unavailable", details };
+  }
+
+  return { status: "valid", details };
+}
+
+export async function trackCheckinFunnelEvent(
+  eventName: "qr_scanned" | "landing_viewed" | "certificate_started", 
+  codeDetails: CheckinCodeDetails
+) {
+  await recordFunnelEvent({
+    eventName,
+    checkinCodeId: codeDetails.checkin_code_id,
+    attractionId: codeDetails.attraction?.attraction_id,
+  });
+}

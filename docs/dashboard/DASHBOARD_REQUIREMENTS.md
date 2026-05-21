@@ -253,6 +253,22 @@ Recommended route:
 /admin/dashboard
 ```
 
+Phase 09 implementation status:
+
+```text
+Implemented as the MVP protected dashboard route.
+The route uses server-side `dashboard.read` permission checks, validated URL filters, live database aggregation, and aggregated privacy-safe DTOs.
+```
+
+Out of current Phase 09 scope:
+
+```text
+export/download reports
+official data import comparison
+scheduled summary table refresh
+public dashboard
+```
+
 MVP page sections:
 
 ```text

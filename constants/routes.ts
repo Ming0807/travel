@@ -15,7 +15,7 @@ export const TOURIST_ROUTES = {
 
 export const ADMIN_ROUTES = {
   admin: "/admin",
-  dashboard: "/dashboard"
+  dashboard: "/admin/dashboard"
 } as const;
 
 export const PLACEHOLDER_ROUTES = [
@@ -26,7 +26,7 @@ export const PLACEHOLDER_ROUTES = [
   "/c/[code]",
   "/passport",
   "/profile",
-  "/dashboard",
+  "/admin/dashboard",
   "/admin",
   "/privacy"
 ] as const;
