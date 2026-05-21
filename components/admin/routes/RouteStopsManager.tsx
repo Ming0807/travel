@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { updateRouteStopsAction } from "@/app/actions/admin-route-actions";
 import type { AdminRouteStopRow } from "@/lib/repositories/admin-route.repository";
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
-import { Plus, Trash, GripVertical } from "@phosphor-icons/react";
+import { Plus, Trash, DotsSixVertical } from "@phosphor-icons/react";
 
 interface RouteStopsManagerProps {
   routeId: number;
@@ -116,7 +116,7 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
                   dayStops.map((stop, index) => (
                     <div key={stop.id} className="flex items-start gap-4 rounded-lg border border-slate-200 p-4">
                       <div className="flex h-10 items-center text-slate-400">
-                        <GripVertical size={20} />
+                        <DotsSixVertical size={20} />
                       </div>
                       <div className="flex-1 space-y-4">
                         <div className="grid gap-4 sm:grid-cols-2">

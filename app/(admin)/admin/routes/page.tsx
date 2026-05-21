@@ -76,8 +76,15 @@ export default async function AdminRoutesPage({
           <EmptyState
             title="ไม่พบเส้นทางแนะนำ"
             description="ลองเปลี่ยนเงื่อนไขการค้นหา หรือเพิ่มเส้นทางใหม่"
-            actionLabel="เพิ่มเส้นทาง"
-            actionHref="/admin/routes/new"
+            action={
+              <Link
+                href="/admin/routes/new"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white hover:bg-[#075049]"
+              >
+                <Plus size={16} weight="bold" />
+                เพิ่มเส้นทาง
+              </Link>
+            }
           />
         ) : (
           <>

@@ -62,7 +62,7 @@ export async function listAdminMedia(filters: AdminMediaFilters): Promise<Pagina
   let query = supabase
     .from("attraction_media")
     .select("*", { count: "exact" })
-    .order("display_order", { ascending: true, nullsLast: true })
+    .order("display_order", { ascending: true })
     .order("created_at", { ascending: false })
     .range(from, to);
 
