@@ -25,40 +25,40 @@ export function HomepageOverview() {
           </div>
         </div>
 
-        <div className="rounded-[2.4rem] border border-white bg-white/80 p-6 shadow-card backdrop-blur-xl lg:p-9">
-          <span className="section-label">
-            <GlobeHemisphereEast size={16} /> Why this platform matters
+        <div className="rounded-[2.4rem] border border-ink/5 bg-cream p-6 shadow-sm lg:p-9">
+          <span className="inline-flex items-center gap-2 rounded-full bg-teal/10 px-4 py-2 text-xs font-bold text-teal">
+            <GlobeHemisphereEast size={16} /> ทำไมต้องแพลตฟอร์มนี้?
           </span>
-          <h2 className="mt-5 text-3xl font-extrabold leading-tight lg:text-5xl">
+          <h2 className="mt-5 text-3xl font-bold leading-tight lg:text-5xl text-ink">
             เว็บท่องเที่ยวที่ไม่ได้แค่สวย<br className="hidden lg:block" />
             แต่สร้างฐานข้อมูลได้จริง
           </h2>
-          <p className="body-text mt-5 text-base leading-8 text-muted">
+          <p className="mt-5 text-base leading-relaxed text-muted">
             จุดแข็งของระบบคือเปลี่ยนการเก็บข้อมูลจาก “แบบสอบถามที่ผู้ใช้ไม่อยากกรอก”
             ให้กลายเป็นประสบการณ์ท่องเที่ยวที่นักท่องเที่ยวอยากทำ
             เพราะเขาได้รับใบประกาศและตราประทับเป็นของที่ระลึก
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-3xl bg-cream p-4">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl bg-white p-5 border border-ink/5">
               <Gift size={24} className="text-gold" />
-              <h4 className="mt-2 font-extrabold">Reward-first</h4>
-              <p className="body-text mt-1 text-sm text-muted">ให้คุณค่าก่อน แล้วค่อยชวนตอบข้อมูลเพิ่มเติม</p>
+              <h4 className="mt-3 font-bold text-ink">Reward-first</h4>
+              <p className="mt-1 text-sm text-muted">ให้คุณค่าก่อน แล้วค่อยชวนตอบข้อมูลเพิ่มเติม</p>
             </div>
-            <div className="rounded-3xl bg-tealSoft p-4">
+            <div className="rounded-3xl bg-white p-5 border border-ink/5">
               <ShieldCheck size={24} className="text-teal" />
-              <h4 className="mt-2 font-extrabold">Privacy-aware</h4>
-              <p className="body-text mt-1 text-sm text-muted">ไม่ขอชื่อจริง เบอร์โทร หรือข้อมูลอ่อนไหวโดยไม่จำเป็น</p>
+              <h4 className="mt-3 font-bold text-ink">Privacy-aware</h4>
+              <p className="mt-1 text-sm text-muted">ไม่ขอชื่อจริง เบอร์โทร หรือข้อมูลอ่อนไหวโดยไม่จำเป็น</p>
             </div>
-            <div className="rounded-3xl bg-[#FFF0E8] p-4">
+            <div className="rounded-3xl bg-white p-5 border border-ink/5">
               <ChartLineUp size={24} className="text-coral" />
-              <h4 className="mt-2 font-extrabold">Planning Data</h4>
-              <p className="body-text mt-1 text-sm text-muted">ข้อมูลต่อยอดเป็น Dashboard และรายงานเชิงนโยบาย</p>
+              <h4 className="mt-3 font-bold text-ink">Planning Data</h4>
+              <p className="mt-1 text-sm text-muted">ข้อมูลต่อยอดเป็น Dashboard และรายงานเชิงนโยบาย</p>
             </div>
-            <div className="rounded-3xl bg-skySoft p-4">
+            <div className="rounded-3xl bg-white p-5 border border-ink/5">
               <DeviceMobile size={24} className="text-blue-600" />
-              <h4 className="mt-2 font-extrabold">No App Install</h4>
-              <p className="body-text mt-1 text-sm text-muted">ใช้ผ่านเว็บ/PWA เหมือนแอปบนมือถือ</p>
+              <h4 className="mt-3 font-bold text-ink">No App Install</h4>
+              <p className="mt-1 text-sm text-muted">ใช้ผ่านเว็บ/PWA เหมือนแอปบนมือถือ</p>
             </div>
           </div>
         </div>

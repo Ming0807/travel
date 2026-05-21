@@ -445,7 +445,7 @@ Allow tourists to upload photos for certificate generation.
 2. Validate file type.
 3. Validate file size.
 4. Show preview.
-5. Upload to Supabase Storage.
+5. Upload through the server-side storage adapter.
 6. Store metadata in visit_photos.
 7. Link photo to visit.
 8. Handle upload errors.
@@ -745,7 +745,7 @@ Deploy the MVP for demonstration or production pilot.
 ```text
 Frontend: Vercel
 Database: Supabase
-Storage: Supabase Storage
+Storage: Cloudinary-first storage adapter for development/Vercel, Supabase Storage fallback, university storage future
 ```
 
 ### Tasks

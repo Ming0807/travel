@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { processCertificateGeneration } from "@/lib/services/certificate.service";
 import { assignStampForVisit } from "@/lib/services/stamp.service";
 import { requireTouristVisitAccess } from "@/lib/auth/guards";
 import { getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
 import { getPhotoById } from "@/lib/repositories/visit-photo.repository";
+import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/private-files";
 import { uuidSchema } from "@/lib/validation/common";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import crypto from "crypto";
@@ -16,11 +16,13 @@ const certificateGenerateSchema = z.object({
   base64Image: z.string().startsWith("data:image/png;base64,")
 });
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
-    const limit = rateLimit(ip, 5, 60 * 1000); // 5 generations per minute per IP
-    
+    const limit = rateLimit(ip, 5, 60 * 1000);
+
     if (!limit.success) {
       return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
     }
@@ -51,47 +53,53 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Convert base64 to buffer
     const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
     const buffer = Buffer.from(base64Data, "base64");
     if (buffer.byteLength > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "ข้อมูลรูปใบประกาศมีขนาดใหญ่เกินไป" }, { status: 400 });
+      return NextResponse.json({ error: "รูปใบประกาศมีขนาดใหญ่เกินไป" }, { status: 400 });
     }
 
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const uuid = crypto.randomUUID();
-    const storagePath = `certificates/${year}/${month}/${visitId}/${uuid}.png`;
+    const logicalPath = `certificates/${year}/${month}/${visitId}/${uuid}.png`;
 
-    const supabase = createSupabaseServiceRoleClient();
-
-    // Upload certificate to Supabase
-    const { error: uploadError } = await supabase.storage
-      .from("certificate-files")
-      .upload(storagePath, buffer, {
-        contentType: "image/png",
-        upsert: false
+    let storagePath: string;
+    try {
+      const uploaded = await uploadPrivateFile({
+        bucket: "certificate-files",
+        path: logicalPath,
+        data: buffer,
+        contentType: "image/png"
       });
-
-    if (uploadError) {
-      console.error("Certificate storage upload error:", uploadError);
+      storagePath = uploaded.storagePath;
+    } catch (error) {
+      console.error("Certificate storage upload error:", error);
       return NextResponse.json({ error: "เกิดข้อผิดพลาด กรุณาลองใหม่" }, { status: 500 });
     }
 
-    // In MVP, we might mock templateId as 1.
-    const certId = await processCertificateGeneration({
-      visitId,
-      templateId: 1, 
-      photoId: photoId || undefined,
-      certificatePath: storagePath
-    });
+    let certId: string;
+    try {
+      certId = await processCertificateGeneration({
+        visitId,
+        templateId: 1,
+        photoId: photoId || undefined,
+        certificatePath: storagePath
+      });
+    } catch (error) {
+      try {
+        await deletePrivateFile({ bucket: "certificate-files", path: storagePath });
+      } catch (cleanupError) {
+        console.error("Certificate storage cleanup failed:", cleanupError);
+      }
+      throw error;
+    }
 
-    // Assign stamp
     const stampResult = await assignStampForVisit(visitId);
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       certificateId: certId,
       stamp: stampResult
     });

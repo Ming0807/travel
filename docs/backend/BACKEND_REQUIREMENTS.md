@@ -54,7 +54,7 @@ Recommended MVP stack:
 Next.js server actions / route handlers
 Supabase PostgreSQL
 Supabase Auth
-Supabase Storage
+Cloudinary-first storage adapter for Vercel deployment
 TypeScript
 Zod
 ```
@@ -70,7 +70,7 @@ Service Layer
     |
 Repository / Query Layer
     |
-Supabase PostgreSQL / Storage
+Supabase PostgreSQL / Storage Adapter
 ```
 
 Alternative stack if using separate backend:
@@ -1039,7 +1039,7 @@ Do not log secrets.
 
 ## 23. File Storage Requirements
 
-Storage buckets:
+Logical storage buckets/folders:
 
 ```text
 visit-photos
@@ -1056,6 +1056,7 @@ Backend must:
 - avoid personal data in paths
 - handle upload/database failure
 - control public/signed URL strategy
+- keep Cloudinary/Supabase/university storage details behind server-only helpers
 
 Do not store base64 files in database.
 
@@ -1277,8 +1278,12 @@ NEXT_PUBLIC_APP_URL
 NEXT_PUBLIC_LIFF_ID optional
 LINE_CHANNEL_ID optional
 LINE_CHANNEL_SECRET optional
-CERTIFICATE_STORAGE_BUCKET
-PHOTO_STORAGE_BUCKET
+STORAGE_PROVIDER
+CLOUDINARY_CLOUD_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
+CLOUDINARY_UPLOAD_FOLDER
+CLOUDINARY_DELIVERY_TYPE
 ```
 
 Rules:

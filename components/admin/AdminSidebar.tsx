@@ -18,6 +18,7 @@ const navItems = [
   { href: "/admin/checkin-codes", label: "QR Check-in", icon: QrCode },
   { href: "/admin/visits", label: "Visit Records", icon: ClipboardText },
   { href: "/admin/surveys", label: "Surveys", icon: ChatCircleText },
+  { href: "/admin/official-data", label: "Official Data", icon: ChartLineUp },
   { href: "/admin/settings", label: "Settings", icon: Gear },
 ];
 

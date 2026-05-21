@@ -203,6 +203,7 @@ database password
 LINE channel secret
 CRON_SECRET
 storage credentials
+Cloudinary API secret
 deployment tokens
 ```
 
@@ -471,6 +472,22 @@ docs/security/IMAGE_UPLOAD_SECURITY.md
 ---
 
 ## 13. Storage Security Requirements
+
+MVP deployment note:
+
+```text
+Cloudinary is used through the server-side storage adapter for development and Vercel deployment.
+Supabase Storage remains a fallback/legacy provider.
+Future university storage must use the same server-side adapter boundary.
+```
+
+Cloudinary-specific rules:
+
+```text
+CLOUDINARY_API_SECRET is server-only.
+Do not expose Cloudinary storage references in public UI, dashboards, or default exports.
+Use authenticated or controlled delivery for tourist photos and certificates where available.
+```
 
 Recommended buckets:
 

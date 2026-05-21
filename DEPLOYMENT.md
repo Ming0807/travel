@@ -64,7 +64,7 @@ Recommended MVP deployment stack:
 Application Hosting: Vercel
 Database: Supabase PostgreSQL
 Authentication: Supabase Auth
-File Storage: Supabase Storage
+File Storage: Cloudinary through server-side storage adapter
 Frontend/Backend Runtime: Next.js App Router
 Domain: HTTPS custom domain or Vercel preview domain
 ```
@@ -76,11 +76,12 @@ Dedicated NestJS backend
 Background worker
 Queue system
 Object storage CDN
+University-managed storage server
 Dashboard summary refresh jobs
 Official tourism data import jobs
 ```
 
-For MVP, **Next.js + Supabase + Vercel** is acceptable.
+For MVP, **Next.js + Supabase + Cloudinary + Vercel** is acceptable.
 
 ---
 
@@ -192,7 +193,7 @@ Vercel / Next.js App
         v
 Supabase PostgreSQL
 Supabase Auth
-Supabase Storage
+Storage Adapter -> Cloudinary for Vercel, Supabase Storage fallback, university storage future
 ```
 
 Important boundary:
@@ -448,7 +449,27 @@ Staging seed may include synthetic data.
 
 ---
 
-## 15. Supabase Storage Buckets
+## 15. Storage Provider and Logical Buckets
+
+Current MVP deployment uses:
+
+```text
+STORAGE_PROVIDER=cloudinary
+```
+
+Cloudinary should be configured in Vercel with:
+
+```text
+CLOUDINARY_CLOUD_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
+CLOUDINARY_UPLOAD_FOLDER
+CLOUDINARY_DELIVERY_TYPE
+```
+
+The API secret is server-only and must not use a `NEXT_PUBLIC_` prefix.
+
+The app still uses logical bucket names so storage can move to Supabase Storage fallback or university-hosted storage later.
 
 Required buckets:
 
@@ -487,15 +508,17 @@ Do not make all buckets public.
 Before production release:
 
 ```text
+[ ] STORAGE_PROVIDER is set intentionally.
+[ ] Cloudinary credentials are configured server-side if using Cloudinary.
+[ ] CLOUDINARY_API_SECRET is not exposed to the browser.
 [ ] attraction-media public read works.
 [ ] stamp-assets public read works.
 [ ] public cannot write to attraction-media.
 [ ] public cannot write to stamp-assets.
-[ ] public cannot list/read visit-photos.
-[ ] public cannot list/read certificate-files.
-[ ] public cannot list/read export-files.
-[ ] signed URLs are generated server-side.
-[ ] signed URLs are short-lived.
+[ ] public cannot list/read private tourist objects through app routes.
+[ ] public cannot access private certificate/export objects without controlled URL or verified access.
+[ ] signed or controlled URLs are generated server-side.
+[ ] signed or controlled URLs are short-lived where provider supports expiry.
 [ ] signed URLs are not stored permanently.
 [ ] storage paths contain no tourist personal data.
 ```
@@ -599,6 +622,19 @@ Development
 
 Never store production secrets in development/preview unless intentionally required and access-controlled.
 
+For Cloudinary-first deployment, configure:
+
+```text
+STORAGE_PROVIDER=cloudinary
+CLOUDINARY_CLOUD_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
+CLOUDINARY_UPLOAD_FOLDER
+CLOUDINARY_DELIVERY_TYPE
+```
+
+`CLOUDINARY_API_SECRET` must remain server-only.
+
 ### 19.3 Deployment Checks
 
 Before merging to production branch:
@@ -610,6 +646,7 @@ Before merging to production branch:
 [ ] Tests pass or not-run reason documented.
 [ ] No secrets exposed in browser bundle.
 [ ] Environment variables are set in Vercel.
+[ ] Cloudinary upload and private/controlled certificate URL generation are verified if `STORAGE_PROVIDER=cloudinary`.
 ```
 
 ---
@@ -815,6 +852,7 @@ admin login broken
 private data leak
 service role exposure
 storage privacy misconfiguration
+Cloudinary authenticated delivery or signed URL configuration failure
 production build unstable
 ```
 
@@ -846,7 +884,7 @@ Storage rollback rules:
 ```text
 do not delete existing production files casually
 version certificate templates/assets
-avoid changing bucket public/private state without verification
+avoid changing provider delivery/private state without verification
 keep previous assets until new deployment is stable
 ```
 
@@ -1038,6 +1076,8 @@ wrong Supabase project URL
 wrong anon key
 service role key exposed to frontend
 missing storage bucket
+missing Cloudinary credentials
+wrong Cloudinary delivery type
 bucket accidentally public
 auth redirect URL misconfigured
 migration not applied

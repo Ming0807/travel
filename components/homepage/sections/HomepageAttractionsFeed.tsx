@@ -1,63 +1,46 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Heart } from "@phosphor-icons/react/dist/ssr";
 import { homepageAttractions } from "../homepage-data";
+import type { AttractionCard } from "@/types/tourism";
 
-export function HomepageAttractionsFeed() {
+export function HomepageAttractionsFeed({ attractions = homepageAttractions }: { attractions?: AttractionCard[] }) {
+  const topDestinations = (attractions.length > 0 ? attractions : homepageAttractions).slice(0, 4);
+
   return (
-    <section id="attractions" className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-6 lg:py-8">
-      <div className="mb-5 flex items-end justify-between">
+    <section id="attractions" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
         <div>
-          <p className="text-sm font-bold text-coral">Explore Feed</p>
-          <h2 className="text-2xl font-extrabold lg:text-3xl">แรงบันดาลใจการท่องเที่ยว</h2>
+          <h2 className="text-3xl font-bold text-ink">จุดหมายปลายทางยอดนิยม</h2>
+          <div className="mt-4 flex gap-4 text-sm font-medium text-muted">
+            <span className="text-ink font-semibold border-b-2 border-coral pb-1">ฮิตที่สุด</span>
+            <span className="hover:text-ink cursor-pointer">ยะลา</span>
+            <span className="hover:text-ink cursor-pointer">ปัตตานี</span>
+            <span className="hover:text-ink cursor-pointer">นราธิวาส</span>
+          </div>
         </div>
         <Link
-          className="hidden rounded-full bg-white px-4 py-2 text-sm font-bold text-teal shadow-sm hover:bg-teal hover:text-white sm:block"
           href="/attractions"
+          className="inline-flex rounded-full border border-ink/20 px-6 py-2.5 text-sm font-semibold text-ink hover:bg-ink hover:text-white transition-colors"
         >
-          ดูทั้งหมด
+          สำรวจทุกสถานที่
         </Link>
       </div>
 
-      <div className="masonry-feed">
-        {homepageAttractions.map((attraction) => (
-          <article
-            key={attraction.slug}
-            className="masonry-card overflow-hidden rounded-[1.5rem] bg-white shadow-card"
-          >
-            <div className="relative">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {topDestinations.map((attraction) => (
+          <Link href={`/attractions/${attraction.slug}`} key={attraction.slug} className="group flex flex-col">
+            <div className="relative w-full aspect-[3/4] overflow-hidden rounded-3xl mb-4 shadow-sm">
               <Image
                 src={attraction.imageUrl}
                 alt={attraction.imageAlt}
-                width={700}
-                height={500}
-                className="h-auto w-full"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
                 unoptimized
               />
-              {attraction.category === "Virtual tour" && (
-                <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-extrabold text-teal shadow">
-                  360°
-                </span>
-              )}
-              <button className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/80 text-ink backdrop-blur">
-                <Heart size={16} />
-              </button>
             </div>
-            <div className="p-4">
-              <h3 className="text-sm font-extrabold">{attraction.name}</h3>
-              <p
-                className={`body-text text-xs ${
-                  attraction.province === "ยะลา"
-                    ? "text-leaf"
-                    : attraction.province === "ปัตตานี"
-                      ? "text-coral"
-                      : "text-blue-600"
-                }`}
-              >
-                {attraction.province}
-              </p>
-            </div>
-          </article>
+            <h3 className="text-lg font-bold text-ink leading-tight">{attraction.name}</h3>
+            <p className="text-sm text-muted mt-1">{attraction.province}</p>
+          </Link>
         ))}
       </div>
     </section>

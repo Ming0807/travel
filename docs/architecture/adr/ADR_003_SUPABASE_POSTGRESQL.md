@@ -10,7 +10,7 @@ The project requires:
 
 - A relational database for highly structured tourism data (5 dimensions)
 - Authentication service for admin users
-- File storage for photos, certificates, and templates
+- Relational database and authentication with a file storage fallback where useful
 - Row Level Security for safe client-side queries
 - Managed hosting to reduce operational overhead
 - Standard SQL for complex analytics queries
@@ -21,7 +21,7 @@ Use **Supabase** as the backend platform, providing:
 
 - **PostgreSQL 15+** as the primary database
 - **Supabase Auth** for admin authentication
-- **Supabase Storage** for file management
+- **Supabase Storage** as a supported fallback/legacy file provider
 - **Supabase Realtime** (available but not required for MVP)
 
 Database access patterns:
@@ -43,7 +43,7 @@ Database access patterns:
 ## Consequences
 
 **Positive:**
-- Single platform for database + auth + storage
+- Single platform for database + auth, with optional storage fallback
 - Standard PostgreSQL with full SQL capability
 - Row Level Security for fine-grained access control
 - Built-in dashboard for database management
@@ -55,3 +55,7 @@ Database access patterns:
 - Connection pooling limits on free tier
 - Must manage RLS policies carefully
 - Supabase-specific patterns (e.g., auth helpers) create some lock-in
+
+## Update: Storage Provider
+
+ADR-009 supersedes Supabase Storage as the default MVP file provider. The current MVP deployment direction uses Cloudinary through a server-side storage adapter for development and Vercel deployment, with university-hosted storage planned as a future adapter.

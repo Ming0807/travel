@@ -2,33 +2,114 @@
 
 ## Status
 
-Completed.
+Planned / In progress.
 
 ## Objective
 
-Provide the necessary instructions and environment variables required to deploy the Next.js + Supabase application to a production environment (e.g., Vercel).
+Deploy the Next.js fullstack tourism platform safely to Vercel with Supabase PostgreSQL/Auth and Cloudinary-first file storage.
+
+The deployment must preserve the reward-first tourist flow:
+
+```text
+QR -> Guest minimal form -> photo upload -> certificate -> stamp/passport -> optional survey -> optional account linking
+```
+
+## Storage Decision
+
+For development and Vercel deployment:
+
+```text
+STORAGE_PROVIDER=cloudinary
+```
+
+Future:
+
+```text
+STORAGE_PROVIDER=university_server
+```
+
+when the university-managed storage adapter is implemented.
+
+Supabase Storage remains a supported fallback/legacy provider for environments that already use Supabase buckets.
 
 ## Deployment Checklist
 
 ### 1. Supabase Production Setup
-1. Create a new Supabase Project for Production.
-2. Run the SQL migrations from `supabase/migrations` in order, or use the Supabase CLI:
-   `npx supabase db push`
-3. Ensure the storage buckets are created and policies are applied (handled by `20260521000002_setup_storage.sql`).
-4. Generate the `service_role` key and `anon` public key from the Supabase Dashboard.
 
-### 2. Next.js Deployment (Vercel)
-1. Push the repository to GitHub.
-2. Import the repository into Vercel.
-3. Configure the following Environment Variables in Vercel:
-   - `NEXT_PUBLIC_SUPABASE_URL` = Your Production Supabase URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = Your Production Supabase Anon Key
-   - `SUPABASE_SERVICE_ROLE_KEY` = Your Production Supabase Service Role Key
-   - `NEXT_PUBLIC_APP_URL` = Your Vercel Domain (e.g., `https://my-tourism-app.vercel.app`)
-   - `NEXT_PUBLIC_LINE_LIFF_ID` = (Optional) Your Production LINE LIFF ID
-4. Deploy the application.
+1. Create a production Supabase project.
+2. Run migrations from `supabase/migrations`.
+3. Apply production seed/reference data only.
+4. Configure Supabase Auth redirects.
+5. Generate server-only `service_role` key and browser-safe anon key.
 
-### 3. Post-Deployment Verification
-- Navigate to the admin dashboard (`/admin`) and log in (or verify the guard redirects correctly).
-- Test the QR check-in flow via a generated check-in code.
-- Verify photo uploads and certificate generation work in the production environment.
+### 2. Cloudinary Production Setup
+
+Configure a Cloudinary product environment for tourist photos and generated certificates.
+
+Required Vercel variables:
+
+```text
+STORAGE_PROVIDER=cloudinary
+CLOUDINARY_CLOUD_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
+CLOUDINARY_UPLOAD_FOLDER=southern-border-tourism
+CLOUDINARY_DELIVERY_TYPE=authenticated
+```
+
+Rules:
+
+- `CLOUDINARY_API_SECRET` is server-only.
+- Do not prefix Cloudinary secrets with `NEXT_PUBLIC_`.
+- Tourist photos and certificates should use authenticated or controlled delivery where available.
+- Storage references must not appear in dashboard/default exports.
+
+### 3. Vercel Setup
+
+1. Import the repository into Vercel.
+2. Set the build command to `npm run build`.
+3. Configure environment variables per Development, Preview, and Production.
+4. Ensure `NEXT_PUBLIC_APP_URL` points to the correct environment URL.
+5. Deploy preview before production.
+
+### 4. Required Validation
+
+Run before deployment:
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run build
+```
+
+Run Supabase migration/seed validation on a controlled environment before production.
+
+### 5. Post-Deployment Smoke Test
+
+Verify:
+
+- public homepage loads
+- attraction list/detail load
+- active QR landing opens
+- guest minimal profile works
+- consent is required
+- photo upload works through Cloudinary
+- certificate generation works
+- certificate preview/download works
+- stamp/passport works
+- optional survey can be skipped/submitted
+- admin login/guard works
+- dashboard requires permission
+- exports remain privacy-safe
+
+## Acceptance Criteria
+
+- No NestJS/Express backend is introduced.
+- Vercel environment variables are documented.
+- Cloudinary storage is configured server-side only.
+- Supabase service role is server-side only.
+- Tourist files are uploaded through the storage adapter.
+- Certificate download is not blocked by survey, LINE, Google, email, or phone.
+- Private identifiers and storage references are not exposed by default.
+- Future university storage path is documented but not falsely claimed as implemented.

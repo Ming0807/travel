@@ -131,7 +131,7 @@ src/services/
 | ExportService | Generate CSV, scope data, log export action |
 | FunnelService | Track events, calculate conversion rates |
 | AuthService | Verify admin session, check role, verify permissions |
-| StorageService | Upload files, generate signed URLs, manage buckets |
+| StorageService | Upload files, generate signed/controlled URLs, hide Cloudinary/Supabase/future university storage details |
 
 ---
 

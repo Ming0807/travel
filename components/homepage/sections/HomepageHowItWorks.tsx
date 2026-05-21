@@ -1,4 +1,5 @@
-import { QrCode, DeviceMobile, Certificate, Stamp } from "@phosphor-icons/react/dist/ssr";
+import { QrCode, DeviceMobile, Certificate, Stamp, ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 
 const steps = [
   {
@@ -29,7 +30,7 @@ const steps = [
     num: "04",
     icon: Stamp,
     label: "Collect Stamp",
-    desc: "รับตราประทับในพาสปอร์ต แล้วเลือกตอบ Micro Survey เพิ่มเติมเพื่อช่วยพัฒนาพื้นที่",
+    desc: "รับตราประทับในพาสปอร์ต แล้วเลือกตอบแบบสอบถามสั้นๆ เพื่อช่วยพัฒนาพื้นที่",
     accent: "bg-sky-500 text-white",
     iconBg: "bg-white/20",
   },
@@ -42,62 +43,57 @@ export function HomepageHowItWorks() {
       {/* Header — asymmetric layout */}
       <div className="mb-14 grid lg:grid-cols-[1fr_auto] lg:items-end gap-8">
         <div>
-          <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-teal">
-            <span className="block h-px w-6 bg-teal" />
-            How it works
+          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-coral">
+            <span className="block h-px w-6 bg-coral" />
+            Digital Passport Flow
           </p>
-          <h2 className="mt-5 font-['Sarabun'] text-4xl font-extrabold leading-[1.15] lg:text-5xl">
+          <h2 className="mt-5 text-4xl font-bold leading-tight lg:text-5xl text-ink">
             ใช้งานง่ายเหมือนแอป
             <br />
             <span className="text-teal">แต่ไม่ต้องโหลดแอป</span>
           </h2>
-          <p className="mt-4 max-w-lg text-[15px] leading-7 text-muted">
-            ระบบออกแบบให้เริ่มจากการให้คุณค่าก่อน — นักท่องเที่ยวกรอกน้อยที่สุด
-            รับใบประกาศก่อน แล้วค่อยตอบข้อมูลเพิ่มเติมแบบสมัครใจ
+          <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-muted">
+            ระบบออกแบบให้เริ่มจากการให้คุณค่าก่อน — นักท่องเที่ยวกรอกน้อยที่สุด รับใบประกาศก่อน แล้วค่อยให้ข้อมูลเพิ่มเติมแบบสมัครใจ
           </p>
         </div>
 
-        <button className="group self-end rounded-full border border-teal px-6 py-3 text-sm font-semibold text-teal transition-all hover:bg-teal hover:text-white">
-          ดูตัวอย่าง Flow
-          <span className="ml-1 inline-block transition-transform group-hover:translate-x-0.5">→</span>
-        </button>
+        <Link 
+          href="/checkin/demo-code"
+          className="group self-end rounded-full border-2 border-teal px-6 py-3 text-sm font-bold text-teal transition-all hover:bg-teal hover:text-white inline-flex items-center gap-2"
+        >
+          ทดลองจำลองการเช็คอิน
+          <ArrowRight className="transition-transform group-hover:translate-x-1" />
+        </Link>
       </div>
 
-      {/* Steps — horizontal timeline with connector lines */}
+      {/* Steps — horizontal timeline */}
       <div className="relative">
-        {/* connector line (desktop) */}
         <div
-          className="absolute top-10 left-0 right-0 mx-auto hidden h-px lg:block"
+          className="absolute top-7 left-0 right-0 mx-auto hidden h-px lg:block"
           style={{
-            left: "calc(12.5% + 28px)",
-            right: "calc(12.5% + 28px)",
+            left: "12.5%",
+            right: "12.5%",
             background: "linear-gradient(to right, var(--color-teal, #0d9488), transparent 100%)",
             opacity: 0.2,
           }}
         />
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map(({ num, icon: Icon, label, desc, accent }) => (
             <div key={num} className="group relative flex flex-col">
-              {/* Step number badge + icon row */}
-              <div className="mb-5 flex items-center gap-4">
+              {/* Icon */}
+              <div className="mb-6">
                 <div
-                  className={`relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${accent} transition-transform duration-300 group-hover:-translate-y-1`}
+                  className={`relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl ${accent} shadow-sm transition-transform duration-500 group-hover:-translate-y-2`}
                 >
-                  <Icon size={26} weight="duotone" />
+                  <Icon size={26} weight="fill" />
                 </div>
-                <span
-                  className="font-['Roboto_Mono',monospace] text-[40px] font-bold leading-none tracking-tight text-black/[0.06] select-none"
-                  aria-hidden="true"
-                >
-                  {num}
-                </span>
               </div>
 
               {/* Content */}
-              <div className="flex-1 border-l-2 border-dashed border-black/10 pl-4">
-                <h3 className="text-base font-extrabold tracking-tight">{label}</h3>
-                <p className="mt-1.5 text-[13.5px] leading-[1.65] text-muted">{desc}</p>
+              <div>
+                <h3 className="text-lg font-bold text-ink">{num}. {label}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted">{desc}</p>
               </div>
             </div>
           ))}
@@ -105,13 +101,16 @@ export function HomepageHowItWorks() {
       </div>
 
       {/* Bottom CTA strip */}
-      <div className="mt-14 flex items-center justify-between rounded-2xl border border-dashed border-teal/30 bg-tealSoft/40 px-6 py-4">
-        <p className="text-sm font-medium text-teal">
-          ครบ 4 จุดเช็กอิน รับรางวัลพิเศษ 🎁
+      <div className="mt-16 flex flex-col md:flex-row items-center justify-between rounded-3xl border border-ink/5 bg-cream px-8 py-6 shadow-sm">
+        <p className="text-sm font-bold text-ink mb-4 md:mb-0">
+          ครบ 4 จุดเช็กอิน รับรางวัลพิเศษประจำจังหวัด 🎁
         </p>
-        <button className="rounded-full bg-teal px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-opacity hover:opacity-80">
-          เริ่มต้นเลย
-        </button>
+        <Link 
+          href="/passport"
+          className="rounded-full bg-teal px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-teal/90 transition-colors"
+        >
+          เปิดสมุดพาสปอร์ต
+        </Link>
       </div>
     </section>
   );

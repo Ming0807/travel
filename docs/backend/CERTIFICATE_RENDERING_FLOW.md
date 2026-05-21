@@ -133,6 +133,7 @@ Reason:
 - easier visual iteration
 - no server-side browser setup
 - works well with React certificate component
+- works with the server-side storage adapter, currently Cloudinary-first for Vercel with Supabase fallback and future university storage support
 
 ## 6.2 Production Server-Side Strategy
 
@@ -582,7 +583,7 @@ Validate uploaded generated certificate file
     |
 Generate storage path
     |
-Upload certificate file
+Upload certificate file through storage adapter
     |
 Create certificate database record
     |

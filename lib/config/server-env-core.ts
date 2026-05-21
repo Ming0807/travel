@@ -13,8 +13,41 @@ const serverEnvSchema = z.object({
   CERTIFICATE_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(600),
   EXPORT_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(600),
   EXPORT_MAX_ROWS: z.coerce.number().int().positive().default(5000),
+  STORAGE_PROVIDER: z.enum(["supabase", "cloudinary", "university_server"]).default("supabase"),
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+  CLOUDINARY_UPLOAD_FOLDER: z.string().default("southern-border-tourism"),
+  CLOUDINARY_DELIVERY_TYPE: z.enum(["authenticated", "upload"]).default("authenticated"),
+  UNIVERSITY_STORAGE_BASE_URL: z.string().url().optional(),
+  UNIVERSITY_STORAGE_UPLOAD_ENDPOINT: z.string().url().optional(),
+  UNIVERSITY_STORAGE_ACCESS_TOKEN: z.string().optional(),
   LINE_CHANNEL_ID: z.string().optional(),
   LINE_CHANNEL_SECRET: z.string().optional()
+}).superRefine((value, ctx) => {
+  if (value.STORAGE_PROVIDER === "cloudinary") {
+    for (const key of ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"] as const) {
+      if (!value[key]?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `${key} is required when STORAGE_PROVIDER=cloudinary`
+        });
+      }
+    }
+  }
+
+  if (value.STORAGE_PROVIDER === "university_server") {
+    for (const key of ["UNIVERSITY_STORAGE_BASE_URL", "UNIVERSITY_STORAGE_UPLOAD_ENDPOINT", "UNIVERSITY_STORAGE_ACCESS_TOKEN"] as const) {
+      if (!value[key]?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `${key} is required when STORAGE_PROVIDER=university_server`
+        });
+      }
+    }
+  }
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

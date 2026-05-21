@@ -36,6 +36,24 @@ export type PermissionKey =
   | "media.update"
   | "media.deactivate"
   | "media.delete"
+  | "story.read"
+  | "story.create"
+  | "story.update"
+  | "story.publish"
+  | "story.unpublish"
+  | "story.delete"
+  | "story.manage"
+  | "story.publish"
+  | "story.unpublish"
+  | "route.read"
+  | "route.create"
+  | "route.update"
+  | "route.delete"
+  | "route.manage"
+  | "route.publish"
+  | "route.unpublish"
+  | "route.activate"
+  | "route.deactivate"
   | "visit.read"
   | "visit.detail"
   | "visit.update"
@@ -127,6 +145,22 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   "media.update",
   "media.deactivate",
   "media.delete",
+  "story.read",
+  "story.create",
+  "story.update",
+  "story.publish",
+  "story.unpublish",
+  "story.delete",
+  "story.manage",
+  "route.read",
+  "route.create",
+  "route.update",
+  "route.delete",
+  "route.manage",
+  "route.publish",
+  "route.unpublish",
+  "route.activate",
+  "route.deactivate",
   "visit.read",
   "visit.detail",
   "visit.update",
@@ -211,6 +245,18 @@ const CONTENT_ADMIN_PERMISSIONS: PermissionKey[] = [
   "media.upload",
   "media.update",
   "media.deactivate",
+  "story.read",
+  "story.create",
+  "story.update",
+  "story.publish",
+  "story.unpublish",
+  "route.read",
+  "route.create",
+  "route.update",
+  "route.publish",
+  "route.unpublish",
+  "route.activate",
+  "route.deactivate",
   "visit.read",
   "visit.detail",
   "survey.read",
@@ -231,6 +277,8 @@ const VIEWER_PERMISSIONS: PermissionKey[] = [
   "photo_spot.read",
   "checkin_code.read",
   "media.read",
+  "story.read",
+  "route.read",
   "visit.read",
   "survey.read",
   "stamp.read"
@@ -259,6 +307,20 @@ const LEGACY_PERMISSION_EXPANSIONS: Record<string, PermissionKey[]> = {
     "checkin_code.update",
     "checkin_code.deactivate",
     "checkin_code.download_qr"
+  ],
+  "story.manage": [
+    "story.read",
+    "story.create",
+    "story.update",
+    "story.publish",
+    "story.unpublish",
+    "story.delete"
+  ],
+  "route.manage": [
+    "route.read",
+    "route.create",
+    "route.update",
+    "route.delete"
   ],
   "export.detailed": [
     "export.create",

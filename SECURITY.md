@@ -21,6 +21,7 @@ This project follows these security practices:
 - **Audit logging** for administrative actions
 - **Input validation** using Zod schemas on all user inputs
 - **File upload validation** (type, size, content checks)
+- **Server-only storage adapter** for Cloudinary/Supabase/future university storage
 - **Consent logging** for PDPA compliance
 - **No sensitive data in client code** (no service role keys, no database URLs)
 
@@ -32,6 +33,7 @@ Required environment variables are documented in `ENVIRONMENT.md`.
 
 - `.env` or `.env.local` files
 - Supabase service role key
+- Cloudinary API secret
 - LINE channel secret
 - Production database URLs
 - Private API keys

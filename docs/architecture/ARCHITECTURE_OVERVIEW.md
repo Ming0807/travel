@@ -92,8 +92,10 @@ Business logic is organized into service modules:
 |---|---|---|
 | PostgreSQL | Supabase-managed | Relational data storage, queries, views |
 | RLS | Supabase RLS | Row-level access control for client queries |
-| Storage | Supabase Storage | File storage for photos, certificates, templates |
+| Storage | Server-side storage adapter | Cloudinary for MVP/Vercel, Supabase Storage fallback, university storage future |
 | Auth | Supabase Auth | Admin authentication, JWT sessions |
+
+Storage diagram labels that mention Supabase Storage should be read as the storage boundary. The current implementation routes private file operations through the server-side adapter, with Cloudinary as the Vercel/development provider.
 
 ---
 
@@ -102,7 +104,7 @@ Business logic is organized into service modules:
 | Decision | Choice | Rationale |
 |---|---|---|
 | Framework | Next.js App Router | SSR + API routes + server actions in one framework |
-| Database | Supabase PostgreSQL | Managed PostgreSQL with auth, storage, real-time |
+| Database | Supabase PostgreSQL | Managed PostgreSQL for relational tourism data and auth integration |
 | Styling | Tailwind CSS | Rapid UI development, mobile-first |
 | UI Components | shadcn/ui | Accessible, customizable, TypeScript-first |
 | Language | TypeScript | Type safety, better DX, fewer runtime errors |
@@ -190,7 +192,7 @@ Module 13: Official Data Import        → Service + Data
 | Concern | Strategy |
 |---|---|
 | Database queries | Summary tables, indexes, pagination |
-| File storage | Supabase Storage with CDN |
+| File storage | Cloudinary through storage adapter for Vercel; Supabase fallback; university storage future |
 | API load | Edge functions, server-side caching |
 | Dashboard | Pre-aggregated data, cache layer |
 | Image optimization | Thumbnails, WebP conversion |
@@ -209,7 +211,8 @@ Current (MVP):
 Future (Production):
     Next.js → Frontend + SSR
     NestJS  → Dedicated backend API
-    Supabase → Database + Storage (no direct client access)
+    Supabase -> Database/Auth
+    Storage -> Cloudinary now, university-managed storage future
 ```
 
 The service layer abstraction makes this migration possible without rewriting business logic.

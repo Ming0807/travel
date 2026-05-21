@@ -55,7 +55,7 @@ This document presents the system context diagram (C4 Model Level 1) showing the
 - Next.js web application (frontend + API)
 - Supabase PostgreSQL database
 - Supabase Auth (admin authentication)
-- Supabase Storage (photos, certificates, templates)
+- Storage adapter (Cloudinary MVP/Vercel, Supabase fallback, university storage future)
 - Dashboard analytics engine
 - Export/report generation
 
@@ -103,7 +103,7 @@ This document presents the system context diagram (C4 Model Level 1) showing the
                              │ Supabase client (service role)
 ┌─ Trusted Zone ─────────────▼───────────────────┐
 │  Supabase PostgreSQL (RLS enabled)             │
-│  Supabase Storage (bucket policies)            │
+│  Storage Adapter (provider access controls)     │
 │  Supabase Auth (admin sessions)                │
 └────────────────────────────────────────────────┘
 ```

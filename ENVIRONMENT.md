@@ -163,6 +163,10 @@ SUPABASE_DATABASE_URL
 DATABASE_URL
 LINE_CHANNEL_ID optional
 LINE_CHANNEL_SECRET optional
+CLOUDINARY_CLOUD_NAME if Cloudinary storage is enabled
+CLOUDINARY_API_KEY if Cloudinary storage is enabled
+CLOUDINARY_API_SECRET if Cloudinary storage is enabled
+UNIVERSITY_STORAGE_ACCESS_TOKEN future
 CRON_SECRET optional
 EXPORT_SIGNING_SECRET optional
 ```
@@ -180,6 +184,9 @@ APP_TIMEZONE
 MAX_UPLOAD_IMAGE_SIZE_MB
 CERTIFICATE_SIGNED_URL_TTL_SECONDS
 EXPORT_SIGNED_URL_TTL_SECONDS
+STORAGE_PROVIDER
+CLOUDINARY_UPLOAD_FOLDER
+CLOUDINARY_DELIVERY_TYPE
 ```
 
 ---
@@ -513,6 +520,88 @@ Backend must enforce.
 
 ---
 
+## 6.13A `STORAGE_PROVIDER`
+
+Purpose:
+
+```text
+Selects the server-side storage adapter.
+```
+
+Allowed values:
+
+```text
+cloudinary
+supabase
+university_server
+```
+
+Recommended for development and Vercel:
+
+```env
+STORAGE_PROVIDER=cloudinary
+```
+
+Rules:
+
+```text
+Cloudinary is the MVP deployment provider.
+Supabase Storage remains a supported fallback for existing local setups.
+university_server is reserved for a future university-hosted storage adapter.
+Do not read this variable in client components.
+```
+
+---
+
+## 6.13B Cloudinary Storage Variables
+
+Required when `STORAGE_PROVIDER=cloudinary`:
+
+```env
+CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name-placeholder
+CLOUDINARY_API_KEY=your-cloudinary-api-key-placeholder
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret-placeholder
+CLOUDINARY_UPLOAD_FOLDER=southern-border-tourism
+CLOUDINARY_DELIVERY_TYPE=authenticated
+```
+
+Security:
+
+```text
+CLOUDINARY_API_SECRET is server-only.
+Do not prefix Cloudinary API secrets with NEXT_PUBLIC_.
+Do not log Cloudinary credentials.
+Do not expose provider IDs or storage references in dashboard/default exports.
+```
+
+Notes:
+
+```text
+CLOUDINARY_DELIVERY_TYPE=authenticated is preferred for tourist photos and certificates.
+If an environment temporarily uses upload/public delivery, document it as a development limitation, not final privacy proof.
+```
+
+---
+
+## 6.13C Future University Storage Variables
+
+Reserved for a future university-hosted storage adapter:
+
+```env
+UNIVERSITY_STORAGE_BASE_URL=
+UNIVERSITY_STORAGE_UPLOAD_ENDPOINT=
+UNIVERSITY_STORAGE_ACCESS_TOKEN=
+```
+
+Rules:
+
+```text
+These are placeholders only until the university storage adapter is implemented.
+The access token is server-only and must not be exposed to the browser.
+```
+
+---
+
 ## 6.14 `CERTIFICATE_SIGNED_URL_TTL_SECONDS`
 
 Purpose:
@@ -787,6 +876,19 @@ DATABASE_URL=postgresql://postgres:[password]@db.[project].supabase.co:5432/post
 MAX_UPLOAD_IMAGE_SIZE_MB=5
 ALLOWED_TOURIST_IMAGE_MIME_TYPES=image/jpeg,image/png,image/webp
 
+# Storage
+STORAGE_PROVIDER=cloudinary
+CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name-placeholder
+CLOUDINARY_API_KEY=your-cloudinary-api-key-placeholder
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret-placeholder
+CLOUDINARY_UPLOAD_FOLDER=southern-border-tourism
+CLOUDINARY_DELIVERY_TYPE=authenticated
+
+# Future university storage
+UNIVERSITY_STORAGE_BASE_URL=
+UNIVERSITY_STORAGE_UPLOAD_ENDPOINT=
+UNIVERSITY_STORAGE_ACCESS_TOKEN=
+
 # Private file access
 CERTIFICATE_SIGNED_URL_TTL_SECONDS=600
 EXPORT_SIGNED_URL_TTL_SECONDS=600
@@ -827,6 +929,15 @@ ENABLE_DEMO_DATA=false
 | `DATABASE_URL` | No | optional/tools | server |
 | `MAX_UPLOAD_IMAGE_SIZE_MB` | No | Recommended | server |
 | `ALLOWED_TOURIST_IMAGE_MIME_TYPES` | No | Recommended | server |
+| `STORAGE_PROVIDER` | No | Recommended | server |
+| `CLOUDINARY_CLOUD_NAME` | No | Required for Cloudinary storage | server |
+| `CLOUDINARY_API_KEY` | No | Required for Cloudinary storage | server |
+| `CLOUDINARY_API_SECRET` | No | Required for Cloudinary storage | server |
+| `CLOUDINARY_UPLOAD_FOLDER` | No | Recommended for Cloudinary storage | server |
+| `CLOUDINARY_DELIVERY_TYPE` | No | Recommended for Cloudinary storage | server |
+| `UNIVERSITY_STORAGE_BASE_URL` | No | Future | server |
+| `UNIVERSITY_STORAGE_UPLOAD_ENDPOINT` | No | Future | server |
+| `UNIVERSITY_STORAGE_ACCESS_TOKEN` | No | Future | server |
 | `CERTIFICATE_SIGNED_URL_TTL_SECONDS` | No | Recommended | server |
 | `EXPORT_SIGNED_URL_TTL_SECONDS` | No | Recommended | server |
 | `EXPORT_MAX_ROWS` | No | Recommended | server |
@@ -908,7 +1019,27 @@ Do not use production Supabase in automated tests.
 
 ---
 
-## 11. Storage Bucket Configuration
+## 11. Storage Provider Configuration
+
+MVP development and Vercel deployment use:
+
+```text
+STORAGE_PROVIDER=cloudinary
+```
+
+Cloudinary must be configured with server-only credentials and a project folder:
+
+```text
+CLOUDINARY_CLOUD_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
+CLOUDINARY_UPLOAD_FOLDER
+CLOUDINARY_DELIVERY_TYPE
+```
+
+The application still uses logical bucket names so code can move to Supabase Storage or university storage later.
+
+## 11.1 Supabase Storage Fallback Buckets
 
 Required buckets:
 
@@ -1065,6 +1196,9 @@ Before production deployment, verify:
 [ ] NEXT_PUBLIC_SUPABASE_URL uses production Supabase project.
 [ ] NEXT_PUBLIC_SUPABASE_ANON_KEY uses production anon key.
 [ ] SUPABASE_SERVICE_ROLE_KEY uses production service role key.
+[ ] STORAGE_PROVIDER is set to cloudinary for Vercel unless intentionally using another adapter.
+[ ] CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are set as server-side Vercel variables.
+[ ] CLOUDINARY_API_SECRET is not exposed with a NEXT_PUBLIC_ prefix.
 [ ] LINE variables use production LINE channel if enabled.
 [ ] Demo data flag is false unless intentionally enabled.
 ```
@@ -1174,8 +1308,9 @@ Certificate download/signing depends on:
 
 ```text
 CERTIFICATE_SIGNED_URL_TTL_SECONDS
-certificate-files bucket
-Supabase service role key server-side
+storage adapter
+Cloudinary credentials if STORAGE_PROVIDER=cloudinary
+Supabase service role key for database access
 ```
 
 Rules:
@@ -1390,6 +1525,8 @@ auth redirect URL
 Check:
 
 ```text
+STORAGE_PROVIDER
+Cloudinary cloud name/API key/API secret if using Cloudinary
 bucket exists
 service role key server-side
 storage policy
@@ -1406,13 +1543,14 @@ visit ownership
 Check:
 
 ```text
-certificate-files bucket
+storage provider configuration
 certificate metadata
 storage path
 signed URL generation
 TTL value
 ownership check
-service role server-side
+Cloudinary delivery type or fallback bucket policy
+service role server-side for database access
 ```
 
 ---
@@ -1477,7 +1615,7 @@ Before release, verify:
 [ ] .env.local not committed.
 [ ] Vercel variables set per environment.
 [ ] Supabase project matches environment.
-[ ] Storage buckets match environment.
+[ ] Storage provider and logical buckets/folders match environment.
 [ ] Auth redirect URLs match environment.
 ```
 

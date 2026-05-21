@@ -768,7 +768,7 @@ Next.js
 TypeScript
 Tailwind CSS
 Supabase PostgreSQL
-Supabase Storage
+Cloudinary-first storage adapter for development/Vercel, with Supabase Storage fallback and future university-server storage
 Supabase Auth for admin
 Guest token for tourists
 ```

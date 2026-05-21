@@ -137,7 +137,8 @@ export default async function AdminSurveysPage({
                       ) : null}
                     </div>
                   </td>
-                  <td className="hidden px-4 py-3 xl:table-cell">
+                  {canReadComments && (
+                    <td className="hidden px-4 py-3 xl:table-cell">
                     {survey.comments ? (
                       <p className="max-w-[200px] truncate text-xs text-slate-500" title={survey.comments}>
                         {survey.comments}
@@ -145,7 +146,8 @@ export default async function AdminSurveysPage({
                     ) : (
                       <span className="text-xs text-slate-400">—</span>
                     )}
-                  </td>
+                    </td>
+                  )}
                 </tr>
               ))}
             </DataTable>

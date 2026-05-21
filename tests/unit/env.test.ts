@@ -49,4 +49,24 @@ describe("environment validation", () => {
 
     expect(() => parseServerEnv(withoutServiceRole)).toThrow("Server environment configuration is invalid");
   });
+
+  it("requires Cloudinary secrets only when Cloudinary storage is selected", () => {
+    expect(() =>
+      parseServerEnv({
+        ...validServerEnv,
+        STORAGE_PROVIDER: "cloudinary"
+      })
+    ).toThrow("Server environment configuration is invalid");
+
+    const parsed = parseServerEnv({
+      ...validServerEnv,
+      STORAGE_PROVIDER: "cloudinary",
+      CLOUDINARY_CLOUD_NAME: "demo-cloud",
+      CLOUDINARY_API_KEY: "cloudinary-key",
+      CLOUDINARY_API_SECRET: "cloudinary-secret"
+    });
+
+    expect(parsed.STORAGE_PROVIDER).toBe("cloudinary");
+    expect(parsed.CLOUDINARY_DELIVERY_TYPE).toBe("authenticated");
+  });
 });

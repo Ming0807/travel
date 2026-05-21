@@ -96,14 +96,19 @@ Known Issues
 - Added Phase 09 MVP dashboard analytics foundation with protected `/admin/dashboard`, server-side filter validation, dashboard service/repository aggregation, KPI cards, profile/behavior/expense/satisfaction/funnel sections, sustainable tourism insight cards, and dashboard metric unit tests.
 - Added Phase 08 admin backoffice documentation alignment for Next.js fullstack admin pages, server-side authorization guards, attraction CMS, photo spot CMS, check-in code CMS, read-only visits, read-only surveys, audit logging, and privacy-safe admin tables.
 - Added Phase 11 optional LINE LIFF linking foundation with browser LIFF helper, optional linking UI, server-side LINE token verification routes, current guest profile linking, and LINE validation tests.
+- Added Cloudinary-first private file storage adapter for development/Vercel deployment with Supabase Storage fallback and future university-storage placeholders.
+- Added Supabase local project configuration for migration and seed validation.
+- Added Phase 04A and Phase 08A task files for database-backed public content and admin CRUD expansion.
 
 ### Changed
 
-- None.
+- Updated tourist photo upload and certificate generation routes to use the server-side storage adapter instead of direct Supabase Storage calls.
+- Updated database documentation for travel stories, official tourism stats, official attraction references, and data import logs.
+- Connected homepage attraction and story sections to the public content repository with safe fallback.
 
 ### Fixed
 
-- None.
+- Fixed public Server Component newsletter placeholders that passed `onSubmit` handlers and caused a Next.js 16 runtime error.
 
 ### Removed
 
@@ -117,10 +122,12 @@ Known Issues
 - Documented Phase 08 server-side permission guard requirements for admin pages and mutations.
 - Documented Phase 08 audit logging expectations for attraction, photo spot, check-in code, and sensitive denied admin actions.
 - Added provider-specific LINE linking security so client-submitted LINE user IDs are not trusted and the legacy generic tourist identity-linking endpoint is disabled.
+- Added Cloudinary secret handling rules and provider-neutral storage references so storage credentials and private paths remain server-only.
 
 ### Migration
 
 - Added migration support for LINE identity linking metadata and dedicated consent fields for optional passport recovery consent.
+- Added database hardening migration and comprehensive development seed data for public content, QR check-ins, synthetic visits, certificates, stamps, surveys, funnel events, exports, and official statistics.
 
 ### Performance
 
@@ -133,12 +140,15 @@ Known Issues
 - Updated Phase 09 dashboard task/module/metric/privacy documentation to reflect the implemented MVP analytics route and live-query limitations.
 - Updated Phase 08 admin documentation to avoid claiming full dashboard analytics, report/export jobs, LINE LIFF, or official data import automation as implemented.
 - Aligned admin page, authorization, role/permission, audit logging, and Admin Attraction CMS docs around privacy-safe operational backoffice behavior.
+- Documented Cloudinary-first deployment/storage architecture and future university-server storage migration path.
+- Documented Phase 02A database-first validation status, including Docker daemon blocking local `supabase db reset`.
 
 ### Known Issues
 
 - Implementation status depends on future code phases.
 - This changelog currently documents documentation/process setup only, not a completed application release.
 - Full Phase 09 dashboard analytics and Phase 10 report/export workflows remain future work unless implemented and verified in a later change.
+- Local Supabase reset has not completed because Docker Desktop / Docker daemon is not running in the current environment.
 
 ---
 

@@ -1,21 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Prompt, Sarabun } from "next/font/google";
+import { Kanit, Noto_Sans_Thai, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { APP_NAME } from "@/constants/product";
 import { SiteHeader } from "@/components/layout/site-header";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
-const prompt = Prompt({
+const kanit = Kanit({
   subsets: ["thai", "latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-prompt",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-sans",
   display: "swap"
 });
 
-const sarabun = Sarabun({
+const notoSansThai = Noto_Sans_Thai({
   subsets: ["thai", "latin"],
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-sarabun",
+  variable: "--font-body",
+  display: "swap"
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-serif",
   display: "swap"
 });
 
@@ -37,8 +44,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="th" className={`${prompt.variable} ${sarabun.variable}`}>
-      <body className="bg-cream text-ink antialiased">
+    <html lang="th" className={`${kanit.variable} ${notoSansThai.variable} ${playfair.variable}`} data-scroll-behavior="smooth">
+      <body className="bg-[var(--background)] text-ink antialiased">
         <SiteHeader appName={APP_NAME} />
         <main className="phone-safe-bottom lg:pb-0">{children}</main>
         <MobileBottomNav />

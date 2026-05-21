@@ -21,7 +21,7 @@ This document describes how data flows through the system from QR scan to dashbo
                         Photo spot info                                        attraction_images
 
 3. Photo Upload     ──▶ POST file              ──▶ Validate file
-                                                    Upload to storage      ──▶ Supabase Storage
+                                                    Upload to storage      ──▶ Storage adapter
                                                     Store metadata         ──▶ visit_photos
 
 4. Minimal Form     ──▶ POST form data         ──▶ Validate with Zod
@@ -31,7 +31,7 @@ This document describes how data flows through the system from QR scan to dashbo
                                                     Create visit           ──▶ visits
 
 5. Certificate      ◀── Generated image        ◀── Render template
-                                                    Upload to storage      ──▶ Supabase Storage
+                                                    Upload to storage      ──▶ Storage adapter
                                                     Store record           ──▶ certificates
 
 6. Stamp            ◀── Stamp earned notice    ◀── Check uniqueness
@@ -95,7 +95,7 @@ Input:  visitId, touristName, attractionName, visitDate, photoUrl, templateId
 Process:
     1. Load certificate template
     2. Compose certificate image (server-side rendering)
-    3. Upload generated image to Supabase Storage
+    3. Upload generated image through the storage adapter
     4. Insert certificate record with file path
     5. Insert funnel_event (type: 'certificate_generated')
 Output: { certificateId, downloadUrl }
@@ -135,10 +135,10 @@ Output: { metrics, chartData, filters }
 | Tourist profiles | PostgreSQL `tourists` | Relational rows |
 | Visit records | PostgreSQL `visits` | Relational rows |
 | Survey responses | PostgreSQL `satisfaction_surveys` | Relational rows |
-| Photos (original) | Supabase Storage `photos` bucket | Binary files (JPEG/PNG/WebP) |
-| Photos (thumbnail) | Supabase Storage `photos` bucket | Binary files (WebP) |
-| Certificates | Supabase Storage `certificates` bucket | Binary files (PNG/WebP) |
-| Templates | Supabase Storage `templates` bucket | Binary files (PNG) |
+| Photos (original) | Storage adapter logical `visit-photos` bucket/folder | Binary files (JPEG/PNG/WebP) |
+| Photos (thumbnail) | Storage adapter logical `visit-photos` bucket/folder | Binary files (WebP), future |
+| Certificates | Storage adapter logical `certificate-files` bucket/folder | Binary files (PNG/WebP) |
+| Templates | Storage adapter logical `certificate-files` or public media bucket/folder | Binary files (PNG), future |
 | Funnel events | PostgreSQL `funnel_events` | Relational rows |
 | Dashboard cache | PostgreSQL `daily_attraction_stats` | Summary rows |
 | Audit logs | PostgreSQL `audit_logs` | Relational rows |

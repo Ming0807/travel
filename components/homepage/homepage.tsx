@@ -1,30 +1,28 @@
-import { HomepageBackground } from "./sections/HomepageBackground";
 import { HomepageHero } from "./sections/HomepageHero";
-import { HomepageProvinceFilter } from "./sections/HomepageProvinceFilter";
 import { HomepageAttractionsFeed } from "./sections/HomepageAttractionsFeed";
 import { HomepageHowItWorks } from "./sections/HomepageHowItWorks";
-import { HomepageOverview } from "./sections/HomepageOverview";
-import { HomepageCertificateCta } from "./sections/HomepageCertificateCta";
-import { HomepageDashboardPreview } from "./sections/HomepageDashboardPreview";
-import { HomepagePrivacy } from "./sections/HomepagePrivacy";
 import { HomepageStories } from "./sections/HomepageStories";
-import { HomepageDataJourney } from "./sections/HomepageDataJourney";
-import { HomepageFooter } from "./sections/HomepageFooter";
+import { HomepageHighlights } from "./sections/HomepageHighlights";
+import { HomepageDashboardPreview } from "./sections/HomepageDashboardPreview";
+import { HomepageCertificateCta } from "./sections/HomepageCertificateCta";
+import { SiteFooter as HomepageFooter } from "../layout/SiteFooter";
+import { listPublicAttractionCards, listPublicStories } from "@/lib/repositories/public-content.repository";
 
-export function Homepage() {
+export async function Homepage() {
+  const [attractions, stories] = await Promise.all([
+    listPublicAttractionCards(8),
+    listPublicStories(4)
+  ]);
+
   return (
     <>
-      <HomepageBackground />
       <HomepageHero />
-      <HomepageProvinceFilter />
-      <HomepageAttractionsFeed />
+      <HomepageAttractionsFeed attractions={attractions} />
       <HomepageHowItWorks />
-      <HomepageOverview />
-      <HomepageCertificateCta />
+      <HomepageStories stories={stories} />
+      <HomepageHighlights />
       <HomepageDashboardPreview />
-      <HomepagePrivacy />
-      <HomepageStories />
-      <HomepageDataJourney />
+      <HomepageCertificateCta />
       <HomepageFooter />
     </>
   );

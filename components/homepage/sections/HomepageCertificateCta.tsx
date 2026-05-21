@@ -1,66 +1,39 @@
 import Image from "next/image";
-import { DownloadSimple, ShareNetwork, Certificate, Stamp } from "@phosphor-icons/react/dist/ssr";
 
 export function HomepageCertificateCta() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-6">
-      <div className="grid overflow-hidden rounded-[2rem] bg-teal shadow-soft lg:grid-cols-[1fr_0.8fr] lg:rounded-[2.7rem]">
-        <div className="relative p-7 text-white lg:p-12">
-          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-3xl"></div>
-          <p className="relative inline-flex rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-[#FFD7B5]">
-            Reward-first Experience
-          </p>
-          <h2 className="relative mt-5 text-3xl font-extrabold leading-tight lg:text-5xl">
-            สแกน QR รับใบประกาศ<br className="hidden sm:block" />และเริ่มสะสมตราประทับ
+    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-ink shadow-sm w-full h-[400px] flex items-center justify-center text-center px-4">
+        <Image
+          className="absolute inset-0 h-full w-full object-cover opacity-60"
+          src="https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=1600&q=80"
+          alt="Landscape"
+          fill
+          unoptimized
+        />
+        
+        <div className="relative z-10 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold text-white sm:text-4xl md:text-5xl leading-tight">
+            รับแรงบันดาลใจการเดินทาง<br />ส่งตรงถึงคุณ
           </h2>
-          <p className="body-text relative mt-5 max-w-xl text-base leading-7 text-white/80">
-            ผู้ใช้ไม่ต้องโหลดแอป ไม่ต้อง Login ก่อน และไม่ต้องกรอกข้อมูลยาว ๆ เริ่มจากรับคุณค่าก่อน
-            แล้วค่อยตอบแบบสอบถามเพิ่มเติมแบบสมัครใจ
+          <p className="mt-4 text-white/90 text-sm md:text-base">
+            สมัครรับข่าวสารเพื่อค้นพบสถานที่ใหม่ๆ โปรโมชั่นพิเศษ และเรื่องเล่าสุดเอ็กซ์คลูซีฟ
           </p>
-
-          <div className="relative mt-7 flex flex-col gap-3 sm:flex-row">
-            <button className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-extrabold text-teal shadow-card hover:scale-[1.02]">
-              จำลองดาวน์โหลดใบประกาศ
-              <DownloadSimple size={20} />
+          
+          <form className="mt-8 flex items-center justify-center max-w-md mx-auto gap-2 bg-white p-1.5 rounded-full shadow-lg">
+            <input 
+              type="email" 
+              placeholder="กรอกอีเมลของคุณ" 
+              className="flex-1 bg-transparent px-4 py-2 text-sm text-ink outline-none border-none placeholder:text-muted focus:ring-0"
+              required
+            />
+            <button 
+              type="submit"
+              className="rounded-full bg-coral px-6 py-2.5 text-sm font-bold text-white hover:bg-[#D46549] transition-colors"
+            >
+              ติดตามข่าวสาร
             </button>
-            <button className="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 bg-white/15 px-6 py-3.5 text-sm font-extrabold text-white backdrop-blur-xl hover:bg-white/25">
-              แชร์ความทรงจำ
-              <ShareNetwork size={20} />
-            </button>
-          </div>
-        </div>
-
-        <div className="relative grid place-items-center p-7 lg:p-12">
-          <div className="relative w-full max-w-[310px] rotate-2 rounded-[2rem] bg-white p-4 shadow-soft transition hover:rotate-0">
-            <div className="text-center">
-              <Certificate weight="fill" size={36} className="mx-auto text-gold" />
-              <p className="mt-1 text-xs font-bold uppercase tracking-[0.25em] text-coral">Travel Memory</p>
-              <h3 className="text-xl font-extrabold text-teal">Digital Certificate</h3>
-            </div>
-            <div className="mt-4 overflow-hidden rounded-3xl">
-              <Image
-                className="h-44 w-full object-cover"
-                src="https://images.unsplash.com/photo-1549880181-56a44cf4a9a1?auto=format&fit=crop&w=600&q=85"
-                alt="Certificate image"
-                width={600}
-                height={200}
-                unoptimized
-              />
-            </div>
-            <div className="p-4 text-center">
-              <p className="body-text text-xs text-muted">This certifies that</p>
-              <p className="mt-1 text-2xl font-extrabold">นักเดินทาง</p>
-              <p className="body-text mt-1 text-xs text-muted">has visited</p>
-              <p className="mt-1 font-bold text-teal">จุดชมวิวทะเลหมอกอัยเยอร์เวง</p>
-              <p className="body-text mt-2 text-xs text-muted">Yala · 20 May 2026</p>
-            </div>
-            <div className="absolute -bottom-5 -right-5 grid h-20 w-20 place-items-center rounded-full bg-gold text-white shadow-card ring-4 ring-white">
-              <div className="text-center">
-                <Stamp weight="fill" size={24} className="mx-auto" />
-                <p className="text-[10px] font-extrabold">YALA</p>
-              </div>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
     </section>

@@ -99,6 +99,13 @@ Public attraction reads can be direct or server-rendered.
 Tourist writes should go through server actions/API routes.
 Admin writes should go through server actions/API routes.
 Sensitive storage access should go through server-side signed URLs.
+
+Cloudinary deployment note:
+
+```text
+Supabase RLS and storage policies do not protect Cloudinary files.
+When STORAGE_PROVIDER=cloudinary, file privacy depends on server-side upload, Cloudinary credential secrecy, authenticated or controlled delivery, and application ownership/permission checks.
+```
 ```
 
 This reduces RLS complexity while still allowing database security.

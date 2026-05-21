@@ -1,66 +1,359 @@
-import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Search } from "lucide-react";
-import { PageShell } from "@/components/layout/page-shell";
-import { homepageAttractions } from "@/components/homepage/homepage-data";
-import { TARGET_PROVINCES } from "@/constants/product";
+import Link from "next/link";
+import { 
+  MagnifyingGlass, 
+  MapPin, 
+  Star,
+  CaretDown,
+  PaperPlaneRight,
+  MapTrifold,
+  ShieldCheck,
+  Users,
+  CalendarCheck
+} from "@phosphor-icons/react/dist/ssr";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { listPublicAttractionCards } from "@/lib/repositories/public-content.repository";
 
-export default function AttractionsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AttractionsPage() {
+  const attractions = await listPublicAttractionCards(16);
+  const featured = attractions[0];
+  const topDestinations = attractions.slice(1, 7);
+  const trending = attractions.slice(7, 9).length > 0 ? attractions.slice(7, 9) : attractions.slice(0, 2);
+
+  const provinces = [
+    { name: "Yala", places: "56 Places", image: "https://images.unsplash.com/photo-1542640244-7e672d6cb466?q=80&w=400&auto=format&fit=crop" },
+    { name: "Pattani", places: "48 Places", image: "https://images.unsplash.com/photo-1587823527237-770498eb7909?q=80&w=400&auto=format&fit=crop" },
+    { name: "Narathiwat", places: "32 Places", image: "https://images.unsplash.com/photo-1598444315278-651817551cc3?q=80&w=400&auto=format&fit=crop" },
+    { name: "Betong", places: "25 Places", image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=400&auto=format&fit=crop" },
+  ];
+
   return (
-    <PageShell
-      description="A Phase 01 placeholder for the future published attraction list. Later phases will load active public attractions from Supabase with search, filters, images, and safe public fields only."
-      eyebrow="Public tourism portal"
-      title="Attractions"
-    >
-      <div className="rounded-[1.5rem] bg-white p-4 shadow-card">
-        <div className="flex items-center gap-3 rounded-2xl bg-[#EEF6F2] px-4 py-3">
-          <Search aria-hidden="true" className="text-[#0F766E]" size={18} />
-          <input
-            aria-label="Search attractions"
-            className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-slate-500"
-            placeholder="Search by attraction, province, route, or story"
-            type="search"
-          />
+    <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
+        
+        {/* Breadcrumb */}
+        <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
+          <span>Home</span>
+          <span>›</span>
+          <span className="text-ink">Destinations</span>
         </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {TARGET_PROVINCES.map((province) => (
-            <button
-              className="shrink-0 rounded-full bg-[#EEF6F2] px-4 py-2 text-sm font-black text-[#073F37]"
-              key={province.key}
-              type="button"
-            >
-              {province.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {homepageAttractions.slice(0, 3).map((attraction) => (
-          <Link
-            className="overflow-hidden rounded-[1.5rem] bg-white shadow-card transition hover:-translate-y-1 hover:shadow-soft"
-            href={`/attractions/${attraction.slug}`}
-            key={attraction.slug}
-          >
-            <Image
-              alt={attraction.imageAlt}
-              className="h-48 w-full object-cover"
-              height={384}
-              src={attraction.imageUrl}
-              unoptimized
-              width={640}
-            />
-            <div className="p-5">
-              <p className="flex items-center gap-1 text-xs font-black uppercase tracking-[0.16em] text-[#D36B4B]">
-                <MapPin aria-hidden="true" size={14} />
-                {attraction.province}
-              </p>
-              <h2 className="mt-2 text-xl font-black text-[#073F37]">{attraction.name}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{attraction.description}</p>
+        {/* HERO SECTION */}
+        <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-20">
+          <div className="lg:w-1/2 pt-4">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight">
+              Explore <span className="text-[#E18868]">Destinations</span><br/>
+              in Southern Border
+            </h1>
+            <p className="text-muted leading-relaxed text-base md:text-lg max-w-md mb-8">
+              จากเมืองท่องเที่ยวสุดฮิตสู่สถานที่ลึกลับที่รอการค้นพบ ค้นหาสถานที่สร้างแรงบันดาลใจและทริปต่อไปของคุณ
+            </p>
+
+            {/* Search & Filters */}
+            <div className="bg-white p-2 rounded-full shadow-sm border border-ink/5 flex items-center mb-6 max-w-xl">
+              <MagnifyingGlass size={20} className="text-muted ml-3" weight="bold" />
+              <input 
+                type="text" 
+                placeholder="Search destinations, provinces or keywords..."
+                className="w-full bg-transparent px-3 py-2 text-sm text-ink outline-none"
+              />
+              <button className="bg-[#E18868] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#D07757] transition-colors whitespace-nowrap">
+                Search
+              </button>
             </div>
-          </Link>
-        ))}
+
+            <div className="flex flex-wrap gap-3">
+              <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
+                Province <CaretDown weight="bold" />
+              </button>
+              <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
+                Travel Style <CaretDown weight="bold" />
+              </button>
+              <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
+                Best Season <CaretDown weight="bold" />
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-[#E18868] hover:underline transition-colors">
+                Reset Filters
+              </button>
+            </div>
+          </div>
+          
+          {/* Featured Destination Card */}
+          <div className="lg:w-1/2 w-full">
+            <div className="relative w-full h-[350px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 group">
+              <Image 
+                src={featured.imageUrl} 
+                alt={featured.imageAlt} 
+                fill 
+                className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                unoptimized
+              />
+              
+              {/* Gradient Overlay for Text Readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent"></div>
+              
+              <div className="absolute top-6 left-6">
+                <span className="inline-flex items-center rounded-full bg-[#E18868] text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
+                  Featured Destination
+                </span>
+              </div>
+              
+              <div className="absolute bottom-8 left-8 right-8 text-white">
+                <h2 className="text-3xl font-black mb-2 leading-tight">
+                  {featured.name}, {featured.province}
+                </h2>
+                <p className="text-sm text-white/90 line-clamp-2 mb-6 max-w-sm">
+                  {featured.description}
+                </p>
+                <button className="bg-white text-ink px-5 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2">
+                  Explore Destination <span>›</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* POPULAR REGIONS */}
+        <section className="mb-20">
+          <h2 className="text-2xl font-black text-ink mb-6">Popular Provinces</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {provinces.map((prov, idx) => (
+              <div key={idx} className="group relative h-40 md:h-48 rounded-[1.5rem] overflow-hidden shadow-sm cursor-pointer border border-ink/5">
+                <Image 
+                  src={prov.image} 
+                  alt={prov.name} 
+                  fill 
+                  className="object-cover transition-transform duration-700 group-hover:scale-110" 
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/80 to-transparent"></div>
+                <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+                  <div>
+                    <h3 className="text-white font-bold text-lg leading-tight mb-1">{prov.name}</h3>
+                    <p className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{prov.places}</p>
+                  </div>
+                  <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
+                    <span className="text-xs">›</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* MAIN GRID & SIDEBAR */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20">
+          
+          {/* Main Content (Left) */}
+          <div className="lg:col-span-8 space-y-16">
+            
+            {/* Top Destinations */}
+            <section>
+              <div className="flex justify-between items-end mb-6">
+                <h2 className="text-2xl font-black text-ink">Top Destinations</h2>
+                <a href="#" className="text-xs font-bold text-[#E18868] hover:underline">View all destinations →</a>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {topDestinations.map((dest) => (
+                  <Link href={`/attractions/${dest.slug}`} key={dest.slug} className="group block">
+                    <div className="relative h-56 w-full rounded-[1.5rem] overflow-hidden mb-4 bg-cream border border-ink/5 shadow-sm">
+                      <Image 
+                        src={dest.imageUrl} 
+                        alt={dest.imageAlt} 
+                        fill 
+                        className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                        unoptimized
+                      />
+                      <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-ink hover:text-[#E18868] hover:bg-white transition-colors">
+                        <HeartIcon />
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-lg font-black text-ink mb-1 group-hover:text-[#E18868] transition-colors">{dest.name}</h3>
+                    <p className="text-xs font-bold text-muted mb-3 flex items-center gap-1 uppercase tracking-wider">
+                      {dest.province}
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {dest.tags.map((tag, i) => (
+                        <span key={i} className="bg-cream border border-ink/5 px-2 py-1 rounded text-[10px] font-bold text-ink">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-4 border-t border-ink/5">
+                      <div>
+                        <p className="text-[10px] text-muted uppercase font-bold tracking-wider mb-0.5">Best Time</p>
+                        <p className="text-xs font-bold text-ink flex items-center gap-1">
+                          <CalendarCheck size={14} className="text-[#E18868]" /> Nov - Apr
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold flex items-center gap-1 justify-end">
+                          <Star size={14} weight="fill" className="text-[#F5B041]" /> 4.8 <span className="text-muted font-normal">(2.3k)</span>
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              
+              {/* Pagination */}
+              <div className="flex justify-center items-center gap-2 mt-10">
+                <button className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:bg-ink/5 transition-colors">{'<'}</button>
+                <button className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E18868] text-white font-bold text-sm shadow-sm">1</button>
+                <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">2</button>
+                <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">3</button>
+                <span className="text-muted">...</span>
+                <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">10</button>
+                <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">{'>'}</button>
+              </div>
+            </section>
+
+            {/* Trending Now */}
+            <section>
+              <h2 className="text-2xl font-black text-ink mb-6">Trending Now</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {trending.map((trend) => (
+                  <Link href={`/attractions/${trend.slug}`} key={trend.slug} className="group bg-white p-3 rounded-[1.5rem] border border-ink/5 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
+                    <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-cream">
+                      <Image 
+                        src={trend.imageUrl} 
+                        alt={trend.imageAlt} 
+                        fill 
+                        className="object-cover transition-transform group-hover:scale-105" 
+                        unoptimized
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-sm text-ink mb-1 group-hover:text-[#E18868] transition-colors leading-tight">{trend.name}</h3>
+                      <p className="text-[10px] text-muted line-clamp-2 mb-2">{trend.description}</p>
+                      <p className="text-[10px] font-bold text-[#E18868] uppercase tracking-wider">{trend.province}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* SIDEBAR (Right) */}
+          <div className="lg:col-span-4 space-y-8">
+            
+            {/* Map Widget */}
+            <div className="bg-[#F2EFE8] rounded-[2rem] p-8 text-center border border-ink/5 relative overflow-hidden">
+              {/* Map Illustration Background */}
+              <div className="absolute inset-0 opacity-40 mix-blend-multiply flex items-center justify-center pointer-events-none p-4">
+                <Image src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600" alt="Map" fill className="object-cover grayscale" unoptimized/>
+              </div>
+              
+              <div className="relative z-10">
+                <h3 className="font-black text-ink text-xl mb-4">Where to Next?</h3>
+                <p className="text-sm text-ink/80 mb-6 leading-relaxed">
+                  Explore destinations by region and plan your perfect trip in Southern Border.
+                </p>
+                <button className="bg-white text-ink border border-ink/10 px-6 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2">
+                  Explore on Map <MapTrifold weight="bold" />
+                </button>
+              </div>
+            </div>
+
+            {/* Travel With Confidence */}
+            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
+              <h3 className="font-black text-ink text-lg mb-6">Travel With Confidence</h3>
+              
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="text-[#E18868] mt-1 shrink-0"><ShieldCheck size={24} weight="light" /></div>
+                  <div>
+                    <h4 className="font-bold text-sm text-ink mb-1">Verified Locations</h4>
+                    <p className="text-xs text-muted leading-relaxed">We verify all photo spots and attractions to ensure they are accessible and safe.</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-4">
+                  <div className="text-[#E18868] mt-1 shrink-0"><Users size={24} weight="light" /></div>
+                  <div>
+                    <h4 className="font-bold text-sm text-ink mb-1">Local Expertise</h4>
+                    <p className="text-xs text-muted leading-relaxed">Curated by local travel experts who know the best hidden gems in the region.</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-4">
+                  <div className="text-[#E18868] mt-1 shrink-0"><MapPin size={24} weight="light" /></div>
+                  <div>
+                    <h4 className="font-bold text-sm text-ink mb-1">Authentic Experiences</h4>
+                    <p className="text-xs text-muted leading-relaxed">Connect deeply with local culture, food, and people for unforgettable memories.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Banner Image Ad */}
+            <div className="relative h-72 rounded-[2rem] overflow-hidden shadow-sm border border-ink/5 group cursor-pointer">
+              <Image 
+                src="https://images.unsplash.com/photo-1542640244-7e672d6cb466?q=80&w=600&auto=format&fit=crop" 
+                alt="Banner" 
+                fill 
+                className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                unoptimized
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <h4 className="text-white font-black text-xl leading-tight mb-2">Sea of Mist Aiyerweng</h4>
+                <p className="text-white/80 text-xs mb-4">Discover the breathtaking views above the clouds.</p>
+                <span className="text-white text-xs font-bold border-b border-white pb-0.5">Learn more</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* BOTTOM CTA BANNER */}
+        <section className="mb-20">
+          <div className="relative w-full rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
+            <Image 
+              src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop" 
+              alt="Newsletter Background" 
+              fill 
+              className="object-cover opacity-20" 
+              unoptimized
+            />
+            <div className="relative z-10 mb-6 md:mb-0 md:w-1/2">
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">Get Travel Inspiration Straight to Your Inbox</h2>
+              <p className="text-white/80 text-sm">Weekly guides, hidden gems and exclusive travel updates.</p>
+            </div>
+            
+            <div className="relative z-10 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 bg-white/10 p-1.5 rounded-full backdrop-blur-md border border-white/20">
+                <input 
+                  type="email" 
+                  placeholder="Enter your email address"
+                  className="w-full sm:w-64 bg-white rounded-full px-5 py-3 text-sm text-ink outline-none"
+                />
+                <button type="button" className="bg-[#E18868] text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-[#D07757] transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                  Subscribe <PaperPlaneRight weight="fill" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        
       </div>
-    </PageShell>
+      
+      {/* SITE FOOTER */}
+      <SiteFooter />
+    </div>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+    </svg>
   );
 }

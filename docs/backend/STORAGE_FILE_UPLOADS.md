@@ -46,24 +46,33 @@ The storage system must support:
 For MVP:
 
 ```text
-Supabase Storage
+Cloudinary through the server-side storage adapter
 ```
 
 Reasons:
 
-- integrates with Supabase/PostgreSQL
-- low setup cost
-- supports public/private buckets
-- works well with Next.js
-- good for student-to-production path
+- works with Vercel deployment without a separate file server
+- low setup cost for development and demos
+- supports image delivery and transformations for future optimization
+- can be hidden behind a provider-neutral adapter
 
-Alternative production options:
+Supported/future options:
 
 ```text
+Supabase Storage fallback
+University-hosted storage future
 S3-compatible storage
 Cloudflare R2
 Google Cloud Storage
 AWS S3
+```
+
+Important:
+
+```text
+Do not call Cloudinary directly from UI components.
+Do not store Cloudinary API secrets in client code.
+Do not expose provider-specific storage references in public UI, dashboards, or default exports.
 ```
 
 ---
@@ -138,7 +147,7 @@ Use private or signed URLs where personal data exists.
 
 ## 5. Recommended Buckets
 
-Recommended buckets:
+Recommended logical buckets/folders:
 
 ```text
 attraction-media
@@ -170,6 +179,10 @@ temp-uploads
 ---
 
 ## 6. Bucket Access Strategy
+
+When using Cloudinary, these are logical buckets/folders managed by the storage adapter.
+
+When using Supabase Storage fallback, these may be real Supabase buckets.
 
 ## 6.1 attraction-media
 
@@ -843,6 +856,14 @@ photo admin preview: short-lived
 Do not store signed URLs permanently in database.
 
 Store only storage path.
+
+Cloudinary note:
+
+```text
+Cloudinary credentials are server-only.
+Tourist photos and certificates should use authenticated or otherwise controlled delivery where available.
+If a development environment uses public/upload delivery, treat it as a development limitation and do not expose those URLs through dashboards or default exports.
+```
 
 ---
 

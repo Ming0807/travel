@@ -2,190 +2,165 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Compass,
   MagnifyingGlass,
-  SlidersHorizontal,
   List,
+  X,
   UserCircle
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 
 type SiteHeaderProps = {
   appName: string;
 };
 
 const navItems = [
-  { href: "#attractions", label: "สำรวจ" },
-  { href: "#passport", label: "พาสปอร์ต" },
-  { href: "#how-it-works", label: "วิธีใช้" },
-  { href: "#dashboard", label: "ข้อมูล" }
+  { href: "/", label: "หน้าแรก" },
+  { href: "/attractions", label: "สถานที่ท่องเที่ยว" },
+  { href: "/stories", label: "เรื่องราว" },
+  { href: "/dashboard", label: "สถิติสาธารณะ" },
+  { href: "/about", label: "เกี่ยวกับโครงการ" },
+  { href: "/contact", label: "ติดต่อเรา" }
 ];
 
 export function SiteHeader({ appName }: SiteHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <>
       {/* ═══════════════════════════════════
           DESKTOP / TABLET HEADER
       ═══════════════════════════════════ */}
-      <header className="sticky top-0 z-50 hidden border-b border-white/70 bg-cream/75 backdrop-blur-2xl lg:block">
+      <header className="sticky top-0 z-50 hidden border-b border-ink/5 bg-cream/80 backdrop-blur-md lg:block">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3" aria-label={`${appName} home`}>
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-card">
-              <Compass weight="fill" size={24} className="text-gold" />
+          <Link href="/" className="flex items-center gap-3 group" aria-label={`${appName} home`}>
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-ink group-hover:bg-coral transition-colors">
+              <Compass weight="fill" size={20} className="text-white" />
             </div>
             <div className="leading-tight">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-coral">
-                Southern Border
-              </p>
-              <h1 className="text-xl font-extrabold tracking-tight text-ink">Explorer</h1>
-              <p className="body-text text-xs text-muted">Yala · Pattani · Narathiwat</p>
+              <h1 className="text-lg font-bold tracking-tight text-ink uppercase">Southern Border</h1>
+              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">Explorer</p>
             </div>
           </Link>
 
-          {/* Search bar */}
-          <div className="mx-10 flex flex-1 items-center justify-center">
-            <label className="flex h-12 w-full max-w-2xl items-center gap-3 rounded-full border border-[#E9DDCF] bg-white px-5 shadow-sm">
-              <MagnifyingGlass size={20} className="text-muted" />
-              <input
-                id="searchInputDesktop"
-                type="text"
-                className="body-text w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                placeholder="ค้นหาสถานที่ อาหาร วัฒนธรรม หรือเส้นทางท่องเที่ยว..."
-              />
-              <button
-                type="button"
-                className="grid h-8 w-8 place-items-center rounded-full bg-tealSoft text-teal"
-                aria-label="Filter search"
-              >
-                <SlidersHorizontal size={16} />
-              </button>
-            </label>
-          </div>
-
           {/* Navigation */}
-          <nav className="flex items-center gap-2" aria-label="Primary">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white hover:text-teal"
-              >
-                {item.label}
-              </Link>
-            ))}
+          <nav className="flex items-center gap-6" aria-label="Primary">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`text-sm font-semibold transition-colors ${
+                    isActive ? "text-coral border-b-2 border-coral pb-1" : "text-ink hover:text-coral pb-1 border-b-2 border-transparent"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-4">
             <button
               type="button"
-              className="ml-2 rounded-full border border-[#E9DDCF] bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm hover:border-teal hover:text-teal"
+              className="text-ink hover:text-coral transition-colors"
+              aria-label="Search"
             >
-              EN
+              <MagnifyingGlass size={20} weight="bold" />
             </button>
+            
+            <div className="h-4 w-px bg-ink/10"></div>
+            
             <Link
-              href="#passport"
-              className="rounded-full bg-teal px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-[#064E52]"
+              href="/passport"
+              className="flex items-center gap-2 text-sm font-semibold text-ink hover:text-coral transition-colors"
             >
-              My Passport
+              <UserCircle size={20} weight="fill" />
+              สมุดพาสปอร์ต
             </Link>
-          </nav>
+
+            <Link
+              href="/checkin/demo-code"
+              className="ml-2 rounded-full bg-coral px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#D46549] transition-colors"
+            >
+              รับใบประกาศ
+            </Link>
+          </div>
         </div>
       </header>
 
       {/* ═══════════════════════════════════
-          MOBILE APP HEADER
+          MOBILE HEADER
       ═══════════════════════════════════ */}
-      <header className="sticky top-0 z-50 border-b border-white/70 bg-cream/80 px-4 py-3 backdrop-blur-2xl lg:hidden">
+      <header className="sticky top-0 z-50 border-b border-ink/5 bg-cream/90 px-4 py-3 backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-between">
-          <button
-            type="button"
-            className="grid h-10 w-10 place-items-center rounded-full bg-white shadow-sm"
-            aria-label="User profile"
-          >
-            <UserCircle weight="fill" size={24} className="text-teal" />
-          </button>
-
-          <Link href="/" className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-white shadow-sm">
-              <Compass weight="fill" size={20} className="text-gold" />
+          <Link href="/" className="flex items-center gap-2" aria-label={`${appName} home`}>
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-ink">
+              <Compass weight="fill" size={20} className="text-white" />
             </div>
-            <div className="leading-tight">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-coral">
-                Southern Border
-              </p>
-              <h1 className="text-sm font-extrabold">Explorer</h1>
+            <div>
+              <h1 className="text-base font-bold tracking-tight text-ink uppercase leading-none">Southern Border</h1>
+              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mt-0.5">Explorer</p>
             </div>
           </Link>
 
-          <button
-            type="button"
-            className="grid h-10 w-10 place-items-center rounded-full bg-white shadow-sm"
-            aria-label="Open menu"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            <List size={24} className="text-ink" />
-          </button>
-        </div>
-
-        {/* Mobile search */}
-        <div className="mt-4 flex items-center gap-2">
-          <label className="flex h-11 flex-1 items-center gap-2 rounded-full bg-white px-4 shadow-sm">
-            <MagnifyingGlass size={18} className="text-muted" />
-            <input
-              id="searchInputMobile"
-              type="text"
-              className="body-text w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-              placeholder="ค้นหาสถานที่..."
-            />
-          </label>
-          <button
-            type="button"
-            className="grid h-11 w-11 place-items-center rounded-full bg-white text-teal shadow-sm"
-            aria-label="Filter"
-          >
-            <SlidersHorizontal size={20} />
-          </button>
-        </div>
-
-        {/* Mobile menu dropdown */}
-        {mobileMenuOpen && (
-          <div className="mt-3 rounded-3xl border border-white/80 bg-white p-3 shadow-card">
-            <Link
-              className="block rounded-2xl px-4 py-3 text-sm font-medium hover:bg-tealSoft"
-              href="#attractions"
-              onClick={() => setMobileMenuOpen(false)}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="grid h-10 w-10 place-items-center rounded-full text-ink hover:bg-ink/5"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-expanded={mobileMenuOpen}
+              aria-label="Toggle menu"
             >
-              สถานที่ท่องเที่ยว
-            </Link>
-            <Link
-              className="block rounded-2xl px-4 py-3 text-sm font-medium hover:bg-tealSoft"
-              href="#passport"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              พาสปอร์ตของฉัน
-            </Link>
-            <Link
-              className="block rounded-2xl px-4 py-3 text-sm font-medium hover:bg-tealSoft"
-              href="#how-it-works"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              วิธีใช้งาน
-            </Link>
-            <Link
-              className="block rounded-2xl px-4 py-3 text-sm font-medium hover:bg-tealSoft"
-              href="#dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              ข้อมูลและแดชบอร์ด
-            </Link>
-            <Link
-              className="block rounded-2xl px-4 py-3 text-sm font-medium hover:bg-tealSoft"
-              href="#privacy"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              ความเป็นส่วนตัว
-            </Link>
+              {mobileMenuOpen ? <X size={24} /> : <List size={24} />}
+            </button>
           </div>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <nav className="absolute left-0 right-0 top-full border-b border-ink/5 bg-cream px-4 py-4 shadow-lg">
+            <ul className="flex flex-col gap-2">
+              {navItems.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="block rounded-xl px-4 py-3 text-sm font-bold text-ink hover:bg-ink/5"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <div className="my-2 h-px w-full bg-ink/10"></div>
+              </li>
+              <li>
+                <Link
+                  href="/passport"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-ink hover:bg-ink/5"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <UserCircle size={20} weight="fill" />
+                  สมุดพาสปอร์ต
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/checkin/demo-code"
+                  className="mt-2 block rounded-xl bg-coral px-4 py-3 text-center text-sm font-bold text-white shadow-sm"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  สแกนรับใบประกาศ
+                </Link>
+              </li>
+            </ul>
+          </nav>
         )}
       </header>
     </>

@@ -285,19 +285,20 @@ This table should support public attraction pages and dashboard filters.
 
 ---
 
-## 8. Table: attraction_images
+## 8. Table: attraction_media
 
 ## 8.1 Purpose
 
-Stores attraction image gallery metadata.
+Stores attraction image, panorama, 360 media, embed, and external URL metadata.
 
 ## 8.2 Columns
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| image_id | bigint identity | yes | Primary key |
+| media_id | bigint identity | yes | Primary key |
 | attraction_id | bigint | yes | Foreign key to attractions |
-| storage_path | text | yes | File path in storage |
+| media_type | varchar(50) | yes | image, panorama, video360, embed, external_url |
+| storage_path | text | yes | Provider object reference or public external URL |
 | alt_text_th | varchar(255) | no | Thai alt text |
 | alt_text_en | varchar(255) | no | English alt text |
 | caption_th | varchar(255) | no | Thai caption |
@@ -311,8 +312,9 @@ Stores attraction image gallery metadata.
 ## 8.3 Constraints
 
 ```text
-primary key(image_id)
+primary key(media_id)
 foreign key(attraction_id) references attractions(attraction_id)
+check(media_type in ('image', 'panorama', 'video360', 'embed', 'external_url'))
 ```
 
 ---
@@ -321,7 +323,9 @@ foreign key(attraction_id) references attractions(attraction_id)
 
 ## 9.1 Purpose
 
-Stores 360-degree media references for attractions.
+Future normalized table for advanced 360-degree media workflows.
+
+Current MVP stores 360 media and embed references in `attraction_media.media_type`.
 
 ## 9.2 Columns
 
@@ -342,7 +346,7 @@ Stores 360-degree media references for attractions.
 
 ## 9.3 MVP Status
 
-Optional in MVP.
+Out of MVP as a separate table.
 
 ---
 
@@ -432,7 +436,7 @@ This table should not store visit-specific information.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| tourist_id | bigint identity | yes | Primary key |
+| tourist_id | uuid | yes | Primary key |
 | display_name | varchar(150) | yes | Name shown on certificate |
 | origin_country_id | bigint | no | Origin country |
 | origin_province_id | bigint | no | Origin province for Thai tourists |
@@ -468,12 +472,14 @@ Stores identity methods used to recognize a tourist.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| identity_id | bigint identity | yes | Primary key |
-| tourist_id | bigint | yes | Foreign key to tourists |
+| identity_id | uuid | yes | Primary key |
+| tourist_id | uuid | yes | Foreign key to tourists |
 | provider | varchar(50) | yes | Identity provider |
 | provider_user_id | text | yes | Provider-specific ID |
 | is_primary | boolean | yes | Whether this is primary identity |
+| linked_at | timestamptz | no | Time identity was linked |
 | last_seen_at | timestamptz | no | Last time this identity was used |
+| metadata_json | jsonb | no | Safe provider metadata |
 | created_at | timestamptz | yes | Record creation time |
 
 ## 13.3 Allowed Providers
@@ -501,12 +507,14 @@ unique(provider, provider_user_id)
 
 Stores optional contact details.
 
+This table is not part of the current MVP migrations. Optional LINE/Google/email links are represented by `tourist_identities`.
+
 ## 14.2 Columns
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
 | contact_id | bigint identity | yes | Primary key |
-| tourist_id | bigint | yes | Foreign key to tourists |
+| tourist_id | uuid | yes | Foreign key to tourists |
 | contact_type | varchar(50) | yes | email, phone, line |
 | contact_value | text | yes | Contact value |
 | is_verified | boolean | yes | Whether verified |
@@ -516,13 +524,13 @@ Stores optional contact details.
 
 ## 14.3 MVP Status
 
-Optional.
+Out of MVP as a separate table.
 
 If email identity is implemented, contact may be useful.
 
 ---
 
-## 15. Table: consent_logs
+## 15. Table: consent_records
 
 ## 15.1 Purpose
 
@@ -532,16 +540,21 @@ Stores consent records.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| consent_id | bigint identity | yes | Primary key |
-| tourist_id | bigint | no | Linked tourist |
-| visit_id | bigint | no | Linked visit |
+| consent_id | uuid | yes | Primary key |
+| tourist_id | uuid | no | Linked tourist |
+| visit_id | uuid | no | Linked visit, added for account-linking/visit consent |
 | consent_version | varchar(50) | yes | Consent notice version |
 | purpose | text | yes | Purpose of data collection |
+| consent_type | varchar(100) | no | Consent grouping, such as account_linking |
+| purpose_key | varchar(150) | no | Stable purpose key, such as passport_recovery |
 | has_consented | boolean | yes | Consent status |
 | consented_at | timestamptz | yes | Consent timestamp |
+| withdrawn_at | timestamptz | no | Withdrawal timestamp |
 | source | varchar(100) | no | web, liff, admin, import |
+| language | varchar(10) | no | Consent language |
 | ip_hash | text | no | Optional hashed IP |
 | user_agent_hash | text | no | Optional hashed user agent |
+| metadata_json | jsonb | no | Safe consent metadata |
 
 ## 15.3 Constraints
 
@@ -571,8 +584,8 @@ This is the main transactional tourism data table.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| visit_id | bigint identity | yes | Primary key |
-| tourist_id | bigint | yes | Foreign key to tourists |
+| visit_id | uuid | yes | Primary key |
+| tourist_id | uuid | yes | Foreign key to tourists |
 | attraction_id | bigint | yes | Foreign key to attractions |
 | photo_spot_id | bigint | no | Foreign key to photo_spots |
 | checkin_code_id | bigint | no | Foreign key to checkin_codes |
@@ -626,8 +639,8 @@ Stores uploaded tourist photo metadata.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| photo_id | bigint identity | yes | Primary key |
-| visit_id | bigint | yes | Foreign key to visits |
+| photo_id | uuid | yes | Primary key |
+| visit_id | uuid | yes | Foreign key to visits |
 | storage_path | text | yes | Storage path |
 | thumbnail_path | text | no | Thumbnail path |
 | original_filename | varchar(255) | no | Original file name |
@@ -653,6 +666,14 @@ image/jpeg
 image/png
 image/webp
 ```
+
+## 17.5 Storage Provider Notes
+
+`storage_path` stores a provider reference, not a public URL.
+
+MVP development and Vercel deployment may store Cloudinary-qualified references. Supabase Storage fallback may store plain object paths.
+
+Do not expose this field in public UI, dashboards, or default exports.
 
 ---
 
@@ -696,10 +717,10 @@ Stores generated certificate records.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| certificate_id | bigint identity | yes | Primary key |
-| visit_id | bigint | yes | Foreign key to visits |
+| certificate_id | uuid | yes | Primary key |
+| visit_id | uuid | yes | Foreign key to visits |
 | template_id | bigint | yes | Foreign key to certificate_templates |
-| photo_id | bigint | no | Foreign key to visit_photos |
+| photo_id | uuid | no | Foreign key to visit_photos |
 | certificate_path | text | yes | Generated certificate file path |
 | share_url | text | no | Public or signed share URL |
 | generated_at | timestamptz | yes | Generation timestamp |
@@ -715,6 +736,12 @@ foreign key(template_id) references certificate_templates(template_id)
 foreign key(photo_id) references visit_photos(photo_id)
 check(download_count >= 0)
 ```
+
+## 19.4 Storage Provider Notes
+
+`certificate_path` stores a provider reference, not a permanent signed URL.
+
+Certificate display/download URLs must be generated server-side and should be short-lived or otherwise controlled.
 
 ---
 
@@ -758,10 +785,10 @@ Stores earned tourist stamps.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| stamp_id | bigint identity | yes | Primary key |
-| tourist_id | bigint | yes | Foreign key to tourists |
+| stamp_id | uuid | yes | Primary key |
+| tourist_id | uuid | yes | Foreign key to tourists |
 | attraction_id | bigint | yes | Foreign key to attractions |
-| visit_id | bigint | yes | Visit that earned the stamp |
+| visit_id | uuid | yes | Visit that earned the stamp |
 | stamp_definition_id | bigint | yes | Stamp definition |
 | earned_at | timestamptz | yes | Earned timestamp |
 | status | varchar(50) | yes | earned, revoked |
@@ -912,13 +939,11 @@ Stores spending data linked to a visit.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| expense_id | bigint identity | yes | Primary key |
-| visit_id | bigint | yes | Foreign key to visits |
+| expense_id | uuid | yes | Primary key |
+| visit_id | uuid | yes | Foreign key to visits |
 | expense_category_id | bigint | no | Expense category |
-| spending_range | varchar(100) | yes | Spending range label/code |
-| amount_min | numeric(12,2) | no | Minimum estimated amount |
-| amount_max | numeric(12,2) | no | Maximum estimated amount |
-| currency_code | char(3) | yes | Currency code, default THB |
+| estimated_amount | numeric(12,2) | no | Optional self-reported estimated amount |
+| spending_range_id | bigint | no | Spending range reference |
 | created_at | timestamptz | yes | Record creation time |
 
 ## 26.3 Constraints
@@ -927,6 +952,8 @@ Stores spending data linked to a visit.
 primary key(expense_id)
 foreign key(visit_id) references visits(visit_id)
 foreign key(expense_category_id) references expense_categories(expense_category_id)
+foreign key(spending_range_id) references spending_ranges(spending_range_id)
+check(estimated_amount is null or estimated_amount >= 0)
 ```
 
 ## 26.4 Notes
@@ -945,35 +972,38 @@ Stores structured satisfaction data.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| satisfaction_id | bigint identity | yes | Primary key |
-| visit_id | bigint | yes | Foreign key to visits |
-| attraction_id | bigint | yes | Foreign key to attractions |
+| survey_id | uuid | yes | Primary key |
+| visit_id | uuid | yes | Foreign key to visits |
+| tourist_id | uuid | yes | Foreign key to tourists |
+| attraction_id | bigint | no | Denormalized attraction for dashboard filtering |
 | overall_score | integer | no | Overall satisfaction score 1-5 |
+| facility_score | integer | no | Facility score 1-5 |
 | safety_score | integer | no | Safety score 1-5 |
 | cleanliness_score | integer | no | Cleanliness score 1-5 |
-| transport_score | integer | no | Transport/accessibility score 1-5 |
+| accessibility_score | integer | no | Accessibility score 1-5 |
 | information_score | integer | no | Information/signage score 1-5 |
-| service_score | integer | no | Service score 1-5 |
-| value_for_money_score | integer | no | Value for money score 1-5 |
-| revisit_intention | boolean | no | Whether tourist intends to revisit |
-| recommendation_intention | boolean | no | Whether tourist would recommend |
-| comment | text | no | Optional comment |
+| value_score | integer | no | Value score 1-5 |
+| revisit_intention | varchar(50) | no | yes, no, maybe |
+| recommend_intention | varchar(50) | no | yes, no, maybe |
+| comments | text | no | Optional comment |
+| submitted_at | timestamptz | yes | Submitted timestamp |
 | completed_at | timestamptz | no | Completion timestamp |
 
 ## 27.3 Constraints
 
 ```text
-primary key(satisfaction_id)
+primary key(survey_id)
 foreign key(visit_id) references visits(visit_id)
+foreign key(tourist_id) references tourists(tourist_id)
 foreign key(attraction_id) references attractions(attraction_id)
 unique(visit_id)
 check(overall_score between 1 and 5)
+check(facility_score between 1 and 5)
 check(safety_score between 1 and 5)
 check(cleanliness_score between 1 and 5)
-check(transport_score between 1 and 5)
+check(accessibility_score between 1 and 5)
 check(information_score between 1 and 5)
-check(service_score between 1 and 5)
-check(value_for_money_score between 1 and 5)
+check(value_score between 1 and 5)
 ```
 
 Note:
@@ -982,11 +1012,13 @@ PostgreSQL check constraints must handle nullable values correctly.
 
 ---
 
-## 28. Table: survey_questions
+## 28. Future Table: survey_questions
 
 ## 28.1 Purpose
 
 Stores configurable survey questions.
+
+This table is not part of the current MVP migrations. The MVP uses fixed optional micro-survey columns in `visits`, `satisfaction_surveys`, and `visit_expenses`.
 
 ## 28.2 Columns
 
@@ -1005,22 +1037,24 @@ Stores configurable survey questions.
 
 ## 28.3 MVP Status
 
-Optional.
+Out of MVP / future dynamic survey engine.
 
 ---
 
-## 29. Table: survey_answers
+## 29. Future Table: survey_answers
 
 ## 29.1 Purpose
 
 Stores configurable survey answers.
+
+This table is not part of the current MVP migrations. Do not build dashboard or export logic against it until a future dynamic survey migration is added.
 
 ## 29.2 Columns
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
 | answer_id | bigint identity | yes | Primary key |
-| visit_id | bigint | yes | Foreign key to visits |
+| visit_id | uuid | yes | Foreign key to visits |
 | question_id | bigint | yes | Foreign key to survey_questions |
 | answer_text | text | no | Text answer |
 | answer_number | numeric | no | Numeric answer |
@@ -1037,7 +1071,7 @@ foreign key(question_id) references survey_questions(question_id)
 
 ## 29.4 MVP Status
 
-Optional.
+Out of MVP / future dynamic survey engine.
 
 ---
 
@@ -1051,16 +1085,13 @@ Stores tourist flow events.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| event_id | bigint identity | yes | Primary key |
-| session_id | varchar(150) | no | Anonymous session ID |
-| tourist_id | bigint | no | Linked tourist |
-| visit_id | bigint | no | Linked visit |
-| attraction_id | bigint | no | Linked attraction |
-| photo_spot_id | bigint | no | Linked photo spot |
+| event_id | uuid | yes | Primary key |
+| tourist_id | uuid | no | Linked tourist |
+| visit_id | uuid | no | Linked visit |
 | checkin_code_id | bigint | no | Linked check-in code |
-| event_name | varchar(100) | yes | Event name |
+| event_type | varchar(100) | yes | Event type |
 | event_time | timestamptz | yes | Event timestamp |
-| metadata_json | jsonb | no | Extra metadata |
+| metadata | jsonb | no | Extra metadata |
 
 ## 30.3 Constraints
 
@@ -1068,12 +1099,10 @@ Stores tourist flow events.
 primary key(event_id)
 foreign key(tourist_id) references tourists(tourist_id)
 foreign key(visit_id) references visits(visit_id)
-foreign key(attraction_id) references attractions(attraction_id)
-foreign key(photo_spot_id) references photo_spots(photo_spot_id)
 foreign key(checkin_code_id) references checkin_codes(checkin_code_id)
 ```
 
-## 30.4 Event Name Values
+## 30.4 Event Type Values
 
 ```text
 qr_scanned
@@ -1089,7 +1118,7 @@ passport_saved
 
 ---
 
-## 31. Table: users
+## 31. Table: admin_users
 
 ## 31.1 Purpose
 
@@ -1101,16 +1130,18 @@ If Supabase Auth is used, this table may reference auth user IDs.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| user_id | uuid | yes | Primary key, may match Supabase auth user ID |
-| display_name | varchar(150) | yes | User display name |
+| admin_id | uuid | yes | Primary key |
 | email | varchar(255) | yes | User email |
+| auth_user_id | uuid | no | Optional Supabase auth user ID |
+| display_name | varchar(150) | no | User display name |
 | is_active | boolean | yes | Whether active |
+| last_login_at | timestamptz | no | Last login timestamp |
 | created_at | timestamptz | yes | Record creation time |
 | updated_at | timestamptz | no | Last update time |
 
 ## 31.3 MVP Status
 
-Required if admin auth is custom or role profile is needed.
+Required for admin auth and permission checks.
 
 ---
 
@@ -1125,10 +1156,10 @@ Stores admin roles.
 | Column | Type | Required | Description |
 |---|---:|---:|---|
 | role_id | bigint identity | yes | Primary key |
-| role_key | varchar(100) | yes | Stable role key |
-| role_name | varchar(150) | yes | Human-readable role name |
+| role_name | varchar(50) | yes | Stable role key/name |
 | description | text | no | Description |
 | is_active | boolean | yes | Whether active |
+| created_at | timestamptz | yes | Record creation time |
 
 ## 32.3 Example Values
 
@@ -1153,8 +1184,9 @@ Stores permission keys.
 | Column | Type | Required | Description |
 |---|---:|---:|---|
 | permission_id | bigint identity | yes | Primary key |
-| permission_key | varchar(150) | yes | Stable permission key |
+| permission_name | varchar(100) | yes | Stable permission key |
 | description | text | no | Permission description |
+| created_at | timestamptz | yes | Record creation time |
 
 ## 33.3 Example Values
 
@@ -1169,25 +1201,25 @@ user.manage
 
 ---
 
-## 34. Table: user_roles
+## 34. Table: admin_user_roles
 
 ## 34.1 Purpose
 
-Maps users to roles.
+Maps admin users to roles.
 
 ## 34.2 Columns
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| user_id | uuid | yes | User ID |
+| admin_id | uuid | yes | Admin user ID |
 | role_id | bigint | yes | Role ID |
 | assigned_at | timestamptz | yes | Assignment timestamp |
 
 ## 34.3 Constraints
 
 ```text
-primary key(user_id, role_id)
-foreign key(user_id) references users(user_id)
+primary key(admin_id, role_id)
+foreign key(admin_id) references admin_users(admin_id)
 foreign key(role_id) references roles(role_id)
 ```
 
@@ -1226,15 +1258,14 @@ Stores important admin actions.
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| audit_log_id | bigint identity | yes | Primary key |
-| actor_user_id | uuid | no | Admin user who performed action |
+| log_id | uuid | yes | Primary key |
+| admin_id | uuid | no | Admin user who performed action |
 | action | varchar(150) | yes | Action key |
 | entity_type | varchar(100) | no | Affected entity type |
 | entity_id | text | no | Affected entity ID |
-| old_values_json | jsonb | no | Previous values |
-| new_values_json | jsonb | no | New values |
-| ip_hash | text | no | Optional hashed IP |
-| user_agent_hash | text | no | Optional hashed user agent |
+| old_data | jsonb | no | Previous safe values |
+| new_data | jsonb | no | New safe values |
+| ip_address | varchar(45) | no | Optional admin request IP if stored |
 | created_at | timestamptz | yes | Action timestamp |
 
 ## 36.3 Example Actions
@@ -1251,84 +1282,139 @@ user.role_update
 
 ---
 
-## 37. Table: data_import_logs
+## 37. Table: travel_stories
 
 ## 37.1 Purpose
 
-Stores official or bulk data import history.
+Stores public travel story content for the tourism portal and SEO-friendly discovery pages.
+
+Stories are public content, not private tourist records. They must not contain private tourist identifiers.
 
 ## 37.2 Columns
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| import_log_id | bigint identity | yes | Primary key |
-| source_name | varchar(150) | yes | Source name |
-| source_url | text | no | Source URL |
-| import_type | varchar(100) | yes | attractions, stats, master_data |
-| status | varchar(50) | yes | pending, success, failed |
-| records_processed | integer | no | Number processed |
-| error_message | text | no | Error details |
-| imported_by | uuid | no | User ID |
-| imported_at | timestamptz | yes | Import timestamp |
+| story_id | bigint identity | yes | Primary key |
+| slug | varchar(200) | yes | Public URL slug, unique |
+| title | varchar(255) | yes | Story title |
+| excerpt | text | no | Short summary for cards |
+| content | text | no | Story body or editorial content |
+| province_id | bigint | no | Optional related province |
+| category | varchar(100) | no | Editorial category |
+| image_url | text | no | Public image URL or safe media reference |
+| is_published | boolean | yes | Whether story is public |
+| published_at | timestamptz | no | Publication timestamp |
+| created_at | timestamptz | yes | Created timestamp |
+| updated_at | timestamptz | no | Updated timestamp |
 
-## 37.3 MVP Status
+## 37.3 Constraints and Access Rules
 
-Optional.
+```text
+primary key(story_id)
+unique(slug)
+foreign key(province_id) references provinces(province_id)
+public read only when is_published = true
+```
 
 ---
 
-## 38. Table: official_tourism_stats
+## 38. Table: data_import_logs
 
 ## 38.1 Purpose
 
-Stores official tourism statistics for future comparison.
+Stores official or bulk data import history.
 
 ## 38.2 Columns
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| official_stat_id | bigint identity | yes | Primary key |
-| province_id | bigint | yes | Province |
-| year | integer | yes | Year |
-| month | integer | no | Month, nullable for annual stats |
-| tourist_type | varchar(50) | no | thai, foreign, total |
-| visitor_count | integer | no | Official visitor count |
-| revenue_amount | numeric(14,2) | no | Official revenue amount |
-| source_name | varchar(150) | no | Source name |
-| source_url | text | no | Source URL |
+| import_log_id | uuid | yes | Primary key |
+| source_name | varchar | no | Source name |
+| source_url | varchar | no | Source URL |
+| source_file_name | varchar | no | Uploaded or imported file name |
+| import_type | varchar | yes | tourism_stats, attraction_refs, province_master, district_master, other |
+| status | varchar | yes | pending, processing, success, partial_success, failed, cancelled |
+| records_processed | integer | no | Number processed |
+| records_inserted | integer | no | Number inserted |
+| records_updated | integer | no | Number updated |
+| records_failed | integer | no | Number failed |
+| error_message | text | no | Safe error details |
+| imported_by | uuid | no | Supabase auth user who imported data |
 | imported_at | timestamptz | yes | Import timestamp |
+| metadata_json | jsonb | no | Safe import metadata |
 
 ## 38.3 MVP Status
 
-Phase 2.
+Optional admin foundation.
 
 ---
 
-## 39. Table: official_attraction_refs
+## 39. Table: official_tourism_stats
 
 ## 39.1 Purpose
 
-Stores links between local attractions and official attraction references.
+Stores official tourism statistics for future comparison.
+
+Official statistics are separate from local platform visits. They must not be counted as reward-first QR participation records.
 
 ## 39.2 Columns
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
-| official_ref_id | bigint identity | yes | Primary key |
-| attraction_id | bigint | yes | Local attraction |
-| source_name | varchar(150) | yes | Source name |
-| external_id | varchar(150) | no | External ID |
-| external_url | text | no | External URL |
-| raw_data_json | jsonb | no | Raw imported metadata |
-| linked_at | timestamptz | yes | Linked timestamp |
+| official_stat_id | uuid | yes | Primary key |
+| province_id | bigint | yes | Province |
+| year | integer | yes | Year |
+| month | integer | no | Month, nullable for annual stats |
+| tourist_type | varchar | yes | thai, foreign, total, unknown |
+| visitor_count | integer | yes | Official visitor count |
+| revenue_amount | numeric(15,2) | no | Official revenue amount, distinct from platform estimated spending |
+| currency_code | varchar | no | Currency code, default THB |
+| source_name | varchar | yes | Source name |
+| source_url | varchar | no | Source URL |
+| source_file_name | varchar | no | Source file name |
+| import_log_id | uuid | no | Related import log |
+| imported_at | timestamptz | yes | Import timestamp |
+| created_at | timestamptz | yes | Created timestamp |
+| updated_at | timestamptz | yes | Updated timestamp |
 
 ## 39.3 MVP Status
 
-Phase 2.
+Phase 2A / optional official data foundation.
 
 ---
 
-## 40. Common Indexes
+## 40. Table: official_attraction_refs
+
+## 40.1 Purpose
+
+Stores links between local attractions and official attraction references.
+
+## 40.2 Columns
+
+| Column | Type | Required | Description |
+|---|---:|---:|---|
+| official_ref_id | uuid | yes | Primary key |
+| attraction_id | bigint | no | Local attraction, nullable until matched |
+| source_name | varchar | yes | Source name |
+| external_id | varchar | no | External ID |
+| external_url | varchar | no | External URL |
+| official_name_th | varchar | yes | Official Thai attraction name |
+| official_name_en | varchar | no | Official English attraction name |
+| official_province_name | varchar | no | Official province text from source |
+| official_district_name | varchar | no | Official district text from source |
+| raw_data_json | jsonb | no | Raw imported metadata |
+| linked_at | timestamptz | no | Linked timestamp |
+| linked_by | uuid | no | Supabase auth user who linked the record |
+| created_at | timestamptz | yes | Created timestamp |
+| updated_at | timestamptz | yes | Updated timestamp |
+
+## 40.3 MVP Status
+
+Phase 2A / optional official data foundation.
+
+---
+
+## 41. Common Indexes
 
 Recommended indexes:
 
@@ -1364,14 +1450,19 @@ idx_visit_expenses_category_id
 idx_satisfaction_surveys_visit_id
 idx_satisfaction_surveys_attraction_id
 
-idx_funnel_events_event_name
+idx_funnel_events_event_type
 idx_funnel_events_event_time
 idx_funnel_events_attraction_id
+idx_travel_stories_published
+idx_official_tourism_stats_province
+idx_official_tourism_stats_year_month
+idx_official_attraction_refs_attraction
+idx_data_import_logs_imported_at
 ```
 
 ---
 
-## 41. MVP Required Tables Summary
+## 42. MVP Required Tables Summary
 
 The MVP should include at least:
 
@@ -1381,18 +1472,21 @@ provinces
 districts
 attraction_types
 attractions
-attraction_images
+attraction_media
 photo_spots
 checkin_codes
 tourists
 tourist_identities
-consent_logs
+consent_records
 visits
 visit_photos
 certificate_templates
 certificates
 stamp_definitions
 tourist_stamps
+suggested_routes
+suggested_route_stops
+travel_stories
 travel_companions
 transport_modes
 travel_purposes
@@ -1400,11 +1494,14 @@ expense_categories
 visit_expenses
 satisfaction_surveys
 funnel_events
+data_import_logs
+official_tourism_stats
+official_attraction_refs
 ```
 
 ---
 
-## 42. Update Rule
+## 43. Update Rule
 
 When a database migration changes any table or column, update this file.
 

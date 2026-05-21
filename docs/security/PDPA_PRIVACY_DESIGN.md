@@ -244,7 +244,7 @@ Stored in:
 
 ```text
 certificates
-certificate-files storage bucket
+certificate-files logical storage bucket/folder
 ```
 
 Contains:
@@ -275,6 +275,7 @@ Rules:
 - public sharing must be user-initiated.
 - do not include email, LINE ID, Google ID, provider_user_id, guest token, internal tourist ID, internal visit ID, or device token.
 - use signed URL or controlled sharing where possible.
+- Cloudinary-first deployment must keep Cloudinary credentials server-only and must not expose storage references in dashboard/default exports.
 
 ---
 

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { handlePhotoUploadMetadata } from "@/lib/services/photo-upload.service";
 import { getServerEnv } from "@/lib/config/server-env";
-import { createPrivateFileSignedUrl } from "@/lib/storage/private-files";
+import { createPrivateFileSignedUrl, deletePrivateFile, uploadPrivateFile } from "@/lib/storage/private-files";
 import { uuidSchema } from "@/lib/validation/common";
 import { parseAllowedTouristImageMimeTypes, validateTouristImageFile } from "@/lib/validation/upload";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import crypto from "crypto";
+
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,22 +50,22 @@ export async function POST(req: NextRequest) {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const uuid = crypto.randomUUID();
-    const storagePath = `visit-photos/${year}/${month}/${visitId}/${uuid}.${fileValidation.extension}`;
+    const logicalPath = `visit-photos/${year}/${month}/${visitId}/${uuid}.${fileValidation.extension}`;
 
-    // Upload to Supabase Storage
-    const supabase = createSupabaseServiceRoleClient();
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const { error: uploadError } = await supabase.storage
-      .from("visit-photos")
-      .upload(storagePath, buffer, {
-        contentType: file.type,
-        upsert: false
+    let storagePath: string;
+    try {
+      const uploaded = await uploadPrivateFile({
+        bucket: "visit-photos",
+        path: logicalPath,
+        data: buffer,
+        contentType: file.type
       });
-
-    if (uploadError) {
-      console.error("Storage upload error:", uploadError);
+      storagePath = uploaded.storagePath;
+    } catch (error) {
+      console.error("Storage upload error:", error);
       return NextResponse.json({ error: "Failed to upload file to storage" }, { status: 500 });
     }
 
@@ -78,7 +79,11 @@ export async function POST(req: NextRequest) {
         fileSizeBytes: file.size
       });
     } catch (error) {
-      await supabase.storage.from("visit-photos").remove([storagePath]);
+      try {
+        await deletePrivateFile({ bucket: "visit-photos", path: storagePath });
+      } catch (cleanupError) {
+        console.error("Photo storage cleanup failed:", cleanupError);
+      }
       throw error;
     }
 

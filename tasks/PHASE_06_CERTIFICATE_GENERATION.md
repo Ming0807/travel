@@ -75,5 +75,6 @@ Instagram should be handled through downloaded image or mobile share sheet. Auto
 - Certificate can be downloaded without survey, sharing, Google, LINE, email, or phone number.
 - Stamp award is triggered after successful certificate generation.
 - Certificate files and uploaded photos are stored separately.
+- Certificate files and uploaded photos are stored through the server-side storage adapter.
+- Development and Vercel deployments use Cloudinary; future university storage must use the same adapter boundary.
 - Public share URLs, if implemented in future, use random tokens and do not expose internal IDs.
-

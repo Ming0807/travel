@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { page: _page, pageSize: _pageSize, ...filters } = parsed.data;
+    void _page;
+    void _pageSize;
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
 
     const data = await exportAdminVisits(filters, maxRows + 1);

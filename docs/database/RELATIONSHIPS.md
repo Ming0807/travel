@@ -143,8 +143,7 @@ Geography
 
 Attractions
     attraction_types -> attractions
-    attractions -> attraction_images
-    attractions -> attraction_360_media
+    attractions -> attraction_media
     attractions -> photo_spots
     attractions -> checkin_codes
     attractions -> visits
@@ -153,8 +152,7 @@ Attractions
 
 Tourists
     tourists -> tourist_identities
-    tourists -> tourist_contacts
-    tourists -> consent_logs
+    tourists -> consent_records
     tourists -> visits
     tourists -> tourist_stamps
 
@@ -164,7 +162,6 @@ Visits
     visits -> tourist_stamps
     visits -> visit_expenses
     visits -> satisfaction_surveys
-    visits -> survey_answers
     visits -> funnel_events
 
 Engagement
@@ -175,9 +172,9 @@ Engagement
     stamp_definitions -> tourist_stamps
 
 Admin
-    users -> audit_logs
-    users -> user_roles
-    roles -> user_roles
+    admin_users -> audit_logs
+    admin_users -> admin_user_roles
+    roles -> admin_user_roles
     roles -> role_permissions
     permissions -> role_permissions
 ```
@@ -402,22 +399,22 @@ or restrict and deactivate attraction type.
 
 ---
 
-## 5.2 attractions to attraction_images
+## 5.2 attractions to attraction_media
 
 ### Relationship
 
 ```text
-attractions.attraction_id 1 -> many attraction_images.attraction_id
+attractions.attraction_id 1 -> many attraction_media.attraction_id
 ```
 
 ### Purpose
 
-Supports image gallery and public attraction pages.
+Supports image gallery, public media, panoramas, embeds, and external URLs for attraction pages.
 
 ### Foreign Key
 
 ```text
-attraction_images.attraction_id references attractions(attraction_id)
+attraction_media.attraction_id references attractions(attraction_id)
 ```
 
 ### Required?
@@ -444,7 +441,7 @@ and use `is_active`.
 
 ---
 
-## 5.3 attractions to attraction_360_media
+## 5.3 Future attractions to attraction_360_media
 
 ### Relationship
 
@@ -454,7 +451,9 @@ attractions.attraction_id 1 -> many attraction_360_media.attraction_id
 
 ### Purpose
 
-Supports immersive attraction content.
+Future normalized support for immersive attraction content.
+
+Current MVP stores image, panorama, video360, embed, and external URL references in `attraction_media`.
 
 ### Foreign Key
 
@@ -464,7 +463,7 @@ attraction_360_media.attraction_id references attractions(attraction_id)
 
 ### Required?
 
-Required for media records.
+Out of MVP as a separate table.
 
 ### Delete Behavior
 
@@ -637,7 +636,7 @@ This prevents duplicate identities.
 
 ---
 
-## 6.2 tourists to tourist_contacts
+## 6.2 Future tourists to tourist_contacts
 
 ### Relationship
 
@@ -647,7 +646,9 @@ tourists.tourist_id 1 -> many tourist_contacts.tourist_id
 
 ### Purpose
 
-Stores optional contact methods.
+Future normalized support for optional contact methods.
+
+Current MVP stores optional account links in `tourist_identities`; contact details are not required before certificate generation.
 
 ### Foreign Key
 
@@ -657,7 +658,7 @@ tourist_contacts.tourist_id references tourists(tourist_id)
 
 ### Required?
 
-Optional table.
+Out of MVP as a separate table.
 
 ### Delete Behavior
 
@@ -671,12 +672,12 @@ or anonymize contact values.
 
 ---
 
-## 6.3 tourists to consent_logs
+## 6.3 tourists to consent_records
 
 ### Relationship
 
 ```text
-tourists.tourist_id 1 -> many consent_logs.tourist_id
+tourists.tourist_id 1 -> many consent_records.tourist_id
 ```
 
 ### Purpose
@@ -686,7 +687,7 @@ Tracks consent history.
 ### Foreign Key
 
 ```text
-consent_logs.tourist_id references tourists(tourist_id)
+consent_records.tourist_id references tourists(tourist_id)
 ```
 
 ### Required?
@@ -1363,7 +1364,7 @@ ON DELETE RESTRICT
 
 ---
 
-## 11.3 survey_questions to survey_answers
+## 11.3 Future survey_questions to survey_answers
 
 ### Relationship
 
@@ -1373,7 +1374,7 @@ survey_questions.question_id 1 -> many survey_answers.question_id
 
 ### Required?
 
-Required for flexible survey answers.
+Out of MVP. The current migrations use fixed optional micro-survey columns instead.
 
 ### Delete Behavior
 
@@ -1387,7 +1388,7 @@ Do not delete questions that have historical answers.
 
 ---
 
-## 11.4 visits to survey_answers
+## 11.4 Future visits to survey_answers
 
 ### Relationship
 
@@ -1397,7 +1398,7 @@ visits.visit_id 1 -> many survey_answers.visit_id
 
 ### Required?
 
-Required for survey answer record.
+Out of MVP. Use `satisfaction_surveys` and `visit_expenses` for the current optional post-certificate survey.
 
 ### Delete Behavior
 
@@ -1432,7 +1433,7 @@ All entity references may be optional because early events may happen before tou
 Required:
 
 ```text
-event_name
+event_type
 event_time
 ```
 
@@ -1454,18 +1455,18 @@ This table is important for measuring conversion and drop-off.
 
 ## 13. Admin and Security Relationships
 
-## 13.1 users to user_roles
+## 13.1 admin_users to admin_user_roles
 
 ### Relationship
 
 ```text
-users.user_id many -> many roles.role_id through user_roles
+admin_users.admin_id many -> many roles.role_id through admin_user_roles
 ```
 
 ### Join Table
 
 ```text
-user_roles
+admin_user_roles
 ```
 
 ### Required?
@@ -1496,12 +1497,12 @@ MVP can simplify with one role field if necessary.
 
 ---
 
-## 13.3 users to audit_logs
+## 13.3 admin_users to audit_logs
 
 ### Relationship
 
 ```text
-users.user_id 1 -> many audit_logs.actor_user_id
+admin_users.admin_id 1 -> many audit_logs.admin_id
 ```
 
 ### Required?
@@ -1542,7 +1543,25 @@ Phase 2.
 
 ---
 
-## 14.2 attractions to official_attraction_refs
+## 14.2 data_import_logs to official_tourism_stats
+
+### Relationship
+
+```text
+data_import_logs.import_log_id 1 -> many official_tourism_stats.import_log_id
+```
+
+### Purpose
+
+Connects official statistics to the import batch that created them.
+
+### MVP Status
+
+Phase 2A.
+
+---
+
+## 14.3 attractions to official_attraction_refs
 
 ### Relationship
 
@@ -1560,6 +1579,24 @@ Phase 2.
 
 ---
 
+## 14.4 provinces to travel_stories
+
+### Relationship
+
+```text
+provinces.province_id 1 -> many travel_stories.province_id
+```
+
+### Purpose
+
+Supports province-filtered public story pages and SEO content.
+
+### MVP Status
+
+Phase 2A public content foundation.
+
+---
+
 ## 15. Required Relationship Constraints Summary
 
 Recommended constraints:
@@ -1569,16 +1606,17 @@ districts.province_id -> provinces.province_id
 attractions.province_id -> provinces.province_id
 attractions.district_id -> districts.district_id
 attractions.attraction_type_id -> attraction_types.attraction_type_id
-attraction_images.attraction_id -> attractions.attraction_id
+attraction_media.attraction_id -> attractions.attraction_id
 photo_spots.attraction_id -> attractions.attraction_id
 checkin_codes.attraction_id -> attractions.attraction_id
 checkin_codes.photo_spot_id -> photo_spots.photo_spot_id
+travel_stories.province_id -> provinces.province_id
 
 tourists.origin_country_id -> countries.country_id
 tourists.origin_province_id -> provinces.province_id
 tourist_identities.tourist_id -> tourists.tourist_id
-consent_logs.tourist_id -> tourists.tourist_id
-consent_logs.visit_id -> visits.visit_id
+consent_records.tourist_id -> tourists.tourist_id
+consent_records.visit_id -> visits.visit_id
 
 visits.tourist_id -> tourists.tourist_id
 visits.attraction_id -> attractions.attraction_id
@@ -1605,8 +1643,9 @@ visit_expenses.expense_category_id -> expense_categories.expense_category_id
 satisfaction_surveys.visit_id -> visits.visit_id
 satisfaction_surveys.attraction_id -> attractions.attraction_id
 
-survey_answers.visit_id -> visits.visit_id
-survey_answers.question_id -> survey_questions.question_id
+official_tourism_stats.province_id -> provinces.province_id
+official_tourism_stats.import_log_id -> data_import_logs.import_log_id
+official_attraction_refs.attraction_id -> attractions.attraction_id
 ```
 
 ---
@@ -1626,9 +1665,9 @@ checkin_codes.code
 tourist_identities(provider, provider_user_id)
 tourist_stamps(tourist_id, attraction_id)
 satisfaction_surveys.visit_id
-roles.role_key
-permissions.permission_key
-user_roles(user_id, role_id)
+roles.role_name
+permissions.permission_name
+admin_user_roles(admin_id, role_id)
 role_permissions(role_id, permission_id)
 ```
 

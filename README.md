@@ -283,7 +283,7 @@ Frontend: Next.js PWA
 UI: Tailwind CSS + shadcn/ui
 Backend: Next.js Server Actions and Route Handlers for MVP
 Database: Supabase PostgreSQL
-Storage: Supabase Storage
+Storage: Cloudinary-first for development/Vercel through a server-side adapter; Supabase Storage fallback; university-hosted storage future
 Authentication: Anonymous guest identity for tourists + Supabase Auth for admins + optional Google/LINE tourist linking
 Charts: ECharts or ApexCharts
 Map: Leaflet
@@ -513,7 +513,15 @@ UI Component
   -> Auth / Permission / Ownership Guard
   -> Service Layer
   -> Repository Layer
-  -> Supabase PostgreSQL / Supabase Storage
+  -> Supabase PostgreSQL / Storage Adapter
+```
+
+Current storage direction:
+
+```text
+Cloudinary for local development and Vercel deployment
+Supabase Storage as supported fallback/legacy provider
+University-managed storage as future provider behind the same adapter
 ```
 
 Next suggested implementation phase:

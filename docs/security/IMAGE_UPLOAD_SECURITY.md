@@ -203,6 +203,8 @@ Do not trust client file names or storage paths.
 
 Tourist photos and certificates should not be public by default.
 
+For MVP development and Vercel deployment, Cloudinary is used through the server-side storage adapter. Cloudinary credentials must remain server-only, and tourist photo/certificate delivery should use authenticated or otherwise controlled URLs where available.
+
 ## 5.6 Do Not Store Base64 in Database
 
 Store files in object storage.
@@ -459,6 +461,14 @@ stamps/{attraction_id}/{stamp_definition_id}.{extension}
 ---
 
 ## 13. Bucket Security
+
+Cloudinary note:
+
+```text
+Cloudinary folders/tags act as logical buckets for MVP deployment.
+Supabase bucket policies protect only Supabase Storage fallback environments.
+When using Cloudinary, the privacy boundary is server-side upload/signing, authenticated or controlled delivery, and application ownership checks.
+```
 
 ## 13.1 visit-photos
 

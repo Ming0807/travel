@@ -80,7 +80,7 @@ Examples:
 ```text
 visits(attraction_id, visit_date)
 visits(created_at, attraction_id)
-funnel_events(event_name, event_time)
+funnel_events(event_type, event_time)
 ```
 
 Composite indexes should match common query patterns.
@@ -366,19 +366,17 @@ visits(attraction_id, visit_date)
 
 Common operations:
 
-- Count events by event name
+- Count events by event type
 - Count events over time
-- Count events by attraction
-- Count events by session
+- Count events by check-in code
 - Build conversion funnel
 
 Required indexes:
 
 ```text
-funnel_events(event_name)
+funnel_events(event_type)
 funnel_events(event_time)
-funnel_events(attraction_id)
-funnel_events(session_id)
+funnel_events(checkin_code_id)
 funnel_events(visit_id)
 funnel_events(tourist_id)
 ```
@@ -386,8 +384,8 @@ funnel_events(tourist_id)
 Composite index:
 
 ```text
-funnel_events(event_name, event_time)
-funnel_events(attraction_id, event_time)
+funnel_events(event_type, event_time)
+funnel_events(checkin_code_id, event_time)
 ```
 
 Be careful not to over-index `funnel_events` because it may become a high-write table.
@@ -426,14 +424,14 @@ on attractions(is_published, is_active);
 
 ---
 
-## 5.3 Attraction Images
+## 5.3 Attraction Media
 
 ```sql
-create index idx_attraction_images_attraction_id
-on attraction_images(attraction_id);
+create index idx_attraction_media_attraction_id
+on attraction_media(attraction_id);
 
-create index idx_attraction_images_cover
-on attraction_images(attraction_id, is_cover);
+create index idx_attraction_media_cover
+on attraction_media(attraction_id, is_cover);
 ```
 
 ---
@@ -509,17 +507,17 @@ on tourist_identities(provider);
 
 ---
 
-## 5.8 Consent Logs
+## 5.8 Consent Records
 
 ```sql
-create index idx_consent_logs_tourist_id
-on consent_logs(tourist_id);
+create index idx_consent_records_tourist_id
+on consent_records(tourist_id);
 
-create index idx_consent_logs_visit_id
-on consent_logs(visit_id);
+create index idx_consent_records_visit_id
+on consent_records(visit_id);
 
-create index idx_consent_logs_consented_at
-on consent_logs(consented_at);
+create index idx_consent_records_consented_at
+on consent_records(consented_at);
 ```
 
 ---
@@ -691,9 +689,9 @@ on satisfaction_surveys(attraction_id, completed_at);
 
 ---
 
-## 5.18 Survey Questions and Answers
+## 5.18 Future Survey Questions and Answers
 
-If implemented:
+Not part of the current MVP migrations. If a future dynamic survey engine is implemented:
 
 ```sql
 create unique index idx_survey_questions_question_key
@@ -714,23 +712,14 @@ on survey_answers(question_id);
 ## 5.19 Funnel Events
 
 ```sql
-create index idx_funnel_events_event_name
-on funnel_events(event_name);
+create index idx_funnel_events_event_type
+on funnel_events(event_type);
 
 create index idx_funnel_events_event_time
 on funnel_events(event_time);
 
-create index idx_funnel_events_attraction_id
-on funnel_events(attraction_id);
-
-create index idx_funnel_events_photo_spot_id
-on funnel_events(photo_spot_id);
-
 create index idx_funnel_events_checkin_code_id
 on funnel_events(checkin_code_id);
-
-create index idx_funnel_events_session_id
-on funnel_events(session_id);
 
 create index idx_funnel_events_visit_id
 on funnel_events(visit_id);
@@ -739,10 +728,7 @@ create index idx_funnel_events_tourist_id
 on funnel_events(tourist_id);
 
 create index idx_funnel_events_name_time
-on funnel_events(event_name, event_time);
-
-create index idx_funnel_events_attraction_time
-on funnel_events(attraction_id, event_time);
+on funnel_events(event_type, event_time);
 ```
 
 If write volume becomes high, review these indexes and keep only those used by dashboard queries.
@@ -752,17 +738,17 @@ If write volume becomes high, review these indexes and keep only those used by d
 ## 5.20 Admin and Security
 
 ```sql
-create unique index idx_users_email
-on users(email);
+create unique index idx_admin_users_email
+on admin_users(email);
 
-create unique index idx_roles_role_key
-on roles(role_key);
+create unique index idx_roles_role_name
+on roles(role_name);
 
-create unique index idx_permissions_permission_key
-on permissions(permission_key);
+create unique index idx_permissions_permission_name
+on permissions(permission_name);
 
-create index idx_audit_logs_actor_user_id
-on audit_logs(actor_user_id);
+create index idx_audit_logs_admin_id
+on audit_logs(admin_id);
 
 create index idx_audit_logs_action
 on audit_logs(action);
@@ -833,7 +819,7 @@ Important indexes:
 ```text
 visits(attraction_id, visit_date)
 satisfaction_surveys(attraction_id, completed_at)
-funnel_events(attraction_id, event_time)
+funnel_events(checkin_code_id, event_time)
 tourist_stamps(attraction_id)
 ```
 
@@ -955,8 +941,8 @@ checkin_codes.code
 tourist_identities(provider, provider_user_id)
 tourist_stamps(tourist_id, attraction_id)
 satisfaction_surveys.visit_id
-roles.role_key
-permissions.permission_key
+roles.role_name
+permissions.permission_name
 ```
 
 These are not only performance tools.
@@ -974,13 +960,13 @@ districts.province_id
 attractions.province_id
 attractions.district_id
 attractions.attraction_type_id
-attraction_images.attraction_id
+attraction_media.attraction_id
 photo_spots.attraction_id
 checkin_codes.attraction_id
 checkin_codes.photo_spot_id
 tourist_identities.tourist_id
-consent_logs.tourist_id
-consent_logs.visit_id
+consent_records.tourist_id
+consent_records.visit_id
 visits.tourist_id
 visits.attraction_id
 visits.photo_spot_id
@@ -1014,7 +1000,8 @@ visits
 visit_photos
 certificates
 tourist_stamps
-survey_answers
+satisfaction_surveys
+visit_expenses
 ```
 
 Be careful with too many indexes on these tables.
@@ -1185,7 +1172,7 @@ on satisfaction_surveys(attraction_id, completed_at);
 Query needs:
 
 ```text
-funnel_events.event_name
+funnel_events.event_type
 funnel_events.event_time
 ```
 
@@ -1193,7 +1180,7 @@ Index:
 
 ```sql
 create index idx_funnel_events_name_time
-on funnel_events(event_name, event_time);
+on funnel_events(event_type, event_time);
 ```
 
 ---
@@ -1211,6 +1198,66 @@ Index:
 ```sql
 create index idx_tourist_stamps_tourist_id
 on tourist_stamps(tourist_id);
+```
+
+---
+
+## 17.5 Public Stories
+
+Query needs:
+
+```text
+travel_stories.is_published
+travel_stories.published_at
+```
+
+Index:
+
+```sql
+create index idx_travel_stories_published
+on travel_stories(is_published, published_at);
+```
+
+Purpose:
+
+```text
+Load published public stories without exposing unpublished admin content.
+```
+
+---
+
+## 17.6 Official Data Review
+
+Query needs:
+
+```text
+official_tourism_stats.province_id
+official_tourism_stats.year
+official_tourism_stats.month
+data_import_logs.imported_at
+official_attraction_refs.attraction_id
+```
+
+Indexes:
+
+```sql
+create index idx_official_tourism_stats_province
+on official_tourism_stats(province_id);
+
+create index idx_official_tourism_stats_year_month
+on official_tourism_stats(year, month);
+
+create index idx_data_import_logs_imported_at
+on data_import_logs(imported_at);
+
+create index idx_official_attraction_refs_attraction
+on official_attraction_refs(attraction_id);
+```
+
+Purpose:
+
+```text
+Support admin official-data screens while keeping official statistics separate from local platform visits.
 ```
 
 ---

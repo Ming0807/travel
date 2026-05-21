@@ -10,18 +10,19 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Prompt", "sans-serif"],
-        body: ["Sarabun", "sans-serif"]
+        sans: ["var(--font-sans)", "sans-serif"],
+        body: ["var(--font-body)", "sans-serif"],
+        serif: ["var(--font-serif)", "serif"]
       },
       colors: {
         ink: "#17212B",
         muted: "#6B7280",
-        cream: "#FFF8EF",
+        cream: "#FAF8F5",
         sand: "#F0DFC8",
         teal: "#0A6B62",
         tealSoft: "#E6F4EF",
         leaf: "#3E7A4F",
-        coral: "#D36B4B",
+        coral: "#E77455",
         gold: "#D6A13D",
         skySoft: "#EAF6F7"
       },
