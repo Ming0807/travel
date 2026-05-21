@@ -1,4 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
+
+// Mock server-only to prevent import errors in test environment
+vi.mock("server-only", () => ({}));
+
 import { listPublicAttractionCards, listPublicStories, listPublicRoutes } from "@/lib/repositories/public-content.repository";
 
 // Mock Supabase to always throw, so we test the fallback DTOs
