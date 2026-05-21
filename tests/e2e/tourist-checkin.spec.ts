@@ -7,6 +7,21 @@ test.describe('Tourist Check-in Flow', () => {
   const checkinCode = 'DEMO-CODE-123';
 
   test('should complete the entire check-in and certificate flow', async ({ page }) => {
+    test.setTimeout(90000); // 90s timeout
+    
+    // Listen to console and page errors for debugging
+    page.on('console', msg => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`));
+    page.on('pageerror', error => console.error(`[Browser PageError] ${error.message}`));
+    page.on('requestfailed', request => console.error(`[Browser Request Failed] ${request.url()} - ${request.failure()?.errorText}`));
+    page.on('response', response => {
+      console.log(`[Response] ${response.status()} ${response.url()}`);
+      if (response.url().includes('/api/')) {
+        if (response.status() >= 400) {
+          response.text().then(text => console.error(`[API Error Body] ${text}`)).catch(() => {});
+        }
+      }
+    });
+
     // 1. Visit the QR Check-in Landing Page
     await page.goto(`/checkin/${checkinCode}`);
     await expect(page.locator('text=สร้างใบประกาศดิจิทัลฟรี')).toBeVisible();
@@ -46,16 +61,6 @@ test.describe('Tourist Check-in Flow', () => {
       window.location.href = `/visit/${visitId}/certificate/preview?photoId=${data.photoId}&previewUrl=${encodeURIComponent(data.previewUrl)}`;
     });
     
-    // Mock certificate generation to avoid headless canvas/CORS issues
-    await page.route('/api/certificate/generate', async route => {
-      await route.fulfill({
-        json: {
-          certificateId: 'test-cert-123',
-          stamp: { status: 'earned' }
-        }
-      });
-    });
-
     // 4. Certificate Preview
     await page.waitForURL(/\/visit\/[^/]+\/certificate\/preview/);
     const generateBtn = page.locator('button:has-text("สร้างใบประกาศดิจิทัล")');

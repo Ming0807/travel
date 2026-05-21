@@ -28,9 +28,12 @@ export default async function CertificateSuccessPage(props: {
 
   const certificate = await getCertificateByVisitId(visitId);
   if (!certificate) {
+    console.error(`[Success Page] Certificate not found for visitId: ${visitId}. Redirecting back to preview.`);
     // If not generated, redirect back
     redirect(`/visit/${visitId}/certificate/preview`);
   }
+  
+  console.log(`[Success Page] Certificate found: ${certificate.certificate_id}`);
 
   const certUrl = await createPrivateFileSignedUrl("certificate-files", certificate.certificate_path);
   const stampStatus =

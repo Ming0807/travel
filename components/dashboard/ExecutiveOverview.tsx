@@ -6,8 +6,8 @@ import { TrendChart } from "@/components/dashboard/TrendChart";
 
 export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
   return (
-    <section className="space-y-5">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+    <section className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {data.kpis.map((metric) => (
           <KpiCard key={metric.key} metric={metric} />
         ))}
