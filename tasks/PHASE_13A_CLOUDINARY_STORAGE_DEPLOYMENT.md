@@ -2,7 +2,7 @@
 
 ## Status
 
-In progress.
+Completed.
 
 ## Objective
 
@@ -12,30 +12,47 @@ Make file storage work for development and Vercel deployment using Cloudinary fi
 
 MVP:
 
-- Add server-only Cloudinary environment variables.
-- Add provider-neutral storage adapter.
-- Use adapter for tourist photo upload.
-- Use adapter for generated certificate storage.
-- Keep Supabase Storage fallback for existing local/demo paths.
-- Document privacy and deployment requirements.
+- [x] Add server-only Cloudinary environment variables.
+- [x] Add provider-neutral storage adapter.
+- [x] Use adapter for tourist photo upload.
+- [x] Use adapter for generated certificate storage.
+- [x] Keep Supabase Storage fallback for existing local/demo paths.
+- [x] Document privacy and deployment requirements.
+- [x] Add admin media upload integration via storage adapter.
 
 Future:
 
 - Implement `university_server` adapter.
 - Add controlled file streaming route if the university server does not support signed URLs.
 - Add cleanup/retention jobs.
-- Add admin media upload integration.
+
+## Implementation Summary
+
+### Storage Adapter (`lib/storage/private-files.ts`)
+- `uploadPrivateFile()`: Routes to Cloudinary or Supabase depending on `STORAGE_PROVIDER`
+- `deletePrivateFile()`: Auto-detects provider from stored reference string
+- `createPrivateFileSignedUrl()`: Generates time-limited access URLs for both providers
+- Cloudinary references stored as `cloudinary:image:authenticated:v123:png:folder/file`
+
+### Upload Routes
+- `app/api/upload/photo/route.ts`: Tourist photo upload → storage adapter
+- `app/api/certificate/generate/route.ts`: Certificate image → storage adapter
+- `app/api/admin/media/upload/route.ts`: Admin attraction media → storage adapter
+
+### Environment Documentation
+- `ENVIRONMENT.md`: Complete documentation of all env vars, examples for local and Vercel
 
 ## Acceptance Criteria
 
-- `STORAGE_PROVIDER=cloudinary` is documented for Vercel.
-- Cloudinary secrets remain server-only.
-- Photo upload route does not call Cloudinary or Supabase directly.
-- Certificate generation route does not call Cloudinary or Supabase directly.
-- Database stores storage references, not permanent signed URLs.
-- Private file references are not exposed in dashboard/default exports.
-- Certificate download still works without survey, LINE, Google, email, or phone.
-- Future university storage is documented but not claimed as implemented.
+- [x] `STORAGE_PROVIDER=cloudinary` is documented for Vercel.
+- [x] Cloudinary secrets remain server-only.
+- [x] Photo upload route does not call Cloudinary or Supabase directly.
+- [x] Certificate generation route does not call Cloudinary or Supabase directly.
+- [x] Database stores storage references, not permanent signed URLs.
+- [x] Private file references are not exposed in dashboard/default exports.
+- [x] Certificate download still works without survey, LINE, Google, email, or phone.
+- [x] Future university storage is documented but not claimed as implemented.
+- [x] Admin media upload also uses the storage adapter.
 
 ## Validation
 

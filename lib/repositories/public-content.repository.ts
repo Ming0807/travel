@@ -125,7 +125,7 @@ export async function listPublicAttractionCards(limit = 16, options?: { search?:
   }
 }
 
-export async function getPublicAttractionDetail(slug: string): Promise<PublicAttractionDetail> {
+export async function getPublicAttractionDetail(slug: string): Promise<PublicAttractionDetail | null> {
   try {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
@@ -189,7 +189,7 @@ export async function listPublicStories(limit = 12): Promise<PublicStoryCard[]> 
       .from("travel_stories")
       .select("slug, title, excerpt, category, image_url, published_at, provinces (province_name_th, province_name_en)")
       .eq("is_published", true)
-      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("published_at", { ascending: false })
       .limit(limit);
 
     const fallback = fallbackStories();

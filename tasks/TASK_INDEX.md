@@ -20,16 +20,14 @@
 | `PHASE_11_LINE_LIFF_OPTIONAL.md` | Implemented foundation | Optional LINE passport linking |
 | `PHASE_12_TESTING_HARDENING.md` | In progress | Stability, security, performance, and QA |
 | `PHASE_13_DEPLOYMENT.md` | Planned | Deployment and release |
-| `PHASE_13A_CLOUDINARY_STORAGE_DEPLOYMENT.md` | In progress | Cloudinary-first Vercel storage with future university-storage path |
+| `PHASE_13A_CLOUDINARY_STORAGE_DEPLOYMENT.md` | Completed | Cloudinary-first Vercel storage with future university-storage path |
 
 ## Immediate Priority
 
-Complete local `supabase db reset` validation for `PHASE_02A_DATABASE_DDL_DML_TEST_DATA.md`, then continue `PHASE_04A_DYNAMIC_PUBLIC_CONTENT.md`, `PHASE_08A_DYNAMIC_ADMIN_CRUD.md`, and `PHASE_13A_CLOUDINARY_STORAGE_DEPLOYMENT.md`.
+Continue with `PHASE_12_TESTING_HARDENING.md` for stability, security, performance, and QA. Then proceed to `PHASE_13_DEPLOYMENT.md` for production deployment.
 
 Reason:
 
-- The new frontend wants dynamic content.
-- Admin CRUD should manage real records used by public pages.
-- Dashboard/export testing needs seeded transaction data.
-- DDL/DML issues are cheaper to fix before more features depend on them.
-- Vercel development needs Cloudinary-backed uploads/certificates before end-to-end tourist flow testing.
+- Core features (public pages, admin CRUD, storage, dashboard) are now implemented.
+- Testing and hardening ensure production readiness.
+- Deployment preparation is the final step before real-user launch.

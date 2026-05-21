@@ -120,6 +120,10 @@ function MediaForm({
   const isEditing = !!initialData;
   const action = isEditing ? updateMediaAction.bind(null, initialData.media_id) : createMediaAction;
 
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [state, formAction, isPending] = useActionState<any, FormData>(action, {
     success: false,
@@ -130,6 +134,36 @@ function MediaForm({
     onClose();
     router.refresh();
   }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    setUploadError(null);
+
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      body.append("attractionId", String(attractionId));
+
+      const response = await fetch("/api/admin/media/upload", {
+        method: "POST",
+        body,
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        setUploadError(result.error || "Upload failed");
+      } else {
+        setUploadedPath(result.storagePath);
+      }
+    } catch {
+      setUploadError("Network error during upload");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
 
   return (
     <form action={formAction} className="rounded-xl border border-slate-200 bg-slate-50 p-4 relative col-span-full">
@@ -151,6 +185,12 @@ function MediaForm({
         </div>
       )}
 
+      {uploadError && (
+        <div className="mb-4 rounded bg-rose-50 p-3 text-xs text-rose-600">
+          {uploadError}
+        </div>
+      )}
+
       <input type="hidden" name="attractionId" value={attractionId} />
 
       <div className="space-y-4">
@@ -169,13 +209,40 @@ function MediaForm({
           </select>
         </div>
 
+        {/* File Upload */}
+        {!isEditing && (
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-700">
+              อัปโหลดไฟล์ (JPEG, PNG, WebP, สูงสุด 10MB)
+            </label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileUpload}
+              disabled={uploadingFile}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#0A6B62] file:px-3 file:py-1 file:text-xs file:font-semibold file:text-white"
+            />
+            {uploadingFile && (
+              <p className="mt-1 text-xs text-amber-600 animate-pulse">กำลังอัปโหลด...</p>
+            )}
+            {uploadedPath && (
+              <p className="mt-1 text-xs text-green-600">✓ อัปโหลดสำเร็จ</p>
+            )}
+          </div>
+        )}
+
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-700">URL / Path *</label>
+          <label className="mb-1 block text-xs font-medium text-slate-700">
+            {isEditing ? "URL / Path *" : "URL / Path (หรือใช้ไฟล์ที่อัปโหลดด้านบน)"}
+          </label>
           <input
             type="text"
             name="storagePath"
             defaultValue={initialData?.storage_path}
+            value={uploadedPath ?? undefined}
+            onChange={(e) => setUploadedPath(e.target.value || null)}
             required
+            placeholder={uploadedPath ? "" : "https://example.com/image.jpg"}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
         </div>
@@ -247,7 +314,7 @@ function MediaForm({
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || uploadingFile}
             className="rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white hover:bg-[#075049] disabled:opacity-50"
           >
             {isPending ? "กำลังบันทึก..." : "บันทึก"}
