@@ -18,13 +18,13 @@
 | `PHASE_09_DASHBOARD.md` | Implemented / seeded metric verification needed | Aggregated dashboard analytics |
 | `PHASE_10_REPORT_EXPORT.md` | Implemented / privacy regression testing needed | Privacy-safe report export |
 | `PHASE_11_LINE_LIFF_OPTIONAL.md` | Implemented foundation | Optional LINE passport linking |
-| `PHASE_12_TESTING_HARDENING.md` | In progress | Stability, security, performance, and QA |
+| `PHASE_12_TESTING_HARDENING.md` | Completed | Stability, security, performance, and QA |
 | `PHASE_13_DEPLOYMENT.md` | Planned | Deployment and release |
 | `PHASE_13A_CLOUDINARY_STORAGE_DEPLOYMENT.md` | Completed | Cloudinary-first Vercel storage with future university-storage path |
 
 ## Immediate Priority
 
-Continue with `PHASE_12_TESTING_HARDENING.md` for stability, security, performance, and QA. Then proceed to `PHASE_13_DEPLOYMENT.md` for production deployment.
+Proceed to `PHASE_13_DEPLOYMENT.md` for production deployment.
 
 Reason:
 

@@ -39,6 +39,10 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=(self)"
+          },
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.youtube.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://res.cloudinary.com https://*.supabase.co; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.cloudinary.com; frame-src 'self' https://www.youtube.com; media-src 'self' https://res.cloudinary.com https://*.supabase.co;"
           }
         ]
       }

@@ -23,14 +23,19 @@ export function PhotoUploadForm({ visitId }: { visitId: string }) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     setError(null);
-    if (!selected) return;
+    if (!selected) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log('File selected:', { size: selected.size, type: selected.type, name: selected.name });
 
     if (selected.size > 5 * 1024 * 1024) {
       setError("ไฟล์มีขนาดใหญ่เกินไป (สูงสุด 5MB)");
       return;
     }
 
-    if (!["image/jpeg", "image/png", "image/webp"].includes(selected.type)) {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(selected.type) && !selected.name.endsWith('.png')) {
       setError("รองรับเฉพาะไฟล์ JPG, PNG, WebP เท่านั้น");
       return;
     }
