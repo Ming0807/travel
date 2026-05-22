@@ -138,36 +138,10 @@ export function AttractionForm({
             </div>
           </section>
 
-          {/* 3. การจัดการและพิกัด (Location & Management) */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">พิกัดและการติดต่อ (Location & Contact)</h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">ที่อยู่ / จุดสังเกต</span>
-                <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.address_text ?? ""} maxLength={1000} name="addressText" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">Latitude (พิกัดแนวตั้ง)</span>
-                <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.latitude ?? ""} name="latitude" type="number" step="0.0000001" placeholder="เช่น 6.5233" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">Longitude (พิกัดแนวนอน)</span>
-                <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.longitude ?? ""} name="longitude" type="number" step="0.0000001" placeholder="เช่น 101.281" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">เวลาเปิดทำการ</span>
-                <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.opening_hours ?? ""} maxLength={255} name="openingHours" placeholder="เช่น ทุกวัน 08:00 - 17:00 น." />
-              </label>
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">ข้อมูลการติดต่อ</span>
-                <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.contact_info ?? ""} maxLength={255} name="contactInfo" placeholder="เช่น เบอร์โทรศัพท์, Facebook, เว็บไซต์" />
-              </label>
-            </div>
-          </section>
         </div>
 
         {/* Right Column (Settings & Metadata) */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-8 lg:h-max lg:self-start">
           
           {/* Status */}
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -275,6 +249,33 @@ export function AttractionForm({
 
         </div>
       </div>
+
+      {/* 3. การจัดการและพิกัด (Location & Management) - Moved to bottom full width */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-black text-[#073F37]">พิกัดและการติดต่อ (Location & Contact)</h2>
+        <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <label className="block md:col-span-2 lg:col-span-4">
+            <span className="text-sm font-bold text-slate-700">ที่อยู่ / จุดสังเกต</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.address_text ?? ""} maxLength={1000} name="addressText" />
+          </label>
+          <label className="block lg:col-span-1">
+            <span className="text-sm font-bold text-slate-700">Latitude (ละติจูด)</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.latitude ?? ""} name="latitude" type="number" step="0.0000001" placeholder="เช่น 6.5233" />
+          </label>
+          <label className="block lg:col-span-1">
+            <span className="text-sm font-bold text-slate-700">Longitude (ลองจิจูด)</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.longitude ?? ""} name="longitude" type="number" step="0.0000001" placeholder="เช่น 101.281" />
+          </label>
+          <label className="block lg:col-span-1">
+            <span className="text-sm font-bold text-slate-700">เวลาเปิดทำการ</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.opening_hours ?? ""} maxLength={255} name="openingHours" placeholder="เช่น ทุกวัน 08:00 - 17:00 น." />
+          </label>
+          <label className="block lg:col-span-1">
+            <span className="text-sm font-bold text-slate-700">ข้อมูลการติดต่อ</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.contact_info ?? ""} maxLength={255} name="contactInfo" placeholder="เช่น เบอร์โทรศัพท์, Facebook" />
+          </label>
+        </div>
+      </section>
 
       <div className="sticky bottom-0 z-10 flex flex-col gap-3 border-t border-slate-200 bg-white/95 py-4 backdrop-blur sm:flex-row sm:justify-end">
         <Link className="rounded-full border border-slate-200 bg-white px-6 py-3 text-center text-sm font-black text-slate-700 hover:bg-slate-50 transition" href="/admin/attractions">
