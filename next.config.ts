@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com"
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com"
+      },
+      {
+        protocol: "https",
+        hostname: "api.cloudinary.com"
       }
     ]
   },
@@ -42,7 +50,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.youtube.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://res.cloudinary.com https://*.supabase.co; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.cloudinary.com; frame-src 'self' https://www.youtube.com; media-src 'self' https://res.cloudinary.com https://*.supabase.co;"
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.youtube.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://res.cloudinary.com https://api.cloudinary.com https://*.supabase.co; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.cloudinary.com; frame-src 'self' https://www.youtube.com; media-src 'self' https://res.cloudinary.com https://api.cloudinary.com https://*.supabase.co;"
           }
         ]
       }
