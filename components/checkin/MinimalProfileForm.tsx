@@ -7,11 +7,18 @@ interface Props {
   checkinCode: string;
   countries: { country_id: number; country_name_th: string }[];
   provinces: { province_id: number; province_name_th: string }[];
+  defaultValues?: {
+    displayName: string;
+    ageGroup: string;
+    originCountryId: string;
+    originProvinceId: string;
+  };
 }
 
-export function MinimalProfileForm({ checkinCode, countries, provinces }: Props) {
+export function MinimalProfileForm({ checkinCode, countries, provinces, defaultValues }: Props) {
   const [state, formAction, pending] = useActionState(submitMinimalProfile, null);
-  const [selectedCountry, setSelectedCountry] = useState<string>("1"); // Default to 1 (Thailand) if it exists
+  const [selectedCountry, setSelectedCountry] = useState<string>(defaultValues?.originCountryId || "1"); // Default to previous or 1 (Thailand)
+
 
   return (
     <div className="w-full max-w-5xl mx-auto bg-white rounded-[2rem] shadow-lg border border-ink/5 overflow-hidden flex flex-col md:flex-row">
@@ -43,6 +50,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces }: Props)
               className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#E18868] focus:ring-1 focus:ring-[#E18868] outline-none transition-all bg-white"
               placeholder="นามแฝง ชื่อเล่น หรือชื่อจริง"
               maxLength={150}
+              defaultValue={defaultValues?.displayName}
               required
             />
             <p className="text-xs text-gray-400">ใช้ชื่อเล่น นามแฝง หรือชื่อจริงก็ได้</p>
@@ -78,6 +86,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces }: Props)
           <select 
             id="originProvinceId" 
             name="originProvinceId"
+            defaultValue={defaultValues?.originProvinceId}
             className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#E18868] focus:ring-1 focus:ring-[#E18868] outline-none bg-white"
           >
             <option value="">เลือกจังหวัด...</option>
@@ -98,6 +107,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces }: Props)
         <select 
           id="ageGroup" 
           name="ageGroup"
+          defaultValue={defaultValues?.ageGroup}
           className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#E18868] focus:ring-1 focus:ring-[#E18868] outline-none bg-white"
           required
         >

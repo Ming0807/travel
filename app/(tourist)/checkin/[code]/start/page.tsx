@@ -2,6 +2,8 @@ import { resolveAndValidateCheckinCode, trackCheckinFunnelEvent } from "@/lib/se
 import { CheckinUnavailable } from "@/components/checkin/CheckinUnavailable";
 import { MinimalProfileForm } from "@/components/checkin/MinimalProfileForm";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getGuestIdentity } from "@/lib/auth/guest";
+import { findTouristByIdentity, getTouristById } from "@/lib/repositories/tourist.repository";
 
 export default async function MinimalProfilePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
@@ -22,6 +24,23 @@ export default async function MinimalProfilePage({ params }: { params: Promise<{
     supabase.from("countries").select("country_id, country_name_th").order("country_id"),
     supabase.from("provinces").select("province_id, province_name_th").order("province_name_th")
   ]);
+
+  let defaultValues = undefined;
+  const guestToken = await getGuestIdentity();
+  if (guestToken) {
+    const touristId = await findTouristByIdentity("anonymous_device", guestToken);
+    if (touristId) {
+      const touristData = await getTouristById(touristId);
+      if (touristData) {
+        defaultValues = {
+          displayName: touristData.display_name,
+          ageGroup: touristData.age_group,
+          originCountryId: touristData.origin_country_id?.toString() || "1",
+          originProvinceId: touristData.origin_province_id?.toString() || "",
+        };
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] flex flex-col relative pb-24">
@@ -49,6 +68,7 @@ export default async function MinimalProfilePage({ params }: { params: Promise<{
           checkinCode={code} 
           countries={countries || []} 
           provinces={provinces || []} 
+          defaultValues={defaultValues}
         />
       </div>
     </div>
