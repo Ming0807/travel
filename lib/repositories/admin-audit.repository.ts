@@ -19,7 +19,7 @@ export async function logAdminAction({
     action,
     entity_type: entityType,
     entity_id: entityId,
-    details_json: details
+    new_data: details
   });
 
   if (error) {

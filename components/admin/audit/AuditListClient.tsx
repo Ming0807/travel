@@ -241,7 +241,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                       {log.entity_type} {log.entity_id ? `(${log.entity_id.length > 12 ? log.entity_id.substring(0, 8) + '...' : log.entity_id})` : ""}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {log.details_json && Object.keys(log.details_json).length > 0 ? (
+                      {((log.new_data && Object.keys(log.new_data).length > 0) || (log.old_data && Object.keys(log.old_data).length > 0)) ? (
                         <button 
                           onClick={() => setSelectedDetails(log.log_id)}
                           className="text-indigo-600 hover:text-indigo-900 inline-flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-md text-xs font-medium"
@@ -300,8 +300,19 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
               </button>
             </div>
             
-            <div className="p-6">
-              {renderDetails(logs.find(l => l.log_id === selectedDetails)?.details_json)}
+            <div className="p-6 flex flex-col gap-4">
+              {logs.find(l => l.log_id === selectedDetails)?.old_data && (
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 mb-2 uppercase">Old Data</h4>
+                  {renderDetails(logs.find(l => l.log_id === selectedDetails)?.old_data)}
+                </div>
+              )}
+              {logs.find(l => l.log_id === selectedDetails)?.new_data && (
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 mb-2 uppercase">New Data / Details</h4>
+                  {renderDetails(logs.find(l => l.log_id === selectedDetails)?.new_data)}
+                </div>
+              )}
             </div>
             
             <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-end">

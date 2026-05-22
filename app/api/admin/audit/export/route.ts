@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const { data: logs } = await getAuditLogsPaginated(1, 10000, filters);
 
     // Build CSV
-    const headers = ["Timestamp", "Admin Name", "Admin Email", "Action", "Entity Type", "Entity ID", "Details"];
+    const headers = ["Timestamp", "Admin Name", "Admin Email", "Action", "Entity Type", "Entity ID", "New Data", "Old Data"];
     
     // Simple CSV escaping
     const escapeCsv = (str: any) => {
@@ -41,7 +41,8 @@ export async function GET(request: NextRequest) {
         log.action,
         log.entity_type,
         log.entity_id || "",
-        log.details_json ? JSON.stringify(log.details_json) : ""
+        log.new_data ? JSON.stringify(log.new_data) : "",
+        log.old_data ? JSON.stringify(log.old_data) : ""
       ];
       csvContent += row.map(escapeCsv).join(",") + "\n";
     }
