@@ -42,7 +42,7 @@ export default async function EditAdminAttractionPage({
           description="แก้ไขรายละเอียดสถานที่ท่องเที่ยว"
         />
 
-        <div className="mt-8 max-w-4xl">
+        <div className="mt-8 max-w-6xl">
           <AttractionForm 
             attraction={attraction}
             provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}

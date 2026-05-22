@@ -26,7 +26,7 @@ export default async function NewAdminAttractionPage() {
           description="เพิ่มสถานที่ท่องเที่ยวใหม่เข้าสู่ระบบ"
         />
 
-        <div className="mt-8 max-w-4xl">
+        <div className="mt-8 max-w-6xl">
           <AttractionForm 
             provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}
             districts={[]} 
