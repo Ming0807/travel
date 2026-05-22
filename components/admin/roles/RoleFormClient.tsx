@@ -85,9 +85,12 @@ export function RoleFormClient({ permissions, initialData }: RoleFormProps) {
                   Role Name (ID)
                 </label>
                 <div className="mt-2">
+                  {isProtectedRole && (
+                    <input type="hidden" name="roleName" value={initialData?.role_name || ""} />
+                  )}
                   <input
                     type="text"
-                    name="roleName"
+                    name={isProtectedRole ? "_roleName" : "roleName"}
                     id="roleName"
                     defaultValue={initialData?.role_name || ""}
                     disabled={isProtectedRole}
@@ -111,8 +114,11 @@ export function RoleFormClient({ permissions, initialData }: RoleFormProps) {
                   Description
                 </label>
                 <div className="mt-2">
+                  {isSuperAdmin && (
+                    <input type="hidden" name="description" value={initialData?.description || ""} />
+                  )}
                   <textarea
-                    name="description"
+                    name={isSuperAdmin ? "_description" : "description"}
                     id="description"
                     rows={3}
                     defaultValue={initialData?.description || ""}

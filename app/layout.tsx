@@ -9,7 +9,8 @@ const kanit = Kanit({
   subsets: ["thai", "latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-sans",
-  display: "swap"
+  display: "swap",
+  preload: false
 });
 
 const notoSansThai = Noto_Sans_Thai({

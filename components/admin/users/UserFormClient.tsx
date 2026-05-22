@@ -54,9 +54,12 @@ export function UserFormClient({ roles, initialData }: UserFormProps) {
             Email Address
           </label>
           <div className="mt-2">
+            {isEditing && (
+              <input type="hidden" name="email" value={initialData?.email || ""} />
+            )}
             <input
               type="email"
-              name="email"
+              name={isEditing ? "_email" : "email"}
               id="email"
               defaultValue={initialData?.email || ""}
               disabled={isEditing}
