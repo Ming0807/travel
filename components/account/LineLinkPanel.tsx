@@ -122,28 +122,28 @@ export function LineLinkPanel({
   };
 
   return (
-    <section className={`rounded-[1.75rem] border border-white bg-white p-5 shadow-card ${className}`}>
-      <div className="flex items-start gap-3">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-tealSoft text-teal">
+    <section className={`rounded-[1.5rem] border border-ink/5 bg-white p-6 shadow-sm ${className}`}>
+      <div className="flex items-start gap-4">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#FAF3EE] text-[#E18868]">
           <ChatCircleDots size={24} weight="fill" />
         </div>
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-coral">{copy.eyebrow}</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#E18868]">{copy.eyebrow}</p>
           <h2 className="mt-1 text-xl font-black leading-tight text-ink">{copy.title}</h2>
           <p className="mt-2 text-sm leading-6 text-muted">{copy.body}</p>
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3">
-        <div className="rounded-2xl bg-cream/70 p-4">
+      <div className="mt-6 grid gap-4">
+        <div className="rounded-[1rem] bg-[#FAF8F5] p-5 border border-ink/5">
           <div className="flex gap-3">
-            <DeviceMobile className="mt-0.5 shrink-0 text-teal" size={20} weight="fill" />
+            <DeviceMobile className="mt-0.5 shrink-0 text-[#E18868]" size={20} weight="fill" />
             <p className="text-sm leading-6 text-ink">
               ใช้งานต่อแบบ Guest ได้เสมอ พาสปอร์ตจะถูกเก็บไว้บนเบราว์เซอร์/อุปกรณ์นี้
             </p>
           </div>
           <div className="mt-3 flex gap-3">
-            <LockKey className="mt-0.5 shrink-0 text-gold" size={20} weight="fill" />
+            <LockKey className="mt-0.5 shrink-0 text-ink/40" size={20} weight="fill" />
             <p className="text-sm leading-6 text-ink">
               การเชื่อม LINE ใช้เพื่อบันทึกพาสปอร์ตเท่านั้น ไม่ใช่ความยินยอมรับข้อความประชาสัมพันธ์
             </p>
@@ -153,7 +153,7 @@ export function LineLinkPanel({
         {isConfigured ? (
           <label
             htmlFor={consentId}
-            className="flex cursor-pointer gap-3 rounded-2xl border border-teal/15 bg-tealSoft/60 p-4 text-sm leading-6 text-ink"
+            className="flex cursor-pointer gap-3 rounded-[1rem] border border-[#E18868]/15 bg-[#FAF3EE]/60 p-5 text-sm leading-6 text-ink hover:bg-[#FAF3EE] transition-colors"
           >
             <input
               id={consentId}
@@ -165,46 +165,46 @@ export function LineLinkPanel({
                   setUiState({ kind: "idle" });
                 }
               }}
-              className="mt-1 h-5 w-5 shrink-0 rounded border-teal/30 text-teal accent-teal"
+              className="mt-1 h-5 w-5 shrink-0 rounded border-[#E18868]/30 text-[#E18868] accent-[#E18868]"
             />
             <span>
               ฉันยินยอมให้เชื่อมบัญชี LINE กับพาสปอร์ตท่องเที่ยว เพื่อบันทึกตราประทับและค้นคืนพาสปอร์ตในภายหลัง
             </span>
           </label>
         ) : (
-          <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4 text-sm leading-6 text-ink">
+          <div className="rounded-[1rem] border border-ink/10 bg-[#FAF8F5] p-5 text-sm leading-6 text-muted">
             ระบบยังไม่ได้เปิดใช้ LINE LIFF ในสภาพแวดล้อมนี้ คุณยังสามารถดูพาสปอร์ตและดาวน์โหลดใบประกาศต่อแบบ Guest ได้ตามปกติ
           </div>
         )}
 
         {uiState.kind === "success" && (
-          <div className="flex gap-3 rounded-2xl bg-tealSoft p-4 text-sm font-semibold leading-6 text-teal">
+          <div className="flex gap-3 rounded-[1rem] bg-[#E18868]/10 p-5 text-sm font-semibold leading-6 text-[#E18868]">
             <CheckCircle className="mt-0.5 shrink-0" size={20} weight="fill" />
             <span>เชื่อม LINE สำเร็จ พาสปอร์ตของคุณพร้อมสำหรับการใช้งานครั้งถัดไปแล้ว</span>
           </div>
         )}
 
         {uiState.kind === "error" && (
-          <div className="flex gap-3 rounded-2xl border border-coral/20 bg-coral/10 p-4 text-sm font-semibold leading-6 text-coral">
+          <div className="flex gap-3 rounded-[1rem] border border-red-500/20 bg-red-50 p-5 text-sm font-semibold leading-6 text-red-500">
             <WarningCircle className="mt-0.5 shrink-0" size={20} weight="fill" />
             <span>{uiState.message}</span>
           </div>
         )}
 
         {uiState.kind === "not_configured" && (
-          <div className="flex gap-3 rounded-2xl border border-gold/30 bg-gold/10 p-4 text-sm font-semibold leading-6 text-ink">
-            <WarningCircle className="mt-0.5 shrink-0 text-gold" size={20} weight="fill" />
+          <div className="flex gap-3 rounded-[1rem] border border-ink/10 bg-[#FAF8F5] p-5 text-sm font-semibold leading-6 text-ink">
+            <WarningCircle className="mt-0.5 shrink-0 text-ink/40" size={20} weight="fill" />
             <span>LINE ยังไม่พร้อมใช้งานในตอนนี้ คุณสามารถใช้ Guest ต่อได้โดยไม่เสียสิทธิ์ใบประกาศหรือตราประทับ</span>
           </div>
         )}
       </div>
 
-      <div className="mt-5 grid gap-3">
+      <div className="mt-6 grid gap-3">
         <button
           type="button"
           onClick={handleLinkLine}
           disabled={!isConfigured || isBusy || uiState.kind === "success"}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#06C755] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#06C755]/20 transition hover:bg-[#05B34C] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#06C755] px-6 py-4 text-sm font-black text-white shadow-sm transition hover:bg-[#05B34C] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
           {isBusy ? <Spinner size={20} className="animate-spin" /> : <ChatCircleDots size={20} weight="bold" />}
           {uiState.kind === "success" ? "เชื่อม LINE แล้ว" : "เชื่อม LINE เพื่อบันทึกพาสปอร์ต"}
@@ -213,7 +213,7 @@ export function LineLinkPanel({
         {showContinueLink && (
           <Link
             href={continueHref}
-            className="flex min-h-12 items-center justify-center rounded-full bg-tealSoft px-5 py-3 text-center text-sm font-bold text-teal"
+            className="flex min-h-12 items-center justify-center rounded-full bg-[#FAF8F5] border border-ink/5 px-6 py-4 text-center text-sm font-bold text-ink hover:bg-white transition-colors"
           >
             ใช้งานต่อแบบ Guest
           </Link>

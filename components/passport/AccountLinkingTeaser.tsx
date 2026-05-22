@@ -9,14 +9,14 @@ type AccountLinkingTeaserProps = {
 export function AccountLinkingTeaser({ isGuest = true, context = "passport" }: AccountLinkingTeaserProps) {
   if (!isGuest) {
     return (
-      <section className="rounded-[1.75rem] border border-teal/10 bg-tealSoft p-5 text-teal shadow-card">
-        <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white text-teal">
-            <CheckCircle size={22} weight="fill" />
+      <section className="rounded-[1.5rem] border border-[#E18868]/10 bg-[#FAF3EE] p-6 text-[#E18868] shadow-sm">
+        <div className="flex items-start gap-4">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white text-[#E18868] shadow-sm">
+            <CheckCircle size={24} weight="fill" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-ink">พาสปอร์ตนี้เชื่อมบัญชีแล้ว</h2>
-            <p className="mt-2 text-sm leading-6 text-teal">
+            <h2 className="text-xl font-black text-ink">พาสปอร์ตนี้เชื่อมบัญชีแล้ว</h2>
+            <p className="mt-2 text-sm leading-6 text-[#E18868]/80">
               คุณสามารถใช้บัญชีที่เชื่อมไว้เพื่อกู้คืนพาสปอร์ตและตราประทับในอนาคตได้
             </p>
           </div>

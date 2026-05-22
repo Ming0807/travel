@@ -80,17 +80,17 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={handleDownload}
-          className="flex flex-col items-center justify-center rounded-2xl border border-gray-100 bg-white py-4 shadow-sm transition-colors hover:border-teal/30 hover:bg-teal-50"
+          className="flex flex-col items-center justify-center rounded-[1.5rem] border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-[#FAF3EE]"
         >
-          <DownloadSimple size={28} className="mb-2 text-teal" />
+          <DownloadSimple size={28} className="mb-2 text-[#E18868]" />
           <span className="text-sm font-bold text-ink">บันทึกรูปภาพ</span>
         </button>
 
         <button
           onClick={handleShare}
-          className="flex flex-col items-center justify-center rounded-2xl border border-gray-100 bg-white py-4 shadow-sm transition-colors hover:border-teal/30 hover:bg-teal-50"
+          className="flex flex-col items-center justify-center rounded-[1.5rem] border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-[#FAF3EE]"
         >
-          <ShareNetwork size={28} className="mb-2 text-teal" />
+          <ShareNetwork size={28} className="mb-2 text-[#E18868]" />
           <span className="text-sm font-bold text-ink">{copied ? "คัดลอกลิงก์แล้ว" : "แชร์ให้เพื่อน"}</span>
         </button>
       </div>
@@ -99,27 +99,27 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
         ดาวน์โหลดใบประกาศได้ทันที ไม่ต้องเชื่อม LINE หรือทำแบบสอบถามก่อน
       </p>
 
-      <div className="mt-4 flex flex-col items-center rounded-3xl border border-gray-50 bg-white p-5 text-center shadow-card">
-        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-coral/10 text-coral">
+      <div className="mt-4 flex flex-col items-center rounded-[1.5rem] border border-ink/5 bg-white p-6 text-center shadow-sm">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FAF3EE] text-[#E18868]">
           <ClipboardText size={24} weight="fill" />
         </div>
         <h3 className="mb-1 font-bold text-ink">แบบสอบถามสั้น ๆ (ไม่บังคับ)</h3>
-        <p className="mb-4 text-sm text-ink-light">
+        <p className="mb-4 text-sm text-muted">
           ช่วยพัฒนาการท่องเที่ยวในพื้นที่ ใช้เวลาประมาณ 1 นาที และคุณยังดาวน์โหลดใบประกาศได้ตามปกติ
         </p>
         <Link
           href={`/visit/${visitId}/survey`}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-coral py-3.5 font-bold text-white shadow-lg shadow-coral/20 transition-colors hover:bg-coral-600"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-[#E18868] py-4 font-bold text-white shadow-sm transition-colors hover:bg-[#D07757]"
         >
           ตอบแบบสอบถามสั้น ๆ <ArrowRight weight="bold" />
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 text-center text-sm font-medium text-teal">
-        <Link href="/passport" className="rounded-full bg-white px-4 py-3 shadow-sm hover:underline">
+      <div className="grid grid-cols-2 gap-3 text-center text-sm font-bold text-ink">
+        <Link href="/passport" className="rounded-full bg-white px-4 py-4 shadow-sm border border-ink/5 hover:bg-[#FAF8F5]">
           ดูพาสปอร์ต
         </Link>
-        <Link href="/" className="rounded-full bg-white px-4 py-3 shadow-sm hover:underline">
+        <Link href="/" className="rounded-full bg-white px-4 py-4 shadow-sm border border-ink/5 hover:bg-[#FAF8F5]">
           กลับหน้าหลัก
         </Link>
       </div>

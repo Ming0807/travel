@@ -44,17 +44,17 @@ export default async function CertificateSuccessPage(props: {
       : "none";
 
   return (
-    <main className="min-h-screen bg-sand px-4 py-8 flex flex-col items-center">
-      <div className="w-full max-w-md mx-auto mb-6 text-center">
-        <div className="mx-auto w-16 h-16 rounded-full bg-teal flex items-center justify-center text-white mb-4 shadow-lg shadow-teal/30">
+    <main className="bg-[#FAF8F5] min-h-screen text-ink px-4 py-12 flex flex-col items-center pb-24">
+      <div className="w-full max-w-md mx-auto mb-8 text-center">
+        <div className="mx-auto w-16 h-16 rounded-full bg-[#FAF3EE] text-[#E18868] flex items-center justify-center mb-4">
           <CheckCircle size={36} weight="fill" />
         </div>
-        <h1 className="text-2xl font-bold text-ink">สร้างใบประกาศสำเร็จ!</h1>
-        <p className="text-ink-light text-sm mt-1">ขอบคุณที่ร่วมเป็นส่วนหนึ่งของการท่องเที่ยว</p>
+        <h1 className="text-3xl font-black text-ink">สร้างใบประกาศสำเร็จ!</h1>
+        <p className="text-muted text-sm mt-2">ขอบคุณที่ร่วมเป็นส่วนหนึ่งของการท่องเที่ยว</p>
       </div>
 
-      <div className="w-full max-w-md mx-auto relative mb-6">
-        <div className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
+      <div className="w-full max-w-md mx-auto relative mb-8">
+        <div className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden shadow-lg border-4 border-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={certUrl}

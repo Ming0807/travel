@@ -7,6 +7,7 @@ import { AttractionTips } from "@/components/attractions/attraction-tips";
 import { AttractionReviews } from "@/components/attractions/attraction-reviews";
 import { AttractionCTA } from "@/components/attractions/attraction-cta";
 import { getPublicAttractionDetail } from "@/lib/repositories/public-content.repository";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -130,6 +131,8 @@ export default async function AttractionDetailPage({ params }: { params: Promise
         {/* Call to Action */}
         <AttractionCTA name={data.name} />
       </div>
+      
+      <SiteFooter />
     </main>
   );
 }

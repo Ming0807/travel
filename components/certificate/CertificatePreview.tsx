@@ -104,7 +104,7 @@ export function CertificatePreview({
 
       {/* Certificate DOM to Capture */}
       <div 
-        className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-b from-teal to-ink"
+        className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden shadow-lg border-4 border-white"
         style={{ width: "100%", maxWidth: "400px" }}
       >
         <div 
@@ -113,7 +113,7 @@ export function CertificatePreview({
           style={{ width: "400px", height: "500px", transform: "scale(1)", transformOrigin: "top left" }} // Fixed dimension for consistent html-to-image
         >
           {/* Background / Styling for MVP Certificate */}
-          <div className="absolute inset-0 bg-sand opacity-30 z-0"></div>
+          <div className="absolute inset-0 bg-[#F4F1EA] z-0"></div>
           
           <div className="relative z-10 flex flex-col h-full items-center p-8 text-center pt-10">
             <h2 className="text-2xl font-bold text-ink uppercase tracking-widest mb-1">Travel Memory</h2>
@@ -149,15 +149,15 @@ export function CertificatePreview({
         </div>
       </div>
 
-      <div className="w-full bg-white p-6 rounded-3xl shadow-card mt-2 text-center">
+      <div className="w-full bg-white p-6 rounded-[2rem] border border-ink/5 shadow-sm mt-4 text-center">
         <h3 className="font-bold text-lg text-ink mb-2">ยืนยันและสร้างใบประกาศ</h3>
-        <p className="text-sm text-ink-light mb-6">
+        <p className="text-sm text-muted mb-6">
           คุณสามารถบันทึกภาพนี้เพื่อเก็บเป็นความทรงจำ หรือแชร์ให้เพื่อนๆ ได้
         </p>
         <button
           onClick={handleGenerate}
           disabled={isGenerating}
-          className="w-full py-4 rounded-full bg-gold text-ink font-bold disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 transition-all hover:bg-gold-light shadow-lg shadow-gold/20"
+          className="w-full py-4 rounded-full bg-[#E18868] text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 transition-all hover:bg-[#D07757] shadow-sm"
         >
           {isGenerating ? (
             <><Spinner className="animate-spin" size={20} /> กำลังสร้างใบประกาศ...</>

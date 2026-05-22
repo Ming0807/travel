@@ -58,8 +58,8 @@ export default async function CertificatePreviewPage(props: {
   });
 
   return (
-    <main className="min-h-screen bg-sand px-4 py-8 flex flex-col items-center">
-      <div className="w-full max-w-md mx-auto mb-6 text-center">
+    <main className="bg-[#FAF8F5] min-h-screen text-ink px-4 py-12 flex flex-col items-center pb-24">
+      <div className="w-full max-w-md mx-auto mb-8 text-center">
         <h1 className="text-2xl font-bold text-ink">ตัวอย่างใบประกาศ</h1>
         <p className="text-ink-light text-sm mt-1">รูปภาพและชื่อที่ปรากฏบนใบประกาศ</p>
       </div>
