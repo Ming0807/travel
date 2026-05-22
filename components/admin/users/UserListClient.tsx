@@ -16,99 +16,165 @@ export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                User
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Roles
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Last Login
-              </th>
-              <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 bg-white">
-            {initialUsers.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-500">
-                  No users found.
-                </td>
-              </tr>
-            ) : (
-              initialUsers.map((user) => (
-                <tr key={user.admin_id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-slate-900">{user.display_name || "Unknown"}</span>
-                      <span className="text-sm text-slate-500">{user.email}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-wrap gap-1">
-                      {user.roles && user.roles.length > 0 ? (
-                        user.roles.map((r: string) => (
-                          <span key={r} className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-                            <Shield size={12} />
-                            {r}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-slate-400">No roles</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        user.is_active
-                          ? "bg-green-100 text-green-800"
-                          : "bg-slate-100 text-slate-800"
-                      }`}
-                    >
-                      {user.is_active ? <CheckCircle weight="fill" /> : <XCircle weight="fill" />}
-                      {user.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                    {user.last_login_at ? format(new Date(user.last_login_at), "MMM d, yyyy HH:mm") : "Never"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-3">
-                      <Link
-                        href={`/admin/users/${user.admin_id}/edit`}
-                        className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"
-                      >
-                        <PencilSimple size={16} />
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleToggle(user.admin_id, user.is_active)}
-                        disabled={isPending}
-                        className={`text-sm font-semibold ${
-                          user.is_active ? "text-red-600 hover:text-red-900" : "text-emerald-600 hover:text-emerald-900"
-                        } disabled:opacity-50`}
-                      >
-                        {user.is_active ? "Deactivate" : "Activate"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-4">
+      {initialUsers.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <p className="text-sm text-slate-500">No users found.</p>
+        </div>
+      ) : (
+        <>
+          {/* Mobile Card View */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {initialUsers.map((user) => (
+              <div key={user.admin_id} className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col">
+                    <span className="text-base font-bold text-slate-900">{user.display_name || "Unknown"}</span>
+                    <span className="text-sm text-slate-500">{user.email}</span>
+                  </div>
+                  <div>
+                    {user.is_active ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                        <CheckCircle size={14} weight="fill" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/20">
+                        <XCircle size={14} weight="fill" />
+                        Inactive
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Roles</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {user.roles && user.roles.length > 0 ? (
+                      user.roles.map((r: string) => (
+                        <span key={r} className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                          <Shield size={12} />
+                          {r}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">No roles</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700 mr-1">Last Login:</span>
+                  {user.last_login_at ? format(new Date(user.last_login_at), "MMM d, yyyy HH:mm") : "Never"}
+                </div>
+
+                <div className="mt-2 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
+                  <Link
+                    href={`/admin/users/${user.admin_id}/edit`}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-100 transition-colors"
+                  >
+                    <PencilSimple size={16} />
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleToggle(user.admin_id, user.is_active)}
+                    disabled={isPending}
+                    className={`flex flex-1 items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold ring-1 ring-inset disabled:opacity-50 transition-colors ${
+                      user.is_active 
+                        ? "text-red-600 ring-red-300 hover:bg-red-50" 
+                        : "text-emerald-600 ring-emerald-300 hover:bg-emerald-50"
+                    }`}
+                  >
+                    {user.is_active ? "Deactivate" : "Activate"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">User</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Roles</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Last Login</th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {initialUsers.map((user) => (
+                    <tr key={user.admin_id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-900">{user.display_name || "Unknown"}</span>
+                          <span className="text-sm text-slate-500">{user.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1.5 max-w-sm">
+                          {user.roles && user.roles.length > 0 ? (
+                            user.roles.map((r: string) => (
+                              <span key={r} className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                                <Shield size={10} />
+                                {r}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-slate-400 italic">No roles</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {user.is_active ? (
+                          <div className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full ring-1 ring-inset ring-green-600/20">
+                            <CheckCircle size={14} weight="fill" />
+                            Active
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-50 px-2.5 py-1 rounded-full ring-1 ring-inset ring-slate-500/20">
+                            <XCircle size={14} weight="fill" />
+                            Inactive
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                        {user.last_login_at ? format(new Date(user.last_login_at), "MMM d, yyyy HH:mm") : "Never"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/admin/users/${user.admin_id}/edit`}
+                            className="inline-flex items-center justify-center rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-[#F3704C] transition-colors"
+                            title="Edit user"
+                          >
+                            <PencilSimple size={20} />
+                            <span className="sr-only">Edit</span>
+                          </Link>
+                          <button
+                            onClick={() => handleToggle(user.admin_id, user.is_active)}
+                            disabled={isPending}
+                            className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold transition-colors disabled:opacity-50 ${
+                              user.is_active 
+                                ? "text-red-600 hover:bg-red-50" 
+                                : "text-emerald-600 hover:bg-emerald-50"
+                            }`}
+                          >
+                            {user.is_active ? "Deactivate" : "Activate"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
