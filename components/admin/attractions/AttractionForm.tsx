@@ -56,8 +56,9 @@ export function AttractionForm({
         </div>
       ) : null}
 
+      {/* 1. ข้อมูลหลัก (Basic Info) */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-        <h2 className="text-lg font-black text-[#073F37]">ข้อมูลหลัก</h2>
+        <h2 className="text-lg font-black text-[#073F37]">ข้อมูลหลัก (Basic Info)</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="text-sm font-bold text-slate-700">ชื่อภาษาไทย *</span>
@@ -81,8 +82,8 @@ export function AttractionForm({
             />
           </label>
 
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">Slug *</span>
+          <label className="block md:col-span-2">
+            <span className="text-sm font-bold text-slate-700">Slug (สำหรับ URL) *</span>
             <input
               className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
               defaultValue={attraction?.slug ?? ""}
@@ -126,7 +127,7 @@ export function AttractionForm({
             </select>
           </label>
 
-          <label className="block">
+          <label className="block md:col-span-2">
             <span className="text-sm font-bold text-slate-700">ประเภทแหล่งท่องเที่ยว</span>
             <select
               className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
@@ -144,59 +145,126 @@ export function AttractionForm({
         </div>
       </section>
 
+      {/* 2. เนื้อหาและภาษา (Content & Languages) */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-        <h2 className="text-lg font-black text-[#073F37]">เนื้อหาสาธารณะ</h2>
-        <div className="mt-5 grid gap-4">
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">คำอธิบายสั้นภาษาไทย</span>
-            <textarea className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.short_description_th ?? ""} maxLength={500} name="shortDescriptionTh" />
-          </label>
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">คำอธิบายรายละเอียดภาษาไทย</span>
-            <textarea className="mt-2 min-h-36 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.description_th ?? ""} maxLength={4000} name="descriptionTh" />
-          </label>
-          <div className="grid gap-4 md:grid-cols-2">
+        <h2 className="text-lg font-black text-[#073F37]">เนื้อหาและเรื่องราว (Content & Story)</h2>
+        <div className="mt-5 grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <h3 className="font-bold text-slate-800">เนื้อหาภาษาไทย</h3>
             <label className="block">
-              <span className="text-sm font-bold text-slate-700">ที่อยู่/จุดสังเกต</span>
-              <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.address_text ?? ""} maxLength={1000} name="addressText" />
+              <span className="text-sm font-bold text-slate-700">คำอธิบายสั้น</span>
+              <textarea className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.short_description_th ?? ""} maxLength={500} name="shortDescriptionTh" />
             </label>
             <label className="block">
-              <span className="text-sm font-bold text-slate-700">เวลาเปิดทำการ</span>
-              <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.opening_hours ?? ""} maxLength={255} name="openingHours" />
+              <span className="text-sm font-bold text-slate-700">รายละเอียดเชิงลึก</span>
+              <textarea className="mt-2 min-h-36 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.description_th ?? ""} maxLength={4000} name="descriptionTh" />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-slate-700">ประวัติศาสตร์ / เรื่องเล่า (Storytelling)</span>
+              <textarea className="mt-2 min-h-36 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.history_th ?? ""} maxLength={4000} name="historyTh" />
+            </label>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="font-bold text-slate-800">English Content</h3>
+            <label className="block">
+              <span className="text-sm font-bold text-slate-700">Short Description</span>
+              <textarea className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.short_description_en ?? ""} maxLength={500} name="shortDescriptionEn" />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-slate-700">Full Description</span>
+              <textarea className="mt-2 min-h-36 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.description_en ?? ""} maxLength={4000} name="descriptionEn" />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-slate-700">History / Storytelling</span>
+              <textarea className="mt-2 min-h-36 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.history_en ?? ""} maxLength={4000} name="historyEn" />
             </label>
           </div>
         </div>
       </section>
 
+      {/* 3. การจัดการและพิกัด (Location & Management) */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-        <h2 className="text-lg font-black text-[#073F37]">สถานะและพิกัด</h2>
+        <h2 className="text-lg font-black text-[#073F37]">พิกัดและการติดต่อ (Location & Contact)</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">Latitude</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.latitude ?? ""} name="latitude" type="number" step="0.0000001" />
+          <label className="block md:col-span-2">
+            <span className="text-sm font-bold text-slate-700">ที่อยู่ / จุดสังเกต</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.address_text ?? ""} maxLength={1000} name="addressText" />
           </label>
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Longitude</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.longitude ?? ""} name="longitude" type="number" step="0.0000001" />
+            <span className="text-sm font-bold text-slate-700">Latitude (พิกัดแนวตั้ง)</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.latitude ?? ""} name="latitude" type="number" step="0.0000001" placeholder="เช่น 6.5233" />
           </label>
-        </div>
-        <div className="mt-5 flex flex-wrap gap-4">
-          <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700">
-            <input defaultChecked={attraction?.is_active ?? true} name="isActive" type="checkbox" value="true" />
-            Active
+          <label className="block">
+            <span className="text-sm font-bold text-slate-700">Longitude (พิกัดแนวนอน)</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.longitude ?? ""} name="longitude" type="number" step="0.0000001" placeholder="เช่น 101.281" />
           </label>
-          <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700">
-            <input defaultChecked={attraction?.is_published ?? false} name="isPublished" type="checkbox" value="true" />
-            Published
+          <label className="block">
+            <span className="text-sm font-bold text-slate-700">เวลาเปิดทำการ</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.opening_hours ?? ""} maxLength={255} name="openingHours" placeholder="เช่น ทุกวัน 08:00 - 17:00 น." />
+          </label>
+          <label className="block">
+            <span className="text-sm font-bold text-slate-700">ข้อมูลการติดต่อ</span>
+            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={attraction?.contact_info ?? ""} maxLength={255} name="contactInfo" placeholder="เช่น เบอร์โทรศัพท์, Facebook, เว็บไซต์" />
           </label>
         </div>
       </section>
 
-      <div className="sticky bottom-0 flex flex-col gap-3 border-t border-slate-200 bg-[#F4F8F6]/95 py-4 backdrop-blur sm:flex-row sm:justify-end">
-        <Link className="rounded-full border border-slate-200 bg-white px-5 py-3 text-center text-sm font-black text-slate-700" href="/admin/attractions">
+      {/* 4. การวางแผนและยั่งยืน (Sustainability & Capacity) */}
+      <section className="rounded-2xl border border-emerald-100 bg-emerald-50/30 p-5 shadow-card">
+        <h2 className="text-lg font-black text-emerald-800">การวางแผนและความยั่งยืน (Sustainability)</h2>
+        <p className="mt-1 text-sm text-emerald-700">ข้อมูลนี้ใช้สำหรับนำเสนอสถิติและการจัดทำแผนส่งเสริมการท่องเที่ยวเชิงยั่งยืน</p>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="text-sm font-bold text-slate-700">หมวดหมู่ความยั่งยืน</span>
+            <select
+              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+              defaultValue={attraction?.sustainability_category ?? ""}
+              name="sustainabilityCategory"
+            >
+              <option value="">ไม่ระบุ</option>
+              <option value="Nature Conservation">Nature Conservation (เชิงนิเวศ/ธรรมชาติ)</option>
+              <option value="Community Based">Community Based (ชุมชน/ท้องถิ่น)</option>
+              <option value="Cultural Heritage">Cultural Heritage (ประวัติศาสตร์/วัฒนธรรม)</option>
+              <option value="Health & Wellness">Health & Wellness (สุขภาพ/เชิงการแพทย์)</option>
+              <option value="Adventure & Sport">Adventure & Sport (ผจญภัย/กีฬา)</option>
+              <option value="General">General (ทั่วไป)</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-sm font-bold text-slate-700">ขีดความสามารถ (คน/วัน)</span>
+            <input 
+              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" 
+              defaultValue={attraction?.estimated_capacity_per_day ?? ""} 
+              name="estimatedCapacityPerDay" 
+              type="number" 
+              min="1" 
+              placeholder="จำนวนนักท่องเที่ยวสูงสุดที่รองรับได้" 
+            />
+          </label>
+        </div>
+      </section>
+
+      {/* 5. สถานะการเผยแพร่ (Status) */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+        <h2 className="text-lg font-black text-[#073F37]">สถานะ (Status)</h2>
+        <div className="mt-5 flex flex-wrap gap-4">
+          <label className="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50 has-[:checked]:text-teal-800">
+            <input defaultChecked={attraction?.is_active ?? true} name="isActive" type="checkbox" value="true" className="h-4 w-4 accent-teal-600" />
+            เปิดใช้งาน (Active)
+          </label>
+          <label className="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 has-[:checked]:border-[#F3704C] has-[:checked]:bg-orange-50 has-[:checked]:text-orange-800">
+            <input defaultChecked={attraction?.is_published ?? false} name="isPublished" type="checkbox" value="true" className="h-4 w-4 accent-[#F3704C]" />
+            เผยแพร่สู่สาธารณะ (Published)
+          </label>
+        </div>
+      </section>
+
+      <div className="sticky bottom-0 z-10 flex flex-col gap-3 border-t border-slate-200 bg-white/95 py-4 backdrop-blur sm:flex-row sm:justify-end">
+        <Link className="rounded-full border border-slate-200 bg-white px-6 py-3 text-center text-sm font-black text-slate-700 hover:bg-slate-50 transition" href="/admin/attractions">
           ยกเลิก
         </Link>
-        <button disabled={isPending} className="rounded-full bg-[#073F37] px-5 py-3 text-sm font-black text-white shadow-card hover:bg-[#0A6B62] disabled:opacity-50" type="submit">
+        <button disabled={isPending} className="rounded-full bg-[#F3704C] px-8 py-3 text-sm font-black text-white shadow-card hover:bg-[#E55A35] disabled:opacity-50 transition" type="submit">
           {isPending ? "กำลังบันทึก..." : submitLabel}
         </button>
       </div>

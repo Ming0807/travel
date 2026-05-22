@@ -57,9 +57,9 @@ export default async function AdminAttractionsPage({
           />
           <Link
             href="/admin/attractions/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#075049]"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#F3704C] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#E55A35] transition-colors"
           >
-            <Plus size={16} weight="bold" />
+            <Plus size={20} weight="bold" />
             เพิ่มสถานที่ใหม่
           </Link>
         </div>
@@ -82,36 +82,75 @@ export default async function AdminAttractionsPage({
           />
         ) : (
           <>
-            <DataTable columns={columns}>
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+              <DataTable columns={columns}>
+                {items.map((attraction) => (
+                  <tr key={attraction.attraction_id} className="hover:bg-slate-50/50">
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="font-bold text-[#073F37]">{attraction.name_th}</p>
+                        {attraction.name_en && (
+                          <p className="mt-0.5 text-xs text-slate-500">{attraction.name_en}</p>
+                        )}
+                        <p className="mt-0.5 text-[11px] text-slate-400">{attraction.slug}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-semibold text-slate-600">
+                        {attraction.province_name_th ?? "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs text-slate-500">
+                        {attraction.attraction_type_name_th ?? "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-xs font-bold text-slate-600">{attraction.photo_spot_count}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-xs font-bold text-slate-600">{attraction.checkin_code_count}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <StatusBadge
+                          label={attraction.is_published ? "Published" : "Draft"}
+                          tone={attraction.is_published ? "green" : "gray"}
+                        />
+                        {!attraction.is_active && (
+                          <StatusBadge label="Inactive" tone="red" />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <AttractionStatusActions
+                        attractionId={attraction.attraction_id}
+                        isPublished={attraction.is_published}
+                        isActive={attraction.is_active}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </DataTable>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="grid gap-4 md:hidden">
               {items.map((attraction) => (
-                <tr key={attraction.attraction_id} className="hover:bg-slate-50/50">
-                  <td className="px-4 py-3">
+                <div
+                  key={attraction.attraction_id}
+                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-bold text-[#073F37]">{attraction.name_th}</p>
+                      <h3 className="font-bold text-[#073F37]">{attraction.name_th}</h3>
                       {attraction.name_en && (
                         <p className="mt-0.5 text-xs text-slate-500">{attraction.name_en}</p>
                       )}
-                      <p className="mt-0.5 text-[11px] text-slate-400">{attraction.slug}</p>
+                      <p className="mt-1 text-[11px] text-slate-400">/{attraction.slug}</p>
                     </div>
-                  </td>
-                  <td className="hidden px-4 py-3 md:table-cell">
-                    <span className="text-xs font-semibold text-slate-600">
-                      {attraction.province_name_th ?? "—"}
-                    </span>
-                  </td>
-                  <td className="hidden px-4 py-3 lg:table-cell">
-                    <span className="text-xs text-slate-500">
-                      {attraction.attraction_type_name_th ?? "—"}
-                    </span>
-                  </td>
-                  <td className="hidden px-4 py-3 text-center lg:table-cell">
-                    <span className="text-xs font-bold text-slate-600">{attraction.photo_spot_count}</span>
-                  </td>
-                  <td className="hidden px-4 py-3 text-center lg:table-cell">
-                    <span className="text-xs font-bold text-slate-600">{attraction.checkin_code_count}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col items-end gap-1">
                       <StatusBadge
                         label={attraction.is_published ? "Published" : "Draft"}
                         tone={attraction.is_published ? "green" : "gray"}
@@ -120,17 +159,38 @@ export default async function AdminAttractionsPage({
                         <StatusBadge label="Inactive" tone="red" />
                       )}
                     </div>
-                  </td>
-                  <td className="px-4 py-3">
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-slate-400">จังหวัด</p>
+                      <p className="font-semibold text-slate-700">{attraction.province_name_th ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400">ประเภท</p>
+                      <p className="font-semibold text-slate-700">{attraction.attraction_type_name_th ?? "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400">จุดถ่ายรูป</p>
+                      <p className="font-semibold text-slate-700">{attraction.photo_spot_count} จุด</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400">QR Codes</p>
+                      <p className="font-semibold text-slate-700">{attraction.checkin_code_count} โค้ด</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-end border-t border-slate-100 pt-4">
                     <AttractionStatusActions
                       attractionId={attraction.attraction_id}
                       isPublished={attraction.is_published}
                       isActive={attraction.is_active}
                     />
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </DataTable>
+            </div>
+
             <Pagination page={page} pageSize={pageSize} total={total} />
           </>
         )}
