@@ -160,48 +160,52 @@ export function RoleFormClient({ permissions, initialData }: RoleFormProps) {
 
         {/* Right Column: Permissions Matrix */}
         <div className="lg:col-span-2">
-          <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">Permissions Matrix</h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8">
-            {Object.entries(permissionGroups).map(([group, perms]) => (
-              <div key={group} className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-50 px-2 py-1 rounded-md inline-block">
-                  {group}
-                </h4>
-                <div className="space-y-3 pl-1">
-                  {perms.map(perm => {
-                    const isChecked = isSuperAdmin || initialData?.permissionIds?.includes(perm.permission_id);
-                    return (
-                      <div key={perm.permission_id} className="relative flex items-start">
-                        <div className="flex h-6 items-center">
-                          <input
-                            id={`perm-${perm.permission_id}`}
-                            name="permissionIds"
-                            type="checkbox"
-                            value={perm.permission_id}
-                            defaultChecked={isChecked}
-                            disabled={isSuperAdmin}
-                            className="h-4 w-4 rounded border-slate-300 text-[#F3704C] focus:ring-[#F3704C] disabled:opacity-50 disabled:bg-slate-100"
-                          />
-                        </div>
-                        <div className="ml-3 text-sm leading-6">
-                          <label htmlFor={`perm-${perm.permission_id}`} className="font-semibold text-slate-900 cursor-pointer">
-                            {perm.permission_name}
-                          </label>
-                          <p className="text-xs text-slate-500">{perm.description}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+          <div className="flex flex-col gap-6">
+            <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2">Permissions Matrix</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.entries(permissionGroups).map(([group, perms]) => (
+                <div key={group} className="flex flex-col rounded-xl border border-slate-200 bg-slate-50/50 p-4 shadow-sm transition hover:bg-slate-50">
+                  <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#F3704C] opacity-80"></span>
+                    {group}
+                  </h4>
+                  <div className="flex flex-col gap-3 pl-1">
+                    {perms.map(perm => {
+                      const isChecked = isSuperAdmin || initialData?.permissionIds?.includes(perm.permission_id);
+                      return (
+                        <label key={perm.permission_id} htmlFor={`perm-${perm.permission_id}`} className={`relative flex items-start cursor-pointer rounded-lg p-2 -m-2 transition-colors hover:bg-white ${isChecked ? 'bg-white shadow-sm ring-1 ring-slate-200' : ''}`}>
+                          <div className="flex h-6 items-center">
+                            <input
+                              id={`perm-${perm.permission_id}`}
+                              name="permissionIds"
+                              type="checkbox"
+                              value={perm.permission_id}
+                              defaultChecked={isChecked}
+                              disabled={isSuperAdmin}
+                              className="h-4 w-4 rounded border-slate-300 text-[#F3704C] focus:ring-[#F3704C] disabled:opacity-50 disabled:bg-slate-100"
+                            />
+                          </div>
+                          <div className="ml-3 text-sm leading-5">
+                            <div className={`font-semibold ${isChecked ? 'text-slate-900' : 'text-slate-700'}`}>
+                              {perm.permission_name}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5 leading-snug">{perm.description}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
       </div>
 
-      <div className="flex items-center justify-end gap-x-4 border-t border-slate-200 pt-6">
+      {/* Sticky Bottom Action Bar for Mobile */}
+      <div className="sticky bottom-0 z-10 -mx-6 -mb-6 mt-8 flex items-center justify-end gap-x-4 border-t border-slate-200 bg-white px-6 py-4 shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)] sm:static sm:mx-0 sm:mb-0 sm:mt-8 sm:bg-transparent sm:px-0 sm:py-0 sm:pt-6 sm:shadow-none">
         <button
           type="button"
           onClick={() => router.back()}
