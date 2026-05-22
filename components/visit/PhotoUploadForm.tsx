@@ -119,7 +119,7 @@ export function PhotoUploadForm({ visitId }: { visitId: string }) {
       <button
         onClick={handleUpload}
         disabled={!file || isUploading}
-        className="w-full py-4 rounded-full bg-teal text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 transition-all"
+        className="w-full py-4 rounded-full bg-[#E18868] text-white font-bold text-base shadow-sm hover:bg-[#D07757] disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 transition-all"
       >
         {isUploading ? (
           <>กำลังอัปโหลด...</>
