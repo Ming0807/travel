@@ -112,8 +112,7 @@ export async function updateRole(roleId: number, data: { roleName: string; descr
     .update({
       role_name: data.roleName,
       description: data.description,
-      is_active: data.isActive,
-      updated_at: new Date().toISOString()
+      is_active: data.isActive
     })
     .eq("role_id", roleId);
 
