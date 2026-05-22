@@ -6,51 +6,59 @@ export function CheckinLanding({ details }: { details: CheckinCodeDetails }) {
   const attraction = details.attraction!;
   
   return (
-    <div className="flex flex-col items-center max-w-md mx-auto w-full px-6 py-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="text-center space-y-4">
-        {/* Attraction Context */}
-        <div className="inline-flex items-center gap-2 bg-coral/10 text-coral px-4 py-1.5 rounded-full text-sm font-medium">
-          <MapPin weight="fill" />
-          <span>{attraction.province?.province_name_th || "สถานที่ท่องเที่ยว"}</span>
-        </div>
-        
-        <h1 className="text-3xl font-semibold text-ink leading-tight">
-          {details.photo_spot ? details.photo_spot.spot_name_th : attraction.name_th}
-        </h1>
-        
-        {attraction.short_description_th && (
-          <p className="text-gray-600 text-sm leading-relaxed">
-            {attraction.short_description_th}
-          </p>
-        )}
+    <div className="min-h-screen bg-[#FAF8F5] relative flex flex-col justify-center pb-12">
+      {/* Hero Background */}
+      <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-ink/90 to-[#FAF8F5]">
+        <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1528181304800-259b08848526?q=80&w=2000&auto=format&fit=crop')" }}></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#FAF8F5]/60 to-[#FAF8F5]"></div>
       </div>
 
-      {/* Certificate Teaser Card */}
-      <div className="w-full bg-white p-6 rounded-3xl shadow-card border border-sand-200 flex flex-col items-center text-center space-y-4">
-        <div className="h-16 w-16 bg-gold/20 text-gold rounded-2xl flex items-center justify-center mb-2">
-          <Certificate size={32} weight="fill" />
+      <div className="relative z-10 flex flex-col items-center max-w-lg mx-auto w-full px-4 pt-20 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="text-center space-y-4">
+          {/* Attraction Context */}
+          <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur shadow-sm text-[#E18868] px-5 py-2 rounded-full text-sm font-bold">
+            <MapPin weight="fill" />
+            <span>{attraction.province?.province_name_th || "สถานที่ท่องเที่ยว"}</span>
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-black text-ink leading-tight drop-shadow-sm">
+            {details.photo_spot ? details.photo_spot.spot_name_th : attraction.name_th}
+          </h1>
+          
+          {attraction.short_description_th && (
+            <p className="text-ink/70 text-base leading-relaxed font-medium max-w-md mx-auto">
+              {attraction.short_description_th}
+            </p>
+          )}
         </div>
-        <div>
-          <h2 className="text-lg font-medium text-ink mb-1">สร้างใบประกาศดิจิทัลฟรี</h2>
-          <p className="text-sm text-gray-500">เก็บความทรงจำการเดินทาง และสะสมตราประทับ ใช้เวลาไม่ถึง 1 นาที</p>
+
+        {/* Certificate Teaser Card */}
+        <div className="w-full bg-white p-8 rounded-[2rem] shadow-sm border border-ink/5 flex flex-col items-center text-center space-y-5">
+          <div className="h-20 w-20 bg-[#FAF3EE] text-[#E18868] rounded-[1.5rem] flex items-center justify-center mb-2 shadow-inner">
+            <Certificate size={40} weight="fill" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-ink mb-2">สร้างใบประกาศดิจิทัลฟรี</h2>
+            <p className="text-sm text-muted leading-relaxed">เก็บความทรงจำการเดินทาง และสะสมตราประทับ ใช้เวลาไม่ถึง 1 นาที</p>
+          </div>
         </div>
-      </div>
 
-      {/* Primary CTA */}
-      <div className="w-full space-y-3 pt-4">
-        <Link 
-          href={`/checkin/${details.code}/start`}
-          className="w-full flex items-center justify-center py-4 bg-teal text-white rounded-2xl font-medium text-lg shadow-sm hover:bg-teal-hover transition-colors"
-        >
-          สร้างใบประกาศของฉัน
-        </Link>
-        <p className="text-xs text-center text-gray-400">ไม่ต้องใช้รหัสผ่าน หรือดาวน์โหลดแอป</p>
-      </div>
+        {/* Primary CTA */}
+        <div className="w-full space-y-4 pt-2">
+          <Link 
+            href={`/checkin/${details.code}/start`}
+            className="w-full flex items-center justify-center py-4 bg-[#E18868] text-white rounded-full font-bold text-lg shadow-sm hover:bg-[#D07757] transition-all hover:scale-[1.02]"
+          >
+            สร้างใบประกาศของฉัน
+          </Link>
+          <p className="text-xs text-center text-muted font-medium">ไม่ต้องใช้รหัสผ่าน หรือดาวน์โหลดแอป</p>
+        </div>
 
-      {/* Privacy Hint */}
-      <div className="flex items-center gap-2 text-xs text-gray-400 mt-8 bg-gray-50 px-4 py-2 rounded-full">
-        <ShieldCheck size={16} />
-        <span>ข้อมูลของคุณปลอดภัยและใช้สำหรับสถิติการท่องเที่ยวเท่านั้น</span>
+        {/* Privacy Hint */}
+        <div className="flex items-center gap-2 text-[11px] text-muted font-bold tracking-wide uppercase mt-8 bg-white/50 backdrop-blur border border-ink/5 px-5 py-3 rounded-full">
+          <ShieldCheck size={18} className="text-[#E18868]" />
+          <span>ข้อมูลของคุณปลอดภัยและใช้สำหรับสถิติการท่องเที่ยวเท่านั้น</span>
+        </div>
       </div>
     </div>
   );
