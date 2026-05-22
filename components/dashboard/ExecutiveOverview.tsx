@@ -3,10 +3,14 @@ import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { NoDataState } from "@/components/dashboard/NoDataState";
 import { TrendChart } from "@/components/dashboard/TrendChart";
+import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 
 export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
   return (
     <section className="space-y-6">
+      <div className="flex justify-end">
+        <ExportCsvButton />
+      </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {data.kpis.map((metric) => (
           <KpiCard key={metric.key} metric={metric} />

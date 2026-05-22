@@ -1,0 +1,34 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createPrivateFileSignedUrl, type PrivateBucketName } from "@/lib/storage/private-files";
+import { requireAdmin } from "@/lib/auth/guards";
+
+export const runtime = "nodejs";
+
+export async function GET(req: NextRequest) {
+  try {
+    await requireAdmin(); // Any admin can preview media
+    
+    const searchParams = req.nextUrl.searchParams;
+    const bucket = searchParams.get("bucket") as PrivateBucketName;
+    const path = searchParams.get("path");
+
+    if (!bucket || !path) {
+      return new NextResponse("Missing bucket or path", { status: 400 });
+    }
+
+    try {
+      const signedUrl = await createPrivateFileSignedUrl(bucket, path, 60 * 60); // 1 hour TTL
+      return NextResponse.redirect(signedUrl);
+    } catch (e: any) {
+      if (e.message === "SIGNED_URL_CREATE_FAILED") {
+        // Fallback for public buckets or old non-private files
+        const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+        return NextResponse.redirect(publicUrl);
+      }
+      throw e;
+    }
+  } catch (error) {
+    console.error("Media preview error:", error);
+    return new NextResponse("Failed to load image", { status: 500 });
+  }
+}

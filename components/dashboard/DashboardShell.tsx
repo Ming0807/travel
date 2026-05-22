@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
+import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import type { DashboardViewModel } from "@/types/dashboard";
 
 export function DashboardShell({ data, children }: { data: DashboardViewModel; children: ReactNode }) {
@@ -18,6 +19,7 @@ export function DashboardShell({ data, children }: { data: DashboardViewModel; c
           {new Date(data.generatedAt).toLocaleString("th-TH")}. QR scans are tracked separately from visits, and estimated spending is not revenue.
         </div>
         <DashboardFilters filters={data.filters} options={data.referenceOptions} />
+        <DashboardTabs />
         {children}
       </div>
     </AdminShell>

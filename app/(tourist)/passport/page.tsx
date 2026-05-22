@@ -6,6 +6,7 @@ import { PassportSummary } from "@/components/passport/PassportSummary";
 import { ProvinceProgress } from "@/components/passport/ProvinceProgress";
 import { StampGrid } from "@/components/passport/StampGrid";
 import { AccountLinkingTeaser } from "@/components/passport/AccountLinkingTeaser";
+import { LineRecoveryPanel } from "@/components/account/LineRecoveryPanel";
 import { getCurrentTouristPassport, type PassportViewModel } from "@/lib/services/passport.service";
 import { TouristAccessError } from "@/lib/auth/guards";
 
@@ -31,7 +32,7 @@ export default async function PassportPage() {
 
   if (result.kind === "no_identity") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] px-4">
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] px-4 py-8">
         <div className="max-w-md w-full rounded-[2rem] bg-white p-8 md:p-10 text-center shadow-sm border border-ink/5">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#FAF3EE] text-[#E18868]">
             <Compass size={40} weight="fill" />
@@ -54,6 +55,8 @@ export default async function PassportPage() {
               กลับหน้าหลัก
             </Link>
           </div>
+          
+          <LineRecoveryPanel />
         </div>
       </main>
     );

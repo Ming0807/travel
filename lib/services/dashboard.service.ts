@@ -502,7 +502,7 @@ function mapAdminError(error: AdminAuthError): DashboardServiceError {
   return new DashboardServiceError("FORBIDDEN", "You do not have permission to view this dashboard.");
 }
 
-export async function getDashboardAnalytics(searchParams: RawSearchParams): Promise<DashboardViewModel> {
+export async function getDashboardAnalytics(searchParams: RawSearchParams, activeTab: string = "executive"): Promise<DashboardViewModel> {
   const parsed = parseDashboardFilters(searchParams);
   if (!parsed.success) {
     throw new DashboardServiceError(
@@ -521,7 +521,7 @@ export async function getDashboardAnalytics(searchParams: RawSearchParams): Prom
 
   let payload: DashboardRepositoryPayload;
   try {
-    payload = await getDashboardRepositoryPayload(parsed.data as DashboardFilters);
+    payload = await getDashboardRepositoryPayload(parsed.data as DashboardFilters, activeTab);
   } catch {
     throw new DashboardServiceError("QUERY_FAILED", "Could not load dashboard data. Please try again.");
   }

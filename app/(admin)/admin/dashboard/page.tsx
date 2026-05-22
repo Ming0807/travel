@@ -3,13 +3,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
-import { ExpenseSection } from "@/components/dashboard/ExpenseSection";
-import { FunnelSection } from "@/components/dashboard/FunnelSection";
 import { NoDataState } from "@/components/dashboard/NoDataState";
-import { SatisfactionSection } from "@/components/dashboard/SatisfactionSection";
-import { SustainableTourismSection } from "@/components/dashboard/SustainableTourismSection";
-import { TouristProfileSection } from "@/components/dashboard/TouristProfileSection";
-import { TravelBehaviorSection } from "@/components/dashboard/TravelBehaviorSection";
 import { DashboardServiceError, getDashboardAnalytics } from "@/lib/services/dashboard.service";
 
 export const metadata: Metadata = {
@@ -59,18 +53,18 @@ export default async function AdminDashboardPage({ searchParams = {} }: Dashboar
   }
 
   if (caughtError || !data) {
-    return <DashboardErrorPage error={caughtError ?? new Error("Could not load dashboard data.")} />;
+    return (
+      <DashboardShell data={data!}>
+        <div className="rounded-lg bg-rose-50 p-4 text-sm text-rose-600">
+          {caughtError instanceof DashboardServiceError ? caughtError.message : "Could not load dashboard data."}
+        </div>
+      </DashboardShell>
+    );
   }
 
   return (
     <DashboardShell data={data}>
       <ExecutiveOverview data={data} />
-      <TouristProfileSection data={data} />
-      <TravelBehaviorSection data={data} />
-      <ExpenseSection data={data} />
-      <SatisfactionSection data={data} />
-      <FunnelSection data={data} />
-      <SustainableTourismSection data={data} />
     </DashboardShell>
   );
 }

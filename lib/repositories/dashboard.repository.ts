@@ -140,7 +140,7 @@ export async function getDashboardReferenceOptions(): Promise<DashboardReference
   };
 }
 
-export async function getDashboardRepositoryPayload(filters: DashboardFilters): Promise<DashboardRepositoryPayload> {
+export async function getDashboardRepositoryPayload(filters: DashboardFilters, activeTab: string = "executive"): Promise<DashboardRepositoryPayload> {
   const supabase = createSupabaseServiceRoleClient();
 
   let visitsQuery = supabase
@@ -337,13 +337,21 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters): 
     expensesQuery = expensesQuery.eq(`visits.tourists.${key}`, value);
   }
 
+  // Determine which queries are needed based on activeTab
+  const needVisits = ["executive", "tourists", "visits", "expenses", "satisfaction", "sustainability"].includes(activeTab);
+  const needCertificates = ["executive", "satisfaction", "sustainability"].includes(activeTab);
+  const needStamps = ["executive", "sustainability"].includes(activeTab);
+  const needSurveys = ["executive", "satisfaction", "sustainability"].includes(activeTab);
+  const needExpenses = ["executive", "expenses", "sustainability"].includes(activeTab);
+  const needFunnel = ["executive", "funnel"].includes(activeTab);
+
   const [visits, certificates, stamps, surveys, expenses, funnelEvents, referenceOptions] = await Promise.all([
-    visitsQuery,
-    certificatesQuery,
-    stampsQuery,
-    surveysQuery,
-    expensesQuery,
-    funnelQuery,
+    needVisits ? visitsQuery : Promise.resolve({ data: [], error: null }),
+    needCertificates ? certificatesQuery : Promise.resolve({ data: [], error: null }),
+    needStamps ? stampsQuery : Promise.resolve({ data: [], error: null }),
+    needSurveys ? surveysQuery : Promise.resolve({ data: [], error: null }),
+    needExpenses ? expensesQuery : Promise.resolve({ data: [], error: null }),
+    needFunnel ? funnelQuery : Promise.resolve({ data: [], error: null }),
     getDashboardReferenceOptions()
   ]);
 
@@ -369,11 +377,11 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters): 
     funnelEvents: funnelRows,
     referenceOptions,
     isTruncated:
-      visitRows.length >= DASHBOARD_ROW_LIMIT ||
-      certificateRows.length >= DASHBOARD_ROW_LIMIT ||
-      stampRows.length >= DASHBOARD_ROW_LIMIT ||
-      surveyRows.length >= DASHBOARD_ROW_LIMIT ||
-      expenseRows.length >= DASHBOARD_ROW_LIMIT ||
-      funnelRows.length >= DASHBOARD_ROW_LIMIT
+      (needVisits && visitRows.length >= DASHBOARD_ROW_LIMIT) ||
+      (needCertificates && certificateRows.length >= DASHBOARD_ROW_LIMIT) ||
+      (needStamps && stampRows.length >= DASHBOARD_ROW_LIMIT) ||
+      (needSurveys && surveyRows.length >= DASHBOARD_ROW_LIMIT) ||
+      (needExpenses && expenseRows.length >= DASHBOARD_ROW_LIMIT) ||
+      (needFunnel && funnelRows.length >= DASHBOARD_ROW_LIMIT)
   };
 }

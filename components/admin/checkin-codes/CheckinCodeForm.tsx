@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createCheckinCodeAction, updateCheckinCodeAction } from "@/app/actions/admin-checkin-code-actions";
 import type { AdminCheckinCodeRow } from "@/lib/repositories/admin-checkin-code.repository";
@@ -27,10 +27,12 @@ export function CheckinCodeForm({ initialData, attractions, photoSpots }: Checki
     fieldErrors: undefined,
   });
 
-  if (state?.success) {
-    router.push("/admin/checkin-codes");
-    router.refresh();
-  }
+  useEffect(() => {
+    if (state?.success) {
+      router.push("/admin/checkin-codes");
+      router.refresh();
+    }
+  }, [state?.success, router]);
 
   const filteredSpots = photoSpots.filter(
     (spot) => spot.attraction_id === Number(selectedAttractionId)
@@ -56,7 +58,6 @@ export function CheckinCodeForm({ initialData, attractions, photoSpots }: Checki
               name="code"
               defaultValue={initialData?.code}
               required
-              pattern="^[a-zA-Z0-9_-]+$"
               title="URL-safe characters only (letters, numbers, hyphens, underscores)"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#0A6B62] focus:outline-none focus:ring-1 focus:ring-[#0A6B62]"
             />

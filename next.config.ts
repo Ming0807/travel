@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "api.cloudinary.com"
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "zaahkhmnqcczswxrcuhw.supabase.co",
+        pathname: "/**",
       }
     ]
   },

@@ -4,7 +4,7 @@ import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 import { getServerEnv, type ServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
-export type PrivateBucketName = "visit-photos" | "certificate-files" | "export-files";
+export type PrivateBucketName = "visit-photos" | "certificate-files" | "export-files" | "southern-border-tourism";
 
 type CloudinaryResourceType = "image" | "raw";
 type CloudinaryDeliveryType = "authenticated" | "upload";

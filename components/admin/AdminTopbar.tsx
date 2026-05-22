@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { MagnifyingGlass, Bell, UserCircle } from "@phosphor-icons/react/dist/ssr";
+import { MagnifyingGlass, Bell, UserCircle, ArrowSquareOut } from "@phosphor-icons/react/dist/ssr";
+import { MobileAdminNav } from "./MobileAdminNav";
 
 type AdminTopbarProps = {
   displayName?: string | null;
@@ -10,10 +11,13 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
   return (
     <div className="sticky top-0 z-20 bg-[#FCFAF8] px-4 py-4 md:px-6 lg:px-8 xl:px-10">
       <div className="flex items-center justify-between gap-4">
-        {/* Mobile Logo */}
-        <Link className="flex items-center gap-2 lg:hidden" href="/admin">
-          <span className="text-lg font-black tracking-tight text-slate-800 uppercase">Globe Trekker</span>
-        </Link>
+        {/* Mobile Nav Drawer & Logo */}
+        <div className="flex items-center gap-3 lg:hidden">
+          <MobileAdminNav />
+          <Link className="flex items-center gap-2" href="/admin">
+            <span className="text-lg font-black tracking-tight text-slate-800 uppercase">Globe Trekker</span>
+          </Link>
+        </div>
 
         {/* Search Bar (Hidden on Mobile for now) */}
         <div className="hidden lg:flex items-center flex-1 max-w-md">
@@ -32,7 +36,18 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end flex-1 lg:flex-none gap-6">
+        <div className="flex items-center justify-end flex-1 lg:flex-none gap-4">
+          {/* View Site */}
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+          >
+            <ArrowSquareOut size={16} weight="bold" />
+            <span className="hidden md:inline">View Site</span>
+          </Link>
+
           {/* Notifications */}
           <button className="relative text-slate-500 hover:text-slate-800 transition">
             <Bell size={22} weight="fill" />

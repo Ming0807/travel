@@ -18,7 +18,7 @@ type ActionResult = {
   fieldErrors?: Record<string, string[] | undefined>;
 };
 
-export async function createCheckinCodeAction(formData: FormData): Promise<ActionResult> {
+export async function createCheckinCodeAction(prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("checkin_code.create");
     const parsed = adminCheckinCodeMutationSchema.safeParse(Object.fromEntries(formData));
@@ -44,11 +44,12 @@ export async function createCheckinCodeAction(formData: FormData): Promise<Actio
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to create check-in code." };
+    console.error("createCheckinCodeAction error:", error);
+    return { success: false, error: `Failed to create check-in code: ${error instanceof Error ? error.message : String(error)}` };
   }
 }
 
-export async function updateCheckinCodeAction(checkinCodeId: number, formData: FormData): Promise<ActionResult> {
+export async function updateCheckinCodeAction(checkinCodeId: number, prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("checkin_code.update");
     const parsed = adminCheckinCodeMutationSchema.safeParse(Object.fromEntries(formData));

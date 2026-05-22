@@ -16,14 +16,16 @@ const notoSansThai = Noto_Sans_Thai({
   subsets: ["thai", "latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-body",
-  display: "swap"
+  display: "swap",
+  preload: false
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-serif",
-  display: "swap"
+  display: "swap",
+  preload: false
 });
 
 export const metadata: Metadata = {
@@ -33,7 +35,29 @@ export const metadata: Metadata = {
   },
   description:
     "สำรวจธรรมชาติ วัฒนธรรม อาหาร และเรื่องราวท้องถิ่นชายแดนใต้ พร้อมรับใบประกาศดิจิทัลและสะสมตราประทับ — A reward-first tourism data collection and intelligence platform for Southern Border travel planning.",
-  metadataBase: new URL("http://localhost:3000")
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://southernborder.app"),
+  openGraph: {
+    title: "Southern Border Explorer",
+    description: "แพลตฟอร์มสะสมตราประทับดิจิทัลและบันทึกการเดินทางชายแดนใต้",
+    url: "https://southernborder.app",
+    siteName: "Southern Border Explorer",
+    images: [
+      {
+        url: "/og-image.jpg", // We will use a standard image for OG
+        width: 1200,
+        height: 630,
+        alt: "Southern Border Tourism Platform",
+      },
+    ],
+    locale: "th_TH",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Southern Border Explorer",
+    description: "แพลตฟอร์มสะสมตราประทับดิจิทัลและบันทึกการเดินทางชายแดนใต้",
+    images: ["/og-image.jpg"],
+  },
 };
 
 export const viewport: Viewport = {

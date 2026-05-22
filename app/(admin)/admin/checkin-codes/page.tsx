@@ -13,6 +13,7 @@ import { requirePermission } from "@/lib/auth/guards";
 import { listAdminCheckinCodes } from "@/lib/repositories/admin-checkin-code.repository";
 import { adminCheckinCodeFiltersSchema } from "@/lib/validation/checkin-code";
 import { CheckinCodeStatusAction } from "@/components/admin/checkin-codes/CheckinCodeStatusAction";
+import { DownloadQrAction } from "@/components/admin/checkin-codes/DownloadQrAction";
 import Link from "next/link";
 import { Plus } from "@phosphor-icons/react/dist/ssr";
 
@@ -120,10 +121,13 @@ export default async function AdminCheckinCodesPage({
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <CheckinCodeStatusAction
-                      checkinCodeId={code.checkin_code_id}
-                      isActive={code.is_active}
-                    />
+                    <div className="flex items-center justify-end gap-2">
+                      <DownloadQrAction code={code.code} label={code.label || ""} />
+                      <CheckinCodeStatusAction
+                        checkinCodeId={code.checkin_code_id}
+                        isActive={code.is_active}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
