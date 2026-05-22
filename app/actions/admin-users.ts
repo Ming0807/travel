@@ -2,8 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth/guards";
-import { toggleAdminUserStatus } from "@/lib/repositories/admin-user.repository";
+import { toggleAdminUserStatus, inviteAdminUser, updateAdminUser } from "@/lib/repositories/admin-user.repository";
 import { logAdminAction } from "@/lib/repositories/admin-audit.repository";
+import { z } from "zod";
+
+const userSchema = z.object({
+  id: z.string().optional(),
+  email: z.string().email("Invalid email format").optional(),
+  displayName: z.string().min(2, "Display name must be at least 2 characters"),
+  roleIds: z.array(z.number()),
+  isActive: z.boolean().default(true),
+});
 
 export async function toggleAdminUserAction(adminId: string, isActive: boolean) {
   try {
@@ -24,5 +33,82 @@ export async function toggleAdminUserAction(adminId: string, isActive: boolean) 
   } catch (error: any) {
     console.error("toggleAdminUserAction error:", error);
     return { error: error.message || "Failed to toggle user status" };
+  }
+}
+
+export async function saveAdminUserAction(formData: FormData) {
+  try {
+    const guard = await requirePermission("user.manage");
+    
+    // Check role manage permission if they are attempting to change roles
+    const roleIdsStr = formData.getAll("roleIds");
+    const roleIds = roleIdsStr.map(id => parseInt(id.toString(), 10)).filter(id => !isNaN(id));
+    
+    if (roleIds.length > 0) {
+      await requirePermission("user.manage_roles");
+    }
+
+    const id = formData.get("id") as string | null;
+    const email = formData.get("email") as string | null;
+    const displayName = formData.get("displayName") as string;
+    const isActive = formData.get("isActive") === "true";
+
+    const validated = userSchema.safeParse({
+      id: id || undefined,
+      email: email || undefined,
+      displayName,
+      roleIds,
+      isActive,
+    });
+
+    if (!validated.success) {
+      return { error: validated.error.issues[0]?.message || "Validation failed" };
+    }
+
+    let newId = id;
+
+    if (id) {
+      // Update existing user
+      await updateAdminUser(id, {
+        displayName: validated.data.displayName,
+        roleIds: validated.data.roleIds,
+        isActive: validated.data.isActive,
+      });
+
+      await logAdminAction({
+        adminId: guard.adminId,
+        action: "user.update",
+        entityType: "admin_user",
+        entityId: id,
+        details: { displayName: validated.data.displayName, roles: validated.data.roleIds, isActive: validated.data.isActive }
+      });
+    } else {
+      // Create new user
+      if (!validated.data.email) throw new Error("Email is required for new users");
+      
+      newId = await inviteAdminUser({
+        email: validated.data.email,
+        displayName: validated.data.displayName,
+        roleIds: validated.data.roleIds,
+      });
+
+      await logAdminAction({
+        adminId: guard.adminId,
+        action: "user.create",
+        entityType: "admin_user",
+        entityId: newId as string,
+        details: { email: validated.data.email, displayName: validated.data.displayName, roles: validated.data.roleIds }
+      });
+    }
+
+    revalidatePath("/admin/users");
+    if (id) {
+      revalidatePath(`/admin/users/${id}/edit`);
+    }
+
+    return { success: true, id: newId };
+  } catch (error: any) {
+    console.error("saveAdminUserAction error:", error);
+    return { error: error.message || "Failed to save user" };
   }
 }

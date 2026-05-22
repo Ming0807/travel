@@ -2,8 +2,9 @@
 
 import { useTransition } from "react";
 import { format } from "date-fns";
-import { CheckCircle, XCircle, Shield } from "@phosphor-icons/react";
+import { CheckCircle, XCircle, Shield, PencilSimple } from "@phosphor-icons/react";
 import { toggleAdminUserAction } from "@/app/actions/admin-users";
+import Link from "next/link";
 
 export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
   const [isPending, startTransition] = useTransition();
@@ -83,15 +84,24 @@ export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
                     {user.last_login_at ? format(new Date(user.last_login_at), "MMM d, yyyy HH:mm") : "Never"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleToggle(user.admin_id, user.is_active)}
-                      disabled={isPending}
-                      className={`text-sm font-semibold ${
-                        user.is_active ? "text-red-600 hover:text-red-900" : "text-emerald-600 hover:text-emerald-900"
-                      } disabled:opacity-50`}
-                    >
-                      {user.is_active ? "Deactivate" : "Activate"}
-                    </button>
+                    <div className="flex items-center justify-end gap-3">
+                      <Link
+                        href={`/admin/users/${user.admin_id}/edit`}
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"
+                      >
+                        <PencilSimple size={16} />
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handleToggle(user.admin_id, user.is_active)}
+                        disabled={isPending}
+                        className={`text-sm font-semibold ${
+                          user.is_active ? "text-red-600 hover:text-red-900" : "text-emerald-600 hover:text-emerald-900"
+                        } disabled:opacity-50`}
+                      >
+                        {user.is_active ? "Deactivate" : "Activate"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
