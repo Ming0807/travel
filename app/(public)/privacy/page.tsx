@@ -1,4 +1,4 @@
-import { LockKeyhole, ShieldCheck } from "lucide-react";
+import { LockKey, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 import { PageShell } from "@/components/layout/page-shell";
 import { StatusCard } from "@/components/ui/status-card";
 
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         />
         <StatusCard
           description="Guest identity uses an anonymous browser/device identifier. IP address is not the main tourist identity mechanism."
-          icon={<LockKeyhole aria-hidden="true" />}
+          icon={<LockKey size={24} aria-hidden="true" />}
           title="Anonymous guest mode"
         />
       </div>

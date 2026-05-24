@@ -1,13 +1,17 @@
 import type { DashboardViewModel } from "@/types/dashboard";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { DonutChartCard } from "@/components/dashboard/DonutChartCard";
+import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 
 export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-black text-[#073F37]">Tourist profile summary</h2>
-        <p className="mt-1 text-sm text-slate-500">Aggregated profile signals only. These are profiles, not verified unique people.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-[#073F37]">Tourist profile summary</h2>
+          <p className="mt-1 text-sm text-slate-500">Aggregated profile signals only. These are profiles, not verified unique people.</p>
+        </div>
+        <ExportCsvButton />
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
         <BarChartCard

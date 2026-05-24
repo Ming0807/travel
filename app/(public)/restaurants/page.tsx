@@ -1,0 +1,212 @@
+import Image from "next/image";
+import Link from "next/link";
+import {
+  MagnifyingGlass,
+  MapPin,
+  Star,
+  ForkKnife,
+  PaperPlaneRight
+} from "@phosphor-icons/react/dist/ssr";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { RestaurantFilterBar } from "@/components/restaurants/RestaurantFilterBar";
+import { listPublicRestaurants } from "@/lib/repositories/public-content.repository";
+
+export const dynamic = "force-dynamic";
+
+export default async function RestaurantsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const resolvedParams = await searchParams;
+  const search = typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined;
+  const foodType = typeof resolvedParams.foodType === 'string' ? resolvedParams.foodType : undefined;
+  const province = typeof resolvedParams.province === 'string' ? resolvedParams.province : undefined;
+
+  const restaurants = await listPublicRestaurants({ search, foodType, province });
+
+
+
+  return (
+    <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
+
+        {/* Breadcrumb */}
+        <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
+          <Link href="/" className="hover:text-coral transition-colors">Home</Link>
+          <span>›</span>
+          <span className="text-ink">Restaurants</span>
+        </div>
+
+        {/* Hero Section */}
+        <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-20">
+          <div className="lg:w-1/2 pt-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 border border-orange-200 px-4 py-1.5 text-xs font-bold text-orange-700 mb-6">
+              <ForkKnife size={14} weight="fill" />
+              Local Economy
+            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight">
+              Discover <span className="text-[#E18868]">Local Flavors</span><br/>
+              of Southern Border
+            </h1>
+            <p className="text-muted leading-relaxed text-base md:text-lg max-w-md mb-8">
+              จากร้านอาหารพื้นเมืองสูตรโบราณสู่คาเฟ่สุดชิค ค้นพบรสชาติที่แท้จริงของชายแดนใต้
+              ที่จะทำให้การเดินทางของคุณสมบูรณ์แบบยิ่งขึ้น
+            </p>
+
+            {/* Search */}
+            <form action="/restaurants" method="GET" className="bg-white p-2 rounded-full shadow-sm border border-ink/5 flex items-center mb-6 max-w-xl">
+              <MagnifyingGlass size={20} className="text-muted ml-3" weight="bold" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={search || ""}
+                placeholder="Search restaurants, food type or province..."
+                className="w-full bg-transparent px-3 py-2 text-sm text-ink outline-none"
+              />
+              <button type="submit" className="bg-[#E18868] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#D07757] transition-colors whitespace-nowrap">
+                Search
+              </button>
+            </form>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-3 items-center">
+              <RestaurantFilterBar foodType={foodType} province={province} />
+              {(search || foodType || province) && (
+                <Link href="/restaurants" className="px-4 py-2 text-xs font-bold text-[#E18868] hover:underline transition-colors">
+                  Reset Filters
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Featured Image */}
+          <div className="lg:w-1/2 w-full">
+            <div className="relative w-full h-[350px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5">
+              <Image
+                src="https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=700&auto=format&fit=crop"
+                alt="Southern Border cuisine"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent"></div>
+              <div className="absolute bottom-8 left-8 right-8 text-white">
+                <h2 className="text-3xl font-black mb-2 leading-tight">
+                  Taste the Culture
+                </h2>
+                <p className="text-sm text-white/90 line-clamp-2 max-w-sm mb-6">
+                  จากข้าวยำปักษ์ใต้ สู่โรตีกรอบ สูตรเด็ดที่สืบทอดกันมาหลายชั่วอายุคน
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Restaurant Grid */}
+        <section className="mb-20">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h2 className="text-2xl font-black text-ink">
+                {search || foodType || province ? "Search Results" : "All Restaurants"}
+              </h2>
+              <p className="text-sm text-muted mt-1">
+                {restaurants.length} {restaurants.length === 1 ? "restaurant" : "restaurants"} found
+              </p>
+            </div>
+          </div>
+
+          {restaurants.length === 0 ? (
+            <div className="text-center py-20">
+              <ForkKnife size={48} className="mx-auto text-muted mb-4" weight="light" />
+              <h3 className="text-xl font-black text-ink mb-2">No restaurants found</h3>
+              <p className="text-muted text-sm mb-6">Try adjusting your search or filters</p>
+              <Link href="/restaurants" className="bg-[#E18868] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#D07757] transition-colors">
+                View All Restaurants
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {restaurants.map((restaurant) => (
+                <Link
+                  href={`/restaurants/${restaurant.slug}`}
+                  key={restaurant.slug}
+                  className="group block bg-white rounded-[1.5rem] overflow-hidden border border-ink/5 shadow-sm hover:shadow-md transition-all"
+                >
+                  <div className="relative h-48 w-full overflow-hidden bg-cream">
+                    <Image
+                      src={restaurant.imageUrl}
+                      alt={restaurant.imageAlt}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      unoptimized
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm text-ink px-3 py-1 text-[10px] font-bold shadow-sm">
+                        {restaurant.foodType}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-5">
+                    <h3 className="text-lg font-black text-ink mb-1 group-hover:text-[#E18868] transition-colors">
+                      {restaurant.name}
+                    </h3>
+                    <p className="text-xs font-bold text-muted flex items-center gap-1 mb-3 uppercase tracking-wider">
+                      <MapPin size={12} weight="fill" className="text-[#E18868]" />
+                      {restaurant.province}
+                    </p>
+                    <p className="text-sm text-muted line-clamp-2 leading-relaxed mb-4">
+                      {restaurant.description}
+                    </p>
+                    {restaurant.rating && (
+                      <div className="flex items-center gap-1 text-xs font-bold">
+                        <Star size={14} weight="fill" className="text-[#F5B041]" />
+                        {restaurant.rating.toFixed(1)}
+                        {restaurant.reviewCount && (
+                          <span className="text-muted font-normal">({restaurant.reviewCount})</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* CTA Section */}
+        <section className="mb-20">
+          <div className="relative w-full rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
+            <Image
+              src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop"
+              alt="Food background"
+              fill
+              className="object-cover opacity-20"
+              unoptimized
+            />
+            <div className="relative z-10 mb-6 md:mb-0 md:w-1/2">
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">
+                Own a Restaurant?
+              </h2>
+              <p className="text-white/80 text-sm">
+                Join our platform and connect with tourists visiting the Southern Border region.
+              </p>
+            </div>
+            <div className="relative z-10">
+              <Link
+                href="/contact"
+                className="bg-white text-ink px-6 py-3 rounded-full text-sm font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2"
+              >
+                Get Listed <PaperPlaneRight weight="fill" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <SiteFooter />
+    </div>
+  );
+}

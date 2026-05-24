@@ -51,9 +51,6 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
           {/* Notifications */}
           <button className="relative text-slate-500 hover:text-slate-800 transition">
             <Bell size={22} weight="fill" />
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-[#F3704C] text-[9px] font-bold text-white">
-              2
-            </span>
           </button>
 
           {/* Profile */}

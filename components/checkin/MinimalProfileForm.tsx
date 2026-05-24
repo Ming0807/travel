@@ -21,7 +21,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
 
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-white rounded-[2rem] shadow-lg border border-ink/5 overflow-hidden flex flex-col md:flex-row">
+    <div className="w-full max-w-5xl mx-auto bg-white rounded-[2rem] shadow-lg border border-ink/5 overflow-hidden flex flex-col md:flex-row animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
       {/* Left Column: Form */}
       <div className="w-full md:w-[55%] p-8 md:p-12">
         <form action={formAction} className="space-y-6">

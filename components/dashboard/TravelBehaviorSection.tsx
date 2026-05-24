@@ -20,6 +20,7 @@ export function TravelBehaviorSection({ data }: { data: DashboardViewModel }) {
             definition: "Average group size uses only non-null group_size answers. Missing answers are excluded.",
             note: `${data.travelBehavior.answeredGroupSizeCount} answered`
           }}
+          index={0}
         />
         <KpiCard
           metric={{
@@ -31,6 +32,7 @@ export function TravelBehaviorSection({ data }: { data: DashboardViewModel }) {
             definition: "Average nights uses only non-null nights answers. Missing answers are excluded.",
             note: `${data.travelBehavior.answeredNightsCount} answered`
           }}
+          index={1}
         />
       </div>
       <div className="grid gap-5 xl:grid-cols-2">

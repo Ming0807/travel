@@ -79,7 +79,7 @@ export function MicroSurveyForm({
   error?: string;
 }) {
   return (
-    <form action={submitPostCertificateSurveyAction} className="space-y-5">
+    <form action={submitPostCertificateSurveyAction} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <input type="hidden" name="visitId" value={visitId} />
 
       {error ? (
@@ -88,7 +88,7 @@ export function MicroSurveyForm({
         </div>
       ) : null}
 
-      <section className="rounded-[1.75rem] bg-white/70 p-4 shadow-card">
+      <section className="rounded-[1.75rem] bg-white/70 p-4 shadow-card transition-all duration-300 hover:shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
         <h2 className="text-lg font-black text-ink">การเดินทาง</h2>
         <p className="mt-1 text-sm text-muted">ตอบเท่าที่สะดวก ข้อมูลนี้ช่วยวางแผนการท่องเที่ยวภาพรวม</p>
 
@@ -123,7 +123,7 @@ export function MicroSurveyForm({
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] bg-white/70 p-4 shadow-card">
+      <section className="rounded-[1.75rem] bg-white/70 p-4 shadow-card transition-all duration-300 hover:shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200 fill-mode-both">
         <h2 className="text-lg font-black text-ink">การพักค้างและค่าใช้จ่าย</h2>
 
         <div className="mt-4 space-y-4">
@@ -177,7 +177,7 @@ export function MicroSurveyForm({
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] bg-white/70 p-4 shadow-card">
+      <section className="rounded-[1.75rem] bg-white/70 p-4 shadow-card transition-all duration-300 hover:shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-both">
         <h2 className="text-lg font-black text-ink">ความพึงพอใจ</h2>
         <p className="mt-1 text-sm text-muted">คะแนนที่ไม่ตอบจะถูกเก็บเป็น No data ไม่ใช่ 0</p>
 

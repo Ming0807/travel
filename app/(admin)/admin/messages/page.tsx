@@ -39,6 +39,8 @@ export default async function AdminMessagesPage({
             initialMessages={result.messages}
             totalPages={result.totalPages}
             currentPage={result.page}
+            total={result.total}
+            pageSize={result.limit}
           />
         </Suspense>
       </div>

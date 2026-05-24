@@ -1,6 +1,6 @@
 "use client";
 
-import { DownloadSimple } from "@phosphor-icons/react";
+import { DownloadSimple } from "@phosphor-icons/react/dist/ssr";
 import { useSearchParams } from "next/navigation";
 
 export function ExportButton({ endpoint, label = "Export CSV" }: { endpoint: string; label?: string }) {

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toPng } from "html-to-image";
-import { DownloadSimple, ArrowLeft, Spinner, Stamp } from "@phosphor-icons/react";
+import { DownloadSimple, ArrowLeft, Spinner, Stamp } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 interface CertificatePreviewProps {
@@ -83,10 +83,10 @@ export function CertificatePreview({
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-md mx-auto gap-6">
+    <div className="flex flex-col items-center w-full max-w-md mx-auto gap-6 animate-in fade-in duration-500">
       
       {/* Action Bar */}
-      <div className="w-full flex justify-between items-center px-2">
+      <div className="w-full flex justify-between items-center px-2 animate-in fade-in slide-in-from-top-2 duration-500 delay-100 fill-mode-both">
         <Link 
           href={`/visit/${visitId}/photo`} 
           className="text-ink-light flex items-center gap-1 hover:text-ink transition-colors"
@@ -97,14 +97,14 @@ export function CertificatePreview({
       </div>
 
       {error && (
-        <div className="w-full bg-red-50 text-red-600 p-3 rounded-xl text-sm">
+        <div className="w-full bg-red-50 text-red-600 p-3 rounded-xl text-sm animate-in fade-in duration-300">
           {error}
         </div>
       )}
 
       {/* Certificate DOM to Capture */}
       <div 
-        className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden shadow-lg border-4 border-white"
+        className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden shadow-lg border-4 border-white animate-in fade-in zoom-in-95 duration-700 delay-200 fill-mode-both"
         style={{ width: "100%", maxWidth: "400px" }}
       >
         <div 
@@ -147,9 +147,22 @@ export function CertificatePreview({
             </div>
           </div>
         </div>
+
+        {/* Loading Shimmer Overlay */}
+        {isGenerating && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-gradient-to-r from-teal/30 via-teal/60 to-teal/30 animate-pulse" />
+              <div className="space-y-2 text-center">
+                <div className="h-4 w-48 rounded-full bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 animate-pulse mx-auto" />
+                <div className="h-3 w-32 rounded-full bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 animate-pulse mx-auto" />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="w-full bg-white p-6 rounded-[2rem] border border-ink/5 shadow-sm mt-4 text-center">
+      <div className="w-full bg-white p-6 rounded-[2rem] border border-ink/5 shadow-sm mt-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
         <h3 className="font-bold text-lg text-ink mb-2">ยืนยันและสร้างใบประกาศ</h3>
         <p className="text-sm text-muted mb-6">
           คุณสามารถบันทึกภาพนี้เพื่อเก็บเป็นความทรงจำ หรือแชร์ให้เพื่อนๆ ได้
@@ -157,7 +170,7 @@ export function CertificatePreview({
         <button
           onClick={handleGenerate}
           disabled={isGenerating}
-          className="w-full py-4 rounded-full bg-[#E18868] text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 transition-all hover:bg-[#D07757] shadow-sm"
+          className="w-full py-4 rounded-full bg-[#E18868] text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 transition-all hover:bg-[#D07757] hover:scale-[1.01] active:scale-[0.99] shadow-sm"
         >
           {isGenerating ? (
             <><Spinner className="animate-spin" size={20} /> กำลังสร้างใบประกาศ...</>

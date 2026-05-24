@@ -9,6 +9,14 @@ import { AttractionCTA } from "@/components/attractions/attraction-cta";
 import { getPublicAttractionDetail } from "@/lib/repositories/public-content.repository";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { notFound } from "next/navigation";
+import {
+  getReviewStatsByAttraction,
+  listPublicReviewsByAttraction,
+} from "@/lib/repositories/admin-review.repository";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { ReviewSubmissionForm } from "@/components/reviews/ReviewSubmissionForm";
+import { VISTA_360_EXTERNAL_URL } from "@/constants/product";
+import { Compass } from "@phosphor-icons/react/dist/ssr";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +27,18 @@ export default async function AttractionDetailPage({ params }: { params: Promise
   if (!data) {
     notFound();
   }
+
+  // Fetch real reviews from the database
+  const client = await createSupabaseServerClient();
+  const { data: attractionRow } = await client
+    .from("attractions")
+    .select("attraction_id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  const attractionId = attractionRow?.attraction_id ? Number(attractionRow.attraction_id) : undefined;
+  const reviewStats = attractionId ? await getReviewStatsByAttraction(attractionId) : null;
+  const publicReviews = attractionId ? await listPublicReviewsByAttraction(attractionId) : [];
 
   return (
     <main className="bg-white min-h-screen pb-12">
@@ -105,10 +125,16 @@ export default async function AttractionDetailPage({ params }: { params: Promise
               </section>
 
               {/* Reviews */}
-              <AttractionReviews 
+              <AttractionReviews
                 rating={data.rating}
                 reviewsCount={data.reviewsCount}
-              />
+                stats={reviewStats ?? undefined}
+                reviews={publicReviews.length > 0 ? publicReviews : undefined}
+              >
+                <div className="mt-8">
+                  <ReviewSubmissionForm attractionId={attractionId ?? undefined} />
+                </div>
+              </AttractionReviews>
               
               {/* Articles (Re-using Cards Row) */}
               <AttractionCardsRow 
@@ -124,6 +150,33 @@ export default async function AttractionDetailPage({ params }: { params: Promise
           <aside className="hidden lg:block">
             <div className="sticky top-24">
               <AttractionInfoSidebar info={data.info} />
+              
+              {/* 360 Vista — แสดงเฉพาะสถานที่ในยะลา */}
+              {data.province === "ยะลา" || data.province === "Yala" ? (
+                <div className="mt-6 rounded-2xl border border-ink/5 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                      <Compass size={16} weight="fill" />
+                    </div>
+                    <h3 className="font-bold text-sm text-ink">360° Virtual Tour</h3>
+                  </div>
+                  <p className="text-xs text-muted mb-4 leading-relaxed">
+                    ชมบรรยากาศสถานที่ท่องเที่ยวในจังหวัดยะลาแบบ 360 องศา เสมือนจริง
+                  </p>
+                  <a
+                    href={VISTA_360_EXTERNAL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                  >
+                    <Compass size={14} weight="fill" />
+                    ดู 360° Virtual Tour
+                  </a>
+                  <p className="mt-2 text-[10px] text-muted text-center">
+                    ระบบภายนอกโดย 360 Vista
+                  </p>
+                </div>
+              ) : null}
             </div>
           </aside>
         </div>

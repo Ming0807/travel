@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ClipboardText, DownloadSimple, ShareNetwork, Sparkle } from "@phosphor-icons/react";
+import { ArrowRight, ClipboardText, DownloadSimple, ShareNetwork, Sparkle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { useState } from "react";
 

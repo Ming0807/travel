@@ -14,7 +14,7 @@ import {
   YoutubeLogo,
   PinterestLogo,
   Envelope
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { useState } from "react";
 

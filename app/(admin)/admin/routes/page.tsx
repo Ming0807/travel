@@ -88,22 +88,60 @@ export default async function AdminRoutesPage({
           />
         ) : (
           <>
-            <DataTable columns={columns}>
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+              <DataTable columns={columns}>
+                {items.map((route) => (
+                  <tr key={route.route_id} className="hover:bg-slate-50/50">
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="font-bold text-[#073F37]">{route.name_th}</p>
+                        {route.name_en && (
+                          <p className="mt-0.5 text-xs text-slate-500">{route.name_en}</p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="hidden px-4 py-3 text-center md:table-cell">
+                      <span className="text-xs font-bold text-slate-600">{route.stop_count}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <StatusBadge
+                          label={route.is_published ? "Published" : "Draft"}
+                          tone={route.is_published ? "green" : "gray"}
+                        />
+                        {!route.is_active && (
+                          <StatusBadge label="Inactive" tone="red" />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <RouteStatusActions
+                        routeId={route.route_id}
+                        isPublished={route.is_published}
+                        isActive={route.is_active}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </DataTable>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="grid gap-4 md:hidden">
               {items.map((route) => (
-                <tr key={route.route_id} className="hover:bg-slate-50/50">
-                  <td className="px-4 py-3">
+                <div
+                  key={route.route_id}
+                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-bold text-[#073F37]">{route.name_th}</p>
+                      <h3 className="font-bold text-[#073F37]">{route.name_th}</h3>
                       {route.name_en && (
                         <p className="mt-0.5 text-xs text-slate-500">{route.name_en}</p>
                       )}
                     </div>
-                  </td>
-                  <td className="hidden px-4 py-3 text-center md:table-cell">
-                    <span className="text-xs font-bold text-slate-600">{route.stop_count}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col items-end gap-1">
                       <StatusBadge
                         label={route.is_published ? "Published" : "Draft"}
                         tone={route.is_published ? "green" : "gray"}
@@ -112,17 +150,26 @@ export default async function AdminRoutesPage({
                         <StatusBadge label="Inactive" tone="red" />
                       )}
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-slate-400">จำนวนจุดแวะ</p>
+                      <p className="font-semibold text-slate-700">{route.stop_count} จุด</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end border-t border-slate-100 pt-4">
                     <RouteStatusActions
                       routeId={route.route_id}
                       isPublished={route.is_published}
                       isActive={route.is_active}
                     />
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </DataTable>
+            </div>
+
             <Pagination page={page} pageSize={pageSize} total={total} />
           </>
         )}

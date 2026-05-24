@@ -6,15 +6,30 @@ import { TrendChart } from "@/components/dashboard/TrendChart";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 
 export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
+  const visitTrend = data.executive.visitTrend;
+
+  /* heuristic: which KPIs get a sparkline? */
+  const sparklineKeys = ["visit", "tourist", "checkin", "certificate"];
+
   return (
     <section className="space-y-6">
       <div className="flex justify-end">
         <ExportCsvButton />
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        {data.kpis.map((metric) => (
-          <KpiCard key={metric.key} metric={metric} />
-        ))}
+        {data.kpis.map((metric, i) => {
+          const k = (metric.key + metric.label).toLowerCase();
+          const showSparkline =
+            sparklineKeys.some((s) => k.includes(s)) && visitTrend.length >= 2;
+          return (
+            <KpiCard
+              key={metric.key}
+              metric={metric}
+              index={i}
+              sparklineData={showSparkline ? visitTrend : undefined}
+            />
+          );
+        })}
       </div>
       {data.dataQualityWarnings.length > 0 ? (
         <div className="grid gap-3 md:grid-cols-2">

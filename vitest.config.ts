@@ -3,9 +3,11 @@ import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   test: {
-    environment: "node",
-    include: ["tests/**/*.test.ts"],
-    globals: true
+    environment: "jsdom",
+    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+    globals: true,
+    setupFiles: ["tests/setup.ts"],
+    css: false,
   },
   resolve: {
     alias: {

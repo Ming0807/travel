@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { MagnifyingGlass, FileText, Funnel, DownloadSimple, X, CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { MagnifyingGlass, FileText, Funnel, DownloadSimple, X } from "@phosphor-icons/react/dist/ssr";
 import { useRouter, usePathname } from "next/navigation";
+import { Pagination } from "@/components/admin/Pagination";
 
 type AuditListClientProps = {
   initialData: {
@@ -90,7 +91,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
           </div>
           <input
             type="text"
-            className="block w-full rounded-lg border border-slate-300 py-2 pl-10 pr-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="block w-full rounded-lg border border-slate-300 py-2 pl-10 pr-3 text-sm focus:border-[#0A6B62] focus:outline-none focus:ring-1 focus:ring-[#0A6B62]/20"
             placeholder="Search action or entity..."
             value={filters.search || ""}
             onChange={(e) => handleFilterChange("search", e.target.value)}
@@ -103,7 +104,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               isFilterOpen || Object.keys(filters).some(k => k !== 'search' && (filters as any)[k])
-                ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                ? "bg-[#E6F4EF] text-[#0A6B62] border border-[#0A6B62]/20"
                 : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
             }`}
           >
@@ -233,7 +234,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex rounded-md bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
+                      <span className="inline-flex rounded-md bg-[#E6F4EF] border border-[#0A6B62]/10 px-2.5 py-0.5 text-xs font-medium text-[#0A6B62]">
                         {log.action}
                       </span>
                     </td>
@@ -244,7 +245,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                       {((log.new_data && Object.keys(log.new_data).length > 0) || (log.old_data && Object.keys(log.old_data).length > 0)) ? (
                         <button 
                           onClick={() => setSelectedDetails(log.log_id)}
-                          className="text-indigo-600 hover:text-indigo-900 inline-flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-md text-xs font-medium"
+                          className="text-[#0A6B62] hover:text-[#F3704C] inline-flex items-center gap-1 bg-[#E6F4EF] px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
                         >
                           <FileText size={16} />
                           View Data
@@ -260,28 +261,10 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
           </table>
         </div>
         
-        {/* Pagination Controls */}
+        {/* Pagination */}
         {initialData.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-3">
-            <p className="text-sm text-slate-500">
-              Showing <span className="font-medium">{(initialData.page - 1) * initialData.limit + 1}</span> to <span className="font-medium">{Math.min(initialData.page * initialData.limit, initialData.total)}</span> of <span className="font-medium">{initialData.total}</span> results
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => applyFilters(initialData.page - 1)}
-                disabled={initialData.page <= 1}
-                className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                <CaretLeft size={16} /> Previous
-              </button>
-              <button
-                onClick={() => applyFilters(initialData.page + 1)}
-                disabled={initialData.page >= initialData.totalPages}
-                className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Next <CaretRight size={16} />
-              </button>
-            </div>
+          <div className="border-t border-slate-200 bg-slate-50 px-6 py-3">
+            <Pagination page={initialData.page} pageSize={initialData.limit} total={initialData.total} />
           </div>
         )}
       </div>

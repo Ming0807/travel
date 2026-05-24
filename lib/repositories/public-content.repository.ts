@@ -209,6 +209,162 @@ export async function getPublicStory(slug: string) {
   return { story, relatedStories };
 }
 
+export type PublicRestaurantCard = {
+  slug: string;
+  name: string;
+  province: string;
+  foodType: string;
+  description: string;
+  imageUrl: string;
+  imageAlt: string;
+  rating?: number;
+  reviewCount?: number;
+};
+
+export type PublicRestaurantDetail = {
+  slug: string;
+  name: string;
+  province: string;
+  provinceId: number;
+  foodType: string | null;
+  description: string | null;
+  addressText: string | null;
+  openingHours: string | null;
+  contactInfo: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  imageUrl: string | null;
+  isPublished: boolean;
+  nearbyAttractions: {
+    slug: string;
+    name: string;
+    distanceText: string | null;
+    imageUrl: string | null;
+  }[];
+};
+
+function mapRestaurantRow(row: DbRecord): PublicRestaurantCard {
+  const province = one(row.provinces);
+  const name = text(row.name_th, text(row.name_en, ""));
+  return {
+    slug: text(row.slug),
+    name,
+    province: text(province?.province_name_th, text(province?.province_name_en, "")),
+    foodType: text(row.food_type, "Local"),
+    description: text(row.description_th, text(row.description_en, "")),
+    imageUrl: text(row.cover_image_url, "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=700&auto=format&fit=crop"),
+    imageAlt: `${name} restaurant image`
+  };
+}
+
+export async function listPublicRestaurants(options?: { search?: string; foodType?: string; province?: string }): Promise<PublicRestaurantCard[]> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    let query = supabase
+      .from("restaurants")
+      .select(`
+        slug,
+        name_th,
+        name_en,
+        description_th,
+        description_en,
+        food_type,
+        cover_image_url,
+        provinces!inner (province_name_th, province_name_en)
+      `)
+      .eq("is_published", true)
+      .eq("is_active", true);
+
+    if (options?.search) {
+      query = query.or(`name_th.ilike.%${options.search}%,name_en.ilike.%${options.search}%`);
+    }
+
+    if (options?.foodType) {
+      query = query.ilike("food_type", `%${options.foodType}%`);
+    }
+
+    if (options?.province) {
+      query = query.eq('provinces.province_name_en', options.province);
+    }
+
+    const { data, error } = await query
+      .order("name_th", { ascending: true })
+      .limit(50);
+
+    if (error || !data || data.length === 0) return [];
+    return (data as DbRecord[]).map(mapRestaurantRow);
+  } catch {
+    return [];
+  }
+}
+
+export async function getPublicRestaurantDetail(slug: string): Promise<PublicRestaurantDetail | null> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select(`
+        *,
+        provinces (province_name_th, province_name_en, province_id),
+        restaurant_attractions (
+          distance_text,
+          attractions (
+            slug,
+            name_th,
+            name_en,
+            attraction_media (storage_path, is_cover)
+          )
+        )
+      `)
+      .eq("slug", slug)
+      .eq("is_published", true)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const row = data as DbRecord & { restaurant_attractions?: DbRecord[] };
+    const province = one(row.provinces);
+    const nearbyAttractions = Array.isArray(row.restaurant_attractions)
+      ? (row.restaurant_attractions as DbRecord[]).map(link => {
+          const attraction = one(link.attractions);
+          return {
+            slug: text(attraction?.slug),
+            name: text(attraction?.name_th, text(attraction?.name_en, "")),
+            distanceText: text(link.distance_text) || null,
+            imageUrl: (() => {
+              if (!attraction) return null;
+              const media = Array.isArray(attraction.attraction_media)
+                ? (attraction.attraction_media as DbRecord[])
+                : [];
+              const cover = media.find(m => m.is_cover === true) ?? media[0];
+              return text(cover?.storage_path) || null;
+            })()
+          };
+        })
+      : [];
+
+    return {
+      slug: text(row.slug, slug),
+      name: text(row.name_th, text(row.name_en, slug)),
+      province: text(province?.province_name_th, text(province?.province_name_en, "")),
+      provinceId: Number(province?.province_id ?? 0),
+      foodType: row.food_type as string | null,
+      description: text(row.description_th, row.description_en as string | undefined) || null,
+      addressText: (row.address_text as string | undefined) ?? null,
+      openingHours: (row.opening_hours as string | undefined) ?? null,
+      contactInfo: (row.contact_info as string | undefined) ?? null,
+      latitude: row.latitude === null ? null : Number(row.latitude),
+      longitude: row.longitude === null ? null : Number(row.longitude),
+      imageUrl: row.cover_image_url as string | null,
+      isPublished: Boolean(row.is_published),
+      nearbyAttractions
+    };
+  } catch {
+    return null;
+  }
+}
+
 export type PublicRouteCard = {
   slug: string;
   name: string;

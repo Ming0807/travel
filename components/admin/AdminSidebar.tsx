@@ -9,15 +9,15 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-slate-200/60 bg-[#FCFAF8] lg:block">
-      <div className="sticky top-0 min-h-screen px-4 py-6">
-        <Link className="flex items-center gap-2 mb-8 px-2" href="/admin">
+    <aside className="hidden w-64 shrink-0 border-r border-slate-200/60 bg-[#FCFAF8] lg:flex lg:flex-col">
+      <div className="flex flex-col h-screen px-4 py-6">
+        <Link className="flex items-center gap-2 mb-8 px-2 shrink-0" href="/admin">
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
             <MapPin size={20} weight="fill" />
           </div>
           <span className="text-lg font-black tracking-tight text-slate-800 uppercase">Globe Trekker</span>
         </Link>
-        <nav aria-label="Admin navigation" className="space-y-6">
+        <nav aria-label="Admin navigation" className="flex-1 space-y-6 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-track]:bg-transparent" style={{ scrollbarWidth: "thin" }}>
           {navGroups.map((group) => {
             const hasActiveItem = group.items.some(i => pathname === i.href || pathname.startsWith(i.href + "/"));
             

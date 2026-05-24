@@ -15,7 +15,7 @@ import {
   Users,
   BookOpen,
   GlobeHemisphereEast
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { projectVision, teamMembers } from "@/lib/data/about";
 

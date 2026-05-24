@@ -1,0 +1,34 @@
+import { Metadata } from "next";
+import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { RestaurantForm } from "@/components/admin/restaurants/RestaurantForm";
+import { requirePermission } from "@/lib/auth/guards";
+import { getAdminProvinces } from "@/lib/repositories/admin-restaurant.repository";
+
+export const metadata: Metadata = {
+  title: "New Restaurant | Admin",
+};
+
+export default async function NewAdminRestaurantPage() {
+  await requirePermission("restaurant.create");
+
+  const provinces = await getAdminProvinces();
+
+  return (
+    <AdminShell>
+      <div className="space-y-6">
+        <AdminPageHeader
+          eyebrow="Local Economy"
+          title="สร้างร้านอาหารใหม่"
+          description="เพิ่มร้านอาหารหรือธุรกิจชุมชนใหม่เข้าสู่ระบบ"
+        />
+
+        <div className="mt-8 max-w-6xl">
+          <RestaurantForm 
+            provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}
+          />
+        </div>
+      </div>
+    </AdminShell>
+  );
+}

@@ -54,6 +54,31 @@ export type PermissionKey =
   | "route.unpublish"
   | "route.activate"
   | "route.deactivate"
+  | "restaurant.read"
+  | "restaurant.create"
+  | "restaurant.update"
+  | "restaurant.publish"
+  | "restaurant.unpublish"
+  | "restaurant.activate"
+  | "restaurant.deactivate"
+  | "restaurant.delete"
+  | "restaurant.manage"
+  | "review.read"
+  | "review.moderate"
+  | "review.approve"
+  | "review.reject"
+  | "review.delete"
+  | "review.manage"
+  | "badge.read"
+  | "badge.create"
+  | "badge.update"
+  | "badge.activate"
+  | "badge.deactivate"
+  | "badge.delete"
+  | "badge.manage"
+  | "badge.award_manual"
+  | "badge.revoke"
+  | "leaderboard.read"
   | "visit.read"
   | "visit.detail"
   | "visit.update"
@@ -161,6 +186,31 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   "route.unpublish",
   "route.activate",
   "route.deactivate",
+  "restaurant.read",
+  "restaurant.create",
+  "restaurant.update",
+  "restaurant.publish",
+  "restaurant.unpublish",
+  "restaurant.activate",
+  "restaurant.deactivate",
+  "restaurant.delete",
+  "restaurant.manage",
+  "review.read",
+  "review.moderate",
+  "review.approve",
+  "review.reject",
+  "review.delete",
+  "review.manage",
+  "badge.read",
+  "badge.create",
+  "badge.update",
+  "badge.activate",
+  "badge.deactivate",
+  "badge.delete",
+  "badge.manage",
+  "badge.award_manual",
+  "badge.revoke",
+  "leaderboard.read",
   "visit.read",
   "visit.detail",
   "visit.update",
@@ -257,6 +307,14 @@ const CONTENT_ADMIN_PERMISSIONS: PermissionKey[] = [
   "route.unpublish",
   "route.activate",
   "route.deactivate",
+  "restaurant.read",
+  "restaurant.create",
+  "restaurant.update",
+  "restaurant.publish",
+  "restaurant.unpublish",
+  "restaurant.activate",
+  "restaurant.deactivate",
+  "badge.read",
   "visit.read",
   "visit.detail",
   "survey.read",
@@ -279,6 +337,8 @@ const VIEWER_PERMISSIONS: PermissionKey[] = [
   "media.read",
   "story.read",
   "route.read",
+  "restaurant.read",
+  "badge.read",
   "visit.read",
   "survey.read",
   "stamp.read"
@@ -321,6 +381,31 @@ const LEGACY_PERMISSION_EXPANSIONS: Record<string, PermissionKey[]> = {
     "route.create",
     "route.update",
     "route.delete"
+  ],
+  "restaurant.manage": [
+    "restaurant.read",
+    "restaurant.create",
+    "restaurant.update",
+    "restaurant.publish",
+    "restaurant.unpublish",
+    "restaurant.activate",
+    "restaurant.deactivate",
+    "restaurant.delete"
+  ],
+  "review.manage": [
+    "review.read",
+    "review.moderate",
+    "review.approve",
+    "review.reject",
+    "review.delete"
+  ],
+  "badge.manage": [
+    "badge.read",
+    "badge.create",
+    "badge.update",
+    "badge.activate",
+    "badge.deactivate",
+    "badge.delete"
   ],
   "export.detailed": [
     "export.create",

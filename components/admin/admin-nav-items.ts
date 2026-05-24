@@ -1,16 +1,24 @@
 import {
   SquaresFour,
   ChartLineUp,
-  MapPin,
-  Image as ImageIcon,
-  QrCode,
+  Users,
+  CalendarBlank,
+  Star,
   ClipboardText,
-  ChatCircleText,
-  Gear,
+  MapPin,
+  Article,
+  ForkKnife,
+  Image as ImageIcon,
+  Certificate,
+  QrCode,
+  Medal,
+  Trophy,
+  UserCircle,
   Shield,
+  Scroll,
+  EnvelopeSimple,
+  Gear,
 } from "@phosphor-icons/react/dist/ssr";
-
-import { Users, Layout } from "@phosphor-icons/react/dist/ssr";
 
 export type NavItem = {
   href: string;
@@ -28,35 +36,44 @@ export const navGroups: NavGroup[] = [
   {
     group: "Overview",
     items: [
-      { href: "/admin", label: "Dashboard", icon: SquaresFour },
+      { href: "/admin", label: "Home", icon: SquaresFour },
       { href: "/admin/dashboard", label: "Analytics", icon: ChartLineUp },
     ]
   },
   {
-    group: "Data & CRM",
+    group: "CRM",
     items: [
       { href: "/admin/tourists", label: "Tourists", icon: Users },
-      { href: "/admin/visits", label: "Bookings", icon: ChartLineUp },
-      { href: "/admin/surveys", label: "Reviews", icon: ChatCircleText },
+      { href: "/admin/visits", label: "Bookings", icon: CalendarBlank },
+      { href: "/admin/reviews", label: "Reviews", icon: Star },
+      { href: "/admin/surveys", label: "Surveys", icon: ClipboardText },
     ]
   },
   {
     group: "Content",
     items: [
       { href: "/admin/attractions", label: "Destinations", icon: MapPin },
-      { href: "/admin/stories", label: "Articles", icon: ClipboardText },
+      { href: "/admin/stories", label: "Articles", icon: Article },
+      { href: "/admin/restaurants", label: "Restaurants", icon: ForkKnife },
       { href: "/admin/photo-spots", label: "Media", icon: ImageIcon },
-      { href: "/admin/certificate-templates", label: "Cert Templates", icon: ImageIcon },
+    ]
+  },
+  {
+    group: "Operations",
+    items: [
+      { href: "/admin/certificate-templates", label: "Cert Templates", icon: Certificate },
       { href: "/admin/checkin-codes", label: "Checkin Codes", icon: QrCode },
+      { href: "/admin/badges", label: "Badges", icon: Medal },
+      { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
     ]
   },
   {
     group: "System",
     items: [
-      { href: "/admin/users", label: "Users", icon: Gear },
+      { href: "/admin/users", label: "Users", icon: UserCircle },
       { href: "/admin/roles", label: "Roles", icon: Shield },
-      { href: "/admin/audit", label: "Audit Logs", icon: ClipboardText },
-      { href: "/admin/messages", label: "Messages", icon: ChatCircleText },
+      { href: "/admin/audit", label: "Audit Logs", icon: Scroll },
+      { href: "/admin/messages", label: "Messages", icon: EnvelopeSimple },
       { href: "/admin/settings", label: "Settings", icon: Gear },
     ]
   }

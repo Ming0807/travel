@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -8,8 +8,11 @@ import {
   EnvelopeOpen, 
   Trash, 
   Archive, 
-  CheckCircle 
-} from "@phosphor-icons/react";
+  CheckCircle,
+  Funnel,
+  MagnifyingGlass
+} from "@phosphor-icons/react/dist/ssr";
+import { Pagination } from "@/components/admin/Pagination";
 import { 
   setAdminMessageStatus, 
   removeAdminMessage, 
@@ -20,13 +23,29 @@ export function MessageListClient({
   initialMessages,
   totalPages,
   currentPage,
+  total,
+  pageSize,
 }: {
   initialMessages: any[];
   totalPages: number;
   currentPage: number;
+  total?: number;
+  pageSize?: number;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [statusFilter, setStatusFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredMessages = initialMessages.filter((msg) => {
+    const matchesStatus = !statusFilter || msg.status === statusFilter;
+    const matchesSearch = !searchTerm || 
+      (msg.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (msg.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (msg.subject || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (msg.message || "").toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   const handleStatusChange = (id: string, status: "unread" | "read" | "archived") => {
     startTransition(async () => {
@@ -78,7 +97,42 @@ export function MessageListClient({
 
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-sm">
+      {/* Filter Bar */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative max-w-sm w-full">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <MagnifyingGlass size={18} />
+          </div>
+          <input
+            type="text"
+            className="block w-full rounded-lg border border-slate-300 py-2 pl-10 pr-3 text-sm focus:border-[#0A6B62] focus:outline-none focus:ring-1 focus:ring-[#0A6B62]/20"
+            placeholder="Search sender, subject, or message..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm">
+            {["", "unread", "read", "archived"].map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                  statusFilter === status
+                    ? "bg-[#F3704C] text-white"
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                {status === "" ? "All" : status === "unread" ? "Unread" : status === "read" ? "Read" : "Archived"}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden md:block overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
@@ -91,7 +145,7 @@ export function MessageListClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/5">
-              {initialMessages.map((msg) => (
+              {filteredMessages.map((msg) => (
                 <tr 
                   key={msg.id} 
                   className={`transition-colors hover:bg-slate-50 ${msg.status === "unread" ? "bg-[#FCFAF8] font-semibold" : ""}`}
@@ -172,26 +226,77 @@ export function MessageListClient({
         </div>
       </div>
 
-      {/* Pagination Controls */}
+      {/* Mobile Card View */}
+      <div className="grid gap-4 md:hidden">
+        {filteredMessages.map((msg) => (
+          <Link
+            key={msg.id}
+            href={`/admin/messages/${msg.id}`}
+            className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-bold text-slate-900 truncate">{msg.name}</span>
+                  {msg.status === "unread" && (
+                    <span className="h-2 w-2 rounded-full bg-[#F3704C] shrink-0" />
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 truncate">{msg.email}</p>
+              </div>
+              <div className="flex flex-wrap gap-1 shrink-0">
+                {msg.status === "unread" && (
+                  <span className="rounded-full bg-[#FFEBE5] px-2 py-0.5 text-[10px] font-bold text-[#F3704C]">
+                    New
+                  </span>
+                )}
+                {msg.is_replied && (
+                  <span className="rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                    Replied
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-700 truncate">
+                {msg.subject || "(ไม่มีหัวข้อ)"}
+              </p>
+              <p className="text-xs text-slate-500 line-clamp-2 mt-1">
+                {msg.message}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+              <span className="text-[11px] text-slate-400">
+                {new Date(msg.created_at).toLocaleDateString("th-TH", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDelete(msg.id);
+                  }}
+                  disabled={isPending}
+                  className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                  title="Delete"
+                >
+                  <Trash size={16} />
+                </button>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          {Array.from({ length: totalPages }).map((_, i) => {
-            const pageNum = i + 1;
-            return (
-              <Link
-                key={pageNum}
-                href={`/admin/messages?page=${pageNum}`}
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition ${
-                  currentPage === pageNum
-                    ? "bg-[#0A6B62] text-white"
-                    : "bg-white text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                {pageNum}
-              </Link>
-            );
-          })}
-        </div>
+        <Pagination page={currentPage} pageSize={pageSize ?? 20} total={total ?? totalPages * (pageSize ?? 20)} />
       )}
     </div>
   );

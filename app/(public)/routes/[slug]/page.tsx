@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { getPublicRouteDetail } from "@/lib/repositories/public-content.repository";
 import { MapPin, CalendarBlank } from "@phosphor-icons/react/dist/ssr";
-import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -40,7 +39,6 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
 
   return (
     <>
-      <SiteHeader appName="Southern Border Tourism" />
       <main className="min-h-screen bg-sand/30 pb-20 pt-24">
         {/* Hero Section */}
         <div className="relative h-[40vh] min-h-[300px] w-full bg-ink">

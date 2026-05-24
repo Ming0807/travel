@@ -8,6 +8,7 @@ import { HomepageCertificateCta } from "./sections/HomepageCertificateCta";
 import { HomepageSuggestedRoutes } from "./sections/HomepageSuggestedRoutes";
 import { SiteFooter as HomepageFooter } from "../layout/SiteFooter";
 import { listPublicAttractionCards, listPublicStories, listPublicRoutes } from "@/lib/repositories/public-content.repository";
+import { RevealOnScroll } from "@/components/ui/reveal-on-scroll";
 
 export async function Homepage() {
   const [attractions, stories, routes] = await Promise.all([
@@ -19,13 +20,13 @@ export async function Homepage() {
   return (
     <>
       <HomepageHero />
-      <HomepageAttractionsFeed attractions={attractions} />
-      <HomepageHowItWorks />
-      <HomepageStories stories={stories} />
-      <HomepageSuggestedRoutes routes={routes} />
-      <HomepageHighlights />
-      <HomepageDashboardPreview />
-      <HomepageCertificateCta />
+      <RevealOnScroll delay={100}><HomepageAttractionsFeed attractions={attractions} /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageHowItWorks /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageStories stories={stories} /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageSuggestedRoutes routes={routes} /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageHighlights /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageDashboardPreview /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageCertificateCta /></RevealOnScroll>
       <HomepageFooter />
     </>
   );

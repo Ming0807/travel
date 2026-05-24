@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
 
 export default function GlobalError({
   error,
@@ -13,7 +13,7 @@ export default function GlobalError({
     <section className="tourism-container grid min-h-[70vh] place-items-center py-20 text-center">
       <div className="max-w-lg rounded-[2rem] bg-white p-8 shadow-card">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-rose-50 text-rose-600">
-          <AlertTriangle aria-hidden="true" />
+          <WarningCircle size={24} aria-hidden="true" />
         </div>
         <h1 className="mt-5 text-3xl font-black text-[#073F37]">
           เกิดข้อผิดพลาด

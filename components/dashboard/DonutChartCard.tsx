@@ -1,5 +1,22 @@
+"use client";
+
+import { useState } from "react";
 import type { DistributionItem } from "@/types/dashboard";
-import { BarChartCard } from "@/components/dashboard/BarChartCard";
+import { NoDataState } from "@/components/dashboard/NoDataState";
+import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
+
+const DONUT_COLORS = [
+  "#0A6B62", // teal
+  "#F3704C", // coral
+  "#D6A13D", // gold
+  "#3E7A4F", // leaf
+  "#E77455", // coral alt
+  "#073F37", // dark teal
+  "#6B7280", // muted
+  "#94A3B8", // slate-400
+  "#A8D5BA", // light green
+  "#F0DFC8", // sand
+];
 
 type DonutChartCardProps = {
   title: string;
@@ -8,6 +25,167 @@ type DonutChartCardProps = {
   emptyDescription: string;
 };
 
-export function DonutChartCard(props: DonutChartCardProps) {
-  return <BarChartCard {...props} />;
+const SIZE = 220;
+const STROKE_WIDTH = 40;
+const RADIUS = (SIZE - STROKE_WIDTH) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const CENTER = SIZE / 2;
+
+export function DonutChartCard({
+  title,
+  definition,
+  data,
+  emptyDescription,
+}: DonutChartCardProps) {
+  const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  if (data.length === 0) {
+    return (
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-black text-slate-800">{title}</h2>
+          <MetricTooltip definition={definition} />
+        </div>
+        <div className="mt-4">
+          <NoDataState description={emptyDescription} />
+        </div>
+      </section>
+    );
+  }
+
+  const visibleData = total > 0 ? data : [];
+  const segments = visibleData.map((item, i) => {
+    const percent = item.value / total;
+    const offset = visibleData
+      .slice(0, i)
+      .reduce((sum, d) => sum + (d.value / total) * CIRCUMFERENCE, 0);
+    const length = percent * CIRCUMFERENCE;
+    return {
+      ...item,
+      percent,
+      offset,
+      length,
+      color: DONUT_COLORS[i % DONUT_COLORS.length],
+    };
+  });
+
+  const hoveredSegment = segments.find((s) => s.label === hoveredLabel);
+  const sorted = [...segments].sort((a, b) => b.value - a.value);
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="text-lg font-black text-slate-800">{title}</h2>
+        <MetricTooltip definition={definition} />
+      </div>
+
+      <div className="mt-4 flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
+        {/* Donut */}
+        <div className="relative shrink-0">
+          <svg
+            width={SIZE}
+            height={SIZE}
+            viewBox={`0 0 ${SIZE} ${SIZE}`}
+            role="img"
+            aria-label={`${title} donut chart`}
+          >
+            {/* Background ring */}
+            <circle
+              cx={CENTER}
+              cy={CENTER}
+              r={RADIUS}
+              fill="none"
+              stroke="#F1F5F9"
+              strokeWidth={STROKE_WIDTH}
+            />
+
+            {/* Segments */}
+            {segments.map((seg) => {
+              const isHovered = hoveredLabel === seg.label;
+              const isEmpty = seg.length < 0.5;
+              // For very small segments, draw at least a tiny visible arc
+              const adjustedLength = isEmpty && seg.value > 0 ? 2 : seg.length;
+
+              return (
+                <circle
+                  key={seg.label}
+                  cx={CENTER}
+                  cy={CENTER}
+                  r={RADIUS}
+                  fill="none"
+                  stroke={seg.color}
+                  strokeWidth={isHovered ? STROKE_WIDTH + 6 : STROKE_WIDTH}
+                  strokeDasharray={`${adjustedLength} ${CIRCUMFERENCE - adjustedLength}`}
+                  strokeDashoffset={-seg.offset}
+                  opacity={hoveredLabel === null || isHovered ? 1 : 0.25}
+                  onMouseEnter={() => setHoveredLabel(seg.label)}
+                  onMouseLeave={() => setHoveredLabel(null)}
+                  style={{
+                    transition:
+                      "stroke-width 0.2s ease, opacity 0.2s ease",
+                    cursor: "pointer",
+                  }}
+                />
+              );
+            })}
+
+            {/* Center text */}
+            <text
+              x={CENTER}
+              y={CENTER - 6}
+              textAnchor="middle"
+              className="fill-slate-800 text-2xl font-black"
+            >
+              {hoveredSegment
+                ? hoveredSegment.value.toLocaleString("th-TH")
+                : total.toLocaleString("th-TH")}
+            </text>
+            <text
+              x={CENTER}
+              y={CENTER + 16}
+              textAnchor="middle"
+              className="fill-slate-400 text-[11px] font-bold"
+            >
+              {hoveredSegment
+                ? `${(hoveredSegment.percent * 100).toFixed(1)}%`
+                : "total"}
+            </text>
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div className="flex-1 space-y-2 self-center sm:self-start">
+          {sorted.map((seg) => {
+            const isHovered = hoveredLabel === seg.label;
+            return (
+              <div
+                key={seg.label}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2 transition-colors ${
+                  isHovered ? "bg-slate-50" : ""
+                }`}
+                onMouseEnter={() => setHoveredLabel(seg.label)}
+                onMouseLeave={() => setHoveredLabel(null)}
+                style={{ cursor: "pointer" }}
+              >
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full"
+                  style={{ backgroundColor: seg.color }}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm font-bold text-slate-700">
+                    {seg.label}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {seg.value.toLocaleString("th-TH")} &middot;{" "}
+                    {(seg.percent * 100).toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
 }

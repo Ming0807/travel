@@ -9,22 +9,61 @@ import {
   Stamp,
   Certificate,
   Warning,
+  Trophy,
 } from "@phosphor-icons/react/dist/ssr";
 import { AccountLinkingTeaser } from "@/components/passport/AccountLinkingTeaser";
 import { getCurrentTouristProfileSummary } from "@/lib/services/profile.service";
-import { TouristAccessError } from "@/lib/auth/guards";
+import { TouristAccessError, resolveCurrentTouristId } from "@/lib/auth/guards";
+import { getTouristXP, getTouristBadges } from "@/lib/services/xp.service";
+import { XPProgressBar } from "@/components/badges/XPProgressBar";
+import { BadgeGrid } from "@/components/badges/BadgeGrid";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
 type ProfileSummary = Awaited<ReturnType<typeof getCurrentTouristProfileSummary>>;
 
+type AllBadgeDef = Awaited<ReturnType<typeof getAllBadges>>;
+
 type ProfileResult =
-  | { kind: "ready"; profile: ProfileSummary }
+  | { kind: "ready"; profile: ProfileSummary; xp: Awaited<ReturnType<typeof getTouristXP>>; badges: Awaited<ReturnType<typeof getTouristBadges>>; allBadges: AllBadgeDef }
   | { kind: "no_identity" }
   | { kind: "error" };
 
+async function getAllBadges() {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data } = await supabase
+    .from("badge_definitions")
+    .select("*")
+    .eq("is_active", true)
+    .order("display_order", { ascending: true });
+
+  return (data ?? []).map((row: any) => ({
+    badgeId: Number(row.badge_id),
+    badgeKey: row.badge_key,
+    nameTh: row.name_th,
+    nameEn: row.name_en,
+    descriptionTh: row.description_th || null,
+    descriptionEn: row.description_en || null,
+    iconName: row.icon_name || null,
+    iconColor: row.icon_color ?? "#E18868",
+    category: row.category,
+    requirementType: row.requirement_type,
+    requirementValue: Number(row.requirement_value),
+    requirementExtra: row.requirement_extra || null,
+    displayOrder: Number(row.display_order),
+    isActive: row.is_active,
+  }));
+}
+
 async function loadProfile(): Promise<ProfileResult> {
   try {
-    const profile = await getCurrentTouristProfileSummary();
-    return { kind: "ready", profile };
+    const touristId = await resolveCurrentTouristId();
+    const [profile, xp, badges, allBadges] = await Promise.all([
+      getCurrentTouristProfileSummary(),
+      getTouristXP(touristId),
+      getTouristBadges(touristId),
+      getAllBadges(),
+    ]);
+    return { kind: "ready", profile, xp, badges, allBadges };
   } catch (error) {
     if (error instanceof TouristAccessError && error.code === "TOURIST_IDENTITY_NOT_FOUND") {
       return { kind: "no_identity" };
@@ -94,7 +133,7 @@ export default async function ProfilePage() {
     );
   }
 
-  const { profile } = result;
+  const { profile, xp, badges, allBadges } = result;
 
   return (
     <main className="min-h-screen bg-cream px-4 pb-28 pt-8">
@@ -110,6 +149,30 @@ export default async function ProfilePage() {
               ? "Guest profile — link Google or LINE later to recover across devices."
               : `Linked with ${profile.linkedProviders.join(", ")}`}
           </p>
+        </section>
+
+        {/* XP Progress */}
+        <XPProgressBar xp={xp} />
+
+        {/* Badges */}
+        <section className="rounded-[1.75rem] bg-white p-5 shadow-card">
+          <h2 className="flex items-center gap-2 text-xl font-black text-ink">
+            <Trophy weight="fill" className="text-gold" /> Badges ที่สะสม
+          </h2>
+          <div className="mt-4">
+            <BadgeGrid allBadges={allBadges} earnedBadges={badges} compact />
+
+            {allBadges.length > 0 && badges.length < allBadges.length && (
+              <div className="mt-4 text-center">
+                <Link
+                  href="/leaderboard"
+                  className="inline-flex items-center gap-1 text-sm font-bold text-teal hover:underline"
+                >
+                  ดู Leaderboard →
+                </Link>
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Info Cards */}

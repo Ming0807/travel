@@ -1,81 +1,101 @@
 import { Star } from "@phosphor-icons/react/dist/ssr";
-import Image from "next/image";
+import type { ReviewCard, ReviewStats } from "@/types/tourism";
 
 type AttractionReviewsProps = {
   rating: number;
   reviewsCount: string;
+  stats?: ReviewStats;
+  reviews?: ReviewCard[];
+  children?: React.ReactNode;
 };
 
-export function AttractionReviews({ rating, reviewsCount }: AttractionReviewsProps) {
+export function AttractionReviews({ rating, reviewsCount, stats, reviews, children }: AttractionReviewsProps) {
+  const hasRealData = stats && stats.totalReviews > 0;
+
   return (
     <div id="reviews" className="scroll-mt-24 pt-8">
-      <h2 className="mb-6 text-2xl font-bold text-ink">Reviews Summary</h2>
+      <h2 className="mb-6 text-2xl font-bold text-ink">Reviews</h2>
 
+      {/* Rating Summary */}
       <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-16">
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold text-ink">{rating}</span>
+            <span className="text-5xl font-bold text-ink">{hasRealData ? stats.averageRating : rating}</span>
             <span className="text-xl font-bold text-muted">/ 5</span>
           </div>
-          <div className="flex text-gold">
+          <div className="flex text-amber-400">
             {[1, 2, 3, 4, 5].map((star) => (
-              <Star key={star} size={20} weight={star <= Math.round(rating) ? "fill" : "regular"} />
+              <Star key={star} size={20} weight={star <= Math.round(hasRealData ? stats.averageRating : rating) ? "fill" : "regular"} />
             ))}
           </div>
-          <p className="text-sm font-semibold text-muted">({reviewsCount} reviews)</p>
+          <p className="text-sm font-semibold text-muted">
+            ({hasRealData ? stats.totalReviews : reviewsCount} review{hasRealData && stats.totalReviews !== 1 ? "s" : (typeof reviewsCount === "string" && !reviewsCount.endsWith("s") ? "" : "s")})
+          </p>
         </div>
 
+        {/* Rating Distribution */}
         <div className="flex flex-1 flex-col gap-2">
-          {[
-            { stars: 5, pct: 70 },
-            { stars: 4, pct: 15 },
-            { stars: 3, pct: 10 },
-            { stars: 2, pct: 4 },
-            { stars: 1, pct: 1 }
-          ].map((row) => (
-            <div key={row.stars} className="flex items-center gap-4 text-sm font-bold text-ink">
-              <div className="w-4">{row.stars}</div>
-              <Star size={12} weight="fill" className="text-ink" />
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#F0EBE1]">
-                <div className="h-full rounded-full bg-coral" style={{ width: `${row.pct}%` }} />
+          {[5, 4, 3, 2, 1].map((star) => {
+            const pct = hasRealData && stats.totalReviews > 0
+              ? Math.round(((stats.distribution[star] ?? 0) / stats.totalReviews) * 100)
+              : star === 5 ? 70 : star === 4 ? 15 : star === 3 ? 10 : star === 2 ? 4 : 1;
+            return (
+              <div key={star} className="flex items-center gap-4 text-sm font-bold text-ink">
+                <div className="w-4">{star}</div>
+                <Star size={12} weight="fill" className="text-amber-400" />
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#F0EBE1]">
+                  <div className="h-full rounded-full bg-amber-400" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="w-8 text-right text-muted">{pct}%</div>
               </div>
-              <div className="w-8 text-right text-muted">{row.pct}%</div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Real Reviews */}
+      {hasRealData && reviews && reviews.length > 0 && (
+        <div className="mt-8 space-y-4">
+          {reviews.map((review) => (
+            <div
+              key={review.reviewId}
+              className="rounded-3xl border border-ink/5 bg-white p-6 shadow-sm"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-ink">{review.touristName}</p>
+                  <p className="text-xs font-semibold text-muted">
+                    {new Date(review.createdAt).toLocaleDateString("th-TH", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+                <div className="flex text-amber-400">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={16}
+                      weight={star <= review.rating ? "fill" : "regular"}
+                      className={star <= review.rating ? "text-amber-400" : "text-slate-200"}
+                    />
+                  ))}
+                </div>
+              </div>
+              {review.title && (
+                <h3 className="mb-1 text-sm font-bold text-ink">{review.title}</h3>
+              )}
+              {review.comment && (
+                <p className="text-sm leading-relaxed text-muted">&ldquo;{review.comment}&rdquo;</p>
+              )}
             </div>
           ))}
         </div>
-      </div>
+      )}
 
-      <div className="mt-8 rounded-3xl border border-ink/5 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="relative h-12 w-12 overflow-hidden rounded-full bg-ink/10">
-              <Image
-                src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80"
-                alt="Reviewer"
-                fill
-                className="object-cover"
-                unoptimized
-              />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-ink">Sophie M.</p>
-              <p className="text-xs font-semibold text-muted">May 10, 2024</p>
-            </div>
-          </div>
-          <div className="flex text-gold">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star key={star} size={16} weight="fill" />
-            ))}
-          </div>
-        </div>
-        <p className="text-sm font-medium leading-relaxed text-ink">
-          &ldquo;Aiyerweng is magical in the morning. The mist, the glass skywalk, and the view made the early trip worth it.&rdquo;
-        </p>
-      </div>
-
-      <button className="mt-6 w-full rounded-full border border-ink/10 py-3 text-sm font-bold text-ink transition-colors hover:bg-cream sm:w-auto sm:px-8">
-        Read more reviews
-      </button>
+      {/* Review Submission Form */}
+      {children}
     </div>
   );
 }

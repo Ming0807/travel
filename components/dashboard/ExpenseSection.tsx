@@ -2,13 +2,17 @@ import type { DashboardViewModel } from "@/types/dashboard";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { formatEstimatedSpending } from "@/lib/services/dashboard-math";
+import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 
 export function ExpenseSection({ data }: { data: DashboardViewModel }) {
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-black text-[#073F37]">Expense and estimated spending</h2>
-        <p className="mt-1 text-sm text-slate-500">Self-reported range-based estimates only. This section must never be read as revenue.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-[#073F37]">Expense and estimated spending</h2>
+          <p className="mt-1 text-sm text-slate-500">Self-reported range-based estimates only. This section must never be read as revenue.</p>
+        </div>
+        <ExportCsvButton />
       </div>
       <KpiCard
         metric={{
@@ -20,6 +24,7 @@ export function ExpenseSection({ data }: { data: DashboardViewModel }) {
           definition: "Estimated spending uses min/max values from selected spending ranges. It is not verified revenue.",
           note: `${data.expense.responseCount} survey expense responses`
         }}
+        index={0}
       />
       <div className="grid gap-5 xl:grid-cols-2">
         <BarChartCard data={data.expense.spendingRanges} definition={data.expense.methodologyNote} emptyDescription="No spending range responses in selected filters." title="Spending range distribution" />

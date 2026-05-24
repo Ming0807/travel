@@ -1,13 +1,17 @@
 import type { DashboardViewModel } from "@/types/dashboard";
 import { FunnelChart } from "@/components/dashboard/FunnelChart";
 import { NoDataState } from "@/components/dashboard/NoDataState";
+import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 
 export function FunnelSection({ data }: { data: DashboardViewModel }) {
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-black text-[#073F37]">Funnel analytics</h2>
-        <p className="mt-1 text-sm text-slate-500">Funnel events explain drop-off. They are not visits and not unique people.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-[#073F37]">Funnel analytics</h2>
+          <p className="mt-1 text-sm text-slate-500">Funnel events explain drop-off. They are not visits and not unique people.</p>
+        </div>
+        <ExportCsvButton />
       </div>
       {data.funnel.largestDropOffStage ? (
         <NoDataState
