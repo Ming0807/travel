@@ -5,6 +5,8 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { createBadgeAction, updateBadgeAction } from "@/app/actions/admin-badge-actions";
 import type { BadgeDefinition } from "@/types/tourism";
+import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
+import { Medal, List, Plus } from "@phosphor-icons/react";
 
 type BadgeFormProps = {
   badge?: BadgeDefinition | null;
@@ -41,9 +43,25 @@ export function BadgeForm({ badge, submitLabel = "บันทึกข้อม
     error: undefined,
   });
 
-  if (state?.success) {
+  if (state?.success && isEditing) {
     router.push("/admin/badges");
     router.refresh();
+  }
+
+  if (state?.success && !isEditing) {
+    const newId = state.data?.id;
+    if (newId) {
+      return (
+        <SuccessNextSteps
+          title="สร้างเหรียญรางวัล (Badge) สำเร็จ!"
+          description="ระบบได้บันทึกข้อมูลเหรียญรางวัลใหม่ของคุณเรียบร้อยแล้ว"
+          actions={[
+            { label: "สร้างเหรียญรางวัลเพิ่ม", href: "/admin/badges/new", primary: true, icon: Plus },
+            { label: "กลับไปหน้ารายการ", href: "/admin/badges", primary: false, icon: List }
+          ]}
+        />
+      );
+    }
   }
 
   return (

@@ -9,6 +9,11 @@ import {
   ClipboardText,
   ChartLineUp,
   ChatCircleText,
+  ForkKnife,
+  Article,
+  Path,
+  Medal,
+  Certificate,
 } from "@phosphor-icons/react/dist/ssr";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -59,6 +64,41 @@ const modules = [
     description: "ดูข้อมูลแบบสอบถามความพึงพอใจ",
     icon: ChatCircleText,
     tone: "bg-teal-50 text-teal-700",
+  },
+  {
+    href: "/admin/restaurants",
+    label: "Restaurants",
+    description: "จัดการร้านอาหารและของฝาก",
+    icon: ForkKnife,
+    tone: "bg-orange-50 text-orange-700",
+  },
+  {
+    href: "/admin/routes",
+    label: "Travel Routes",
+    description: "จัดการเส้นทางท่องเที่ยวแนะนำ",
+    icon: Path,
+    tone: "bg-cyan-50 text-cyan-700",
+  },
+  {
+    href: "/admin/stories",
+    label: "Stories & Articles",
+    description: "จัดการบทความและเรื่องเล่า",
+    icon: Article,
+    tone: "bg-fuchsia-50 text-fuchsia-700",
+  },
+  {
+    href: "/admin/badges",
+    label: "Digital Badges",
+    description: "จัดการเหรียญรางวัลและเงื่อนไข",
+    icon: Medal,
+    tone: "bg-yellow-50 text-yellow-700",
+  },
+  {
+    href: "/admin/certificate-templates",
+    label: "Certificate Templates",
+    description: "จัดการเทมเพลตใบประกาศนียบัตร",
+    icon: Certificate,
+    tone: "bg-indigo-50 text-indigo-700",
   },
 ];
 

@@ -50,8 +50,11 @@ export class SettingsRepository {
     const query: any = supabase.from("site_settings" as any);
     // @ts-ignore
     const { error } = await query
-      .update({ setting_value: value, updated_at: new Date().toISOString() })
-      .eq("setting_key", key);
+      .upsert({ 
+        setting_key: key, 
+        setting_value: value, 
+        updated_at: new Date().toISOString() 
+      }, { onConflict: 'setting_key' });
 
     if (error) {
       console.error(`Error updating setting ${key}:`, error.message || JSON.stringify(error));

@@ -12,7 +12,7 @@ import {
   deleteAdminBadge,
 } from "@/lib/repositories/admin-badge.repository";
 
-export type ActionResult = { success: true } | { success: false; error: string };
+export type ActionResult = { success: true; data?: { id: number } } | { success: false; error: string };
 
 export async function createBadgeAction(
   prevState: ActionResult,
@@ -53,7 +53,7 @@ export async function createBadgeAction(
     });
 
     revalidatePath("/admin/badges");
-    return { success: true };
+    return { success: true, data: { id: created.badgeId } };
   } catch (error) {
     return {
       success: false,

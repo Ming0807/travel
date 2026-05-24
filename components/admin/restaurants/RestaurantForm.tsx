@@ -5,6 +5,8 @@ import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { createRestaurantAction, updateRestaurantAction } from "@/app/actions/admin-restaurant-actions";
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
+import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
+import { Image, List } from "@phosphor-icons/react";
 
 export type AdminSelectOption = {
   id: number;
@@ -33,9 +35,25 @@ export function RestaurantForm({
     fieldErrors: undefined,
   });
 
-  if (state?.success) {
+  if (state?.success && isEditing) {
     router.push("/admin/restaurants");
     router.refresh();
+  }
+
+  if (state?.success && !isEditing) {
+    const newId = state.data?.id;
+    if (newId) {
+      return (
+        <SuccessNextSteps
+          title="สร้างร้านอาหารสำเร็จ!"
+          description="ระบบได้บันทึกข้อมูลร้านอาหารใหม่ของคุณเรียบร้อยแล้ว คุณสามารถจัดการรูปภาพหรือกลับไปยังหน้ารายการได้"
+          actions={[
+            { label: "อัปโหลดรูปภาพร้านอาหาร", href: `/admin/restaurants/${newId}`, primary: true, icon: Image },
+            { label: "กลับไปหน้ารายการ", href: "/admin/restaurants", primary: false, icon: List }
+          ]}
+        />
+      );
+    }
   }
 
   function fieldError(name: string) {
@@ -90,6 +108,11 @@ export function RestaurantForm({
                   maxLength={200}
                   name="slug"
                   required
+                  pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                  placeholder="e.g. delicious-cafe"
+                  onChange={(e) => {
+                    e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+                  }}
                 />
                 {fieldError("slug") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("slug")}</span> : null}
               </label>

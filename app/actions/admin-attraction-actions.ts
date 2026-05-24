@@ -19,7 +19,7 @@ type ActionResult = {
   data?: any;
 };
 
-export async function createAttractionAction(formData: FormData): Promise<ActionResult> {
+export async function createAttractionAction(prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("attraction.create");
     const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData));
@@ -50,7 +50,7 @@ export async function createAttractionAction(formData: FormData): Promise<Action
   }
 }
 
-export async function updateAttractionAction(attractionId: number, formData: FormData): Promise<ActionResult> {
+export async function updateAttractionAction(attractionId: number, prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("attraction.update");
     const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData));

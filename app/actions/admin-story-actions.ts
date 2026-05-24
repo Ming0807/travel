@@ -16,6 +16,8 @@ type ActionResult = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any;
 };
 
 export async function createStoryAction(formData: FormData): Promise<ActionResult> {
@@ -41,7 +43,7 @@ export async function createStoryAction(formData: FormData): Promise<ActionResul
     });
 
     revalidatePath("/admin/stories");
-    return { success: true };
+    return { success: true, data: { id: created.story_id } };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "Failed to create story." };

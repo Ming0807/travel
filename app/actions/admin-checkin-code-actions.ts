@@ -16,6 +16,8 @@ type ActionResult = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any;
 };
 
 export async function createCheckinCodeAction(prevState: ActionResult, formData: FormData): Promise<ActionResult> {
