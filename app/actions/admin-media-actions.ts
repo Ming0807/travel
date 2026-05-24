@@ -30,12 +30,12 @@ export async function createMediaAction(formData: FormData): Promise<ActionResul
     await logAdminMutation({
       actor: guard.actor,
       action: "media.create",
-      entityType: "attraction_media",
+      entityType: "content_media",
       entityId: created.media_id,
       newValues: parsed.data as unknown as Record<string, unknown>,
     });
 
-    revalidatePath(`/admin/attractions/${parsed.data.attractionId}/media`);
+    revalidatePath(`/admin/${parsed.data.entityType}s/${parsed.data.entityId}/media`);
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
@@ -58,13 +58,13 @@ export async function updateMediaAction(mediaId: number, formData: FormData): Pr
     await logAdminMutation({
       actor: guard.actor,
       action: "media.update",
-      entityType: "attraction_media",
+      entityType: "content_media",
       entityId: updated.media_id,
       oldValues: old as unknown as Record<string, unknown>,
       newValues: parsed.data as unknown as Record<string, unknown>,
     });
 
-    revalidatePath(`/admin/attractions/${parsed.data.attractionId}/media`);
+    revalidatePath(`/admin/${parsed.data.entityType}s/${parsed.data.entityId}/media`);
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
@@ -108,12 +108,14 @@ export async function deleteMediaAction(mediaId: number): Promise<ActionResult> 
     await logAdminMutation({
       actor: guard.actor,
       action: "media.delete",
-      entityType: "attraction_media",
+      entityType: "content_media",
       entityId: mediaId,
       oldValues: current as unknown as Record<string, unknown>,
     });
 
-    revalidatePath(`/admin/attractions/${current.attraction_id}/media`);
+    const entityType = current.restaurant_id ? 'restaurants' : current.story_id ? 'stories' : current.route_id ? 'routes' : 'attractions';
+    const entityId = current.restaurant_id || current.story_id || current.route_id || current.attraction_id;
+    revalidatePath(`/admin/${entityType}/${entityId}/media`);
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };

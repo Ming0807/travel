@@ -7,11 +7,12 @@ import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 import { Plus, Trash, PencilSimple, X } from "@phosphor-icons/react";
 
 interface MediaManagerProps {
-  attractionId: number;
+  entityId: number;
+  entityType: "attraction" | "restaurant" | "story" | "route";
   initialMedia: AdminMediaRow[];
 }
 
-export function MediaManager({ attractionId, initialMedia }: MediaManagerProps) {
+export function MediaManager({ entityId, entityType, initialMedia }: MediaManagerProps) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<number | "new" | null>(null);
 
@@ -39,7 +40,8 @@ export function MediaManager({ attractionId, initialMedia }: MediaManagerProps) 
 
       {editingId === "new" && (
         <MediaForm
-          attractionId={attractionId}
+          entityId={entityId}
+          entityType={entityType}
           onClose={() => setEditingId(null)}
         />
       )}
@@ -49,7 +51,8 @@ export function MediaManager({ attractionId, initialMedia }: MediaManagerProps) 
           <div key={media.media_id} className="relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             {editingId === media.media_id ? (
               <MediaForm
-                attractionId={attractionId}
+                entityId={entityId}
+                entityType={entityType}
                 initialData={media}
                 onClose={() => setEditingId(null)}
               />
@@ -108,11 +111,13 @@ export function MediaManager({ attractionId, initialMedia }: MediaManagerProps) 
 }
 
 function MediaForm({
-  attractionId,
+  entityId,
+  entityType,
   initialData,
   onClose,
 }: {
-  attractionId: number;
+  entityId: number;
+  entityType: "attraction" | "restaurant" | "story" | "route";
   initialData?: AdminMediaRow;
   onClose: () => void;
 }) {
@@ -145,7 +150,8 @@ function MediaForm({
     try {
       const body = new FormData();
       body.append("file", file);
-      body.append("attractionId", String(attractionId));
+      body.append("entityId", String(entityId));
+      body.append("entityType", entityType);
 
       const response = await fetch("/api/admin/media/upload", {
         method: "POST",
@@ -191,7 +197,8 @@ function MediaForm({
         </div>
       )}
 
-      <input type="hidden" name="attractionId" value={attractionId} />
+      <input type="hidden" name="entityId" value={entityId} />
+      <input type="hidden" name="entityType" value={entityType} />
 
       <div className="space-y-4">
         <div>

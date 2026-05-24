@@ -6,7 +6,10 @@ import type { PaginatedResult } from "./admin-route.repository";
 
 export type AdminMediaRow = {
   media_id: number;
-  attraction_id: number;
+  attraction_id: number | null;
+  restaurant_id: number | null;
+  story_id: number | null;
+  route_id: number | null;
   media_type: string;
   storage_path: string;
   alt_text_th: string | null;
@@ -24,7 +27,10 @@ export type AdminMediaRow = {
 function mapMedia(row: any): AdminMediaRow {
   return {
     media_id: Number(row.media_id),
-    attraction_id: Number(row.attraction_id),
+    attraction_id: row.attraction_id ? Number(row.attraction_id) : null,
+    restaurant_id: row.restaurant_id ? Number(row.restaurant_id) : null,
+    story_id: row.story_id ? Number(row.story_id) : null,
+    route_id: row.route_id ? Number(row.route_id) : null,
     media_type: row.media_type,
     storage_path: row.storage_path,
     alt_text_th: row.alt_text_th,
@@ -41,7 +47,10 @@ function mapMedia(row: any): AdminMediaRow {
 
 function toPayload(input: AdminMediaMutationInput) {
   return {
-    attraction_id: input.attractionId,
+    attraction_id: input.entityType === 'attraction' ? input.entityId : null,
+    restaurant_id: input.entityType === 'restaurant' ? input.entityId : null,
+    story_id: input.entityType === 'story' ? input.entityId : null,
+    route_id: input.entityType === 'route' ? input.entityId : null,
     media_type: input.mediaType,
     storage_path: input.storagePath,
     alt_text_th: input.altTextTh,
@@ -60,13 +69,15 @@ export async function listAdminMedia(filters: AdminMediaFilters): Promise<Pagina
   const to = from + filters.pageSize - 1;
 
   let query = supabase
-    .from("attraction_media")
+    .from("content_media")
     .select("*", { count: "exact" })
     .order("display_order", { ascending: true })
     .order("created_at", { ascending: false })
     .range(from, to);
 
-  if (filters.attractionId) query = query.eq("attraction_id", filters.attractionId);
+  if (filters.entityType && filters.entityId) {
+    query = query.eq(`${filters.entityType}_id`, filters.entityId);
+  }
   if (filters.mediaType) query = query.eq("media_type", filters.mediaType);
   if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
 
@@ -87,7 +98,7 @@ export async function listAdminMedia(filters: AdminMediaFilters): Promise<Pagina
 export async function getAdminMediaById(mediaId: number): Promise<AdminMediaRow | null> {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
-    .from("attraction_media")
+    .from("content_media")
     .select("*")
     .eq("media_id", mediaId)
     .maybeSingle();
@@ -104,7 +115,7 @@ export async function getAdminMediaById(mediaId: number): Promise<AdminMediaRow 
 export async function createAdminMedia(input: AdminMediaMutationInput): Promise<AdminMediaRow> {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
-    .from("attraction_media")
+    .from("content_media")
     .insert(toPayload(input))
     .select("*")
     .single();
@@ -119,7 +130,7 @@ export async function createAdminMedia(input: AdminMediaMutationInput): Promise<
 export async function updateAdminMedia(mediaId: number, input: AdminMediaMutationInput): Promise<AdminMediaRow> {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
-    .from("attraction_media")
+    .from("content_media")
     .update(toPayload(input))
     .eq("media_id", mediaId)
     .select("*")
@@ -138,7 +149,7 @@ export async function updateAdminMediaStatus(
 ): Promise<AdminMediaRow> {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
-    .from("attraction_media")
+    .from("content_media")
     .update(patch)
     .eq("media_id", mediaId)
     .select("*")
@@ -154,7 +165,7 @@ export async function updateAdminMediaStatus(
 export async function deleteAdminMedia(mediaId: number): Promise<void> {
   const supabase = createSupabaseServiceRoleClient();
   const { error } = await supabase
-    .from("attraction_media")
+    .from("content_media")
     .delete()
     .eq("media_id", mediaId);
 

@@ -21,7 +21,8 @@ const booleanFromForm = z.preprocess((value) => {
 }, z.boolean());
 
 export const adminMediaFiltersSchema = adminPaginationSchema.extend({
-  attractionId: requiredId.optional(),
+  entityId: requiredId.optional(),
+  entityType: z.enum(['attraction', 'restaurant', 'story', 'route']).optional(),
   mediaType: z.preprocess(
     (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
     z.string().optional()
@@ -33,7 +34,8 @@ export const adminMediaFiltersSchema = adminPaginationSchema.extend({
 });
 
 export const adminMediaMutationSchema = z.object({
-  attractionId: requiredId,
+  entityId: requiredId,
+  entityType: z.enum(['attraction', 'restaurant', 'story', 'route']),
   mediaType: z.enum(['image', 'panorama', 'video360', 'embed', 'external_url']),
   storagePath: z.string().trim().min(1, "Storage path/URL is required."),
   altTextTh: optionalShortText,

@@ -23,11 +23,12 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const attractionId = formData.get("attractionId") as string | null;
+    const entityId = formData.get("entityId") as string | null;
+    const entityType = formData.get("entityType") as string | null;
 
-    if (!file || !attractionId) {
+    if (!file || !entityId || !entityType) {
       return NextResponse.json(
-        { success: false, error: "Missing file or attraction ID" },
+        { success: false, error: "Missing file, entity ID, or entity Type" },
         { status: 400 }
       );
     }
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const uuid = crypto.randomUUID();
-    const logicalPath = `attraction-media/${year}/${month}/${attractionId}/${uuid}.${ext}`;
+    const logicalPath = `${entityType}-media/${year}/${month}/${entityId}/${uuid}.${ext}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
