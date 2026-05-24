@@ -52,9 +52,9 @@ export function RestaurantForm({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column (Main Content) */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="lg:col-span-7 space-y-8">
 
           {/* 1. Basic Info */}
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -120,7 +120,7 @@ export function RestaurantForm({
         </div>
 
         {/* Right Column (Settings & Metadata) */}
-        <div className="space-y-6 lg:sticky lg:top-8 lg:h-max lg:self-start">
+        <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-8 lg:h-max lg:self-start">
 
           {/* Status */}
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

@@ -72,10 +72,10 @@ export function RoleFormClient({ permissions, initialData }: RoleFormProps) {
 
       {initialData?.role_id && <input type="hidden" name="id" value={initialData.role_id} />}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         
         {/* Left Column: Role Details */}
-        <div className="space-y-6 lg:col-span-1">
+        <div className="lg:col-span-7 space-y-8">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">Role Details</h3>
             
@@ -159,11 +159,11 @@ export function RoleFormClient({ permissions, initialData }: RoleFormProps) {
         </div>
 
         {/* Right Column: Permissions Matrix */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-5 space-y-8">
           <div className="flex flex-col gap-6">
             <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2">Permissions Matrix</h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {Object.entries(permissionGroups).map(([group, perms]) => (
                 <div key={group} className="flex flex-col rounded-xl border border-slate-200 bg-slate-50/50 p-4 shadow-sm transition hover:bg-slate-50">
                   <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
