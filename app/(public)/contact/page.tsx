@@ -48,14 +48,14 @@ export default function ContactPage() {
         <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-24">
           <div className="lg:w-1/2 pt-8">
             <p className="text-[#D6896C] font-bold tracking-widest text-xs uppercase mb-4">
-              We&apos;d love to hear from you
+              เรายินดีรับฟังจากคุณ
             </p>
-            <h1 className="text-5xl md:text-6xl font-black text-ink mb-6">Contact Us</h1>
+            <h1 className="text-5xl md:text-6xl font-black text-ink mb-6">ติดต่อเรา</h1>
             <p className="text-muted leading-relaxed text-lg max-w-md mb-8">
               มีข้อสงสัย ต้องการคำแนะนำเรื่องการท่องเที่ยว หรืออยากให้เราช่วยวางแผนทริปครั้งต่อไป? ทีมงานของเราพร้อมช่วยเหลือคุณเสมอ
             </p>
             <button className="inline-flex items-center gap-2 bg-[#E18868] text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-[#D07757] transition-all">
-              Message us <Airplane weight="fill" />
+              ส่งข้อความหาเรา <Airplane weight="fill" />
             </button>
             
             {/* Dashed line decorative SVG */}
@@ -96,7 +96,7 @@ export default function ContactPage() {
               <div className="w-24 h-24 rounded-full border border-dashed border-[#CBA07D] flex items-center justify-center bg-[#FAF8F5]/80 backdrop-blur-sm p-1">
                 <div className="w-full h-full rounded-full border border-[#CBA07D] flex flex-col items-center justify-center text-center">
                   <span className="text-[#CBA07D] text-[10px] font-black leading-tight tracking-widest uppercase">
-                    Southern<br/>Border
+                    ท่องเที่ยว<br/>ชายแดนใต้
                   </span>
                 </div>
               </div>
@@ -109,12 +109,12 @@ export default function ContactPage() {
           
           {/* Left: Contact Form */}
           <div className="lg:col-span-7">
-            <h2 className="text-2xl font-black text-ink mb-2">Send us a message</h2>
-            <p className="text-muted text-sm mb-8">Fill out the form and we&apos;ll get back to you shortly.</p>
+            <h2 className="text-2xl font-black text-ink mb-2">ส่งข้อความหาเรา</h2>
+            <p className="text-muted text-sm mb-8">กรอกแบบฟอร์มด้านล่าง แล้วเราจะติดต่อกลับโดยเร็วที่สุด</p>
             
             <form className="space-y-6" onSubmit={e => e.preventDefault()}>
               <div>
-                <label className="block text-xs font-bold text-ink mb-2">Full Name</label>
+                <label className="block text-xs font-bold text-ink mb-2">ชื่อ-นามสกุล</label>
                 <input 
                   type="text" 
                   placeholder="e.g. สมชาย รักสงบ"
@@ -123,7 +123,7 @@ export default function ContactPage() {
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-ink mb-2">Email Address</label>
+                <label className="block text-xs font-bold text-ink mb-2">อีเมล</label>
                 <input 
                   type="email" 
                   placeholder="e.g. somchai@example.com"
@@ -132,9 +132,9 @@ export default function ContactPage() {
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-ink mb-2">Destination Interest</label>
+                <label className="block text-xs font-bold text-ink mb-2">จังหวัดที่สนใจ</label>
                 <select defaultValue="" className="w-full bg-transparent border-b border-ink/20 py-3 text-ink focus:border-teal outline-none transition-colors appearance-none ">
-                  <option value="" disabled>Select a destination</option>
+                  <option value="" disabled>เลือกจังหวัด</option>
                   <option value="yala">ยะลา (Yala)</option>
                   <option value="pattani">ปัตตานี (Pattani)</option>
                   <option value="narathiwat">นราธิวาส (Narathiwat)</option>
@@ -143,7 +143,7 @@ export default function ContactPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-ink mb-2">Subject</label>
+                <label className="block text-xs font-bold text-ink mb-2">หัวเรื่อง</label>
                 <input 
                   type="text" 
                   placeholder="e.g. สอบถามเส้นทาง, แจ้งปัญหาการสแกน QR"
@@ -152,10 +152,10 @@ export default function ContactPage() {
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-ink mb-2">Message</label>
+                <label className="block text-xs font-bold text-ink mb-2">ข้อความ</label>
                 <textarea 
                   rows={4}
-                  placeholder="Tell us more about your travel plans or questions..."
+                  placeholder="บอกเราเพิ่มเติมเกี่ยวกับแผนการเดินทางหรือข้อสงสัยของคุณ..."
                   className="w-full bg-[#F4F1EA] rounded-2xl p-5 text-sm text-ink outline-none focus:ring-2 focus:ring-teal/30 resize-none mt-2 placeholder:text-muted/50 border border-ink/5"
                 ></textarea>
               </div>
@@ -164,7 +164,7 @@ export default function ContactPage() {
                 type="submit" 
                 className="w-full bg-[#E18868] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#D07757] transition-all shadow-sm"
               >
-                Send Message <PaperPlaneRight weight="fill" />
+                ส่งข้อความ <PaperPlaneRight weight="fill" />
               </button>
               
               <p className="text-[11px] text-muted text-center flex items-center justify-center gap-2">
@@ -175,7 +175,7 @@ export default function ContactPage() {
 
           {/* Right: Contact Cards */}
           <div className="lg:col-span-5 space-y-4">
-            <h2 className="text-2xl font-black text-ink mb-6">Get in touch</h2>
+            <h2 className="text-2xl font-black text-ink mb-6">ช่องทางการติดต่อ</h2>
             
             {/* Contact Cards */}
             <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-ink/5 flex items-start gap-4">
@@ -184,9 +184,9 @@ export default function ContactPage() {
               </div>
               <div className="flex-1 flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-sm text-ink mb-1">Email Us</h3>
+                  <h3 className="font-bold text-sm text-ink mb-1">ส่งอีเมลหาเรา</h3>
                   <p className="text-sm text-ink font-semibold">contact@southerntourism.com</p>
-                  <p className="text-xs text-muted mt-1">We reply within 24 hours</p>
+                  <p className="text-xs text-muted mt-1">เราจะตอบกลับภายใน 24 ชั่วโมง</p>
                 </div>
               </div>
             </div>
@@ -196,9 +196,9 @@ export default function ContactPage() {
                 <Phone size={24} weight="fill" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-ink mb-1">Call Us</h3>
+                <h3 className="font-bold text-sm text-ink mb-1">โทรหาเรา</h3>
                 <p className="text-sm text-ink font-semibold">+66 (0) 73 313 928</p>
-                <p className="text-xs text-muted mt-1">Mon - Fri, 9:00 AM - 4:00 PM</p>
+                <p className="text-xs text-muted mt-1">จันทร์ - ศุกร์, 09:00 - 16:00 น.</p>
               </div>
             </div>
 
@@ -207,14 +207,14 @@ export default function ContactPage() {
                 <MapPin size={24} weight="fill" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-ink mb-1">Our Office</h3>
+                <h3 className="font-bold text-sm text-ink mb-1">สำนักงานของเรา</h3>
                 <p className="text-sm font-semibold leading-relaxed">
                   มหาวิทยาลัยสงขลานครินทร์ วิทยาเขตปัตตานี<br/>
                   181 ถ.เจริญประดิษฐ์ ต.รูสะมิแล<br/>
                   ปัตตานี 94000
                 </p>
                 <a href="#" className="text-xs font-bold text-[#E18868] mt-2 inline-block hover:underline">
-                  View on Google Maps
+                  ดูบน Google Maps
                 </a>
               </div>
             </div>
@@ -224,10 +224,10 @@ export default function ContactPage() {
                 <Clock size={24} weight="fill" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-ink mb-1">Support Hours</h3>
+                <h3 className="font-bold text-sm text-ink mb-1">เวลาทำการ</h3>
                 <p className="text-xs text-muted leading-relaxed">
-                  Mon - Fri: 9:00 AM - 6:00 PM<br/>
-                  Sat - Sun: 10:00 AM - 4:00 PM
+                  จันทร์ - ศุกร์: 09:00 - 18:00 น.<br/>
+                  เสาร์ - อาทิตย์: 10:00 - 16:00 น.
                 </p>
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function ContactPage() {
           {/* Visit Our Office Map */}
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-ink">Visit Our Office</h2>
+              <h2 className="text-2xl font-black text-ink">เยี่ยมชมสำนักงานของเรา</h2>
             </div>
             
             <div className="bg-white rounded-[2rem] overflow-hidden border border-ink/5 shadow-sm">
@@ -250,7 +250,7 @@ export default function ContactPage() {
                   เรายินดีต้อนรับทุกคนที่สนใจโครงการ หรือต้องการพูดคุยเรื่องความร่วมมือในการพัฒนาแพลตฟอร์มการท่องเที่ยว
                 </p>
                 <button className="border border-ink/20 rounded-full px-5 py-2.5 text-xs font-bold flex items-center gap-2 hover:bg-ink hover:text-white transition-colors">
-                  Get Directions <PaperPlaneRight weight="bold" />
+                  ดูเส้นทาง <PaperPlaneRight weight="bold" />
                 </button>
               </div>
               <div className="h-64 bg-[#EBECE8] relative w-full border-t border-ink/5">
@@ -275,8 +275,8 @@ export default function ContactPage() {
           {/* FAQ & Connect */}
           <div>
             <div className="flex justify-between items-end mb-6">
-              <h2 className="text-2xl font-black text-ink">Frequently Asked Questions</h2>
-              <a href="#" className="text-xs font-bold text-ink hover:text-[#E18868]">View all FAQs →</a>
+              <h2 className="text-2xl font-black text-ink">คำถามที่พบบ่อย</h2>
+              <a href="#" className="text-xs font-bold text-ink hover:text-[#E18868]">ดูคำถามทั้งหมด →</a>
             </div>
             
             <div className="space-y-3 mb-10">
@@ -307,7 +307,7 @@ export default function ContactPage() {
             </div>
 
             <div className="flex items-center gap-6">
-              <h3 className="font-bold text-ink">Let&apos;s Connect</h3>
+              <h3 className="font-bold text-ink">ติดตามเรา</h3>
               <div className="flex gap-3">
                 <a href="#" className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
                   <InstagramLogo size={18} />
@@ -341,7 +341,7 @@ export default function ContactPage() {
               unoptimized
             />
             <div className="relative z-10 max-w-md">
-              <h2 className="text-3xl font-black text-white mb-3">Stay Inspired</h2>
+              <h2 className="text-3xl font-black text-white mb-3">รับแรงบันดาลใจใหม่ๆ</h2>
               <p className="text-white/80 text-sm mb-6">
                 รับข่าวสารเกี่ยวกับการท่องเที่ยว โปรโมชัน และจุด Check-in ใหม่ๆ ในจังหวัดชายแดนใต้ ส่งตรงถึงอีเมลคุณ
               </p>
@@ -349,14 +349,14 @@ export default function ContactPage() {
               <div className="flex flex-col sm:flex-row gap-3 p-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
                 <input 
                   type="email" 
-                  placeholder="Enter your email address"
+                  placeholder="กรอกอีเมลของคุณ"
                   className="flex-1 bg-white rounded-full px-5 py-3 text-sm text-ink outline-none"
                 />
                 <button className="bg-[#E18868] text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-[#D07757] transition-colors flex items-center justify-center gap-2 shadow-sm">
-                  Subscribe <PaperPlaneRight weight="fill" />
+                  ติดตามข่าวสาร <PaperPlaneRight weight="fill" />
                 </button>
               </div>
-              <p className="text-[10px] text-white/50 mt-3 pl-2">No spam, ever. Unsubscribe anytime.</p>
+              <p className="text-[10px] text-white/50 mt-3 pl-2">เราไม่ส่งสแปม และคุณสามารถยกเลิกได้ตลอดเวลา</p>
             </div>
           </div>
         </section>

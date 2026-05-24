@@ -9,10 +9,10 @@ export function HomepageDashboardPreview() {
         <div>
           <div className="flex items-center gap-3">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-coral">
-              Live Tourism Insights
+              ข้อมูลเชิงลึกการท่องเที่ยวแบบเรียลไทม์
             </p>
             <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Preview Data
+              ข้อมูลเบื้องต้น
             </span>
           </div>
           <h2 className="mt-3 text-4xl font-bold leading-tight lg:text-5xl text-ink">

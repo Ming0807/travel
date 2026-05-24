@@ -28,19 +28,19 @@ export default function AboutPage() {
         <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-24">
           <div className="lg:w-1/2 pt-8">
             <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-              <span>Home</span>
+              <span>หน้าแรก</span>
               <span>›</span>
-              <span className="text-ink">About Us</span>
+              <span className="text-ink">เกี่ยวกับเรา</span>
             </div>
             
             <h1 className="text-5xl md:text-6xl font-black text-ink mb-6 leading-tight">
-              About <br className="hidden lg:block"/>Southern Border
+              เกี่ยวกับ <br className="hidden lg:block"/>ท่องเที่ยวชายแดนใต้
             </h1>
             <p className="text-muted leading-relaxed text-lg max-w-md mb-8">
               เราคือนักเล่าเรื่อง นักสำรวจ และผู้สร้างสรรค์แพลตฟอร์มที่มุ่งหวังจะเปิดมุมมองใหม่ของการท่องเที่ยวใน 3 จังหวัดชายแดนใต้ — หนึ่งการเดินทาง หนึ่งความประทับใจ
             </p>
             <button className="inline-flex items-center gap-2 bg-[#E18868] text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-[#D07757] transition-all">
-              Explore our story
+              ค้นพบเรื่องราวของเรา
             </button>
             
             {/* Dashed line decorative SVG */}
@@ -95,9 +95,9 @@ export default function AboutPage() {
               <Target size={32} weight="fill" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-ink mb-3">Our Mission</h2>
+              <h2 className="text-xl font-black text-ink mb-3">พันธกิจของเรา</h2>
               <p className="text-muted text-sm leading-relaxed">
-                To inspire and empower travelers with trusted guides, authentic stories, and handpicked recommendations that turn trips into life-changing experiences in the Southern Border.
+                เพื่อสร้างแรงบันดาลใจและมอบพลังให้นักเดินทางด้วยคำแนะนำที่เชื่อถือได้ เรื่องราวที่แท้จริง และสถานที่ที่เราคัดสรรมาอย่างดี เพื่อเปลี่ยนการเดินทางให้เป็นประสบการณ์ที่น่าจดจำใน 3 จังหวัดชายแดนใต้
               </p>
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function AboutPage() {
               <Eye size={32} weight="fill" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-ink mb-3">Our Vision</h2>
+              <h2 className="text-xl font-black text-ink mb-3">วิสัยทัศน์ของเรา</h2>
               <p className="text-muted text-sm leading-relaxed">
                 {projectVision.content}
               </p>
@@ -117,16 +117,16 @@ export default function AboutPage() {
 
         {/* WHAT MAKES IT SPECIAL */}
         <section className="mb-24">
-          <h2 className="text-3xl font-black text-ink mb-12">What Makes Us Special</h2>
+          <h2 className="text-3xl font-black text-ink mb-12">ความพิเศษของเรา</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="space-y-4">
               <div className="text-[#E18868]">
                 <CheckCircle size={40} weight="light" />
               </div>
-              <h3 className="font-bold text-ink">Curated with Care</h3>
+              <h3 className="font-bold text-ink">คัดสรรด้วยความใส่ใจ</h3>
               <p className="text-sm text-muted leading-relaxed">
-                Every guide and recommendation is handpicked by real travelers and local experts.
+                ทุกคำแนะนำและจุดหมายปลายทางถูกเลือกสรรจากประสบการณ์ตรงของนักเดินทางและผู้คนในพื้นที่
               </p>
             </div>
             
@@ -134,9 +134,9 @@ export default function AboutPage() {
               <div className="text-[#E18868]">
                 <GlobeHemisphereEast size={40} weight="light" />
               </div>
-              <h3 className="font-bold text-ink">Authentic & Local</h3>
+              <h3 className="font-bold text-ink">สัมผัสวิถีท้องถิ่นแท้จริง</h3>
               <p className="text-sm text-muted leading-relaxed">
-                We go beyond the tourist trail to bring you real places and real stories from the locals.
+                พาคุณออกจากเส้นทางหลัก สู่สถานที่และเรื่องราวที่ผู้คนท้องถิ่นอยากนำเสนอ
               </p>
             </div>
 
@@ -144,9 +144,9 @@ export default function AboutPage() {
               <div className="text-[#E18868]">
                 <Camera size={40} weight="light" />
               </div>
-              <h3 className="font-bold text-ink">Stories that Inspire</h3>
+              <h3 className="font-bold text-ink">เรื่องราวสร้างแรงบันดาลใจ</h3>
               <p className="text-sm text-muted leading-relaxed">
-                From epic journeys to hidden gems, our stories fuel your next adventure.
+                จากแหล่งท่องเที่ยวลับสู่เส้นทางใหม่ๆ ที่จะปลุกความเป็นนักสำรวจในตัวคุณ
               </p>
             </div>
 
@@ -154,9 +154,9 @@ export default function AboutPage() {
               <div className="text-[#E18868]">
                 <ShieldCheck size={40} weight="light" />
               </div>
-              <h3 className="font-bold text-ink">Trusted by Travelers</h3>
+              <h3 className="font-bold text-ink">เชื่อถือได้ ปลอดภัย</h3>
               <p className="text-sm text-muted leading-relaxed">
-                Clear, honest and up-to-date content you can count on, wherever you go.
+                เนื้อหาอัปเดตตลอดเวลา พร้อมข้อแนะนำและระบบที่ดูแลข้อมูลให้คุณเดินทางอย่างมั่นใจ
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default function AboutPage() {
         {/* OUR STORY */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-24 items-center">
           <div className="lg:col-span-4 space-y-6">
-            <h2 className="text-3xl font-black text-ink">Our Story</h2>
+            <h2 className="text-3xl font-black text-ink">เรื่องราวของเรา</h2>
             <div className="space-y-4 text-sm text-muted leading-relaxed">
               <p>
                 แพลตฟอร์มนี้ถือกำเนิดขึ้นจากความรักในการเดินทางและความเชื่อที่ว่า การเดินทางที่ดีที่สุดคือการก้าวออกไปสัมผัสกับวิถีชีวิตจริงที่ซ่อนอยู่ในพื้นที่
@@ -178,7 +178,7 @@ export default function AboutPage() {
               </p>
             </div>
             <p className="text-[#E18868] font-['Playfair_Display'] italic text-xl pt-4">
-              The journey continues...
+              และการเดินทางยังคงดำเนินต่อไป...
             </p>
           </div>
           
@@ -196,9 +196,9 @@ export default function AboutPage() {
         {/* MEET THE TEAM */}
         <section className="mb-24">
           <div className="flex justify-between items-end mb-12">
-            <h2 className="text-3xl font-black text-ink">Meet the Team</h2>
+            <h2 className="text-3xl font-black text-ink">ทีมงานของเรา</h2>
             <button className="border border-ink/20 rounded-full px-5 py-2 text-xs font-bold hover:bg-ink hover:text-white transition-colors">
-              Join our team
+              ร่วมงานกับเรา
             </button>
           </div>
           
@@ -217,9 +217,9 @@ export default function AboutPage() {
                 <h3 className="font-black text-ink">{member.name}</h3>
                 <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-3 mt-1">{member.role}</p>
                 <p className="text-xs text-muted leading-relaxed mb-4 flex-1">
-                  {idx === 0 ? "Explorer at heart, storyteller by passion." : 
-                   idx === 1 ? "Turning data into insights that inspire." : 
-                   "Capturing the world one pattern at a time."}
+                  {idx === 0 ? "นักสำรวจโดยสายเลือด นักเล่าเรื่องโดยความหลงใหล" : 
+                   idx === 1 ? "เปลี่ยนข้อมูลเป็นอินไซต์ที่สร้างแรงบันดาลใจ" : 
+                   "เก็บบันทึกความงามของโลกผ่านสายตาที่แม่นยำ"}
                 </p>
                 <div className="flex gap-3 text-ink/40 mt-auto">
                   <InstagramLogo size={16} className="hover:text-[#E18868] cursor-pointer transition-colors" />
@@ -243,7 +243,7 @@ export default function AboutPage() {
               <h3 className="font-black text-ink">อามีนา สะมะแอ</h3>
               <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-3 mt-1">Community Manager</p>
               <p className="text-xs text-muted leading-relaxed mb-4 flex-1">
-                Building connections and curating experiences for locals.
+                สร้างความเชื่อมโยงและคัดสรรประสบการณ์ร่วมกับชุมชน
               </p>
               <div className="flex gap-3 text-ink/40 mt-auto">
                 <InstagramLogo size={16} className="hover:text-[#E18868] cursor-pointer transition-colors" />
@@ -262,29 +262,29 @@ export default function AboutPage() {
             <div className="flex flex-col items-center">
               <div className="text-[#E18868] mb-3"><MapPin size={32} weight="light" /></div>
               <h3 className="text-3xl font-black text-ink mb-1">150+</h3>
-              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">Attractions</p>
-              <p className="text-xs text-muted">Handpicked places to discover.</p>
+              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">สถานที่ท่องเที่ยว</p>
+              <p className="text-xs text-muted">คัดสรรสถานที่เด่นๆ มาเพื่อคุณ</p>
             </div>
             
             <div className="flex flex-col items-center">
               <div className="text-[#E18868] mb-3"><Users size={32} weight="light" /></div>
               <h3 className="text-3xl font-black text-ink mb-1">50K+</h3>
-              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">Happy Travelers</p>
-              <p className="text-xs text-muted">Trusted by a growing community.</p>
+              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">นักเดินทางผู้ร่วมสนุก</p>
+              <p className="text-xs text-muted">มั่นใจด้วยคอมมูนิตี้ที่เติบโตต่อเนื่อง</p>
             </div>
             
             <div className="flex flex-col items-center">
               <div className="text-[#E18868] mb-3"><BookOpen size={32} weight="light" /></div>
               <h3 className="text-3xl font-black text-ink mb-1">10K+</h3>
-              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">Stamps Collected</p>
-              <p className="text-xs text-muted">Real journeys recorded.</p>
+              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">ตราประทับสะสม</p>
+              <p className="text-xs text-muted">หลักฐานของความทรงจำดีๆ</p>
             </div>
             
             <div className="flex flex-col items-center">
               <div className="text-[#E18868] mb-3"><GlobeHemisphereEast size={32} weight="light" /></div>
               <h3 className="text-3xl font-black text-ink mb-1">3</h3>
-              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">Provinces</p>
-              <p className="text-xs text-muted">Yala, Pattani, Narathiwat.</p>
+              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">จังหวัดหลัก</p>
+              <p className="text-xs text-muted">ยะลา, ปัตตานี, นราธิวาส</p>
             </div>
           </div>
         </section>

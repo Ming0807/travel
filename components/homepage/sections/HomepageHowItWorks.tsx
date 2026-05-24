@@ -5,7 +5,7 @@ const steps = [
   {
     num: "01",
     icon: QrCode,
-    label: "Scan QR",
+    label: "สแกนคิวอาร์ (Scan QR)",
     desc: "สแกน QR ที่จุดถ่ายรูป ระบบรู้ทันทีว่าอยู่จังหวัด สถานที่ และจุดเช็กอินใด",
     accent: "bg-teal text-white",
     iconBg: "bg-white/20",
@@ -13,7 +13,7 @@ const steps = [
   {
     num: "02",
     icon: DeviceMobile,
-    label: "Upload Photo",
+    label: "อัปโหลดรูปภาพ",
     desc: "กรอกชื่อที่ต้องการแสดง จังหวัด/ประเทศ ช่วงอายุ และอัปโหลดรูปสำหรับบัตรที่ระลึก",
     accent: "bg-coral text-white",
     iconBg: "bg-white/20",
@@ -21,7 +21,7 @@ const steps = [
   {
     num: "03",
     icon: Certificate,
-    label: "Get Certificate",
+    label: "รับใบประกาศ",
     desc: "ระบบสร้างใบประกาศดิจิทัลให้ดาวน์โหลดและแชร์ได้ โดยไม่บังคับ Login ก่อน",
     accent: "bg-gold text-white",
     iconBg: "bg-white/20",
@@ -29,7 +29,7 @@ const steps = [
   {
     num: "04",
     icon: Stamp,
-    label: "Collect Stamp",
+    label: "สะสมตราประทับ",
     desc: "รับตราประทับในพาสปอร์ต แล้วเลือกตอบแบบสอบถามสั้นๆ เพื่อช่วยพัฒนาพื้นที่",
     accent: "bg-sky-500 text-white",
     iconBg: "bg-white/20",
@@ -45,7 +45,7 @@ export function HomepageHowItWorks() {
         <div>
           <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-coral">
             <span className="block h-px w-6 bg-coral" />
-            Digital Passport Flow
+            ขั้นตอนการใช้งานพาสปอร์ตดิจิทัล
           </p>
           <h2 className="mt-5 text-4xl font-bold leading-tight lg:text-5xl text-ink">
             ใช้งานง่ายเหมือนแอป

@@ -11,11 +11,11 @@ export function HomepageHero() {
             ค้นพบความมหัศจรรย์<br />
             ที่ซ่อนเร้นแห่งชายแดนใต้<br />
             <span className="font-serif italic text-coral relative inline-block mt-2">
-              Hidden
+              สิ่งมหัศจรรย์
               <svg className="absolute w-full h-3 -bottom-1 left-0 text-sand/60" viewBox="0 0 100 10" preserveAspectRatio="none">
                 <path d="M0,5 Q50,10 100,5" stroke="currentColor" strokeWidth="4" fill="none" />
               </svg>
-            </span> Wonders
+            </span> ที่รอคุณอยู่
           </h1>
           <p className="mt-6 text-lg leading-8 text-muted body-text max-w-lg">
             ตามหาช่วงเวลาสุดพิเศษและสถานที่ที่ซ่อนเร้นเพื่อจุดประกายประสบการณ์ที่ไม่มีวันลืม จากการพบปะผู้คนไปจนถึงจุดหมายที่โดดเด่น เราจะช่วยให้คุณค้นพบเรื่องราวดีๆ ใน ยะลา ปัตตานี และนราธิวาส

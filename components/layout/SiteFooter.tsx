@@ -9,7 +9,7 @@ export function SiteFooter() {
         <div>
           <div className="flex items-center gap-3">
             <Compass weight="fill" size={32} className="text-coral" />
-            <h3 className="text-xl font-bold tracking-tight text-ink uppercase">Southern Border</h3>
+            <h3 className="text-xl font-bold tracking-tight text-ink uppercase">ท่องเที่ยวชายแดนใต้</h3>
           </div>
           <p className="mt-6 text-sm text-muted">ติดตามเราได้ที่</p>
           <div className="mt-3 flex gap-4 text-ink">

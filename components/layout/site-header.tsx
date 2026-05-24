@@ -88,8 +88,8 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               <Compass weight="fill" size={20} className="text-white" />
             </div>
             <div className="leading-tight">
-              <h1 className="text-lg font-bold tracking-tight text-ink uppercase">Southern Border</h1>
-              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">Explorer</p>
+              <h1 className="text-lg font-bold tracking-tight text-ink uppercase">ท่องเที่ยวชายแดนใต้</h1>
+              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">Digital Passport</p>
             </div>
           </Link>
 
@@ -189,8 +189,8 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               <Compass weight="fill" size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold tracking-tight text-ink uppercase leading-none">Southern Border</h1>
-              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mt-0.5">Explorer</p>
+              <h1 className="text-base font-bold tracking-tight text-ink uppercase leading-none">ท่องเที่ยวชายแดนใต้</h1>
+              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mt-0.5">Digital Passport</p>
             </div>
           </Link>
 
