@@ -36,12 +36,12 @@ export default async function PhotoUploadPage(props: {
         
         {/* Title Section */}
         <div className="w-full md:w-1/3 mb-6 flex flex-col gap-3">
-          <span className="inline-flex w-fit items-center px-3 py-1 rounded-full bg-white/80 backdrop-blur text-[#E18868] font-bold text-xs tracking-wider uppercase shadow-sm">
+          <span className="inline-flex w-fit items-center px-3 py-1 rounded-full bg-white/80 backdrop-blur text-coral font-bold text-xs tracking-wider uppercase shadow-sm">
             ขั้นตอนที่ 2/3
           </span>
           <h1 className="text-4xl md:text-5xl font-black text-ink drop-shadow-sm">เพิ่มรูปภาพความทรงจำ</h1>
           <p className="text-ink/80 flex items-center gap-2 font-medium">
-            <MapPin weight="fill" className="text-[#E18868]" size={20} />
+            <MapPin weight="fill" className="text-coral" size={20} />
             {attraction?.name_th || "สถานที่ท่องเที่ยว"}
           </p>
         </div>

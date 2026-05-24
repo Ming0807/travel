@@ -25,60 +25,66 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
   const sideStories = storyCards.slice(1, 4);
 
   return (
-    <section id="stories" className="mx-auto mt-8 max-w-7xl border-t border-ink/5 px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <h2 className="text-3xl font-bold text-ink">เรื่องราวและแรงบันดาลใจ</h2>
+    <section id="stories" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-[3rem] my-8 shadow-sm border border-ink/5">
+      <div className="mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <h2 className="text-4xl font-black text-ink tracking-tight">ประสบการณ์จากนักเดินทาง</h2>
+          <p className="mt-4 text-muted text-sm md:text-base font-medium max-w-lg">อ่านเรื่องราวแห่งแรงบันดาลใจจากผู้ที่ได้สัมผัสมนต์เสน่ห์ของปลายด้ามขวาน</p>
+        </div>
         <Link
           href="/stories"
-          className="inline-flex items-center gap-2 rounded-full border-2 border-ink/10 px-6 py-3 text-sm font-bold text-ink transition-all hover:border-ink hover:bg-ink hover:text-white"
+          className="inline-flex rounded-full border border-ink/10 px-6 py-3 text-sm font-bold text-ink hover:bg-cream hover:text-coral transition-colors"
         >
-          อ่านบทความทั้งหมด
+          อ่านบทความทั้งหมด &rarr;
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
         {featuredStory && (
           <Link href={`/stories/${featuredStory.id}`} className="group block">
-            <div className="relative mb-5 aspect-[4/3] w-full overflow-hidden rounded-3xl shadow-sm">
+            <div className="relative mb-6 aspect-[4/3] w-full overflow-hidden rounded-[2rem] shadow-card bg-cream">
               <Image
                 src={featuredStory.imageUrl}
                 alt={storyImageAlt(featuredStory.title)}
                 fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
                 unoptimized
               />
+              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold text-coral shadow-sm">
+                เรื่องเด่น (Featured)
+              </div>
             </div>
-            <p className="mb-2 text-sm font-semibold text-teal">{featuredStory.category}</p>
-            <h3 className="text-2xl font-bold leading-tight text-ink transition-colors group-hover:text-coral">
+            <p className="mb-3 text-xs font-bold text-coral uppercase tracking-widest">{featuredStory.category} · {featuredStory.province}</p>
+            <h3 className="text-3xl font-black leading-tight text-ink transition-colors group-hover:text-coral">
               {featuredStory.title}
             </h3>
-            <p className="body-text mt-3 text-sm text-muted">
+            <p className="body-text mt-4 text-base text-muted font-medium leading-relaxed">
               {featuredStory.excerpt ||
-                `สำรวจวัฒนธรรม อาหาร และเรื่องราวท้องถิ่นที่รอให้คุณค้นพบใน${featuredStory.province}`}
+                `ร่วมสำรวจวัฒนธรรม อาหาร และเรื่องราวท้องถิ่นที่ซ่อนเร้น รอให้คุณได้สัมผัสใน${featuredStory.province}`}
             </p>
-            <p className="mt-4 text-xs text-muted">{featuredStory.date || "เผยแพร่ล่าสุด"} · อ่าน 4 นาที</p>
+            <p className="mt-5 text-sm font-bold text-ink/40">{featuredStory.date || "เผยแพร่ล่าสุด"} · ใช้เวลาอ่าน 4 นาที</p>
           </Link>
         )}
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
           {sideStories.map((story, index) => (
-            <Link href={`/stories/${story.id}`} key={story.id} className="group flex items-center gap-5">
-              <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl shadow-sm">
+            <Link href={`/stories/${story.id}`} key={story.id} className="group flex flex-col sm:flex-row items-center sm:items-start gap-6 border-b border-ink/5 pb-8 last:border-0 last:pb-0">
+              <div className="relative h-48 sm:h-36 w-full sm:w-36 shrink-0 overflow-hidden rounded-3xl shadow-sm bg-cream">
                 <Image
                   src={story.imageUrl}
                   alt={storyImageAlt(story.title)}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
                   unoptimized
                 />
               </div>
-              <div>
-                <p className="mb-1 text-xs font-semibold text-teal">{story.category}</p>
-                <h3 className="text-base font-bold leading-tight text-ink transition-colors group-hover:text-coral">
+              <div className="flex-1 mt-2 sm:mt-0">
+                <p className="mb-2 text-[10px] font-black text-coral uppercase tracking-widest">{story.category}</p>
+                <h3 className="text-xl font-bold leading-snug text-ink transition-colors group-hover:text-coral line-clamp-2">
                   {story.title}
                 </h3>
-                <p className="mt-2 text-xs text-muted">
-                  {story.date || `เรื่องแนะนำ ${index + 1}`} · อ่าน {3 + index} นาที
+                <p className="mt-4 text-xs font-bold text-ink/40">
+                  {story.date || `เรื่องราวแนะนำ ${index + 1}`} · ใช้เวลาอ่าน {3 + index} นาที
                 </p>
               </div>
             </Link>

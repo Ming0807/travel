@@ -123,7 +123,7 @@ export function PhotoUploadForm({ visitId }: { visitId: string }) {
           className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-300 ${
             isDragOver
               ? "border-teal bg-teal/5 scale-[1.02] shadow-lg"
-              : "border-gray-300 hover:border-[#E18868] hover:bg-cream/50 hover:scale-[1.01]"
+              : "border-gray-300 hover:border-coral hover:bg-cream/50 hover:scale-[1.01]"
           }`}
         >
           <div className="flex flex-col items-center justify-center pt-5 pb-6 transition-transform duration-300">
@@ -167,7 +167,7 @@ export function PhotoUploadForm({ visitId }: { visitId: string }) {
       <button
         onClick={handleUpload}
         disabled={!file || isUploading}
-        className="w-full py-4 rounded-full bg-[#E18868] text-white font-bold text-base shadow-sm hover:bg-[#D07757] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex justify-center items-center gap-2 transition-all"
+        className="w-full py-4 rounded-full bg-coral text-white font-bold text-base shadow-sm hover:bg-coral/90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex justify-center items-center gap-2 transition-all"
       >
         {isUploading ? (
           <span className="flex items-center gap-2">

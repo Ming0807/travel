@@ -46,10 +46,10 @@ export default async function CertificateSuccessPage(props: {
       <ConfettiEffect />
       
       {/* Background glow */}
-      <div className="absolute top-0 w-[500px] h-[500px] bg-[#E18868]/10 rounded-full blur-[100px] pointer-events-none -mt-40"></div>
+      <div className="absolute top-0 w-[500px] h-[500px] bg-coral/10 rounded-full blur-[100px] pointer-events-none -mt-40"></div>
 
       <div className="w-full max-w-md mx-auto mb-10 text-center relative z-10">
-        <div className="mx-auto w-20 h-20 rounded-full bg-[#FAF3EE] text-[#E18868] flex items-center justify-center mb-6 shadow-inner ring-8 ring-white">
+        <div className="mx-auto w-20 h-20 rounded-full bg-cream text-coral flex items-center justify-center mb-6 shadow-inner ring-8 ring-white">
           <CheckCircle size={44} weight="fill" />
         </div>
         <h1 className="text-3xl md:text-4xl font-black text-ink tracking-tight">สร้างใบประกาศสำเร็จ!</h1>
@@ -59,7 +59,7 @@ export default async function CertificateSuccessPage(props: {
       </div>
 
       <div className="w-full max-w-md mx-auto relative mb-12 z-10 group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-[#E18868]/40 to-[#f5a88c]/40 rounded-[2.2rem] blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+        <div className="absolute -inset-1 bg-gradient-to-r from-coral/40 to-coral/20 rounded-[2.2rem] blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
         <div className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white bg-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -78,7 +78,7 @@ export default async function CertificateSuccessPage(props: {
         />
         
         <div className="mt-6 flex justify-center">
-          <button className="flex items-center gap-2 text-xs font-bold text-muted hover:text-[#E18868] transition-colors py-2 px-4 rounded-full bg-white border border-ink/5 shadow-sm">
+          <button className="flex items-center gap-2 text-xs font-bold text-muted hover:text-coral transition-colors py-2 px-4 rounded-full bg-white border border-ink/5 shadow-sm">
             <ShareNetwork weight="bold" size={16} /> แชร์ใบประกาศนี้
           </button>
         </div>

@@ -54,7 +54,7 @@ export default async function MinimalProfilePage({ params }: { params: Promise<{
       <div className="relative z-10 pt-[10vh]">
         <div className="max-w-5xl mx-auto px-4 mb-8 flex items-center justify-center md:justify-start gap-4 text-ink">
           <div className="bg-white/80 backdrop-blur rounded-2xl p-3 shadow-sm">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#E18868]">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-coral">
               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l.99-3.95 5.43-5.44Z"></path>
             </svg>
           </div>

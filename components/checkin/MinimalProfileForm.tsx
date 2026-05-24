@@ -47,7 +47,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
               type="text" 
               id="displayName" 
               name="displayName" 
-              className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#E18868] focus:ring-1 focus:ring-[#E18868] outline-none transition-all bg-white"
+              className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-coral focus:ring-1 focus:ring-coral outline-none transition-all bg-white"
               placeholder="นามแฝง ชื่อเล่น หรือชื่อจริง"
               maxLength={150}
               defaultValue={defaultValues?.displayName}
@@ -66,7 +66,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
           name="originCountryId"
           value={selectedCountry}
           onChange={(e) => setSelectedCountry(e.target.value)}
-          className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#E18868] focus:ring-1 focus:ring-[#E18868] outline-none bg-white"
+          className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-coral focus:ring-1 focus:ring-coral outline-none bg-white"
         >
           <option value="">เลือกประเทศ...</option>
           {countries.map((c) => (
@@ -87,7 +87,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
             id="originProvinceId" 
             name="originProvinceId"
             defaultValue={defaultValues?.originProvinceId}
-            className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#E18868] focus:ring-1 focus:ring-[#E18868] outline-none bg-white"
+            className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-coral focus:ring-1 focus:ring-coral outline-none bg-white"
           >
             <option value="">เลือกจังหวัด...</option>
             {provinces.map((p) => (
@@ -108,7 +108,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
           id="ageGroup" 
           name="ageGroup"
           defaultValue={defaultValues?.ageGroup}
-          className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#E18868] focus:ring-1 focus:ring-[#E18868] outline-none bg-white"
+          className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-coral focus:ring-1 focus:ring-coral outline-none bg-white"
           required
         >
           <option value="">เลือกช่วงอายุ...</option>
@@ -132,7 +132,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
               name="hasConsented" 
               value="true"
               required
-              className="w-5 h-5 rounded border-gray-300 text-[#E18868] focus:ring-[#E18868] cursor-pointer"
+              className="w-5 h-5 rounded border-gray-300 text-coral focus:ring-coral cursor-pointer"
             />
           </div>
           <span className="text-xs text-muted leading-relaxed group-hover:text-ink transition-colors">
@@ -146,7 +146,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
         <button 
           type="submit" 
           disabled={pending}
-          className="w-full flex items-center justify-center py-4 bg-[#E18868] text-white rounded-full font-bold text-base shadow-sm hover:bg-[#D07757] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center py-4 bg-coral text-white rounded-full font-bold text-base shadow-sm hover:bg-coral/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {pending ? "กำลังดำเนินการ..." : "ยืนยันและดำเนินการต่อ"}
         </button>
@@ -162,7 +162,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
       <div className="w-full md:w-[45%] bg-[#FAF8F5] p-8 md:p-12 flex flex-col items-center justify-center border-l border-ink/5">
         <div className="max-w-xs w-full">
           <div className="text-center mb-8">
-            <div className="w-32 h-32 mx-auto bg-white rounded-full flex items-center justify-center shadow-sm mb-6 text-[#E18868]">
+            <div className="w-32 h-32 mx-auto bg-white rounded-full flex items-center justify-center shadow-sm mb-6 text-coral">
               {/* Fallback illustration icon */}
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>

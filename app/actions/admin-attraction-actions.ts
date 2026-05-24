@@ -16,6 +16,7 @@ type ActionResult = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
+  data?: any;
 };
 
 export async function createAttractionAction(formData: FormData): Promise<ActionResult> {
@@ -41,10 +42,11 @@ export async function createAttractionAction(formData: FormData): Promise<Action
     });
 
     revalidatePath("/admin/attractions");
-    return { success: true };
-  } catch (error) {
+    return { success: true, data: { id: created.attraction_id } };
+  } catch (error: any) {
+    console.error("Failed to create attraction:", error);
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to create attraction." };
+    return { success: false, error: "Failed to create attraction: " + (error.message || "Unknown error") };
   }
 }
 
@@ -73,7 +75,7 @@ export async function updateAttractionAction(attractionId: number, formData: For
     });
 
     revalidatePath("/admin/attractions");
-    return { success: true };
+    return { success: true, data: { id: updated.attraction_id } };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "Failed to update attraction." };

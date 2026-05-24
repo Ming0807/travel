@@ -16,7 +16,7 @@ export function CheckinLanding({ details }: { details: CheckinCodeDetails }) {
       <div className="relative z-10 flex flex-col items-center max-w-lg mx-auto w-full px-4 pt-20 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
         <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both">
           {/* Attraction Context */}
-          <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur shadow-sm text-[#E18868] px-5 py-2 rounded-full text-sm font-bold animate-in fade-in zoom-in-95 duration-500 delay-300 fill-mode-both">
+          <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur shadow-sm text-coral px-5 py-2 rounded-full text-sm font-bold animate-in fade-in zoom-in-95 duration-500 delay-300 fill-mode-both">
             <MapPin weight="fill" />
             <span>{attraction.province?.province_name_th || "สถานที่ท่องเที่ยว"}</span>
           </div>
@@ -34,7 +34,7 @@ export function CheckinLanding({ details }: { details: CheckinCodeDetails }) {
 
         {/* Certificate Teaser Card */}
         <div className="w-full bg-white p-8 rounded-[2rem] shadow-sm border border-ink/5 flex flex-col items-center text-center space-y-5 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[900ms] fill-mode-both hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-          <div className="h-20 w-20 bg-[#FAF3EE] text-[#E18868] rounded-[1.5rem] flex items-center justify-center mb-2 shadow-inner animate-in zoom-in-95 duration-500 delay-[1100ms] fill-mode-both">
+          <div className="h-20 w-20 bg-cream text-coral rounded-[1.5rem] flex items-center justify-center mb-2 shadow-inner animate-in zoom-in-95 duration-500 delay-[1100ms] fill-mode-both">
             <Certificate size={40} weight="fill" />
           </div>
           <div>
@@ -46,8 +46,8 @@ export function CheckinLanding({ details }: { details: CheckinCodeDetails }) {
         {/* Primary CTA */}
         <div className="w-full space-y-4 pt-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-[1300ms] fill-mode-both">
           <Link 
-            href={`/checkin/${details.code}/start`}
-            className="w-full flex items-center justify-center py-4 bg-[#E18868] text-white rounded-full font-bold text-lg shadow-sm hover:bg-[#D07757] transition-all hover:scale-[1.02] active:scale-[0.98]"
+            href={`/checkin/${details.code}/identity`}
+            className="w-full flex items-center justify-center py-4 bg-coral text-white rounded-full font-bold text-lg shadow-sm hover:bg-coral/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             สร้างใบประกาศของฉัน
           </Link>
@@ -56,7 +56,7 @@ export function CheckinLanding({ details }: { details: CheckinCodeDetails }) {
 
         {/* Privacy Hint */}
         <div className="flex items-center gap-2 text-[11px] text-muted font-bold tracking-wide uppercase mt-8 bg-white/50 backdrop-blur border border-ink/5 px-5 py-3 rounded-full animate-in fade-in duration-700 delay-[1500ms] fill-mode-both">
-          <ShieldCheck size={18} className="text-[#E18868]" />
+          <ShieldCheck size={18} className="text-coral" />
           <span>ข้อมูลของคุณปลอดภัยและใช้สำหรับสถิติการท่องเที่ยวเท่านั้น</span>
         </div>
       </div>

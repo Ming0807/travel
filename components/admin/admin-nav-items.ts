@@ -6,6 +6,7 @@ import {
   Star,
   ClipboardText,
   MapPin,
+  MapPinLine,
   Article,
   ForkKnife,
   Image as ImageIcon,
@@ -53,9 +54,11 @@ export const navGroups: NavGroup[] = [
     group: "Content",
     items: [
       { href: "/admin/attractions", label: "Destinations", icon: MapPin },
+      { href: "/admin/routes", label: "Travel Routes", icon: MapPinLine },
       { href: "/admin/stories", label: "Articles", icon: Article },
       { href: "/admin/restaurants", label: "Restaurants", icon: ForkKnife },
-      { href: "/admin/photo-spots", label: "Media", icon: ImageIcon },
+      { href: "/admin/media", label: "Media Library", icon: ImageIcon },
+      { href: "/admin/photo-spots", label: "Photo Spots", icon: ImageIcon },
     ]
   },
   {

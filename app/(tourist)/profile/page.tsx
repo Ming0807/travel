@@ -18,6 +18,7 @@ import { getTouristXP, getTouristBadges } from "@/lib/services/xp.service";
 import { XPProgressBar } from "@/components/badges/XPProgressBar";
 import { BadgeGrid } from "@/components/badges/BadgeGrid";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 type ProfileSummary = Awaited<ReturnType<typeof getCurrentTouristProfileSummary>>;
 
@@ -44,7 +45,7 @@ async function getAllBadges() {
     descriptionTh: row.description_th || null,
     descriptionEn: row.description_en || null,
     iconName: row.icon_name || null,
-    iconColor: row.icon_color ?? "#E18868",
+    iconColor: row.icon_color ?? "var(--coral, #E77455)",
     category: row.category,
     requirementType: row.requirement_type,
     requirementValue: Number(row.requirement_value),
@@ -136,147 +137,161 @@ export default async function ProfilePage() {
   const { profile, xp, badges, allBadges } = result;
 
   return (
-    <main className="min-h-screen bg-cream px-4 pb-28 pt-8">
-      <div className="mx-auto max-w-lg space-y-5">
-        {/* Profile Header */}
-        <section className="rounded-[2rem] bg-gradient-to-br from-teal to-ink p-6 text-white shadow-glow">
-          <p className="text-xs font-black uppercase tracking-[0.24em] text-gold">
-            Tourist Profile
-          </p>
-          <h1 className="mt-3 text-3xl font-black">{profile.displayName}</h1>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            {profile.isGuest
-              ? "Guest profile — link Google or LINE later to recover across devices."
-              : `Linked with ${profile.linkedProviders.join(", ")}`}
-          </p>
-        </section>
+    <>
+      <main className="min-h-[calc(100vh-200px)] bg-[#FAF8F5] px-4 pb-28 pt-8 relative overflow-hidden text-ink">
+        {/* Premium Background Elements */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal/5 rounded-full blur-[100px] -z-10 translate-x-1/4 -translate-y-1/4 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-[700px] h-[700px] bg-coral/5 rounded-full blur-[120px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
 
-        {/* XP Progress */}
-        <XPProgressBar xp={xp} />
+        <div className="mx-auto max-w-lg space-y-5 relative z-10">
+          {/* Profile Header */}
+          <section className="rounded-[2.5rem] bg-gradient-to-br from-teal to-ink p-8 text-white shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4"></div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-gold relative z-10">
+              Tourist Profile
+            </p>
+            <h1 className="mt-4 text-4xl font-black relative z-10 leading-tight">{profile.displayName}</h1>
+            <p className="mt-3 text-sm leading-6 text-white/80 relative z-10">
+              {profile.isGuest
+                ? "Guest profile — link Google or LINE later to recover across devices."
+                : `Linked with ${profile.linkedProviders.join(", ")}`}
+            </p>
+          </section>
 
-        {/* Badges */}
-        <section className="rounded-[1.75rem] bg-white p-5 shadow-card">
-          <h2 className="flex items-center gap-2 text-xl font-black text-ink">
-            <Trophy weight="fill" className="text-gold" /> Badges ที่สะสม
-          </h2>
-          <div className="mt-4">
-            <BadgeGrid allBadges={allBadges} earnedBadges={badges} compact />
+          {/* XP Progress */}
+          <XPProgressBar xp={xp} />
 
-            {allBadges.length > 0 && badges.length < allBadges.length && (
-              <div className="mt-4 text-center">
-                <Link
-                  href="/leaderboard"
-                  className="inline-flex items-center gap-1 text-sm font-bold text-teal hover:underline"
-                >
-                  ดู Leaderboard →
-                </Link>
+          {/* Badges */}
+          <section className="rounded-[2rem] bg-white p-6 shadow-sm border border-ink/5">
+            <h2 className="flex items-center gap-2 text-xl font-black text-ink">
+              <Trophy weight="fill" className="text-gold" /> Badges ที่สะสม
+            </h2>
+            <div className="mt-5">
+              <BadgeGrid allBadges={allBadges} earnedBadges={badges} compact />
+
+              {allBadges.length > 0 && badges.length < allBadges.length && (
+                <div className="mt-5 text-center">
+                  <Link
+                    href="/leaderboard"
+                    className="inline-flex items-center gap-2 text-sm font-bold text-ink hover:text-teal transition-colors px-4 py-2 rounded-full bg-cream hover:bg-teal/10"
+                  >
+                    ดู Leaderboard <span className="text-teal font-black">→</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Info Cards */}
+          <section className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-[2rem] bg-white p-5 shadow-sm border border-ink/5">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-coral/10 text-coral">
+                  <GlobeHemisphereEast size={22} weight="fill" />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-widest text-muted">ภูมิลำเนา</span>
+              </div>
+              <p className="text-xl font-black text-ink">{profile.origin}</p>
+            </div>
+
+            <div className="rounded-[2rem] bg-white p-5 shadow-sm border border-ink/5">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <IdentificationCard size={22} weight="fill" />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-widest text-muted">กลุ่มอายุ</span>
+              </div>
+              <p className="text-xl font-black text-ink">{formatAgeGroup(profile.ageGroup)}</p>
+            </div>
+          </section>
+
+          {/* Passport Summary */}
+          <section className="rounded-[2rem] bg-white p-6 shadow-sm border border-ink/5">
+            <h2 className="flex items-center gap-2 text-xl font-black text-ink">
+              <Stamp weight="fill" className="text-gold" /> ตราประทับที่สะสม
+            </h2>
+            <div className="mt-5 space-y-4">
+              {profile.passportSummary.provinceProgress.map((item) => {
+                const percent =
+                  item.totalCount > 0
+                    ? Math.min(100, Math.round((item.earnedCount / item.totalCount) * 100))
+                    : 0;
+                return (
+                  <div key={item.provinceName}>
+                    <div className="mb-2 flex items-center justify-between text-sm">
+                      <span className="font-bold text-ink">{item.provinceName}</span>
+                      <span className="font-semibold text-muted bg-cream px-2 py-0.5 rounded-md text-[10px] tracking-wide">
+                        {item.earnedCount}
+                        {item.totalCount ? ` / ${item.totalCount}` : ""} stamps
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-tealSoft">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-teal to-gold"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-6 text-center">
+              <Link
+                href="/passport"
+                className="inline-flex items-center gap-2 text-sm font-bold text-ink hover:text-teal transition-colors px-4 py-2 rounded-full bg-cream hover:bg-teal/10"
+              >
+                ดูพาสปอร์ตฉบับเต็ม <span className="text-teal font-black">→</span>
+              </Link>
+            </div>
+          </section>
+
+          {/* Certificate History */}
+          <section className="rounded-[2rem] bg-white p-6 shadow-sm border border-ink/5">
+            <h2 className="flex items-center gap-2 text-xl font-black text-ink">
+              <Certificate weight="fill" className="text-coral" /> ประวัติใบประกาศ
+            </h2>
+            {profile.certificateHistory.length === 0 ? (
+              <div className="mt-4 p-6 text-center rounded-[1.5rem] bg-cream/50 border border-ink/5">
+                <p className="text-sm leading-6 text-muted">
+                  ยังไม่มีใบประกาศ — ลองสแกน QR Code ที่สถานที่ท่องเที่ยวที่เข้าร่วม
+                </p>
+              </div>
+            ) : (
+              <div className="mt-5 space-y-3">
+                {profile.certificateHistory.map((cert, index) => (
+                  <div
+                    key={`${cert.attractionName}-${cert.generatedAt}-${index}`}
+                    className="rounded-[1.5rem] border border-ink/5 bg-white p-4 shadow-sm hover:border-coral/20 transition-colors"
+                  >
+                    <p className="font-bold text-ink text-base">{cert.attractionName}</p>
+                    <div className="mt-2 flex items-center gap-3 text-xs text-muted font-medium">
+                      <span className="flex items-center gap-1.5 bg-cream px-2 py-1 rounded-md">
+                        <MapPin weight="fill" className="text-coral" />
+                        {cert.provinceName}
+                      </span>
+                      {cert.visitDate && (
+                        <span className="bg-cream px-2 py-1 rounded-md">
+                          {new Date(cert.visitDate).toLocaleDateString("th-TH", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
+          </section>
+
+          {/* Account Linking */}
+          <div className="pt-2">
+            <AccountLinkingTeaser isGuest={profile.isGuest} />
           </div>
-        </section>
-
-        {/* Info Cards */}
-        <section className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-[1.5rem] bg-white p-4 shadow-card">
-            <div className="mb-2 flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-coral/15 text-coral">
-                <GlobeHemisphereEast size={20} weight="fill" />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-wide text-muted">ภูมิลำเนา</span>
-            </div>
-            <p className="text-lg font-black text-ink">{profile.origin}</p>
-          </div>
-
-          <div className="rounded-[1.5rem] bg-white p-4 shadow-card">
-            <div className="mb-2 flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-skySoft text-blue-600">
-                <IdentificationCard size={20} weight="fill" />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-wide text-muted">กลุ่มอายุ</span>
-            </div>
-            <p className="text-lg font-black text-ink">{formatAgeGroup(profile.ageGroup)}</p>
-          </div>
-        </section>
-
-        {/* Passport Summary */}
-        <section className="rounded-[1.75rem] bg-white p-5 shadow-card">
-          <h2 className="flex items-center gap-2 text-xl font-black text-ink">
-            <Stamp weight="fill" className="text-gold" /> ตราประทับที่สะสม
-          </h2>
-          <div className="mt-4 space-y-3">
-            {profile.passportSummary.provinceProgress.map((item) => {
-              const percent =
-                item.totalCount > 0
-                  ? Math.min(100, Math.round((item.earnedCount / item.totalCount) * 100))
-                  : 0;
-              return (
-                <div key={item.provinceName}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-bold text-ink">{item.provinceName}</span>
-                    <span className="font-semibold text-muted">
-                      {item.earnedCount}
-                      {item.totalCount ? ` / ${item.totalCount}` : ""} stamps
-                    </span>
-                  </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-tealSoft">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-teal to-gold"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <Link
-            href="/passport"
-            className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-teal hover:underline"
-          >
-            ดูพาสปอร์ตฉบับเต็ม →
-          </Link>
-        </section>
-
-        {/* Certificate History */}
-        <section className="rounded-[1.75rem] bg-white p-5 shadow-card">
-          <h2 className="flex items-center gap-2 text-xl font-black text-ink">
-            <Certificate weight="fill" className="text-coral" /> ประวัติใบประกาศ
-          </h2>
-          {profile.certificateHistory.length === 0 ? (
-            <p className="mt-3 text-sm leading-6 text-muted">
-              ยังไม่มีใบประกาศ — ลองสแกน QR Code ที่สถานที่ท่องเที่ยวที่เข้าร่วม
-            </p>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {profile.certificateHistory.map((cert, index) => (
-                <div
-                  key={`${cert.attractionName}-${cert.generatedAt}-${index}`}
-                  className="rounded-2xl border border-white bg-cream/50 p-4"
-                >
-                  <p className="font-bold text-ink">{cert.attractionName}</p>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted">
-                    <span className="flex items-center gap-1">
-                      <MapPin weight="fill" className="text-coral" />
-                      {cert.provinceName}
-                    </span>
-                    {cert.visitDate && (
-                      <span>
-                        {new Date(cert.visitDate).toLocaleDateString("th-TH", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Account Linking */}
-        <AccountLinkingTeaser isGuest={profile.isGuest} />
-      </div>
-    </main>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
   );
 }
