@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { FloppyDisk, ImageSquare, TextAa, Layout, CheckCircle, XCircle, GlobeHemisphereWest, Users, PaperPlaneTilt, Envelope, Phone, MapPinLine } from "@phosphor-icons/react";
+import { FloppyDisk, ImageSquare, TextAa, Layout, CheckCircle, XCircle, GlobeHemisphereWest, Users, PaperPlaneTilt, Envelope, Phone, MapPinLine, MagnifyingGlass, ToggleRight, Wrench } from "@phosphor-icons/react";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 
-type Tab = "homepage" | "general" | "social" | "footer";
+type Tab = "homepage" | "general" | "social" | "footer" | "seo" | "features" | "maintenance";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -22,6 +22,9 @@ export default function SettingsPage() {
   const [generalInfo, setGeneralInfo] = useState({ email: "", phone: "", address: "" });
   const [socialMedia, setSocialMedia] = useState({ facebook: "", instagram: "", line: "" });
   const [footerInfo, setFooterInfo] = useState({ copyright: "", description: "" });
+  const [seoSettings, setSeoSettings] = useState({ metaTitle: "", metaDescription: "", ogImage: "", googleAnalyticsId: "" });
+  const [featureToggles, setFeatureToggles] = useState({ enableStamp: true, enableCertificate: true, enableSurvey: true });
+  const [maintenanceInfo, setMaintenanceInfo] = useState({ isMaintenanceMode: false, maintenanceMessage: "" });
   
   useEffect(() => {
     fetchSettings();
@@ -49,6 +52,15 @@ export default function SettingsPage() {
           if (item.setting_key === "footer_info" && item.setting_value) {
             setFooterInfo({ copyright: "", description: "", ...item.setting_value });
           }
+          if (item.setting_key === "seo_settings" && item.setting_value) {
+            setSeoSettings({ metaTitle: "", metaDescription: "", ogImage: "", googleAnalyticsId: "", ...item.setting_value });
+          }
+          if (item.setting_key === "feature_toggles" && item.setting_value) {
+            setFeatureToggles({ enableStamp: true, enableCertificate: true, enableSurvey: true, ...item.setting_value });
+          }
+          if (item.setting_key === "maintenance_info" && item.setting_value) {
+            setMaintenanceInfo({ isMaintenanceMode: false, maintenanceMessage: "", ...item.setting_value });
+          }
         });
       }
     } catch (error) {
@@ -69,7 +81,10 @@ export default function SettingsPage() {
       },
       { key: "general_info", value: generalInfo },
       { key: "social_media", value: socialMedia },
-      { key: "footer_info", value: footerInfo }
+      { key: "footer_info", value: footerInfo },
+      { key: "seo_settings", value: seoSettings },
+      { key: "feature_toggles", value: featureToggles },
+      { key: "maintenance_info", value: maintenanceInfo }
     ];
 
     try {
@@ -102,6 +117,10 @@ export default function SettingsPage() {
     const newImages = [...heroSettings.images];
     newImages[index] = value;
     setHeroSettings({ ...heroSettings, images: newImages });
+  };
+
+  const handleOgImageChange = (url: string) => {
+    setSeoSettings({ ...seoSettings, ogImage: url });
   };
 
   return (
@@ -165,7 +184,31 @@ export default function SettingsPage() {
                 Footer
               </button>
 
-              <div className="mt-6 pt-6 border-t border-slate-200">
+              <div className="my-2 border-t border-slate-200"></div>
+
+              <button 
+                onClick={() => setActiveTab("seo")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-sm font-bold text-left ${activeTab === "seo" ? "bg-white text-teal shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:bg-white/60 hover:text-slate-800"}`}
+              >
+                <MagnifyingGlass size={20} weight={activeTab === "seo" ? "fill" : "regular"} />
+                SEO & Branding
+              </button>
+              <button 
+                onClick={() => setActiveTab("features")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-sm font-bold text-left ${activeTab === "features" ? "bg-white text-teal shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:bg-white/60 hover:text-slate-800"}`}
+              >
+                <ToggleRight size={20} weight={activeTab === "features" ? "fill" : "regular"} />
+                Features Toggle
+              </button>
+              <button 
+                onClick={() => setActiveTab("maintenance")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-sm font-bold text-left ${activeTab === "maintenance" ? "bg-white text-coral shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:bg-white/60 hover:text-slate-800"}`}
+              >
+                <Wrench size={20} weight={activeTab === "maintenance" ? "fill" : "regular"} />
+                Maintenance
+              </button>
+
+              <div className="mt-4 pt-6 border-t border-slate-200">
                 <button
                   onClick={handleSave}
                   disabled={saving}
@@ -433,6 +476,207 @@ export default function SettingsPage() {
                 </section>
               )}
 
+              {/* TAB: SEO & Branding */}
+              {activeTab === "seo" && (
+                <section className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                      <MagnifyingGlass size={20} className="text-ink" weight="duotone" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800">SEO & Branding</h3>
+                      <p className="text-xs text-slate-500">Search engine optimization and brand assets</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-bold text-slate-700 border-b border-slate-100 pb-2">Meta Information</h4>
+                      <div className="grid gap-5">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Default Meta Title</label>
+                          <input
+                            type="text"
+                            value={seoSettings.metaTitle}
+                            onChange={(e) => setSeoSettings({...seoSettings, metaTitle: e.target.value})}
+                            placeholder="e.g. Southern Border Tourism Platform"
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:bg-white focus:border-teal focus:outline-none focus:ring-4 focus:ring-teal/10 transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Default Meta Description</label>
+                          <textarea
+                            value={seoSettings.metaDescription}
+                            onChange={(e) => setSeoSettings({...seoSettings, metaDescription: e.target.value})}
+                            rows={3}
+                            placeholder="Discover the beauty of the southern border..."
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:bg-white focus:border-teal focus:outline-none focus:ring-4 focus:ring-teal/10 transition-all resize-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4">
+                      <h4 className="text-sm font-bold text-slate-700 border-b border-slate-100 pb-2">Social Sharing (OpenGraph)</h4>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Default OG Image</label>
+                        <p className="text-xs text-slate-500 mb-3">Image shown when users share your website on Facebook, LINE, etc. (Recommended size: 1200x630px)</p>
+                        
+                        {seoSettings.ogImage ? (
+                          <div className="flex gap-3 bg-slate-50/50 border border-slate-200 rounded-xl p-3">
+                            <div className="w-24 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={seoSettings.ogImage} alt="OG Default" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <div className="truncate text-xs font-mono text-slate-600 mb-2">
+                                {seoSettings.ogImage}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    setCurrentPickingIndex(999);
+                                    setIsMediaPickerOpen(true);
+                                  }}
+                                  className="text-xs font-bold text-teal hover:text-teal/80 transition-colors bg-teal/10 px-3 py-1.5 rounded-lg"
+                                >
+                                  Change Image
+                                </button>
+                                <button
+                                  onClick={() => setSeoSettings({...seoSettings, ogImage: ""})}
+                                  className="text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors bg-rose-50 px-3 py-1.5 rounded-lg"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setCurrentPickingIndex(999); // Special index for OG image
+                              setIsMediaPickerOpen(true);
+                            }}
+                            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 rounded-xl px-4 py-8 text-sm text-slate-500 hover:border-teal hover:text-teal hover:bg-teal/5 transition-all"
+                          >
+                            <ImageSquare size={20} />
+                            <span className="font-medium">Select OpenGraph Image</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4">
+                      <h4 className="text-sm font-bold text-slate-700 border-b border-slate-100 pb-2">Tracking & Analytics</h4>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Google Analytics Measurement ID</label>
+                        <input
+                          type="text"
+                          value={seoSettings.googleAnalyticsId}
+                          onChange={(e) => setSeoSettings({...seoSettings, googleAnalyticsId: e.target.value})}
+                          placeholder="e.g. G-XXXXXXXXXX"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:bg-white focus:border-teal focus:outline-none focus:ring-4 focus:ring-teal/10 transition-all font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* TAB: Features Toggle */}
+              {activeTab === "features" && (
+                <section className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                      <ToggleRight size={20} className="text-ink" weight="duotone" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800">Features Toggle</h3>
+                      <p className="text-xs text-slate-500">Enable or disable major system modules dynamically</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    <label className="flex items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                      <div>
+                        <h4 className="font-bold text-slate-800">QR Check-in & Digital Stamps</h4>
+                        <p className="text-xs text-slate-500 mt-1">Allow tourists to scan QR codes and collect stamps at attractions.</p>
+                      </div>
+                      <div className="relative inline-block w-12 mr-2 align-middle select-none shrink-0">
+                        <input type="checkbox" className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-200 appearance-none cursor-pointer transition-transform duration-200 ease-in-out checked:translate-x-6 checked:border-teal" checked={featureToggles.enableStamp} onChange={(e) => setFeatureToggles({...featureToggles, enableStamp: e.target.checked})} />
+                        <label className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${featureToggles.enableStamp ? 'bg-teal' : 'bg-slate-200'}`}></label>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                      <div>
+                        <h4 className="font-bold text-slate-800">Digital Certificate Generation</h4>
+                        <p className="text-xs text-slate-500 mt-1">Enable generating personalized certificates after check-in.</p>
+                      </div>
+                      <div className="relative inline-block w-12 mr-2 align-middle select-none shrink-0">
+                        <input type="checkbox" className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-200 appearance-none cursor-pointer transition-transform duration-200 ease-in-out checked:translate-x-6 checked:border-teal" checked={featureToggles.enableCertificate} onChange={(e) => setFeatureToggles({...featureToggles, enableCertificate: e.target.checked})} />
+                        <label className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${featureToggles.enableCertificate ? 'bg-teal' : 'bg-slate-200'}`}></label>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                      <div>
+                        <h4 className="font-bold text-slate-800">Post-Visit Surveys</h4>
+                        <p className="text-xs text-slate-500 mt-1">Ask for feedback and expenses data after successful check-in.</p>
+                      </div>
+                      <div className="relative inline-block w-12 mr-2 align-middle select-none shrink-0">
+                        <input type="checkbox" className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-200 appearance-none cursor-pointer transition-transform duration-200 ease-in-out checked:translate-x-6 checked:border-teal" checked={featureToggles.enableSurvey} onChange={(e) => setFeatureToggles({...featureToggles, enableSurvey: e.target.checked})} />
+                        <label className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${featureToggles.enableSurvey ? 'bg-teal' : 'bg-slate-200'}`}></label>
+                      </div>
+                    </label>
+                  </div>
+                </section>
+              )}
+
+              {/* TAB: Maintenance */}
+              {activeTab === "maintenance" && (
+                <section className="rounded-3xl border border-red-100 bg-white overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <div className="bg-red-50/50 px-6 py-4 border-b border-red-100 flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg shadow-sm border border-red-100">
+                      <Wrench size={20} className="text-red-500" weight="duotone" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-red-800">System Maintenance</h3>
+                      <p className="text-xs text-red-600/70">Control access to the public website</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    <div className={`p-5 rounded-2xl border transition-colors ${maintenanceInfo.isMaintenanceMode ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
+                      <label className="flex items-start justify-between gap-4 cursor-pointer">
+                        <div>
+                          <h4 className={`font-bold ${maintenanceInfo.isMaintenanceMode ? 'text-red-800' : 'text-slate-800'}`}>Enable Maintenance Mode</h4>
+                          <p className={`text-xs mt-1 ${maintenanceInfo.isMaintenanceMode ? 'text-red-600' : 'text-slate-500'}`}>
+                            When active, regular users will see a maintenance page. Admins can still access the dashboard.
+                          </p>
+                        </div>
+                        <div className="relative inline-block w-12 mr-2 align-middle select-none shrink-0 mt-1">
+                          <input type="checkbox" className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-200 appearance-none cursor-pointer transition-transform duration-200 ease-in-out checked:translate-x-6 checked:border-red-500" checked={maintenanceInfo.isMaintenanceMode} onChange={(e) => setMaintenanceInfo({...maintenanceInfo, isMaintenanceMode: e.target.checked})} />
+                          <label className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${maintenanceInfo.isMaintenanceMode ? 'bg-red-500' : 'bg-slate-200'}`}></label>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Maintenance Message</label>
+                      <textarea
+                        value={maintenanceInfo.maintenanceMessage}
+                        onChange={(e) => setMaintenanceInfo({...maintenanceInfo, maintenanceMessage: e.target.value})}
+                        rows={4}
+                        placeholder="We are currently upgrading the system. Please come back later..."
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:bg-white focus:border-teal focus:outline-none focus:ring-4 focus:ring-teal/10 transition-all resize-none"
+                      />
+                      <p className="text-xs text-slate-500 mt-2">This message will be displayed to visitors while the system is in maintenance mode.</p>
+                    </div>
+                  </div>
+                </section>
+              )}
+
             </div>
           </div>
         )}
@@ -442,7 +686,9 @@ export default function SettingsPage() {
         isOpen={isMediaPickerOpen}
         onClose={() => setIsMediaPickerOpen(false)}
         onSelect={(url) => {
-          if (currentPickingIndex !== null) {
+          if (currentPickingIndex === 999) {
+            handleOgImageChange(url);
+          } else if (currentPickingIndex !== null) {
             handleImageChange(currentPickingIndex, url);
           }
         }}
