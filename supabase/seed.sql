@@ -385,7 +385,10 @@ WITH attraction_seed(province_en, district_en, type_en, slug, name_th, name_en, 
     ('Songkhla', 'Mueang Songkhla', 'Old Town & Architecture', 'songkhla-old-town', 'ย่านเมืองเก่าสงขลา', 'Songkhla Old Town', 'เมืองเก่าริมทะเลสาบที่เชื่อมโยงอาหาร ศิลปะ และประวัติศาสตร์', 'Lakeside old town with food, art, and history.', 7.2000000, 100.5900000, 'All day', 'old_town', 2500),
     ('Songkhla', 'Hat Yai', 'Viewpoint', 'hat-yai-municipal-park', 'สวนสาธารณะเทศบาลนครหาดใหญ่', 'Hat Yai Municipal Park', 'จุดชมวิวเมืองหาดใหญ่และพื้นที่พักผ่อน', 'City viewpoint and recreation park.', 7.0300000, 100.5000000, '05:00-20:00', 'urban_viewpoint', 2200),
     ('Satun', 'La-ngu', 'Beach & Coastal', 'pak-bara-pier', 'ท่าเรือปากบารา', 'Pak Bara Pier', 'ประตูสู่หมู่เกาะสตูลและจุดเริ่มต้นเส้นทางทะเล', 'Gateway pier to Satun island routes.', 6.8630000, 99.7330000, '06:00-18:00', 'marine_gateway', 1800),
-    ('Satun', 'Mueang Satun', 'Nature & Ecotourism', 'tarutao-national-park', 'อุทยานแห่งชาติตะรุเตา', 'Tarutao National Park', 'เส้นทางธรรมชาติและทะเลระดับประเทศในสตูล', 'National park island and nature route.', 6.6500000, 99.6500000, '08:30-16:30', 'marine_ecotourism', 1000)
+    ('Satun', 'Mueang Satun', 'Nature & Ecotourism', 'tarutao-national-park', 'อุทยานแห่งชาติตะรุเตา', 'Tarutao National Park', 'เส้นทางธรรมชาติและทะเลระดับประเทศในสตูล', 'National park island and nature route.', 6.6500000, 99.6500000, '08:30-16:30', 'marine_ecotourism', 1000),
+    ('Yala', 'Mueang Yala', 'Food & Souvenirs', 'tara-restaurant-yala', 'ร้านอาหารธารา ยะลา', 'Tara Restaurant Yala', 'ร้านอาหารท้องถิ่นขึ้นชื่อเมืองยะลา', 'Famous local restaurant in Yala.', 6.5450000, 101.2850000, '10:00-22:00', 'local_food', 200),
+    ('Pattani', 'Mueang Pattani', 'Food & Souvenirs', 'roti-de-forest-pattani', 'โรตี เดอ ฟอเรส ปัตตานี', 'Roti de Forest Pattani', 'ร้านคาเฟ่และโรตีฟิวชั่นชื่อดัง', 'Popular cafe and fusion roti restaurant.', 6.8750000, 101.2550000, '09:00-21:00', 'local_food', 150),
+    ('Narathiwat', 'Mueang Narathiwat', 'Food & Souvenirs', 'mangkon-thong-narathiwat', 'ร้านอาหารมังกรทอง นราธิวาส', 'Golden Dragon Restaurant', 'ร้านอาหารซีฟู้ดและอาหารท้องถิ่น', 'Seafood and local cuisine restaurant.', 6.4300000, 101.8300000, '10:00-22:00', 'local_food', 250)
 )
 INSERT INTO public.attractions (
   province_id, district_id, attraction_type_id, slug, name_th, name_en,

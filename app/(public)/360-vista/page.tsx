@@ -22,14 +22,14 @@ export const metadata = {
 
 export default function Vista360Page() {
   return (
-    <main className="bg-[#FAF8F5] min-h-screen text-ink">
+    <main className="bg-background min-h-screen text-ink">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-24 pb-20">
         
         {/* Breadcrumb */}
         <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <Link href="/" className="hover:text-coral transition-colors">Home</Link>
-          <span>›</span>
-          <span className="text-ink">360° Virtual Tour</span>
+          <Link href="/" className="hover:text-coral transition-colors">หน้าแรก</Link>
+          <span>/</span>
+          <span className="text-ink">ภาพจำลองเสมือนจริง 360 องศา</span>
         </div>
 
         {/* Hero Section */}
@@ -40,7 +40,7 @@ export default function Vista360Page() {
               ระบบภายนอก - เชื่อมต่อกับ 360 Vista
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight">
-              360° <span className="text-[#E18868]">Virtual Tour</span>
+              360° <span className="text-coral">Virtual Tour</span>
               <br />ยะลา
             </h1>
             <p className="text-muted leading-relaxed text-base md:text-lg max-w-lg mb-8">
@@ -52,7 +52,7 @@ export default function Vista360Page() {
               href={VISTA_360_EXTERNAL_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 bg-[#F3704C] text-white px-8 py-4 rounded-full text-sm font-bold shadow-lg hover:bg-[#E55A35] transition-all hover:shadow-xl"
+              className="inline-flex items-center gap-3 bg-coral text-white px-8 py-4 rounded-full text-sm font-bold shadow-lg hover:bg-coral/90 transition-all hover:shadow-xl"
             >
               <Compass size={22} weight="fill" />
               เปิด 360 Vista
@@ -118,7 +118,7 @@ export default function Vista360Page() {
             <div className="space-y-3">
               {places[0].spots.map((spot, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-[#F3704C]" />
+                  <div className="w-2 h-2 rounded-full bg-coral" />
                   <span className="text-sm font-semibold text-ink">{spot}</span>
                 </div>
               ))}

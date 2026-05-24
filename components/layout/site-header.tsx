@@ -19,33 +19,24 @@ type SiteHeaderProps = {
 const navGroups = [
   {
     type: "link",
-    href: "/",
-    label: "หน้าแรก"
-  },
-  {
-    type: "link",
     href: "/attractions",
     label: "สถานที่ท่องเที่ยว"
   },
   {
-    type: "link",
-    href: "/stories",
-    label: "เรื่องราว"
-  },
-  {
     type: "dropdown",
-    label: "สำรวจเพิ่มเติม",
+    label: "สำรวจ",
     items: [
-      { href: "/restaurants", label: "ร้านอาหาร" },
-      { href: "/360-vista", label: "360° Virtual Tour" },
-      { href: "/leaderboard", label: "Leaderboard" }
+      { href: "/restaurants", label: "ร้านอาหารแนะนำ" },
+      { href: "/stories", label: "บทความและเรื่องราว" },
+      { href: "/360-vista", label: "ทัวร์เสมือนจริง 360°" }
     ]
   },
   {
     type: "dropdown",
-    label: "เกี่ยวกับเรา",
+    label: "เพิ่มเติม",
     items: [
-      { href: "/about", label: "เกี่ยวกับโครงการ" },
+      { href: "/leaderboard", label: "กระดานผู้นำ" },
+      { href: "/about", label: "เกี่ยวกับเรา" },
       { href: "/contact", label: "ติดต่อเรา" }
     ]
   }
@@ -83,18 +74,20 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
       >
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group" aria-label={`${appName} home`}>
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-ink group-hover:bg-coral transition-colors">
-              <Compass weight="fill" size={20} className="text-white" />
-            </div>
-            <div className="leading-tight">
-              <h1 className="text-lg font-bold tracking-tight text-ink uppercase">ท่องเที่ยวชายแดนใต้</h1>
-              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">Digital Passport</p>
-            </div>
-          </Link>
+          <div className="flex-1 flex justify-start">
+            <Link href="/" className="flex items-center gap-3 group" aria-label={`${appName} home`}>
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-ink group-hover:bg-coral transition-colors">
+                <Compass weight="fill" size={20} className="text-white" />
+              </div>
+              <div className="leading-tight">
+                <h1 className="text-lg font-bold tracking-tight text-ink uppercase">ท่องเที่ยวชายแดนใต้</h1>
+                <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">Digital Passport</p>
+              </div>
+            </Link>
+          </div>
 
           {/* Navigation */}
-          <nav className="flex items-center gap-6" aria-label="Primary">
+          <nav className="flex items-center justify-center gap-6" aria-label="Primary">
             {navGroups.map((group) => {
               if (group.type === "link") {
                 const isActive = pathname === group.href;
@@ -148,7 +141,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex-1 flex items-center justify-end gap-4">
             <button
               type="button"
               className="text-ink hover:text-coral transition-colors"
@@ -169,7 +162,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
 
             <Link
               href="/checkin/demo-code"
-              className="ml-2 rounded-full bg-coral px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#D46549] transition-colors"
+              className="ml-2 rounded-full bg-coral px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-coral/90 transition-colors"
             >
               รับใบประกาศ
             </Link>

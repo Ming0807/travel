@@ -24,7 +24,7 @@ export default async function AdminUsersPage() {
         actions={
           <Link
             href="/admin/users/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#F3704C] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#E55A35] transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal/90 transition-colors"
           >
             <Plus size={20} weight="bold" />
             Invite User

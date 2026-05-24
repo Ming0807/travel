@@ -33,23 +33,23 @@ async function LeaderboardData() {
       {allTime.length >= 3 && (
         <div className="rounded-2xl bg-gradient-to-br from-teal to-ink p-6 text-center text-white shadow-glow">
           <Trophy size={32} weight="fill" className="mx-auto text-gold" />
-          <p className="mt-1 text-xs font-black uppercase tracking-[0.24em] text-gold">Top Explorer</p>
+          <p className="mt-1 text-xs font-black uppercase tracking-[0.24em] text-gold">นักสำรวจยอดเยี่ยม</p>
           <p className="mt-2 text-3xl font-black">{allTime[0].touristName}</p>
           <p className="mt-1 text-sm text-white/75">
-            {allTime[0].totalXp.toLocaleString()} XP · Level {allTime[0].level}
+            {allTime[0].totalXp.toLocaleString()} XP · เลเวล {allTime[0].level}
           </p>
           <div className="mt-4 flex justify-center gap-6">
             <div className="text-center">
               <p className="text-lg font-black">{allTime[0].badgeCount}</p>
-              <p className="text-[10px] font-bold uppercase text-white/60">Badges</p>
+              <p className="text-[10px] font-bold uppercase text-white/60">เหรียญตรา</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-black">{allTime[0].stampCount}</p>
-              <p className="text-[10px] font-bold uppercase text-white/60">Stamps</p>
+              <p className="text-[10px] font-bold uppercase text-white/60">ตราประทับ</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-black">{allTime[0].visitCount}</p>
-              <p className="text-[10px] font-bold uppercase text-white/60">Visits</p>
+              <p className="text-[10px] font-bold uppercase text-white/60">การเข้าชม</p>
             </div>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default async function LeaderboardPage() {
         </Link>
 
         <div>
-          <h1 className="text-3xl font-black text-ink">Leaderboard</h1>
+          <h1 className="text-3xl font-black text-ink">กระดานผู้นำ (Leaderboard)</h1>
           <p className="mt-1 text-sm leading-6 text-muted">
             อันดับนักท่องเที่ยวที่สะสม XP มากที่สุด
           </p>

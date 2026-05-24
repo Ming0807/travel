@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useId, type ReactNode } from "react";
 import type { DashboardKpi, TrendPoint } from "@/types/dashboard";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import {
@@ -133,7 +133,7 @@ function formatAnimated(raw: number, valueType: string, original: string): strin
    sparkline mini SVG
    ────────────────────────────────────────────── */
 function Sparkline({ data, color }: { data: TrendPoint[]; color: string }) {
-  const [id] = useState(() => `spk-${Math.random().toString(36).slice(2, 8)}`);
+  const id = useId();
 
   if (!data || data.length < 2) return null;
 
@@ -155,7 +155,7 @@ function Sparkline({ data, color }: { data: TrendPoint[]; color: string }) {
     .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
     .join(" ");
   const areaD = `${lineD} L${pts[pts.length - 1].x.toFixed(1)},${H} L${pts[0].x.toFixed(1)},${H} Z`;
-  const gradId = `spk-grad-${id}`;
+  const gradId = `spk-grad-${id.replace(/:/g, '')}`;
 
   return (
     <svg

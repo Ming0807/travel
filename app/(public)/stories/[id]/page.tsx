@@ -40,17 +40,17 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
             
             {/* Breadcrumbs */}
             <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-              <Link href="/" className="hover:text-ink transition-colors">Home</Link>
-              <span>›</span>
-              <Link href="/stories" className="hover:text-ink transition-colors">Stories</Link>
-              <span>›</span>
+              <Link href="/" className="hover:text-ink transition-colors">หน้าแรก</Link>
+              <span>/</span>
+              <Link href="/stories" className="hover:text-ink transition-colors">บทความและเรื่องราว</Link>
+              <span>/</span>
               <span className="text-ink">{story.category}</span>
             </div>
 
             {/* Header info */}
             <div className="flex items-center gap-4 text-[10px] font-bold text-muted uppercase tracking-wider mb-4">
-              <span className="bg-[#E18868] text-white px-2 py-0.5 rounded-sm">{story.category}</span>
-              <span>• 5 MIN READ</span>
+              <span className="bg-coral text-white px-2 py-0.5 rounded-sm">{story.category}</span>
+              <span>• อ่าน 5 นาที</span>
             </div>
 
             {/* Title & Excerpt */}
@@ -69,7 +69,7 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
                 </div>
                 <div>
                   <p className="font-black text-ink">ฟาติมา สุไลมาน</p>
-                  <p className="text-xs text-muted">{story.date} • 5 min read</p>
+                  <p className="text-xs text-muted">{story.date} • อ่าน 5 นาที</p>
                 </div>
               </div>
               
@@ -104,19 +104,19 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
             </div>
 
             {/* Article Body */}
-            <article className="prose prose-lg max-w-none text-ink/80 prose-headings:text-ink prose-headings:font-black prose-a:text-[#E18868]">
+            <article className="prose prose-lg max-w-none text-ink/80 prose-headings:text-ink prose-headings:font-black prose-a:text-coral">
               <h2 className="text-3xl font-black text-ink mb-6 mt-12">Why These Destinations Stand Out</h2>
               <p className="mb-6 leading-relaxed">
                 การเดินทางในแต่ละปีมอบโอกาสใหม่ๆ ให้เราได้สำรวจโลก และ 3 จังหวัดชายแดนใต้ก็เช่นกัน เราได้คัดสรรสถานที่เหล่านี้มาจากกระแสการท่องเที่ยวล่าสุด ความสวยงามของธรรมชาติ และประสบการณ์ที่ไม่มีวันลืม
               </p>
               
-              <blockquote className="my-8 bg-[#FAF3EE] p-8 rounded-[2rem] border border-[#E18868]/20 relative">
-                <Quotes size={32} weight="fill" className="text-[#E18868]/30 absolute top-6 left-6" />
+              <blockquote className="my-8 bg-[#FAF3EE] p-8 rounded-[2rem] border border-coral/20 relative">
+                <Quotes size={32} weight="fill" className="text-coral/30 absolute top-6 left-6" />
                 <p className="text-xl font-bold italic text-ink text-center relative z-10 mx-8">
                   โลกนี้เต็มไปด้วยสถานที่ที่จะทำให้คุณพูดไม่ออก – ให้การเดินทางครั้งนี้เป็นปีที่คุณได้เห็นมันด้วยตาตัวเอง
                 </p>
                 <div className="text-center mt-4">
-                  <span className="text-[#E18868] text-sm font-bold">— Southern Border Explorer</span>
+                  <span className="text-coral text-sm font-bold">— Southern Border Explorer</span>
                 </div>
               </blockquote>
 
@@ -179,22 +179,22 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
             <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
               <h3 className="font-black text-ink text-lg mb-4">Table of Contents</h3>
               <ul className="space-y-3 text-sm">
-                <li className="flex gap-3 text-muted hover:text-[#E18868] transition-colors cursor-pointer">
+                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer">
                   <span className="font-bold">01</span> <span>Why These Destinations Stand Out</span>
                 </li>
                 <li className="flex gap-3 text-ink font-bold cursor-pointer">
-                  <span className="text-[#E18868]">02</span> <span>Top Places to Explore</span>
+                  <span className="text-coral">02</span> <span>Top Places to Explore</span>
                 </li>
-                <li className="flex gap-3 text-muted hover:text-[#E18868] transition-colors cursor-pointer pl-7">
+                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer pl-7">
                   <span>•</span> <span>{story.province} - จุดเช็คอินสุดประทับใจ</span>
                 </li>
-                <li className="flex gap-3 text-muted hover:text-[#E18868] transition-colors cursor-pointer pl-7">
+                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer pl-7">
                   <span>•</span> <span>วิถีชุมชนและอาหารพื้นถิ่น</span>
                 </li>
-                <li className="flex gap-3 text-muted hover:text-[#E18868] transition-colors cursor-pointer">
+                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer">
                   <span className="font-bold">03</span> <span>Travel Tips</span>
                 </li>
-                <li className="flex gap-3 text-muted hover:text-[#E18868] transition-colors cursor-pointer">
+                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer">
                   <span className="font-bold">04</span> <span>Final Thoughts</span>
                 </li>
               </ul>
@@ -216,12 +216,12 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
                 นักเดินทางและช่างภาพผู้หลงใหลในการค้นหาสถานที่ใหม่ๆ ในกว่า 20 จังหวัด แบ่งปันเรื่องราวและเคล็ดลับเพื่อเป็นแรงบันดาลใจให้ผู้อื่น
               </p>
               <div className="flex items-center justify-between">
-                <a href="#" className="text-xs font-bold text-[#E18868] hover:underline">View all posts →</a>
+                <Link href="/stories" className="text-xs font-bold text-coral hover:underline">ดูบทความทั้งหมด &rarr;</Link>
                 <div className="flex gap-2">
-                  <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-ink shadow-sm hover:text-[#E18868]">
+                  <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-ink shadow-sm hover:text-coral">
                     <InstagramLogo size={14} />
                   </button>
-                  <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-ink shadow-sm hover:text-[#E18868]">
+                  <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-ink shadow-sm hover:text-coral">
                     <TwitterLogo size={14} weight="fill" />
                   </button>
                 </div>
@@ -238,29 +238,29 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
                   </span>
                 ))}
               </div>
-              <button className="text-[11px] font-bold text-[#E18868] mt-6 hover:underline">
-                View all tags →
+              <button className="text-[11px] font-bold text-coral mt-6 hover:underline">
+                ดูแท็กทั้งหมด &rarr;
               </button>
             </div>
 
             {/* Newsletter */}
-            <div className="bg-[#FAF3EE] rounded-[2rem] p-8 shadow-sm border border-[#E18868]/10 text-center">
-              <h3 className="font-black text-ink text-xl mb-2">Never Miss a Story</h3>
+            <div className="bg-[#FAF3EE] rounded-[2rem] p-8 shadow-sm border border-coral/10 text-center">
+              <h3 className="font-black text-ink text-xl mb-2">ไม่พลาดทุกเรื่องราว</h3>
               <p className="text-xs text-muted mb-6 leading-relaxed">
-                Get travel inspiration, tips, and exclusive offers straight to your inbox.
+                รับเรื่องราวแรงบันดาลใจและเคล็ดลับการเดินทางส่งตรงถึงอีเมลคุณ
               </p>
               <div className="space-y-3">
                 <input 
                   type="email" 
-                  placeholder="Enter your email address"
+                  placeholder="กรอกอีเมลของคุณ"
                   className="w-full bg-white rounded-full px-5 py-3 text-sm text-ink outline-none border border-ink/5 focus:border-teal"
                 />
-                <button type="button" className="w-full bg-[#E18868] text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-[#D07757] transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <button type="button" className="w-full bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm">
                   Subscribe <PaperPlaneRight weight="fill" />
                 </button>
               </div>
               <p className="text-[9px] text-muted mt-3 flex items-center justify-center gap-1">
-                <span>🔒</span> No spam, unsubscribe anytime.
+                <span>🔒</span> เราไม่ส่งสแปม และยกเลิกได้ตลอดเวลา
               </p>
             </div>
           </div>
@@ -269,8 +269,8 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
         {/* MORE STORIES YOU MAY LOVE */}
         <section className="mb-20 pt-12 border-t border-ink/10">
           <div className="flex justify-between items-end mb-8">
-            <h2 className="text-3xl font-black text-ink">More Stories You May Love</h2>
-            <Link href="/stories" className="text-sm font-bold text-[#E18868] hover:underline">View all articles →</Link>
+            <h2 className="text-3xl font-black text-ink">เรื่องราวอื่นๆ ที่คุณอาจสนใจ</h2>
+            <Link href="/stories" className="text-sm font-bold text-coral hover:underline">ดูบทความทั้งหมด &rarr;</Link>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -288,10 +288,10 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
                   </div>
                   <div className="flex-1 flex flex-col p-6">
                     <div className="flex items-center gap-4 text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
-                      <span className="text-[#E18868]">{s.category}</span>
-                      <span>• 5 MIN READ</span>
+                      <span className="text-coral">{s.category}</span>
+                      <span>• อ่าน 5 นาที</span>
                     </div>
-                    <h3 className="text-lg font-black text-ink mb-2 group-hover:text-[#E18868] transition-colors line-clamp-2 leading-snug">
+                    <h3 className="text-lg font-black text-ink mb-2 group-hover:text-coral transition-colors line-clamp-2 leading-snug">
                       {s.title}
                     </h3>
                   </div>

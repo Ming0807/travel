@@ -33,9 +33,9 @@ export default async function RestaurantsPage({
 
         {/* Breadcrumb */}
         <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <Link href="/" className="hover:text-coral transition-colors">Home</Link>
-          <span>›</span>
-          <span className="text-ink">Restaurants</span>
+          <Link href="/" className="hover:text-coral transition-colors">หน้าแรก</Link>
+          <span>/</span>
+          <span className="text-ink">ร้านอาหาร</span>
         </div>
 
         {/* Hero Section */}
@@ -46,8 +46,8 @@ export default async function RestaurantsPage({
               Local Economy
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight">
-              Discover <span className="text-[#E18868]">Local Flavors</span><br/>
-              of Southern Border
+              ค้นพบ <span className="text-coral">รสชาติท้องถิ่น</span><br/>
+              ใน 3 จังหวัดชายแดนใต้
             </h1>
             <p className="text-muted leading-relaxed text-base md:text-lg max-w-md mb-8">
               จากร้านอาหารพื้นเมืองสูตรโบราณสู่คาเฟ่สุดชิค ค้นพบรสชาติที่แท้จริงของชายแดนใต้
@@ -61,11 +61,11 @@ export default async function RestaurantsPage({
                 type="text"
                 name="q"
                 defaultValue={search || ""}
-                placeholder="Search restaurants, food type or province..."
+                placeholder="ค้นหาร้านอาหาร ประเภทอาหาร หรือจังหวัด..."
                 className="w-full bg-transparent px-3 py-2 text-sm text-ink outline-none"
               />
-              <button type="submit" className="bg-[#E18868] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#D07757] transition-colors whitespace-nowrap">
-                Search
+              <button type="submit" className="bg-coral text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-coral/90 transition-colors whitespace-nowrap">
+                ค้นหา
               </button>
             </form>
 
@@ -73,8 +73,8 @@ export default async function RestaurantsPage({
             <div className="flex flex-wrap gap-3 items-center">
               <RestaurantFilterBar foodType={foodType} province={province} />
               {(search || foodType || province) && (
-                <Link href="/restaurants" className="px-4 py-2 text-xs font-bold text-[#E18868] hover:underline transition-colors">
-                  Reset Filters
+                <Link href="/restaurants" className="px-4 py-2 text-xs font-bold text-coral hover:underline transition-colors">
+                  ดูร้านอาหารทั้งหมด &rarr;
                 </Link>
               )}
             </div>
@@ -105,13 +105,11 @@ export default async function RestaurantsPage({
 
         {/* Restaurant Grid */}
         <section className="mb-20">
-          <div className="flex justify-between items-end mb-8">
+          <div className="flex justify-between items-end mb-6">
             <div>
-              <h2 className="text-2xl font-black text-ink">
-                {search || foodType || province ? "Search Results" : "All Restaurants"}
-              </h2>
+              <h2 className="text-2xl font-black text-ink">ร้านยอดนิยม</h2>
               <p className="text-sm text-muted mt-1">
-                {restaurants.length} {restaurants.length === 1 ? "restaurant" : "restaurants"} found
+                {restaurants.length} {restaurants.length === 1 ? "ร้าน" : "ร้าน"} ที่พบ
               </p>
             </div>
           </div>
@@ -119,10 +117,10 @@ export default async function RestaurantsPage({
           {restaurants.length === 0 ? (
             <div className="text-center py-20">
               <ForkKnife size={48} className="mx-auto text-muted mb-4" weight="light" />
-              <h3 className="text-xl font-black text-ink mb-2">No restaurants found</h3>
-              <p className="text-muted text-sm mb-6">Try adjusting your search or filters</p>
-              <Link href="/restaurants" className="bg-[#E18868] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#D07757] transition-colors">
-                View All Restaurants
+              <h3 className="text-xl font-black text-ink mb-2">ไม่พบร้านอาหาร</h3>
+              <p className="text-muted text-sm mb-6">ลองปรับการค้นหาหรือตัวกรองของคุณ</p>
+              <Link href="/restaurants" className="bg-coral text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-coral/90 transition-colors">
+                ค้นหาร้านอาหารใกล้เคียง
               </Link>
             </div>
           ) : (
@@ -149,11 +147,14 @@ export default async function RestaurantsPage({
                   </div>
 
                   <div className="p-5">
-                    <h3 className="text-lg font-black text-ink mb-1 group-hover:text-[#E18868] transition-colors">
-                      {restaurant.name}
-                    </h3>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-black text-ink mb-1 group-hover:text-coral transition-colors line-clamp-1">
+                        {restaurant.name}
+                      </h3>
+                      <span className="text-[10px] font-bold text-teal uppercase tracking-wider group-hover:underline whitespace-nowrap ml-2">ดูรายละเอียด &rarr;</span>
+                    </div>
                     <p className="text-xs font-bold text-muted flex items-center gap-1 mb-3 uppercase tracking-wider">
-                      <MapPin size={12} weight="fill" className="text-[#E18868]" />
+                      <MapPin size={12} weight="fill" className="text-coral" />
                       {restaurant.province}
                     </p>
                     <p className="text-sm text-muted line-clamp-2 leading-relaxed mb-4">
@@ -187,10 +188,10 @@ export default async function RestaurantsPage({
             />
             <div className="relative z-10 mb-6 md:mb-0 md:w-1/2">
               <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">
-                Own a Restaurant?
+                เป็นเจ้าของร้านอาหาร?
               </h2>
               <p className="text-white/80 text-sm">
-                Join our platform and connect with tourists visiting the Southern Border region.
+                เข้าร่วมแพลตฟอร์มของเราและเชื่อมต่อกับนักท่องเที่ยวที่มาเยือน 3 จังหวัดชายแดนใต้
               </p>
             </div>
             <div className="relative z-10">
@@ -198,7 +199,7 @@ export default async function RestaurantsPage({
                 href="/contact"
                 className="bg-white text-ink px-6 py-3 rounded-full text-sm font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2"
               >
-                Get Listed <PaperPlaneRight weight="fill" />
+                ลงทะเบียนร้านอาหาร <PaperPlaneRight weight="fill" />
               </Link>
             </div>
           </div>

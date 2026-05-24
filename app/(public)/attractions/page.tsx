@@ -9,7 +9,9 @@ import {
   MapTrifold,
   ShieldCheck,
   Users,
-  CalendarCheck
+  CalendarCheck,
+  ArrowRight,
+  Heart
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { listPublicAttractionCards } from "@/lib/repositories/public-content.repository";
@@ -52,8 +54,8 @@ export default async function AttractionsPage({
         <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-20">
           <div className="lg:w-1/2 pt-4">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight">
-              Explore <span className="text-[#E18868]">Destinations</span><br/>
-              in Southern Border
+              สำรวจ <span className="text-coral">สถานที่ท่องเที่ยว</span><br/>
+              ใน 3 จังหวัดชายแดนใต้
             </h1>
             <p className="text-muted leading-relaxed text-base md:text-lg max-w-md mb-8">
               จากเมืองท่องเที่ยวสุดฮิตสู่สถานที่ลึกลับที่รอการค้นพบ ค้นหาสถานที่สร้างแรงบันดาลใจและทริปต่อไปของคุณ
@@ -66,26 +68,26 @@ export default async function AttractionsPage({
                 type="text" 
                 name="q"
                 defaultValue={search || ""}
-                placeholder="Search destinations, provinces or keywords..."
+                placeholder="ค้นหาสถานที่ท่องเที่ยว จังหวัด หรือคำค้นหา..."
                 className="w-full bg-transparent px-3 py-2 text-sm text-ink outline-none"
               />
-              <button type="submit" className="bg-[#E18868] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#D07757] transition-colors whitespace-nowrap">
-                Search
+              <button type="submit" className="bg-coral text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-coral/90 transition-colors whitespace-nowrap">
+                ค้นหา
               </button>
             </form>
 
             <div className="flex flex-wrap gap-3">
               <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
-                Province <CaretDown weight="bold" />
+                จังหวัด <CaretDown weight="bold" />
               </button>
               <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
-                Travel Style <CaretDown weight="bold" />
+                สไตล์การท่องเที่ยว <CaretDown weight="bold" />
               </button>
               <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
-                Best Season <CaretDown weight="bold" />
+                ช่วงเวลาแนะนำ <CaretDown weight="bold" />
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-[#E18868] hover:underline transition-colors">
-                Reset Filters
+              <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-coral hover:underline transition-colors">
+                ล้างตัวกรอง
               </button>
             </div>
           </div>
@@ -106,8 +108,8 @@ export default async function AttractionsPage({
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent"></div>
                 
                 <div className="absolute top-6 left-6">
-                  <span className="inline-flex items-center rounded-full bg-[#E18868] text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
-                    Featured Destination
+                  <span className="inline-flex items-center rounded-full bg-coral text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
+                    สถานที่แนะนำ
                   </span>
                 </div>
                 
@@ -115,17 +117,15 @@ export default async function AttractionsPage({
                   <h2 className="text-3xl font-black mb-2 leading-tight">
                     {featured.name}, {featured.province}
                   </h2>
-                  <p className="text-sm text-white/90 line-clamp-2 mb-6 max-w-sm">
-                    {featured.description}
-                  </p>
-                  <Link href={`/attractions/${featured.slug}`} className="bg-white text-ink px-5 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2">
-                    Explore Destination <span>›</span>
+                  <p className="text-sm text-white/80 line-clamp-2">{featured.description}</p>
+                  <Link href={`/attractions/${featured.slug}`} className="bg-white text-ink px-5 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2 mt-4">
+                    อ่านเพิ่มเติม <ArrowRight size={14} weight="bold" />
                   </Link>
                 </div>
               </div>
             ) : (
               <div className="w-full h-[350px] rounded-[2rem] bg-cream flex items-center justify-center text-muted">
-                No destinations found.
+                ไม่พบข้อมูลสถานที่
               </div>
             )}
           </div>
@@ -133,7 +133,7 @@ export default async function AttractionsPage({
 
         {/* POPULAR REGIONS */}
         <section className="mb-20">
-          <h2 className="text-2xl font-black text-ink mb-6">Popular Provinces</h2>
+          <h2 className="text-2xl font-black text-ink mb-6">จังหวัดยอดนิยม</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {provinces.map((prov, idx) => (
               <Link href={`/attractions?province=${prov.name}`} key={idx} className="group relative h-40 md:h-48 rounded-[1.5rem] overflow-hidden shadow-sm cursor-pointer border border-ink/5 block">
@@ -168,8 +168,10 @@ export default async function AttractionsPage({
             {/* Top Destinations */}
             <section>
               <div className="flex justify-between items-end mb-6">
-                <h2 className="text-2xl font-black text-ink">Top Destinations</h2>
-                <a href="#" className="text-xs font-bold text-[#E18868] hover:underline">View all destinations →</a>
+                <h2 className="text-2xl font-black text-ink">สถานที่ยอดนิยม</h2>
+                <div>
+                  <Link href="/attractions" className="text-xs font-bold text-coral hover:underline">ดูสถานที่ทั้งหมด &rarr;</Link>
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -183,12 +185,12 @@ export default async function AttractionsPage({
                         className="object-cover transition-transform duration-700 group-hover:scale-105" 
                         unoptimized
                       />
-                      <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-ink hover:text-[#E18868] hover:bg-white transition-colors">
-                        <HeartIcon />
+                      <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-ink hover:text-coral hover:bg-white transition-colors">
+                        <Heart size={16} />
                       </div>
                     </div>
                     
-                    <h3 className="text-lg font-black text-ink mb-1 group-hover:text-[#E18868] transition-colors">{dest.name}</h3>
+                    <h3 className="text-lg font-black text-ink mb-1 group-hover:text-coral transition-colors">{dest.name}</h3>
                     <p className="text-xs font-bold text-muted mb-3 flex items-center gap-1 uppercase tracking-wider">
                       {dest.province}
                     </p>
@@ -203,9 +205,9 @@ export default async function AttractionsPage({
                     
                     <div className="flex items-center justify-between pt-4 border-t border-ink/5">
                       <div>
-                        <p className="text-[10px] text-muted uppercase font-bold tracking-wider mb-0.5">Best Time</p>
+                        <p className="text-[10px] text-muted uppercase font-bold tracking-wider mb-0.5">ช่วงเวลาที่ดีที่สุด</p>
                         <p className="text-xs font-bold text-ink flex items-center gap-1">
-                          <CalendarCheck size={14} className="text-[#E18868]" /> Nov - Apr
+                          <CalendarCheck size={14} className="text-coral" /> พ.ย. - เม.ย.
                         </p>
                       </div>
                       <div className="text-right">
@@ -221,7 +223,7 @@ export default async function AttractionsPage({
               {/* Pagination */}
               <div className="flex justify-center items-center gap-2 mt-10">
                 <button className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:bg-ink/5 transition-colors">{'<'}</button>
-                <button className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E18868] text-white font-bold text-sm shadow-sm">1</button>
+                <button className="w-8 h-8 rounded-full flex items-center justify-center bg-coral text-white font-bold text-sm shadow-sm">1</button>
                 <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">2</button>
                 <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">3</button>
                 <span className="text-muted">...</span>
@@ -232,7 +234,7 @@ export default async function AttractionsPage({
 
             {/* Trending Now */}
             <section>
-              <h2 className="text-2xl font-black text-ink mb-6">Trending Now</h2>
+              <h2 className="text-2xl font-black text-ink mb-6">กำลังมาแรง</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {trending.map((trend) => (
                   <Link href={`/attractions/${trend.slug}`} key={trend.slug} className="group bg-white p-3 rounded-[1.5rem] border border-ink/5 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
@@ -246,9 +248,10 @@ export default async function AttractionsPage({
                       />
                     </div>
                     <div>
-                      <h3 className="font-black text-sm text-ink mb-1 group-hover:text-[#E18868] transition-colors leading-tight">{trend.name}</h3>
-                      <p className="text-[10px] text-muted line-clamp-2 mb-2">{trend.description}</p>
-                      <p className="text-[10px] font-bold text-[#E18868] uppercase tracking-wider">{trend.province}</p>
+                      <h3 className="font-black text-sm text-ink mb-1 group-hover:text-coral transition-colors leading-tight">{trend.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[10px] font-bold text-coral uppercase tracking-wider">{trend.province}</p>
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -267,12 +270,12 @@ export default async function AttractionsPage({
               </div>
               
               <div className="relative z-10">
-                <h3 className="font-black text-ink text-xl mb-4">Where to Next?</h3>
+                <h3 className="font-black text-ink text-xl mb-4">วางแผนการเดินทางวันนี้</h3>
                 <p className="text-sm text-ink/80 mb-6 leading-relaxed">
-                  Explore destinations by region and plan your perfect trip in Southern Border.
+                  สำรวจสถานที่ท่องเที่ยวตามภูมิภาคและวางแผนทริปที่สมบูรณ์แบบของคุณใน 3 จังหวัดชายแดนใต้
                 </p>
                 <button className="bg-white text-ink border border-ink/10 px-6 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2">
-                  Explore on Map <MapTrifold weight="bold" />
+                  ดูบนแผนที่ <MapTrifold weight="bold" />
                 </button>
               </div>
             </div>
@@ -283,26 +286,26 @@ export default async function AttractionsPage({
               
               <div className="space-y-6">
                 <div className="flex gap-4">
-                  <div className="text-[#E18868] mt-1 shrink-0"><ShieldCheck size={24} weight="light" /></div>
+                  <div className="text-coral mt-1 shrink-0"><ShieldCheck size={24} weight="light" /></div>
                   <div>
-                    <h4 className="font-bold text-sm text-ink mb-1">Verified Locations</h4>
-                    <p className="text-xs text-muted leading-relaxed">We verify all photo spots and attractions to ensure they are accessible and safe.</p>
+                    <h4 className="font-bold text-sm text-ink mb-1">สถานที่ที่ได้รับการตรวจสอบแล้ว</h4>
+                    <p className="text-xs text-muted leading-relaxed">เราตรวจสอบจุดถ่ายภาพและสถานที่ท่องเที่ยวทั้งหมดเพื่อให้แน่ใจว่าปลอดภัยและเข้าถึงได้จริง</p>
                   </div>
                 </div>
                 
                 <div className="flex gap-4">
-                  <div className="text-[#E18868] mt-1 shrink-0"><Users size={24} weight="light" /></div>
+                  <div className="text-coral mt-1 shrink-0"><Users size={24} weight="light" /></div>
                   <div>
-                    <h4 className="font-bold text-sm text-ink mb-1">Local Expertise</h4>
-                    <p className="text-xs text-muted leading-relaxed">Curated by local travel experts who know the best hidden gems in the region.</p>
+                    <h4 className="font-bold text-sm text-ink mb-1">ความเชี่ยวชาญในพื้นที่</h4>
+                    <p className="text-xs text-muted leading-relaxed">คัดสรรโดยผู้เชี่ยวชาญด้านการเดินทางในท้องถิ่นที่รู้แหล่งท่องเที่ยวลับที่ดีที่สุด</p>
                   </div>
                 </div>
                 
                 <div className="flex gap-4">
-                  <div className="text-[#E18868] mt-1 shrink-0"><MapPin size={24} weight="light" /></div>
+                  <div className="text-coral mt-1 shrink-0"><MapPin size={24} weight="light" /></div>
                   <div>
-                    <h4 className="font-bold text-sm text-ink mb-1">Authentic Experiences</h4>
-                    <p className="text-xs text-muted leading-relaxed">Connect deeply with local culture, food, and people for unforgettable memories.</p>
+                    <h4 className="font-bold text-sm text-ink mb-1">ประสบการณ์ที่แท้จริง</h4>
+                    <p className="text-xs text-muted leading-relaxed">เชื่อมโยงอย่างลึกซึ้งกับวัฒนธรรม อาหาร และผู้คนในท้องถิ่นเพื่อความทรงจำที่ไม่มีวันลืม</p>
                   </div>
                 </div>
               </div>
@@ -347,11 +350,11 @@ export default async function AttractionsPage({
               <div className="flex flex-col sm:flex-row gap-3 bg-white/10 p-1.5 rounded-full backdrop-blur-md border border-white/20">
                 <input 
                   type="email" 
-                  placeholder="Enter your email address"
+                  placeholder="กรอกอีเมลของคุณ"
                   className="w-full sm:w-64 bg-white rounded-full px-5 py-3 text-sm text-ink outline-none"
                 />
-                <button type="button" className="bg-[#E18868] text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-[#D07757] transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-                  Subscribe <PaperPlaneRight weight="fill" />
+                <button type="button" className="bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                  ติดตามข่าวสาร <PaperPlaneRight weight="fill" />
                 </button>
               </div>
             </div>

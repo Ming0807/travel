@@ -39,7 +39,7 @@ export default function AboutPage() {
             <p className="text-muted leading-relaxed text-lg max-w-md mb-8">
               เราคือนักเล่าเรื่อง นักสำรวจ และผู้สร้างสรรค์แพลตฟอร์มที่มุ่งหวังจะเปิดมุมมองใหม่ของการท่องเที่ยวใน 3 จังหวัดชายแดนใต้ — หนึ่งการเดินทาง หนึ่งความประทับใจ
             </p>
-            <button className="inline-flex items-center gap-2 bg-[#E18868] text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-[#D07757] transition-all">
+            <button className="inline-flex items-center gap-2 bg-coral text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-coral/90 transition-all">
               ค้นพบเรื่องราวของเรา
             </button>
             
@@ -91,7 +91,7 @@ export default function AboutPage() {
         {/* MISSION & VISION */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24 bg-[#F2EFE8] p-10 md:p-12 rounded-[2.5rem]">
           <div className="flex gap-6 items-start">
-            <div className="bg-[#E18868] text-white p-4 rounded-full shrink-0 shadow-sm">
+            <div className="bg-coral text-white p-4 rounded-full shrink-0 shadow-sm">
               <Target size={32} weight="fill" />
             </div>
             <div>
@@ -103,7 +103,7 @@ export default function AboutPage() {
           </div>
           
           <div className="flex gap-6 items-start">
-            <div className="bg-[#E18868] text-white p-4 rounded-full shrink-0 shadow-sm">
+            <div className="bg-coral text-white p-4 rounded-full shrink-0 shadow-sm">
               <Eye size={32} weight="fill" />
             </div>
             <div>
@@ -121,7 +121,7 @@ export default function AboutPage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="space-y-4">
-              <div className="text-[#E18868]">
+              <div className="text-coral">
                 <CheckCircle size={40} weight="light" />
               </div>
               <h3 className="font-bold text-ink">คัดสรรด้วยความใส่ใจ</h3>
@@ -131,7 +131,7 @@ export default function AboutPage() {
             </div>
             
             <div className="space-y-4">
-              <div className="text-[#E18868]">
+              <div className="text-coral">
                 <GlobeHemisphereEast size={40} weight="light" />
               </div>
               <h3 className="font-bold text-ink">สัมผัสวิถีท้องถิ่นแท้จริง</h3>
@@ -141,7 +141,7 @@ export default function AboutPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="text-[#E18868]">
+              <div className="text-coral">
                 <Camera size={40} weight="light" />
               </div>
               <h3 className="font-bold text-ink">เรื่องราวสร้างแรงบันดาลใจ</h3>
@@ -151,7 +151,7 @@ export default function AboutPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="text-[#E18868]">
+              <div className="text-coral">
                 <ShieldCheck size={40} weight="light" />
               </div>
               <h3 className="font-bold text-ink">เชื่อถือได้ ปลอดภัย</h3>
@@ -177,7 +177,7 @@ export default function AboutPage() {
                 วันนี้ เราคือคอมมูนิตี้ที่เติบโตขึ้นเรื่อยๆ ซึ่งประกอบด้วยนักสำรวจ ครีเอเตอร์ และคนในพื้นที่ที่ทำงานร่วมกันเพื่อช่วยให้คุณเดินทางได้ลึกซึ้งขึ้น ชาญฉลาดขึ้น และมีจุดมุ่งหมาย
               </p>
             </div>
-            <p className="text-[#E18868] font-['Playfair_Display'] italic text-xl pt-4">
+            <p className="text-coral font-['Playfair_Display'] italic text-xl pt-4">
               และการเดินทางยังคงดำเนินต่อไป...
             </p>
           </div>
@@ -222,9 +222,9 @@ export default function AboutPage() {
                    "เก็บบันทึกความงามของโลกผ่านสายตาที่แม่นยำ"}
                 </p>
                 <div className="flex gap-3 text-ink/40 mt-auto">
-                  <InstagramLogo size={16} className="hover:text-[#E18868] cursor-pointer transition-colors" />
-                  <FacebookLogo size={16} className="hover:text-[#E18868] cursor-pointer transition-colors" />
-                  <LinkedinLogo size={16} className="hover:text-[#E18868] cursor-pointer transition-colors" />
+                  <InstagramLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
+                  <FacebookLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
+                  <LinkedinLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
                 </div>
               </div>
             ))}
@@ -246,42 +246,42 @@ export default function AboutPage() {
                 สร้างความเชื่อมโยงและคัดสรรประสบการณ์ร่วมกับชุมชน
               </p>
               <div className="flex gap-3 text-ink/40 mt-auto">
-                <InstagramLogo size={16} className="hover:text-[#E18868] cursor-pointer transition-colors" />
-                <FacebookLogo size={16} className="hover:text-[#E18868] cursor-pointer transition-colors" />
-                <LinkedinLogo size={16} className="hover:text-[#E18868] cursor-pointer transition-colors" />
+                <InstagramLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
+                <FacebookLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
+                <LinkedinLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
               </div>
             </div>
           </div>
         </section>
 
         {/* STATS BANNER */}
-        <section className="bg-white rounded-[2rem] border border-[#E18868]/20 shadow-sm p-12 mb-24 relative overflow-hidden">
+        <section className="bg-white rounded-[2rem] border border-coral/20 shadow-sm p-12 mb-24 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#FAF3EE] rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center divide-x divide-ink/5">
             <div className="flex flex-col items-center">
-              <div className="text-[#E18868] mb-3"><MapPin size={32} weight="light" /></div>
+              <div className="text-coral mb-3"><MapPin size={32} weight="light" /></div>
               <h3 className="text-3xl font-black text-ink mb-1">150+</h3>
               <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">สถานที่ท่องเที่ยว</p>
               <p className="text-xs text-muted">คัดสรรสถานที่เด่นๆ มาเพื่อคุณ</p>
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="text-[#E18868] mb-3"><Users size={32} weight="light" /></div>
+              <div className="text-coral mb-3"><Users size={32} weight="light" /></div>
               <h3 className="text-3xl font-black text-ink mb-1">50K+</h3>
               <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">นักเดินทางผู้ร่วมสนุก</p>
               <p className="text-xs text-muted">มั่นใจด้วยคอมมูนิตี้ที่เติบโตต่อเนื่อง</p>
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="text-[#E18868] mb-3"><BookOpen size={32} weight="light" /></div>
+              <div className="text-coral mb-3"><BookOpen size={32} weight="light" /></div>
               <h3 className="text-3xl font-black text-ink mb-1">10K+</h3>
               <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">ตราประทับสะสม</p>
               <p className="text-xs text-muted">หลักฐานของความทรงจำดีๆ</p>
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="text-[#E18868] mb-3"><GlobeHemisphereEast size={32} weight="light" /></div>
+              <div className="text-coral mb-3"><GlobeHemisphereEast size={32} weight="light" /></div>
               <h3 className="text-3xl font-black text-ink mb-1">3</h3>
               <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">จังหวัดหลัก</p>
               <p className="text-xs text-muted">ยะลา, ปัตตานี, นราธิวาส</p>
@@ -291,38 +291,38 @@ export default function AboutPage() {
 
         {/* OUR VALUES */}
         <section className="mb-24">
-          <h2 className="text-3xl font-black text-ink mb-12">Our Values</h2>
+          <h2 className="text-3xl font-black text-ink mb-12">คุณค่าของเรา</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-ink/5">
-              <div className="text-[#E18868] mb-4"><Heart size={28} weight="light" /></div>
-              <h3 className="font-bold text-ink mb-2">Authentic Experiences</h3>
+              <div className="text-coral mb-4"><Heart size={28} weight="light" /></div>
+              <h3 className="font-bold text-ink mb-2">ประสบการณ์ที่แท้จริง</h3>
               <p className="text-xs text-muted leading-relaxed">
-                We believe in real moments, real people, and real stories.
+                เราเชื่อในเรื่องราวจริง ผู้คนจริง และช่วงเวลาแห่งความประทับใจ
               </p>
             </div>
             
             <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-ink/5">
-              <div className="text-[#E18868] mb-4"><Users size={28} weight="light" /></div>
-              <h3 className="font-bold text-ink mb-2">Respect Local Culture</h3>
+              <div className="text-coral mb-4"><Users size={28} weight="light" /></div>
+              <h3 className="font-bold text-ink mb-2">เคารพในวัฒนธรรมท้องถิ่น</h3>
               <p className="text-xs text-muted leading-relaxed">
-                We travel mindfully and support the communities we visit.
+                เราเดินทางอย่างมีความหมายและสนับสนุนชุมชนที่เราไปเยือน
               </p>
             </div>
             
             <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-ink/5">
-              <div className="text-[#E18868] mb-4"><Target size={28} weight="light" /></div>
-              <h3 className="font-bold text-ink mb-2">Curated with Purpose</h3>
+              <div className="text-coral mb-4"><Target size={28} weight="light" /></div>
+              <h3 className="font-bold text-ink mb-2">คัดสรรอย่างมีจุดมุ่งหมาย</h3>
               <p className="text-xs text-muted leading-relaxed">
-                Quality over quantity. We choose what&apos;s truly worth your time.
+                คุณภาพเหนือปริมาณ เราเลือกสิ่งที่มีค่าต่อเวลาของคุณอย่างแท้จริง
               </p>
             </div>
             
             <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-ink/5">
-              <div className="text-[#E18868] mb-4"><ShieldCheck size={28} weight="light" /></div>
-              <h3 className="font-bold text-ink mb-2">Trusted & Transparent</h3>
+              <div className="text-coral mb-4"><ShieldCheck size={28} weight="light" /></div>
+              <h3 className="font-bold text-ink mb-2">น่าเชื่อถือและโปร่งใส</h3>
               <p className="text-xs text-muted leading-relaxed">
-                Honest recommendations and clear information you can rely on.
+                คำแนะนำที่จริงใจและข้อมูลที่ชัดเจนซึ่งคุณสามารถเชื่อถือได้
               </p>
             </div>
           </div>
@@ -339,10 +339,10 @@ export default function AboutPage() {
               unoptimized
             />
             <div className="relative z-10">
-              <h2 className="text-4xl font-black text-white mb-3">Let&apos;s Explore the World Together</h2>
-              <p className="text-white/90 mb-8">Your next great adventure is just a story away.</p>
-              <button className="bg-[#E18868] text-white px-8 py-3.5 rounded-full font-bold shadow-md hover:bg-[#D07757] transition-all">
-                Start exploring
+              <h2 className="text-4xl font-black text-white mb-3">ออกเดินทางสำรวจโลกไปด้วยกัน</h2>
+              <p className="text-white/90 mb-8">การผจญภัยครั้งยิ่งใหญ่ครั้งต่อไปของคุณเริ่มต้นจากเรื่องราวเหล่านี้</p>
+              <button className="bg-coral text-white px-8 py-3.5 rounded-full font-bold shadow-md hover:bg-coral/90 transition-all">
+                เริ่มต้นการสำรวจ
               </button>
             </div>
           </div>

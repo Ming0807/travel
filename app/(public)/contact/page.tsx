@@ -47,14 +47,14 @@ export default function ContactPage() {
         {/* HERO SECTION */}
         <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-24">
           <div className="lg:w-1/2 pt-8">
-            <p className="text-[#D6896C] font-bold tracking-widest text-xs uppercase mb-4">
+            <p className="text-coral font-bold tracking-widest text-xs uppercase mb-4">
               เรายินดีรับฟังจากคุณ
             </p>
             <h1 className="text-5xl md:text-6xl font-black text-ink mb-6">ติดต่อเรา</h1>
             <p className="text-muted leading-relaxed text-lg max-w-md mb-8">
               มีข้อสงสัย ต้องการคำแนะนำเรื่องการท่องเที่ยว หรืออยากให้เราช่วยวางแผนทริปครั้งต่อไป? ทีมงานของเราพร้อมช่วยเหลือคุณเสมอ
             </p>
-            <button className="inline-flex items-center gap-2 bg-[#E18868] text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-[#D07757] transition-all">
+            <button className="inline-flex items-center gap-2 bg-coral text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-coral/90 transition-all">
               ส่งข้อความหาเรา <Airplane weight="fill" />
             </button>
             
@@ -162,7 +162,7 @@ export default function ContactPage() {
               
               <button 
                 type="submit" 
-                className="w-full bg-[#E18868] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#D07757] transition-all shadow-sm"
+                className="w-full bg-coral text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-coral/90 transition-all shadow-sm"
               >
                 ส่งข้อความ <PaperPlaneRight weight="fill" />
               </button>
@@ -179,7 +179,7 @@ export default function ContactPage() {
             
             {/* Contact Cards */}
             <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-ink/5 flex items-start gap-4">
-              <div className="bg-[#FAF3EE] text-[#E18868] p-3 rounded-full shrink-0">
+              <div className="bg-[#FAF3EE] text-coral p-3 rounded-full shrink-0">
                 <EnvelopeSimple size={24} weight="fill" />
               </div>
               <div className="flex-1 flex items-center justify-between">
@@ -192,7 +192,7 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-ink/5 flex items-start gap-4">
-              <div className="bg-[#FAF3EE] text-[#E18868] p-3 rounded-full shrink-0">
+              <div className="bg-[#FAF3EE] text-coral p-3 rounded-full shrink-0">
                 <Phone size={24} weight="fill" />
               </div>
               <div>
@@ -213,14 +213,14 @@ export default function ContactPage() {
                   181 ถ.เจริญประดิษฐ์ ต.รูสะมิแล<br/>
                   ปัตตานี 94000
                 </p>
-                <a href="#" className="text-xs font-bold text-[#E18868] mt-2 inline-block hover:underline">
+                <a href="#" className="text-xs font-bold text-coral mt-2 inline-block hover:underline">
                   ดูบน Google Maps
                 </a>
               </div>
             </div>
 
             <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-ink/5 flex items-start gap-4">
-              <div className="bg-[#FAF3EE] text-[#E18868] p-3 rounded-full shrink-0">
+              <div className="bg-[#FAF3EE] text-coral p-3 rounded-full shrink-0">
                 <Clock size={24} weight="fill" />
               </div>
               <div>
@@ -264,7 +264,7 @@ export default function ContactPage() {
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-white px-4 py-2 rounded-xl shadow-lg border border-ink/5 flex items-center gap-2">
-                    <MapPin size={20} weight="fill" className="text-[#E18868]" />
+                    <MapPin size={20} weight="fill" className="text-coral" />
                     <span className="font-bold text-xs uppercase tracking-wider text-ink">PSU Pattani</span>
                   </div>
                 </div>
@@ -276,7 +276,7 @@ export default function ContactPage() {
           <div>
             <div className="flex justify-between items-end mb-6">
               <h2 className="text-2xl font-black text-ink">คำถามที่พบบ่อย</h2>
-              <a href="#" className="text-xs font-bold text-ink hover:text-[#E18868]">ดูคำถามทั้งหมด →</a>
+              <a href="#" className="text-xs font-bold text-ink hover:text-coral">ดูคำถามทั้งหมด &rarr;</a>
             </div>
             
             <div className="space-y-3 mb-10">
@@ -287,7 +287,7 @@ export default function ContactPage() {
                     className="w-full p-5 flex items-center justify-between text-left focus:outline-none"
                   >
                     <div className="flex gap-4 items-center">
-                      <div className="w-8 h-8 rounded-full bg-[#FAF3EE] text-[#E18868] flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#FAF3EE] text-coral flex items-center justify-center shrink-0">
                         <MapPin size={16} weight="fill" />
                       </div>
                       <span className="font-bold text-sm text-ink">{faq.question}</span>
@@ -352,7 +352,7 @@ export default function ContactPage() {
                   placeholder="กรอกอีเมลของคุณ"
                   className="flex-1 bg-white rounded-full px-5 py-3 text-sm text-ink outline-none"
                 />
-                <button className="bg-[#E18868] text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-[#D07757] transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <button className="bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm">
                   ติดตามข่าวสาร <PaperPlaneRight weight="fill" />
                 </button>
               </div>

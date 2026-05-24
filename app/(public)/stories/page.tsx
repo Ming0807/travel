@@ -4,7 +4,8 @@ import {
   MagnifyingGlass, 
   PaperPlaneRight, 
   Star,
-  Clock
+  Clock,
+  ArrowRight
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { listPublicStories } from "@/lib/repositories/public-content.repository";
@@ -24,15 +25,15 @@ export default async function StoriesPage() {
         
         {/* HERO SECTION */}
         <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <span>Home</span>
-          <span>›</span>
-          <span className="text-ink">Stories</span>
+          <Link href="/" className="hover:text-[#E18868] transition-colors">หน้าแรก</Link>
+          <span>/</span>
+          <span className="text-ink">บทความและเรื่องราว</span>
         </div>
         
         <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-20">
           <div className="lg:w-5/12 pt-4">
             <h1 className="text-5xl md:text-6xl font-black text-ink mb-6 leading-tight">
-              Stories & Inspiration <br className="hidden lg:block"/>for Every Journey
+              เรื่องราวและแรงบันดาลใจ <br className="hidden lg:block"/>สำหรับทุกการเดินทาง
             </h1>
             <p className="text-muted leading-relaxed text-lg max-w-md mb-8">
               เรื่องราวจริง เคล็ดลับที่มีประโยชน์ และแรงบันดาลใจจากนักเดินทางใน 3 จังหวัดชายแดนใต้ ค้นหาไอเดียสำหรับการผจญภัยครั้งต่อไปของคุณ
@@ -60,17 +61,17 @@ export default async function StoriesPage() {
                     unoptimized
                   />
                   <div className="absolute top-4 right-4">
-                    <span className="inline-flex items-center rounded-full bg-[#E18868] text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
+                    <span className="inline-flex items-center rounded-full bg-coral text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
                       Featured
                     </span>
                   </div>
                 </div>
                 <div className="p-8 md:w-1/2 flex flex-col justify-center">
                   <div className="flex items-center gap-4 text-[10px] font-bold text-muted uppercase tracking-wider mb-4">
-                    <span className="text-[#E18868]">{featuredStory.category}</span>
-                    <span className="flex items-center gap-1"><Clock size={12}/> 5 MIN READ</span>
+                    <span className="text-coral">{featuredStory.category}</span>
+                    <span className="flex items-center gap-1"><Clock size={12}/> อ่าน 5 นาที</span>
                   </div>
-                  <h2 className="text-2xl font-black text-ink mb-4 group-hover:text-[#E18868] transition-colors leading-snug">
+                  <h2 className="text-2xl font-black text-ink mb-4 group-hover:text-coral transition-colors leading-snug">
                     {featuredStory.title}
                   </h2>
                   <p className="text-sm text-muted line-clamp-3 mb-6">
@@ -104,7 +105,7 @@ export default async function StoriesPage() {
                     key={cat} 
                     className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${
                       idx === 0 
-                        ? 'bg-[#E18868] text-white' 
+                        ? 'bg-coral text-white' 
                         : 'bg-white text-ink border border-ink/10 hover:border-ink/30'
                     }`}
                   >
@@ -116,7 +117,7 @@ export default async function StoriesPage() {
               <div className="relative w-full md:w-64">
                 <input 
                   type="text" 
-                  placeholder="Search articles..."
+                  placeholder="ค้นหาบทความ..."
                   className="w-full bg-white border border-ink/10 rounded-full pl-4 pr-10 py-2.5 text-xs text-ink focus:border-teal outline-none transition-colors"
                 />
                 <MagnifyingGlass size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted" weight="bold" />
@@ -140,11 +141,11 @@ export default async function StoriesPage() {
                     
                     <div className="flex-1 flex flex-col p-6">
                       <div className="flex items-center gap-4 text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
-                        <span className="text-[#E18868]">{story.category}</span>
-                        <span className="flex items-center gap-1"><Clock size={12}/> 4 MIN READ</span>
+                        <span className="text-coral">{story.category}</span>
+                        <span className="flex items-center gap-1"><Clock size={12}/> อ่าน 4 นาที</span>
                       </div>
                       
-                      <h2 className="text-lg font-black text-ink mb-3 group-hover:text-[#E18868] transition-colors line-clamp-2 leading-snug">
+                      <h2 className="text-lg font-black text-ink mb-3 group-hover:text-coral transition-colors line-clamp-2 leading-snug">
                         {story.title}
                       </h2>
                       <p className="text-xs text-muted line-clamp-2 mb-5 flex-1 leading-relaxed">
@@ -169,7 +170,7 @@ export default async function StoriesPage() {
             {/* Pagination */}
             <div className="flex justify-center items-center gap-2 mt-12">
               <button className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:bg-ink/5 transition-colors">{'<'}</button>
-              <button className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E18868] text-white font-bold text-sm shadow-sm">1</button>
+              <button className="w-8 h-8 rounded-full flex items-center justify-center bg-coral text-white font-bold text-sm shadow-sm">1</button>
               <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">2</button>
               <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">3</button>
               <span className="text-muted">...</span>
@@ -184,8 +185,8 @@ export default async function StoriesPage() {
             {/* Editor's Picks */}
             <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
               <div className="flex items-center gap-2 mb-6">
-                <Star size={20} weight="fill" className="text-[#E18868]" />
-                <h3 className="font-black text-ink text-lg">Editor&apos;s Picks</h3>
+                <Star size={20} weight="fill" className="text-coral" />
+                <h3 className="font-black text-ink text-lg">บทความแนะนำ</h3>
               </div>
               
               <div className="space-y-5">
@@ -195,8 +196,8 @@ export default async function StoriesPage() {
                       <Image src={pick.imageUrl} alt={pick.title} fill className="object-cover transition-transform group-hover:scale-110" unoptimized />
                     </div>
                     <div>
-                      <p className="text-[9px] font-bold text-[#E18868] uppercase tracking-wider mb-1">{pick.category}</p>
-                      <h4 className="font-bold text-sm text-ink leading-tight group-hover:text-[#E18868] transition-colors line-clamp-2 mb-1">
+                      <p className="text-[9px] font-bold text-coral uppercase tracking-wider mb-1">{pick.category}</p>
+                      <h4 className="font-bold text-sm text-ink leading-tight group-hover:text-coral transition-colors line-clamp-2 mb-1">
                         {pick.title}
                       </h4>
                       <p className="text-[10px] text-muted">{pick.date}</p>
@@ -207,8 +208,8 @@ export default async function StoriesPage() {
             </div>
 
             {/* Newsletter */}
-            <div className="bg-[#FAF3EE] rounded-[2rem] p-8 shadow-sm border border-[#E18868]/10 text-center">
-              <h3 className="font-black text-ink text-xl mb-2">Never Miss a Story</h3>
+            <div className="bg-[#FAF3EE] rounded-[2rem] p-8 shadow-sm border border-coral/10 text-center">
+              <h3 className="font-black text-ink text-xl mb-2">ไม่พลาดทุกเรื่องราว</h3>
               <p className="text-xs text-muted mb-6 leading-relaxed">
                 รับเรื่องราวแรงบันดาลใจและเคล็ดลับการเดินทางส่งตรงถึงอีเมลคุณ
               </p>
@@ -216,21 +217,21 @@ export default async function StoriesPage() {
               <div className="space-y-3">
                 <input 
                   type="email" 
-                  placeholder="Enter your email address"
+                  placeholder="กรอกอีเมลของคุณ"
                   className="w-full bg-white rounded-full px-5 py-3 text-sm text-ink outline-none border border-ink/5 focus:border-teal"
                 />
-                <button type="button" className="w-full bg-[#E18868] text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-[#D07757] transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <button type="button" className="w-full bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm">
                   Subscribe <PaperPlaneRight weight="fill" />
                 </button>
               </div>
               <p className="text-[9px] text-muted mt-3 flex items-center justify-center gap-1">
-                <span>🔒</span> No spam, unsubscribe anytime.
+                <span>🔒</span> เราไม่ส่งสแปม และยกเลิกได้ตลอดเวลา
               </p>
             </div>
 
             {/* Popular Tags */}
             <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
-              <h3 className="font-black text-ink text-lg mb-6">Popular Tags</h3>
+              <h3 className="font-black text-ink text-lg mb-6">แท็กยอดนิยม</h3>
               <div className="flex flex-wrap gap-2">
                 {["Yala", "Pattani", "Narathiwat", "Betong", "Local Food", "Nature Trail", "Culture", "Photography", "Budget Travel", "Cafe Hopping"].map(tag => (
                   <span key={tag} className="px-3 py-1.5 rounded-full text-[11px] font-medium text-ink bg-[#FAF8F5] border border-ink/5 hover:border-ink/20 cursor-pointer transition-colors">
@@ -238,8 +239,8 @@ export default async function StoriesPage() {
                   </span>
                 ))}
               </div>
-              <button className="text-[11px] font-bold text-[#E18868] mt-6 hover:underline">
-                View all tags →
+              <button className="text-[11px] font-bold text-coral mt-6 hover:underline">
+                ดูแท็กทั้งหมด &rarr;
               </button>
             </div>
             
@@ -257,13 +258,13 @@ export default async function StoriesPage() {
               unoptimized
             />
             <div className="relative z-10 text-center md:text-left mb-4 md:mb-0">
-              <h2 className="text-xl md:text-2xl font-black text-white mb-1">Share Your Story with the World</h2>
-              <p className="text-white/80 text-xs md:text-sm">Have a travel story to share? Join our community of explorers and inspire others.</p>
+              <h2 className="text-xl md:text-2xl font-black text-white mb-1">แบ่งปันเรื่องราวของคุณกับเรา</h2>
+              <p className="text-white/80 text-xs md:text-sm">มีเรื่องราวการเดินทางดีๆ ที่อยากแชร์ไหม? มาร่วมสร้างแรงบันดาลใจให้คนอื่นๆ กัน</p>
             </div>
             <div className="relative z-10">
-              <button className="bg-[#E18868] text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#D07757] transition-all flex items-center gap-2 whitespace-nowrap">
-                Become a Contributor <PaperPlaneRight weight="bold" />
-              </button>
+              <Link href={`/stories/${featuredStory.id}`} className="bg-coral text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-coral/90 transition-all flex items-center gap-2 whitespace-nowrap">
+                อ่านเรื่องราว <ArrowRight size={14} weight="bold" />
+              </Link>
             </div>
           </div>
         </section>

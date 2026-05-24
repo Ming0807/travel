@@ -63,10 +63,10 @@ export default async function RestaurantDetailPage({
 
         {/* Breadcrumb */}
         <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <Link href="/" className="hover:text-coral transition-colors">Home</Link>
-          <span>›</span>
-          <Link href="/restaurants" className="hover:text-coral transition-colors">Restaurants</Link>
-          <span>›</span>
+          <Link href="/" className="hover:text-coral transition-colors">หน้าแรก</Link>
+          <span>/</span>
+          <Link href="/restaurants" className="hover:text-coral transition-colors">ร้านอาหาร</Link>
+          <span>/</span>
           <span className="text-ink">{restaurant.name}</span>
         </div>
 
@@ -103,7 +103,7 @@ export default async function RestaurantDetailPage({
             {/* Description */}
             {restaurant.description && (
               <section>
-                <h2 className="text-2xl font-black text-ink mb-4">About</h2>
+                <h2 className="text-2xl font-black text-ink mb-4">เกี่ยวกับ</h2>
                 <p className="text-base leading-relaxed text-muted whitespace-pre-line">
                   {restaurant.description}
                 </p>
@@ -113,7 +113,7 @@ export default async function RestaurantDetailPage({
             {/* Nearby Attractions */}
             {restaurant.nearbyAttractions.length > 0 && (
               <section>
-                <h2 className="text-2xl font-black text-ink mb-6">Nearby Attractions</h2>
+                <h2 className="text-2xl font-black text-ink mb-6">สถานที่ท่องเที่ยวใกล้เคียง</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {restaurant.nearbyAttractions.map((attraction) => (
                     <Link
@@ -155,14 +155,14 @@ export default async function RestaurantDetailPage({
 
               {/* Quick Info Card */}
               <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
-                <h3 className="font-black text-ink text-lg mb-6">Restaurant Info</h3>
+                <h3 className="font-black text-ink text-lg mb-6">ข้อมูลร้านอาหาร</h3>
 
                 <div className="space-y-5">
                   {restaurant.foodType && (
                     <div className="flex items-start gap-3">
                       <ForkKnife size={20} className="text-[#E18868] mt-0.5 shrink-0" weight="light" />
                       <div>
-                        <p className="text-xs font-bold text-muted uppercase tracking-wider">Cuisine</p>
+                        <p className="text-xs font-bold text-muted uppercase tracking-wider">ประเภทอาหาร</p>
                         <p className="text-sm font-bold text-ink">{restaurant.foodType}</p>
                       </div>
                     </div>
@@ -172,7 +172,7 @@ export default async function RestaurantDetailPage({
                     <div className="flex items-start gap-3">
                       <MapPin size={20} className="text-[#E18868] mt-0.5 shrink-0" weight="light" />
                       <div>
-                        <p className="text-xs font-bold text-muted uppercase tracking-wider">Address</p>
+                        <p className="text-xs font-bold text-muted uppercase tracking-wider">ที่อยู่</p>
                         <p className="text-sm font-bold text-ink">{restaurant.addressText}</p>
                       </div>
                     </div>
@@ -182,7 +182,7 @@ export default async function RestaurantDetailPage({
                     <div className="flex items-start gap-3">
                       <Clock size={20} className="text-[#E18868] mt-0.5 shrink-0" weight="light" />
                       <div>
-                        <p className="text-xs font-bold text-muted uppercase tracking-wider">Opening Hours</p>
+                        <p className="text-xs font-bold text-muted uppercase tracking-wider">เวลาทำการ</p>
                         <p className="text-sm font-bold text-ink">{restaurant.openingHours}</p>
                       </div>
                     </div>
@@ -192,7 +192,7 @@ export default async function RestaurantDetailPage({
                     <div className="flex items-start gap-3">
                       <Phone size={20} className="text-[#E18868] mt-0.5 shrink-0" weight="light" />
                       <div>
-                        <p className="text-xs font-bold text-muted uppercase tracking-wider">Contact</p>
+                        <p className="text-xs font-bold text-muted uppercase tracking-wider">ข้อมูลติดต่อ</p>
                         <p className="text-sm font-bold text-ink">{restaurant.contactInfo}</p>
                       </div>
                     </div>
@@ -217,23 +217,23 @@ export default async function RestaurantDetailPage({
                       rel="noopener noreferrer"
                       className="mt-3 inline-flex items-center gap-2 bg-white text-ink px-4 py-2 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors"
                     >
-                      <NavigationArrow size={14} weight="fill" /> Get Directions
+                      <NavigationArrow size={14} weight="fill" /> ดูเส้นทาง
                     </a>
                   </div>
                 </div>
               )}
 
               {/* CTA */}
-              <div className="bg-gradient-to-br from-[#E18868] to-[#D07757] rounded-[2rem] p-6 text-white">
-                <h3 className="font-black text-lg mb-2">Visiting Southern Border?</h3>
+              <div className="bg-gradient-to-br from-coral to-coral/90 rounded-[2rem] p-6 text-white">
+                <h3 className="font-black text-lg mb-2">มาเที่ยวชายแดนใต้ใช่ไหม?</h3>
                 <p className="text-sm text-white/90 mb-4">
-                  Start your journey and earn digital stamps & certificates at attractions nearby.
+                  เริ่มต้นการเดินทางและสะสมตราประทับพร้อมรับใบประกาศดิจิทัล
                 </p>
                 <Link
                   href="/passport"
                   className="inline-flex items-center gap-2 bg-white text-ink px-5 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors"
                 >
-                  Start Your Passport
+                  เริ่มต้นใช้งานพาสปอร์ต
                 </Link>
               </div>
 
