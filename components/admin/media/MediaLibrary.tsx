@@ -1,8 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import { UploadSimple, Trash, WarningCircle, CheckCircle, Image as ImageIcon } from "@phosphor-icons/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowSquareOut,
+  CheckCircle,
+  Image as ImageIcon,
+  Info,
+  MagnifyingGlass,
+  ShieldCheck,
+  Trash,
+  UploadSimple,
+  WarningCircle,
+} from "@phosphor-icons/react";
 
 export type MediaAsset = {
   id: string;
@@ -15,56 +24,97 @@ export type MediaAsset = {
   url: string;
 };
 
-const CATEGORIES = ["All", "General", "Homepage", "Badges", "Certificates", "Attractions"];
+const CATEGORIES = [
+  { value: "All", label: "All" },
+  { value: "General", label: "General" },
+  { value: "Homepage", label: "Homepage" },
+  { value: "Attractions", label: "Attractions" },
+  { value: "Badges", label: "Badges" },
+  { value: "Certificates", label: "Certificates" },
+];
+
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
 type MediaLibraryProps = {
   mode?: "manage" | "pick";
   onSelect?: (url: string) => void;
 };
 
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getAssetReadiness(asset: MediaAsset) {
+  if (!ALLOWED_TYPES.includes(asset.mime_type)) {
+    return { label: "Unsupported type", tone: "warning" as const };
+  }
+  if (asset.size_bytes > 2 * 1024 * 1024) {
+    return { label: "Large file", tone: "warning" as const };
+  }
+  return { label: "Web ready", tone: "success" as const };
+}
+
 export function MediaLibrary({ mode = "manage", onSelect }: MediaLibraryProps) {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
+  const [query, setQuery] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState("");
+  const [deleteCandidate, setDeleteCandidate] = useState<MediaAsset | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchMedia();
+    void fetchMedia();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
+
+  const filteredAssets = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return assets;
+    return assets.filter((asset) =>
+      [asset.file_name, asset.storage_path, asset.category, asset.mime_type]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(normalized))
+    );
+  }, [assets, query]);
+
+  const stats = useMemo(() => {
+    const largeCount = assets.filter((asset) => asset.size_bytes > 2 * 1024 * 1024).length;
+    const unsupportedCount = assets.filter((asset) => !ALLOWED_TYPES.includes(asset.mime_type)).length;
+    return { total: assets.length, largeCount, unsupportedCount };
+  }, [assets]);
 
   const fetchMedia = async () => {
     setLoading(true);
+    setError("");
     try {
-      const res = await fetch(`/api/admin/media?category=${category}`);
-      if (res.ok) {
-        const data = await res.json();
-        setAssets(data);
-      } else {
-        setError("Failed to fetch media assets");
+      const response = await fetch(`/api/admin/media?category=${encodeURIComponent(category)}`);
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setError(data?.error || "Could not load media assets. Please try again.");
+        return;
       }
-    } catch (err) {
-      setError("An error occurred while fetching media");
+      setAssets(Array.isArray(data) ? data : []);
+    } catch {
+      setError("Could not connect to the media library. Please check the connection and try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate type
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
-    if (!allowedTypes.includes(file.type)) {
-      setError(`Invalid file type. Please upload JPEG, PNG, WebP or SVG.`);
+  const uploadFile = async (file: File) => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError("Unsupported file type. Use JPG, PNG, or WebP.");
       return;
     }
 
-    // Validate size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError(`File is too large (max 10MB)`);
+    if (file.size > MAX_SIZE_BYTES) {
+      setError("File is too large. Use an image up to 10MB.");
       return;
     }
 
@@ -76,169 +126,309 @@ export function MediaLibrary({ mode = "manage", onSelect }: MediaLibraryProps) {
     formData.append("category", category === "All" ? "General" : category);
 
     try {
-      const res = await fetch("/api/admin/media", {
+      const response = await fetch("/api/admin/media", {
         method: "POST",
         body: formData,
       });
+      const data = await response.json().catch(() => null);
 
-      if (res.ok) {
-        const data = await res.json();
-        setAssets([data.asset, ...assets]);
-      } else {
-        const data = await res.json();
-        setError(data.error || "Upload failed");
+      if (!response.ok) {
+        setError(data?.error || "Upload failed. Please try again.");
+        return;
       }
-    } catch (err) {
-      setError("Upload failed due to network error");
+
+      if (data?.asset) {
+        setAssets((current) => [data.asset, ...current]);
+      }
+    } catch {
+      setError("Upload failed because the connection was interrupted. Please try again.");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      setIsDragging(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent select trigger if in pick mode
-    if (!confirm("Are you sure you want to delete this image? It might break pages where it's used.")) return;
+  const handleFileInput = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) await uploadFile(file);
+  };
+
+  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) await uploadFile(file);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteCandidate) return;
 
     try {
-      const res = await fetch(`/api/admin/media/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setAssets(assets.filter(a => a.id !== id));
-      } else {
-        alert("Failed to delete media");
+      const response = await fetch(`/api/admin/media/${deleteCandidate.id}`, { method: "DELETE" });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setError(data?.error || "Could not delete this asset. Please try again.");
+        return;
       }
-    } catch (err) {
-      alert("Delete failed");
+      setAssets((current) => current.filter((asset) => asset.id !== deleteCandidate.id));
+      setDeleteCandidate(null);
+    } catch {
+      setError("Delete failed because the connection was interrupted. Please try again.");
     }
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      {/* Toolbar */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
-          {CATEGORIES.map(c => (
-            <button
-              key={c}
-              onClick={() => setCategory(c)}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
-                category === c
-                  ? "bg-ink text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
+    <div className="flex h-full flex-col bg-slate-50">
+      <div className="border-b border-slate-200 bg-white px-5 py-4">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-[#0A6B62]/20 bg-[#E6F4EF] px-3 py-2 text-xs font-black text-[#073F37]">
+                <ShieldCheck size={16} weight="fill" />
+                Official content assets
+              </span>
+              <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
+                Tourist uploads and generated certificates are stored separately.
+              </span>
+            </div>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+              Use this library to search, upload, and pick reusable official images. To change a public attraction,
+              story, route, or homepage card image, start from that content editor so the image keeps its owner,
+              role, alt text, and publish readiness.
+            </p>
+          </div>
+
+          <div
+            onDragOver={(event) => {
+              event.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            className={`rounded-lg border-2 border-dashed p-4 transition ${
+              isDragging ? "border-[#0A6B62] bg-[#E6F4EF]" : "border-slate-300 bg-slate-50"
+            }`}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileInput}
+              className="hidden"
+              accept="image/jpeg,image/png,image/webp"
+            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-black text-slate-800">Upload official image</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">JPG, PNG, WebP up to 10MB. Storage path is generated automatically.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-black text-white transition hover:bg-[#075049] disabled:opacity-50"
+              >
+                {uploading ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                ) : (
+                  <UploadSimple size={18} weight="bold" />
+                )}
+                {uploading ? "Uploading..." : "Upload"}
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleUpload}
-            className="hidden"
-            accept="image/jpeg,image/png,image/webp,image/svg+xml"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-2 bg-teal text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-teal/90 transition-colors shadow-sm disabled:opacity-50"
-          >
-            {uploading ? (
-               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            ) : (
-              <UploadSimple size={18} weight="bold" />
-            )}
-            Upload Image
-          </button>
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="relative">
+            <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} weight="bold" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="min-h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+              placeholder="Search file name, path, category, or type"
+            />
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {CATEGORIES.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setCategory(item.value)}
+                className={`min-h-10 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-black transition ${
+                  category === item.value
+                    ? "bg-[#073F37] text-white"
+                    : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-bold text-slate-500">Assets in view</p>
+            <p className="mt-1 text-xl font-black text-slate-900">{stats.total}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-bold text-slate-500">Large files</p>
+            <p className={`mt-1 text-xl font-black ${stats.largeCount ? "text-amber-700" : "text-slate-900"}`}>{stats.largeCount}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-bold text-slate-500">Unsupported types</p>
+            <p className={`mt-1 text-xl font-black ${stats.unsupportedCount ? "text-rose-700" : "text-slate-900"}`}>{stats.unsupportedCount}</p>
+          </div>
         </div>
       </div>
 
-      {error && (
-        <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-2 text-sm">
-          <WarningCircle size={18} weight="fill" />
+      {error ? (
+        <div className="mx-5 mt-4 flex gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-bold text-rose-700">
+          <WarningCircle className="mt-0.5 shrink-0" size={18} weight="fill" />
           {error}
         </div>
-      )}
+      ) : null}
 
-      {/* Grid */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-5">
         {loading ? (
           <div className="flex h-full items-center justify-center">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-teal" />
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#0A6B62]" />
           </div>
-        ) : assets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-slate-400">
-            <ImageIcon size={48} weight="duotone" className="mb-3 text-slate-300" />
-            <p>No media found in {category}</p>
+        ) : filteredAssets.length === 0 ? (
+          <div className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-5 text-center">
+            <ImageIcon size={48} weight="duotone" className="text-slate-300" />
+            <p className="mt-3 text-sm font-black text-slate-800">No matching media assets</p>
+            <p className="mt-1 max-w-md text-sm leading-6 text-slate-500">
+              Try another search, switch category, or upload an official image. Content-specific cover and gallery
+              metadata is managed from the content editor.
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {assets.map((asset) => (
-              <div 
-                key={asset.id} 
-                onClick={() => mode === "pick" && onSelect && onSelect(asset.url)}
-                className={`group relative bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all ${
-                  mode === "pick" ? "cursor-pointer hover:border-teal hover:ring-2 hover:ring-teal/20" : ""
-                }`}
-              >
-                <div className="aspect-square relative bg-slate-100 flex items-center justify-center p-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={asset.url}
-                    alt={asset.file_name}
-                    className="max-w-full max-h-full object-contain drop-shadow-sm rounded"
-                  />
-                  
-                  {/* Overlay Actions */}
-                  <div className={`absolute inset-0 bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 ${mode === "pick" ? "" : "backdrop-blur-sm"}`}>
-                    {mode === "pick" ? (
-                      <div className="bg-teal text-white rounded-full p-2 shadow-lg">
-                        <CheckCircle size={24} weight="fill" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {filteredAssets.map((asset) => {
+              const readiness = getAssetReadiness(asset);
+              const isPickMode = mode === "pick";
+
+              return (
+                <article
+                  key={asset.id}
+                  onClick={() => isPickMode && onSelect?.(asset.url)}
+                  className={`group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition ${
+                    isPickMode ? "cursor-pointer hover:border-[#0A6B62] hover:ring-2 hover:ring-[#0A6B62]/15" : "hover:shadow-md"
+                  }`}
+                >
+                  <div className="relative aspect-[4/3] bg-slate-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={asset.url} alt={asset.file_name} className="h-full w-full object-cover" />
+                    <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-black ${
+                          readiness.tone === "success"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-800"
+                        }`}
+                      >
+                        {readiness.label}
+                      </span>
+                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-black text-slate-700">
+                        {asset.category}
+                      </span>
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition group-hover:opacity-100">
+                      <a
+                        href={asset.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(event) => event.stopPropagation()}
+                        className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-white/95 px-3 py-2 text-xs font-black text-slate-800"
+                      >
+                        <ArrowSquareOut size={15} weight="bold" />
+                        Open
+                      </a>
+                      {isPickMode ? (
+                        <span className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#0A6B62] px-3 py-2 text-xs font-black text-white">
+                          <CheckCircle size={15} weight="fill" />
+                          Select
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setDeleteCandidate(asset);
+                          }}
+                          className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-black text-white"
+                        >
+                          <Trash size={15} weight="bold" />
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <div>
+                      <p className="truncate text-sm font-black text-slate-800" title={asset.file_name}>{asset.file_name}</p>
+                      <p className="mt-1 truncate font-mono text-xs text-slate-500" title={asset.storage_path}>{asset.storage_path}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-lg bg-slate-50 p-2">
+                        <p className="font-bold text-slate-500">Type</p>
+                        <p className="mt-0.5 font-black text-slate-800">{asset.mime_type.replace("image/", "").toUpperCase()}</p>
                       </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => window.open(asset.url, '_blank')}
-                          className="bg-white/20 text-white hover:bg-white hover:text-ink p-2 rounded-full transition-colors"
-                          title="View Original"
-                        >
-                          <ImageIcon size={18} weight="bold" />
-                        </button>
-                        <button
-                          onClick={(e) => handleDelete(asset.id, e)}
-                          className="bg-red-500/80 text-white hover:bg-red-500 p-2 rounded-full transition-colors"
-                          title="Delete"
-                        >
-                          <Trash size={18} weight="bold" />
-                        </button>
-                      </>
-                    )}
+                      <div className="rounded-lg bg-slate-50 p-2">
+                        <p className="font-bold text-slate-500">Size</p>
+                        <p className="mt-0.5 font-black text-slate-800">{formatSize(asset.size_bytes)}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 rounded-lg border border-slate-200 bg-white p-2 text-xs leading-5 text-slate-600">
+                      <Info className="mt-0.5 shrink-0 text-slate-400" size={15} weight="fill" />
+                      Alt text, cover role, and public readiness are set inside the content editor that uses this asset.
+                    </div>
                   </div>
-                </div>
-                <div className="p-3 border-t border-slate-100">
-                  <p className="text-xs font-semibold text-slate-700 truncate" title={asset.file_name}>
-                    {asset.file_name}
-                  </p>
-                  <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500 font-medium uppercase tracking-wide">
-                    <span>{asset.category}</span>
-                    <span>{formatSize(asset.size_bytes)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {deleteCandidate ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-2xl">
+            <div className="flex gap-3">
+              <WarningCircle className="mt-0.5 shrink-0 text-amber-600" size={24} weight="fill" />
+              <div>
+                <h2 className="text-base font-black text-slate-900">Delete asset from global library?</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  This removes the file from the public `site-media` bucket and the global asset list. If a settings
+                  field or content record uses this URL, that surface may show a broken image. Prefer replacing images
+                  from the content editor when the asset is already public.
+                </p>
+                <p className="mt-3 break-all rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-600">
+                  {deleteCandidate.storage_path}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setDeleteCandidate(null)}
+                className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="min-h-11 rounded-lg bg-rose-600 px-4 py-2 text-sm font-black text-white transition hover:bg-rose-700"
+              >
+                Delete asset
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

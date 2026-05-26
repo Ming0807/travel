@@ -88,7 +88,7 @@ export default async function AdminRestaurantsPage({
                   <tr key={restaurant.restaurant_id} className="hover:bg-slate-50/50">
                     <td className="px-4 py-3">
                       <div>
-                        <a href={`/admin/restaurants/${restaurant.restaurant_id}`} className="font-bold text-[#073F37] hover:text-[#F3704C] transition-colors">{restaurant.name_th}</a>
+                        <a href={`/admin/restaurants/${restaurant.restaurant_id}/edit`} className="font-bold text-[#073F37] hover:text-[#F3704C] transition-colors">{restaurant.name_th}</a>
                         {restaurant.name_en && (
                           <p className="mt-0.5 text-xs text-slate-500">{restaurant.name_en}</p>
                         )}

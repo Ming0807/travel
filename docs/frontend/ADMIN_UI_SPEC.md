@@ -90,6 +90,7 @@ MVP routes:
 
 ```text
 /admin
+/admin/content
 /admin/dashboard
 /admin/attractions
 /admin/attractions/new
@@ -137,6 +138,7 @@ content card/table/form
 Sidebar items for MVP:
 
 ```text
+Content Hub
 Dashboard
 Attractions
 Photo Spots
@@ -260,11 +262,22 @@ Rules:
 
 - mark required fields
 - validate client and server side
+- show a top form error summary with admin-friendly field labels
+- use readiness panels for connected workflows such as QR codes, route stops, media, and publishing
+- use a consistent sticky save bar for create/edit forms
 - show field errors
 - disable save while saving
 - show success/error feedback
 - preserve form data after errors
 - warn for destructive actions
+
+Implemented shared primitives:
+
+```text
+components/admin/forms/AdminFormUX.tsx
+```
+
+This module provides section, error summary, help panel, readiness panel, and save bar primitives for admin CMS forms.
 
 ---
 
@@ -366,7 +379,83 @@ Export Report
 
 ---
 
-## 12. Admin Dashboard Analytics Page
+## 12. Content And Dashboard Pages
+
+## 12.1 Content Hub Page
+
+Route:
+
+```text
+/admin/content
+```
+
+Purpose:
+
+Provide a workflow-first CMS command center for public content operations.
+
+The page should answer common admin questions:
+
+```text
+Where do I change the homepage popular destination image?
+Where do I edit attraction text and gallery images?
+Where do stories connect to attractions?
+Where do routes get their stops?
+Which content affects the QR landing page?
+```
+
+Recommended sections:
+
+```text
+content source-of-truth map
+workflow cards
+public surface map
+publish readiness checklist
+quick links to attractions, media, stories, routes, photo spots, and QR codes
+```
+
+The Content Hub should not store duplicate content. It should route admins to the correct source record.
+
+Content Hub should also expose public-surface workflows:
+
+```text
+Homepage sections
+Attraction page sections
+Story pages
+Route pages
+QR landing content
+Settings surfaces
+```
+
+For content-heavy pages, the editor should mirror the public page sections. Example for an attraction detail page:
+
+```text
+Header
+Gallery
+Overview
+Things to Do
+Where to Stay
+Food & Drink
+Tips
+How to Get There
+Reviews
+Related Articles
+QR / Certificate CTA
+Publishing
+```
+
+This section-based model helps admins understand what part of `/attractions/[slug]` they are editing.
+
+CMS source-of-truth requirement:
+
+```text
+Admin previews and public pages must use inserted database content or honest empty states.
+```
+
+Do not use runtime mock attraction/story/route data as fallback in the CMS review path. Design mockups may be archived for reference, but public routes and admin visual editors must not silently show fake content when the database is missing records.
+
+---
+
+## 12.2 Admin Dashboard Analytics Page
 
 Route:
 
@@ -481,6 +570,28 @@ Media
 360 Media optional
 Publishing
 ```
+
+Preferred UX direction:
+
+```text
+Use a page-section editor that follows the public attraction detail layout.
+```
+
+The editor may still save to the same attraction/media/photo spot/check-in records, but the admin-facing navigation should be:
+
+```text
+Header
+Gallery
+Overview
+Location / How to Get There
+Nearby Food / Stays
+Reviews
+Related Stories
+QR / Certificate CTA
+Publishing
+```
+
+Show a preview/readiness panel for the selected section.
 
 ## 14.2 Basic Information Fields
 
@@ -671,6 +782,7 @@ Rules:
 - photo spot must belong to attraction
 - inactive spot should not appear in public check-in
 - do not hard delete if visits exist
+- explain that photo spots connect QR/certificate context to one attraction
 
 ---
 
@@ -758,6 +870,12 @@ Validation:
 - attraction required
 - photo spot must belong to attraction
 - starts_at before ends_at
+
+UX:
+
+- preview `/c/[code]` directly in the form
+- copy the public QR landing URL
+- show readiness for URL-safe code, selected attraction, and active status
 
 ---
 
@@ -988,15 +1106,49 @@ MVP optional.
 Possible sections:
 
 ```text
-general settings
-supported languages
-certificate settings
-PWA settings
-privacy/consent version
-data retention settings
+Homepage
+Public Pages
+Contact & Footer
+SEO
+System Features
+Maintenance
 ```
 
 Do not put complex master data management here if it deserves its own page.
+
+Settings UX rules:
+
+- Use section navigation instead of a very long mixed form.
+- Use a media picker for configurable images.
+- Save only changed setting groups or keys.
+- Make unsaved changes visible.
+- Require `system.settings_read` to view and `system.settings_update` to save.
+- Server-side APIs must reject unknown setting keys.
+- Sensitive setting changes should be audit logged.
+
+Settings should not become the primary CMS for attraction/story/route content.
+
+Keep in Settings:
+
+```text
+homepage hero text/images
+public page headers
+contact/footer
+SEO defaults
+system toggles
+```
+
+Move or expose through a dedicated CMS surface:
+
+```text
+homepage popular destination selection
+attraction content
+story content
+route content
+media attached to records
+```
+
+Homepage popular destinations should use a searchable attraction picker with province/status/readiness filters, not a raw slug textarea.
 
 ---
 
@@ -1309,6 +1461,9 @@ Show LINE user IDs in normal admin tables.
 Show raw technical errors.
 Mix tourist flow UI inside admin layout.
 Use inconsistent button/table styles.
+Use runtime mock data as public CMS fallback.
+Duplicate attraction cover images into homepage settings.
+Keep active design mockup HTML files beside production app routes.
 ```
 
 ---

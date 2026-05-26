@@ -13,6 +13,8 @@ import { requirePermission } from "@/lib/auth/guards";
 import { listAdminPhotoSpots } from "@/lib/repositories/photo-spot.repository";
 import { adminPhotoSpotFiltersSchema } from "@/lib/validation/photo-spot";
 import { PhotoSpotStatusAction } from "@/components/admin/photo-spots/PhotoSpotStatusAction";
+import Link from "next/link";
+import { Plus, PencilSimple } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = {
   title: "Photo Spots Management | Admin",
@@ -41,11 +43,20 @@ export default async function AdminPhotoSpotsPage({
   return (
     <AdminShell>
       <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="Content Management"
-          title="จุดถ่ายภาพ"
-          description="จัดการจุดถ่ายภาพในแต่ละแหล่งท่องเที่ยว"
-        />
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <AdminPageHeader
+            eyebrow="Content Management"
+            title="จุดถ่ายภาพ"
+            description="จัดการจุดถ่ายภาพในแต่ละแหล่งท่องเที่ยว"
+          />
+          <Link
+            href="/admin/photo-spots/new"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#F3704C] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#E55A35] transition-colors"
+          >
+            <Plus size={20} weight="bold" />
+            เพิ่มจุดถ่ายภาพ
+          </Link>
+        </div>
 
         <FilterBar>
           <div className="min-w-[220px] flex-1">
@@ -95,10 +106,19 @@ export default async function AdminPhotoSpotsPage({
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <PhotoSpotStatusAction
-                        photoSpotId={spot.photo_spot_id}
-                        isActive={spot.is_active}
-                      />
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/photo-spots/${spot.photo_spot_id}/edit`}
+                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                          title="แก้ไข"
+                        >
+                          <PencilSimple size={20} />
+                        </Link>
+                        <PhotoSpotStatusAction
+                          photoSpotId={spot.photo_spot_id}
+                          isActive={spot.is_active}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -144,7 +164,13 @@ export default async function AdminPhotoSpotsPage({
                     )}
                   </div>
 
-                  <div className="flex items-center justify-end border-t border-slate-100 pt-4">
+                  <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+                    <Link
+                      href={`/admin/photo-spots/${spot.photo_spot_id}/edit`}
+                      className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                    >
+                      <PencilSimple size={20} />
+                    </Link>
                     <PhotoSpotStatusAction
                       photoSpotId={spot.photo_spot_id}
                       isActive={spot.is_active}

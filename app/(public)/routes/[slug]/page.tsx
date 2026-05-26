@@ -42,15 +42,19 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
       <main className="min-h-screen bg-sand/30 pb-20 pt-24">
         {/* Hero Section */}
         <div className="relative h-[40vh] min-h-[300px] w-full bg-ink">
-          <Image 
-            src={route.imageUrl} 
-            alt={route.name} 
-            fill 
-            className="object-cover opacity-70" 
-            unoptimized 
-          />
+          {route.imageUrl ? (
+            <Image
+              src={route.imageUrl}
+              alt={route.name}
+              fill
+              className="object-cover opacity-70"
+              unoptimized
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_34%),linear-gradient(135deg,#18433f,#6A9C63)]" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-transparent" />
-          
+
           <div className="absolute inset-0 flex items-end">
             <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6">
               <span className="inline-block rounded-full bg-leaf px-3 py-1 text-xs font-bold text-white mb-4">
@@ -84,7 +88,7 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
 
           <div className="space-y-12">
             <h2 className="text-2xl font-black text-ink">แผนการเดินทาง</h2>
-            
+
             {days.map(day => (
               <div key={day} className="relative">
                 <div className="mb-6 flex items-center gap-4">
@@ -93,21 +97,28 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
                   </div>
                   <h3 className="text-xl font-bold text-ink">วันที่ {day}</h3>
                 </div>
-                
+
                 <div className="ml-6 space-y-8 border-l-2 border-slate-200 py-4 pl-8">
                   {stopsByDay[day].map((stop, index) => (
                     <div key={stop.sequence} className="relative">
                       <div className="absolute -left-[41px] top-4 h-4 w-4 rounded-full border-4 border-white bg-leaf shadow-sm" />
-                      
+
                       <Link href={`/attractions/${stop.attractionSlug}`} className="group flex flex-col sm:flex-row gap-4 rounded-2xl bg-white p-4 shadow-sm transition hover:shadow-md">
                         <div className="relative h-48 sm:h-32 w-full sm:w-48 shrink-0 overflow-hidden rounded-xl">
-                          <Image 
-                            src={stop.attractionImage} 
-                            alt={stop.attractionName} 
-                            fill 
-                            className="object-cover transition duration-500 group-hover:scale-105" 
-                            unoptimized 
-                          />
+                          {stop.attractionImage ? (
+                            <Image
+                              src={stop.attractionImage}
+                              alt={stop.attractionName}
+                              fill
+                              className="object-cover transition duration-500 group-hover:scale-105"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-sand/70 text-center text-xs font-semibold text-muted">
+                              <MapPin size={22} className="text-leaf" />
+                              <span>Image not added</span>
+                            </div>
+                          )}
                         </div>
                         <div className="flex flex-col justify-center">
                           <p className="text-sm font-bold text-leaf mb-1">จุดที่ {index + 1}</p>

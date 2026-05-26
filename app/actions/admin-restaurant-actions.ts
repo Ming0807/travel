@@ -25,12 +25,12 @@ export async function createRestaurantAction(formData: FormData): Promise<Action
     const guard = await requirePermission("restaurant.create");
     const parsed = adminRestaurantMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลร้านอาหารอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const existingSlug = await findRestaurantBySlug(parsed.data.slug);
     if (existingSlug !== null) {
-      return { success: false, error: "Slug already exists.", fieldErrors: { slug: ["This slug is already in use."] } };
+      return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const created = await createAdminRestaurant(parsed.data);
@@ -46,7 +46,7 @@ export async function createRestaurantAction(formData: FormData): Promise<Action
     return { success: true, data: { id: created.restaurant_id } };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to create restaurant." };
+    return { success: false, error: "ยังสร้างร้านอาหารไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -55,16 +55,16 @@ export async function updateRestaurantAction(restaurantId: number, formData: For
     const guard = await requirePermission("restaurant.update");
     const parsed = adminRestaurantMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลร้านอาหารอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const existingSlug = await findRestaurantBySlug(parsed.data.slug, restaurantId);
     if (existingSlug !== null) {
-      return { success: false, error: "Slug already exists.", fieldErrors: { slug: ["This slug is already in use."] } };
+      return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const old = await getAdminRestaurantById(restaurantId);
-    if (!old) return { success: false, error: "Restaurant not found." };
+    if (!old) return { success: false, error: "ไม่พบร้านอาหารนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminRestaurant(restaurantId, parsed.data);
     await logAdminMutation({
@@ -80,14 +80,14 @@ export async function updateRestaurantAction(restaurantId: number, formData: For
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to update restaurant." };
+    return { success: false, error: "ยังบันทึกการแก้ไขร้านอาหารไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
 export async function toggleRestaurantPublishAction(restaurantId: number): Promise<ActionResult> {
   try {
     const current = await getAdminRestaurantById(restaurantId);
-    if (!current) return { success: false, error: "Restaurant not found." };
+    if (!current) return { success: false, error: "ไม่พบร้านอาหารนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const guard = await requirePermission(current.is_published ? "restaurant.unpublish" : "restaurant.publish");
 
@@ -105,14 +105,14 @@ export async function toggleRestaurantPublishAction(restaurantId: number): Promi
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle publish status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะเผยแพร่ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
 export async function toggleRestaurantActiveAction(restaurantId: number): Promise<ActionResult> {
   try {
     const current = await getAdminRestaurantById(restaurantId);
-    if (!current) return { success: false, error: "Restaurant not found." };
+    if (!current) return { success: false, error: "ไม่พบร้านอาหารนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const guard = await requirePermission(current.is_active ? "restaurant.deactivate" : "restaurant.activate");
 
@@ -130,6 +130,6 @@ export async function toggleRestaurantActiveAction(restaurantId: number): Promis
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle active status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะใช้งานไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }

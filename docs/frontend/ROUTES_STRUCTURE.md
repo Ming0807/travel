@@ -457,6 +457,18 @@ Purpose:
 - recent activity
 - summary cards
 
+## 9.1.1 Content Hub
+
+```text
+/admin/content
+```
+
+Purpose:
+
+- guide admins to the correct CMS module for public-facing content changes
+- explain how attractions, media, stories, routes, photo spots, QR codes, and homepage sections connect
+- provide quick links for common content tasks such as replacing popular destination images or editing attraction detail pages
+
 ## 9.2 Attractions
 
 ```text
@@ -834,6 +846,7 @@ MVP can be simple.
 Recommended sidebar:
 
 ```text
+Content Hub
 Dashboard
 Attractions
 Photo Spots

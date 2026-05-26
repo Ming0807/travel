@@ -18,7 +18,7 @@ export default async function AdminRouteMediaPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requirePermission("attraction.update");
+  await requirePermission("route.update");
 
   const resolvedParams = await params;
   const routeId = parseInt(resolvedParams.id, 10);

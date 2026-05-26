@@ -6,7 +6,7 @@ import { CaretDown } from "@phosphor-icons/react/dist/ssr";
 const tabs = [
   { id: "overview", label: "Overview" },
   { id: "things-to-do", label: "Things to Do" },
-  { id: "where-to-stay", label: "Where to Stay" },
+  // { id: "where-to-stay", label: "Where to Stay" }, // Hidden until module is ready
   { id: "food", label: "Food & Drink" },
   { id: "tips", label: "Travel Tips" },
   { id: "how-to-get-there", label: "How to Get There" },

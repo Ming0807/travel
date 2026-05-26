@@ -72,13 +72,17 @@ export default async function RestaurantDetailPage({
 
         {/* Hero Section */}
         <div className="relative w-full h-[300px] md:h-[400px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 mb-10">
-          <Image
-            src={restaurant.imageUrl || "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1200&auto=format&fit=crop"}
-            alt={restaurant.name}
-            fill
-            className="object-cover"
-            unoptimized
-          />
+          {restaurant.imageUrl ? (
+            <Image
+              src={restaurant.imageUrl}
+              alt={restaurant.name}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          ) : (
+            <div className="absolute inset-0 bg-ink" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/30 to-transparent"></div>
           <div className="absolute bottom-8 left-8 right-8 text-white">
             {restaurant.foodType && (
@@ -122,13 +126,19 @@ export default async function RestaurantDetailPage({
                       className="group flex items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-ink/5 shadow-sm hover:shadow-md transition-all"
                     >
                       <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-cream">
-                        <Image
-                          src={attraction.imageUrl || "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=200&q=80"}
-                          alt={attraction.name}
-                          fill
-                          className="object-cover transition-transform group-hover:scale-105"
-                          unoptimized
-                        />
+                        {attraction.imageUrl ? (
+                          <Image
+                            src={attraction.imageUrl}
+                            alt={attraction.name}
+                            fill
+                            className="object-cover transition-transform group-hover:scale-105"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-semibold text-muted">
+                            No image
+                          </div>
+                        )}
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-black text-sm text-ink mb-1 group-hover:text-[#E18868] transition-colors leading-tight">
@@ -203,9 +213,7 @@ export default async function RestaurantDetailPage({
               {/* Map Placeholder */}
               {restaurant.latitude && restaurant.longitude && (
                 <div className="bg-[#F2EFE8] rounded-[2rem] p-6 text-center border border-ink/5 relative overflow-hidden h-48">
-                  <div className="absolute inset-0 opacity-30 flex items-center justify-center pointer-events-none">
-                    <Image src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=400" alt="Map" fill className="object-cover grayscale" unoptimized />
-                  </div>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(243,112,76,0.16),transparent_34%),radial-gradient(circle_at_80%_35%,rgba(10,107,98,0.14),transparent_36%)] pointer-events-none" />
                   <div className="relative z-10 flex flex-col items-center justify-center h-full">
                     <Compass size={32} className="text-[#E18868] mb-2" weight="fill" />
                     <p className="text-sm font-bold text-ink">

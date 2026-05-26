@@ -555,18 +555,19 @@ SET stamp_name_th = EXCLUDED.stamp_name_th,
     stamp_image_path = EXCLUDED.stamp_image_path,
     is_active = EXCLUDED.is_active;
 
-WITH route_seed(name_th, name_en, description_th, description_en, cover_image_path) AS (
+WITH route_seed(slug, name_th, name_en, description_th, description_en, cover_image_path) AS (
   VALUES
-    ('เส้นทางทะเลหมอกและเมืองเบตง', 'Betong Mist & Wellness Route', 'อัยเยอร์เวง บ่อน้ำร้อน และเมืองเบตง', 'Aiyerweng, hot spring, and Betong city loop.', 'routes/betong-mist.jpg'),
-    ('เส้นทางศรัทธาและเมืองเก่าปัตตานี', 'Pattani Faith & Old Town Route', 'มัสยิดกลาง ศาลเจ้า และเมืองเก่า', 'Mosque, shrine, and old town route.', 'routes/pattani-faith.jpg'),
-    ('เส้นทางทะเลนราธิวาส', 'Narathiwat Coastal Route', 'หาดนราทัศน์ อ่าวมะนาว และตลาดชายแดน', 'Narathiwat beach, Ao Manao, and border market.', 'routes/narathiwat-coast.jpg'),
-    ('เส้นทางเมืองเก่าและทะเลสตูล', 'Songkhla-Satun Heritage & Sea Route', 'เมืองเก่าสงขลา หาดใหญ่ ปากบารา และตะรุเตา', 'Songkhla old town, Hat Yai, Pak Bara, and Tarutao.', 'routes/songkhla-satun.jpg')
+    ('betong-mist-wellness-route', 'เส้นทางทะเลหมอกและเมืองเบตง', 'Betong Mist & Wellness Route', 'อัยเยอร์เวง บ่อน้ำร้อน และเมืองเบตง', 'Aiyerweng, hot spring, and Betong city loop.', 'routes/betong-mist.jpg'),
+    ('pattani-faith-old-town-route', 'เส้นทางศรัทธาและเมืองเก่าปัตตานี', 'Pattani Faith & Old Town Route', 'มัสยิดกลาง ศาลเจ้า และเมืองเก่า', 'Mosque, shrine, and old town route.', 'routes/pattani-faith.jpg'),
+    ('narathiwat-coastal-route', 'เส้นทางทะเลนราธิวาส', 'Narathiwat Coastal Route', 'หาดนราทัศน์ อ่าวมะนาว และตลาดชายแดน', 'Narathiwat beach, Ao Manao, and border market.', 'routes/narathiwat-coast.jpg'),
+    ('songkhla-satun-heritage-sea-route', 'เส้นทางเมืองเก่าและทะเลสตูล', 'Songkhla-Satun Heritage & Sea Route', 'เมืองเก่าสงขลา หาดใหญ่ ปากบารา และตะรุเตา', 'Songkhla old town, Hat Yai, Pak Bara, and Tarutao.', 'routes/songkhla-satun.jpg')
 )
-INSERT INTO public.suggested_routes (name_th, name_en, description_th, description_en, cover_image_path, is_published, is_active)
-SELECT name_th, name_en, description_th, description_en, cover_image_path, true, true
+INSERT INTO public.suggested_routes (slug, name_th, name_en, description_th, description_en, cover_image_path, is_published, is_active)
+SELECT slug, name_th, name_en, description_th, description_en, cover_image_path, true, true
 FROM route_seed
 ON CONFLICT (name_en) DO UPDATE
-SET name_th = EXCLUDED.name_th,
+SET slug = EXCLUDED.slug,
+    name_th = EXCLUDED.name_th,
     description_th = EXCLUDED.description_th,
     description_en = EXCLUDED.description_en,
     cover_image_path = EXCLUDED.cover_image_path,
@@ -1120,3 +1121,43 @@ SET attraction_id = EXCLUDED.attraction_id,
     official_district_name = EXCLUDED.official_district_name,
     raw_data_json = EXCLUDED.raw_data_json,
     linked_at = EXCLUDED.linked_at;
+-- ==========================================
+-- 21. ACCOMMODATIONS & RELATIONS
+-- ==========================================
+
+WITH acc_seed(province_en, slug, name_th, name_en, type_en, price, lat, lng, img) AS (
+  VALUES
+    ('Yala', 'betong-grand-view', '?????????????', 'Betong Grand View', 'Hotel', '1,000 - 2,000 THB', 5.7700000, 101.0700000, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200&auto=format&fit=crop'),
+    ('Yala', 'aiyerweng-resort', '??????????? ???????', 'Aiyerweng Resort', 'Resort', '1,500 - 3,000 THB', 5.9700000, 101.1200000, 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=1200&auto=format&fit=crop'),
+    ('Pattani', 'cs-pattani-hotel', '?????? ??.???. ???????', 'CS Pattani Hotel', 'Hotel', '1,000 - 2,500 THB', 6.8650000, 101.2500000, 'https://images.unsplash.com/photo-1551882547-ff40eb0d8d73?q=80&w=1200&auto=format&fit=crop'),
+    ('Narathiwat', 'imperial-narathiwat', '???????????????? ????????', 'Imperial Narathiwat Hotel', 'Hotel', '1,200 - 2,500 THB', 6.4200000, 101.8200000, 'https://images.unsplash.com/photo-1542314831-c6a4d27ce66f?q=80&w=1200&auto=format&fit=crop')
+)
+INSERT INTO public.accommodations (
+  province_id, slug, name_th, name_en, accommodation_type,
+  latitude, longitude, cover_image_url, price_range, is_published, is_active
+)
+SELECT
+  p.province_id,
+  s.slug,
+  s.name_th,
+  s.name_en,
+  s.type_en,
+  s.lat,
+  s.lng,
+  s.img,
+  s.price,
+  true,
+  true
+FROM acc_seed s
+JOIN public.provinces p ON p.province_name_en = s.province_en
+ON CONFLICT (slug) DO UPDATE
+SET province_id = EXCLUDED.province_id,
+    name_th = EXCLUDED.name_th,
+    name_en = EXCLUDED.name_en,
+    accommodation_type = EXCLUDED.accommodation_type,
+    latitude = EXCLUDED.latitude,
+    longitude = EXCLUDED.longitude,
+    cover_image_url = EXCLUDED.cover_image_url,
+    price_range = EXCLUDED.price_range,
+    is_published = EXCLUDED.is_published,
+    is_active = EXCLUDED.is_active;

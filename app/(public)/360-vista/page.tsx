@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowSquareOut, Compass } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -8,8 +7,6 @@ const places = [
   {
     name: "Yala City 360° Virtual Tour",
     description: "สำรวจยะลาแบบ 360 องศา สัมผัสบรรยากาศสถานที่สำคัญในเมืองยะลา ไม่ว่าจะเป็นมัสยิดกลาง ตลาดนัดมะพร้าว สะพานดำ และสถานที่ท่องเที่ยวอื่นๆ เสมือนจริง",
-    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=85",
-    imageAlt: "Yala 360 tour",
     province: "ยะลา",
     spots: ["มัสยิดกลางยะลา", "ตลาดนัดมะพร้าว", "สะพานดำ", "จุดชมวิวใจกลางเมือง"],
   },
@@ -66,15 +63,11 @@ export default function Vista360Page() {
               href={VISTA_360_EXTERNAL_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="group block relative w-full aspect-[4/3] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5"
+              className="group block relative w-full aspect-[4/3] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 bg-[#EAF2F0]"
             >
-              <Image
-                src="https://images.unsplash.com/photo-1549880181-56a44cf4a9a1?auto=format&fit=crop&w=800&q=85"
-                alt="Yala 360 Virtual Tour Preview"
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                unoptimized
-              />
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,#EAF2F0_0%,#F8EDE7_58%,#173F37_100%)] transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:28px_28px]" />
+              <div className="absolute inset-8 rounded-[1.5rem] border border-white/60 bg-white/25 backdrop-blur-sm" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-2 border-white/40 group-hover:scale-110 transition-transform duration-300">

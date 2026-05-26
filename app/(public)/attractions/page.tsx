@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  MagnifyingGlass, 
-  MapPin, 
+import {
+  MagnifyingGlass,
+  MapPin,
   Star,
   CaretDown,
   PaperPlaneRight,
@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { listPublicAttractionCards } from "@/lib/repositories/public-content.repository";
+import { SettingsService } from "@/lib/services/settings.service";
 
 export const dynamic = "force-dynamic";
 
@@ -27,22 +28,39 @@ export default async function AttractionsPage({
   const search = typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined;
   const province = typeof resolvedParams.province === 'string' ? resolvedParams.province : undefined;
 
-  const attractions = await listPublicAttractionCards(16, { search, province });
+  const settingsService = new SettingsService();
+  const [attractions, heroSettings, bannerSettings] = await Promise.all([
+    listPublicAttractionCards(16, { search, province }),
+    settingsService.getSetting("attractions_page_hero", {
+      title: "สำรวจ <span class=\"text-coral\">สถานที่ท่องเที่ยว</span><br/>ใน 3 จังหวัดชายแดนใต้",
+      description: "จากเมืองท่องเที่ยวสุดฮิตสู่สถานที่ลึกลับที่รอการค้นพบ ค้นหาสถานที่สร้างแรงบันดาลใจและทริปต่อไปของคุณ"
+    }),
+    settingsService.getSetting("attractions_page_banner", {
+      title: "Sea of Mist Aiyerweng",
+      subtitle: "Discover the breathtaking views above the clouds.",
+      linkText: "Learn more",
+      linkUrl: "/attractions/aiyerweng",
+      image: ""
+    })
+  ]);
+
   const featured = attractions[0] || null;
   const topDestinations = attractions.slice(1, 7);
   const trending = attractions.slice(7, 9).length > 0 ? attractions.slice(7, 9) : attractions.slice(0, 2);
+  const emptyMessage = search || province
+    ? "No published attractions match the current filters."
+    : "No published attractions have been added yet.";
 
   const provinces = [
-    { name: "Yala", places: "56 Places", image: "https://images.unsplash.com/photo-1542640244-7e672d6cb466?q=80&w=400&auto=format&fit=crop" },
-    { name: "Pattani", places: "48 Places", image: "https://images.unsplash.com/photo-1587823527237-770498eb7909?q=80&w=400&auto=format&fit=crop" },
-    { name: "Narathiwat", places: "32 Places", image: "https://images.unsplash.com/photo-1598444315278-651817551cc3?q=80&w=400&auto=format&fit=crop" },
-    { name: "Betong", places: "25 Places", image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=400&auto=format&fit=crop" },
+    { name: "Yala", places: "Yala" },
+    { name: "Pattani", places: "Pattani" },
+    { name: "Narathiwat", places: "Narathiwat" },
   ];
 
   return (
     <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
-        
+
         {/* Breadcrumb */}
         <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
           <span>Home</span>
@@ -53,19 +71,17 @@ export default async function AttractionsPage({
         {/* HERO SECTION */}
         <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-20">
           <div className="lg:w-1/2 pt-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight">
-              สำรวจ <span className="text-coral">สถานที่ท่องเที่ยว</span><br/>
-              ใน 3 จังหวัดชายแดนใต้
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight" dangerouslySetInnerHTML={{ __html: heroSettings.title }}>
             </h1>
             <p className="text-muted leading-relaxed text-base md:text-lg max-w-md mb-8">
-              จากเมืองท่องเที่ยวสุดฮิตสู่สถานที่ลึกลับที่รอการค้นพบ ค้นหาสถานที่สร้างแรงบันดาลใจและทริปต่อไปของคุณ
+              {heroSettings.description}
             </p>
 
             {/* Search & Filters */}
             <form action="/attractions" method="GET" className="bg-white p-2 rounded-full shadow-sm border border-ink/5 flex items-center mb-6 max-w-xl">
               <MagnifyingGlass size={20} className="text-muted ml-3" weight="bold" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="q"
                 defaultValue={search || ""}
                 placeholder="ค้นหาสถานที่ท่องเที่ยว จังหวัด หรือคำค้นหา..."
@@ -91,28 +107,34 @@ export default async function AttractionsPage({
               </button>
             </div>
           </div>
-          
+
           {/* Featured Destination Card */}
           <div className="lg:w-1/2 w-full">
             {featured ? (
               <div className="relative w-full h-[350px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 group">
-                <Image 
-                  src={featured.imageUrl} 
-                  alt={featured.imageAlt} 
-                  fill 
-                  className="object-cover transition-transform duration-700 group-hover:scale-105" 
-                  unoptimized
-                />
-                
+                {featured.imageUrl ? (
+                  <Image
+                    src={featured.imageUrl}
+                    alt={featured.imageAlt}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-cream px-6 text-center text-sm font-semibold text-muted">
+                    Image not added
+                  </div>
+                )}
+
                 {/* Gradient Overlay for Text Readability */}
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent"></div>
-                
+
                 <div className="absolute top-6 left-6">
                   <span className="inline-flex items-center rounded-full bg-coral text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
                     สถานที่แนะนำ
                   </span>
                 </div>
-                
+
                 <div className="absolute bottom-8 left-8 right-8 text-white">
                   <h2 className="text-3xl font-black mb-2 leading-tight">
                     {featured.name}, {featured.province}
@@ -125,7 +147,7 @@ export default async function AttractionsPage({
               </div>
             ) : (
               <div className="w-full h-[350px] rounded-[2rem] bg-cream flex items-center justify-center text-muted">
-                ไม่พบข้อมูลสถานที่
+                {emptyMessage}
               </div>
             )}
           </div>
@@ -136,21 +158,14 @@ export default async function AttractionsPage({
           <h2 className="text-2xl font-black text-ink mb-6">จังหวัดยอดนิยม</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {provinces.map((prov, idx) => (
-              <Link href={`/attractions?province=${prov.name}`} key={idx} className="group relative h-40 md:h-48 rounded-[1.5rem] overflow-hidden shadow-sm cursor-pointer border border-ink/5 block">
-                <Image 
-                  src={prov.image} 
-                  alt={prov.name} 
-                  fill 
-                  className="object-cover transition-transform duration-700 group-hover:scale-110" 
-                  unoptimized
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/80 to-transparent"></div>
+              <Link href={`/attractions?province=${prov.name}`} key={idx} className="group relative h-40 md:h-48 rounded-[1.5rem] overflow-hidden bg-white shadow-sm cursor-pointer border border-ink/5 block transition hover:border-coral/30 hover:shadow-md">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(243,112,76,0.16),transparent_42%),linear-gradient(135deg,rgba(10,107,98,0.08),rgba(255,255,255,0.8))]"></div>
                 <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
                   <div>
-                    <h3 className="text-white font-bold text-lg leading-tight mb-1">{prov.name}</h3>
-                    <p className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{prov.places}</p>
+                    <h3 className="text-ink font-bold text-lg leading-tight mb-1">{prov.name}</h3>
+                    <p className="text-muted text-[10px] font-bold uppercase tracking-wider">{prov.places}</p>
                   </div>
-                  <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
+                  <div className="w-6 h-6 rounded-full bg-coral/10 flex items-center justify-center text-coral">
                     <span className="text-xs">›</span>
                   </div>
                 </div>
@@ -161,10 +176,10 @@ export default async function AttractionsPage({
 
         {/* MAIN GRID & SIDEBAR */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20">
-          
+
           {/* Main Content (Left) */}
           <div className="lg:col-span-8 space-y-16">
-            
+
             {/* Top Destinations */}
             <section>
               <div className="flex justify-between items-end mb-6">
@@ -173,28 +188,34 @@ export default async function AttractionsPage({
                   <Link href="/attractions" className="text-xs font-bold text-coral hover:underline">ดูสถานที่ทั้งหมด &rarr;</Link>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {topDestinations.map((dest) => (
+                {topDestinations.length > 0 ? topDestinations.map((dest) => (
                   <Link href={`/attractions/${dest.slug}`} key={dest.slug} className="group block">
                     <div className="relative h-56 w-full rounded-[1.5rem] overflow-hidden mb-4 bg-cream border border-ink/5 shadow-sm">
-                      <Image 
-                        src={dest.imageUrl} 
-                        alt={dest.imageAlt} 
-                        fill 
-                        className="object-cover transition-transform duration-700 group-hover:scale-105" 
-                        unoptimized
-                      />
+                      {dest.imageUrl ? (
+                        <Image
+                          src={dest.imageUrl}
+                          alt={dest.imageAlt}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-semibold text-muted">
+                          Image not added
+                        </div>
+                      )}
                       <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-ink hover:text-coral hover:bg-white transition-colors">
                         <Heart size={16} />
                       </div>
                     </div>
-                    
+
                     <h3 className="text-lg font-black text-ink mb-1 group-hover:text-coral transition-colors">{dest.name}</h3>
                     <p className="text-xs font-bold text-muted mb-3 flex items-center gap-1 uppercase tracking-wider">
                       {dest.province}
                     </p>
-                    
+
                     <div className="flex flex-wrap gap-2 mb-4">
                       {dest.tags.map((tag, i) => (
                         <span key={i} className="bg-cream border border-ink/5 px-2 py-1 rounded text-[10px] font-bold text-ink">
@@ -202,7 +223,7 @@ export default async function AttractionsPage({
                         </span>
                       ))}
                     </div>
-                    
+
                     <div className="flex items-center justify-between pt-4 border-t border-ink/5">
                       <div>
                         <p className="text-[10px] text-muted uppercase font-bold tracking-wider mb-0.5">ช่วงเวลาที่ดีที่สุด</p>
@@ -217,35 +238,35 @@ export default async function AttractionsPage({
                       </div>
                     </div>
                   </Link>
-                ))}
-              </div>
-              
-              {/* Pagination */}
-              <div className="flex justify-center items-center gap-2 mt-10">
-                <button className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:bg-ink/5 transition-colors">{'<'}</button>
-                <button className="w-8 h-8 rounded-full flex items-center justify-center bg-coral text-white font-bold text-sm shadow-sm">1</button>
-                <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">2</button>
-                <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">3</button>
-                <span className="text-muted">...</span>
-                <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">10</button>
-                <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">{'>'}</button>
+                )) : (
+                  <div className="md:col-span-2 rounded-[1.5rem] border border-dashed border-ink/10 bg-white p-8 text-center text-sm font-semibold text-muted">
+                    {emptyMessage}
+                  </div>
+                )}
               </div>
             </section>
 
             {/* Trending Now */}
+            {trending.length > 0 && (
             <section>
               <h2 className="text-2xl font-black text-ink mb-6">กำลังมาแรง</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {trending.map((trend) => (
                   <Link href={`/attractions/${trend.slug}`} key={trend.slug} className="group bg-white p-3 rounded-[1.5rem] border border-ink/5 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
                     <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-cream">
-                      <Image 
-                        src={trend.imageUrl} 
-                        alt={trend.imageAlt} 
-                        fill 
-                        className="object-cover transition-transform group-hover:scale-105" 
-                        unoptimized
-                      />
+                      {trend.imageUrl ? (
+                        <Image
+                          src={trend.imageUrl}
+                          alt={trend.imageAlt}
+                          fill
+                          className="object-cover transition-transform group-hover:scale-105"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-semibold text-muted">
+                          No image
+                        </div>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-black text-sm text-ink mb-1 group-hover:text-coral transition-colors leading-tight">{trend.name}</h3>
@@ -257,18 +278,16 @@ export default async function AttractionsPage({
                 ))}
               </div>
             </section>
+            )}
           </div>
 
           {/* SIDEBAR (Right) */}
           <div className="lg:col-span-4 space-y-8">
-            
+
             {/* Map Widget */}
             <div className="bg-[#F2EFE8] rounded-[2rem] p-8 text-center border border-ink/5 relative overflow-hidden">
-              {/* Map Illustration Background */}
-              <div className="absolute inset-0 opacity-40 mix-blend-multiply flex items-center justify-center pointer-events-none p-4">
-                <Image src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600" alt="Map" fill className="object-cover grayscale" unoptimized/>
-              </div>
-              
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(10,107,98,0.12),transparent_36%),radial-gradient(circle_at_80%_30%,rgba(243,112,76,0.12),transparent_32%)] pointer-events-none" />
+
               <div className="relative z-10">
                 <h3 className="font-black text-ink text-xl mb-4">วางแผนการเดินทางวันนี้</h3>
                 <p className="text-sm text-ink/80 mb-6 leading-relaxed">
@@ -283,7 +302,7 @@ export default async function AttractionsPage({
             {/* Travel With Confidence */}
             <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
               <h3 className="font-black text-ink text-lg mb-6">Travel With Confidence</h3>
-              
+
               <div className="space-y-6">
                 <div className="flex gap-4">
                   <div className="text-coral mt-1 shrink-0"><ShieldCheck size={24} weight="light" /></div>
@@ -292,7 +311,7 @@ export default async function AttractionsPage({
                     <p className="text-xs text-muted leading-relaxed">เราตรวจสอบจุดถ่ายภาพและสถานที่ท่องเที่ยวทั้งหมดเพื่อให้แน่ใจว่าปลอดภัยและเข้าถึงได้จริง</p>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-4">
                   <div className="text-coral mt-1 shrink-0"><Users size={24} weight="light" /></div>
                   <div>
@@ -300,7 +319,7 @@ export default async function AttractionsPage({
                     <p className="text-xs text-muted leading-relaxed">คัดสรรโดยผู้เชี่ยวชาญด้านการเดินทางในท้องถิ่นที่รู้แหล่งท่องเที่ยวลับที่ดีที่สุด</p>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-4">
                   <div className="text-coral mt-1 shrink-0"><MapPin size={24} weight="light" /></div>
                   <div>
@@ -312,21 +331,25 @@ export default async function AttractionsPage({
             </div>
 
             {/* Banner Image Ad */}
-            <div className="relative h-72 rounded-[2rem] overflow-hidden shadow-sm border border-ink/5 group cursor-pointer">
-              <Image 
-                src="https://images.unsplash.com/photo-1542640244-7e672d6cb466?q=80&w=600&auto=format&fit=crop" 
-                alt="Banner" 
-                fill 
-                className="object-cover transition-transform duration-700 group-hover:scale-105" 
-                unoptimized
-              />
+            <Link href={bannerSettings.linkUrl} className="relative h-72 rounded-[2rem] overflow-hidden shadow-sm border border-ink/5 group cursor-pointer block">
+              {bannerSettings.image ? (
+                <Image
+                  src={bannerSettings.image}
+                  alt={bannerSettings.title}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  unoptimized
+                />
+              ) : (
+                <div className="absolute inset-0 bg-ink" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-ink/90 to-transparent"></div>
               <div className="absolute bottom-6 left-6 right-6">
-                <h4 className="text-white font-black text-xl leading-tight mb-2">Sea of Mist Aiyerweng</h4>
-                <p className="text-white/80 text-xs mb-4">Discover the breathtaking views above the clouds.</p>
-                <span className="text-white text-xs font-bold border-b border-white pb-0.5">Learn more</span>
+                <h4 className="text-white font-black text-xl leading-tight mb-2">{bannerSettings.title}</h4>
+                <p className="text-white/80 text-xs mb-4">{bannerSettings.subtitle}</p>
+                <span className="text-white text-xs font-bold border-b border-white pb-0.5">{bannerSettings.linkText}</span>
               </div>
-            </div>
+            </Link>
 
           </div>
         </div>
@@ -334,22 +357,16 @@ export default async function AttractionsPage({
         {/* BOTTOM CTA BANNER */}
         <section className="mb-20">
           <div className="relative w-full rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
-            <Image 
-              src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop" 
-              alt="Newsletter Background" 
-              fill 
-              className="object-cover opacity-20" 
-              unoptimized
-            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(243,112,76,0.2),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(10,107,98,0.28),transparent_42%)]" />
             <div className="relative z-10 mb-6 md:mb-0 md:w-1/2">
               <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">Get Travel Inspiration Straight to Your Inbox</h2>
               <p className="text-white/80 text-sm">Weekly guides, hidden gems and exclusive travel updates.</p>
             </div>
-            
+
             <div className="relative z-10 w-full md:w-auto">
               <div className="flex flex-col sm:flex-row gap-3 bg-white/10 p-1.5 rounded-full backdrop-blur-md border border-white/20">
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   placeholder="กรอกอีเมลของคุณ"
                   className="w-full sm:w-64 bg-white rounded-full px-5 py-3 text-sm text-ink outline-none"
                 />
@@ -360,9 +377,9 @@ export default async function AttractionsPage({
             </div>
           </div>
         </section>
-        
+
       </div>
-      
+
       {/* SITE FOOTER */}
       <SiteFooter />
     </div>

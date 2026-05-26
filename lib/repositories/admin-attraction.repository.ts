@@ -22,6 +22,11 @@ export type AdminAttractionRow = {
   address_text: string | null;
   opening_hours: string | null;
   contact_info: string | null;
+  travel_tips_th: string | null;
+  travel_tips_en: string | null;
+  how_to_get_there_th: string | null;
+  how_to_get_there_en: string | null;
+  custom_sections_json: any | null;
   sustainability_category: string | null;
   estimated_capacity_per_day: number | null;
   is_published: boolean;
@@ -67,6 +72,11 @@ function mapAttraction(row: any, photoSpotCounts = new Map<number, number>(), ch
     address_text: row.address_text,
     opening_hours: row.opening_hours,
     contact_info: row.contact_info,
+    travel_tips_th: row.travel_tips_th,
+    travel_tips_en: row.travel_tips_en,
+    how_to_get_there_th: row.how_to_get_there_th,
+    how_to_get_there_en: row.how_to_get_there_en,
+    custom_sections_json: row.custom_sections_json,
     sustainability_category: row.sustainability_category,
     estimated_capacity_per_day: row.estimated_capacity_per_day,
     is_published: row.is_published,
@@ -100,6 +110,11 @@ function toPayload(input: AdminAttractionMutationInput) {
     address_text: input.addressText,
     opening_hours: input.openingHours,
     contact_info: input.contactInfo,
+    travel_tips_th: input.travelTipsTh,
+    travel_tips_en: input.travelTipsEn,
+    how_to_get_there_th: input.howToGetThereTh,
+    how_to_get_there_en: input.howToGetThereEn,
+    custom_sections_json: input.customSectionsJson,
     sustainability_category: input.sustainabilityCategory,
     estimated_capacity_per_day: input.estimatedCapacityPerDay,
     is_published: input.isPublished,
@@ -297,11 +312,21 @@ export async function getAdminAttractionTypes() {
   return data;
 }
 
+export async function getAdminDistricts() {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("districts")
+    .select("district_id, province_id, district_name_th")
+    .order("district_name_th");
+  if (error) throw new Error("FAILED_TO_FETCH_DISTRICTS");
+  return data;
+}
+
 export async function getAdminAttractionsList() {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("attractions")
-    .select("attraction_id, name_th")
+    .select("attraction_id, name_th, is_active, is_published")
     .order("name_th");
   if (error) throw new Error("ADMIN_ATTRACTIONS_LIST_FAILED");
   return data || [];
@@ -315,4 +340,72 @@ export async function getAdminPhotoSpotsList() {
     .order("spot_name_th");
   if (error) throw new Error("ADMIN_PHOTO_SPOTS_LIST_FAILED");
   return data || [];
+}
+
+export async function getAdminAttractionRelatedContent(attractionId: number) {
+  const supabase = createSupabaseServiceRoleClient();
+  const [attractions, restaurants, accommodations, stories] = await Promise.all([
+    supabase.from("attraction_related_attractions").select("*").eq("attraction_id", attractionId).order("display_order"),
+    supabase.from("attraction_related_restaurants").select("*").eq("attraction_id", attractionId).order("display_order"),
+    supabase.from("attraction_related_accommodations").select("*").eq("attraction_id", attractionId).order("display_order"),
+    supabase.from("attraction_related_stories").select("*").eq("attraction_id", attractionId).order("display_order")
+  ]);
+
+  return {
+    attractions: attractions.data || [],
+    restaurants: restaurants.data || [],
+    accommodations: accommodations.data || [],
+    stories: stories.data || []
+  };
+}
+
+export async function updateAdminAttractionRelatedContent(attractionId: number, type: 'attractions' | 'restaurants' | 'accommodations' | 'stories', relatedIds: number[]) {
+  const supabase = createSupabaseServiceRoleClient();
+  const table = `attraction_related_${type}`;
+  const idColumn = type === 'attractions' ? 'related_attraction_id' : type === 'restaurants' ? 'restaurant_id' : type === 'accommodations' ? 'accommodation_id' : 'story_id';
+
+  // Delete existing
+  const { error: deleteError } = await supabase.from(table).delete().eq("attraction_id", attractionId);
+  if (deleteError) throw new Error("ADMIN_ATTRACTION_RELATED_UPDATE_FAILED");
+
+  // Insert new
+  if (relatedIds.length > 0) {
+    const payload = relatedIds.map((id, index) => ({
+      attraction_id: attractionId,
+      [idColumn]: id,
+      display_order: index + 1
+    }));
+    const { error: insertError } = await supabase.from(table).insert(payload);
+    if (insertError) throw new Error("ADMIN_ATTRACTION_RELATED_UPDATE_FAILED");
+  }
+}
+
+export async function getAdminAllContentList() {
+  const supabase = createSupabaseServiceRoleClient();
+  const [attractions, restaurants, stories] = await Promise.all([
+    supabase.from("attractions").select("attraction_id, name_th, province_id, provinces(province_name_th)").eq("is_published", true),
+    supabase.from("restaurants").select("restaurant_id, name_th, province_id, provinces(province_name_th)").eq("is_published", true),
+    supabase.from("travel_stories").select("story_id, title").eq("is_published", true)
+  ]);
+
+  // Note: accommodations won't work locally since migration failed, but we query it safely if it exists.
+  // Actually, we'll skip accommodations for now to prevent 500 errors in this function if the table is missing,
+  // or we can use maybeSingle/error catching. Let's just catch it.
+
+  let accommodationsList: any[] = [];
+  try {
+    const { data } = await supabase.from("accommodations").select("accommodation_id, name_th, province_id, provinces(province_name_th)").eq("is_published", true);
+    accommodationsList = data || [];
+  } catch (e) {
+    // Ignore if table missing
+  }
+
+  const getProvinceName = (p: any) => Array.isArray(p) ? p[0]?.province_name_th : p?.province_name_th;
+
+  return {
+    attractions: (attractions.data || []).map(a => ({ id: a.attraction_id, name: a.name_th, province: getProvinceName(a.provinces) })),
+    restaurants: (restaurants.data || []).map(r => ({ id: r.restaurant_id, name: r.name_th, province: getProvinceName(r.provinces) })),
+    accommodations: accommodationsList.map(a => ({ id: a.accommodation_id, name: a.name_th, province: getProvinceName(a.provinces) })),
+    stories: (stories.data || []).map(s => ({ id: s.story_id, name: s.title }))
+  };
 }

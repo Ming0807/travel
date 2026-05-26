@@ -53,10 +53,12 @@ export const navGroups: NavGroup[] = [
   {
     group: "Content",
     items: [
+      { href: "/admin/content", label: "Content Hub", icon: SquaresFour },
       { href: "/admin/attractions", label: "Destinations", icon: MapPin },
       { href: "/admin/routes", label: "Travel Routes", icon: MapPinLine },
       { href: "/admin/stories", label: "Articles", icon: Article },
       { href: "/admin/restaurants", label: "Restaurants", icon: ForkKnife },
+      { href: "/admin/accommodations", label: "Accommodations", icon: MapPin },
       { href: "/admin/media", label: "Media Library", icon: ImageIcon },
       { href: "/admin/photo-spots", label: "Photo Spots", icon: ImageIcon },
     ]

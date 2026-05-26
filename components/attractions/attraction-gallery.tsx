@@ -1,27 +1,33 @@
 import Image from "next/image";
 
 type AttractionGalleryProps = {
-  mainImage: string;
+  mainImage: string | null;
   gallery: string[];
 };
 
 export function AttractionGallery({ mainImage, gallery }: AttractionGalleryProps) {
   // We expect up to 4 images in the gallery array
-  const smallImages = gallery.slice(0, 4);
+  const smallImages = gallery.filter(Boolean).slice(0, 4);
 
   return (
     <div className="mb-12">
       <div className="grid gap-3 lg:grid-cols-4 lg:grid-rows-2 lg:h-[500px]">
         {/* Main large image */}
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl lg:col-span-4 lg:row-span-1 lg:aspect-auto lg:h-[340px]">
-          <Image
-            src={mainImage}
-            alt="Main attraction view"
-            fill
-            className="object-cover"
-            priority
-            unoptimized
-          />
+          {mainImage ? (
+            <Image
+              src={mainImage}
+              alt="Main attraction view"
+              fill
+              className="object-cover"
+              priority
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-cream px-6 text-center text-sm font-semibold text-muted">
+              No public image has been added for this attraction yet.
+            </div>
+          )}
         </div>
 
         {/* Small thumbnail images */}

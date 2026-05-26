@@ -1,21 +1,28 @@
-"use client";
-
+import type { Metadata } from "next";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MediaLibrary } from "@/components/admin/media/MediaLibrary";
+import { requirePermission } from "@/lib/auth/guards";
 
-export default function MediaPage() {
+export const metadata: Metadata = {
+  title: "Media Library | Admin",
+};
+
+export default async function MediaPage() {
+  await requirePermission("media.read");
+
   return (
     <AdminShell>
-      <div className="max-w-7xl mx-auto h-[calc(100vh-120px)] flex flex-col">
+      <div className="mx-auto flex h-[calc(100vh-120px)] max-w-7xl flex-col">
         <div className="mb-6 shrink-0">
           <AdminPageHeader
+            eyebrow="Content Assets"
             title="Media Library"
-            description="Manage all images and assets used across the platform."
+            description="Search, upload, pick, and govern official public media assets. Edit public page image roles and alt text from each content editor."
           />
         </div>
-        
-        <div className="flex-1 min-h-0 rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm flex flex-col">
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
           <MediaLibrary mode="manage" />
         </div>
       </div>

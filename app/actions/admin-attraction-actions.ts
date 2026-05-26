@@ -10,6 +10,7 @@ import {
   updateAdminAttractionStatus,
   findAttractionBySlug,
   getAdminAttractionById,
+  updateAdminAttractionRelatedContent,
 } from "@/lib/repositories/admin-attraction.repository";
 
 type ActionResult = {
@@ -22,14 +23,14 @@ type ActionResult = {
 export async function createAttractionAction(prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("attraction.create");
-    const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData));
+    const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData.entries()));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลสถานที่อีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const existingSlug = await findAttractionBySlug(parsed.data.slug);
     if (existingSlug !== null) {
-      return { success: false, error: "Slug already exists.", fieldErrors: { slug: ["This slug is already in use."] } };
+      return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const created = await createAdminAttraction(parsed.data);
@@ -41,26 +42,26 @@ export async function createAttractionAction(prevState: ActionResult, formData: 
       newValues: parsed.data as unknown as Record<string, unknown>,
     });
 
-    revalidatePath("/admin/attractions");
+    revalidatePath('/', 'layout');
     return { success: true, data: { id: created.attraction_id } };
   } catch (error: any) {
     console.error("Failed to create attraction:", error);
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to create attraction: " + (error.message || "Unknown error") };
+    return { success: false, error: "ยังสร้างสถานที่ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
 export async function updateAttractionAction(attractionId: number, prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("attraction.update");
-    const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData));
+    const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData.entries()));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลสถานที่อีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const existingSlug = await findAttractionBySlug(parsed.data.slug, attractionId);
     if (existingSlug !== null) {
-      return { success: false, error: "Slug already exists.", fieldErrors: { slug: ["This slug is already in use."] } };
+      return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const old = await getAdminAttractionById(attractionId);
@@ -74,11 +75,11 @@ export async function updateAttractionAction(attractionId: number, prevState: Ac
       newValues: parsed.data as unknown as Record<string, unknown>,
     });
 
-    revalidatePath("/admin/attractions");
+    revalidatePath('/', 'layout');
     return { success: true, data: { id: updated.attraction_id } };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to update attraction." };
+    return { success: false, error: "ยังบันทึกการแก้ไขสถานที่ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -86,7 +87,7 @@ export async function toggleAttractionPublishAction(attractionId: number): Promi
   try {
     const guard = await requirePermission("attraction.publish");
     const current = await getAdminAttractionById(attractionId);
-    if (!current) return { success: false, error: "Attraction not found." };
+    if (!current) return { success: false, error: "ไม่พบสถานที่นี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminAttractionStatus(attractionId, { is_published: !current.is_published });
     await logAdminMutation({
@@ -98,11 +99,11 @@ export async function toggleAttractionPublishAction(attractionId: number): Promi
       newValues: { is_published: updated.is_published },
     });
 
-    revalidatePath("/admin/attractions");
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle publish status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะเผยแพร่ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -110,7 +111,7 @@ export async function toggleAttractionActiveAction(attractionId: number): Promis
   try {
     const guard = await requirePermission("attraction.deactivate");
     const current = await getAdminAttractionById(attractionId);
-    if (!current) return { success: false, error: "Attraction not found." };
+    if (!current) return { success: false, error: "ไม่พบสถานที่นี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminAttractionStatus(attractionId, { is_active: !current.is_active });
     await logAdminMutation({
@@ -122,10 +123,35 @@ export async function toggleAttractionActiveAction(attractionId: number): Promis
       newValues: { is_active: updated.is_active },
     });
 
-    revalidatePath("/admin/attractions");
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle active status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะใช้งานไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
+export async function updateAttractionRelatedContentAction(
+  attractionId: number,
+  type: 'attractions' | 'restaurants' | 'accommodations' | 'stories',
+  relatedIds: number[]
+): Promise<ActionResult> {
+  try {
+    const guard = await requirePermission("attraction.update");
+    await updateAdminAttractionRelatedContent(attractionId, type, relatedIds);
+
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "attraction.update_related",
+      entityType: "attraction",
+      entityId: attractionId,
+      newValues: { type, relatedIds },
+    });
+
+    revalidatePath('/', 'layout');
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    return { success: false, error: "ยังบันทึกข้อมูลเชื่อมโยงไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }

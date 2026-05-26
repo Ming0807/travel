@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createRestaurantAction, updateRestaurantAction } from "@/app/actions/admin-restaurant-actions";
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
+import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
 import { Image, List } from "@phosphor-icons/react";
 
 export type AdminSelectOption = {
@@ -17,6 +17,15 @@ type RestaurantFormProps = {
   restaurant?: AdminRestaurantRow | null;
   provinces: AdminSelectOption[];
   submitLabel?: string;
+};
+
+const FIELD_LABELS = {
+  nameTh: "ชื่อภาษาไทย",
+  slug: "Slug",
+  provinceId: "จังหวัด",
+  latitude: "Latitude",
+  longitude: "Longitude",
+  coverImageUrl: "รูปภาพปก",
 };
 
 export function RestaurantForm({
@@ -35,10 +44,12 @@ export function RestaurantForm({
     fieldErrors: undefined,
   });
 
-  if (state?.success && isEditing) {
-    router.push("/admin/restaurants");
-    router.refresh();
-  }
+  useEffect(() => {
+    if (state?.success && isEditing) {
+      router.push("/admin/restaurants");
+      router.refresh();
+    }
+  }, [state?.success, isEditing, router]);
 
   if (state?.success && !isEditing) {
     const newId = state.data?.id;
@@ -64,11 +75,7 @@ export function RestaurantForm({
     <form action={formAction} className="space-y-8">
       {restaurant?.restaurant_id ? <input name="restaurantId" type="hidden" value={restaurant.restaurant_id} /> : null}
 
-      {state?.error ? (
-        <div className="rounded-2xl p-4 text-sm font-bold bg-rose-50 text-rose-700">
-          {state.error}
-        </div>
-      ) : null}
+      <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} fieldLabels={FIELD_LABELS} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column (Main Content) */}
@@ -241,14 +248,7 @@ export function RestaurantForm({
         </div>
       </section>
 
-      <div className="sticky bottom-0 z-10 flex flex-col gap-3 border-t border-slate-200 bg-white/95 py-4 backdrop-blur sm:flex-row sm:justify-end">
-        <Link className="rounded-full border border-slate-200 bg-white px-6 py-3 text-center text-sm font-black text-slate-700 hover:bg-slate-50 transition" href="/admin/restaurants">
-          ยกเลิก
-        </Link>
-        <button disabled={isPending} className="rounded-full bg-[#F3704C] px-8 py-3 text-sm font-black text-white shadow-card hover:bg-[#E55A35] disabled:opacity-50 transition" type="submit">
-          {isPending ? "กำลังบันทึก..." : submitLabel}
-        </button>
-      </div>
+      <AdminSaveBar cancelHref="/admin/restaurants" isPending={isPending} submitLabel={submitLabel} />
     </form>
   );
 }

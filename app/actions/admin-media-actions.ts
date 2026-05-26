@@ -8,7 +8,7 @@ import {
   createAdminMedia,
   updateAdminMedia,
   updateAdminMediaStatus,
-  deleteAdminMedia,
+  archiveAdminMedia,
   getAdminMediaById,
 } from "@/lib/repositories/admin-media.repository";
 
@@ -18,14 +18,26 @@ type ActionResult = {
   fieldErrors?: Record<string, string[] | undefined>;
 };
 
-export async function createMediaAction(formData: FormData): Promise<ActionResult> {
+function adminMediaEntityPath(entityType: string, entityId: number) {
+  const segmentByEntity: Record<string, string> = {
+    attraction: "attractions",
+    restaurant: "restaurants",
+    story: "stories",
+    route: "routes",
+  };
+
+  return `/admin/${segmentByEntity[entityType] ?? `${entityType}s`}/${entityId}/media`;
+}
+
+export async function createMediaAction(prevState: any, formData: FormData): Promise<ActionResult> {
   try {
-    const guard = await requirePermission("attraction.update");
-    const parsed = adminMediaMutationSchema.safeParse(Object.fromEntries(formData));
+    const parsed = adminMediaMutationSchema.safeParse(Object.fromEntries(formData.entries()));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      console.error("CREATE_MEDIA_VALIDATION_ERROR", parsed.error.flatten().fieldErrors);
+      return { success: false, error: "กรุณาตรวจข้อมูลสื่ออีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
+    const guard = await requirePermission("media.upload");
     const created = await createAdminMedia(parsed.data);
     await logAdminMutation({
       actor: guard.actor,
@@ -35,24 +47,26 @@ export async function createMediaAction(formData: FormData): Promise<ActionResul
       newValues: parsed.data as unknown as Record<string, unknown>,
     });
 
-    revalidatePath(`/admin/${parsed.data.entityType}s/${parsed.data.entityId}/media`);
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (error) {
+    console.error("CREATE_MEDIA_ERROR", error);
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to create media." };
+    return { success: false, error: "ยังบันทึกสื่อไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
-export async function updateMediaAction(mediaId: number, formData: FormData): Promise<ActionResult> {
+export async function updateMediaAction(mediaId: number, prevState: any, formData: FormData): Promise<ActionResult> {
   try {
-    const guard = await requirePermission("attraction.update");
-    const parsed = adminMediaMutationSchema.safeParse(Object.fromEntries(formData));
+    const parsed = adminMediaMutationSchema.safeParse(Object.fromEntries(formData.entries()));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      console.error("UPDATE_MEDIA_VALIDATION_ERROR", parsed.error.flatten().fieldErrors);
+      return { success: false, error: "กรุณาตรวจข้อมูลสื่ออีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
+    const guard = await requirePermission("media.update");
     const old = await getAdminMediaById(mediaId);
-    if (!old) return { success: false, error: "Media not found." };
+    if (!old) return { success: false, error: "ไม่พบสื่อนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminMedia(mediaId, parsed.data);
     await logAdminMutation({
@@ -64,61 +78,70 @@ export async function updateMediaAction(mediaId: number, formData: FormData): Pr
       newValues: parsed.data as unknown as Record<string, unknown>,
     });
 
-    revalidatePath(`/admin/${parsed.data.entityType}s/${parsed.data.entityId}/media`);
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (error) {
+    console.error("UPDATE_MEDIA_ERROR", error);
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to update media." };
+    return { success: false, error: "ยังบันทึกการแก้ไขสื่อไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
 export async function toggleMediaActiveAction(mediaId: number): Promise<ActionResult> {
   try {
     const current = await getAdminMediaById(mediaId);
-    if (!current) return { success: false, error: "Media not found." };
+    if (!current) return { success: false, error: "ไม่พบสื่อนี้ อาจถูกลบหรือย้ายแล้ว" };
 
-    const guard = await requirePermission("attraction.update");
+    const guard = await requirePermission("media.deactivate");
 
-    const updated = await updateAdminMediaStatus(mediaId, { is_active: !current.is_active });
+    const shouldActivate = !current.is_active;
+    const updated = await updateAdminMediaStatus(mediaId, {
+      is_active: shouldActivate,
+      lifecycle_status: shouldActivate ? "active" : "draft",
+      archived_at: shouldActivate ? null : current.archived_at,
+    });
     await logAdminMutation({
       actor: guard.actor,
       action: current.is_active ? "media.deactivate" : "media.activate",
-      entityType: "attraction_media",
+      entityType: "content_media",
       entityId: mediaId,
-      oldValues: { is_active: current.is_active },
-      newValues: { is_active: updated.is_active },
+      oldValues: { is_active: current.is_active, lifecycle_status: current.lifecycle_status },
+      newValues: { is_active: updated.is_active, lifecycle_status: updated.lifecycle_status },
     });
 
-    revalidatePath(`/admin/attractions/${current.attraction_id}/media`);
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle active status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะใช้งานสื่อไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
 export async function deleteMediaAction(mediaId: number): Promise<ActionResult> {
   try {
     const current = await getAdminMediaById(mediaId);
-    if (!current) return { success: false, error: "Media not found." };
+    if (!current) return { success: false, error: "ไม่พบสื่อนี้ อาจถูกลบหรือย้ายแล้ว" };
 
-    const guard = await requirePermission("attraction.update");
+    const guard = await requirePermission("media.deactivate");
 
-    await deleteAdminMedia(mediaId);
+    const archived = await archiveAdminMedia(mediaId);
     await logAdminMutation({
       actor: guard.actor,
-      action: "media.delete",
+      action: "media.archive",
       entityType: "content_media",
       entityId: mediaId,
       oldValues: current as unknown as Record<string, unknown>,
+      newValues: {
+        is_active: archived.is_active,
+        lifecycle_status: archived.lifecycle_status,
+        archived_at: archived.archived_at,
+      },
     });
 
-    const entityType = current.restaurant_id ? 'restaurants' : current.story_id ? 'stories' : current.route_id ? 'routes' : 'attractions';
-    const entityId = current.restaurant_id || current.story_id || current.route_id || current.attraction_id;
-    revalidatePath(`/admin/${entityType}/${entityId}/media`);
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to delete media." };
+    return { success: false, error: "ยังลบสื่อไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }

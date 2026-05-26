@@ -1,5 +1,22 @@
 import { NextResponse } from "next/server";
 import { DashboardServiceError, getDashboardAnalytics } from "@/lib/services/dashboard.service";
+import { requirePermission, type AdminAuthError } from "@/lib/auth/guards";
+import { getDashboardRepositoryPayload } from "@/lib/repositories/dashboard.repository";
+import { parseDashboardFilters } from "@/lib/validation/dashboard-filters";
+import type { DashboardFilters } from "@/types/dashboard";
+import Papa from "papaparse";
+
+function mapAdminError(error: AdminAuthError): DashboardServiceError {
+  if (error.code === "UNAUTHORIZED") {
+    return new DashboardServiceError("UNAUTHORIZED", "Please sign in to view this dashboard.");
+  }
+  return new DashboardServiceError("FORBIDDEN", "You do not have permission to view this dashboard.");
+}
+
+function safeString(val: unknown): string {
+  if (val === null || val === undefined) return "";
+  return String(val);
+}
 
 export async function GET(request: Request) {
   try {
@@ -9,20 +26,113 @@ export async function GET(request: Request) {
       params[key] = value;
     });
 
-    const data = await getDashboardAnalytics(params, "executive");
+    const exportType = params.type || "summary";
+    const parsed = parseDashboardFilters(params);
+    if (!parsed.success) {
+      return new NextResponse("Invalid filters", { status: 400 });
+    }
 
-    let csv = "Dashboard Export - Top Attractions Summary\n";
-    csv += `Generated at: ${new Date(data.generatedAt).toLocaleString("th-TH")}\n\n`;
+    try {
+      await requirePermission("dashboard.read");
+    } catch (error) {
+      const err = mapAdminError(error as AdminAuthError);
+      return new NextResponse(err.message, { status: err.code === "UNAUTHORIZED" ? 401 : 403 });
+    }
 
-    csv += "Rank,Attraction,Province,Visits,Certificates,Surveys,Avg Satisfaction\n";
-    data.executive.topAttractions.forEach((attr) => {
-      csv += `${attr.rank},"${attr.attractionName}","${attr.provinceName}",${attr.visitCount},${attr.certificateCount},${attr.surveyResponseCount},${attr.averageSatisfaction ?? "N/A"}\n`;
-    });
+    let csv = "";
+    let filename = `dashboard_export_${exportType}_${new Date().toISOString().split('T')[0]}.csv`;
+
+    if (exportType === "summary") {
+      const data = await getDashboardAnalytics(params, "executive");
+
+      csv += "Dashboard Export - Top Attractions Summary\n";
+      csv += `Generated at: ${new Date(data.generatedAt).toLocaleString("th-TH")}\n\n`;
+
+      csv += "Rank,Attraction,Province,Visits,Certificates,Surveys,Avg Satisfaction\n";
+      data.executive.topAttractions.forEach((attr) => {
+        csv += `${attr.rank},"${attr.attractionName}","${attr.provinceName}",${attr.visitCount},${attr.certificateCount},${attr.surveyResponseCount},${attr.averageSatisfaction ?? "N/A"}\n`;
+      });
+    } else {
+      // Raw data exports - NO PII is queried in the payload
+      const payload = await getDashboardRepositoryPayload(parsed.data as DashboardFilters, exportType);
+
+      if (exportType === "tourists") {
+        // Aggregate unique tourists from visits since there's no direct "tourists" array in payload
+        const uniqueTourists = new Map<string, any>();
+        payload.visits.forEach(v => {
+          if (v.tourists && v.tourist_id) {
+            uniqueTourists.set(String(v.tourist_id), v.tourists);
+          }
+        });
+
+        const rows = Array.from(uniqueTourists.values()).map(t => {
+          const country = t.countries as any;
+          const province = t.provinces as any;
+          return {
+            "Age Group": safeString(t.age_group),
+            "Preferred Language": safeString(t.preferred_language),
+            "Origin Country (EN)": safeString(country?.country_name_en),
+            "Origin Province (EN)": safeString(province?.province_name_en)
+          };
+        });
+        csv = Papa.unparse(rows);
+        if (rows.length === 0) csv = "No data available";
+      } else if (exportType === "visits") {
+        const rows = payload.visits.map(v => {
+          const t = v.tourists as any;
+          const country = t?.countries as any;
+          const originProvince = t?.provinces as any;
+          const attr = v.attractions as any;
+          const destProvince = attr?.provinces as any;
+          const companion = v.travel_companions as any;
+          const transport = v.transport_modes as any;
+          const purpose = v.travel_purposes as any;
+          return {
+            "Visit Date": safeString(v.visit_date),
+            "Attraction": safeString(attr?.name_en || attr?.name_th),
+            "Destination Province": safeString(destProvince?.province_name_en),
+            "Age Group": safeString(t?.age_group),
+            "Origin Country": safeString(country?.country_name_en),
+            "Origin Province": safeString(originProvince?.province_name_en),
+            "Group Size": safeString(v.group_size),
+            "Overnight": safeString(v.overnight_status),
+            "Nights": safeString(v.nights),
+            "Companion": safeString(companion?.name_en),
+            "Transport": safeString(transport?.name_en),
+            "Purpose": safeString(purpose?.name_en)
+          };
+        });
+        csv = Papa.unparse(rows);
+        if (rows.length === 0) csv = "No data available";
+      } else if (exportType === "surveys") {
+        const rows = payload.surveys.map(s => {
+          const v = s.visits as any;
+          const attr = v?.attractions as any;
+          const province = attr?.provinces as any;
+          return {
+            "Submitted At": safeString(s.submitted_at),
+            "Visit Date": safeString(v?.visit_date),
+            "Attraction": safeString(attr?.name_en || attr?.name_th),
+            "Province": safeString(province?.province_name_en),
+            "Overall Score": safeString(s.overall_score),
+            "Cleanliness Score": safeString(s.cleanliness_score),
+            "Facility Score": safeString(s.facility_score),
+            "Safety Score": safeString(s.safety_score),
+            "Revisit Intention": safeString(s.revisit_intention),
+            "Recommend Intention": safeString(s.recommend_intention)
+          };
+        });
+        csv = Papa.unparse(rows);
+        if (rows.length === 0) csv = "No data available";
+      } else {
+        return new NextResponse("Unknown export type", { status: 400 });
+      }
+    }
 
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="dashboard_summary_${new Date().toISOString().split('T')[0]}.csv"`
+        "Content-Disposition": `attachment; filename="${filename}"`
       }
     });
   } catch (error) {

@@ -2,15 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { uploadPrivateFile } from "@/lib/storage/private-files";
 import { getServerEnv } from "@/lib/config/server-env";
 import { rateLimit } from "@/lib/utils/rate-limit";
+import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
+import { adminMediaEntityTypes } from "@/lib/validation/media";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_ENTITY_TYPES = new Set<string>(adminMediaEntityTypes);
 const MAX_SIZE_MB = 10;
 
 export async function POST(req: NextRequest) {
   try {
+    await requirePermission("media.upload");
+
     const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
     const limit = rateLimit(ip, 20, 60 * 1000);
 
@@ -28,21 +33,28 @@ export async function POST(req: NextRequest) {
 
     if (!file || !entityId || !entityType) {
       return NextResponse.json(
-        { success: false, error: "Missing file, entity ID, or entity Type" },
+        { success: false, error: "กรุณาเลือกไฟล์ก่อนอัปโหลด" },
+        { status: 400 }
+      );
+    }
+
+    if (!ALLOWED_ENTITY_TYPES.has(entityType) || !Number.isInteger(Number(entityId)) || Number(entityId) <= 0) {
+      return NextResponse.json(
+        { success: false, error: "Invalid media owner." },
         { status: 400 }
       );
     }
 
     if (!ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json(
-        { success: false, error: `File type ${file.type} is not allowed. Use JPEG, PNG, or WebP.` },
+        { success: false, error: "ไฟล์นี้ไม่รองรับ กรุณาใช้ JPG, PNG หรือ WebP" },
         { status: 400 }
       );
     }
 
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, error: `File size exceeds ${MAX_SIZE_MB}MB limit.` },
+        { success: false, error: `ไฟล์ใหญ่เกินไป กรุณาใช้ไฟล์ไม่เกิน ${MAX_SIZE_MB}MB` },
         { status: 400 }
       );
     }
@@ -58,7 +70,7 @@ export async function POST(req: NextRequest) {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const uuid = crypto.randomUUID();
-    const logicalPath = `${entityType}-media/${year}/${month}/${entityId}/${uuid}.${ext}`;
+    const logicalPath = `content-media/${entityType}/${year}/${month}/${entityId}/${uuid}.${ext}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -93,6 +105,13 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Admin media upload error:", error);
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.code === "UNAUTHORIZED" ? 401 : 403 }
+      );
+    }
+
     return NextResponse.json(
       { success: false, error: "Upload failed. Please try again." },
       { status: 500 }

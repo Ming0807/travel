@@ -25,12 +25,12 @@ export async function createStoryAction(formData: FormData): Promise<ActionResul
     const guard = await requirePermission("story.create");
     const parsed = adminStoryMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลเรื่องราวอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const existingSlug = await findStoryBySlug(parsed.data.slug);
     if (existingSlug !== null) {
-      return { success: false, error: "Slug already exists.", fieldErrors: { slug: ["This slug is already in use."] } };
+      return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const created = await createAdminStory(parsed.data);
@@ -46,7 +46,7 @@ export async function createStoryAction(formData: FormData): Promise<ActionResul
     return { success: true, data: { id: created.story_id } };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to create story." };
+    return { success: false, error: "ยังสร้างเรื่องราวไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -55,16 +55,16 @@ export async function updateStoryAction(storyId: number, formData: FormData): Pr
     const guard = await requirePermission("story.update");
     const parsed = adminStoryMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลเรื่องราวอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const existingSlug = await findStoryBySlug(parsed.data.slug, storyId);
     if (existingSlug !== null) {
-      return { success: false, error: "Slug already exists.", fieldErrors: { slug: ["This slug is already in use."] } };
+      return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const old = await getAdminStoryById(storyId);
-    if (!old) return { success: false, error: "Story not found." };
+    if (!old) return { success: false, error: "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminStory(storyId, parsed.data);
     await logAdminMutation({
@@ -80,14 +80,14 @@ export async function updateStoryAction(storyId: number, formData: FormData): Pr
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to update story." };
+    return { success: false, error: "ยังบันทึกการแก้ไขเรื่องราวไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
 export async function toggleStoryPublishAction(storyId: number): Promise<ActionResult> {
   try {
     const current = await getAdminStoryById(storyId);
-    if (!current) return { success: false, error: "Story not found." };
+    if (!current) return { success: false, error: "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const guard = await requirePermission(current.is_published ? "story.unpublish" : "story.publish");
 
@@ -105,6 +105,6 @@ export async function toggleStoryPublishAction(storyId: number): Promise<ActionR
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle publish status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะเผยแพร่ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }

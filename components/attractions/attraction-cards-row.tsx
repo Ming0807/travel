@@ -5,7 +5,7 @@ type CardItem = {
   id: string;
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrl: string | null;
   rating?: number;
   reviews?: string;
   price?: string;
@@ -34,13 +34,19 @@ export function AttractionCardsRow({ id, title, items, viewAllText }: Attraction
         {items.map((item) => (
           <div key={item.id} className="min-w-[240px] max-w-[240px] flex-shrink-0 group cursor-pointer">
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl mb-4 bg-ink/5">
-              <Image
-                src={item.imageUrl}
-                alt={item.title}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                unoptimized
-              />
+              {item.imageUrl ? (
+                <Image
+                  src={item.imageUrl}
+                  alt={item.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-semibold text-muted">
+                  Image not added
+                </div>
+              )}
             </div>
             <h3 className="text-base font-bold text-ink group-hover:text-coral transition-colors">{item.title}</h3>
             <p className="mt-1 text-sm text-muted line-clamp-2">{item.description}</p>

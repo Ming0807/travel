@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowSquareOut, Plus } from "@phosphor-icons/react/dist/ssr";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
@@ -14,30 +16,61 @@ import { listAdminCheckinCodes } from "@/lib/repositories/admin-checkin-code.rep
 import { adminCheckinCodeFiltersSchema } from "@/lib/validation/checkin-code";
 import { CheckinCodeStatusAction } from "@/components/admin/checkin-codes/CheckinCodeStatusAction";
 import { DownloadQrAction } from "@/components/admin/checkin-codes/DownloadQrAction";
-import Link from "next/link";
-import { Plus } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = {
   title: "QR Check-in Codes | Admin",
 };
 
 const columns = [
-  { key: "code", label: "รหัส Check-in" },
-  { key: "attraction", label: "แหล่งท่องเที่ยว", className: "hidden md:table-cell" },
-  { key: "spot", label: "จุดถ่ายภาพ", className: "hidden lg:table-cell" },
+  { key: "code", label: "Check-in code" },
+  { key: "attraction", label: "Attraction", className: "hidden md:table-cell" },
+  { key: "spot", label: "Photo spot", className: "hidden lg:table-cell" },
   { key: "label", label: "Label", className: "hidden lg:table-cell" },
-  { key: "period", label: "ช่วงเวลา", className: "hidden xl:table-cell" },
-  { key: "status", label: "สถานะ" },
-  { key: "actions", label: "", className: "w-10" },
+  { key: "period", label: "Schedule", className: "hidden xl:table-cell" },
+  { key: "status", label: "Status" },
+  { key: "actions", label: "", className: "w-32" },
 ];
 
 function formatDate(dateStr: string | null) {
-  if (!dateStr) return "—";
+  if (!dateStr) return "-";
   return new Date(dateStr).toLocaleDateString("th-TH", {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
+}
+
+function AttractionStatusWarnings({
+  isActive,
+  isPublished,
+}: {
+  isActive: boolean | null;
+  isPublished: boolean | null;
+}) {
+  if (isActive !== false && isPublished !== false) return null;
+
+  return (
+    <div className="mt-1 flex flex-wrap gap-1">
+      {isActive === false ? <StatusBadge label="Attraction inactive" tone="red" /> : null}
+      {isPublished === false ? <StatusBadge label="Attraction draft" tone="gold" /> : null}
+    </div>
+  );
+}
+
+function CheckinCodeActions({ code, label }: { code: string; label?: string | null }) {
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <Link
+        href={`/c/${code}`}
+        target="_blank"
+        aria-label={`Open QR landing for ${code}`}
+        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-500 transition hover:bg-slate-50 hover:text-[#0A6B62]"
+      >
+        <ArrowSquareOut size={18} weight="bold" />
+      </Link>
+      <DownloadQrAction code={code} label={label || code} />
+    </div>
+  );
 }
 
 export default async function AdminCheckinCodesPage({
@@ -54,11 +87,11 @@ export default async function AdminCheckinCodesPage({
   return (
     <AdminShell>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <AdminPageHeader
             eyebrow="Content Management"
             title="QR Check-in Codes"
-            description="สร้างและจัดการ QR Code สำหรับนักท่องเที่ยว Check-in ที่สถานที่"
+            description="จัดการ QR ที่นักท่องเที่ยวสแกนเพื่อเข้า flow check-in, certificate, และ stamp"
           />
           <Link
             href="/admin/checkin-codes/new"
@@ -78,37 +111,36 @@ export default async function AdminCheckinCodesPage({
         {items.length === 0 ? (
           <EmptyState
             title="ไม่พบ Check-in Code"
-            description="ลองเปลี่ยนเงื่อนไขการค้นหาหรือตัวกรอง"
+            description="ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองก่อนสร้าง QR ใหม่"
           />
         ) : (
           <>
-            {/* Desktop Table View */}
             <div className="hidden md:block">
               <DataTable columns={columns}>
                 {items.map((code) => (
                   <tr key={code.checkin_code_id} className="hover:bg-slate-50/50">
                     <td className="px-4 py-3">
                       <p className="font-mono text-sm font-bold text-[#073F37]">{code.code}</p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">
-                        /c/{code.code}
-                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-400">/c/{code.code}</p>
                     </td>
                     <td className="hidden px-4 py-3 md:table-cell">
                       <span className="text-xs font-semibold text-slate-600">
-                        {code.attraction_name_th ?? "—"}
+                        {code.attraction_name_th ?? "-"}
                       </span>
+                      <AttractionStatusWarnings
+                        isActive={code.attraction_is_active}
+                        isPublished={code.attraction_is_published}
+                      />
                     </td>
                     <td className="hidden px-4 py-3 lg:table-cell">
-                      <span className="text-xs text-slate-500">
-                        {code.photo_spot_name_th ?? "—"}
-                      </span>
+                      <span className="text-xs text-slate-500">{code.photo_spot_name_th ?? "-"}</span>
                     </td>
                     <td className="hidden px-4 py-3 lg:table-cell">
-                      <span className="text-xs text-slate-500">{code.label ?? "—"}</span>
+                      <span className="text-xs text-slate-500">{code.label ?? "-"}</span>
                     </td>
                     <td className="hidden px-4 py-3 xl:table-cell">
                       <span className="text-[11px] text-slate-400">
-                        {formatDate(code.starts_at)} – {formatDate(code.ends_at)}
+                        {formatDate(code.starts_at)} - {formatDate(code.ends_at)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -117,14 +149,14 @@ export default async function AdminCheckinCodesPage({
                           label={code.is_active ? "Active" : "Inactive"}
                           tone={code.is_active ? "green" : "red"}
                         />
-                        {code.ends_at && new Date(code.ends_at) < new Date() && (
+                        {code.ends_at && new Date(code.ends_at) < new Date() ? (
                           <StatusBadge label="Expired" tone="gray" />
-                        )}
+                        ) : null}
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
-                        <DownloadQrAction code={code.code} label={code.label || ""} />
+                        <CheckinCodeActions code={code.code} label={code.label} />
                         <CheckinCodeStatusAction
                           checkinCodeId={code.checkin_code_id}
                           isActive={code.is_active}
@@ -136,7 +168,6 @@ export default async function AdminCheckinCodesPage({
               </DataTable>
             </div>
 
-            {/* Mobile Card View */}
             <div className="grid gap-4 md:hidden">
               {items.map((code) => (
                 <div
@@ -153,37 +184,41 @@ export default async function AdminCheckinCodesPage({
                         label={code.is_active ? "Active" : "Inactive"}
                         tone={code.is_active ? "green" : "red"}
                       />
-                      {code.ends_at && new Date(code.ends_at) < new Date() && (
+                      {code.ends_at && new Date(code.ends_at) < new Date() ? (
                         <StatusBadge label="Expired" tone="gray" />
-                      )}
+                      ) : null}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-xs text-slate-400">แหล่งท่องเที่ยว</p>
-                      <p className="font-semibold text-slate-700">{code.attraction_name_th ?? "—"}</p>
+                      <p className="text-xs text-slate-400">Attraction</p>
+                      <p className="font-semibold text-slate-700">{code.attraction_name_th ?? "-"}</p>
+                      <AttractionStatusWarnings
+                        isActive={code.attraction_is_active}
+                        isPublished={code.attraction_is_published}
+                      />
                     </div>
                     <div>
-                      <p className="text-xs text-slate-400">จุดถ่ายภาพ</p>
-                      <p className="font-semibold text-slate-700">{code.photo_spot_name_th ?? "—"}</p>
+                      <p className="text-xs text-slate-400">Photo spot</p>
+                      <p className="font-semibold text-slate-700">{code.photo_spot_name_th ?? "-"}</p>
                     </div>
-                    {code.label && (
+                    {code.label ? (
                       <div>
                         <p className="text-xs text-slate-400">Label</p>
                         <p className="font-semibold text-slate-700">{code.label}</p>
                       </div>
-                    )}
+                    ) : null}
                     <div>
-                      <p className="text-xs text-slate-400">ช่วงเวลา</p>
+                      <p className="text-xs text-slate-400">Schedule</p>
                       <p className="text-[11px] text-slate-500">
-                        {formatDate(code.starts_at)} – {formatDate(code.ends_at)}
+                        {formatDate(code.starts_at)} - {formatDate(code.ends_at)}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-                    <DownloadQrAction code={code.code} label={code.label || ""} />
+                    <CheckinCodeActions code={code.code} label={code.label} />
                     <CheckinCodeStatusAction
                       checkinCodeId={code.checkin_code_id}
                       isActive={code.is_active}

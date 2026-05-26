@@ -37,6 +37,12 @@ export const adminRouteFiltersSchema = adminPaginationSchema.extend({
 
 export const adminRouteMutationSchema = z.object({
   nameTh: z.string().trim().min(1, "Thai name is required.").max(255),
+  slug: z
+    .string()
+    .trim()
+    .min(3, "Slug is required.")
+    .max(200)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, URL-safe, and hyphen-separated."),
   nameEn: optionalShortText,
   descriptionTh: optionalText,
   descriptionEn: optionalText,

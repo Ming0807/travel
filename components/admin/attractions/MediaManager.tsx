@@ -1,110 +1,289 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createMediaAction, updateMediaAction, deleteMediaAction } from "@/app/actions/admin-media-actions";
+import {
+  CheckCircle,
+  Image as ImageIcon,
+  PencilSimple,
+  Plus,
+  Trash,
+  UploadSimple,
+  WarningCircle,
+  X,
+  Images,
+} from "@phosphor-icons/react";
+import { createMediaAction, deleteMediaAction, updateMediaAction } from "@/app/actions/admin-media-actions";
 import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
-import { Plus, Trash, PencilSimple, X } from "@phosphor-icons/react";
+import type { AdminMediaEntityType } from "@/lib/validation/media";
+import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
+
+type MediaType = "image" | "panorama" | "video360" | "embed" | "external_url";
 
 interface MediaManagerProps {
   entityId: number;
-  entityType: "attraction" | "restaurant" | "story" | "route";
+  entityType: AdminMediaEntityType;
   initialMedia: AdminMediaRow[];
+}
+
+const MEDIA_TYPE_OPTIONS: { value: MediaType; label: string; help: string; needsUpload: boolean }[] = [
+  {
+    value: "image",
+    label: "รูปภาพทั่วไป",
+    help: "ใช้เป็นภาพหน้าปก การ์ดหน้าเว็บ หรือแกลเลอรี",
+    needsUpload: true,
+  },
+  {
+    value: "panorama",
+    label: "ภาพพาโนรามา / 360",
+    help: "ใช้กับภาพมุมกว้างหรือภาพ 360 ที่เป็นไฟล์รูป",
+    needsUpload: true,
+  },
+  {
+    value: "video360",
+    label: "วิดีโอ 360",
+    help: "ใช้ URL ของวิดีโอ 360 จากผู้ให้บริการภายนอก",
+    needsUpload: false,
+  },
+  {
+    value: "embed",
+    label: "Embed",
+    help: "ใช้ iframe หรือ embed code เช่น virtual tour",
+    needsUpload: false,
+  },
+  {
+    value: "external_url",
+    label: "ลิงก์ภายนอก",
+    help: "ใช้ URL รูปหรือสื่อที่ถูกโฮสต์ไว้ภายนอก",
+    needsUpload: false,
+  },
+];
+
+const MEDIA_TYPE_LABELS: Record<string, string> = {
+  image: "รูปภาพ",
+  panorama: "พาโนรามา",
+  video360: "วิดีโอ 360",
+  embed: "Embed",
+  external_url: "ลิงก์ภายนอก",
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  mediaType: "ประเภทสื่อ",
+  storagePath: "ไฟล์หรือ URL",
+  altTextTh: "Alt text ภาษาไทย",
+  altTextEn: "Alt text ภาษาอังกฤษ",
+  captionTh: "คำบรรยายภาษาไทย",
+  captionEn: "คำบรรยายภาษาอังกฤษ",
+  displayOrder: "ลำดับการแสดงผล",
+};
+
+function mediaPreviewUrl(storagePath: string) {
+  if (!storagePath) return "";
+  if (/^https?:\/\//i.test(storagePath)) return storagePath;
+  return `/api/media/image?path=${encodeURIComponent(storagePath)}`;
+}
+
+function getMediaTypeOption(value: string) {
+  return MEDIA_TYPE_OPTIONS.find((option) => option.value === value) ?? MEDIA_TYPE_OPTIONS[0];
+}
+
+function readableFieldErrors(fieldErrors?: Record<string, string[] | undefined>) {
+  if (!fieldErrors) return [];
+
+  return Object.entries(fieldErrors).flatMap(([field, errors]) => {
+    if (!errors?.length) return [];
+    return errors.map((error) => `${FIELD_LABELS[field] ?? field}: ${error}`);
+  });
 }
 
 export function MediaManager({ entityId, entityType, initialMedia }: MediaManagerProps) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<number | "new" | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const mediaSummary = useMemo(() => {
+    const activeMedia = initialMedia.filter((media) => media.is_active);
+    const coverCount = initialMedia.filter((media) => media.is_cover && media.is_active).length;
+    const missingAltCount = initialMedia.filter((media) =>
+      media.is_active &&
+      (media.media_type === "image" || media.media_type === "panorama") &&
+      !media.alt_text_th &&
+      !media.alt_text_en
+    ).length;
+
+    return {
+      total: initialMedia.length,
+      active: activeMedia.length,
+      coverCount,
+      missingAltCount,
+    };
+  }, [initialMedia]);
 
   const handleDelete = async (mediaId: number) => {
-    if (!confirm("Are you sure you want to delete this media?")) return;
-    const res = await deleteMediaAction(mediaId);
-    if (res.success) {
+    const ok = window.confirm("ต้องการลบสื่อนี้ออกจาก CMS ใช่ไหม? ถ้าสื่อนี้ถูกใช้ในหน้าเว็บ ควรตรวจหน้า public อีกครั้งหลังลบ");
+    if (!ok) return;
+
+    setDeleteError(null);
+    const result = await deleteMediaAction(mediaId);
+    if (result.success) {
       router.refresh();
-    } else {
-      alert(res.error || "Failed to delete");
+      return;
     }
+
+    setDeleteError(result.error || "ไม่สามารถลบสื่อนี้ได้");
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-end">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 rounded-lg border border-[#0A6B62]/20 bg-[#E6F4EF] p-4 text-sm leading-6 text-[#073F37] sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-black">Media workflow</p>
+          <p className="mt-0.5">
+            อัปโหลดไฟล์ก่อน แล้วระบบจะสร้าง path ให้อัตโนมัติ แอดมินไม่ต้องกรอก storage path เอง ยกเว้นกรณีใช้ URL หรือ embed ภายนอก
+          </p>
+        </div>
         <button
+          type="button"
           onClick={() => setEditingId("new")}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white hover:bg-[#075049]"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-black text-white transition hover:bg-[#075049]"
         >
-          <Plus size={16} weight="bold" />
-          เพิ่มรูปภาพ/วิดีโอ
+          <Plus size={18} weight="bold" />
+          เพิ่มสื่อ
         </button>
       </div>
 
-      {editingId === "new" && (
-        <MediaForm
-          entityId={entityId}
-          entityType={entityType}
-          onClose={() => setEditingId(null)}
-        />
-      )}
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {initialMedia.map((media) => (
-          <div key={media.media_id} className="relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            {editingId === media.media_id ? (
-              <MediaForm
-                entityId={entityId}
-                entityType={entityType}
-                initialData={media}
-                onClose={() => setEditingId(null)}
-              />
-            ) : (
-              <>
-                <div className="aspect-video w-full overflow-hidden rounded-lg bg-slate-100">
-                  {media.media_type === "image" ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={media.storage_path} alt={media.alt_text_th || ""} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                      {media.media_type}
-                    </div>
-                  )}
-                </div>
-                <div className="mt-4 flex items-start justify-between gap-4">
-                  <div>
-                    <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                      {media.media_type}
-                    </span>
-                    {media.is_cover && (
-                      <span className="ml-2 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        Cover
-                      </span>
-                    )}
-                    <p className="mt-1 text-sm font-medium text-slate-800">{media.alt_text_th || "No alt text"}</p>
-                    <p className="text-xs text-slate-500">Order: {media.display_order ?? "-"}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      onClick={() => setEditingId(media.media_id)}
-                      className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-[#0A6B62]"
-                    >
-                      <PencilSimple size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(media.media_id)}
-                      className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                    >
-                      <Trash size={16} />
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
+      <div className="grid gap-3 sm:grid-cols-4">
+        {[
+          { label: "Total media", value: mediaSummary.total, tone: "text-slate-900" },
+          { label: "Active", value: mediaSummary.active, tone: "text-[#073F37]" },
+          { label: "Cover images", value: mediaSummary.coverCount, tone: mediaSummary.coverCount ? "text-[#073F37]" : "text-amber-700" },
+          { label: "Missing alt", value: mediaSummary.missingAltCount, tone: mediaSummary.missingAltCount ? "text-amber-700" : "text-[#073F37]" },
+        ].map((item) => (
+          <div key={item.label} className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-xs font-bold text-slate-500">{item.label}</p>
+            <p className={`mt-1 text-xl font-black ${item.tone}`}>{item.value}</p>
           </div>
         ))}
-        {initialMedia.length === 0 && editingId !== "new" && (
-          <div className="col-span-full py-8 text-center text-slate-500 border border-dashed border-slate-300 rounded-xl">
-            ไม่มีสื่อประสมในสถานที่นี้
-          </div>
-        )}
+      </div>
+
+      {deleteError ? (
+        <div className="flex gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-bold text-rose-700">
+          <WarningCircle className="mt-0.5 shrink-0" size={18} weight="fill" />
+          {deleteError}
+        </div>
+      ) : null}
+
+      {editingId === "new" ? (
+        <MediaForm entityId={entityId} entityType={entityType} onClose={() => setEditingId(null)} />
+      ) : null}
+
+      {initialMedia.length === 0 && editingId !== "new" ? (
+        <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center">
+          <ImageIcon className="mx-auto text-slate-300" size={42} weight="duotone" />
+          <p className="mt-3 text-sm font-black text-slate-700">ยังไม่มีสื่อสำหรับรายการนี้</p>
+          <p className="mt-1 text-sm text-slate-500">เพิ่มภาพ cover ก่อน เพื่อให้หน้า public, homepage card และ preview ดูสมบูรณ์</p>
+        </div>
+      ) : null}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {initialMedia.map((media) => {
+          const isVisual = media.media_type === "image" || media.media_type === "panorama";
+          const hasAltText = Boolean(media.alt_text_th || media.alt_text_en);
+          const readinessItems = [
+            { label: "Active", complete: media.is_active },
+            { label: "Alt text", complete: !isVisual || hasAltText },
+            { label: "Cover role", complete: !isVisual || media.is_cover },
+          ];
+          return (
+            <article key={media.media_id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              {editingId === media.media_id ? (
+                <MediaForm
+                  entityId={entityId}
+                  entityType={entityType}
+                  initialData={media}
+                  onClose={() => setEditingId(null)}
+                />
+              ) : (
+                <div className="space-y-4">
+                  <div className="aspect-video overflow-hidden rounded-lg bg-slate-100">
+                    {isVisual ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={mediaPreviewUrl(media.storage_path)}
+                        alt={media.alt_text_th || media.alt_text_en || ""}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center px-4 text-center text-sm text-slate-500">
+                        <ImageIcon size={28} weight="duotone" />
+                        <span className="mt-2 font-bold">{MEDIA_TYPE_LABELS[media.media_type] ?? media.media_type}</span>
+                        <span className="mt-1 line-clamp-2 text-xs">{media.storage_path}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
+                          {MEDIA_TYPE_LABELS[media.media_type] ?? media.media_type}
+                        </span>
+                        {media.is_cover ? (
+                          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+                            Cover
+                          </span>
+                        ) : null}
+                        {!media.is_active ? (
+                          <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600">
+                            Inactive
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-sm font-bold text-slate-800">
+                        {media.alt_text_th || media.alt_text_en || "ยังไม่มี alt text"}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">ลำดับ: {media.display_order ?? "-"}</p>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(media.media_id)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0A6B62]"
+                        aria-label="แก้ไขสื่อ"
+                      >
+                        <PencilSimple size={17} weight="bold" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(media.media_id)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-rose-50 hover:text-rose-600"
+                        aria-label="ลบสื่อ"
+                      >
+                        <Trash size={17} weight="bold" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-xs font-black uppercase text-slate-500">Public readiness</p>
+                    <div className="mt-2 grid gap-2">
+                      {readinessItems.map((item) => (
+                        <div key={item.label} className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                          {item.complete ? (
+                            <CheckCircle className="shrink-0 text-[#0A6B62]" size={15} weight="fill" />
+                          ) : (
+                            <WarningCircle className="shrink-0 text-amber-600" size={15} weight="fill" />
+                          )}
+                          {item.label}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </article>
+          );
+        })}
       </div>
     </div>
   );
@@ -117,35 +296,58 @@ function MediaForm({
   onClose,
 }: {
   entityId: number;
-  entityType: "attraction" | "restaurant" | "story" | "route";
+  entityType: AdminMediaEntityType;
   initialData?: AdminMediaRow;
   onClose: () => void;
 }) {
   const router = useRouter();
   const isEditing = !!initialData;
   const action = isEditing ? updateMediaAction.bind(null, initialData.media_id) : createMediaAction;
-
+  const [mediaType, setMediaType] = useState<MediaType>((initialData?.media_type as MediaType) || "image");
+  const [storagePath, setStoragePath] = useState(initialData?.storage_path || "");
   const [uploadingFile, setUploadingFile] = useState(false);
-  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [state, formAction, isPending] = useActionState<any, FormData>(action, {
     success: false,
     error: undefined,
+    fieldErrors: undefined,
   });
 
-  if (state?.success) {
-    onClose();
-    router.refresh();
-  }
+  const selectedMediaType = useMemo(() => getMediaTypeOption(mediaType), [mediaType]);
+  const fieldErrors = readableFieldErrors(state?.fieldErrors);
+  const canSubmit = !uploadingFile && !isPending && storagePath.trim().length > 0;
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  useEffect(() => {
+    if (state?.success) {
+      onClose();
+      router.refresh();
+    }
+  }, [state?.success, onClose, router]);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError("ไฟล์นี้ไม่รองรับ กรุณาใช้ JPG, PNG หรือ WebP");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("ไฟล์ใหญ่เกินไป กรุณาใช้ไฟล์ไม่เกิน 10MB");
+      event.target.value = "";
+      return;
+    }
 
     setUploadingFile(true);
     setUploadError(null);
+    setUploadSuccess(false);
 
     try {
       const body = new FormData();
@@ -157,177 +359,270 @@ function MediaForm({
         method: "POST",
         body,
       });
-
       const result = await response.json();
-      if (!result.success) {
-        setUploadError(result.error || "Upload failed");
-      } else {
-        setUploadedPath(result.storagePath);
+
+      if (!response.ok || !result.success) {
+        setUploadError(result.error || "อัปโหลดไม่สำเร็จ กรุณาลองใหม่");
+        return;
       }
+
+      setStoragePath(result.storagePath);
+      setUploadSuccess(true);
     } catch {
-      setUploadError("Network error during upload");
+      setUploadError("เชื่อมต่อไม่สำเร็จ กรุณาตรวจอินเทอร์เน็ตแล้วลองใหม่");
     } finally {
       setUploadingFile(false);
+      event.target.value = "";
     }
   };
 
   return (
-    <form action={formAction} className="rounded-xl border border-slate-200 bg-slate-50 p-4 relative col-span-full">
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute right-4 top-4 text-slate-400 hover:text-slate-600"
-      >
-        <X size={20} />
-      </button>
-      
-      <h4 className="mb-4 text-sm font-semibold text-slate-800">
-        {isEditing ? "แก้ไขรูปภาพ/วิดีโอ" : "เพิ่มรูปภาพ/วิดีโอใหม่"}
-      </h4>
-
-      {state?.error && (
-        <div className="mb-4 rounded bg-rose-50 p-3 text-xs text-rose-600">
-          {state.error}
-        </div>
-      )}
-
-      {uploadError && (
-        <div className="mb-4 rounded bg-rose-50 p-3 text-xs text-rose-600">
-          {uploadError}
-        </div>
-      )}
-
+    <form action={formAction} className="col-span-full rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <input type="hidden" name="entityId" value={entityId} />
       <input type="hidden" name="entityType" value={entityType} />
+      <input type="hidden" name="storagePath" value={storagePath} />
+      <input type="hidden" name="isCover" value="false" />
+      <input type="hidden" name="isActive" value="false" />
 
-      <div className="space-y-4">
+      <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-700">ประเภท</label>
-          <select
-            name="mediaType"
-            defaultValue={initialData?.media_type ?? "image"}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="image">รูปภาพ (Image)</option>
-            <option value="panorama">พาโนรามา (Panorama)</option>
-            <option value="video360">วิดีโอ 360 (Video 360)</option>
-            <option value="embed">โค้ดฝัง (Embed)</option>
-            <option value="external_url">ลิงก์ภายนอก (External URL)</option>
-          </select>
+          <h3 className="text-base font-black text-[#073F37]">{isEditing ? "แก้ไขสื่อ" : "เพิ่มสื่อใหม่"}</h3>
+          <p className="mt-1 text-sm leading-6 text-slate-500">
+            เลือกประเภทสื่อก่อน ระบบจะแสดงเฉพาะช่องที่จำเป็น ลดการกรอกผิดและกันปัญหา path หาย
+          </p>
         </div>
-
-        {/* File Upload */}
-        {!isEditing && (
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">
-              อัปโหลดไฟล์ (JPEG, PNG, WebP, สูงสุด 10MB)
-            </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleFileUpload}
-              disabled={uploadingFile}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#0A6B62] file:px-3 file:py-1 file:text-xs file:font-semibold file:text-white"
-            />
-            {uploadingFile && (
-              <p className="mt-1 text-xs text-amber-600 animate-pulse">กำลังอัปโหลด...</p>
-            )}
-            {uploadedPath && (
-              <p className="mt-1 text-xs text-green-600">✓ อัปโหลดสำเร็จ</p>
-            )}
-          </div>
-        )}
-
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-700">
-            {isEditing ? "URL / Path *" : "URL / Path (หรือใช้ไฟล์ที่อัปโหลดด้านบน)"}
-          </label>
-          <input
-            type="text"
-            name="storagePath"
-            defaultValue={initialData?.storage_path}
-            value={uploadedPath ?? undefined}
-            onChange={(e) => setUploadedPath(e.target.value || null)}
-            required
-            placeholder={uploadedPath ? "" : "https://example.com/image.jpg"}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">Alt Text (TH)</label>
-            <input
-              type="text"
-              name="altTextTh"
-              defaultValue={initialData?.alt_text_th ?? ""}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">Alt Text (EN)</label>
-            <input
-              type="text"
-              name="altTextEn"
-              defaultValue={initialData?.alt_text_en ?? ""}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">Caption (TH)</label>
-            <input
-              type="text"
-              name="captionTh"
-              defaultValue={initialData?.caption_th ?? ""}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-700">Caption (EN)</label>
-            <input
-              type="text"
-              name="captionEn"
-              defaultValue={initialData?.caption_en ?? ""}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-slate-700">ลำดับการแสดงผล</label>
-            <input
-              type="number"
-              name="displayOrder"
-              defaultValue={initialData?.display_order ?? ""}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="flex flex-1 items-end gap-4 pb-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="isCover" defaultChecked={initialData?.is_cover ?? false} className="rounded" />
-              ภาพหน้าปก
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="isActive" defaultChecked={initialData?.is_active ?? true} className="rounded" />
-              Active
-            </label>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="submit"
-            disabled={isPending || uploadingFile}
-            className="rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white hover:bg-[#075049] disabled:opacity-50"
-          >
-            {isPending ? "กำลังบันทึก..." : "บันทึก"}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+          aria-label="ปิดฟอร์ม"
+        >
+          <X size={18} weight="bold" />
+        </button>
       </div>
+
+      {state?.error ? (
+        <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          <div className="flex gap-2 font-black">
+            <WarningCircle className="mt-0.5 shrink-0" size={18} weight="fill" />
+            {state.error}
+          </div>
+          {fieldErrors.length ? (
+            <ul className="mt-2 list-disc space-y-1 pl-7 text-xs font-bold">
+              {fieldErrors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-5">
+          <label className="block">
+            <span className="text-sm font-black text-slate-700">ประเภทสื่อ</span>
+            <select
+              name="mediaType"
+              value={mediaType}
+              onChange={(event) => {
+                setMediaType(event.target.value as MediaType);
+                setUploadError(null);
+                setUploadSuccess(false);
+              }}
+              className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+            >
+              {MEDIA_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-xs leading-5 text-slate-500">{selectedMediaType.help}</span>
+          </label>
+
+          {selectedMediaType.needsUpload ? (
+            <div>
+              <span className="text-sm font-black text-slate-700">ไฟล์รูปภาพ</span>
+              <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center transition hover:border-[#0A6B62] hover:bg-[#E6F4EF]">
+                <UploadSimple className="text-[#0A6B62]" size={30} weight="bold" />
+                <span className="mt-2 text-sm font-black text-slate-800">
+                  {uploadingFile ? "กำลังอัปโหลด..." : storagePath ? "เปลี่ยนไฟล์" : "อัปโหลดไฟล์"}
+                </span>
+                <span className="mt-1 text-xs text-slate-500">รองรับ JPG, PNG, WebP ขนาดไม่เกิน 10MB</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleFileUpload}
+                  disabled={uploadingFile}
+                  className="sr-only"
+                />
+              </label>
+              {uploadError ? (
+                <p className="mt-2 flex gap-2 text-xs font-bold text-rose-600">
+                  <WarningCircle className="shrink-0" size={15} weight="fill" />
+                  {uploadError}
+                </p>
+              ) : null}
+              {uploadSuccess ? (
+                <p className="mt-2 flex gap-2 text-xs font-bold text-emerald-700">
+                  <CheckCircle className="shrink-0" size={15} weight="fill" />
+                  อัปโหลดสำเร็จ ระบบเติม path ให้แล้ว
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <div className="block space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-black text-slate-700">
+                  {mediaType === "embed" ? "Embed code / iframe" : "URL ของสื่อ / Path"}
+                </span>
+                {mediaType !== "embed" ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsMediaPickerOpen(true)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#0A6B62] hover:text-[#075049] transition-colors bg-[#E6F4EF] hover:bg-[#c9ebe1] px-2.5 py-1 rounded-md"
+                  >
+                    <Images size={14} weight="bold" /> เลือกจากคลังภาพ (Media Library)
+                  </button>
+                ) : null}
+              </div>
+
+              {mediaType === "embed" ? (
+                <textarea
+                  name="storagePath"
+                  value={storagePath}
+                  onChange={(event) => setStoragePath(event.target.value)}
+                  rows={5}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                  placeholder="<iframe ...></iframe>"
+                />
+              ) : (
+                <input
+                  name="storagePath"
+                  type="text"
+                  value={storagePath}
+                  onChange={(event) => setStoragePath(event.target.value)}
+                  className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                  placeholder="https://... หรือ /path/to/image.jpg"
+                />
+              )}
+            </div>
+          )}
+
+          {storagePath ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+              <p className="font-black text-slate-700">Storage / URL</p>
+              <p className="mt-1 break-all font-mono">{storagePath}</p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-black text-slate-700">Alt text ภาษาไทย</span>
+              <input
+                name="altTextTh"
+                defaultValue={initialData?.alt_text_th ?? ""}
+                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                placeholder="อธิบายภาพเพื่อ accessibility"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-black text-slate-700">Alt text ภาษาอังกฤษ</span>
+              <input
+                name="altTextEn"
+                defaultValue={initialData?.alt_text_en ?? ""}
+                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                placeholder="Short image description"
+              />
+            </label>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-black text-slate-700">Caption ภาษาไทย</span>
+              <input
+                name="captionTh"
+                defaultValue={initialData?.caption_th ?? ""}
+                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-black text-slate-700">Caption ภาษาอังกฤษ</span>
+              <input
+                name="captionEn"
+                defaultValue={initialData?.caption_en ?? ""}
+                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+              />
+            </label>
+          </div>
+        </div>
+
+        <aside className="space-y-4">
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+            <div className="aspect-video bg-slate-100">
+              {storagePath && (mediaType === "image" || mediaType === "panorama" || mediaType === "external_url") ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={mediaPreviewUrl(storagePath)} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center px-5 text-center text-sm text-slate-500">
+                  <ImageIcon size={32} weight="duotone" />
+                  <span className="mt-2 font-bold">{storagePath ? selectedMediaType.label : "ยังไม่มีไฟล์หรือ URL"}</span>
+                </div>
+              )}
+            </div>
+            <div className="space-y-3 p-4">
+              <label className="block">
+                <span className="text-sm font-black text-slate-700">ลำดับการแสดงผล</span>
+                <input
+                  type="number"
+                  name="displayOrder"
+                  defaultValue={initialData?.display_order ?? ""}
+                  className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                  placeholder="เช่น 1"
+                />
+              </label>
+
+              <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50">
+                ตั้งเป็นภาพ cover
+                <input type="checkbox" name="isCover" defaultChecked={initialData?.is_cover ?? false} className="h-4 w-4 accent-[#F3704C]" value="true" />
+              </label>
+
+              <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 has-[:checked]:border-[#0A6B62] has-[:checked]:bg-[#E6F4EF]">
+                เปิดใช้งาน
+                <input type="checkbox" name="isActive" defaultChecked={initialData?.is_active ?? true} className="h-4 w-4 accent-[#0A6B62]" value="true" />
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+            <p className="font-black">ก่อน publish</p>
+            <p className="mt-1">ภาพ official ควรมี alt text และควรใช้ไฟล์ที่มีสิทธิ์ใช้งานชัดเจน โดยเฉพาะภาพที่ขึ้นหน้าแรกหรือหน้า attraction</p>
+          </div>
+        </aside>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+        >
+          ยกเลิก
+        </button>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="min-h-11 rounded-lg bg-[#073F37] px-5 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isPending ? "กำลังบันทึก..." : storagePath ? "บันทึกสื่อ" : "อัปโหลดหรือใส่ URL ก่อน"}
+        </button>
+      </div>
+
+      <MediaPickerModal
+        isOpen={isMediaPickerOpen}
+        onClose={() => setIsMediaPickerOpen(false)}
+        onSelect={(url) => setStoragePath(url)}
+      />
     </form>
   );
 }

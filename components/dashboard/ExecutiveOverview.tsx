@@ -46,6 +46,24 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
           emptyDescription="No visits by province for selected filters."
           title="Visits by province"
         />
+        <BarChartCard
+          data={data.travelBehavior.transportModes}
+          definition="Distribution of self-reported transport modes from survey responses."
+          emptyDescription="No transport mode data for selected filters."
+          title="Transport modes"
+        />
+        <BarChartCard
+          data={data.expense.spendingRanges}
+          definition="Distribution of self-reported spending ranges from survey responses."
+          emptyDescription="No spending range data for selected filters."
+          title="Spending ranges"
+        />
+        <BarChartCard
+          data={data.satisfaction.distribution}
+          definition="Distribution of overall satisfaction scores from survey responses."
+          emptyDescription="No satisfaction data for selected filters."
+          title="Overall Satisfaction"
+        />
       </div>
     </section>
   );

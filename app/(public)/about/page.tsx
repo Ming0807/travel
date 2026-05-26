@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { 
   Target,
   Eye,
@@ -56,34 +55,35 @@ export default function AboutPage() {
             {/* Background Shape */}
             <div className="absolute top-10 left-10 w-[350px] h-[400px] bg-[#F2EFE8] rounded-[3rem] -z-10 opacity-70"></div>
             
-            <div className="absolute top-0 left-0 w-64 h-80 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-10">
-              <Image 
-                src="https://images.unsplash.com/photo-1542640244-7e672d6cb466?q=80&w=600&auto=format&fit=crop" 
-                alt="Sea of mist Aiyerweng" 
-                fill 
-                className="object-cover" 
-                unoptimized
-              />
+            <div className="absolute top-0 left-0 w-64 h-80 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-10 bg-white">
+              <div className="flex h-full flex-col justify-between bg-[linear-gradient(135deg,#F8EDE7_0%,#F7F3EA_50%,#E9F0EC_100%)] p-6">
+                <MapPin size={40} weight="fill" className="text-coral" />
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Tourism data</p>
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    <span className="h-16 rounded-xl bg-white/70" />
+                    <span className="h-24 rounded-xl bg-white/80" />
+                    <span className="h-12 rounded-xl bg-white/60" />
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <div className="absolute top-8 right-4 w-48 h-48 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-20">
-              <Image 
-                src="https://images.unsplash.com/photo-1587823527237-770498eb7909?q=80&w=500&auto=format&fit=crop" 
-                alt="Pattani Central Mosque" 
-                fill 
-                className="object-cover" 
-                unoptimized
-              />
+            <div className="absolute top-8 right-4 w-48 h-48 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-20 bg-[#EAF2F0] p-5">
+              <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-teal/20 bg-white/50 text-center">
+                <GlobeHemisphereEast size={42} weight="light" className="text-teal" />
+                <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Official content</p>
+              </div>
             </div>
             
-            <div className="absolute bottom-4 right-12 w-56 h-40 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-30">
-              <Image 
-                src="https://images.unsplash.com/photo-1598444315278-651817551cc3?q=80&w=500&auto=format&fit=crop" 
-                alt="Narathiwat beach" 
-                fill 
-                className="object-cover" 
-                unoptimized
-              />
+            <div className="absolute bottom-4 right-12 w-56 h-40 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-30 bg-[#FFF8EF] p-5">
+              <div className="flex h-full items-end justify-between rounded-2xl border border-coral/20 bg-white/60 p-4">
+                <Camera size={34} weight="light" className="text-coral" />
+                <div className="space-y-2">
+                  <span className="block h-2 w-20 rounded-full bg-coral/30" />
+                  <span className="block h-2 w-14 rounded-full bg-ink/15" />
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -182,14 +182,25 @@ export default function AboutPage() {
             </p>
           </div>
           
-          <div className="lg:col-span-8 relative h-[400px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5">
-            <Image 
-              src="https://images.unsplash.com/photo-1501555088652-021faa106b9b?q=80&w=1200&auto=format&fit=crop" 
-              alt="Our Story Journey" 
-              fill 
-              className="object-cover" 
-              unoptimized
-            />
+          <div className="lg:col-span-8 relative h-[400px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 bg-[#EDF3F0]">
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#FFF8EF_0%,#EDF3F0_52%,#F8E7DF_100%)]" />
+            <div className="absolute inset-8 rounded-[1.5rem] border border-white/70 bg-white/35 p-8 backdrop-blur-sm">
+              <div className="grid h-full grid-cols-3 gap-4">
+                <div className="flex flex-col justify-end rounded-2xl bg-white/60 p-5">
+                  <MapPin size={36} weight="fill" className="text-coral" />
+                  <span className="mt-5 h-2 w-20 rounded-full bg-ink/20" />
+                </div>
+                <div className="flex flex-col justify-center rounded-2xl bg-white/70 p-5">
+                  <Users size={38} weight="light" className="text-teal" />
+                  <span className="mt-5 h-2 w-24 rounded-full bg-ink/20" />
+                  <span className="mt-2 h-2 w-16 rounded-full bg-coral/30" />
+                </div>
+                <div className="flex flex-col justify-start rounded-2xl bg-white/60 p-5">
+                  <BookOpen size={36} weight="light" className="text-ink" />
+                  <span className="mt-5 h-2 w-20 rounded-full bg-ink/20" />
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -206,13 +217,10 @@ export default function AboutPage() {
             {teamMembers.map((member, idx) => (
               <div key={idx} className="bg-white rounded-[1.5rem] p-5 shadow-sm border border-ink/5 flex flex-col items-center text-center">
                 <div className="w-full h-48 relative rounded-xl overflow-hidden mb-4 bg-cream">
-                  <Image 
-                    src={member.imageUrl} 
-                    alt={member.name} 
-                    fill 
-                    className="object-cover"
-                    unoptimized 
-                  />
+                  <div className="flex h-full flex-col items-center justify-center bg-[#F4F1EA] text-center">
+                    <Users size={42} weight="light" className="text-coral" />
+                    <span className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Team profile</span>
+                  </div>
                 </div>
                 <h3 className="font-black text-ink">{member.name}</h3>
                 <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-3 mt-1">{member.role}</p>
@@ -229,16 +237,12 @@ export default function AboutPage() {
               </div>
             ))}
             
-            {/* Mock 4th member to match layout */}
             <div className="bg-white rounded-[1.5rem] p-5 shadow-sm border border-ink/5 flex flex-col items-center text-center">
               <div className="w-full h-48 relative rounded-xl overflow-hidden mb-4 bg-cream">
-                <Image 
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop" 
-                  alt="Amina" 
-                  fill 
-                  className="object-cover"
-                  unoptimized 
-                />
+                <div className="flex h-full flex-col items-center justify-center bg-[#F4F1EA] text-center">
+                  <Users size={42} weight="light" className="text-coral" />
+                  <span className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Team profile</span>
+                </div>
               </div>
               <h3 className="font-black text-ink">อามีนา สะมะแอ</h3>
               <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-3 mt-1">Community Manager</p>
@@ -331,13 +335,8 @@ export default function AboutPage() {
         {/* CTA BANNER */}
         <section className="mb-20">
           <div className="relative w-full h-[300px] rounded-[2rem] overflow-hidden flex flex-col items-center justify-center text-center px-4 shadow-xl">
-            <Image 
-              src="https://images.unsplash.com/photo-1542640244-7e672d6cb466?q=80&w=1200&auto=format&fit=crop" 
-              alt="CTA Background" 
-              fill 
-              className="object-cover brightness-50" 
-              unoptimized
-            />
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#173F37_0%,#31685B_48%,#E18868_100%)]" />
+            <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(90deg,rgba(255,255,255,.25)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.25)_1px,transparent_1px)] [background-size:48px_48px]" />
             <div className="relative z-10">
               <h2 className="text-4xl font-black text-white mb-3">ออกเดินทางสำรวจโลกไปด้วยกัน</h2>
               <p className="text-white/90 mb-8">การผจญภัยครั้งยิ่งใหญ่ครั้งต่อไปของคุณเริ่มต้นจากเรื่องราวเหล่านี้</p>

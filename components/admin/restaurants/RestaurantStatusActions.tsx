@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Eye, EyeSlash, CheckCircle, XCircle } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
+import { Eye, EyeSlash, CheckCircle, XCircle, Image, PencilSimple } from "@phosphor-icons/react/dist/ssr";
 
 import {
   toggleRestaurantPublishAction,
@@ -36,6 +37,20 @@ export function RestaurantStatusActions({ restaurantId, isPublished, isActive }:
       >
         {isPublished ? <Eye size={16} weight="fill" /> : <EyeSlash size={16} weight="fill" />}
       </button>
+      <Link
+        href={`/admin/restaurants/${restaurantId}/media`}
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0A6B62]"
+        title="Manage Media"
+      >
+        <Image size={16} weight="bold" />
+      </Link>
+      <Link
+        href={`/admin/restaurants/${restaurantId}/edit`}
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-blue-600"
+        title="Edit Restaurant"
+      >
+        <PencilSimple size={16} weight="bold" />
+      </Link>
       <button
         onClick={handleActiveToggle}
         className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-green-600 transition"

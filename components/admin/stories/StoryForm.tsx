@@ -1,22 +1,84 @@
 "use client";
 
-import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createStoryAction, updateStoryAction } from "@/app/actions/admin-story-actions";
 import type { AdminStoryRow } from "@/lib/repositories/admin-story.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
-import { Image, List, Plus } from "@phosphor-icons/react";
+import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { ArrowSquareOut, CheckCircle, Image, List, Plus, WarningCircle } from "@phosphor-icons/react";
 
 interface StoryFormProps {
   initialData?: AdminStoryRow | null;
   provinces: { province_id: number; province_name_th: string }[];
 }
 
+const FIELD_LABELS = {
+  title: "ชื่อบทความ",
+  slug: "Slug",
+  provinceId: "จังหวัด",
+  imageUrl: "รูปภาพปก",
+};
+
+type ReadinessItem = {
+  label: string;
+  detail: string;
+  isReady: boolean;
+};
+
+function hasText(value: string | null | undefined) {
+  return !!value?.trim();
+}
+
 export function StoryForm({ initialData, provinces }: StoryFormProps) {
   const router = useRouter();
   const isEditing = !!initialData;
   const action = isEditing ? updateStoryAction.bind(null, initialData.story_id) : createStoryAction;
+  const publicHref = isEditing && initialData?.slug ? `/stories/${initialData.slug}` : null;
+  const readinessItems: ReadinessItem[] = [
+    {
+      label: "Title",
+      detail: "Shown as the public story headline.",
+      isReady: hasText(initialData?.title),
+    },
+    {
+      label: "Slug",
+      detail: publicHref ? publicHref : "Needed for the public story URL.",
+      isReady: hasText(initialData?.slug),
+    },
+    {
+      label: "Excerpt",
+      detail: "Used on story cards and near the story headline.",
+      isReady: hasText(initialData?.excerpt),
+    },
+    {
+      label: "Content",
+      detail: "Rendered as the saved public article body.",
+      isReady: hasText(initialData?.content),
+    },
+    {
+      label: "Hero image",
+      detail: "Controls the main image on the story detail page.",
+      isReady: hasText(initialData?.image_url),
+    },
+    {
+      label: "Province",
+      detail: "Helps visitors and admins filter regional content.",
+      isReady: initialData?.province_id != null,
+    },
+    {
+      label: "Category",
+      detail: "Shown as the story label on public pages.",
+      isReady: hasText(initialData?.category),
+    },
+    {
+      label: "Publish status",
+      detail: initialData?.is_published ? "Currently visible on public story surfaces." : "Saved as draft until published.",
+      isReady: !!initialData?.is_published,
+    },
+  ];
+  const readyCount = readinessItems.filter((item) => item.isReady).length;
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [state, formAction, isPending] = useActionState<any, FormData>(action, {
@@ -25,10 +87,12 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
     fieldErrors: undefined,
   });
 
-  if (state?.success && isEditing) {
-    router.push("/admin/stories");
-    router.refresh();
-  }
+  useEffect(() => {
+    if (state?.success && isEditing) {
+      router.push("/admin/stories");
+      router.refresh();
+    }
+  }, [state?.success, isEditing, router]);
 
   if (state?.success && !isEditing) {
     const newId = state.data?.id;
@@ -53,11 +117,7 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
 
   return (
     <form action={formAction} className="space-y-8">
-      {state?.error && (
-        <div className="rounded-2xl p-4 text-sm font-bold bg-rose-50 text-rose-700">
-          {state.error}
-        </div>
-      )}
+      <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} fieldLabels={FIELD_LABELS} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column (Main Content) */}
@@ -131,6 +191,45 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
           
           {/* Status */}
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide text-[#0A6B62]">Public page readiness</p>
+                <h2 className="mt-1 text-lg font-black text-[#073F37]">
+                  {readyCount}/{readinessItems.length} checks ready
+                </h2>
+              </div>
+              {publicHref ? (
+                <Link
+                  href={publicHref}
+                  target="_blank"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-[#0A6B62] hover:text-[#0A6B62]"
+                  title="Preview public story"
+                >
+                  <ArrowSquareOut size={17} weight="bold" />
+                </Link>
+              ) : null}
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-500">
+              These checks map this editor to the public story page. Update and save the form to refresh this readiness view.
+            </p>
+            <div className="mt-4 space-y-2">
+              {readinessItems.map((item) => (
+                <div key={item.label} className="flex gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                  {item.isReady ? (
+                    <CheckCircle className="mt-0.5 shrink-0 text-emerald-600" size={16} weight="fill" />
+                  ) : (
+                    <WarningCircle className="mt-0.5 shrink-0 text-amber-600" size={16} weight="fill" />
+                  )}
+                  <div>
+                    <p className="text-xs font-black text-slate-700">{item.label}</p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{item.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-black text-[#073F37]">สถานะ (Status)</h2>
             <div className="mt-5 flex flex-col gap-3">
               <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 has-[:checked]:border-[#F3704C] has-[:checked]:bg-orange-50 has-[:checked]:text-orange-800">
@@ -198,14 +297,11 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-10 flex flex-col gap-3 border-t border-slate-200 bg-white/95 py-4 backdrop-blur sm:flex-row sm:justify-end">
-        <Link className="rounded-full border border-slate-200 bg-white px-6 py-3 text-center text-sm font-black text-slate-700 hover:bg-slate-50 transition" href="/admin/stories">
-          ยกเลิก
-        </Link>
-        <button disabled={isPending} className="rounded-full bg-[#F3704C] px-8 py-3 text-sm font-black text-white shadow-card hover:bg-[#E55A35] disabled:opacity-50 transition" type="submit">
-          {isPending ? "กำลังบันทึก..." : isEditing ? "บันทึกการแก้ไข" : "สร้างบทความ"}
-        </button>
-      </div>
+      <AdminSaveBar
+        cancelHref="/admin/stories"
+        isPending={isPending}
+        submitLabel={isEditing ? "บันทึกการแก้ไขเรื่องราว" : "สร้างเรื่องราว"}
+      />
     </form>
   );
 }

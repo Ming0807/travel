@@ -22,7 +22,7 @@ export async function createPhotoSpotAction(formData: FormData): Promise<ActionR
     const guard = await requirePermission("photo_spot.create");
     const parsed = adminPhotoSpotMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลจุดถ่ายภาพอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const created = await createAdminPhotoSpot(parsed.data);
@@ -38,7 +38,7 @@ export async function createPhotoSpotAction(formData: FormData): Promise<ActionR
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to create photo spot." };
+    return { success: false, error: "ยังสร้างจุดถ่ายภาพไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -47,7 +47,7 @@ export async function updatePhotoSpotAction(photoSpotId: number, formData: FormD
     const guard = await requirePermission("photo_spot.update");
     const parsed = adminPhotoSpotMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลจุดถ่ายภาพอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const old = await getAdminPhotoSpotById(photoSpotId);
@@ -65,7 +65,7 @@ export async function updatePhotoSpotAction(photoSpotId: number, formData: FormD
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to update photo spot." };
+    return { success: false, error: "ยังบันทึกการแก้ไขจุดถ่ายภาพไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -73,7 +73,7 @@ export async function togglePhotoSpotActiveAction(photoSpotId: number): Promise<
   try {
     const guard = await requirePermission("photo_spot.deactivate");
     const current = await getAdminPhotoSpotById(photoSpotId);
-    if (!current) return { success: false, error: "Photo spot not found." };
+    if (!current) return { success: false, error: "ไม่พบจุดถ่ายภาพนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminPhotoSpotStatus(photoSpotId, !current.is_active);
     await logAdminMutation({
@@ -89,6 +89,6 @@ export async function togglePhotoSpotActiveAction(photoSpotId: number): Promise<
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle active status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะใช้งานไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }

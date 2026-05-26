@@ -36,7 +36,7 @@ const steps = [
   },
 ];
 
-export function HomepageHowItWorks() {
+export function HomepageHowItWorks({ title = "ใช้งานง่ายเหมือนแอป", subtitle = "แต่ไม่ต้องโหลดแอป", description = "ระบบออกแบบให้เริ่มจากการให้คุณค่าก่อน — นักท่องเที่ยวกรอกน้อยที่สุด รับใบประกาศก่อน แล้วค่อยให้ข้อมูลเพิ่มเติมแบบสมัครใจ" }: { title?: string, subtitle?: string, description?: string }) {
   return (
     <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24 bg-[#FAF8F5] rounded-[3rem] my-8 shadow-sm">
 
@@ -48,12 +48,12 @@ export function HomepageHowItWorks() {
             Digital Passport
           </p>
           <h2 className="text-4xl font-black leading-[1.1] lg:text-5xl text-ink">
-            ใช้งานง่ายเหมือนแอป
+            {title}
             <br />
-            <span className="text-coral font-['Playfair_Display'] italic font-normal">แต่ไม่ต้องโหลดแอป</span>
+            {subtitle && <span className="text-coral font-['Playfair_Display'] italic font-normal">{subtitle}</span>}
           </h2>
           <p className="mt-6 max-w-lg text-base leading-relaxed text-muted font-medium">
-            ระบบออกแบบให้เริ่มจากการให้คุณค่าก่อน — นักท่องเที่ยวกรอกน้อยที่สุด รับใบประกาศก่อน แล้วค่อยให้ข้อมูลเพิ่มเติมแบบสมัครใจ
+            {description}
           </p>
         </div>
 

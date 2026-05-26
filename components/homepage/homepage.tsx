@@ -13,19 +13,44 @@ import { SettingsService } from "@/lib/services/settings.service";
 
 export async function Homepage() {
   const settingsService = new SettingsService();
-  const [attractions, stories, routes, heroSettings] = await Promise.all([
-    listPublicAttractionCards(8),
-    listPublicStories(4),
+
+  // First fetch the featured attractions slugs
+  const featuredAttractionsSetting = await settingsService.getSetting("homepage_featured_attractions", { slugs: [] });
+  const featuredSlugs = featuredAttractionsSetting?.slugs || [];
+
+  const [attractions, stories, routes, heroSettings, howItWorksSettings, highlightsSettings, ctaSettings] = await Promise.all([
+    listPublicAttractionCards(8, { featuredSlugs }),
+    listPublicStories({ limit: 4 }),
     listPublicRoutes(3),
     settingsService.getSetting("homepage_hero", {
       title: "ค้นพบ<br/>ความมหัศจรรย์<br/>ที่ซ่อนเร้น",
       subtitle: "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์",
       description: "ตามหาช่วงเวลาสุดพิเศษและสถานที่ที่ซ่อนเร้นเพื่อจุดประกายประสบการณ์ที่ไม่มีวันลืม ในยะลา ปัตตานี และนราธิวาส",
       images: [
-        "https://images.unsplash.com/photo-1549880181-56a44cf4a9a1?auto=format&fit=crop&w=800&q=85",
-        "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=800&q=85",
-        "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=800&q=85"
+        "",
+        "",
+        ""
       ]
+    }),
+    settingsService.getSetting("homepage_how_it_works", {
+      title: "ใช้งานง่ายเหมือนแอป",
+      subtitle: "แต่ไม่ต้องโหลดแอป",
+      description: "ระบบออกแบบให้เริ่มจากการให้คุณค่าก่อน — นักท่องเที่ยวกรอกน้อยที่สุด รับใบประกาศก่อน แล้วค่อยให้ข้อมูลเพิ่มเติมแบบสมัครใจ"
+    }),
+    settingsService.getSetting("homepage_highlights", {
+      title: "ประสบการณ์จากนักเดินทาง",
+      authorName: "Maria Angelica",
+      location: "มะนิลา, ฟิลิปปินส์",
+      quote: "ฉันไม่เคยคาดคิดเลยว่าชายแดนใต้จะสวยงามขนาดนี้ ทะเลหมอกที่อัยเยอร์เวงนั้นน่าทึ่งมาก ใบประกาศดิจิทัลที่ได้ก็เป็นสิ่งที่ช่วยให้ความทรงจำครั้งนี้พิเศษยิ่งขึ้น แนะนำสุดๆ สำหรับคนที่ชอบการผจญภัย!",
+      videoCover: "",
+      imageCover: "",
+      imageTitle: "ตลาดน้ำเมืองปัตตานี"
+    }),
+    settingsService.getSetting("homepage_cta", {
+      title: "รับแรงบันดาลใจการเดินทาง",
+      subtitle: "ส่งตรงถึงคุณ",
+      description: "สมัครรับข่าวสารเพื่อค้นพบสถานที่ใหม่ๆ โปรโมชั่นพิเศษ และเรื่องเล่าสุดเอ็กซ์คลูซีฟจากชายแดนใต้",
+      bgImage: ""
     })
   ]);
 
@@ -33,12 +58,12 @@ export async function Homepage() {
     <>
       <HomepageHero {...heroSettings} />
       <RevealOnScroll delay={100}><HomepageAttractionsFeed attractions={attractions} /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageHowItWorks /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageHowItWorks {...howItWorksSettings} /></RevealOnScroll>
       <RevealOnScroll delay={100}><HomepageStories stories={stories} /></RevealOnScroll>
       <RevealOnScroll delay={100}><HomepageSuggestedRoutes routes={routes} /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageHighlights /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageHighlights {...highlightsSettings} /></RevealOnScroll>
       <RevealOnScroll delay={100}><HomepageDashboardPreview /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageCertificateCta /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageCertificateCta {...ctaSettings} /></RevealOnScroll>
       <HomepageFooter />
     </>
   );

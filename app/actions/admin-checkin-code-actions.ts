@@ -25,12 +25,12 @@ export async function createCheckinCodeAction(prevState: ActionResult, formData:
     const guard = await requirePermission("checkin_code.create");
     const parsed = adminCheckinCodeMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลรหัส Check-in อีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const existingCode = await findCheckinCodeByCode(parsed.data.code);
     if (existingCode !== null) {
-      return { success: false, error: "Code already exists.", fieldErrors: { code: ["This check-in code is already in use."] } };
+      return { success: false, error: "รหัสนี้ถูกใช้งานแล้ว", fieldErrors: { code: ["กรุณาใช้รหัสอื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const created = await createAdminCheckinCode(parsed.data);
@@ -43,11 +43,11 @@ export async function createCheckinCodeAction(prevState: ActionResult, formData:
     });
 
     revalidatePath("/admin/checkin-codes");
-    return { success: true };
+    return { success: true, data: { id: created.checkin_code_id, code: created.code } };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     console.error("createCheckinCodeAction error:", error);
-    return { success: false, error: `Failed to create check-in code: ${error instanceof Error ? error.message : String(error)}` };
+    return { success: false, error: "ยังสร้างรหัส Check-in ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -56,12 +56,12 @@ export async function updateCheckinCodeAction(checkinCodeId: number, prevState: 
     const guard = await requirePermission("checkin_code.update");
     const parsed = adminCheckinCodeMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลรหัส Check-in อีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     const existingCode = await findCheckinCodeByCode(parsed.data.code, checkinCodeId);
     if (existingCode !== null) {
-      return { success: false, error: "Code already exists.", fieldErrors: { code: ["This check-in code is already in use."] } };
+      return { success: false, error: "รหัสนี้ถูกใช้งานแล้ว", fieldErrors: { code: ["กรุณาใช้รหัสอื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const old = await getAdminCheckinCodeById(checkinCodeId);
@@ -79,7 +79,7 @@ export async function updateCheckinCodeAction(checkinCodeId: number, prevState: 
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to update check-in code." };
+    return { success: false, error: "ยังบันทึกการแก้ไขรหัส Check-in ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -87,7 +87,7 @@ export async function toggleCheckinCodeActiveAction(checkinCodeId: number): Prom
   try {
     const guard = await requirePermission("checkin_code.deactivate");
     const current = await getAdminCheckinCodeById(checkinCodeId);
-    if (!current) return { success: false, error: "Check-in code not found." };
+    if (!current) return { success: false, error: "ไม่พบรหัส Check-in นี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminCheckinCodeStatus(checkinCodeId, !current.is_active);
     await logAdminMutation({
@@ -103,6 +103,6 @@ export async function toggleCheckinCodeActiveAction(checkinCodeId: number): Prom
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle active status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะรหัส Check-in ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }

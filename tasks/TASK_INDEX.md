@@ -15,6 +15,7 @@
 | `PHASE_07_SURVEY_EXPENSE_SATISFACTION.md` | Implemented / seeded data verification needed | Optional post-certificate survey |
 | `PHASE_08_ADMIN_BACKOFFICE.md` | Implemented / CRUD expansion needed | Admin CMS foundation |
 | `PHASE_08A_DYNAMIC_ADMIN_CRUD.md` | Completed | Admin CRUD for frontend-managed public content |
+| `PHASE_08B_ADMIN_UX_HARDENING.md` | Completed | Admin CMS UX hardening, media workflow clarity, readiness, settings, and QA |
 | `PHASE_09_DASHBOARD.md` | Implemented / seeded metric verification needed | Aggregated dashboard analytics |
 | `PHASE_10_REPORT_EXPORT.md` | Implemented / privacy regression testing needed | Privacy-safe report export |
 | `PHASE_11_LINE_LIFF_OPTIONAL.md` | Implemented foundation | Optional LINE passport linking |
@@ -24,10 +25,10 @@
 
 ## Immediate Priority
 
-Proceed to `PHASE_13_DEPLOYMENT.md` for production deployment.
+Proceed to `PHASE_08B_ADMIN_UX_HARDENING.md` before production deployment.
 
 Reason:
 
-- Core features (public pages, admin CRUD, storage, dashboard) are now implemented.
-- Testing and hardening ensure production readiness.
-- Deployment preparation is the final step before real-user launch.
+- Core admin CRUD exists, but real admin usability still needs a careful hardening pass.
+- Content, media, QR, settings, and publish readiness must be understandable before handing the system to non-developer admins.
+- Deployment should wait until admin workflows can be completed and tested end to end.

@@ -5,6 +5,7 @@ import type { AdminRouteFilters, AdminRouteMutationInput, AdminRouteStopMutation
 
 export type AdminRouteRow = {
   route_id: number;
+  slug: string;
   name_th: string;
   name_en: string | null;
   description_th: string | null;
@@ -39,6 +40,7 @@ export type PaginatedResult<T> = {
 function mapRoute(row: any, stopCounts = new Map<number, number>()): AdminRouteRow {
   return {
     route_id: Number(row.route_id),
+    slug: row.slug,
     name_th: row.name_th,
     name_en: row.name_en,
     description_th: row.description_th,
@@ -55,6 +57,7 @@ function mapRoute(row: any, stopCounts = new Map<number, number>()): AdminRouteR
 function toPayload(input: AdminRouteMutationInput) {
   return {
     name_th: input.nameTh,
+    slug: input.slug,
     name_en: input.nameEn,
     description_th: input.descriptionTh,
     description_en: input.descriptionEn,
@@ -62,6 +65,19 @@ function toPayload(input: AdminRouteMutationInput) {
     is_published: input.isPublished,
     is_active: input.isActive
   };
+}
+
+export async function findRouteBySlug(slug: string, excludeRouteId?: number) {
+  const supabase = createSupabaseServiceRoleClient();
+  let query = supabase.from("suggested_routes").select("route_id").eq("slug", slug).limit(1);
+  if (excludeRouteId) query = query.neq("route_id", excludeRouteId);
+
+  const { data, error } = await query.maybeSingle();
+  if (error) {
+    throw new Error("ADMIN_ROUTE_READ_FAILED");
+  }
+
+  return data ? Number(data.route_id) : null;
 }
 
 function countByRoute(rows: { route_id: number }[]) {
@@ -83,7 +99,7 @@ export async function listAdminRoutes(filters: AdminRouteFilters): Promise<Pagin
     .range(from, to);
 
   if (filters.search) {
-    query = query.or(`name_th.ilike.%${filters.search}%,name_en.ilike.%${filters.search}%`);
+    query = query.or(`name_th.ilike.%${filters.search}%,name_en.ilike.%${filters.search}%,slug.ilike.%${filters.search}%`);
   }
   if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
   if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);

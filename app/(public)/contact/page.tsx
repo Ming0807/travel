@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { 
   EnvelopeSimple, 
   Phone, 
@@ -71,24 +70,25 @@ export default function ContactPage() {
             {/* Background Map Graphic (Optional - simulated with light shape) */}
             <div className="absolute top-0 right-10 w-[400px] h-[350px] bg-[#F2EFE8] rounded-3xl -z-10 opacity-70" style={{ clipPath: 'polygon(10% 0, 100% 10%, 90% 100%, 0 90%)' }}></div>
             
-            <div className="absolute top-4 right-32 w-64 h-72 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-10">
-              <Image 
-                src="https://images.unsplash.com/photo-1549488344-c184c7f1a307?auto=format&fit=crop&q=80&w=600" 
-                alt="Yala mountain view" 
-                fill 
-                className="object-cover" 
-                unoptimized
-              />
+            <div className="absolute top-4 right-32 w-64 h-72 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-10 bg-white">
+              <div className="flex h-full flex-col justify-between bg-[linear-gradient(135deg,#F8EDE7_0%,#F7F3EA_55%,#E9F0EC_100%)] p-6">
+                <EnvelopeSimple size={40} weight="fill" className="text-coral" />
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Contact desk</p>
+                  <div className="mt-5 space-y-3">
+                    <span className="block h-3 w-32 rounded-full bg-white/80" />
+                    <span className="block h-3 w-24 rounded-full bg-white/60" />
+                    <span className="block h-3 w-36 rounded-full bg-white/70" />
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <div className="absolute bottom-4 right-4 w-56 h-64 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-20">
-              <Image 
-                src="https://images.unsplash.com/photo-1583531061962-d3a9582d2fb4?auto=format&fit=crop&q=80&w=500" 
-                alt="Pattani culture" 
-                fill 
-                className="object-cover" 
-                unoptimized
-              />
+            <div className="absolute bottom-4 right-4 w-56 h-64 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-20 bg-[#EAF2F0] p-5">
+              <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-teal/20 bg-white/55 text-center">
+                <PaperPlaneRight size={42} weight="light" className="text-teal" />
+                <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Route support</p>
+              </div>
             </div>
             
             {/* Stamp Badge */}
@@ -117,7 +117,7 @@ export default function ContactPage() {
                 <label className="block text-xs font-bold text-ink mb-2">ชื่อ-นามสกุล</label>
                 <input 
                   type="text" 
-                  placeholder="e.g. สมชาย รักสงบ"
+                  placeholder="เช่น สมชาย รักสงบ"
                   className="w-full bg-transparent border-b border-ink/20 py-3 text-ink focus:border-teal outline-none transition-colors placeholder:text-muted/50"
                 />
               </div>
@@ -126,7 +126,7 @@ export default function ContactPage() {
                 <label className="block text-xs font-bold text-ink mb-2">อีเมล</label>
                 <input 
                   type="email" 
-                  placeholder="e.g. somchai@example.com"
+                  placeholder="เช่น somchai@example.com"
                   className="w-full bg-transparent border-b border-ink/20 py-3 text-ink focus:border-teal outline-none transition-colors placeholder:text-muted/50"
                 />
               </div>
@@ -146,7 +146,7 @@ export default function ContactPage() {
                 <label className="block text-xs font-bold text-ink mb-2">หัวเรื่อง</label>
                 <input 
                   type="text" 
-                  placeholder="e.g. สอบถามเส้นทาง, แจ้งปัญหาการสแกน QR"
+                  placeholder="เช่น สอบถามเส้นทาง หรือแจ้งปัญหาการสแกน QR"
                   className="w-full bg-transparent border-b border-ink/20 py-3 text-ink focus:border-teal outline-none transition-colors placeholder:text-muted/50"
                 />
               </div>
@@ -254,14 +254,10 @@ export default function ContactPage() {
                 </button>
               </div>
               <div className="h-64 bg-[#EBECE8] relative w-full border-t border-ink/5">
-                {/* Simulated Map Background */}
-                <Image 
-                  src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800" 
-                  alt="Map Placeholder" 
-                  fill 
-                  className="object-cover opacity-60 grayscale" 
-                  unoptimized
-                />
+                <div className="absolute inset-0 bg-[#E8EEE9]" />
+                <div className="absolute inset-0 opacity-70 [background-image:linear-gradient(90deg,rgba(23,63,55,.12)_1px,transparent_1px),linear-gradient(rgba(23,63,55,.12)_1px,transparent_1px)] [background-size:36px_36px]" />
+                <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-teal/20" />
+                <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-teal/20" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-white px-4 py-2 rounded-xl shadow-lg border border-ink/5 flex items-center gap-2">
                     <MapPin size={20} weight="fill" className="text-coral" />
@@ -333,13 +329,8 @@ export default function ContactPage() {
         {/* NEWSLETTER (Stay Inspired) */}
         <section className="mb-20">
           <div className="relative rounded-[2rem] overflow-hidden bg-ink py-16 px-8 md:px-16 flex flex-col justify-center shadow-2xl">
-            <Image 
-              src="https://images.unsplash.com/photo-1549488344-c184c7f1a307?auto=format&fit=crop&q=80&w=1200" 
-              alt="Background" 
-              fill 
-              className="object-cover opacity-30" 
-              unoptimized
-            />
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#173F37_0%,#264D48_52%,#E18868_100%)] opacity-95" />
+            <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(255,255,255,.28)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.28)_1px,transparent_1px)] [background-size:44px_44px]" />
             <div className="relative z-10 max-w-md">
               <h2 className="text-3xl font-black text-white mb-3">รับแรงบันดาลใจใหม่ๆ</h2>
               <p className="text-white/80 text-sm mb-6">
@@ -350,7 +341,7 @@ export default function ContactPage() {
                 <input 
                   type="email" 
                   placeholder="กรอกอีเมลของคุณ"
-                  className="flex-1 bg-white rounded-full px-5 py-3 text-sm text-ink outline-none"
+                  className="flex-1 bg-white rounded-full px-5 py-3 text-sm text-ink outline-none placeholder:text-muted/70"
                 />
                 <button className="bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm">
                   ติดตามข่าวสาร <PaperPlaneRight weight="fill" />

@@ -1,4 +1,7 @@
-import { Star } from "@phosphor-icons/react/dist/ssr";
+"use client";
+
+import { useState } from "react";
+import { Star, X } from "@phosphor-icons/react";
 import type { ReviewCard, ReviewStats } from "@/types/tourism";
 
 type AttractionReviewsProps = {
@@ -10,7 +13,18 @@ type AttractionReviewsProps = {
 };
 
 export function AttractionReviews({ rating, reviewsCount, stats, reviews, children }: AttractionReviewsProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const hasRealData = stats && stats.totalReviews > 0;
+
+  // Sort reviews: 5-stars first, then by date descending
+  const sortedReviews = reviews ? [...reviews].sort((a, b) => {
+    if (b.rating !== a.rating) {
+      return b.rating - a.rating; // Highest rating first
+    }
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // Newest first
+  }) : [];
+
+  const displayReviews = sortedReviews.slice(0, 3); // Show top 3 initially
 
   return (
     <div id="reviews" className="scroll-mt-24 pt-8">
@@ -54,48 +68,88 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, childr
       </div>
 
       {/* Real Reviews */}
-      {hasRealData && reviews && reviews.length > 0 && (
+      {hasRealData && displayReviews && displayReviews.length > 0 && (
         <div className="mt-8 space-y-4">
-          {reviews.map((review) => (
-            <div
-              key={review.reviewId}
-              className="rounded-3xl border border-ink/5 bg-white p-6 shadow-sm"
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-ink">{review.touristName}</p>
-                  <p className="text-xs font-semibold text-muted">
-                    {new Date(review.createdAt).toLocaleDateString("th-TH", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-                <div className="flex text-amber-400">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={16}
-                      weight={star <= review.rating ? "fill" : "regular"}
-                      className={star <= review.rating ? "text-amber-400" : "text-slate-200"}
-                    />
-                  ))}
-                </div>
-              </div>
-              {review.title && (
-                <h3 className="mb-1 text-sm font-bold text-ink">{review.title}</h3>
-              )}
-              {review.comment && (
-                <p className="text-sm leading-relaxed text-muted">&ldquo;{review.comment}&rdquo;</p>
-              )}
-            </div>
+          {displayReviews.map((review) => (
+            <ReviewItem key={review.reviewId} review={review} />
           ))}
+
+          {sortedReviews.length > 3 && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="mt-4 flex w-full items-center justify-center rounded-2xl border border-ink/10 bg-white py-3 text-sm font-bold text-ink transition-colors hover:bg-slate-50"
+            >
+              ดูรีวิวทั้งหมด ({sortedReviews.length})
+            </button>
+          )}
         </div>
       )}
 
       {/* Review Submission Form */}
       {children}
+
+      {/* View All Reviews Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm sm:p-6">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-3xl bg-white shadow-2xl flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-ink/5 p-6">
+              <div>
+                <h3 className="text-xl font-bold text-ink">รีวิวทั้งหมด</h3>
+                <p className="text-sm text-muted">จากผู้เยี่ยมชม {sortedReviews.length} คน</p>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-muted hover:bg-slate-200 transition-colors"
+              >
+                <X size={20} weight="bold" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {sortedReviews.map((review) => (
+                <ReviewItem key={review.reviewId} review={review} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReviewItem({ review }: { review: ReviewCard }) {
+  return (
+    <div className="rounded-3xl border border-ink/5 bg-white p-6 shadow-sm">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-bold text-ink">{review.touristName}</p>
+          <p className="text-xs font-semibold text-muted">
+            {new Date(review.createdAt).toLocaleDateString("th-TH", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+        <div className="flex text-amber-400">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              size={16}
+              weight={star <= review.rating ? "fill" : "regular"}
+              className={star <= review.rating ? "text-amber-400" : "text-slate-200"}
+            />
+          ))}
+        </div>
+      </div>
+      {review.title && (
+        <h3 className="mb-1 text-sm font-bold text-ink">{review.title}</h3>
+      )}
+      {review.comment && (
+        <p className="text-sm leading-relaxed text-muted">&ldquo;{review.comment}&rdquo;</p>
+      )}
     </div>
   );
 }

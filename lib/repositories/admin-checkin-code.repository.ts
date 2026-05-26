@@ -17,6 +17,8 @@ export type AdminCheckinCodeRow = {
   created_at: string;
   updated_at: string | null;
   attraction_name_th: string | null;
+  attraction_is_active: boolean | null;
+  attraction_is_published: boolean | null;
   photo_spot_name_th: string | null;
 };
 
@@ -37,6 +39,8 @@ function mapCheckinCode(row: any): AdminCheckinCodeRow {
     created_at: row.created_at,
     updated_at: row.updated_at,
     attraction_name_th: attraction?.name_th ?? null,
+    attraction_is_active: attraction?.is_active ?? null,
+    attraction_is_published: attraction?.is_published ?? null,
     photo_spot_name_th: photoSpot?.spot_name_th ?? null,
   };
 }
@@ -60,7 +64,7 @@ export async function listAdminCheckinCodes(filters: AdminCheckinCodeFilters): P
 
   let query = supabase
     .from("checkin_codes")
-    .select("*, attractions (name_th), photo_spots (spot_name_th)", { count: "exact" })
+    .select("*, attractions (name_th, is_active, is_published), photo_spots (spot_name_th)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(from, to);
 
@@ -86,7 +90,7 @@ export async function getAdminCheckinCodeById(checkinCodeId: number): Promise<Ad
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("checkin_codes")
-    .select("*, attractions (name_th), photo_spots (spot_name_th)")
+    .select("*, attractions (name_th, is_active, is_published), photo_spots (spot_name_th)")
     .eq("checkin_code_id", checkinCodeId)
     .maybeSingle();
 

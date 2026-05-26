@@ -1,26 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { travelStories } from "../homepage-data";
 import type { PublicStoryCard } from "@/lib/repositories/public-content.repository";
-
-function fallbackStories(): PublicStoryCard[] {
-  return travelStories.map((story) => ({
-    id: story.slug,
-    title: story.title,
-    excerpt: "",
-    province: story.province,
-    date: "",
-    imageUrl: story.imageUrl,
-    category: story.category
-  }));
-}
 
 function storyImageAlt(title: string) {
   return `${title} story image`;
 }
 
 export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
-  const storyCards = stories && stories.length > 0 ? stories : fallbackStories();
+  const storyCards = stories ?? [];
   const featuredStory = storyCards[0];
   const sideStories = storyCards.slice(1, 4);
 
@@ -40,16 +27,22 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
       </div>
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-        {featuredStory && (
+        {featuredStory ? (
           <Link href={`/stories/${featuredStory.id}`} className="group block">
             <div className="relative mb-6 aspect-[4/3] w-full overflow-hidden rounded-[2rem] shadow-card bg-cream">
-              <Image
-                src={featuredStory.imageUrl}
-                alt={storyImageAlt(featuredStory.title)}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                unoptimized
-              />
+              {featuredStory.imageUrl ? (
+                <Image
+                  src={featuredStory.imageUrl}
+                  alt={storyImageAlt(featuredStory.title)}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm font-semibold text-muted">
+                  Image not added
+                </div>
+              )}
               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold text-coral shadow-sm">
                 เรื่องเด่น (Featured)
               </div>
@@ -64,19 +57,29 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
             </p>
             <p className="mt-5 text-sm font-bold text-ink/40">{featuredStory.date || "เผยแพร่ล่าสุด"} · ใช้เวลาอ่าน 4 นาที</p>
           </Link>
+        ) : (
+          <div className="rounded-[2rem] border border-dashed border-ink/10 bg-cream p-8 text-center text-sm font-semibold text-muted">
+            Published stories will appear here after content is added in the database.
+          </div>
         )}
 
         <div className="flex flex-col gap-8">
           {sideStories.map((story, index) => (
             <Link href={`/stories/${story.id}`} key={story.id} className="group flex flex-col sm:flex-row items-center sm:items-start gap-6 border-b border-ink/5 pb-8 last:border-0 last:pb-0">
               <div className="relative h-48 sm:h-36 w-full sm:w-36 shrink-0 overflow-hidden rounded-3xl shadow-sm bg-cream">
-                <Image
-                  src={story.imageUrl}
-                  alt={storyImageAlt(story.title)}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  unoptimized
-                />
+                {story.imageUrl ? (
+                  <Image
+                    src={story.imageUrl}
+                    alt={storyImageAlt(story.title)}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs font-semibold text-muted">
+                    No image
+                  </div>
+                )}
               </div>
               <div className="flex-1 mt-2 sm:mt-0">
                 <p className="mb-2 text-[10px] font-black text-coral uppercase tracking-widest">{story.category}</p>

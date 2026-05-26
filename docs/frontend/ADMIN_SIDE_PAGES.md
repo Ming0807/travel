@@ -23,6 +23,7 @@ Phase 08 does not claim that full dashboard analytics, report export jobs, LINE 
 | Route | Purpose | Phase 08 Scope |
 |---|---|---|
 | `/admin` | Admin overview and navigation entry | Protected shell and operational status |
+| `/admin/content` | Admin content command center | Workflow guidance for homepage content, attraction content, media, stories, routes, photo spots, and QR dependencies |
 | `/admin/dashboard` | Privacy-safe dashboard entry | Placeholder/summary route; full analytics is Phase 09 |
 | `/admin/attractions` | Attraction CMS list | Search, filters, pagination, status, safe actions |
 | `/admin/attractions/new` | Create attraction | Server-validated create form |
@@ -77,6 +78,29 @@ Core fields include:
 - Operational active status.
 
 The CMS should protect data quality because dashboard metrics will depend on attraction, province, district, and category relationships.
+
+## Content Hub Page
+
+Route:
+
+```text
+/admin/content
+```
+
+Purpose:
+
+The Content Hub is a workflow-first command center for admins who need to understand where public content is edited. It should explain how homepage popular destinations, attraction detail pages, media, stories, routes, photo spots, and QR landing pages connect.
+
+The page should not duplicate CRUD functionality. It should guide admins to the correct module and reduce confusion about where to update public-facing content.
+
+Required guidance:
+
+- Change popular destination image through the attraction/media workflow.
+- Edit attraction detail text through the attraction edit page.
+- Manage story content through the story module.
+- Manage route content through the route module.
+- Manage QR landing context through photo spots and check-in codes.
+- Treat attraction records as the source of truth for public destination content.
 
 ## Photo Spot Pages
 

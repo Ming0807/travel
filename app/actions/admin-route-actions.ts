@@ -10,6 +10,7 @@ import {
   updateAdminRouteStatus,
   getAdminRouteById,
   updateRouteStopsBatch,
+  findRouteBySlug,
 } from "@/lib/repositories/admin-route.repository";
 
 type ActionResult = {
@@ -25,7 +26,12 @@ export async function createRouteAction(formData: FormData): Promise<ActionResul
     const guard = await requirePermission("route.create");
     const parsed = adminRouteMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลเส้นทางอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
+    }
+
+    const existingSlug = await findRouteBySlug(parsed.data.slug);
+    if (existingSlug !== null) {
+      return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const created = await createAdminRoute(parsed.data);
@@ -38,10 +44,10 @@ export async function createRouteAction(formData: FormData): Promise<ActionResul
     });
 
     revalidatePath("/admin/routes");
-    return { success: true, data: { id: created.route_id } };
+    return { success: true, data: { id: created.route_id, slug: created.slug } };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to create route." };
+    return { success: false, error: "ยังสร้างเส้นทางไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -50,11 +56,16 @@ export async function updateRouteAction(routeId: number, formData: FormData): Pr
     const guard = await requirePermission("route.update");
     const parsed = adminRouteMutationSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจข้อมูลเส้นทางอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
+    }
+
+    const existingSlug = await findRouteBySlug(parsed.data.slug, routeId);
+    if (existingSlug !== null) {
+      return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
     const old = await getAdminRouteById(routeId);
-    if (!old) return { success: false, error: "Route not found." };
+    if (!old) return { success: false, error: "ไม่พบเส้นทางนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminRoute(routeId, parsed.data);
     await logAdminMutation({
@@ -70,14 +81,14 @@ export async function updateRouteAction(routeId: number, formData: FormData): Pr
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to update route." };
+    return { success: false, error: "ยังบันทึกการแก้ไขเส้นทางไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
 export async function toggleRoutePublishAction(routeId: number): Promise<ActionResult> {
   try {
     const current = await getAdminRouteById(routeId);
-    if (!current) return { success: false, error: "Route not found." };
+    if (!current) return { success: false, error: "ไม่พบเส้นทางนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const guard = await requirePermission(current.is_published ? "route.unpublish" : "route.publish");
 
@@ -95,14 +106,14 @@ export async function toggleRoutePublishAction(routeId: number): Promise<ActionR
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle publish status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะเผยแพร่ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
 export async function toggleRouteActiveAction(routeId: number): Promise<ActionResult> {
   try {
     const current = await getAdminRouteById(routeId);
-    if (!current) return { success: false, error: "Route not found." };
+    if (!current) return { success: false, error: "ไม่พบเส้นทางนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const guard = await requirePermission(current.is_active ? "route.deactivate" : "route.activate");
 
@@ -120,7 +131,7 @@ export async function toggleRouteActiveAction(routeId: number): Promise<ActionRe
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to toggle active status." };
+    return { success: false, error: "ยังเปลี่ยนสถานะใช้งานไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -128,13 +139,13 @@ export async function updateRouteStopsAction(routeId: number, formData: FormData
   try {
     const guard = await requirePermission("route.update");
     const stopsJson = formData.get("stops") as string;
-    if (!stopsJson) return { success: false, error: "Invalid stops data." };
+    if (!stopsJson) return { success: false, error: "ยังไม่มีข้อมูลจุดแวะ กรุณาเพิ่มจุดแวะอย่างน้อย 1 จุด" };
 
     const parsedStops = JSON.parse(stopsJson);
     const parsed = adminRouteStopsBatchSchema.safeParse({ routeId, stops: parsedStops });
     
     if (!parsed.success) {
-      return { success: false, error: "Validation failed.", fieldErrors: parsed.error.flatten().fieldErrors };
+      return { success: false, error: "กรุณาตรวจจุดแวะของเส้นทางอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
     await updateRouteStopsBatch(routeId, parsed.data.stops);
@@ -152,6 +163,6 @@ export async function updateRouteStopsAction(routeId: number, formData: FormData
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to update route stops." };
+    return { success: false, error: "ยังบันทึกจุดแวะของเส้นทางไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }

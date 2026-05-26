@@ -1,9 +1,12 @@
 import { Metadata } from "next";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AttractionForm } from "@/components/admin/attractions/AttractionForm";
+import { AttractionVisualEditor } from "@/components/admin/attractions/visual-editor/AttractionVisualEditor";
 import { requirePermission } from "@/lib/auth/guards";
-import { getAdminAttractionById, getAdminProvinces, getAdminAttractionTypes } from "@/lib/repositories/admin-attraction.repository";
+import { getAdminAttractionById, getAdminProvinces, getAdminAttractionTypes, getAdminDistricts, getAdminAllContentList, getAdminAttractionRelatedContent } from "@/lib/repositories/admin-attraction.repository";
+import { listAdminMedia } from "@/lib/repositories/admin-media.repository";
+import { getPublicAttractionDetail } from "@/lib/repositories/public-content.repository";
+import { getReviewStatsByAttraction, listPublicReviewsByAttraction } from "@/lib/repositories/admin-review.repository";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -23,35 +26,40 @@ export default async function EditAdminAttractionPage({
     notFound();
   }
 
-  const [attraction, provinces, types] = await Promise.all([
+  const [attraction, provinces, districts, types, mediaRes] = await Promise.all([
     getAdminAttractionById(attractionId),
     getAdminProvinces(),
+    getAdminDistricts(),
     getAdminAttractionTypes(),
+    listAdminMedia({ page: 1, pageSize: 100, entityType: 'attraction', entityId: attractionId })
   ]);
 
   if (!attraction) {
     notFound();
   }
 
-  return (
-    <AdminShell>
-      <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="Content Management"
-          title={`แก้ไขสถานที่: ${attraction.name_th}`}
-          description="แก้ไขรายละเอียดสถานที่ท่องเที่ยว"
-        />
+  // Fetch contextual public data for the Visual Editor preview
+  const [publicDetail, reviewStats, publicReviews, allContent, relatedContent] = await Promise.all([
+    getPublicAttractionDetail(attraction.slug),
+    getReviewStatsByAttraction(attractionId),
+    listPublicReviewsByAttraction(attractionId),
+    getAdminAllContentList(),
+    getAdminAttractionRelatedContent(attractionId)
+  ]);
 
-        <div className="mt-8 max-w-6xl">
-          <AttractionForm 
-            attraction={attraction}
-            provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}
-            districts={[]} 
-            attractionTypes={types.map(t => ({ id: t.attraction_type_id, label: t.type_name_th }))}
-            submitLabel="บันทึกการแก้ไข"
-          />
-        </div>
-      </div>
-    </AdminShell>
+  // Remove AdminShell here because Visual Editor uses full screen layout
+  return (
+    <AttractionVisualEditor
+      attraction={attraction}
+      media={mediaRes.items}
+      provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}
+      districts={districts.map(d => ({ id: d.district_id, label: d.district_name_th, provinceId: d.province_id }))}
+      attractionTypes={types.map(t => ({ id: t.attraction_type_id, label: t.type_name_th }))}
+      publicDetail={publicDetail}
+      reviewStats={reviewStats}
+      publicReviews={publicReviews}
+      allContent={allContent}
+      relatedContent={relatedContent}
+    />
   );
 }

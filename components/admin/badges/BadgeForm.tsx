@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createBadgeAction, updateBadgeAction } from "@/app/actions/admin-badge-actions";
 import type { BadgeDefinition } from "@/types/tourism";
@@ -43,10 +43,12 @@ export function BadgeForm({ badge, submitLabel = "บันทึกข้อม
     error: undefined,
   });
 
-  if (state?.success && isEditing) {
-    router.push("/admin/badges");
+  useEffect(() => {
+    if (state?.success && isEditing) {
+      router.push("/admin/badges");
     router.refresh();
-  }
+    }
+  }, [state?.success, isEditing, router]);
 
   if (state?.success && !isEditing) {
     const newId = state.data?.id;

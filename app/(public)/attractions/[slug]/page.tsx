@@ -42,13 +42,13 @@ export default async function AttractionDetailPage({ params }: { params: Promise
 
   return (
     <main className="bg-white min-h-screen pb-12">
-      {/* 
-        We don't use PageShell here because the layout is edge-to-edge for the gallery 
+      {/*
+        We don't use PageShell here because the layout is edge-to-edge for the gallery
         on mobile, and has specific max-width constraints matching the design.
       */}
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8 lg:pt-10">
-        
-        <AttractionHeader 
+
+        <AttractionHeader
           name={data.name}
           province={data.province}
           rating={data.rating}
@@ -56,60 +56,66 @@ export default async function AttractionDetailPage({ params }: { params: Promise
           bestTimeToVisit={data.bestTimeToVisit}
         />
 
-        <AttractionGallery 
+        <AttractionGallery
           mainImage={data.mainImage}
           gallery={data.gallery}
         />
 
         {/* Main Content Area - Grid Layout */}
         <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
-          
+
           {/* Left Column (Main Content) */}
           <div className="min-w-0">
             <AttractionTabs />
-            
+
             {/* Sections */}
             <div className="flex flex-col gap-12">
               {/* Overview */}
               <section id="overview" className="scroll-mt-24">
                 <h2 className="mb-4 text-2xl font-bold text-ink">Overview</h2>
                 <p className="text-base leading-relaxed text-muted">
-                  {data.description}
+                  {data.description || "No public overview has been added for this attraction yet."}
                 </p>
               </section>
 
               {/* Things to Do */}
-              <AttractionCardsRow 
-                id="things-to-do"
-                title="Things to Do"
-                items={data.thingsToDo}
-                viewAllText="View all things to do"
-              />
+              {data.thingsToDo.length > 0 && (
+                <AttractionCardsRow
+                  id="things-to-do"
+                  title="Things to Do"
+                  items={data.thingsToDo}
+                  viewAllText="View all things to do"
+                />
+              )}
 
-              {/* Where to Stay */}
-              <AttractionCardsRow 
-                id="where-to-stay"
-                title="Where to Stay"
-                items={data.whereToStay}
-                viewAllText="View all hotels"
-              />
+              {/* Where to Stay - Hidden until module is ready */}
+              {data.whereToStay.length > 0 && (
+                <AttractionCardsRow
+                  id="where-to-stay"
+                  title="Where to Stay"
+                  items={data.whereToStay}
+                  viewAllText="View all hotels"
+                />
+              )}
 
               {/* Food & Drink */}
-              <AttractionCardsRow 
-                id="food"
-                title="Food & Drink"
-                items={data.foodAndDrink}
-                viewAllText="View all restaurants"
-              />
+              {data.foodAndDrink.length > 0 && (
+                <AttractionCardsRow
+                  id="food"
+                  title="Food & Drink"
+                  items={data.foodAndDrink}
+                  viewAllText="View all restaurants"
+                />
+              )}
 
               {/* Tips */}
-              <AttractionTips tips={data.travelTips} />
+              {data.travelTips.length > 0 && <AttractionTips tips={data.travelTips} />}
 
               {/* How to Get There & Map placeholder */}
               <section id="how-to-get-there" className="scroll-mt-24 pt-8">
                 <h2 className="mb-4 text-2xl font-bold text-ink">How to Get There</h2>
-                <p className="mb-6 text-sm leading-relaxed text-muted">
-                  การเดินทางมายังอัยเยอร์เวง สามารถเดินทางด้วยรถยนต์ส่วนตัวจากตัวเมืองเบตง ใช้เวลาประมาณ 45 นาที หรือใช้บริการรถตู้โดยสารจากตัวเมืองยะลามายังเบตง
+                <p className="mb-6 text-sm leading-relaxed text-muted whitespace-pre-wrap">
+                  {data.howToGetThere || "Travel access details have not been added yet."}
                 </p>
                 <div className="aspect-[21/9] w-full overflow-hidden rounded-3xl bg-[#F0EBE1] border border-ink/5 flex items-center justify-center relative">
                   {/* Decorative Map Line */}
@@ -135,14 +141,16 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                   <ReviewSubmissionForm attractionId={attractionId ?? undefined} />
                 </div>
               </AttractionReviews>
-              
+
               {/* Articles (Re-using Cards Row) */}
-              <AttractionCardsRow 
-                id="articles"
-                title="Recommended Articles"
-                items={data.thingsToDo.slice(0, 3)} // Mocking with things to do
-                viewAllText="View all articles"
-              />
+              {data.articles && data.articles.length > 0 && (
+                <AttractionCardsRow
+                  id="articles"
+                  title="Recommended Articles"
+                  items={data.articles}
+                  viewAllText="View all articles"
+                />
+              )}
             </div>
           </div>
 
@@ -150,7 +158,7 @@ export default async function AttractionDetailPage({ params }: { params: Promise
           <aside className="hidden lg:block">
             <div className="sticky top-24">
               <AttractionInfoSidebar info={data.info} />
-              
+
               {/* 360 Vista — แสดงเฉพาะสถานที่ในยะลา */}
               {data.province === "ยะลา" || data.province === "Yala" ? (
                 <div className="mt-6 rounded-2xl border border-ink/5 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
@@ -184,7 +192,7 @@ export default async function AttractionDetailPage({ params }: { params: Promise
         {/* Call to Action */}
         <AttractionCTA name={data.name} />
       </div>
-      
+
       <SiteFooter />
     </main>
   );

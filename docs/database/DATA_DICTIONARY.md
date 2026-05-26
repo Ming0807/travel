@@ -285,18 +285,22 @@ This table should support public attraction pages and dashboard filters.
 
 ---
 
-## 8. Table: attraction_media
+## 8. Table: content_media
 
 ## 8.1 Purpose
 
-Stores attraction image, panorama, 360 media, embed, and external URL metadata.
+Stores image, panorama, 360 media, embed, and external URL metadata for public content entities such as attractions, restaurants, accommodations, stories, and routes.
 
 ## 8.2 Columns
 
 | Column | Type | Required | Description |
 |---|---:|---:|---|
 | media_id | bigint identity | yes | Primary key |
-| attraction_id | bigint | yes | Foreign key to attractions |
+| attraction_id | bigint | no | Foreign key to attractions |
+| restaurant_id | bigint | no | Foreign key to restaurants |
+| accommodation_id | bigint | no | Foreign key to accommodations |
+| story_id | bigint | no | Foreign key to travel stories |
+| route_id | bigint | no | Foreign key to suggested routes |
 | media_type | varchar(50) | yes | image, panorama, video360, embed, external_url |
 | storage_path | text | yes | Provider object reference or public external URL |
 | alt_text_th | varchar(255) | no | Thai alt text |
@@ -314,6 +318,11 @@ Stores attraction image, panorama, 360 media, embed, and external URL metadata.
 ```text
 primary key(media_id)
 foreign key(attraction_id) references attractions(attraction_id)
+foreign key(restaurant_id) references restaurants(restaurant_id)
+foreign key(accommodation_id) references accommodations(accommodation_id)
+foreign key(story_id) references travel_stories(story_id)
+foreign key(route_id) references suggested_routes(route_id)
+check(exactly one entity foreign key is set)
 check(media_type in ('image', 'panorama', 'video360', 'embed', 'external_url'))
 ```
 
@@ -325,7 +334,7 @@ check(media_type in ('image', 'panorama', 'video360', 'embed', 'external_url'))
 
 Future normalized table for advanced 360-degree media workflows.
 
-Current MVP stores 360 media and embed references in `attraction_media.media_type`.
+Current MVP stores 360 media and embed references in `content_media.media_type`.
 
 ## 9.2 Columns
 
@@ -802,6 +811,73 @@ foreign key(attraction_id) references attractions(attraction_id)
 foreign key(visit_id) references visits(visit_id)
 foreign key(stamp_definition_id) references stamp_definitions(stamp_definition_id)
 unique(tourist_id, attraction_id)
+```
+
+---
+
+## 21A. Table: suggested_routes
+
+## 21A.1 Purpose
+
+Stores curated public travel routes. Route records are public content and should reference existing attraction records through `suggested_route_stops` instead of duplicating attraction data.
+
+## 21A.2 Columns
+
+| Column | Type | Required | Description |
+|---|---:|---:|---|
+| route_id | bigint identity | yes | Primary key |
+| slug | varchar(200) | yes | Public URL slug for `/routes/[slug]`, unique |
+| name_th | varchar(255) | yes | Thai route name |
+| name_en | varchar(255) | no | English route name |
+| description_th | text | no | Thai route description |
+| description_en | text | no | English route description |
+| cover_image_path | text | no | Public-safe route cover image path |
+| is_published | boolean | yes | Public visibility |
+| is_active | boolean | yes | Active status |
+| created_at | timestamptz | yes | Record creation time |
+| updated_at | timestamptz | no | Last update time |
+
+## 21A.3 Constraints
+
+```text
+primary key(route_id)
+unique(slug)
+unique(name_en) where name_en is not null
+public read only when is_published = true and is_active = true
+```
+
+## 21A.4 Notes
+
+The `slug` column was added by migration `20260528002000_add_suggested_route_slugs.sql` so admin route previews and public route pages use the same stable URL model.
+
+---
+
+## 21B. Table: suggested_route_stops
+
+## 21B.1 Purpose
+
+Stores the ordered attraction stops inside a curated travel route.
+
+## 21B.2 Columns
+
+| Column | Type | Required | Description |
+|---|---:|---:|---|
+| stop_id | bigint identity | yes | Primary key |
+| route_id | bigint | yes | Foreign key to suggested routes |
+| attraction_id | bigint | yes | Foreign key to attractions |
+| day_number | integer | yes | Route day number |
+| display_order | integer | yes | Stop order within the day |
+| stop_note_th | text | no | Thai stop note |
+| stop_note_en | text | no | English stop note |
+| created_at | timestamptz | yes | Record creation time |
+
+## 21B.3 Constraints
+
+```text
+primary key(stop_id)
+foreign key(route_id) references suggested_routes(route_id)
+foreign key(attraction_id) references attractions(attraction_id)
+unique(route_id, day_number, display_order)
 ```
 
 ---
@@ -1472,7 +1548,7 @@ provinces
 districts
 attraction_types
 attractions
-attraction_media
+content_media
 photo_spots
 checkin_codes
 tourists

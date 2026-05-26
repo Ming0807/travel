@@ -7,9 +7,9 @@ export function HomepageHero({
   subtitle = "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์",
   description = "ตามหาช่วงเวลาสุดพิเศษและสถานที่ที่ซ่อนเร้นเพื่อจุดประกายประสบการณ์ที่ไม่มีวันลืม ในยะลา ปัตตานี และนราธิวาส",
   images = [
-    "https://images.unsplash.com/photo-1549880181-56a44cf4a9a1?auto=format&fit=crop&w=800&q=85",
-    "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=800&q=85",
-    "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=800&q=85"
+    "",
+    "",
+    ""
   ]
 }: {
   title?: string;
@@ -17,6 +17,17 @@ export function HomepageHero({
   description?: string;
   images?: string[];
 }) {
+  const getImageUrl = (path: string | undefined) => {
+    const value = path?.trim();
+    if (!value) return "";
+    if (value.startsWith("http")) return value;
+    return `/api/media/image?path=${encodeURIComponent(value)}`;
+  };
+
+  const img0 = getImageUrl(images?.[0]);
+  const img1 = getImageUrl(images?.[1]);
+  const img2 = getImageUrl(images?.[2]);
+
   return (
     <section className="relative overflow-hidden bg-[#FAF8F5] pt-16 pb-24 sm:pt-24 sm:pb-32 lg:pb-40 text-ink">
       {/* Background Decorative Elements */}
@@ -60,9 +71,9 @@ export function HomepageHero({
             
             <div className="mt-12 flex items-center gap-4 text-sm font-bold text-muted">
               <div className="flex -space-x-3">
-                <Image src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" width={40} height={40} alt="User" className="rounded-full border-2 border-[#FAF8F5] object-cover" unoptimized />
-                <Image src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=100&auto=format&fit=crop" width={40} height={40} alt="User" className="rounded-full border-2 border-[#FAF8F5] object-cover" unoptimized />
-                <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop" width={40} height={40} alt="User" className="rounded-full border-2 border-[#FAF8F5] object-cover" unoptimized />
+                <div className="w-10 h-10 rounded-full border-2 border-[#FAF8F5] bg-leaf text-white flex items-center justify-center text-xs font-black">SB</div>
+                <div className="w-10 h-10 rounded-full border-2 border-[#FAF8F5] bg-teal text-white flex items-center justify-center text-xs font-black">QR</div>
+                <div className="w-10 h-10 rounded-full border-2 border-[#FAF8F5] bg-gold text-ink flex items-center justify-center text-xs font-black">AI</div>
                 <div className="w-10 h-10 rounded-full border-2 border-[#FAF8F5] bg-coral text-white flex items-center justify-center text-xs font-black">+5k</div>
               </div>
               <p>นักเดินทางที่ร่วมค้นพบสิ่งใหม่ๆ กับเรา</p>
@@ -72,14 +83,21 @@ export function HomepageHero({
           {/* Right: Premium Image Collage (Col 7-12) */}
           <div className="lg:col-span-6 relative h-[500px] md:h-[600px] w-full mt-10 lg:mt-0">
             {/* Main Center Image */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[80%] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white z-20">
-              <Image
-                src={images[0] || "https://images.unsplash.com/photo-1549880181-56a44cf4a9a1?auto=format&fit=crop&w=800&q=85"}
-                alt="Highlight 1"
-                fill
-                className="object-cover scale-105"
-                unoptimized
-              />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[80%] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white z-20 bg-cream">
+              {img0 ? (
+                <Image
+                  src={img0}
+                  alt="Highlight 1"
+                  fill
+                  priority
+                  className="object-cover scale-105"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-sand text-center text-xs font-bold uppercase tracking-widest text-muted">
+                  Hero image not added
+                </div>
+              )}
               <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold shadow-sm">
                 📍 จุดเช็กอินยอดฮิต
               </div>
@@ -87,8 +105,8 @@ export function HomepageHero({
             
             {/* Top Right Floating Image */}
             <div className="absolute top-0 right-0 w-[40%] h-[45%] rounded-[2rem] overflow-hidden shadow-xl border-4 border-white z-10 hidden md:block bg-cream">
-              {images[1] && <Image
-                src={images[1]}
+              {img1 && <Image
+                src={img1}
                 alt="Highlight 2"
                 fill
                 className="object-cover"
@@ -98,8 +116,8 @@ export function HomepageHero({
             
             {/* Bottom Left Floating Image */}
             <div className="absolute bottom-0 left-0 w-[45%] h-[40%] rounded-[2rem] overflow-hidden shadow-xl border-4 border-white z-30 hidden md:block bg-cream">
-              {images[2] && <Image
-                src={images[2]}
+              {img2 && <Image
+                src={img2}
                 alt="Highlight 3"
                 fill
                 className="object-cover"

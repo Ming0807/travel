@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
 
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_SIZE_MB = 10;
 
 export async function GET(req: NextRequest) {
   try {
+    await requirePermission("media.read");
     const supabase = await createSupabaseServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // Minimal check, ideally should check admin roles
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
@@ -51,18 +47,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(assets);
   } catch (error: any) {
     console.error("Error fetching media assets:", error);
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const guard = await requirePermission("media.upload");
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -74,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     if (!ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json(
-        { error: `File type ${file.type} is not allowed.` },
+        { error: "ไฟล์นี้ไม่รองรับ กรุณาใช้ JPG, PNG หรือ WebP" },
         { status: 400 }
       );
     }
@@ -90,7 +84,6 @@ export async function POST(req: NextRequest) {
       "image/jpeg": "jpg",
       "image/png": "png",
       "image/webp": "webp",
-      "image/svg+xml": "svg",
     };
     const ext = extensionMap[file.type] || "jpg";
     
@@ -126,7 +119,7 @@ export async function POST(req: NextRequest) {
         mime_type: file.type,
         size_bytes: file.size,
         category: category,
-        uploaded_by: session.user.id
+        uploaded_by: guard.authUserId
       })
       .select()
       .single();
@@ -152,6 +145,10 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error("Media upload error:", error);
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
+    }
+
     return NextResponse.json(
       { error: "Upload failed. Please try again." },
       { status: 500 }

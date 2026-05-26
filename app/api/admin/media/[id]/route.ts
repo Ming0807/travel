@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 
 export const runtime = "nodejs";
 
@@ -10,12 +10,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createSupabaseServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await requirePermission("media.delete");
 
     const adminSupabase = createSupabaseServiceRoleClient();
 
@@ -54,6 +49,10 @@ export async function DELETE(
 
   } catch (error: any) {
     console.error("Media delete error:", error);
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
+    }
+
     return NextResponse.json(
       { error: "Delete failed. Please try again." },
       { status: 500 }

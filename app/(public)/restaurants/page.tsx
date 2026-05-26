@@ -10,6 +10,7 @@ import {
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { RestaurantFilterBar } from "@/components/restaurants/RestaurantFilterBar";
 import { listPublicRestaurants } from "@/lib/repositories/public-content.repository";
+import { SettingsService } from "@/lib/services/settings.service";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +24,26 @@ export default async function RestaurantsPage({
   const foodType = typeof resolvedParams.foodType === 'string' ? resolvedParams.foodType : undefined;
   const province = typeof resolvedParams.province === 'string' ? resolvedParams.province : undefined;
 
-  const restaurants = await listPublicRestaurants({ search, foodType, province });
-
+  const settingsService = new SettingsService();
+  const [restaurants, heroSettings, featureSettings, ctaSettings] = await Promise.all([
+    listPublicRestaurants({ search, foodType, province }),
+    settingsService.getSetting("restaurants_page_hero", {
+      title: "ค้นพบ <span class=\"text-coral\">รสชาติท้องถิ่น</span><br/>ใน 3 จังหวัดชายแดนใต้",
+      description: "จากร้านอาหารพื้นเมืองสูตรโบราณสู่คาเฟ่สุดชิค ค้นพบรสชาติที่แท้จริงของชายแดนใต้ ที่จะทำให้การเดินทางของคุณสมบูรณ์แบบยิ่งขึ้น"
+    }),
+    settingsService.getSetting("restaurants_page_feature", {
+      title: "Taste the Culture",
+      subtitle: "จากข้าวยำปักษ์ใต้ สู่โรตีกรอบ สูตรเด็ดที่สืบทอดกันมาหลายชั่วอายุคน",
+      image: ""
+    }),
+    settingsService.getSetting("restaurants_page_cta", {
+      title: "เป็นเจ้าของร้านอาหาร?",
+      subtitle: "เข้าร่วมแพลตฟอร์มของเราและเชื่อมต่อกับนักท่องเที่ยวที่มาเยือน 3 จังหวัดชายแดนใต้",
+      linkText: "ลงทะเบียนร้านอาหาร",
+      linkUrl: "/contact",
+      image: ""
+    })
+  ]);
 
 
   return (
@@ -45,13 +64,10 @@ export default async function RestaurantsPage({
               <ForkKnife size={14} weight="fill" />
               Local Economy
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight">
-              ค้นพบ <span className="text-coral">รสชาติท้องถิ่น</span><br/>
-              ใน 3 จังหวัดชายแดนใต้
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight" dangerouslySetInnerHTML={{ __html: heroSettings.title }}>
             </h1>
             <p className="text-muted leading-relaxed text-base md:text-lg max-w-md mb-8">
-              จากร้านอาหารพื้นเมืองสูตรโบราณสู่คาเฟ่สุดชิค ค้นพบรสชาติที่แท้จริงของชายแดนใต้
-              ที่จะทำให้การเดินทางของคุณสมบูรณ์แบบยิ่งขึ้น
+              {heroSettings.description}
             </p>
 
             {/* Search */}
@@ -83,20 +99,24 @@ export default async function RestaurantsPage({
           {/* Featured Image */}
           <div className="lg:w-1/2 w-full">
             <div className="relative w-full h-[350px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5">
-              <Image
-                src="https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=700&auto=format&fit=crop"
-                alt="Southern Border cuisine"
-                fill
-                className="object-cover"
-                unoptimized
-              />
+              {featureSettings.image ? (
+                <Image
+                  src={featureSettings.image}
+                  alt={featureSettings.title}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="absolute inset-0 bg-ink" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent"></div>
               <div className="absolute bottom-8 left-8 right-8 text-white">
                 <h2 className="text-3xl font-black mb-2 leading-tight">
-                  Taste the Culture
+                  {featureSettings.title}
                 </h2>
                 <p className="text-sm text-white/90 line-clamp-2 max-w-sm mb-6">
-                  จากข้าวยำปักษ์ใต้ สู่โรตีกรอบ สูตรเด็ดที่สืบทอดกันมาหลายชั่วอายุคน
+                  {featureSettings.subtitle}
                 </p>
               </div>
             </div>
@@ -132,13 +152,19 @@ export default async function RestaurantsPage({
                   className="group block bg-white rounded-[1.5rem] overflow-hidden border border-ink/5 shadow-sm hover:shadow-md transition-all"
                 >
                   <div className="relative h-48 w-full overflow-hidden bg-cream">
-                    <Image
-                      src={restaurant.imageUrl}
-                      alt={restaurant.imageAlt}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      unoptimized
-                    />
+                    {restaurant.imageUrl ? (
+                      <Image
+                        src={restaurant.imageUrl}
+                        alt={restaurant.imageAlt}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-semibold text-muted">
+                        Image not added
+                      </div>
+                    )}
                     <div className="absolute top-4 left-4">
                       <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm text-ink px-3 py-1 text-[10px] font-bold shadow-sm">
                         {restaurant.foodType}
@@ -179,27 +205,31 @@ export default async function RestaurantsPage({
         {/* CTA Section */}
         <section className="mb-20">
           <div className="relative w-full rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
-            <Image
-              src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop"
-              alt="Food background"
-              fill
-              className="object-cover opacity-20"
-              unoptimized
-            />
+            {ctaSettings.image ? (
+              <Image
+                src={ctaSettings.image}
+                alt={ctaSettings.title}
+                fill
+                className="object-cover opacity-20"
+                unoptimized
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(243,112,76,0.2),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(10,107,98,0.28),transparent_42%)]" />
+            )}
             <div className="relative z-10 mb-6 md:mb-0 md:w-1/2">
               <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">
-                เป็นเจ้าของร้านอาหาร?
+                {ctaSettings.title}
               </h2>
               <p className="text-white/80 text-sm">
-                เข้าร่วมแพลตฟอร์มของเราและเชื่อมต่อกับนักท่องเที่ยวที่มาเยือน 3 จังหวัดชายแดนใต้
+                {ctaSettings.subtitle}
               </p>
             </div>
             <div className="relative z-10">
               <Link
-                href="/contact"
-                className="bg-white text-ink px-6 py-3 rounded-full text-sm font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2"
+                href={ctaSettings.linkUrl}
+                className="bg-white text-ink px-6 py-3 rounded-full text-sm font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2 whitespace-nowrap"
               >
-                ลงทะเบียนร้านอาหาร <PaperPlaneRight weight="fill" />
+                {ctaSettings.linkText} <PaperPlaneRight weight="fill" />
               </Link>
             </div>
           </div>

@@ -9,8 +9,21 @@ export const metadata: Metadata = {
   title: "New Check-in Code | Admin",
 };
 
-export default async function NewAdminCheckinCodePage() {
+export default async function NewAdminCheckinCodePage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requirePermission("checkin_code.create");
+  const resolvedSearchParams = await searchParams;
+  const rawAttractionId = Array.isArray(resolvedSearchParams?.attraction_id)
+    ? resolvedSearchParams?.attraction_id[0]
+    : resolvedSearchParams?.attraction_id;
+  const rawPhotoSpotId = Array.isArray(resolvedSearchParams?.photo_spot_id)
+    ? resolvedSearchParams?.photo_spot_id[0]
+    : resolvedSearchParams?.photo_spot_id;
+  const defaultAttractionId = rawAttractionId ? Number(rawAttractionId) : null;
+  const defaultPhotoSpotId = rawPhotoSpotId ? Number(rawPhotoSpotId) : null;
 
   const [attractions, photoSpots] = await Promise.all([
     getAdminAttractionsList(),
@@ -30,6 +43,8 @@ export default async function NewAdminCheckinCodePage() {
           <CheckinCodeForm 
             attractions={attractions}
             photoSpots={photoSpots}
+            defaultAttractionId={Number.isFinite(defaultAttractionId) ? defaultAttractionId : null}
+            defaultPhotoSpotId={Number.isFinite(defaultPhotoSpotId) ? defaultPhotoSpotId : null}
           />
         </div>
       </div>

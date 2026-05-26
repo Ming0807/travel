@@ -3,6 +3,7 @@ import { minimalProfileFormSchema } from "@/lib/validation/tourist-profile";
 import { resolveCheckinCodeSchema } from "@/lib/validation/checkin";
 import { postCertificateSurveySchema } from "@/lib/validation/survey";
 import { passportVisitIdSchema } from "@/lib/validation/passport";
+import { adminMediaMutationSchema } from "@/lib/validation/media";
 import { uuidSchema, localeSchema, checkinCodeSchema, displayNameSchema } from "@/lib/validation/common";
 
 // =========================================
@@ -346,5 +347,73 @@ describe("passport validation", () => {
 
   it("rejects invalid visit ID", () => {
     expect(() => passportVisitIdSchema.parse("not-a-valid-id")).toThrow();
+  });
+});
+
+// =========================================
+// Admin Media Schema
+// =========================================
+describe("admin media validation", () => {
+  it("accepts camelCase form payload", () => {
+    const result = adminMediaMutationSchema.parse({
+      entityId: "10",
+      entityType: "attraction",
+      mediaType: "image",
+      storagePath: "content-media/attraction/2026/05/10/example.webp",
+      altTextTh: "ภาพสถานที่",
+      displayOrder: "",
+      isCover: "on",
+      isActive: "on",
+    });
+
+    expect(result.mediaType).toBe("image");
+    expect(result.storagePath).toContain("content-media");
+    expect(result.displayOrder).toBeUndefined();
+    expect(result.isCover).toBe(true);
+  });
+
+  it("accepts legacy snake_case form payload", () => {
+    const result = adminMediaMutationSchema.parse({
+      entity_id: "10",
+      entity_type: "story",
+      media_type: "external_url",
+      storage_path: "https://example.com/image.webp",
+      is_cover: "false",
+      is_active: "true",
+    });
+
+    expect(result.entityType).toBe("story");
+    expect(result.mediaType).toBe("external_url");
+    expect(result.isCover).toBe(false);
+    expect(result.isActive).toBe(true);
+  });
+
+  it("accepts accommodation as a content media owner", () => {
+    const result = adminMediaMutationSchema.parse({
+      entityId: "12",
+      entityType: "accommodation",
+      mediaType: "image",
+      storagePath: "content-media/accommodation/2026/05/12/example.webp",
+      isCover: "true",
+      isActive: "true",
+    });
+
+    expect(result.entityType).toBe("accommodation");
+    expect(result.entityId).toBe(12);
+  });
+
+  it("rejects missing storage path with a useful field error", () => {
+    const result = adminMediaMutationSchema.safeParse({
+      entityId: "10",
+      entityType: "attraction",
+      mediaType: "image",
+      isCover: "false",
+      isActive: "true",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.storagePath?.[0]).toContain("Upload a file or add a URL");
+    }
   });
 });

@@ -18,7 +18,7 @@ export default async function AdminRestaurantMediaPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requirePermission("attraction.update");
+  await requirePermission("restaurant.update");
 
   const resolvedParams = await params;
   const restaurantId = parseInt(resolvedParams.id, 10);

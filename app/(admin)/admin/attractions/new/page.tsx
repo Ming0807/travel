@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AttractionForm } from "@/components/admin/attractions/AttractionForm";
+import { AttractionQuickCreate } from "@/components/admin/attractions/AttractionQuickCreate";
 import { requirePermission } from "@/lib/auth/guards";
 import { getAdminProvinces, getAdminAttractionTypes } from "@/lib/repositories/admin-attraction.repository";
 
@@ -27,9 +27,8 @@ export default async function NewAdminAttractionPage() {
         />
 
         <div className="mt-8 max-w-6xl">
-          <AttractionForm 
+          <AttractionQuickCreate
             provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}
-            districts={[]} 
             attractionTypes={types.map(t => ({ id: t.attraction_type_id, label: t.type_name_th }))}
           />
         </div>

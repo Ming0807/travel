@@ -1,22 +1,34 @@
-/* eslint-disable react/no-unescaped-entities */
-
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  Export,
-  BookmarkSimple,
-  InstagramLogo,
-  TwitterLogo,
-  PinterestLogo,
-  EnvelopeSimple,
-  Quotes,
-  PaperPlaneRight
-} from "@phosphor-icons/react/dist/ssr";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { ArrowLeft, CalendarBlank, Clock, FileText } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { getPublicStory } from "@/lib/repositories/public-content.repository";
-import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const data = await getPublicStory(id);
+
+  if (!data) {
+    return { title: "Story Not Found" };
+  }
+
+  return {
+    title: `${data.story.title} | Southern Border Tourism`,
+    description: data.story.excerpt,
+  };
+}
+
+function storyParagraphs(content: string | null, excerpt: string) {
+  const source = content?.trim() || excerpt.trim();
+  return source
+    .split(/\n{2,}|\r?\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
 
 export default async function StoryDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,283 +39,135 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
   }
 
   const { story, relatedStories } = data;
+  const paragraphs = storyParagraphs(story.content, story.excerpt);
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
-        
-        {/* MAIN LAYOUT */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 mb-20">
-          
-          {/* LEFT: CONTENT */}
-          <div className="lg:col-span-8">
-            
-            {/* Breadcrumbs */}
-            <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-              <Link href="/" className="hover:text-ink transition-colors">หน้าแรก</Link>
-              <span>/</span>
-              <Link href="/stories" className="hover:text-ink transition-colors">บทความและเรื่องราว</Link>
-              <span>/</span>
-              <span className="text-ink">{story.category}</span>
+    <div className="min-h-screen bg-[#FAF8F5] text-ink">
+      <main className="mx-auto max-w-7xl px-4 pt-12 pb-20 sm:px-6 md:pt-20 lg:px-8">
+        <Link href="/stories" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-muted transition-colors hover:text-coral">
+          <ArrowLeft size={16} weight="bold" />
+          Back to stories
+        </Link>
+
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14">
+          <article className="lg:col-span-8">
+            <div className="mb-6 flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-widest text-muted">
+              <span className="rounded-full bg-coral px-3 py-1 text-white">{story.category || "Story"}</span>
+              {story.province ? <span>{story.province}</span> : null}
+              {story.date ? (
+                <span className="inline-flex items-center gap-1">
+                  <CalendarBlank size={14} />
+                  {story.date}
+                </span>
+              ) : null}
             </div>
 
-            {/* Header info */}
-            <div className="flex items-center gap-4 text-[10px] font-bold text-muted uppercase tracking-wider mb-4">
-              <span className="bg-coral text-white px-2 py-0.5 rounded-sm">{story.category}</span>
-              <span>• อ่าน 5 นาที</span>
-            </div>
-
-            {/* Title & Excerpt */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight">
+            <h1 className="max-w-4xl text-4xl font-black leading-tight text-ink md:text-5xl lg:text-6xl">
               {story.title}
             </h1>
-            <p className="text-muted leading-relaxed text-lg mb-8">
-              {story.excerpt} จากสถานที่ยอดฮิตสู่ดินแดนที่ซ่อนเร้น เราได้รวบรวมข้อมูลที่คุณต้องรู้ก่อนเก็บกระเป๋า
-            </p>
 
-            {/* Author & Share */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 py-6 border-y border-ink/10 mb-8">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-cream overflow-hidden relative border-2 border-white shadow-sm">
-                  <Image src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=100&auto=format&fit=crop" alt="Author" fill className="object-cover" unoptimized />
-                </div>
-                <div>
-                  <p className="font-black text-ink">ฟาติมา สุไลมาน</p>
-                  <p className="text-xs text-muted">{story.date} • อ่าน 5 นาที</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <button className="flex items-center gap-2 text-xs font-bold text-ink border border-ink/10 px-3 py-1.5 rounded-full hover:bg-cream transition-colors">
-                  <Export size={14} /> Share
-                </button>
-                <button className="flex items-center gap-2 text-xs font-bold text-ink border border-ink/10 px-3 py-1.5 rounded-full hover:bg-cream transition-colors">
-                  <BookmarkSimple size={14} /> Save
-                </button>
-                <button className="flex items-center justify-center w-8 h-8 text-ink border border-ink/10 rounded-full hover:bg-cream transition-colors">
-                  <TwitterLogo size={14} weight="fill" />
-                </button>
-                <button className="flex items-center justify-center w-8 h-8 text-ink border border-ink/10 rounded-full hover:bg-cream transition-colors">
-                  <PinterestLogo size={14} weight="fill" />
-                </button>
-                <button className="flex items-center justify-center w-8 h-8 text-ink border border-ink/10 rounded-full hover:bg-cream transition-colors">
-                  <EnvelopeSimple size={14} weight="fill" />
-                </button>
-              </div>
-            </div>
-
-            {/* Main Hero Image */}
-            <div className="relative w-full h-[400px] md:h-[500px] rounded-[2rem] overflow-hidden mb-12 shadow-sm border border-ink/5">
-              <Image 
-                src={story.imageUrl} 
-                alt={story.title} 
-                fill 
-                className="object-cover" 
-                unoptimized
-              />
-            </div>
-
-            {/* Article Body */}
-            <article className="prose prose-lg max-w-none text-ink/80 prose-headings:text-ink prose-headings:font-black prose-a:text-coral">
-              <h2 className="text-3xl font-black text-ink mb-6 mt-12">Why These Destinations Stand Out</h2>
-              <p className="mb-6 leading-relaxed">
-                การเดินทางในแต่ละปีมอบโอกาสใหม่ๆ ให้เราได้สำรวจโลก และ 3 จังหวัดชายแดนใต้ก็เช่นกัน เราได้คัดสรรสถานที่เหล่านี้มาจากกระแสการท่องเที่ยวล่าสุด ความสวยงามของธรรมชาติ และประสบการณ์ที่ไม่มีวันลืม
+            {story.excerpt ? (
+              <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted">
+                {story.excerpt}
               </p>
-              
-              <blockquote className="my-8 bg-[#FAF3EE] p-8 rounded-[2rem] border border-coral/20 relative">
-                <Quotes size={32} weight="fill" className="text-coral/30 absolute top-6 left-6" />
-                <p className="text-xl font-bold italic text-ink text-center relative z-10 mx-8">
-                  โลกนี้เต็มไปด้วยสถานที่ที่จะทำให้คุณพูดไม่ออก – ให้การเดินทางครั้งนี้เป็นปีที่คุณได้เห็นมันด้วยตาตัวเอง
+            ) : null}
+
+            <div className="mt-8 flex items-center gap-3 border-y border-ink/10 py-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-leaf text-sm font-black text-white">
+                ST
+              </div>
+              <div>
+                <p className="text-sm font-black text-ink">Southern Border Tourism Editorial</p>
+                <p className="flex items-center gap-1 text-xs font-semibold text-muted">
+                  <Clock size={14} />
+                  Editorial story
                 </p>
-                <div className="text-center mt-4">
-                  <span className="text-coral text-sm font-bold">— Southern Border Explorer</span>
-                </div>
-              </blockquote>
-
-              <h2 className="text-3xl font-black text-ink mb-8 mt-12">Top Places to Explore</h2>
-              
-              {/* Place 1 */}
-              <div className="mb-12">
-                <h3 className="text-2xl font-black text-ink mb-4">1. {story.province} - จุดเช็คอินสุดประทับใจ</h3>
-                <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
-                  <div className="md:w-1/2">
-                    <p className="leading-relaxed mb-4">
-                      สถานที่แห่งนี้เปรียบเสมือนดินแดนในฝัน พื้นที่อันเป็นเอกลักษณ์นี้นำเสนอส่วนผสมที่ลงตัวของการผจญภัยและประวัติศาสตร์
-                    </p>
-                    <ul className="space-y-2 mb-0">
-                      <li><strong>Must do:</strong> ถ่ายรูปรับใบประกาศดิจิทัลในช่วงเช้า</li>
-                      <li><strong>Don't miss:</strong> พิพิธภัณฑ์กลางแจ้งและการเรียนรู้วัฒนธรรม</li>
-                      <li><strong>Perfect for:</strong> คู่รัก, ช่างภาพ, ผู้แสวงหาการผจญภัย</li>
-                    </ul>
-                  </div>
-                  <div className="md:w-1/2 relative h-48 w-full rounded-[1.5rem] overflow-hidden shadow-sm">
-                    <Image 
-                      src={story.imageUrl} 
-                      alt="Detail view" 
-                      fill 
-                      className="object-cover" 
-                      unoptimized
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Place 2 (Mock) */}
-              <div className="mb-12">
-                <h3 className="text-2xl font-black text-ink mb-4">2. วิถีชุมชนและอาหารพื้นถิ่น</h3>
-                <p className="leading-relaxed mb-6">
-                  นอกเหนือจากสถานที่สวยงามแล้ว สิ่งที่ขาดไม่ได้คือการสัมผัสวิถีชีวิตดั้งเดิมของชาวบ้าน ลองชิมอาหารท้องถิ่นที่หารับประทานยาก และพูดคุยกับผู้คนที่จะทำให้การเดินทางของคุณมีความหมายมากขึ้น
-                </p>
-                <div className="relative h-72 w-full rounded-[1.5rem] overflow-hidden shadow-sm">
-                  <Image 
-                    src="https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&q=80&w=1200" 
-                    alt="Local food" 
-                    fill 
-                    className="object-cover" 
-                    unoptimized
-                  />
-                </div>
-              </div>
-
-              <h2 className="text-3xl font-black text-ink mb-6 mt-12">Final Thoughts</h2>
-              <p className="leading-relaxed mb-8">
-                ไม่ว่าคุณจะเลือกเดินทางไปที่ไหนในพื้นที่ชายแดนใต้ สิ่งสำคัญคือการเปิดใจรับประสบการณ์ใหม่ๆ สนับสนุนเศรษฐกิจท้องถิ่น และเดินทางอย่างมีความรับผิดชอบ
-              </p>
-            </article>
-          </div>
-
-          {/* RIGHT: SIDEBAR */}
-          <div className="lg:col-span-4 space-y-8">
-            
-            {/* Table of Contents */}
-            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
-              <h3 className="font-black text-ink text-lg mb-4">Table of Contents</h3>
-              <ul className="space-y-3 text-sm">
-                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer">
-                  <span className="font-bold">01</span> <span>Why These Destinations Stand Out</span>
-                </li>
-                <li className="flex gap-3 text-ink font-bold cursor-pointer">
-                  <span className="text-coral">02</span> <span>Top Places to Explore</span>
-                </li>
-                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer pl-7">
-                  <span>•</span> <span>{story.province} - จุดเช็คอินสุดประทับใจ</span>
-                </li>
-                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer pl-7">
-                  <span>•</span> <span>วิถีชุมชนและอาหารพื้นถิ่น</span>
-                </li>
-                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer">
-                  <span className="font-bold">03</span> <span>Travel Tips</span>
-                </li>
-                <li className="flex gap-3 text-muted hover:text-coral transition-colors cursor-pointer">
-                  <span className="font-bold">04</span> <span>Final Thoughts</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* About the Author */}
-            <div className="bg-[#F2EFE8] rounded-[2rem] p-6 shadow-sm border border-ink/5">
-              <h3 className="font-black text-ink text-lg mb-4">About the Author</h3>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 rounded-full overflow-hidden relative shrink-0">
-                  <Image src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=100&auto=format&fit=crop" alt="Author" fill className="object-cover" unoptimized />
-                </div>
-                <div>
-                  <p className="font-black text-ink">ฟาติมา สุไลมาน</p>
-                  <p className="text-[10px] font-bold text-muted uppercase tracking-wider">Travel Writer & Analyst</p>
-                </div>
-              </div>
-              <p className="text-xs text-muted leading-relaxed mb-4">
-                นักเดินทางและช่างภาพผู้หลงใหลในการค้นหาสถานที่ใหม่ๆ ในกว่า 20 จังหวัด แบ่งปันเรื่องราวและเคล็ดลับเพื่อเป็นแรงบันดาลใจให้ผู้อื่น
-              </p>
-              <div className="flex items-center justify-between">
-                <Link href="/stories" className="text-xs font-bold text-coral hover:underline">ดูบทความทั้งหมด &rarr;</Link>
-                <div className="flex gap-2">
-                  <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-ink shadow-sm hover:text-coral">
-                    <InstagramLogo size={14} />
-                  </button>
-                  <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-ink shadow-sm hover:text-coral">
-                    <TwitterLogo size={14} weight="fill" />
-                  </button>
-                </div>
               </div>
             </div>
 
-            {/* Popular Tags */}
-            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
-              <h3 className="font-black text-ink text-lg mb-6">Popular Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {["Europe", "Asia", "Adventure", "Solo Travel", "Budget Travel", "Photography", "Beach", "Hiking", "Food", "City Guide"].map(tag => (
-                  <span key={tag} className="px-3 py-1.5 rounded-full text-[11px] font-medium text-ink bg-[#FAF8F5] border border-ink/5 hover:border-ink/20 cursor-pointer transition-colors">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <button className="text-[11px] font-bold text-coral mt-6 hover:underline">
-                ดูแท็กทั้งหมด &rarr;
-              </button>
-            </div>
-
-            {/* Newsletter */}
-            <div className="bg-[#FAF3EE] rounded-[2rem] p-8 shadow-sm border border-coral/10 text-center">
-              <h3 className="font-black text-ink text-xl mb-2">ไม่พลาดทุกเรื่องราว</h3>
-              <p className="text-xs text-muted mb-6 leading-relaxed">
-                รับเรื่องราวแรงบันดาลใจและเคล็ดลับการเดินทางส่งตรงถึงอีเมลคุณ
-              </p>
-              <div className="space-y-3">
-                <input 
-                  type="email" 
-                  placeholder="กรอกอีเมลของคุณ"
-                  className="w-full bg-white rounded-full px-5 py-3 text-sm text-ink outline-none border border-ink/5 focus:border-teal"
+            <div className="relative mt-10 h-[320px] overflow-hidden rounded-[2rem] border border-ink/5 bg-cream shadow-sm md:h-[500px]">
+              {story.imageUrl ? (
+                <Image
+                  src={story.imageUrl}
+                  alt={story.title}
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
-                <button type="button" className="w-full bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm">
-                  Subscribe <PaperPlaneRight weight="fill" />
-                </button>
-              </div>
-              <p className="text-[9px] text-muted mt-3 flex items-center justify-center gap-1">
-                <span>🔒</span> เราไม่ส่งสแปม และยกเลิกได้ตลอดเวลา
-              </p>
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center text-sm font-semibold text-muted">
+                  <FileText size={32} className="text-leaf" />
+                  Image not added
+                </div>
+              )}
             </div>
-          </div>
-        </div>
 
-        {/* MORE STORIES YOU MAY LOVE */}
-        <section className="mb-20 pt-12 border-t border-ink/10">
-          <div className="flex justify-between items-end mb-8">
-            <h2 className="text-3xl font-black text-ink">เรื่องราวอื่นๆ ที่คุณอาจสนใจ</h2>
-            <Link href="/stories" className="text-sm font-bold text-coral hover:underline">ดูบทความทั้งหมด &rarr;</Link>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {relatedStories.map((s) => (
-              <Link href={`/stories/${s.id}`} key={s.id} className="group block">
-                <article className="flex flex-col h-full rounded-[1.5rem] bg-white shadow-sm border border-ink/5 overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
-                  <div className="relative h-48 w-full overflow-hidden bg-cream">
-                    <Image
-                      src={s.imageUrl}
-                      alt={s.title}
-                      fill
-                      unoptimized
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="flex-1 flex flex-col p-6">
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
-                      <span className="text-coral">{s.category}</span>
-                      <span>• อ่าน 5 นาที</span>
-                    </div>
-                    <h3 className="text-lg font-black text-ink mb-2 group-hover:text-coral transition-colors line-clamp-2 leading-snug">
-                      {s.title}
-                    </h3>
-                  </div>
-                </article>
-              </Link>
-            ))}
-          </div>
-        </section>
-        
-      </div>
-      
-      {/* SITE FOOTER */}
+            <div className="prose prose-lg mt-12 max-w-none prose-headings:text-ink prose-p:leading-relaxed prose-p:text-ink/75">
+              {paragraphs.length > 0 ? (
+                paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)
+              ) : (
+                <div className="rounded-2xl border border-dashed border-ink/10 bg-white p-6 text-sm font-semibold text-muted">
+                  Full story content has not been added yet.
+                </div>
+              )}
+            </div>
+          </article>
+
+          <aside className="space-y-6 lg:col-span-4">
+            <div className="rounded-[2rem] border border-ink/5 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-black text-ink">Story Details</h2>
+              <dl className="mt-5 space-y-4 text-sm">
+                <div>
+                  <dt className="text-xs font-bold uppercase tracking-widest text-muted">Category</dt>
+                  <dd className="mt-1 font-semibold text-ink">{story.category || "Story"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-bold uppercase tracking-widest text-muted">Province</dt>
+                  <dd className="mt-1 font-semibold text-ink">{story.province || "Not specified"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-bold uppercase tracking-widest text-muted">Published</dt>
+                  <dd className="mt-1 font-semibold text-ink">{story.date || "Not specified"}</dd>
+                </div>
+              </dl>
+            </div>
+
+            {relatedStories.length > 0 ? (
+              <div className="rounded-[2rem] border border-ink/5 bg-white p-6 shadow-sm">
+                <h2 className="text-lg font-black text-ink">Related Stories</h2>
+                <div className="mt-5 space-y-5">
+                  {relatedStories.map((related) => (
+                    <Link key={related.id} href={`/stories/${related.id}`} className="group flex gap-4">
+                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-cream">
+                        {related.imageUrl ? (
+                          <Image
+                            src={related.imageUrl}
+                            alt={related.title}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-semibold text-muted">
+                            No image
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-coral">{related.category || "Story"}</p>
+                        <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-snug text-ink transition-colors group-hover:text-coral">
+                          {related.title}
+                        </h3>
+                        {related.date ? <p className="mt-1 text-[10px] font-semibold text-muted">{related.date}</p> : null}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </aside>
+        </div>
+      </main>
       <SiteFooter />
     </div>
   );

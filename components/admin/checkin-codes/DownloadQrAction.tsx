@@ -2,85 +2,104 @@
 
 import { DownloadSimple } from "@phosphor-icons/react";
 import { QRCodeCanvas } from "qrcode.react";
-import { useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-export function DownloadQrAction({ 
-  code, 
-  label 
-}: { 
-  code: string; 
-  label: string; 
-}) {
+type DownloadQrActionProps = {
+  code: string;
+  label?: string | null;
+  buttonLabel?: string;
+  showLabel?: boolean;
+  disabled?: boolean;
+};
+
+export function DownloadQrAction({
+  code,
+  label,
+  buttonLabel = "Download QR",
+  showLabel = false,
+  disabled = false,
+}: DownloadQrActionProps) {
   const qrRef = useRef<HTMLDivElement>(null);
+  const [origin, setOrigin] = useState("");
 
-  // The full URL that tourists will scan
-  const url = `${typeof window !== "undefined" ? window.location.origin : ""}/c/${code}`;
-  
-  // Safe filename
-  const filename = `qrcode-${label ? label.replace(/[^a-zA-Z0-9]/g, "-") : code}.png`;
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const safeCode = code.trim();
+  const isReady = !disabled && /^[a-z0-9_-]{3,100}$/.test(safeCode);
+  const url = `${origin}/c/${safeCode || "your-code"}`;
+  const filename = useMemo(() => {
+    const filenameLabel = safeCode || label || "checkin-code";
+    const safeLabel = filenameLabel
+      .replace(/[^a-zA-Z0-9_-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return `qrcode-${safeLabel || "checkin-code"}.png`;
+  }, [label, safeCode]);
 
   const handleDownload = () => {
-    if (!qrRef.current) return;
+    if (!isReady || !qrRef.current) return;
     const canvas = qrRef.current.querySelector("canvas");
     if (!canvas) return;
 
-    // Create a new canvas to add padding and text
     const finalCanvas = document.createElement("canvas");
     const ctx = finalCanvas.getContext("2d");
     if (!ctx) return;
 
     const qrSize = canvas.width;
-    const padding = 40;
-    const textHeight = 60;
-    
-    finalCanvas.width = qrSize + (padding * 2);
-    finalCanvas.height = qrSize + (padding * 2) + textHeight;
+    const padding = 44;
+    const textHeight = label ? 92 : 70;
 
-    // Fill background
+    finalCanvas.width = qrSize + padding * 2;
+    finalCanvas.height = qrSize + padding * 2 + textHeight;
+
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-
-    // Draw QR code
     ctx.drawImage(canvas, padding, padding);
 
-    // Draw Text
     ctx.fillStyle = "#000000";
     ctx.font = "bold 24px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(`Code: ${code}`, finalCanvas.width / 2, finalCanvas.height - 30);
+    ctx.fillText(`Code: ${safeCode}`, finalCanvas.width / 2, finalCanvas.height - (label ? 58 : 30));
+
     if (label) {
       ctx.font = "16px sans-serif";
-      ctx.fillText(label, finalCanvas.width / 2, finalCanvas.height - 10);
+      ctx.fillText(label, finalCanvas.width / 2, finalCanvas.height - 32);
+      ctx.font = "14px sans-serif";
+      ctx.fillStyle = "#334155";
+      ctx.fillText(`/c/${safeCode}`, finalCanvas.width / 2, finalCanvas.height - 10);
     }
 
-    // Trigger download
     const dataUrl = finalCanvas.toDataURL("image/png");
-    const a = document.createElement("a");
-    a.href = dataUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const anchor = document.createElement("a");
+    anchor.href = dataUrl;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
   };
 
   return (
     <>
-      {/* Hidden QR Code canvas for generating image */}
-      <div className="hidden" ref={qrRef}>
-        <QRCodeCanvas 
-          value={url} 
-          size={500} 
-          level="H"
-          marginSize={2}
-        />
+      <div className="hidden" ref={qrRef} aria-hidden="true">
+        <QRCodeCanvas value={url} size={500} level="H" marginSize={2} />
       </div>
 
       <button
+        type="button"
         onClick={handleDownload}
-        title="ดาวน์โหลด QR Code"
-        className="p-2 text-slate-400 hover:text-[#0A6B62] hover:bg-slate-100 rounded-md transition-colors"
+        disabled={!isReady}
+        title={buttonLabel}
+        aria-label={`${buttonLabel} ${safeCode ? `for ${safeCode}` : ""}`.trim()}
+        className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition ${
+          isReady
+            ? "border border-[#0A6B62]/30 bg-white text-[#073F37] hover:bg-[#E6F4EF]"
+            : "cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400"
+        }`}
       >
-        <DownloadSimple size={20} weight="bold" />
+        <DownloadSimple size={18} weight="bold" />
+        {showLabel ? <span>{buttonLabel}</span> : null}
       </button>
     </>
   );

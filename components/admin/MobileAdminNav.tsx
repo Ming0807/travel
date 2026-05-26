@@ -50,49 +50,58 @@ export function MobileAdminNav() {
         </div>
 
         <nav className="p-4 space-y-6">
-          {navGroups.map((group) => {
-            const hasActiveItem = group.items.some(i => pathname === i.href || pathname.startsWith(i.href + "/"));
-            
-            return (
-              <details key={group.group} className="group" open={hasActiveItem}>
-                <summary className="flex cursor-pointer items-center justify-between px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 select-none hover:text-slate-600 transition-colors">
-                  {group.group}
-                  <CaretDown size={12} weight="bold" className="transition-transform group-open:-rotate-180" />
-                </summary>
-                <div className="space-y-1 pb-4">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setIsOpen(false)}
-                      className={`flex items-center justify-between rounded-xl px-3 py-3 text-sm font-semibold transition ${
-                        isActive
-                          ? "bg-[#FFEBE5] text-[#F3704C]"
-                          : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon size={20} weight={isActive ? "fill" : "regular"} />
-                        {item.label}
-                      </div>
-                      {item.badge && (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F3704C] text-[10px] font-bold text-white">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-                </div>
-              </details>
-            );
-          })}
+          {navGroups.map((group) => (
+            <MobileNavGroup key={group.group} group={group} pathname={pathname} closeDrawer={() => setIsOpen(false)} />
+          ))}
         </nav>
       </div>
     </>
+  );
+}
+
+function MobileNavGroup({ group, pathname, closeDrawer }: { group: any; pathname: string; closeDrawer: () => void }) {
+  const hasActiveItem = group.items.some((i: any) => pathname === i.href || pathname.startsWith(i.href + "/"));
+  const [isGroupOpen, setIsGroupOpen] = require("react").useState(hasActiveItem);
+
+  require("react").useEffect(() => {
+    if (hasActiveItem) setIsGroupOpen(true);
+  }, [hasActiveItem]);
+
+  return (
+    <details className="group" open={isGroupOpen} onToggle={(e) => setIsGroupOpen((e.target as HTMLDetailsElement).open)}>
+      <summary className="flex cursor-pointer items-center justify-between px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 select-none hover:text-slate-600 transition-colors">
+        {group.group}
+        <CaretDown size={12} weight="bold" className="transition-transform group-open:-rotate-180" />
+      </summary>
+      <div className="space-y-1 pb-4">
+        {group.items.map((item: any) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={closeDrawer}
+              className={`flex items-center justify-between rounded-xl px-3 py-3 text-sm font-semibold transition ${
+                isActive
+                  ? "bg-[#FFEBE5] text-[#F3704C]"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Icon size={20} weight={isActive ? "fill" : "regular"} />
+                {item.label}
+              </div>
+              {item.badge && (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F3704C] text-[10px] font-bold text-white">
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </details>
   );
 }

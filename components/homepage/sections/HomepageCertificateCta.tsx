@@ -1,17 +1,38 @@
 import Image from "next/image";
 
-export function HomepageCertificateCta() {
+export function HomepageCertificateCta({
+  title = "รับแรงบันดาลใจการเดินทาง",
+  subtitle = "ส่งตรงถึงคุณ",
+  description = "สมัครรับข่าวสารเพื่อค้นพบสถานที่ใหม่ๆ โปรโมชั่นพิเศษ และเรื่องเล่าสุดเอ็กซ์คลูซีฟจากชายแดนใต้",
+  bgImage = ""
+}: {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  bgImage?: string;
+}) {
+  const getImageUrl = (path: string | undefined) => {
+    const value = path?.trim();
+    if (!value) return "";
+    if (value.startsWith("http")) return value;
+    return `/api/media/image?path=${encodeURIComponent(value)}`;
+  };
+
+  const imgSrc = getImageUrl(bgImage);
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="relative overflow-hidden rounded-[3rem] bg-ink shadow-xl w-full h-[450px] flex items-center justify-center text-center px-4">
         {/* Background Image */}
-        <Image
-          className="absolute inset-0 h-full w-full object-cover opacity-50 mix-blend-overlay"
-          src="https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=1600&q=80"
-          alt="Landscape"
-          fill
-          unoptimized
-        />
+        {imgSrc && (
+          <Image
+            className="absolute inset-0 h-full w-full object-cover opacity-50 mix-blend-overlay"
+            src={imgSrc}
+            alt="Landscape"
+            fill
+            unoptimized
+          />
+        )}
         
         {/* Decorative Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-transparent opacity-80"></div>
@@ -22,11 +43,11 @@ export function HomepageCertificateCta() {
           </div>
           
           <h2 className="text-4xl font-black text-white sm:text-5xl leading-[1.1] mb-6">
-            รับแรงบันดาลใจการเดินทาง<br />
-            <span className="font-['Playfair_Display'] italic font-normal text-coral">ส่งตรงถึงคุณ</span>
+            {title}<br />
+            {subtitle && <span className="font-['Playfair_Display'] italic font-normal text-coral">{subtitle}</span>}
           </h2>
           <p className="text-white/80 text-sm md:text-base mb-10 max-w-lg mx-auto leading-relaxed">
-            สมัครรับข่าวสารเพื่อค้นพบสถานที่ใหม่ๆ โปรโมชั่นพิเศษ และเรื่องเล่าสุดเอ็กซ์คลูซีฟจากชายแดนใต้
+            {description}
           </p>
           
           <form className="flex flex-col sm:flex-row items-center justify-center w-full max-w-md mx-auto gap-3 bg-white/10 backdrop-blur-md p-2 rounded-full border border-white/20 shadow-2xl">

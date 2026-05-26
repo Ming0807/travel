@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { StoryForm } from "@/components/admin/stories/StoryForm";
+import { StoryVisualEditor } from "@/components/admin/stories/visual-editor/StoryVisualEditor";
 import { requirePermission } from "@/lib/auth/guards";
 import { getAdminStoryById } from "@/lib/repositories/admin-story.repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -36,18 +36,9 @@ export default async function EditAdminStoryPage({
     .order("province_id");
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="Content Management"
-          title={`แก้ไขบทความ: ${story.title}`}
-          description="แก้ไขเนื้อหาบทความท่องเที่ยว"
-        />
-
-        <div className="mt-8">
-          <StoryForm initialData={story} provinces={provinces ?? []} />
-        </div>
-      </div>
-    </AdminShell>
+    <StoryVisualEditor
+      story={story}
+      provinces={provinces ?? []}
+    />
   );
 }

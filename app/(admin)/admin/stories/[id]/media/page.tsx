@@ -18,7 +18,7 @@ export default async function AdminStoryMediaPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requirePermission("attraction.update");
+  await requirePermission("story.update");
 
   const resolvedParams = await params;
   const storyId = parseInt(resolvedParams.id, 10);

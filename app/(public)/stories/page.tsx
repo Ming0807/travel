@@ -1,277 +1,221 @@
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  MagnifyingGlass, 
-  PaperPlaneRight, 
-  Star,
-  Clock,
-  ArrowRight
-} from "@phosphor-icons/react/dist/ssr";
+import type { Metadata } from "next";
+import { ArrowRight, Clock, FileText, Star } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { listPublicStories } from "@/lib/repositories/public-content.repository";
+import { SettingsService } from "@/lib/services/settings.service";
+
+export const metadata: Metadata = {
+  title: "Stories | Southern Border Tourism",
+  description: "Published travel stories from Yala, Pattani, and Narathiwat.",
+};
 
 export const dynamic = "force-dynamic";
 
 export default async function StoriesPage() {
-  const allStories = await listPublicStories(12);
+  const settingsService = new SettingsService();
+  const [allStories, heroSettings, ctaSettings] = await Promise.all([
+    listPublicStories({ limit: 12 }),
+    settingsService.getSetting("stories_page_hero", {
+      title: "Stories and travel inspiration",
+      description: "Published content from the Southern Border Tourism CMS.",
+    }),
+    settingsService.getSetting("stories_page_cta", {
+      title: "Explore more stories",
+      subtitle: "Read the latest published travel content.",
+      linkText: "View stories",
+      linkUrl: "/stories",
+      image: "",
+    }),
+  ]);
+
   const featuredStory = allStories[0];
   const editorPicks = allStories.slice(1, 4);
-
-  const categories = ["All", "Destinations", "Food & Drink", "Culture", "Nature", "History"];
+  const remainingStories = featuredStory ? allStories.slice(1) : allStories;
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
-        
-        {/* HERO SECTION */}
-        <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <Link href="/" className="hover:text-[#E18868] transition-colors">หน้าแรก</Link>
+    <div className="min-h-screen bg-[#FAF8F5] text-ink">
+      <main className="mx-auto max-w-7xl px-4 pt-12 pb-20 sm:px-6 md:pt-20 lg:px-8">
+        <div className="mb-6 flex gap-2 text-xs font-bold uppercase tracking-widest text-muted">
+          <Link href="/" className="transition-colors hover:text-coral">Home</Link>
           <span>/</span>
-          <span className="text-ink">บทความและเรื่องราว</span>
+          <span className="text-ink">Stories</span>
         </div>
-        
-        <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-20">
-          <div className="lg:w-5/12 pt-4">
-            <h1 className="text-5xl md:text-6xl font-black text-ink mb-6 leading-tight">
-              เรื่องราวและแรงบันดาลใจ <br className="hidden lg:block"/>สำหรับทุกการเดินทาง
-            </h1>
-            <p className="text-muted leading-relaxed text-lg max-w-md mb-8">
-              เรื่องราวจริง เคล็ดลับที่มีประโยชน์ และแรงบันดาลใจจากนักเดินทางใน 3 จังหวัดชายแดนใต้ ค้นหาไอเดียสำหรับการผจญภัยครั้งต่อไปของคุณ
+
+        <section className="mb-16 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-5">
+            <h1 className="text-5xl font-black leading-tight text-ink md:text-6xl" dangerouslySetInnerHTML={{ __html: heroSettings.title }} />
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted">
+              {heroSettings.description}
             </p>
-            
-            {/* Dashed line decorative SVG */}
-            <div className="mt-8 opacity-40">
-              <svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 59C20.5 59 40 45.5 54.5 35C74.3989 20.5901 95 10 120 10C148 10 170 25 190 40" stroke="#E18868" strokeWidth="2" strokeDasharray="6 6"/>
-                <path d="M185 30L195 45L175 48" stroke="#E18868" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
           </div>
-          
-          {/* Featured Article */}
-          <div className="lg:w-7/12 w-full">
-            <Link href={`/stories/${featuredStory.id}`} className="group block relative rounded-[2rem] bg-white shadow-sm border border-ink/5 overflow-hidden transition-all hover:shadow-md">
-              <div className="flex flex-col md:flex-row">
-                <div className="relative h-64 md:h-80 md:w-1/2 overflow-hidden bg-cream">
-                  <Image 
-                    src={featuredStory.imageUrl} 
-                    alt={featuredStory.title} 
-                    fill 
-                    className="object-cover transition-transform duration-700 group-hover:scale-105" 
-                    unoptimized
-                  />
-                  <div className="absolute top-4 right-4">
-                    <span className="inline-flex items-center rounded-full bg-coral text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
+
+          <div className="lg:col-span-7">
+            {featuredStory ? (
+              <Link href={`/stories/${featuredStory.id}`} className="group block overflow-hidden rounded-[2rem] border border-ink/5 bg-white shadow-sm transition hover:shadow-md">
+                <div className="grid grid-cols-1 md:grid-cols-2">
+                  <div className="relative h-72 overflow-hidden bg-cream md:h-96">
+                    {featuredStory.imageUrl ? (
+                      <Image
+                        src={featuredStory.imageUrl}
+                        alt={featuredStory.title}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center text-sm font-semibold text-muted">
+                        <FileText size={30} className="text-leaf" />
+                        Image not added
+                      </div>
+                    )}
+                    <span className="absolute left-4 top-4 rounded-full bg-coral px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
                       Featured
                     </span>
                   </div>
-                </div>
-                <div className="p-8 md:w-1/2 flex flex-col justify-center">
-                  <div className="flex items-center gap-4 text-[10px] font-bold text-muted uppercase tracking-wider mb-4">
-                    <span className="text-coral">{featuredStory.category}</span>
-                    <span className="flex items-center gap-1"><Clock size={12}/> อ่าน 5 นาที</span>
-                  </div>
-                  <h2 className="text-2xl font-black text-ink mb-4 group-hover:text-coral transition-colors leading-snug">
-                    {featuredStory.title}
-                  </h2>
-                  <p className="text-sm text-muted line-clamp-3 mb-6">
-                    {featuredStory.excerpt}
-                  </p>
-                  <div className="flex items-center gap-3 mt-auto">
-                    <div className="w-8 h-8 rounded-full bg-cream overflow-hidden relative">
-                      <Image src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=100&auto=format&fit=crop" alt="Author" fill className="object-cover" unoptimized />
+                  <div className="flex flex-col justify-center p-7 md:p-8">
+                    <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-coral">{featuredStory.category || "Story"}</p>
+                    <h2 className="text-2xl font-black leading-snug text-ink transition-colors group-hover:text-coral">
+                      {featuredStory.title}
+                    </h2>
+                    {featuredStory.excerpt ? (
+                      <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted">
+                        {featuredStory.excerpt}
+                      </p>
+                    ) : null}
+                    <div className="mt-6 flex items-center justify-between border-t border-ink/5 pt-5">
+                      <span className="flex items-center gap-1 text-xs font-bold text-muted">
+                        <Clock size={14} />
+                        {featuredStory.date || "Published story"}
+                      </span>
+                      <span className="inline-flex items-center gap-2 text-sm font-black text-coral">
+                        Read <ArrowRight size={14} weight="bold" />
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-ink">ฟาติมา สุไลมาน</p>
-                      <p className="text-[10px] text-muted">{featuredStory.date}</p>
-                    </div>
                   </div>
                 </div>
+              </Link>
+            ) : (
+              <div className="rounded-[2rem] border border-dashed border-ink/10 bg-white p-10 text-center text-sm font-semibold text-muted">
+                No published stories have been added yet.
               </div>
-            </Link>
+            )}
           </div>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20">
-          
-          {/* MAIN CONTENT (Left) */}
-          <div className="lg:col-span-8">
-            
-            {/* Filters & Search */}
-            <div className="flex flex-col md:flex-row justify-between gap-4 mb-8 items-center border-b border-ink/5 pb-4">
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat, idx) => (
-                  <button 
-                    key={cat} 
-                    className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${
-                      idx === 0 
-                        ? 'bg-coral text-white' 
-                        : 'bg-white text-ink border border-ink/10 hover:border-ink/30'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-              
-              <div className="relative w-full md:w-64">
-                <input 
-                  type="text" 
-                  placeholder="ค้นหาบทความ..."
-                  className="w-full bg-white border border-ink/10 rounded-full pl-4 pr-10 py-2.5 text-xs text-ink focus:border-teal outline-none transition-colors"
-                />
-                <MagnifyingGlass size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted" weight="bold" />
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
+          <section className="lg:col-span-8">
+            <div className="mb-6 flex items-end justify-between gap-4 border-b border-ink/5 pb-4">
+              <div>
+                <h2 className="text-2xl font-black text-ink">Published Stories</h2>
+                <p className="mt-1 text-sm font-semibold text-muted">{allStories.length} story records</p>
               </div>
             </div>
 
-            {/* Articles Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {allStories.map((story) => (
-                <Link href={`/stories/${story.id}`} key={story.id} className="group block">
-                  <article className="flex flex-col h-full rounded-[1.5rem] bg-white shadow-sm border border-ink/5 overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
-                    <div className="relative h-48 w-full overflow-hidden bg-cream">
-                      <Image
-                        src={story.imageUrl}
-                        alt={story.title}
-                        fill
-                        unoptimized
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    </div>
-                    
-                    <div className="flex-1 flex flex-col p-6">
-                      <div className="flex items-center gap-4 text-[10px] font-bold text-muted uppercase tracking-wider mb-3">
-                        <span className="text-coral">{story.category}</span>
-                        <span className="flex items-center gap-1"><Clock size={12}/> อ่าน 4 นาที</span>
+            {remainingStories.length > 0 ? (
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                {remainingStories.map((story) => (
+                  <Link href={`/stories/${story.id}`} key={story.id} className="group block">
+                    <article className="flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-ink/5 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+                      <div className="relative h-48 w-full overflow-hidden bg-cream">
+                        {story.imageUrl ? (
+                          <Image
+                            src={story.imageUrl}
+                            alt={story.title}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-semibold text-muted">
+                            Image not added
+                          </div>
+                        )}
                       </div>
-                      
-                      <h2 className="text-lg font-black text-ink mb-3 group-hover:text-coral transition-colors line-clamp-2 leading-snug">
-                        {story.title}
-                      </h2>
-                      <p className="text-xs text-muted line-clamp-2 mb-5 flex-1 leading-relaxed">
-                        {story.excerpt}
-                      </p>
-                      
-                      <div className="flex items-center gap-3 mt-auto pt-4 border-t border-ink/5">
-                        <div className="w-6 h-6 rounded-full bg-cream overflow-hidden relative">
-                          <Image src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop" alt="Author" fill className="object-cover" unoptimized />
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold text-ink">นพดล แซ่ลี้</p>
-                          <p className="text-[9px] text-muted">{story.date}</p>
-                        </div>
+                      <div className="flex flex-1 flex-col p-6">
+                        <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-coral">{story.category || "Story"}</p>
+                        <h3 className="line-clamp-2 text-lg font-black leading-snug text-ink transition-colors group-hover:text-coral">
+                          {story.title}
+                        </h3>
+                        {story.excerpt ? (
+                          <p className="mt-3 line-clamp-2 flex-1 text-xs leading-relaxed text-muted">
+                            {story.excerpt}
+                          </p>
+                        ) : <div className="flex-1" />}
+                        <p className="mt-5 border-t border-ink/5 pt-4 text-[10px] font-semibold text-muted">{story.date || "Published story"}</p>
                       </div>
-                    </div>
-                  </article>
-                </Link>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex justify-center items-center gap-2 mt-12">
-              <button className="w-8 h-8 rounded-full flex items-center justify-center text-muted hover:bg-ink/5 transition-colors">{'<'}</button>
-              <button className="w-8 h-8 rounded-full flex items-center justify-center bg-coral text-white font-bold text-sm shadow-sm">1</button>
-              <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">2</button>
-              <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">3</button>
-              <span className="text-muted">...</span>
-              <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">15</button>
-              <button className="w-8 h-8 rounded-full flex items-center justify-center text-ink font-bold text-sm hover:bg-ink/5 transition-colors">{'>'}</button>
-            </div>
-          </div>
-
-          {/* SIDEBAR (Right) */}
-          <div className="lg:col-span-4 space-y-8">
-            
-            {/* Editor's Picks */}
-            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
-              <div className="flex items-center gap-2 mb-6">
-                <Star size={20} weight="fill" className="text-coral" />
-                <h3 className="font-black text-ink text-lg">บทความแนะนำ</h3>
-              </div>
-              
-              <div className="space-y-5">
-                {editorPicks.map((pick, idx) => (
-                  <Link href={`/stories/${pick.id}`} key={idx} className="group flex gap-4 items-center">
-                    <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-cream">
-                      <Image src={pick.imageUrl} alt={pick.title} fill className="object-cover transition-transform group-hover:scale-110" unoptimized />
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-bold text-coral uppercase tracking-wider mb-1">{pick.category}</p>
-                      <h4 className="font-bold text-sm text-ink leading-tight group-hover:text-coral transition-colors line-clamp-2 mb-1">
-                        {pick.title}
-                      </h4>
-                      <p className="text-[10px] text-muted">{pick.date}</p>
-                    </div>
+                    </article>
                   </Link>
                 ))}
               </div>
-            </div>
-
-            {/* Newsletter */}
-            <div className="bg-[#FAF3EE] rounded-[2rem] p-8 shadow-sm border border-coral/10 text-center">
-              <h3 className="font-black text-ink text-xl mb-2">ไม่พลาดทุกเรื่องราว</h3>
-              <p className="text-xs text-muted mb-6 leading-relaxed">
-                รับเรื่องราวแรงบันดาลใจและเคล็ดลับการเดินทางส่งตรงถึงอีเมลคุณ
-              </p>
-              
-              <div className="space-y-3">
-                <input 
-                  type="email" 
-                  placeholder="กรอกอีเมลของคุณ"
-                  className="w-full bg-white rounded-full px-5 py-3 text-sm text-ink outline-none border border-ink/5 focus:border-teal"
-                />
-                <button type="button" className="w-full bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm">
-                  Subscribe <PaperPlaneRight weight="fill" />
-                </button>
+            ) : featuredStory ? (
+              <div className="rounded-[1.5rem] border border-dashed border-ink/10 bg-white p-8 text-center text-sm font-semibold text-muted">
+                More stories will appear here after they are published.
               </div>
-              <p className="text-[9px] text-muted mt-3 flex items-center justify-center gap-1">
-                <span>🔒</span> เราไม่ส่งสแปม และยกเลิกได้ตลอดเวลา
-              </p>
-            </div>
+            ) : null}
+          </section>
 
-            {/* Popular Tags */}
-            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
-              <h3 className="font-black text-ink text-lg mb-6">แท็กยอดนิยม</h3>
-              <div className="flex flex-wrap gap-2">
-                {["Yala", "Pattani", "Narathiwat", "Betong", "Local Food", "Nature Trail", "Culture", "Photography", "Budget Travel", "Cafe Hopping"].map(tag => (
-                  <span key={tag} className="px-3 py-1.5 rounded-full text-[11px] font-medium text-ink bg-[#FAF8F5] border border-ink/5 hover:border-ink/20 cursor-pointer transition-colors">
-                    {tag}
-                  </span>
-                ))}
+          <aside className="space-y-8 lg:col-span-4">
+            <div className="rounded-[2rem] border border-ink/5 bg-white p-6 shadow-sm">
+              <div className="mb-6 flex items-center gap-2">
+                <Star size={20} weight="fill" className="text-coral" />
+                <h2 className="text-lg font-black text-ink">Editor Picks</h2>
               </div>
-              <button className="text-[11px] font-bold text-coral mt-6 hover:underline">
-                ดูแท็กทั้งหมด &rarr;
-              </button>
+              {editorPicks.length > 0 ? (
+                <div className="space-y-5">
+                  {editorPicks.map((pick) => (
+                    <Link href={`/stories/${pick.id}`} key={pick.id} className="group flex gap-4">
+                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-cream">
+                        {pick.imageUrl ? (
+                          <Image src={pick.imageUrl} alt={pick.title} fill className="object-cover transition-transform group-hover:scale-110" unoptimized />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-semibold text-muted">
+                            No image
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-coral">{pick.category || "Story"}</p>
+                        <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-ink transition-colors group-hover:text-coral">
+                          {pick.title}
+                        </h3>
+                        <p className="mt-1 text-[10px] font-semibold text-muted">{pick.date || "Published story"}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm font-semibold text-muted">Publish more stories to show editor picks.</p>
+              )}
             </div>
-            
-          </div>
+          </aside>
         </div>
 
-        {/* BOTTOM CTA BANNER */}
-        <section className="mb-20">
-          <div className="relative w-full h-32 md:h-40 rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center justify-between px-8 md:px-12 shadow-md bg-ink">
-            <Image 
-              src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop" 
-              alt="Share Story Background" 
-              fill 
-              className="object-cover opacity-30" 
-              unoptimized
-            />
-            <div className="relative z-10 text-center md:text-left mb-4 md:mb-0">
-              <h2 className="text-xl md:text-2xl font-black text-white mb-1">แบ่งปันเรื่องราวของคุณกับเรา</h2>
-              <p className="text-white/80 text-xs md:text-sm">มีเรื่องราวการเดินทางดีๆ ที่อยากแชร์ไหม? มาร่วมสร้างแรงบันดาลใจให้คนอื่นๆ กัน</p>
-            </div>
+        <section className="mt-16">
+          <div className="relative flex min-h-40 flex-col items-center justify-between gap-5 overflow-hidden rounded-[2rem] bg-ink px-8 py-8 text-center shadow-md md:flex-row md:px-12 md:text-left">
+            {ctaSettings.image ? (
+              <Image
+                src={ctaSettings.image}
+                alt={ctaSettings.title}
+                fill
+                className="object-cover opacity-30"
+                unoptimized
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_32%),linear-gradient(135deg,#073F37,#0A6B62)]" />
+            )}
             <div className="relative z-10">
-              <Link href={`/stories/${featuredStory.id}`} className="bg-coral text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-coral/90 transition-all flex items-center gap-2 whitespace-nowrap">
-                อ่านเรื่องราว <ArrowRight size={14} weight="bold" />
-              </Link>
+              <h2 className="text-2xl font-black text-white">{ctaSettings.title}</h2>
+              <p className="mt-1 text-sm text-white/80">{ctaSettings.subtitle}</p>
             </div>
+            <Link href={ctaSettings.linkUrl} className="relative z-10 inline-flex items-center gap-2 rounded-full bg-coral px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-coral/90">
+              {ctaSettings.linkText} <ArrowRight size={14} weight="bold" />
+            </Link>
           </div>
         </section>
-        
-      </div>
-      
-      {/* SITE FOOTER */}
+      </main>
+
       <SiteFooter />
     </div>
   );

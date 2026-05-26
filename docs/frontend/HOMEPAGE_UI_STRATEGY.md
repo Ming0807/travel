@@ -75,7 +75,7 @@ Recommended visual theme:
 
 The page should feel spacious, premium, and calm. Use soft shadows, rounded cards, readable type, and clear hierarchy. Do not make the whole page a single-hue green theme; use white surfaces, warm reward accents, and content imagery to keep it lively.
 
-The available mockup file `southern_border_homepage_ui_mockup_v2.html` reinforces this direction with teal/emerald primary color, cream/mist background, white cards, gold certificate accents, coral highlights, masonry cards, QR certificate card, passport card, and mobile-safe bottom navigation.
+Earlier standalone homepage mockup HTML files were removed from the active repository surface to avoid CMS confusion. The current homepage direction should be validated against the real Next.js pages and seeded database content.
 
 ---
 
