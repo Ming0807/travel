@@ -359,6 +359,49 @@ export async function getAdminAttractionRelatedContent(attractionId: number) {
   };
 }
 
+const INLINE_FIELD_MAP: Record<string, string> = {
+  nameTh: "name_th",
+  nameEn: "name_en",
+  slug: "slug",
+  shortDescriptionTh: "short_description_th",
+  shortDescriptionEn: "short_description_en",
+  descriptionTh: "description_th",
+  descriptionEn: "description_en",
+  historyTh: "history_th",
+  historyEn: "history_en",
+  travelTipsTh: "travel_tips_th",
+  travelTipsEn: "travel_tips_en",
+  howToGetThereTh: "how_to_get_there_th",
+  howToGetThereEn: "how_to_get_there_en",
+  addressText: "address_text",
+  openingHours: "opening_hours",
+  contactInfo: "contact_info",
+  sustainabilityCategory: "sustainability_category",
+};
+
+export function getInlineFieldColumn(fieldName: string): string | null {
+  return INLINE_FIELD_MAP[fieldName] ?? null;
+}
+
+export async function updateAdminAttractionField(
+  attractionId: number,
+  fieldName: string,
+  value: string | null
+): Promise<void> {
+  const dbField = getInlineFieldColumn(fieldName);
+  if (!dbField) throw new Error(`INVALID_INLINE_FIELD: ${fieldName}`);
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { error } = await supabase
+    .from("attractions")
+    .update({ [dbField]: value === "" ? null : value })
+    .eq("attraction_id", attractionId);
+
+  if (error) {
+    throw new Error("ADMIN_ATTRACTION_UPDATE_FAILED");
+  }
+}
+
 export async function updateAdminAttractionRelatedContent(attractionId: number, type: 'attractions' | 'restaurants' | 'accommodations' | 'stories', relatedIds: number[]) {
   const supabase = createSupabaseServiceRoleClient();
   const table = `attraction_related_${type}`;

@@ -77,6 +77,10 @@ Implemented baseline:
 - Settings supports direct group links such as `/admin/settings?tab=homepage` so the Content Hub can send admins to the correct surface.
 - Story and route admin forms show public-page readiness panels and preview links after records are saved.
 - Main CMS image surfaces use saved media paths or missing-image states instead of Unsplash fallback images.
+- Public attraction detail sections now use a shared, content-aware section model so public navigation and the attraction visual editor use the same order and localized labels.
+- Public attraction mobile section navigation uses a jump selector instead of rows that look expandable but only scroll.
+- Content Health now flags official content that still uses likely stock/demo media paths so admins can replace public images with verified assets.
+- Media used-in lookup has a dedicated `/api/admin/media/references?storagePath=...` endpoint for content-media workflows.
 - Root-level HTML prototype/mockup files were removed from the active app surface.
 
 ## Recommended CMS Direction
@@ -184,7 +188,7 @@ Rules:
 Implementation warning:
 
 - The picker must query real attraction schema fields such as `attraction_id`, `slug`, `name_th`, `name_en`, `is_published`, `is_active`, and `provinces(province_name_th, province_name_en)`.
-- Cover readiness should come from the final media source, either `attraction_media` or `content_media`.
+- Cover readiness should come from the final media source `content_media`.
 - Do not add a `cover_image_path` shortcut to attractions only to make the picker easier. That would duplicate image ownership and confuse the CMS.
 - If no matching attraction exists, show "no results" instead of adding demo cards.
 

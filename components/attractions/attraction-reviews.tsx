@@ -9,10 +9,11 @@ type AttractionReviewsProps = {
   reviewsCount: string;
   stats?: ReviewStats;
   reviews?: ReviewCard[];
+  title?: string;
   children?: React.ReactNode;
 };
 
-export function AttractionReviews({ rating, reviewsCount, stats, reviews, children }: AttractionReviewsProps) {
+export function AttractionReviews({ rating, reviewsCount, stats, reviews, title = "Reviews", children }: AttractionReviewsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const hasRealData = stats && stats.totalReviews > 0;
 
@@ -28,7 +29,7 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, childr
 
   return (
     <div id="reviews" className="scroll-mt-24 pt-8">
-      <h2 className="mb-6 text-2xl font-bold text-ink">Reviews</h2>
+      <h2 className="mb-6 text-2xl font-bold text-ink">{title}</h2>
 
       {/* Rating Summary */}
       <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-16">

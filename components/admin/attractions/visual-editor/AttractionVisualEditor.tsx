@@ -6,6 +6,7 @@ import { AttractionGallery } from "@/components/attractions/attraction-gallery";
 import { AttractionTabs } from "@/components/attractions/attraction-tabs";
 import { AttractionInfoSidebar } from "@/components/attractions/attraction-info-sidebar";
 import { EditableBlock } from "@/components/admin/forms/EditableBlock";
+import { InlineEditableText } from "@/components/admin/forms/InlineEditableText";
 import { Drawer } from "@/components/admin/Drawer";
 import { HeaderForm, ContentForm, LocationForm, SettingsForm } from "./SectionForms";
 import { MediaManager } from "@/components/admin/attractions/MediaManager";
@@ -18,6 +19,7 @@ import Link from "next/link";
 import { AttractionCardsRow } from "@/components/attractions/attraction-cards-row";
 import { AttractionReviews } from "@/components/attractions/attraction-reviews";
 import type { PublicAttractionDetail } from "@/lib/repositories/public-content.repository";
+import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
 
 type EditorSection = "header" | "content" | "location" | "settings" | "gallery" | "related_attractions" | "related_accommodations" | "related_restaurants" | "related_stories" | null;
 
@@ -205,8 +207,9 @@ export function AttractionVisualEditor({
   // Derive display data to match frontend components
   const provinceName = provinces.find((p) => p.id === attraction.province_id)?.label ?? "ไม่ระบุจังหวัด";
   const name = attraction.name_th || "ยังไม่มีชื่อ";
-  const description = attraction.description_th || attraction.short_description_th || "คลิกเพื่อเพิ่มเนื้อหา";
-  
+  const description = attraction.description_th ?? "";
+  const shortDescription = attraction.short_description_th ?? "";
+
   // Derive media
   const sortedMedia = [...media].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
   const images = sortedMedia
@@ -224,6 +227,21 @@ export function AttractionVisualEditor({
   const publicWhereToStay = relatedAccommodationCount > 0 ? publicDetail?.whereToStay ?? [] : [];
   const publicFoodAndDrink = relatedRestaurantCount > 0 ? publicDetail?.foodAndDrink ?? [] : [];
   const publicArticles = relatedStoryCount > 0 ? publicDetail?.articles ?? [] : [];
+  const locale = "th";
+  const sectionLabel = (key: Parameters<typeof getAttractionSectionLabel>[0]) =>
+    getAttractionSectionLabel(key, locale);
+  const previewSections = buildAttractionSectionNavigation(
+    {
+      description,
+      thingsToDo: publicThingsToDo,
+      whereToStay: publicWhereToStay,
+      foodAndDrink: publicFoodAndDrink,
+      travelTips: attraction.travel_tips_th ? [attraction.travel_tips_th] : [],
+      howToGetThere: attraction.how_to_get_there_th,
+      articles: publicArticles,
+    },
+    { locale, includeReviews: true }
+  );
   const photoSpotCount = attraction.photo_spot_count ?? 0;
   const checkinCodeCount = attraction.checkin_code_count ?? 0;
   const hasPublicText = Boolean(attraction.short_description_th || attraction.description_th);
@@ -250,8 +268,8 @@ export function AttractionVisualEditor({
     },
     {
       id: "content",
-      label: "Overview",
-      publicSection: "Overview, history, tips",
+      label: sectionLabel("overview"),
+      publicSection: `${sectionLabel("overview")}, ${sectionLabel("travel_tips")}`,
       complete: hasPublicText,
       help: hasPublicText ? "Public description is available." : "Add short or full Thai description.",
       actionLabel: "Edit content",
@@ -259,8 +277,8 @@ export function AttractionVisualEditor({
     },
     {
       id: "location",
-      label: "Location",
-      publicSection: "How to get there",
+      label: sectionLabel("how_to_get_there"),
+      publicSection: sectionLabel("how_to_get_there"),
       complete: hasLocationDetails,
       help: hasLocationDetails ? "Location details are present." : "Add address, travel guidance, or coordinates.",
       actionLabel: "Edit location",
@@ -278,7 +296,7 @@ export function AttractionVisualEditor({
     {
       id: "related",
       label: "Related content",
-      publicSection: "Food, stays, stories",
+      publicSection: `${sectionLabel("things_to_do")}, ${sectionLabel("food_drink")}, ${sectionLabel("articles")}`,
       complete: hasRelatedContent,
       help: hasRelatedContent ? "At least one related section has saved records." : "Optional: link real stays, restaurants, stories, or nearby attractions.",
       actionLabel: "Select related records",
@@ -348,10 +366,10 @@ export function AttractionVisualEditor({
 
       {/* Editor Canvas (matches public layout) */}
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8 lg:pt-10">
-        
+
         {/* Header Block */}
         <EditableBlock id="header" label="ข้อมูลหลัก" isActive={activeSection === "header"} onEdit={() => setActiveSection("header")}>
-          <AttractionHeader 
+          <AttractionHeader
             name={name}
             province={provinceName}
             rating={0}
@@ -380,40 +398,85 @@ export function AttractionVisualEditor({
         <div className="mt-12 grid gap-12 lg:grid-cols-[1fr_320px]">
           {/* Main Content Area */}
           <div className="min-w-0 space-y-12">
-            <AttractionTabs />
-            
+            <AttractionTabs sections={previewSections} mobileLabel="เลือกส่วนของหน้า" />
+
             {/* Overview / Content Block */}
             <EditableBlock id="content" label="เนื้อหา" isActive={activeSection === "content"} onEdit={() => setActiveSection("content")}>
               <div className="space-y-12">
-                <section id="overview" className="scroll-mt-24 pointer-events-none">
-                  <h2 className="mb-4 text-2xl font-bold text-slate-800">Overview</h2>
-                  <p className="text-base leading-relaxed text-slate-600 whitespace-pre-wrap">
-                    {description}
-                  </p>
-                </section>
-                
-                {attraction.history_th && (
-                  <section id="history" className="scroll-mt-24 pointer-events-none">
-                    <h2 className="mb-4 text-2xl font-bold text-slate-800">ประวัติศาสตร์ / เรื่องเล่า</h2>
-                    <p className="text-base leading-relaxed text-slate-600 whitespace-pre-wrap">
-                      {attraction.history_th}
+                <section id="overview" className="scroll-mt-24">
+                  <h2 className="mb-4 text-2xl font-bold text-slate-800">{sectionLabel("overview")}</h2>
+                  {shortDescription ? (
+                    <p className="mb-4 text-sm font-medium text-slate-500 leading-relaxed whitespace-pre-wrap">
+                      {shortDescription}
                     </p>
-                  </section>
-                )}
-                
-                {attraction.travel_tips_th && (
-                  <section id="tips" className="scroll-mt-24 pointer-events-none mt-8">
-                    <h2 className="mb-4 text-2xl font-bold text-slate-800">ข้อแนะนำการเดินทาง (Travel Tips)</h2>
-                    <div className="rounded-2xl bg-amber-50 p-6 border border-amber-100">
-                      <p className="text-base leading-relaxed text-amber-900 whitespace-pre-wrap">
-                        {attraction.travel_tips_th}
-                      </p>
+                  ) : (
+                    <p className="mb-4 text-sm italic text-slate-400">
+                      <InlineEditableText
+                        value=""
+                        fieldName="shortDescriptionTh"
+                        attractionId={attraction.attraction_id}
+                        placeholder="คลิกเพื่อเพิ่มคำอธิบายสั้น..."
+                        multiline
+                        maxLength={500}
+                      />
+                    </p>
+                  )}
+                  <div className="text-base leading-relaxed text-slate-600">
+                    <InlineEditableText
+                      value={description}
+                      fieldName="descriptionTh"
+                      attractionId={attraction.attraction_id}
+                      placeholder="คลิกเพื่อเพิ่มคำอธิบายเต็ม..."
+                      multiline
+                      maxLength={4000}
+                      className="min-h-[40px]"
+                    />
+                  </div>
+                </section>
+
+                <section id="history" className="scroll-mt-24">
+                  <h2 className="mb-4 text-2xl font-bold text-slate-800">ประวัติศาสตร์ / เรื่องเล่า</h2>
+                  <div className="text-base leading-relaxed text-slate-600">
+                    <InlineEditableText
+                      value={attraction.history_th ?? ""}
+                      fieldName="historyTh"
+                      attractionId={attraction.attraction_id}
+                      placeholder="คลิกเพื่อเพิ่มประวัติศาสตร์หรือเรื่องเล่า..."
+                      multiline
+                      maxLength={4000}
+                    />
+                  </div>
+                  {!attraction.history_th ? (
+                    <p className="mt-2 text-xs text-slate-400">
+                      เพิ่มประวัติศาสตร์ของสถานที่เพื่อให้ผู้เยี่ยมชมเข้าใจบริบท
+                    </p>
+                  ) : null}
+                </section>
+
+                <section id="tips" className="scroll-mt-24 mt-8">
+                  <h2 className="mb-4 text-2xl font-bold text-slate-800">{sectionLabel("travel_tips")}</h2>
+                  <div className="rounded-2xl bg-amber-50 p-6 border border-amber-100">
+                    <div className="text-base leading-relaxed text-amber-900">
+                      <InlineEditableText
+                        value={attraction.travel_tips_th ?? ""}
+                        fieldName="travelTipsTh"
+                        attractionId={attraction.attraction_id}
+                        placeholder="คลิกเพื่อเพิ่มข้อแนะนำการเดินทาง..."
+                        multiline
+                        maxLength={5000}
+                        className="text-amber-900"
+                      />
                     </div>
-                  </section>
-                )}
+                  </div>
+                  {!attraction.travel_tips_th ? (
+                    <p className="mt-2 text-xs text-amber-600/70">
+                      แนะนำเวลาไปเที่ยวที่ดีที่สุด วิธีเดินทาง และข้อควรรู้
+                    </p>
+                  ) : null}
+                </section>
               </div>
             </EditableBlock>
-            
+
             {/* Relational Content Block (Rendered visually but edits navigate away) */}
             <div className="space-y-12 mt-12 relative border-t border-slate-200 pt-12">
               <div className="absolute top-0 right-0 -mt-3 rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold text-slate-500">
@@ -424,9 +487,9 @@ export function AttractionVisualEditor({
               {publicThingsToDo.length > 0 ? (
                 <div className="relative group rounded-3xl border border-transparent hover:border-slate-300 p-2 -mx-2 transition-colors">
                   <div className="pointer-events-none">
-                    <AttractionCardsRow 
+                    <AttractionCardsRow
                       id="things-to-do"
-                      title="Things to Do"
+                      title={sectionLabel("things_to_do")}
                       items={publicThingsToDo}
                       viewAllText="View all things to do"
                     />
@@ -450,9 +513,9 @@ export function AttractionVisualEditor({
               {publicWhereToStay.length > 0 ? (
                 <div className="relative group rounded-3xl border border-transparent hover:border-slate-300 p-2 -mx-2 transition-colors">
                   <div className="pointer-events-none">
-                    <AttractionCardsRow 
+                    <AttractionCardsRow
                       id="where-to-stay"
-                      title="Where to Stay"
+                      title={sectionLabel("where_to_stay")}
                       items={publicWhereToStay}
                       viewAllText="View all hotels"
                     />
@@ -476,9 +539,9 @@ export function AttractionVisualEditor({
               {publicFoodAndDrink.length > 0 ? (
                 <div className="relative group rounded-3xl border border-transparent hover:border-slate-300 p-2 -mx-2 transition-colors">
                   <div className="pointer-events-none">
-                    <AttractionCardsRow 
+                    <AttractionCardsRow
                       id="food"
-                      title="Food & Drink"
+                      title={sectionLabel("food_drink")}
                       items={publicFoodAndDrink}
                       viewAllText="View all restaurants"
                     />
@@ -506,6 +569,7 @@ export function AttractionVisualEditor({
                     reviewsCount={reviewStats?.totalReviews?.toString() || "0"}
                     stats={reviewStats}
                     reviews={publicReviews}
+                    title={sectionLabel("reviews")}
                   />
                 </div>
                 <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -514,14 +578,14 @@ export function AttractionVisualEditor({
                   </Link>
                 </div>
               </div>
-              
+
               {/* Recommended Articles */}
               {publicArticles.length > 0 ? (
                 <div className="relative group rounded-3xl border border-transparent hover:border-slate-300 p-2 -mx-2 transition-colors">
                   <div className="pointer-events-none">
-                    <AttractionCardsRow 
+                    <AttractionCardsRow
                       id="articles"
-                      title="Recommended Articles"
+                    title={sectionLabel("articles")}
                       items={publicArticles}
                       viewAllText="View all articles"
                     />
@@ -541,14 +605,32 @@ export function AttractionVisualEditor({
                 />
               )}
             </div>
-            
+
             {/* Location / Map Block */}
             <EditableBlock id="location" label="พิกัด & แผนที่" isActive={activeSection === "location"} onEdit={() => setActiveSection("location")}>
               <section id="how-to-get-there" className="scroll-mt-24 pt-8 pointer-events-none">
-                <h2 className="mb-4 text-2xl font-bold text-slate-800">วิธีการเดินทาง (How to Get There)</h2>
-                <p className="mb-6 text-sm leading-relaxed text-slate-600 whitespace-pre-wrap">
-                  {attraction.how_to_get_there_th || attraction.address_text || "คลิกเพื่อเพิ่มที่อยู่และการเดินทาง"}
-                </p>
+                <h2 className="mb-4 text-2xl font-bold text-slate-800">{sectionLabel("how_to_get_there")}</h2>
+                <div className="mb-6 text-sm leading-relaxed text-slate-600">
+                  <InlineEditableText
+                    value={attraction.how_to_get_there_th ?? ""}
+                    fieldName="howToGetThereTh"
+                    attractionId={attraction.attraction_id}
+                    placeholder="คลิกเพื่อเพิ่มวิธีการเดินทาง..."
+                    multiline
+                    maxLength={5000}
+                  />
+                  <div className="mt-1 text-xs text-slate-400">
+                    <span className="font-medium">ที่อยู่:</span>{' '}
+                    <InlineEditableText
+                      value={attraction.address_text ?? ""}
+                      fieldName="addressText"
+                      attractionId={attraction.attraction_id}
+                      placeholder="คลิกเพื่อเพิ่มที่อยู่..."
+                      className="inline"
+                      whiteSpace="normal"
+                    />
+                  </div>
+                </div>
                 <div className="aspect-[21/9] w-full overflow-hidden rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center relative text-center">
                   <div className="flex flex-col items-center px-6">
                     <MapPinLine size={48} className="text-coral/50" weight="duotone" />
@@ -567,21 +649,21 @@ export function AttractionVisualEditor({
               </section>
             </EditableBlock>
           </div>
-          
+
           {/* Sidebar Area */}
           <aside className="hidden lg:block">
             <EditableBlock id="sidebar" label="ตั้งค่า / สถานะ" isActive={activeSection === "settings"} onEdit={() => setActiveSection("settings")}>
               <div className="pointer-events-none sticky top-24">
-                <AttractionInfoSidebar 
+                <AttractionInfoSidebar
                   info={{
                     region: attraction.sustainability_category || "ไม่ระบุ",
                     population: attraction.estimated_capacity_per_day ? `~${attraction.estimated_capacity_per_day} คน/วัน` : "ไม่ระบุ",
                     language: "Thai, English",
                     currency: "THB",
                     timeZone: attraction.opening_hours || "GMT+7",
-                  }} 
+                  }}
                 />
-                
+
                 {/* Contact Info Preview */}
                 {attraction.contact_info && (
                   <div className="mt-6 rounded-3xl bg-slate-50 p-6 text-sm text-slate-600 border border-slate-100">
@@ -647,14 +729,14 @@ export function AttractionVisualEditor({
         onClose={() => setActiveSection(null)}
         title="เลือกสถานที่ท่องเที่ยวใกล้เคียง"
       >
-        <RelatedContentForm 
+        <RelatedContentForm
           attractionId={attraction.attraction_id}
           type="attractions"
           availableItems={allContent?.attractions?.filter((a) => a.id !== attraction.attraction_id) || []}
           initialSelectedIds={relatedContent?.attractions?.map((a) => Number(a.related_attraction_id)) || []}
           attractionProvince={provinceName}
           onClose={() => setActiveSection(null)}
-          title="Things to Do"
+          title={sectionLabel("things_to_do")}
         />
       </Drawer>
 
@@ -663,14 +745,14 @@ export function AttractionVisualEditor({
         onClose={() => setActiveSection(null)}
         title="เลือกที่พักใกล้เคียง"
       >
-        <RelatedContentForm 
+        <RelatedContentForm
           attractionId={attraction.attraction_id}
           type="accommodations"
           availableItems={allContent?.accommodations || []}
           initialSelectedIds={relatedContent?.accommodations?.map((a) => Number(a.accommodation_id)) || []}
           attractionProvince={provinceName}
           onClose={() => setActiveSection(null)}
-          title="Where to Stay"
+          title={sectionLabel("where_to_stay")}
         />
       </Drawer>
 
@@ -679,14 +761,14 @@ export function AttractionVisualEditor({
         onClose={() => setActiveSection(null)}
         title="เลือกร้านอาหารใกล้เคียง"
       >
-        <RelatedContentForm 
+        <RelatedContentForm
           attractionId={attraction.attraction_id}
           type="restaurants"
           availableItems={allContent?.restaurants || []}
           initialSelectedIds={relatedContent?.restaurants?.map((a) => Number(a.restaurant_id)) || []}
           attractionProvince={provinceName}
           onClose={() => setActiveSection(null)}
-          title="Food & Drink"
+          title={sectionLabel("food_drink")}
         />
       </Drawer>
 
@@ -695,14 +777,14 @@ export function AttractionVisualEditor({
         onClose={() => setActiveSection(null)}
         title="เลือกบทความที่เกี่ยวข้อง"
       >
-        <RelatedContentForm 
+        <RelatedContentForm
           attractionId={attraction.attraction_id}
           type="stories"
           availableItems={allContent?.stories || []}
           initialSelectedIds={relatedContent?.stories?.map((a) => Number(a.story_id)) || []}
           attractionProvince={provinceName}
           onClose={() => setActiveSection(null)}
-          title="Articles"
+          title={sectionLabel("articles")}
         />
       </Drawer>
     </div>

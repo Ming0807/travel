@@ -3,11 +3,12 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Archive,
   CheckCircle,
   Image as ImageIcon,
+  Info,
   PencilSimple,
   Plus,
-  Trash,
   UploadSimple,
   WarningCircle,
   X,
@@ -96,10 +97,42 @@ function readableFieldErrors(fieldErrors?: Record<string, string[] | undefined>)
   });
 }
 
+type MediaReference = {
+  entityType: string;
+  entityId: number | null;
+  name: string;
+};
+
+function EntityTypeLabel({ type }: { type: string }) {
+  const labelMap: Record<string, { label: string; badge: string }> = {
+    attraction: { label: "Attraction", badge: "bg-blue-50 text-blue-700" },
+    restaurant: { label: "Restaurant", badge: "bg-rose-50 text-rose-700" },
+    accommodation: { label: "Accommodation", badge: "bg-purple-50 text-purple-700" },
+    story: { label: "Story", badge: "bg-amber-50 text-amber-700" },
+    route: { label: "Route", badge: "bg-emerald-50 text-emerald-700" },
+  };
+  const info = labelMap[type] ?? { label: type, badge: "bg-slate-50 text-slate-700" };
+  return <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${info.badge}`}>{info.label}</span>;
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("th-TH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function MediaManager({ entityId, entityType, initialMedia }: MediaManagerProps) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<number | "new" | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [archiveCandidate, setArchiveCandidate] = useState<AdminMediaRow | null>(null);
+  const [archiveReferences, setArchiveReferences] = useState<MediaReference[]>([]);
+  const [loadingReferences, setLoadingReferences] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
   const mediaSummary = useMemo(() => {
     const activeMedia = initialMedia.filter((media) => media.is_active);
     const coverCount = initialMedia.filter((media) => media.is_cover && media.is_active).length;
@@ -118,18 +151,44 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
     };
   }, [initialMedia]);
 
-  const handleDelete = async (mediaId: number) => {
-    const ok = window.confirm("ต้องการลบสื่อนี้ออกจาก CMS ใช่ไหม? ถ้าสื่อนี้ถูกใช้ในหน้าเว็บ ควรตรวจหน้า public อีกครั้งหลังลบ");
-    if (!ok) return;
+  const handleArchiveClick = async (media: AdminMediaRow) => {
+    setArchiveCandidate(media);
+    setArchiveReferences([]);
+    setIsArchiving(false);
+    setLoadingReferences(true);
 
+    // Fetch used-in references before showing the confirmation.
+    // MediaManager works with content_media IDs, so lookup references by storage path.
+    try {
+      const url = `/api/admin/media/references?storagePath=${encodeURIComponent(media.storage_path)}`;
+      const response = await fetch(url, { method: "GET" });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.references) {
+        setArchiveReferences(data.references);
+      }
+    } catch {
+      // Silently fail — references will just be empty
+    } finally {
+      setLoadingReferences(false);
+    }
+  };
+
+  const handleConfirmArchive = async () => {
+    if (!archiveCandidate) return;
+    setIsArchiving(true);
     setDeleteError(null);
-    const result = await deleteMediaAction(mediaId);
+
+    const result = await deleteMediaAction(archiveCandidate.media_id);
     if (result.success) {
+      setIsArchiving(false);
+      setArchiveCandidate(null);
+      setArchiveReferences([]);
       router.refresh();
       return;
     }
 
-    setDeleteError(result.error || "ไม่สามารถลบสื่อนี้ได้");
+    setDeleteError(result.error || "ไม่สามารถ archive สื่อนี้ได้");
+    setIsArchiving(false);
   };
 
   return (
@@ -255,11 +314,11 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(media.media_id)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-rose-50 hover:text-rose-600"
-                        aria-label="ลบสื่อ"
+                        onClick={() => handleArchiveClick(media)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-amber-700 transition hover:bg-amber-50 hover:text-amber-800"
+                        aria-label="Archive สื่อ"
                       >
-                        <Trash size={17} weight="bold" />
+                        <Archive size={17} weight="bold" />
                       </button>
                     </div>
                   </div>
@@ -285,6 +344,94 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
           );
         })}
       </div>
+
+      {archiveCandidate ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Archive media confirmation"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setArchiveCandidate(null);
+              setArchiveReferences([]);
+            }
+          }}
+        >
+          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-2xl">
+            <div className="flex gap-3">
+              <Archive className="mt-0.5 shrink-0 text-amber-600" size={24} weight="fill" />
+              <div>
+                <h2 className="text-base font-black text-slate-900">Archive สื่อนี้?</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  จะซ่อนไฟล์นี้จาก Media Library และตัวเลือกสื่อใน CMS ไฟล์และฐานข้อมูลยังคงอยู่เพื่อให้กู้คืนได้ภายหลัง
+                </p>
+                {archiveCandidate.storage_path ? (
+                  <p className="mt-3 break-all rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-600">
+                    {archiveCandidate.storage_path}
+                  </p>
+                ) : null}
+
+                {archiveCandidate.created_at ? (
+                  <p className="mt-2 text-xs text-slate-500">สร้าง: {formatDate(archiveCandidate.created_at)}</p>
+                ) : null}
+
+                {loadingReferences ? (
+                  <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-[#0A6B62]" />
+                    กำลังตรวจสอบว่าสื่อนี้ถูกใช้ที่ไหนบ้าง...
+                  </div>
+                ) : archiveReferences.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="text-xs font-bold text-amber-700">สื่อนี้ถูกใช้ในเนื้อหาเหล่านี้:</p>
+                    <div className="mt-2 space-y-1.5">
+                      {archiveReferences.map((ref, idx) => (
+                        <div key={idx} className="flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs">
+                          <EntityTypeLabel type={ref.entityType} />
+                          <span className="font-bold text-slate-700">{ref.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-amber-800">
+                      สื่อที่ถูก archive แล้วจะยังคงแสดงในหน้าสาธารณะเดิม แต่จะไม่ปรากฏในตัวเลือกสำหรับการเพิ่มสื่อใหม่
+                      หากต้องการเปลี่ยนภาพ ควรอัปโหลดภาพใหม่และตั้งเป็น active ก่อน archive
+                    </p>
+                  </div>
+                ) : !loadingReferences ? (
+                  <p className="mt-3 text-xs leading-5 text-slate-500">
+                    สื่อนี้ไม่ได้ถูกอ้างอิงในเนื้อหาใด ๆ การ archive จะมีผลกับ Media Library และตัวเลือกสื่อเท่านั้น
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setArchiveCandidate(null);
+                  setArchiveReferences([]);
+                }}
+                className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+              >
+                {archiveReferences.length > 0 ? "ปิด" : "ยกเลิก"}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmArchive}
+                disabled={isArchiving}
+                className="min-h-11 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-black text-white transition hover:bg-amber-700 disabled:opacity-50"
+              >
+                {isArchiving ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                ) : (
+                  <Archive size={16} weight="bold" />
+                )}
+                {isArchiving ? "กำลัง Archive..." : "Archive สื่อนี้"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -424,6 +571,7 @@ function MediaForm({
             <select
               name="mediaType"
               value={mediaType}
+              aria-describedby="media-type-help"
               onChange={(event) => {
                 setMediaType(event.target.value as MediaType);
                 setUploadError(null);
@@ -437,7 +585,7 @@ function MediaForm({
                 </option>
               ))}
             </select>
-            <span className="mt-1 block text-xs leading-5 text-slate-500">{selectedMediaType.help}</span>
+            <span id="media-type-help" className="mt-1 block text-xs leading-5 text-slate-500">{selectedMediaType.help}</span>
           </label>
 
           {selectedMediaType.needsUpload ? (
@@ -514,47 +662,95 @@ function MediaForm({
               <p className="font-black text-slate-700">Storage / URL</p>
               <p className="mt-1 break-all font-mono">{storagePath}</p>
             </div>
-          ) : null}
+          ) : null}                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-500">Metadata — accessibility & search</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Alt text is required for public images. Caption shows below the image on public pages.</p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <label className="block">
+                      <span className="text-sm font-black text-slate-700">Alt text (ภาษาไทย) <span className="text-rose-500">*</span></span>
+                      <input
+                        name="altTextTh"
+                        defaultValue={initialData?.alt_text_th ?? ""}
+                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                        placeholder="อธิบายภาพเพื่อ accessibility"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-black text-slate-700">Alt text (English)</span>
+                      <input
+                        name="altTextEn"
+                        defaultValue={initialData?.alt_text_en ?? ""}
+                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                        placeholder="Short image description"
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <label className="block">
+                      <span className="text-sm font-black text-slate-700">Caption ภาษาไทย</span>
+                      <input
+                        name="captionTh"
+                        defaultValue={initialData?.caption_th ?? ""}
+                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                        placeholder="ข้อความใต้ภาพ"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-black text-slate-700">Caption ภาษาอังกฤษ</span>
+                      <input
+                        name="captionEn"
+                        defaultValue={initialData?.caption_en ?? ""}
+                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                        placeholder="Image subtitle"
+                      />
+                    </label>
+                  </div>
+                </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block">
-              <span className="text-sm font-black text-slate-700">Alt text ภาษาไทย</span>
-              <input
-                name="altTextTh"
-                defaultValue={initialData?.alt_text_th ?? ""}
-                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                placeholder="อธิบายภาพเพื่อ accessibility"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-black text-slate-700">Alt text ภาษาอังกฤษ</span>
-              <input
-                name="altTextEn"
-                defaultValue={initialData?.alt_text_en ?? ""}
-                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                placeholder="Short image description"
-              />
-            </label>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block">
-              <span className="text-sm font-black text-slate-700">Caption ภาษาไทย</span>
-              <input
-                name="captionTh"
-                defaultValue={initialData?.caption_th ?? ""}
-                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-black text-slate-700">Caption ภาษาอังกฤษ</span>
-              <input
-                name="captionEn"
-                defaultValue={initialData?.caption_en ?? ""}
-                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-              />
-            </label>
-          </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-500">Attribution & licensing</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Credit the source for public-facing images. Optional but recommended for third-party images.</p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <label className="block">
+                      <span className="text-sm font-black text-slate-700">Credit / Source name</span>
+                      <input
+                        name="creditText"
+                        defaultValue={initialData?.credit_text ?? ""}
+                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                        placeholder="เช่น ช่างภาพ: สมชาย ใจดี"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-black text-slate-700">Source URL</span>
+                      <input
+                        name="sourceUrl"
+                        defaultValue={initialData?.source_url ?? ""}
+                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                        placeholder="https://..."
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <label className="block">
+                      <span className="text-sm font-black text-slate-700">License type</span>
+                      <input
+                        name="licenseType"
+                        defaultValue={initialData?.license_type ?? ""}
+                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                        placeholder="เช่น CC BY 4.0, Royalty-free"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-black text-slate-700">Usage notes</span>
+                      <input
+                        name="usageNotes"
+                        defaultValue={initialData?.usage_notes ?? ""}
+                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                        placeholder="ข้อความภายใน (ไม่แสดงสาธารณะ)"
+                      />
+                    </label>
+                  </div>
+                </div>
         </div>
 
         <aside className="space-y-4">
@@ -582,15 +778,17 @@ function MediaForm({
                 />
               </label>
 
-              <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50">
-                ตั้งเป็นภาพ cover
-                <input type="checkbox" name="isCover" defaultChecked={initialData?.is_cover ?? false} className="h-4 w-4 accent-[#F3704C]" value="true" />
-              </label>
-
-              <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 has-[:checked]:border-[#0A6B62] has-[:checked]:bg-[#E6F4EF]">
-                เปิดใช้งาน
-                <input type="checkbox" name="isActive" defaultChecked={initialData?.is_active ?? true} className="h-4 w-4 accent-[#0A6B62]" value="true" />
-              </label>
+              <fieldset className="space-y-3">
+                <legend className="text-sm font-black text-slate-700">ตัวเลือกสื่อ</legend>
+                <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-amber-950 has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50">
+                  ตั้งเป็นภาพ cover
+                  <input type="checkbox" name="isCover" defaultChecked={initialData?.is_cover ?? false} className="h-4 w-4 accent-[#F3704C]" value="true" />
+                </label>
+                <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 has-[:checked]:border-[#0A6B62] has-[:checked]:bg-[#E6F4EF]">
+                  เปิดใช้งาน
+                  <input type="checkbox" name="isActive" defaultChecked={initialData?.is_active ?? true} className="h-4 w-4 accent-[#0A6B62]" value="true" />
+                </label>
+              </fieldset>
             </div>
           </div>
 

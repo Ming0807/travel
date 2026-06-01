@@ -244,6 +244,7 @@ VALUES
   ('media.upload', 'Upload media'),
   ('media.update', 'Update media'),
   ('media.deactivate', 'Deactivate media'),
+  ('media.activate', 'Restore archived media'),
   ('media.delete', 'Delete media'),
   ('visit.read', 'Read operational visit records'),
   ('visit.detail', 'Read visit detail records'),
@@ -324,7 +325,7 @@ JOIN public.permissions p ON p.permission_name IN (
   'attraction.read', 'attraction.create', 'attraction.update', 'attraction.publish', 'attraction.unpublish', 'attraction.deactivate',
   'photo_spot.read', 'photo_spot.create', 'photo_spot.update', 'photo_spot.deactivate',
   'checkin_code.read', 'checkin_code.create', 'checkin_code.update', 'checkin_code.deactivate', 'checkin_code.download_qr',
-  'media.read', 'media.upload', 'media.update', 'media.deactivate',
+  'media.read', 'media.upload', 'media.update', 'media.deactivate', 'media.activate',
   'visit.read', 'visit.detail',
   'survey.read', 'survey.detail',
   'certificate.read',
@@ -446,16 +447,17 @@ WITH media_seed(slug, storage_path, alt_text_th, caption_th, display_order, is_c
     ('songkhla-old-town', 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=1200&auto=format&fit=crop', 'เมืองเก่าสงขลา', 'สถาปัตยกรรมและศิลปะชุมชน', 1, true),
     ('pak-bara-pier', 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1200&auto=format&fit=crop', 'ท่าเรือปากบารา', 'ประตูสู่ทะเลสตูล', 1, true)
 )
-INSERT INTO public.attraction_media (attraction_id, media_type, storage_path, alt_text_th, caption_th, display_order, is_cover, is_active)
-SELECT a.attraction_id, 'external_url', m.storage_path, m.alt_text_th, m.caption_th, m.display_order, m.is_cover, true
+INSERT INTO public.content_media (attraction_id, media_type, storage_path, alt_text_th, caption_th, display_order, is_cover, is_active, lifecycle_status)
+SELECT a.attraction_id, 'external_url', m.storage_path, m.alt_text_th, m.caption_th, m.display_order, m.is_cover, true, 'active'
 FROM media_seed m
 JOIN public.attractions a ON a.slug = m.slug
-ON CONFLICT (attraction_id, storage_path) DO UPDATE
+ON CONFLICT (attraction_id, storage_path) WHERE attraction_id IS NOT NULL DO UPDATE
 SET alt_text_th = EXCLUDED.alt_text_th,
     caption_th = EXCLUDED.caption_th,
     display_order = EXCLUDED.display_order,
     is_cover = EXCLUDED.is_cover,
-    is_active = EXCLUDED.is_active;
+    is_active = EXCLUDED.is_active,
+    lifecycle_status = EXCLUDED.lifecycle_status;
 
 WITH spot_seed(slug, spot_name_th, spot_name_en, description_th, display_order, code, label) AS (
   VALUES
@@ -1134,7 +1136,7 @@ WITH acc_seed(province_en, slug, name_th, name_en, type_en, price, lat, lng, img
 )
 INSERT INTO public.accommodations (
   province_id, slug, name_th, name_en, accommodation_type,
-  latitude, longitude, cover_image_url, price_range, is_published, is_active
+  latitude, longitude, price_range, is_published, is_active
 )
 SELECT
   p.province_id,
@@ -1144,7 +1146,6 @@ SELECT
   s.type_en,
   s.lat,
   s.lng,
-  s.img,
   s.price,
   true,
   true
@@ -1157,7 +1158,6 @@ SET province_id = EXCLUDED.province_id,
     accommodation_type = EXCLUDED.accommodation_type,
     latitude = EXCLUDED.latitude,
     longitude = EXCLUDED.longitude,
-    cover_image_url = EXCLUDED.cover_image_url,
     price_range = EXCLUDED.price_range,
     is_published = EXCLUDED.is_published,
     is_active = EXCLUDED.is_active;

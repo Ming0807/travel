@@ -16,7 +16,8 @@ import {
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ReviewSubmissionForm } from "@/components/reviews/ReviewSubmissionForm";
 import { VISTA_360_EXTERNAL_URL } from "@/constants/product";
-import { Compass } from "@phosphor-icons/react/dist/ssr";
+import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
+import { Compass, MapPinLine } from "@phosphor-icons/react/dist/ssr";
 
 export const dynamic = "force-dynamic";
 
@@ -39,9 +40,17 @@ export default async function AttractionDetailPage({ params }: { params: Promise
   const attractionId = attractionRow?.attraction_id ? Number(attractionRow.attraction_id) : undefined;
   const reviewStats = attractionId ? await getReviewStatsByAttraction(attractionId) : null;
   const publicReviews = attractionId ? await listPublicReviewsByAttraction(attractionId) : [];
+  const locale = "th";
+  const sections = buildAttractionSectionNavigation(data, { locale, includeReviews: true });
+  const sectionLabel = (key: Parameters<typeof getAttractionSectionLabel>[0]) =>
+    getAttractionSectionLabel(key, locale);
+  const hasCoordinates = data.latitude !== null && data.longitude !== null;
+  const mapsUrl = hasCoordinates
+    ? `https://www.google.com/maps?q=${data.latitude},${data.longitude}`
+    : null;
 
   return (
-    <main className="bg-white min-h-screen pb-12">
+    <main className="bg-white min-h-screen pb-24 lg:pb-12">
       {/*
         We don't use PageShell here because the layout is edge-to-edge for the gallery
         on mobile, and has specific max-width constraints matching the design.
@@ -66,15 +75,15 @@ export default async function AttractionDetailPage({ params }: { params: Promise
 
           {/* Left Column (Main Content) */}
           <div className="min-w-0">
-            <AttractionTabs />
+            <AttractionTabs sections={sections} mobileLabel="เลือกส่วนของหน้า" />
 
             {/* Sections */}
             <div className="flex flex-col gap-12">
               {/* Overview */}
-              <section id="overview" className="scroll-mt-24">
-                <h2 className="mb-4 text-2xl font-bold text-ink">Overview</h2>
+              <section id="overview" className="scroll-mt-28">
+                <h2 className="mb-4 text-2xl font-bold text-ink">{sectionLabel("overview")}</h2>
                 <p className="text-base leading-relaxed text-muted">
-                  {data.description || "No public overview has been added for this attraction yet."}
+                  {data.description || "ยังไม่ได้เพิ่มคำอธิบายสำหรับสถานที่นี้"}
                 </p>
               </section>
 
@@ -82,9 +91,9 @@ export default async function AttractionDetailPage({ params }: { params: Promise
               {data.thingsToDo.length > 0 && (
                 <AttractionCardsRow
                   id="things-to-do"
-                  title="Things to Do"
+                  title={sectionLabel("things_to_do")}
                   items={data.thingsToDo}
-                  viewAllText="View all things to do"
+                  viewAllText="ดูกิจกรรมทั้งหมด"
                 />
               )}
 
@@ -92,9 +101,9 @@ export default async function AttractionDetailPage({ params }: { params: Promise
               {data.whereToStay.length > 0 && (
                 <AttractionCardsRow
                   id="where-to-stay"
-                  title="Where to Stay"
+                  title={sectionLabel("where_to_stay")}
                   items={data.whereToStay}
-                  viewAllText="View all hotels"
+                  viewAllText="ดูที่พักทั้งหมด"
                 />
               )}
 
@@ -102,32 +111,61 @@ export default async function AttractionDetailPage({ params }: { params: Promise
               {data.foodAndDrink.length > 0 && (
                 <AttractionCardsRow
                   id="food"
-                  title="Food & Drink"
+                  title={sectionLabel("food_drink")}
                   items={data.foodAndDrink}
-                  viewAllText="View all restaurants"
+                  viewAllText="ดูร้านอาหารทั้งหมด"
                 />
               )}
 
               {/* Tips */}
-              {data.travelTips.length > 0 && <AttractionTips tips={data.travelTips} />}
+              {data.travelTips.length > 0 && <AttractionTips tips={data.travelTips} title={sectionLabel("travel_tips")} />}
 
-              {/* How to Get There & Map placeholder */}
-              <section id="how-to-get-there" className="scroll-mt-24 pt-8">
-                <h2 className="mb-4 text-2xl font-bold text-ink">How to Get There</h2>
+              {/* How to Get There */}
+              <section id="how-to-get-there" className="scroll-mt-28 pt-8">
+                <h2 className="mb-4 text-2xl font-bold text-ink">{sectionLabel("how_to_get_there")}</h2>
                 <p className="mb-6 text-sm leading-relaxed text-muted whitespace-pre-wrap">
-                  {data.howToGetThere || "Travel access details have not been added yet."}
+                  {data.howToGetThere || "ยังไม่ได้เพิ่มรายละเอียดการเดินทาง"}
                 </p>
-                <div className="aspect-[21/9] w-full overflow-hidden rounded-3xl bg-[#F0EBE1] border border-ink/5 flex items-center justify-center relative">
-                  {/* Decorative Map Line */}
-                  <svg width="100%" height="100%" viewBox="0 0 800 300" preserveAspectRatio="none" className="absolute inset-0 text-coral/20">
-                    <path d="M 100 150 Q 300 50 500 150 T 900 150" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="10 10"/>
-                  </svg>
-                  <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-coral text-white shadow-lg shadow-coral/30">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                    </svg>
+                {hasCoordinates ? (
+                  <div className="rounded-3xl border border-ink/10 bg-slate-50 p-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-coral text-white">
+                          <MapPinLine size={22} weight="bold" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-ink">พิกัดสถานที่</p>
+                          <p className="mt-1 text-sm leading-6 text-muted">
+                            {data.addressText || `${data.latitude!.toFixed(5)}, ${data.longitude!.toFixed(5)}`}
+                          </p>
+                          <p className="mt-1 font-mono text-xs text-muted">
+                            {data.latitude!.toFixed(5)}, {data.longitude!.toFixed(5)}
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href={mapsUrl ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-5 py-2 text-sm font-bold text-white transition hover:bg-coral"
+                      >
+                        เปิดแผนที่
+                      </a>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+                    <div className="flex items-start gap-3">
+                      <MapPinLine className="mt-0.5 shrink-0 text-amber-700" size={22} weight="duotone" />
+                      <div>
+                        <p className="text-sm font-black">ยังไม่ได้เพิ่มพิกัด</p>
+                        <p className="mt-1 text-sm leading-6">
+                          หน้านี้จะแสดงแผนที่จริงได้หลังจากแอดมินเพิ่ม latitude และ longitude ใน CMS
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </section>
 
               {/* Reviews */}
@@ -136,6 +174,7 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                 reviewsCount={data.reviewsCount}
                 stats={reviewStats ?? undefined}
                 reviews={publicReviews.length > 0 ? publicReviews : undefined}
+                title={sectionLabel("reviews")}
               >
                 <div className="mt-8">
                   <ReviewSubmissionForm attractionId={attractionId ?? undefined} />
@@ -146,9 +185,9 @@ export default async function AttractionDetailPage({ params }: { params: Promise
               {data.articles && data.articles.length > 0 && (
                 <AttractionCardsRow
                   id="articles"
-                  title="Recommended Articles"
+                  title={sectionLabel("articles")}
                   items={data.articles}
-                  viewAllText="View all articles"
+                  viewAllText="ดูบทความทั้งหมด"
                 />
               )}
             </div>

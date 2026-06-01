@@ -10,6 +10,8 @@ import {
   updateAdminAttractionStatus,
   findAttractionBySlug,
   getAdminAttractionById,
+  updateAdminAttractionField,
+  getInlineFieldColumn,
   updateAdminAttractionRelatedContent,
 } from "@/lib/repositories/admin-attraction.repository";
 
@@ -128,6 +130,40 @@ export async function toggleAttractionActiveAction(attractionId: number): Promis
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังเปลี่ยนสถานะใช้งานไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
+// Inline field update for the visual editor.
+
+export async function updateAttractionFieldAction(
+  attractionId: number,
+  fieldName: string,
+  value: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const guard = await requirePermission("attraction.update");
+
+    const dbField = getInlineFieldColumn(fieldName);
+    if (!dbField) {
+      return { success: false, error: "Invalid field name" };
+    }
+
+    await updateAdminAttractionField(attractionId, fieldName, value);
+
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "attraction.update",
+      entityType: "attraction",
+      entityId: attractionId,
+      newValues: { [fieldName]: value },
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    console.error("Inline field update failed:", error);
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    return { success: false, error: "ยังบันทึกการแก้ไขไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 

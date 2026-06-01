@@ -2,12 +2,13 @@ import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 
 type AttractionTipsProps = {
   tips: string[];
+  title?: string;
 };
 
-export function AttractionTips({ tips }: AttractionTipsProps) {
+export function AttractionTips({ tips, title = "Travel Tips" }: AttractionTipsProps) {
   return (
     <div id="tips" className="scroll-mt-24 pt-8">
-      <h2 className="mb-6 text-2xl font-bold text-ink">Travel Tips</h2>
+      <h2 className="mb-6 text-2xl font-bold text-ink">{title}</h2>
       <div className="rounded-3xl bg-[#F0EBE1] p-8">
         <ul className="flex flex-col gap-4">
           {tips.map((tip, index) => (

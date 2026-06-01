@@ -1,5 +1,16 @@
 # API_ENDPOINTS.md
 
+## Admin Media Endpoints
+
+These endpoints support official CMS media management. They require admin authentication and server-side permission checks.
+
+| Method | Path | Status | Purpose | Permission | Notes |
+|---|---|---|---|---|---|
+| `GET` | `/api/admin/media/[id]` | Implemented | Load used-in references for a media asset by `media_assets.id`. | `media.read` | Kept for Media Library asset workflows. |
+| `DELETE` | `/api/admin/media/[id]` | Implemented | Archive a media asset instead of hard deleting it. | `media.deactivate` | Returns used-in references so admins understand impact. |
+| `PATCH` | `/api/admin/media/[id]` | Implemented | Restore an archived media asset with `{ "action": "unarchive" }`. | `media.activate` | Requires the `media.activate` seed/migration permission. |
+| `GET` | `/api/admin/media/references?storagePath=...` | Implemented | Load used-in references by storage path for content-media editors. | `media.read` | Preferred for attraction/story/route media managers that work with `content_media` records. |
+
 ## Phase 11 LINE LIFF Endpoints
 
 These endpoints support optional LINE account linking after the tourist has already received the certificate/stamp reward. They must not be used as entry gates for QR check-in, photo upload, certificate download, passport guest mode, or survey access.

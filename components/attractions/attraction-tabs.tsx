@@ -1,65 +1,97 @@
 "use client";
 
-import { useState } from "react";
-import { CaretDown } from "@phosphor-icons/react/dist/ssr";
+import { useEffect, useState } from "react";
+import type { AttractionSectionNavItem } from "@/lib/content/attraction-sections";
 
-const tabs = [
-  { id: "overview", label: "Overview" },
-  { id: "things-to-do", label: "Things to Do" },
-  // { id: "where-to-stay", label: "Where to Stay" }, // Hidden until module is ready
-  { id: "food", label: "Food & Drink" },
-  { id: "tips", label: "Travel Tips" },
-  { id: "how-to-get-there", label: "How to Get There" },
-  { id: "reviews", label: "Reviews Summary" },
-  { id: "articles", label: "Recommended Articles" },
-];
+type AttractionTabsProps = {
+  sections: AttractionSectionNavItem[];
+  mobileLabel?: string;
+};
 
-export function AttractionTabs() {
-  const [activeTab, setActiveTab] = useState("overview");
+export function AttractionTabs({ sections, mobileLabel = "ไปยังส่วน" }: AttractionTabsProps) {
+  const [activeTab, setActiveTab] = useState(sections[0]?.id ?? "");
+
+  useEffect(() => {
+    if (!sections.some((section) => section.id === activeTab)) {
+      setActiveTab(sections[0]?.id ?? "");
+    }
+  }, [activeTab, sections]);
+
+  useEffect(() => {
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visibleEntry?.target.id) {
+          setActiveTab(visibleEntry.target.id);
+        }
+      },
+      { rootMargin: "-120px 0px -55% 0px", threshold: [0.1, 0.3, 0.6] }
+    );
+
+    sections.forEach((section) => {
+      const element = document.getElementById(section.id);
+      if (element) observer.observe(element);
+    });
+
+    return () => observer.disconnect();
+  }, [sections]);
 
   const scrollToSection = (id: string) => {
     setActiveTab(id);
     const element = document.getElementById(id);
     if (element) {
       const y = element.getBoundingClientRect().top + window.scrollY - 100;
-      window.scrollTo({ top: y, behavior: "smooth" });
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: y, behavior: prefersReducedMotion ? "auto" : "smooth" });
     }
   };
+
+  if (sections.length === 0) return null;
 
   return (
     <>
       {/* Desktop Sticky Tabs */}
-      <div className="sticky top-20 z-40 hidden border-b border-ink/10 bg-cream/90 backdrop-blur-md lg:block mb-10">
-        <div className="flex items-center gap-8 px-2 overflow-x-auto no-scrollbar">
-          {tabs.map((tab) => (
+      <div className="sticky top-20 z-40 mb-10 hidden border-b border-ink/10 bg-white/95 py-3 backdrop-blur-md lg:block">
+        <nav className="flex flex-wrap items-center gap-2" aria-label="Attraction page sections">
+          {sections.map((tab) => (
             <button
               key={tab.id}
               onClick={() => scrollToSection(tab.id)}
-              className={`whitespace-nowrap py-4 text-sm font-bold transition-colors border-b-2 ${
+              className={`min-h-10 rounded-full border px-3 py-2 text-sm font-bold transition-colors ${
                 activeTab === tab.id
-                  ? "border-coral text-coral"
-                  : "border-transparent text-ink hover:text-coral"
+                  ? "border-coral bg-coral text-white"
+                  : "border-ink/10 bg-white text-ink hover:border-coral/30 hover:bg-cream"
               }`}
             >
-              {tab.label}
+              {tab.shortLabel}
             </button>
           ))}
-        </div>
+        </nav>
       </div>
 
-      {/* Mobile Accordion Menu (Alternative to Tabs on small screens) */}
-      <div className="lg:hidden mb-8">
-        <div className="rounded-2xl bg-white border border-ink/5 shadow-sm overflow-hidden">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => scrollToSection(tab.id)}
-              className="flex w-full items-center justify-between border-b border-ink/5 px-6 py-4 text-left text-sm font-bold text-ink hover:bg-cream/50 transition-colors last:border-b-0"
-            >
-              {tab.label}
-              <CaretDown size={16} weight="bold" className="text-muted" />
-            </button>
-          ))}
+      {/* Mobile jump menu */}
+      <div className="sticky top-0 z-30 mb-8 rounded-2xl border border-ink/10 bg-white/95 p-3 shadow-sm backdrop-blur-md lg:hidden">
+        <label htmlFor="attraction-section-jump" className="mb-2 block text-xs font-bold text-muted">
+          {mobileLabel}
+        </label>
+        <div className="relative">
+          <select
+            id="attraction-section-jump"
+            value={activeTab}
+            onChange={(event) => scrollToSection(event.target.value)}
+            className="min-h-12 w-full rounded-xl border border-ink/10 bg-cream px-4 py-3 text-sm font-bold text-ink outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/20"
+          >
+            {sections.map((tab) => (
+              <option key={tab.id} value={tab.id}>
+                {tab.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </>

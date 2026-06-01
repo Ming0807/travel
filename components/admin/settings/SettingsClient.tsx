@@ -1,9 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle,
+  Circle,
+  EnvelopeSimple,
   FloppyDisk,
   Gear,
   GlobeHemisphereWest,
@@ -47,35 +49,43 @@ const GROUPS: {
 }[] = [
   {
     id: "homepage",
-    label: "Homepage",
-    description: "Hero, popular destination slots, highlight blocks",
+    label: "หน้าแรก",
+    description: "ภาพ Hero, สถานที่ยอดนิยม, highlight blocks",
     icon: GlobeHemisphereWest,
   },
   {
     id: "publicPages",
-    label: "Public Pages",
-    description: "Attractions, stories, routes, restaurants page headers",
+    label: "หน้าสาธารณะ",
+    description: "ส่วนหัวของหน้า Attractions, Stories, Routes, Restaurants",
     icon: ImageSquare,
   },
   {
     id: "contact",
-    label: "Contact & Footer",
-    description: "Contact channels, social links, footer copy",
-    icon: Gear,
+    label: "ติดต่อและส่วนท้าย",
+    description: "ช่องทางติดต่อ, ลิงก์ social, ข้อความท้ายเว็บ",
+    icon: EnvelopeSimple,
   },
   {
     id: "seo",
     label: "SEO",
-    description: "Default meta title, description, sharing image",
+    description: "Meta title, meta description, รูปตอนแชร์ลิงก์",
     icon: MagnifyingGlass,
   },
   {
     id: "system",
-    label: "System",
-    description: "Feature toggles and maintenance message",
+    label: "ระบบ",
+    description: "เปิด/ปิดโมดูลหลัก และข้อความปิดปรับปรุง",
     icon: ToggleRight,
   },
 ];
+
+const GROUP_KEYS: Record<SettingsGroupId, SiteSettingKey[]> = {
+  homepage: ["homepage_hero", "homepage_featured_attractions", "homepage_how_it_works", "homepage_highlights", "homepage_cta"],
+  publicPages: ["attractions_page_hero", "attractions_page_banner", "stories_page_hero", "stories_page_cta", "routes_page_hero", "restaurants_page_hero", "restaurants_page_feature", "restaurants_page_cta"],
+  contact: ["general_info", "social_media", "footer_info"],
+  seo: ["seo_settings"],
+  system: ["feature_toggles", "maintenance_info"],
+};
 
 function createInitialSettings(rows: SiteSettingRow[]) {
   const settings = structuredClone(SITE_SETTING_DEFAULTS) as SettingsState;
@@ -109,6 +119,38 @@ function isSettingsGroupId(value: unknown): value is SettingsGroupId {
   return typeof value === "string" && GROUPS.some((group) => group.id === value);
 }
 
+// Static mapping from setting key to settings group — defined outside component
+const KEY_TO_GROUP: Record<string, SettingsGroupId> = {
+  homepage_hero: "homepage",
+  homepage_featured_attractions: "homepage",
+  homepage_how_it_works: "homepage",
+  homepage_highlights: "homepage",
+  homepage_cta: "homepage",
+  attractions_page_hero: "publicPages",
+  attractions_page_banner: "publicPages",
+  stories_page_hero: "publicPages",
+  stories_page_cta: "publicPages",
+  routes_page_hero: "publicPages",
+  restaurants_page_hero: "publicPages",
+  restaurants_page_feature: "publicPages",
+  restaurants_page_cta: "publicPages",
+  general_info: "contact",
+  social_media: "contact",
+  footer_info: "contact",
+  seo_settings: "seo",
+  feature_toggles: "system",
+  maintenance_info: "system",
+};
+
+function computeDirtyCountPerGroup(dirtyKeys: Set<string>): Partial<Record<SettingsGroupId, number>> {
+  const counts: Partial<Record<SettingsGroupId, number>> = {};
+  for (const key of dirtyKeys) {
+    const groupId = KEY_TO_GROUP[key] ?? "homepage";
+    counts[groupId] = (counts[groupId] ?? 0) + 1;
+  }
+  return counts;
+}
+
 export function SettingsClient({
   initialSettings,
   initialGroup,
@@ -125,8 +167,48 @@ export function SettingsClient({
     message: "",
   });
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const activeGroupMeta = useMemo(() => GROUPS.find((group) => group.id === activeGroup) ?? GROUPS[0], [activeGroup]);
+
+  // Compute dirty count per group — derived from dirtyKeys
+  const dirtyCountPerGroup = useMemo(() => computeDirtyCountPerGroup(dirtyKeys), [dirtyKeys]);
+
+  useEffect(() => {
+    return () => {
+      if (transitionRef.current) clearTimeout(transitionRef.current);
+    };
+  }, []);
+
+  function handleGroupChange(newGroup: SettingsGroupId) {
+    if (newGroup === activeGroup) return;
+    setIsTransitioning(true);
+    if (transitionRef.current) clearTimeout(transitionRef.current);
+    transitionRef.current = setTimeout(() => {
+      setActiveGroup(newGroup);
+      setIsTransitioning(false);
+      transitionRef.current = undefined;
+    }, 150);
+  }
+
+  function resetGroupToDefaults(groupId: SettingsGroupId) {
+    const keys = GROUP_KEYS[groupId];
+    const defaults = SITE_SETTING_DEFAULTS;
+    setSettings((current) => {
+      const updated = { ...current };
+      for (const key of keys) {
+        updated[key] = structuredClone(defaults[key]);
+      }
+      return updated;
+    });
+    setDirtyKeys((current) => {
+      const next = new Set(current);
+      for (const key of keys) next.add(key);
+      return next;
+    });
+    setStatus({ type: "info", message: `รีเซ็ตค่ากลุ่ม \"${groupId}\" เป็นค่าเริ่มต้นแล้ว กดบันทึกเพื่อยืนยัน` });
+  }
 
   function markDirty(key: SiteSettingKey) {
     setDirtyKeys((current) => {
@@ -224,7 +306,9 @@ export function SettingsClient({
             type="button"
             onClick={saveChanges}
             disabled={saving || dirtyKeys.size === 0}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#073F37] px-4 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50"
+            className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50 ${
+              dirtyKeys.size > 0 ? "bg-slate-400" : "bg-[#073F37]"
+            }`}
           >
             <FloppyDisk size={18} weight="bold" />
             {saving ? "กำลังบันทึก..." : dirtyKeys.size ? `บันทึก ${dirtyKeys.size} รายการ` : "บันทึกแล้ว"}
@@ -234,6 +318,7 @@ export function SettingsClient({
 
       {status.type ? (
         <div
+          role="alert"
           className={`flex gap-3 rounded-lg border p-4 text-sm font-bold ${
             status.type === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
@@ -262,64 +347,130 @@ export function SettingsClient({
               <button
                 type="button"
                 key={group.id}
-                onClick={() => setActiveGroup(group.id)}
-                className={`flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition ${
+                onClick={() => handleGroupChange(group.id)}
+                className={`relative flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition ${
                   isActive
                     ? "border-[#0A6B62] bg-[#E6F4EF] text-[#073F37]"
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                 }`}
               >
                 <Icon className="mt-0.5 shrink-0" size={20} weight={isActive ? "fill" : "regular"} />
-                <span>
-                  <span className="block text-sm font-black">{group.label}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="block text-sm font-black">{group.label}</span>
+                    {dirtyCountPerGroup[group.id] ? (
+                      <Circle
+                        className="shrink-0 animate-pulse text-[#F3704C]"
+                        size={8}
+                        weight="fill"
+                        aria-label="มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก"
+                      />
+                    ) : null}
+                  </span>
                   <span className="mt-0.5 block text-xs leading-5 text-slate-500">{group.description}</span>
                 </span>
+                {dirtyCountPerGroup[group.id] ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#F3704C] text-[10px] font-black text-white shadow-sm">
+                    {dirtyCountPerGroup[group.id]! > 9 ? "9+" : dirtyCountPerGroup[group.id]}
+                  </span>
+                ) : null}
               </button>
             );
           })}
         </nav>
 
         <div className="space-y-5">
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#F3704C]">Current Section</p>
-            <h2 className="mt-1 text-xl font-black text-slate-800">{activeGroupMeta.label}</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-500">{activeGroupMeta.description}</p>
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#F3704C]">หมวดที่กำลังแก้ไข</p>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-black text-slate-800">{activeGroupMeta.label}</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">{activeGroupMeta.description}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => resetGroupToDefaults(activeGroup)}
+                className="min-h-10 shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-black text-amber-800 transition hover:bg-amber-100 active:scale-[0.97]"
+                title="รีเซ็ตค่าทั้งหมดในกลุ่มนี้กลับเป็นค่าเริ่มต้น"
+              >
+                รีเซ็ตเป็นค่าเริ่มต้น
+              </button>
+            </div>
           </div>
 
-          {activeGroup === "homepage" ? (
-            <HomepageSettings
-              settings={settings}
-              updateSettingObject={updateSettingObject}
-              updateHeroImage={updateHeroImage}
-              openPicker={setPickerTarget}
-            />
-          ) : null}
+          <div
+            className={`transition-all duration-200 ${
+              isTransitioning ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
+            }`}
+          >
+            {activeGroup === "homepage" ? (
+              <HomepageSettings
+                settings={settings}
+                updateSettingObject={updateSettingObject}
+                updateHeroImage={updateHeroImage}
+                openPicker={setPickerTarget}
+              />
+            ) : null}
 
-          {activeGroup === "publicPages" ? (
-            <PublicPageSettings
-              settings={settings}
-              updateSettingObject={updateSettingObject}
-              openPicker={setPickerTarget}
-            />
-          ) : null}
+            {activeGroup === "publicPages" ? (
+              <PublicPageSettings
+                settings={settings}
+                updateSettingObject={updateSettingObject}
+                openPicker={setPickerTarget}
+              />
+            ) : null}
 
-          {activeGroup === "contact" ? (
-            <ContactSettings settings={settings} updateSettingObject={updateSettingObject} />
-          ) : null}
+            {activeGroup === "contact" ? (
+              <ContactSettings settings={settings} updateSettingObject={updateSettingObject} />
+            ) : null}
 
-          {activeGroup === "seo" ? (
-            <SeoSettings
-              settings={settings}
-              updateSettingObject={updateSettingObject}
-              openPicker={setPickerTarget}
-            />
-          ) : null}
+            {activeGroup === "seo" ? (
+              <SeoSettings
+                settings={settings}
+                updateSettingObject={updateSettingObject}
+                openPicker={setPickerTarget}
+              />
+            ) : null}
 
-          {activeGroup === "system" ? (
-            <SystemSettings settings={settings} updateSettingObject={updateSettingObject} />
-          ) : null}
+            {activeGroup === "system" ? (
+              <SystemSettings settings={settings} updateSettingObject={updateSettingObject} />
+            ) : null}
+          </div>
+
         </div>
       </div>
+
+      {/* Fixed bottom save bar when there are dirty changes */}
+      {dirtyKeys.size > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-6 py-4 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] backdrop-blur-sm">
+          <div className="mx-auto flex max-w-7xl flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-center gap-2 text-sm font-bold text-slate-600">
+              <Circle className="text-[#F3704C]" size={8} weight="fill" />
+              {dirtyKeys.size === 1
+                ? "มีการเปลี่ยนแปลง 1 รายการที่ยังไม่ได้บันทึก"
+                : `มีการเปลี่ยนแปลง ${dirtyKeys.size} รายการที่ยังไม่ได้บันทึก`}
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDirtyKeys(new Set())}
+                className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-600 transition hover:bg-slate-50"
+              >
+                ยกเลิกทั้งหมด
+              </button>
+              <button
+                type="button"
+                onClick={saveChanges}
+                disabled={saving}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#073F37] px-5 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <FloppyDisk size={18} weight="bold" />
+                {saving ? "กำลังบันทึก..." : `บันทึกทั้งหมด (${dirtyKeys.size})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <MediaPickerModal
         isOpen={!!pickerTarget}
@@ -330,6 +481,8 @@ export function SettingsClient({
         }}
         title="เลือกภาพจาก Media Library"
       />
+      {/* Spacer for fixed bottom save bar */}
+      {dirtyKeys.size > 0 ? <div className="h-20" /> : null}
     </div>
   );
 }
@@ -347,10 +500,10 @@ function HomepageSettings({
 }) {
   return (
     <>
-      <SettingsSection title="Homepage Hero" description="ข้อความและภาพชุดแรกของหน้าแรก">
-        <TextInput label="Headline" value={settings.homepage_hero.title} onChange={(value) => updateSettingObject("homepage_hero", { title: value })} />
-        <TextInput label="Subtitle / Eyebrow" value={settings.homepage_hero.subtitle} onChange={(value) => updateSettingObject("homepage_hero", { subtitle: value })} />
-        <TextArea label="Description" value={settings.homepage_hero.description} onChange={(value) => updateSettingObject("homepage_hero", { description: value })} rows={3} />
+      <SettingsSection title="ภาพหลักหน้าแรก (Hero)" description="ข้อความและภาพชุดแรกของหน้าแรก">
+        <TextInput label="หัวข้อหลัก" value={settings.homepage_hero.title} onChange={(value) => updateSettingObject("homepage_hero", { title: value })} />
+        <TextInput label="หัวข้อย่อย" value={settings.homepage_hero.subtitle} onChange={(value) => updateSettingObject("homepage_hero", { subtitle: value })} />
+        <TextArea label="คำอธิบาย" value={settings.homepage_hero.description} onChange={(value) => updateSettingObject("homepage_hero", { description: value })} rows={3} />
         <div className="grid gap-4 md:grid-cols-3">
           {[0, 1, 2].map((index) => (
             <ImageField
@@ -364,38 +517,38 @@ function HomepageSettings({
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Popular Destinations" description="เลือกสถานที่ท่องเที่ยวที่ต้องการล็อกให้ขึ้นหน้าแรก (ลากวางเพื่อสลับตำแหน่ง)">
+      <SettingsSection title="สถานที่ยอดนิยม" description="เลือกสถานที่ท่องเที่ยวที่ต้องการล็อกให้ขึ้นหน้าแรก (ลากวางเพื่อสลับตำแหน่ง)">
         <HomepageFeaturedEditor
           slugs={settings.homepage_featured_attractions.slugs ?? []}
           onChange={(slugs) => updateSettingObject("homepage_featured_attractions", { slugs })}
         />
       </SettingsSection>
 
-      <SettingsSection title="How It Works" description="บล็อกอธิบาย QR, certificate, stamp แบบสั้น">
-        <TextInput label="Title" value={settings.homepage_how_it_works.title} onChange={(value) => updateSettingObject("homepage_how_it_works", { title: value })} />
-        <TextInput label="Subtitle" value={settings.homepage_how_it_works.subtitle} onChange={(value) => updateSettingObject("homepage_how_it_works", { subtitle: value })} />
-        <TextArea label="Description" value={settings.homepage_how_it_works.description} onChange={(value) => updateSettingObject("homepage_how_it_works", { description: value })} rows={3} />
+      <SettingsSection title="วิธีการทำงาน" description="บล็อกอธิบาย QR, certificate, stamp แบบสั้น">
+        <TextInput label="หัวข้อ" value={settings.homepage_how_it_works.title} onChange={(value) => updateSettingObject("homepage_how_it_works", { title: value })} />
+        <TextInput label="หัวข้อย่อย" value={settings.homepage_how_it_works.subtitle} onChange={(value) => updateSettingObject("homepage_how_it_works", { subtitle: value })} />
+        <TextArea label="คำอธิบาย" value={settings.homepage_how_it_works.description} onChange={(value) => updateSettingObject("homepage_how_it_works", { description: value })} rows={3} />
       </SettingsSection>
 
-      <SettingsSection title="Highlights" description="เรื่องเล่าและภาพประกอบช่วงกลางหน้าแรก">
-        <TextInput label="Title" value={settings.homepage_highlights.title} onChange={(value) => updateSettingObject("homepage_highlights", { title: value })} />
+      <SettingsSection title="ไฮไลต์" description="เรื่องเล่าและภาพประกอบช่วงกลางหน้าแรก">
+        <TextInput label="หัวข้อ" value={settings.homepage_highlights.title} onChange={(value) => updateSettingObject("homepage_highlights", { title: value })} />
         <div className="grid gap-4 md:grid-cols-2">
-          <TextInput label="Author name" value={settings.homepage_highlights.authorName} onChange={(value) => updateSettingObject("homepage_highlights", { authorName: value })} />
-          <TextInput label="Location" value={settings.homepage_highlights.location} onChange={(value) => updateSettingObject("homepage_highlights", { location: value })} />
+          <TextInput label="ชื่อผู้เขียน" value={settings.homepage_highlights.authorName} onChange={(value) => updateSettingObject("homepage_highlights", { authorName: value })} />
+          <TextInput label="สถานที่" value={settings.homepage_highlights.location} onChange={(value) => updateSettingObject("homepage_highlights", { location: value })} />
         </div>
-        <TextArea label="Quote" value={settings.homepage_highlights.quote} onChange={(value) => updateSettingObject("homepage_highlights", { quote: value })} rows={4} />
+        <TextArea label="คำคม" value={settings.homepage_highlights.quote} onChange={(value) => updateSettingObject("homepage_highlights", { quote: value })} rows={4} />
         <div className="grid gap-4 md:grid-cols-2">
-          <ImageField label="Video cover" value={settings.homepage_highlights.videoCover} onRemove={() => updateSettingObject("homepage_highlights", { videoCover: "" })} onPick={() => openPicker({ key: "homepage_highlights", field: "videoCover" })} />
-          <ImageField label="Image cover" value={settings.homepage_highlights.imageCover} onRemove={() => updateSettingObject("homepage_highlights", { imageCover: "" })} onPick={() => openPicker({ key: "homepage_highlights", field: "imageCover" })} />
+          <ImageField label="ภาพปกวิดีโอ" value={settings.homepage_highlights.videoCover} onRemove={() => updateSettingObject("homepage_highlights", { videoCover: "" })} onPick={() => openPicker({ key: "homepage_highlights", field: "videoCover" })} />
+          <ImageField label="ภาพปก" value={settings.homepage_highlights.imageCover} onRemove={() => updateSettingObject("homepage_highlights", { imageCover: "" })} onPick={() => openPicker({ key: "homepage_highlights", field: "imageCover" })} />
         </div>
-        <TextInput label="Image title" value={settings.homepage_highlights.imageTitle} onChange={(value) => updateSettingObject("homepage_highlights", { imageTitle: value })} />
+        <TextInput label="ชื่อภาพ" value={settings.homepage_highlights.imageTitle} onChange={(value) => updateSettingObject("homepage_highlights", { imageTitle: value })} />
       </SettingsSection>
 
-      <SettingsSection title="Homepage CTA" description="บล็อก call-to-action ท้ายหน้าแรก">
-        <TextInput label="Title" value={settings.homepage_cta.title} onChange={(value) => updateSettingObject("homepage_cta", { title: value })} />
-        <TextInput label="Subtitle" value={settings.homepage_cta.subtitle} onChange={(value) => updateSettingObject("homepage_cta", { subtitle: value })} />
-        <TextArea label="Description" value={settings.homepage_cta.description} onChange={(value) => updateSettingObject("homepage_cta", { description: value })} rows={3} />
-        <ImageField label="Background image" value={settings.homepage_cta.bgImage} onRemove={() => updateSettingObject("homepage_cta", { bgImage: "" })} onPick={() => openPicker({ key: "homepage_cta", field: "bgImage" })} />
+      <SettingsSection title="CTA หน้าแรก" description="บล็อก call-to-action ท้ายหน้าแรก">
+        <TextInput label="หัวข้อ" value={settings.homepage_cta.title} onChange={(value) => updateSettingObject("homepage_cta", { title: value })} />
+        <TextInput label="หัวข้อย่อย" value={settings.homepage_cta.subtitle} onChange={(value) => updateSettingObject("homepage_cta", { subtitle: value })} />
+        <TextArea label="คำอธิบาย" value={settings.homepage_cta.description} onChange={(value) => updateSettingObject("homepage_cta", { description: value })} rows={3} />
+        <ImageField label="ภาพพื้นหลัง" value={settings.homepage_cta.bgImage} onRemove={() => updateSettingObject("homepage_cta", { bgImage: "" })} onPick={() => openPicker({ key: "homepage_cta", field: "bgImage" })} />
       </SettingsSection>
     </>
   );
@@ -412,48 +565,48 @@ function PublicPageSettings({
 }) {
   return (
     <>
-      <SettingsSection title="Attractions Page" description="ข้อความหัวหน้าและ banner ของหน้ารวมสถานที่">
-        <TextInput label="Hero title" value={settings.attractions_page_hero.title} onChange={(value) => updateSettingObject("attractions_page_hero", { title: value })} />
-        <TextArea label="Hero description" value={settings.attractions_page_hero.description} onChange={(value) => updateSettingObject("attractions_page_hero", { description: value })} rows={3} />
+      <SettingsSection title="หน้าสถานที่ท่องเที่ยว" description="ข้อความหัวและ banner ของหน้ารวมสถานที่">
+        <TextInput label="หัวข้อ Hero" value={settings.attractions_page_hero.title} onChange={(value) => updateSettingObject("attractions_page_hero", { title: value })} />
+        <TextArea label="คำอธิบาย Hero" value={settings.attractions_page_hero.description} onChange={(value) => updateSettingObject("attractions_page_hero", { description: value })} rows={3} />
         <div className="grid gap-4 md:grid-cols-2">
-          <TextInput label="Banner title" value={settings.attractions_page_banner.title} onChange={(value) => updateSettingObject("attractions_page_banner", { title: value })} />
-          <TextInput label="Banner subtitle" value={settings.attractions_page_banner.subtitle} onChange={(value) => updateSettingObject("attractions_page_banner", { subtitle: value })} />
-          <TextInput label="Button text" value={settings.attractions_page_banner.linkText} onChange={(value) => updateSettingObject("attractions_page_banner", { linkText: value })} />
-          <TextInput label="Button URL" value={settings.attractions_page_banner.linkUrl} onChange={(value) => updateSettingObject("attractions_page_banner", { linkUrl: value })} />
+          <TextInput label="หัวข้อ Banner" value={settings.attractions_page_banner.title} onChange={(value) => updateSettingObject("attractions_page_banner", { title: value })} />
+          <TextInput label="หัวข้อย่อย Banner" value={settings.attractions_page_banner.subtitle} onChange={(value) => updateSettingObject("attractions_page_banner", { subtitle: value })} />
+          <TextInput label="ข้อความปุ่ม" value={settings.attractions_page_banner.linkText} onChange={(value) => updateSettingObject("attractions_page_banner", { linkText: value })} />
+          <TextInput label="URL ปุ่ม" value={settings.attractions_page_banner.linkUrl} onChange={(value) => updateSettingObject("attractions_page_banner", { linkUrl: value })} />
         </div>
-        <ImageField label="Banner image" value={settings.attractions_page_banner.image} onRemove={() => updateSettingObject("attractions_page_banner", { image: "" })} onPick={() => openPicker({ key: "attractions_page_banner", field: "image" })} />
+        <ImageField label="ภาพ Banner" value={settings.attractions_page_banner.image} onRemove={() => updateSettingObject("attractions_page_banner", { image: "" })} onPick={() => openPicker({ key: "attractions_page_banner", field: "image" })} />
       </SettingsSection>
 
-      <SettingsSection title="Stories Page" description="ข้อความหัวหน้าและ CTA ของหน้าบทความ">
-        <TextInput label="Hero title" value={settings.stories_page_hero.title} onChange={(value) => updateSettingObject("stories_page_hero", { title: value })} />
-        <TextArea label="Hero description" value={settings.stories_page_hero.description} onChange={(value) => updateSettingObject("stories_page_hero", { description: value })} rows={3} />
-        <TextInput label="CTA title" value={settings.stories_page_cta.title} onChange={(value) => updateSettingObject("stories_page_cta", { title: value })} />
-        <TextInput label="CTA subtitle" value={settings.stories_page_cta.subtitle} onChange={(value) => updateSettingObject("stories_page_cta", { subtitle: value })} />
+      <SettingsSection title="หน้าบทความ" description="ข้อความหัวและ CTA ของหน้าบทความ">
+        <TextInput label="หัวข้อ Hero" value={settings.stories_page_hero.title} onChange={(value) => updateSettingObject("stories_page_hero", { title: value })} />
+        <TextArea label="คำอธิบาย Hero" value={settings.stories_page_hero.description} onChange={(value) => updateSettingObject("stories_page_hero", { description: value })} rows={3} />
+        <TextInput label="หัวข้อ CTA" value={settings.stories_page_cta.title} onChange={(value) => updateSettingObject("stories_page_cta", { title: value })} />
+        <TextInput label="หัวข้อย่อย CTA" value={settings.stories_page_cta.subtitle} onChange={(value) => updateSettingObject("stories_page_cta", { subtitle: value })} />
         <div className="grid gap-4 md:grid-cols-2">
-          <TextInput label="CTA button text" value={settings.stories_page_cta.linkText} onChange={(value) => updateSettingObject("stories_page_cta", { linkText: value })} />
-          <TextInput label="CTA URL" value={settings.stories_page_cta.linkUrl} onChange={(value) => updateSettingObject("stories_page_cta", { linkUrl: value })} />
+          <TextInput label="ข้อความปุ่ม CTA" value={settings.stories_page_cta.linkText} onChange={(value) => updateSettingObject("stories_page_cta", { linkText: value })} />
+          <TextInput label="URL CTA" value={settings.stories_page_cta.linkUrl} onChange={(value) => updateSettingObject("stories_page_cta", { linkUrl: value })} />
         </div>
-        <ImageField label="CTA image" value={settings.stories_page_cta.image} onRemove={() => updateSettingObject("stories_page_cta", { image: "" })} onPick={() => openPicker({ key: "stories_page_cta", field: "image" })} />
+        <ImageField label="ภาพ CTA" value={settings.stories_page_cta.image} onRemove={() => updateSettingObject("stories_page_cta", { image: "" })} onPick={() => openPicker({ key: "stories_page_cta", field: "image" })} />
       </SettingsSection>
 
-      <SettingsSection title="Routes Page" description="ข้อความหัวหน้าเส้นทางท่องเที่ยว">
-        <TextInput label="Hero title" value={settings.routes_page_hero.title} onChange={(value) => updateSettingObject("routes_page_hero", { title: value })} />
-        <TextArea label="Hero description" value={settings.routes_page_hero.description} onChange={(value) => updateSettingObject("routes_page_hero", { description: value })} rows={3} />
+      <SettingsSection title="หน้าเส้นทาง" description="ข้อความหัวหน้าเส้นทางท่องเที่ยว">
+        <TextInput label="หัวข้อ Hero" value={settings.routes_page_hero.title} onChange={(value) => updateSettingObject("routes_page_hero", { title: value })} />
+        <TextArea label="คำอธิบาย Hero" value={settings.routes_page_hero.description} onChange={(value) => updateSettingObject("routes_page_hero", { description: value })} rows={3} />
       </SettingsSection>
 
-      <SettingsSection title="Restaurants Page" description="ข้อความและภาพของหน้าร้านอาหาร">
-        <TextInput label="Hero title" value={settings.restaurants_page_hero.title} onChange={(value) => updateSettingObject("restaurants_page_hero", { title: value })} />
-        <TextArea label="Hero description" value={settings.restaurants_page_hero.description} onChange={(value) => updateSettingObject("restaurants_page_hero", { description: value })} rows={3} />
-        <TextInput label="Feature title" value={settings.restaurants_page_feature.title} onChange={(value) => updateSettingObject("restaurants_page_feature", { title: value })} />
-        <TextInput label="Feature subtitle" value={settings.restaurants_page_feature.subtitle} onChange={(value) => updateSettingObject("restaurants_page_feature", { subtitle: value })} />
-        <ImageField label="Feature image" value={settings.restaurants_page_feature.image} onRemove={() => updateSettingObject("restaurants_page_feature", { image: "" })} onPick={() => openPicker({ key: "restaurants_page_feature", field: "image" })} />
-        <TextInput label="CTA title" value={settings.restaurants_page_cta.title} onChange={(value) => updateSettingObject("restaurants_page_cta", { title: value })} />
-        <TextInput label="CTA subtitle" value={settings.restaurants_page_cta.subtitle} onChange={(value) => updateSettingObject("restaurants_page_cta", { subtitle: value })} />
+      <SettingsSection title="หน้าร้านอาหาร" description="ข้อความและภาพของหน้าร้านอาหาร">
+        <TextInput label="หัวข้อ Hero" value={settings.restaurants_page_hero.title} onChange={(value) => updateSettingObject("restaurants_page_hero", { title: value })} />
+        <TextArea label="คำอธิบาย Hero" value={settings.restaurants_page_hero.description} onChange={(value) => updateSettingObject("restaurants_page_hero", { description: value })} rows={3} />
+        <TextInput label="หัวข้อ Feature" value={settings.restaurants_page_feature.title} onChange={(value) => updateSettingObject("restaurants_page_feature", { title: value })} />
+        <TextInput label="หัวข้อย่อย Feature" value={settings.restaurants_page_feature.subtitle} onChange={(value) => updateSettingObject("restaurants_page_feature", { subtitle: value })} />
+        <ImageField label="ภาพ Feature" value={settings.restaurants_page_feature.image} onRemove={() => updateSettingObject("restaurants_page_feature", { image: "" })} onPick={() => openPicker({ key: "restaurants_page_feature", field: "image" })} />
+        <TextInput label="หัวข้อ CTA" value={settings.restaurants_page_cta.title} onChange={(value) => updateSettingObject("restaurants_page_cta", { title: value })} />
+        <TextInput label="หัวข้อย่อย CTA" value={settings.restaurants_page_cta.subtitle} onChange={(value) => updateSettingObject("restaurants_page_cta", { subtitle: value })} />
         <div className="grid gap-4 md:grid-cols-2">
-          <TextInput label="CTA button text" value={settings.restaurants_page_cta.linkText} onChange={(value) => updateSettingObject("restaurants_page_cta", { linkText: value })} />
-          <TextInput label="CTA URL" value={settings.restaurants_page_cta.linkUrl} onChange={(value) => updateSettingObject("restaurants_page_cta", { linkUrl: value })} />
+          <TextInput label="ข้อความปุ่ม CTA" value={settings.restaurants_page_cta.linkText} onChange={(value) => updateSettingObject("restaurants_page_cta", { linkText: value })} />
+          <TextInput label="URL CTA" value={settings.restaurants_page_cta.linkUrl} onChange={(value) => updateSettingObject("restaurants_page_cta", { linkUrl: value })} />
         </div>
-        <ImageField label="CTA image" value={settings.restaurants_page_cta.image} onRemove={() => updateSettingObject("restaurants_page_cta", { image: "" })} onPick={() => openPicker({ key: "restaurants_page_cta", field: "image" })} />
+        <ImageField label="ภาพ CTA" value={settings.restaurants_page_cta.image} onRemove={() => updateSettingObject("restaurants_page_cta", { image: "" })} onPick={() => openPicker({ key: "restaurants_page_cta", field: "image" })} />
       </SettingsSection>
     </>
   );
@@ -468,23 +621,23 @@ function ContactSettings({
 }) {
   return (
     <>
-      <SettingsSection title="General Contact" description="ข้อมูลติดต่อหลักของแพลตฟอร์ม">
+      <SettingsSection title="ข้อมูลติดต่อทั่วไป" description="ข้อมูลติดต่อหลักของแพลตฟอร์ม">
         <div className="grid gap-4 md:grid-cols-2">
-          <TextInput label="Email" type="email" value={settings.general_info.email} onChange={(value) => updateSettingObject("general_info", { email: value })} />
-          <TextInput label="Phone" value={settings.general_info.phone} onChange={(value) => updateSettingObject("general_info", { phone: value })} />
+          <TextInput label="อีเมล" type="email" value={settings.general_info.email} onChange={(value) => updateSettingObject("general_info", { email: value })} />
+          <TextInput label="เบอร์โทรศัพท์" value={settings.general_info.phone} onChange={(value) => updateSettingObject("general_info", { phone: value })} />
         </div>
-        <TextArea label="Address" value={settings.general_info.address} onChange={(value) => updateSettingObject("general_info", { address: value })} rows={3} />
+        <TextArea label="ที่อยู่" value={settings.general_info.address} onChange={(value) => updateSettingObject("general_info", { address: value })} rows={3} />
       </SettingsSection>
 
-      <SettingsSection title="Social Links" description="ลิงก์ social ที่ใช้ใน footer หรือหน้า public">
-        <TextInput label="Facebook URL" type="url" value={settings.social_media.facebook} onChange={(value) => updateSettingObject("social_media", { facebook: value })} />
-        <TextInput label="Instagram URL" type="url" value={settings.social_media.instagram} onChange={(value) => updateSettingObject("social_media", { instagram: value })} />
-        <TextInput label="LINE URL" type="url" value={settings.social_media.line} onChange={(value) => updateSettingObject("social_media", { line: value })} />
+      <SettingsSection title="ลิงก์โซเชียล" description="ลิงก์ social ที่ใช้ใน footer หรือหน้า public">
+        <TextInput label="Facebook" type="url" value={settings.social_media.facebook} onChange={(value) => updateSettingObject("social_media", { facebook: value })} />
+        <TextInput label="Instagram" type="url" value={settings.social_media.instagram} onChange={(value) => updateSettingObject("social_media", { instagram: value })} />
+        <TextInput label="LINE" type="url" value={settings.social_media.line} onChange={(value) => updateSettingObject("social_media", { line: value })} />
       </SettingsSection>
 
-      <SettingsSection title="Footer" description="ข้อความท้ายเว็บไซต์">
-        <TextInput label="Copyright" value={settings.footer_info.copyright} onChange={(value) => updateSettingObject("footer_info", { copyright: value })} />
-        <TextArea label="Description" value={settings.footer_info.description} onChange={(value) => updateSettingObject("footer_info", { description: value })} rows={3} />
+      <SettingsSection title="ส่วนท้าย (Footer)" description="ข้อความท้ายเว็บไซต์">
+        <TextInput label="ลิขสิทธิ์" value={settings.footer_info.copyright} onChange={(value) => updateSettingObject("footer_info", { copyright: value })} />
+        <TextArea label="คำอธิบาย" value={settings.footer_info.description} onChange={(value) => updateSettingObject("footer_info", { description: value })} rows={3} />
       </SettingsSection>
     </>
   );
@@ -500,11 +653,11 @@ function SeoSettings({
   openPicker: (target: PickerTarget) => void;
 }) {
   return (
-    <SettingsSection title="SEO Defaults" description="ค่าพื้นฐานสำหรับ title, description และภาพตอนแชร์ลิงก์">
+    <SettingsSection title="ค่าเริ่มต้น SEO" description="ค่าพื้นฐานสำหรับ title, description และภาพตอนแชร์ลิงก์">
       <TextInput label="Meta title" value={settings.seo_settings.metaTitle} onChange={(value) => updateSettingObject("seo_settings", { metaTitle: value })} />
       <TextArea label="Meta description" value={settings.seo_settings.metaDescription} onChange={(value) => updateSettingObject("seo_settings", { metaDescription: value })} rows={3} />
-      <ImageField label="OpenGraph image" value={settings.seo_settings.ogImage} onRemove={() => updateSettingObject("seo_settings", { ogImage: "" })} onPick={() => openPicker({ key: "seo_settings", field: "ogImage" })} />
-      <TextInput label="Google Analytics measurement ID" value={settings.seo_settings.googleAnalyticsId} onChange={(value) => updateSettingObject("seo_settings", { googleAnalyticsId: value })} placeholder="G-XXXXXXXXXX" />
+      <ImageField label="รูปภาพ OpenGraph" value={settings.seo_settings.ogImage} onRemove={() => updateSettingObject("seo_settings", { ogImage: "" })} onPick={() => openPicker({ key: "seo_settings", field: "ogImage" })} />
+      <TextInput label="รหัส Google Analytics" value={settings.seo_settings.googleAnalyticsId} onChange={(value) => updateSettingObject("seo_settings", { googleAnalyticsId: value })} placeholder="G-XXXXXXXXXX" />
     </SettingsSection>
   );
 }
@@ -518,15 +671,15 @@ function SystemSettings({
 }) {
   return (
     <>
-      <SettingsSection title="Feature Toggles" description="เปิดหรือปิด module หลักของระบบ">
-        <ToggleField label="Digital stamps" checked={settings.feature_toggles.enableStamp} onChange={(checked) => updateSettingObject("feature_toggles", { enableStamp: checked })} />
-        <ToggleField label="Certificate generation" checked={settings.feature_toggles.enableCertificate} onChange={(checked) => updateSettingObject("feature_toggles", { enableCertificate: checked })} />
-        <ToggleField label="Post-visit survey" checked={settings.feature_toggles.enableSurvey} onChange={(checked) => updateSettingObject("feature_toggles", { enableSurvey: checked })} />
+      <SettingsSection title="เปิด/ปิดฟีเจอร์" description="เปิดหรือปิดโมดูลหลักของระบบ">
+        <ToggleField label="แสตมป์ดิจิทัล" checked={settings.feature_toggles.enableStamp} onChange={(checked) => updateSettingObject("feature_toggles", { enableStamp: checked })} />
+        <ToggleField label="การออกใบประกาศ" checked={settings.feature_toggles.enableCertificate} onChange={(checked) => updateSettingObject("feature_toggles", { enableCertificate: checked })} />
+        <ToggleField label="แบบสำรวจหลังเยี่ยมชม" checked={settings.feature_toggles.enableSurvey} onChange={(checked) => updateSettingObject("feature_toggles", { enableSurvey: checked })} />
       </SettingsSection>
 
-      <SettingsSection title="Maintenance" description="ข้อความสำหรับโหมดปิดปรับปรุง">
-        <ToggleField label="Maintenance mode" checked={settings.maintenance_info.isMaintenanceMode} onChange={(checked) => updateSettingObject("maintenance_info", { isMaintenanceMode: checked })} tone="danger" />
-        <TextArea label="Maintenance message" value={settings.maintenance_info.maintenanceMessage} onChange={(value) => updateSettingObject("maintenance_info", { maintenanceMessage: value })} rows={4} />
+      <SettingsSection title="การปิดปรับปรุง" description="ข้อความสำหรับโหมดปิดปรับปรุง">
+        <ToggleField label="โหมดปิดปรับปรุง" checked={settings.maintenance_info.isMaintenanceMode} onChange={(checked) => updateSettingObject("maintenance_info", { isMaintenanceMode: checked })} tone="danger" />
+        <TextArea label="ข้อความแจ้งเตือน" value={settings.maintenance_info.maintenanceMessage} onChange={(value) => updateSettingObject("maintenance_info", { maintenanceMessage: value })} rows={4} />
       </SettingsSection>
     </>
   );
@@ -609,14 +762,28 @@ function ImageField({
   onPick: () => void;
   onRemove: () => void;
 }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   return (
     <div>
       <p className="text-sm font-black text-slate-700">{label}</p>
       <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-        <div className="aspect-video bg-slate-100">
+        <div className="relative aspect-video bg-slate-100">
           {value ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={imagePreviewUrl(value)} alt="" className="h-full w-full object-cover" />
+            <>
+              {/* Shimmer placeholder */}
+              {!imageLoaded ? (
+                <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100" />
+              ) : null}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imagePreviewUrl(value)}
+                alt=""
+                className={`h-full w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageLoaded(true)}
+              />
+            </>
           ) : (
             <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
               ยังไม่ได้เลือกภาพ
@@ -627,7 +794,7 @@ function ImageField({
           <button
             type="button"
             onClick={onPick}
-            className="min-h-10 flex-1 rounded-lg bg-[#073F37] px-3 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62]"
+            className="min-h-10 flex-1 rounded-lg bg-[#073F37] px-3 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62] active:scale-[0.97]"
           >
             เลือกภาพ
           </button>
@@ -635,7 +802,7 @@ function ImageField({
             <button
               type="button"
               onClick={onRemove}
-              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+              className="min-h-10 rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-black text-rose-700 transition hover:bg-rose-50 hover:text-rose-800 active:scale-[0.97]"
             >
               เอาออก
             </button>
