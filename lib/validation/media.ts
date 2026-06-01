@@ -4,29 +4,29 @@ import { adminPaginationSchema } from "./admin-attraction";
 const optionalText = z.preprocess(
   (value) => (value === undefined || value === null || (typeof value === "string" && value.trim() === "") ? null : value),
   z.string().trim().nullable()
-);
+).default(null);
 
 const optionalShortText = z.preprocess(
   (value) => (value === undefined || value === null || (typeof value === "string" && value.trim() === "") ? null : value),
   z.string().trim().max(255).nullable()
-);
+).default(null);
 
 const optionalUrl = z.preprocess(
   (value) => (value === undefined || value === null || (typeof value === "string" && value.trim() === "") ? null : value),
   z.string().trim().url("Source URL must be a valid URL.").max(1000).nullable()
-);
+).default(null);
 
 const optionalLicenseText = z.preprocess(
   (value) => (value === undefined || value === null || (typeof value === "string" && value.trim() === "") ? null : value),
   z.string().trim().max(80).nullable()
-);
+).default(null);
 
 const requiredId = z.coerce.number().int().positive();
 
 const optionalInt = z.preprocess(
   (value) => (value === "" || value === null || value === undefined ? undefined : value),
   z.coerce.number().int().optional()
-);
+)
 
 const booleanFromForm = z.preprocess((value) => {
   if (typeof value === "boolean") return value;

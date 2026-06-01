@@ -16,14 +16,14 @@ export function StampCard({ stamp }: { stamp: SafePassportStamp }) {
   const rotationClass = rotations[hash];
 
   const content = (
-    <article className="relative rounded-[1.5rem] bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 group border-2 border-dashed border-ink/10 hover:border-[#E18868]/30 overflow-hidden">
+    <article className="relative rounded-xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 group border-2 border-dashed border-ink/10 hover:border-[#E18868]/30 overflow-hidden">
       {/* Decorative watermark / stamp effect */}
       <div className={`absolute -right-6 -bottom-6 opacity-[0.03] text-[#E18868] pointer-events-none transform ${rotationClass} transition-all duration-500 group-hover:opacity-[0.08] group-hover:scale-110`}>
         <SealCheck size={140} weight="fill" />
       </div>
       
       {/* Hover glow effect */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-[#E18868]/0 via-[#E18868]/5 to-[#E18868]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none rounded-[1.5rem]" />
+      <div className="absolute -inset-1 bg-gradient-to-r from-[#E18868]/0 via-[#E18868]/5 to-[#E18868]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none rounded-xl" />
 
       <div className="absolute top-4 right-4 rotate-[15deg] opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:rotate-[10deg]">
         <span className="border-2 border-[#E18868] text-[#E18868] px-2 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-md shadow-sm bg-white/80 backdrop-blur-sm">

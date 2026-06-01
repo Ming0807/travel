@@ -65,6 +65,13 @@ const moduleGroups = [
     title: "Content Management",
     items: [
       {
+        href: "/admin/content-health",
+        label: "Content Health",
+        description: "ตรวจสอบ draft/published, ภาษา, รูปภาพของเนื้อหาทั้งหมด",
+        icon: ChartLineUp,
+        tone: "bg-teal-50 text-teal-700",
+      },
+      {
         href: "/admin/attractions",
         label: "แหล่งท่องเที่ยว",
         description: "จัดการข้อมูลสถานที่ท่องเที่ยว 3 จังหวัด",

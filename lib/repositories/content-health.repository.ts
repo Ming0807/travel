@@ -22,6 +22,7 @@ export type ContentHealthItem = {
   hasEnglishDescription: boolean;
   hasCoverMedia: boolean;
   hasPotentialStockMedia: boolean;
+  hasMissingAltMedia: boolean;
   stockMediaPaths: string[];
   missingTranslations: string[];
   issues: string[];
@@ -34,6 +35,7 @@ export type ContentHealthSummary = {
   totalActive: number;
   itemsMissingEnglish: number;
   itemsMissingMedia: number;
+  itemsMissingAltText: number;
   itemsWithPotentialStockMedia: number;
   itemsWithIssues: number;
   publishedPercentage: number;
@@ -45,6 +47,7 @@ export type ContentHealthSummary = {
     active: number;
     missingEnglish: number;
     missingMedia: number;
+    missingAltText: number;
     stockMedia: number;
   }>;
 };
@@ -175,12 +178,13 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
   // Fetch all content media cover counts in one query
   const { data: contentMediaRows } = await supabase
     .from("content_media")
-    .select("storage_path, attraction_id, story_id, route_id, restaurant_id, accommodation_id")
+    .select("storage_path, attraction_id, story_id, route_id, restaurant_id, accommodation_id, alt_text_th, alt_text_en, media_type")
     .eq("is_active", true)
     .eq("lifecycle_status", "active");
 
   const contentMediaCoverCounts = new Map<string, number>();
   const potentialStockMediaByKey = new Map<string, string[]>();
+  const missingAltByKey = new Set<string>();
   if (contentMediaRows) {
     for (const row of contentMediaRows) {
       const keys = [
@@ -191,6 +195,9 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
         row.accommodation_id ? `accommodation_${row.accommodation_id}` : null,
       ].filter(Boolean) as string[];
 
+      const isVisual = row.media_type === "image" || row.media_type === "panorama";
+      const hasAlt = Boolean(row.alt_text_th?.trim() || row.alt_text_en?.trim());
+
       for (const key of keys) {
         contentMediaCoverCounts.set(key, (contentMediaCoverCounts.get(key) ?? 0) + 1);
 
@@ -199,6 +206,10 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
             ...(potentialStockMediaByKey.get(key) ?? []),
             row.storage_path,
           ]);
+        }
+
+        if (isVisual && !hasAlt) {
+          missingAltByKey.add(key);
         }
       }
     }
@@ -226,12 +237,12 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
 
   const items: ContentHealthItem[] = [];
   const byType: ContentHealthSummary["byType"] = {
-    attraction: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, stockMedia: 0 },
-    story: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, stockMedia: 0 },
-    route: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, stockMedia: 0 },
-    restaurant: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, stockMedia: 0 },
-    accommodation: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, stockMedia: 0 },
-    photo_spot: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, stockMedia: 0 },
+    attraction: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, missingAltText: 0, stockMedia: 0 },
+    story: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, missingAltText: 0, stockMedia: 0 },
+    route: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, missingAltText: 0, stockMedia: 0 },
+    restaurant: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, missingAltText: 0, stockMedia: 0 },
+    accommodation: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, missingAltText: 0, stockMedia: 0 },
+    photo_spot: { total: 0, published: 0, draft: 0, active: 0, missingEnglish: 0, missingMedia: 0, missingAltText: 0, stockMedia: 0 },
   };
 
   function processItems<T extends Record<string, unknown>>(
@@ -275,8 +286,12 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
       const coverOk = hasCoverMedia(mapped.raw, contentType, contentMediaCoverCounts);
       if (!coverOk) typeSummary.missingMedia++;
 
-      const stockMediaPaths = potentialStockMediaByKey.get(contentKey(contentType, mapped.raw)) ?? [];
+      const cKey = contentKey(contentType, mapped.raw);
+      const stockMediaPaths = potentialStockMediaByKey.get(cKey) ?? [];
       if (stockMediaPaths.length > 0) typeSummary.stockMedia++;
+
+      const missingAlt = missingAltByKey.has(cKey);
+      if (missingAlt) typeSummary.missingAltText++;
 
       // Collect issues
       const issues: string[] = [];
@@ -287,6 +302,7 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
       }
       if (!coverOk) issues.push("no cover");
       if (stockMediaPaths.length > 0) issues.push("stock/demo media");
+      if (missingAlt) issues.push("missing alt text");
 
       items.push({
         id: mapped.id,
@@ -303,6 +319,7 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
         hasEnglishDescription: missingTranslations.length < enFields.length,
         hasCoverMedia: coverOk,
         hasPotentialStockMedia: stockMediaPaths.length > 0,
+        hasMissingAltMedia: missingAlt,
         stockMediaPaths,
         missingTranslations,
         issues,
@@ -420,6 +437,7 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
   let totalActive = 0;
   let itemsMissingEnglish = 0;
   let itemsMissingMedia = 0;
+  let itemsMissingAltText = 0;
   let itemsWithPotentialStockMedia = 0;
   let itemsWithIssues = 0;
 
@@ -431,6 +449,7 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
     totalActive += s.active;
     itemsMissingEnglish += s.missingEnglish;
     itemsMissingMedia += s.missingMedia;
+    itemsMissingAltText += s.missingAltText;
     itemsWithPotentialStockMedia += s.stockMedia;
   }
 
@@ -445,6 +464,7 @@ export async function getContentHealth(): Promise<ContentHealthReport> {
       totalActive,
       itemsMissingEnglish,
       itemsMissingMedia,
+      itemsMissingAltText,
       itemsWithPotentialStockMedia,
       itemsWithIssues,
       publishedPercentage: totalItems > 0 ? Math.round((totalPublished / totalItems) * 100) : 0,

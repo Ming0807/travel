@@ -21,7 +21,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
 
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-white rounded-[2rem] shadow-lg border border-ink/5 overflow-hidden flex flex-col md:flex-row animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
+    <div className="w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-lg border border-ink/5 overflow-hidden flex flex-col md:flex-row animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both">
       {/* Left Column: Form */}
       <div className="w-full md:w-[55%] p-8 md:p-12">
         <form action={formAction} className="space-y-6">
@@ -32,9 +32,9 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
             <p className="text-sm text-muted">ใช้เวลาเพียงเล็กน้อยเพื่อเริ่มเก็บความทรงจำ</p>
           </div>
 
-          {state?.error && (
+          {state?.message && (
             <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl border border-red-100">
-              {state.error}
+              {state.message}
             </div>
           )}
 
@@ -159,7 +159,7 @@ export function MinimalProfileForm({ checkinCode, countries, provinces, defaultV
       </div>
 
       {/* Right Column: Illustration/Info */}
-      <div className="w-full md:w-[45%] bg-[#FAF8F5] p-8 md:p-12 flex flex-col items-center justify-center border-l border-ink/5">
+      <div className="w-full md:w-[45%] bg-background p-8 md:p-12 flex flex-col items-center justify-center border-l border-ink/5">
         <div className="max-w-xs w-full">
           <div className="text-center mb-8">
             <div className="w-32 h-32 mx-auto bg-white rounded-full flex items-center justify-center shadow-sm mb-6 text-coral">

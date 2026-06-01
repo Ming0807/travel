@@ -83,7 +83,7 @@ export function MessageListClient({
 
   if (initialMessages.length === 0) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-[2rem] border border-dashed border-ink/10 bg-white p-12 text-center">
+      <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-ink/10 bg-white p-12 text-center">
         <div className="mb-4 rounded-full bg-slate-50 p-4 text-slate-400">
           <EnvelopeSimple size={48} weight="light" />
         </div>
@@ -148,7 +148,7 @@ export function MessageListClient({
               {filteredMessages.map((msg) => (
                 <tr 
                   key={msg.id} 
-                  className={`transition-colors hover:bg-slate-50 ${msg.status === "unread" ? "bg-[#FCFAF8] font-semibold" : ""}`}
+                  className={`transition-colors hover:bg-slate-50 ${msg.status === "unread" ? "bg-slate-50 font-semibold" : ""}`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">

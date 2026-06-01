@@ -2,7 +2,7 @@ import type { PassportProvinceProgress } from "@/lib/services/passport.service";
 
 export function ProvinceProgress({ progress }: { progress: PassportProvinceProgress[] }) {
   return (
-    <section className="rounded-[1.5rem] bg-white p-6 shadow-sm border border-ink/5">
+    <section className="rounded-xl bg-white p-6 border border-ink/5">
       <h2 className="text-xl font-black text-ink mb-6">ความคืบหน้าตามจังหวัด</h2>
       <div className="space-y-5">
         {progress.map((item) => {

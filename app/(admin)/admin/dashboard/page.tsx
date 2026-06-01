@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { requirePermission } from "@/lib/auth/guards";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { NoDataState } from "@/components/dashboard/NoDataState";
@@ -14,34 +16,8 @@ type DashboardPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>> | Record<string, string | string[] | undefined>;
 };
 
-function DashboardErrorPage({ error }: { error: DashboardServiceError | Error }) {
-  const title =
-    error instanceof DashboardServiceError && error.code === "VALIDATION_ERROR"
-      ? "Invalid dashboard filters"
-      : "Dashboard unavailable";
-
-  return (
-    <AdminShell>
-      <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="Phase 09"
-          title={title}
-          description="Dashboard analytics are protected and return aggregated data only."
-        />
-        <NoDataState
-          title={title}
-          description={
-            error instanceof DashboardServiceError
-              ? error.message
-              : "Could not load dashboard data. Please try again."
-          }
-        />
-      </div>
-    </AdminShell>
-  );
-}
-
 export default async function AdminDashboardPage({ searchParams = {} }: DashboardPageProps) {
+  await requirePermission("dashboard.read");
   const resolvedSearchParams = await searchParams;
   let data;
   let caughtError: Error | null = null;
@@ -53,18 +29,22 @@ export default async function AdminDashboardPage({ searchParams = {} }: Dashboar
   }
 
   if (caughtError || !data) {
+    const isValidationError = caughtError instanceof DashboardServiceError && caughtError.code === "VALIDATION_ERROR";
     return (
-      <DashboardShell data={data!}>
-        <div className="rounded-lg bg-rose-50 p-4 text-sm text-rose-600">
-          {caughtError instanceof DashboardServiceError ? caughtError.message : "Could not load dashboard data."}
+      <AdminShell>
+        <div className="space-y-6">
+          <AdminPageHeader eyebrow="Phase 09" title={isValidationError ? "Invalid filters" : "Dashboard unavailable"} description="Dashboard analytics are protected and return aggregated data only." />
+          <NoDataState title={isValidationError ? "Invalid filters" : "Error"} description={caughtError?.message ?? "Could not load dashboard data."} />
         </div>
-      </DashboardShell>
+      </AdminShell>
     );
   }
 
   return (
     <DashboardShell data={data}>
-      <ExecutiveOverview data={data} />
+      <ErrorBoundary fallbackTitle="Executive overview unavailable" fallbackDescription="The chart section encountered an error. Try refreshing the page.">
+        <ExecutiveOverview data={data} />
+      </ErrorBoundary>
     </DashboardShell>
   );
 }

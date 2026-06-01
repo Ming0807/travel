@@ -93,7 +93,7 @@ async function LeaderboardData() {
 export default async function LeaderboardPage() {
   return (
     <>
-      <main className="min-h-screen bg-[#FAF8F5] px-4 pb-24 pt-12 md:pt-20 relative overflow-hidden text-ink">
+      <main className="min-h-screen bg-background px-4 pb-24 pt-12 md:pt-20 relative overflow-hidden text-ink">
         {/* Premium Background Elements */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-coral/5 rounded-full blur-[120px] -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-teal/5 rounded-full blur-[150px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
@@ -108,7 +108,7 @@ export default async function LeaderboardPage() {
             กลับหน้าหลัก
           </Link>
 
-          <div className="text-center bg-white/40 backdrop-blur-md rounded-[3rem] py-12 px-6 border border-white shadow-sm relative overflow-hidden">
+          <div className="text-center bg-white/40 backdrop-blur-md rounded-3xl py-12 px-6 border border-white shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[4px] bg-gradient-to-r from-transparent via-coral to-transparent"></div>
             
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white text-coral text-xs font-black uppercase tracking-widest mb-6 shadow-sm border border-coral/10">
@@ -132,7 +132,7 @@ export default async function LeaderboardPage() {
               </div>
             }
           >
-            <div className="bg-white rounded-[2rem] shadow-sm border border-ink/5 p-4 md:p-8">
+            <div className="bg-white rounded-2xl border border-ink/5 p-4 md:p-8">
               <LeaderboardData />
             </div>
           </Suspense>

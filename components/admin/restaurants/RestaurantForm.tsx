@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createRestaurantAction, updateRestaurantAction } from "@/app/actions/admin-restaurant-actions";
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
-import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { AdminFormErrorSummary, AdminFormSection, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { FormInput, FormTextarea, FormSelect, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
 import { Image, List } from "@phosphor-icons/react";
+import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 
 export type AdminSelectOption = {
   id: number;
@@ -35,6 +37,9 @@ export function RestaurantForm({
 }: RestaurantFormProps) {
   const router = useRouter();
   const isEditing = !!restaurant;
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
+  const [coverMediaId, setCoverMediaId] = useState<number | null>(null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const action = isEditing ? updateRestaurantAction.bind(null, restaurant.restaurant_id) : createRestaurantAction;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,6 +48,8 @@ export function RestaurantForm({
     error: undefined,
     fieldErrors: undefined,
   });
+
+  const fe = (name: string) => getFieldError(state?.fieldErrors, name);
 
   useEffect(() => {
     if (state?.success && isEditing) {
@@ -67,188 +74,153 @@ export function RestaurantForm({
     }
   }
 
-  function fieldError(name: string) {
-    return state?.fieldErrors?.[name]?.[0];
-  }
-
   return (
     <form action={formAction} className="space-y-8">
       {restaurant?.restaurant_id ? <input name="restaurantId" type="hidden" value={restaurant.restaurant_id} /> : null}
 
       <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} fieldLabels={FIELD_LABELS} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         {/* Left Column (Main Content) */}
-        <div className="lg:col-span-7 space-y-8">
-
-          {/* 1. Basic Info */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">ข้อมูลหลัก (Basic Info)</h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">ชื่อภาษาไทย *</span>
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={restaurant?.name_th ?? ""}
-                  maxLength={255}
-                  name="nameTh"
-                  required
-                />
-                {fieldError("nameTh") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("nameTh")}</span> : null}
-              </label>
-
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">ชื่อภาษาอังกฤษ</span>
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={restaurant?.name_en ?? ""}
-                  maxLength={255}
-                  name="nameEn"
-                />
-              </label>
-
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">Slug (สำหรับ URL) *</span>
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={restaurant?.slug ?? ""}
-                  maxLength={200}
-                  name="slug"
-                  required
-                  pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
-                  placeholder="e.g. delicious-cafe"
-                  onChange={(e) => {
-                    e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
-                  }}
-                />
-                {fieldError("slug") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("slug")}</span> : null}
-              </label>
+        <div className="space-y-8 lg:col-span-7">
+          <AdminFormSection title="ข้อมูลหลัก (Basic Info)">
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormInput label="ชื่อภาษาไทย" name="nameTh" defaultValue={restaurant?.name_th ?? ""} maxLength={255} required error={fe("nameTh")} className="md:col-span-2" />
+              <FormInput label="ชื่อภาษาอังกฤษ" name="nameEn" defaultValue={restaurant?.name_en ?? ""} maxLength={255} className="md:col-span-2" />
+              <FormInput
+                label="Slug (สำหรับ URL)"
+                name="slug"
+                defaultValue={restaurant?.slug ?? ""}
+                maxLength={200}
+                required
+                pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                placeholder="e.g. delicious-cafe"
+                onChange={(e) => {
+                  e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+                }}
+                error={fe("slug")}
+                className="md:col-span-2"
+              />
             </div>
-          </section>
+          </AdminFormSection>
 
-          {/* 2. Content & Description */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">เนื้อหาและรายละเอียด (Content)</h2>
-            <div className="mt-5 grid gap-6 md:grid-cols-2">
+          <AdminFormSection title="เนื้อหาและรายละเอียด (Content)">
+            <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
-                <h3 className="font-bold text-slate-800">เนื้อหาภาษาไทย</h3>
-                <label className="block">
-                  <span className="text-sm font-bold text-slate-700">รายละเอียด</span>
-                  <textarea className="mt-2 min-h-[120px] w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={restaurant?.description_th ?? ""} maxLength={5000} name="descriptionTh" />
-                </label>
+                <p className="font-bold text-slate-800">เนื้อหาภาษาไทย</p>
+                <FormTextarea label="รายละเอียด" name="descriptionTh" defaultValue={restaurant?.description_th ?? ""} maxLength={5000} />
               </div>
               <div className="space-y-4">
-                <h3 className="font-bold text-slate-800">English Content</h3>
-                <label className="block">
-                  <span className="text-sm font-bold text-slate-700">Description</span>
-                  <textarea className="mt-2 min-h-[120px] w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={restaurant?.description_en ?? ""} maxLength={5000} name="descriptionEn" />
-                </label>
+                <p className="font-bold text-slate-800">English Content</p>
+                <FormTextarea label="Description" name="descriptionEn" defaultValue={restaurant?.description_en ?? ""} maxLength={5000} />
               </div>
             </div>
-          </section>
-
+          </AdminFormSection>
         </div>
 
         {/* Right Column (Settings & Metadata) */}
-        <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-8 lg:h-max lg:self-start">
-
+        <div className="space-y-8 lg:sticky lg:top-8 lg:col-span-5 lg:self-start">
           {/* Status */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">สถานะ (Status)</h2>
-            <div className="mt-5 flex flex-col gap-3">
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-50 has-[:checked]:text-teal-800">
-                เปิดใช้งาน (Active)
-                <input defaultChecked={restaurant?.is_active ?? true} name="isActive" type="checkbox" value="true" className="h-4 w-4 accent-teal-600" />
-              </label>
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 has-[:checked]:border-[#F3704C] has-[:checked]:bg-orange-50 has-[:checked]:text-orange-800">
-                เผยแพร่ (Published)
-                <input defaultChecked={restaurant?.is_published ?? false} name="isPublished" type="checkbox" value="true" className="h-4 w-4 accent-[#F3704C]" />
-              </label>
+          <AdminFormSection title="สถานะ (Status)">
+            <div className="flex flex-col gap-3">
+              <FormCheckbox label="เปิดใช้งาน (Active)" name="isActive" defaultChecked={restaurant?.is_active ?? true} accent="teal" />
+              <FormCheckbox label="เผยแพร่ (Published)" name="isPublished" defaultChecked={restaurant?.is_published ?? false} accent="coral" />
             </div>
-          </section>
+          </AdminFormSection>
 
           {/* Location & Type */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">ที่ตั้งและประเภท</h2>
-            <div className="mt-5 grid gap-4">
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">จังหวัด *</span>
-                <select
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={restaurant?.province_id ?? ""}
-                  name="provinceId"
-                  required
-                >
-                  <option value="">เลือกจังหวัด</option>
-                  {provinces.map((province) => (
-                    <option key={province.id} value={province.id}>
-                      {province.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          <AdminFormSection title="ที่ตั้งและประเภท">
+            <div className="grid gap-4">
+              <FormSelect
+                label="จังหวัด"
+                name="provinceId"
+                defaultValue={restaurant?.province_id ?? ""}
+                placeholder="เลือกจังหวัด"
+                required
+                options={provinces.map((p) => ({ value: p.id, label: p.label }))}
+              />
+
+              <FormSelect
+                label="ประเภทอาหาร"
+                name="foodType"
+                defaultValue={restaurant?.food_type ?? ""}
+                placeholder="ไม่ระบุ"
+                options={[
+                  { value: "Thai", label: "Thai / อาหารไทย" },
+                  { value: "Malay", label: "Malay / อาหารมาเลย์" },
+                  { value: "International", label: "International / นานาชาติ" },
+                  { value: "Coffee", label: "Coffee / คาเฟ่" },
+                  { value: "Bakery", label: "Bakery / เบเกอรี่" },
+                  { value: "Halal", label: "Halal / ฮาลาล" },
+                ]}
+              />
 
               <label className="block">
-                <span className="text-sm font-bold text-slate-700">ประเภทอาหาร</span>
-                <select
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={restaurant?.food_type ?? ""}
-                  name="foodType"
-                >
-                  <option value="">ไม่ระบุ</option>
-                  <option value="Thai">Thai / อาหารไทย</option>
-                  <option value="Malay">Malay / อาหารมาเลย์</option>
-                  <option value="International">International / นานาชาติ</option>
-                  <option value="Coffee">Coffee / คาเฟ่</option>
-                  <option value="Bakery">Bakery / เบเกอรี่</option>
-                  <option value="Halal">Halal / ฮาลาล</option>
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">รูปภาพปก (Cover Image URL)</span>
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={restaurant?.cover_image_url ?? ""}
-                  maxLength={500}
-                  name="coverImageUrl"
-                  placeholder="https://example.com/image.jpg"
-                />
+                <span className="text-sm font-bold text-slate-700">รูปภาพปก (Cover Image)</span>
+                <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                  <div className="aspect-video bg-slate-100">
+                    {coverPreviewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={coverPreviewUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
+                        ยังไม่ได้เลือกรูปภาพ
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 p-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => setIsPickerOpen(true)}
+                      className="min-h-10 flex-1 rounded-lg bg-[#073F37] px-3 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62]"
+                    >
+                      เลือกจาก Media Library
+                    </button>
+                    {coverPreviewUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCoverPreviewUrl("");
+                          setCoverMediaId(null);
+                        }}
+                        className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                      >
+                        เอาออก
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                <input type="hidden" name="coverMediaId" value={coverMediaId ?? ""} />
               </label>
             </div>
-          </section>
-
+          </AdminFormSection>
         </div>
       </div>
 
       {/* Location & Contact - Bottom full width */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-black text-[#073F37]">พิกัดและการติดต่อ (Location & Contact)</h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <label className="block md:col-span-2 lg:col-span-4">
-            <span className="text-sm font-bold text-slate-700">ที่อยู่</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={restaurant?.address_text ?? ""} maxLength={1000} name="addressText" />
-          </label>
-          <label className="block lg:col-span-1">
-            <span className="text-sm font-bold text-slate-700">Latitude (ละติจูด)</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={restaurant?.latitude ?? ""} name="latitude" type="number" step="0.0000001" placeholder="เช่น 6.5233" />
-          </label>
-          <label className="block lg:col-span-1">
-            <span className="text-sm font-bold text-slate-700">Longitude (ลองจิจูด)</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={restaurant?.longitude ?? ""} name="longitude" type="number" step="0.0000001" placeholder="เช่น 101.281" />
-          </label>
-          <label className="block lg:col-span-1">
-            <span className="text-sm font-bold text-slate-700">เวลาเปิดทำการ</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={restaurant?.opening_hours ?? ""} maxLength={255} name="openingHours" placeholder="เช่น ทุกวัน 09:00 - 21:00 น." />
-          </label>
-          <label className="block lg:col-span-1">
-            <span className="text-sm font-bold text-slate-700">ข้อมูลการติดต่อ</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={restaurant?.contact_info ?? ""} maxLength={255} name="contactInfo" placeholder="เช่น เบอร์โทรศัพท์, Facebook" />
-          </label>
+      <AdminFormSection title="พิกัดและการติดต่อ (Location & Contact)">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <FormInput label="ที่อยู่" name="addressText" defaultValue={restaurant?.address_text ?? ""} maxLength={1000} className="md:col-span-2 lg:col-span-4" />
+          <FormInput label="Latitude (ละติจูด)" name="latitude" defaultValue={restaurant?.latitude ?? ""} type="number" step="0.0000001" placeholder="เช่น 6.5233" className="lg:col-span-1" />
+          <FormInput label="Longitude (ลองจิจูด)" name="longitude" defaultValue={restaurant?.longitude ?? ""} type="number" step="0.0000001" placeholder="เช่น 101.281" className="lg:col-span-1" />
+          <FormInput label="เวลาเปิดทำการ" name="openingHours" defaultValue={restaurant?.opening_hours ?? ""} maxLength={255} placeholder="เช่น ทุกวัน 09:00 - 21:00 น." className="lg:col-span-1" />
+          <FormInput label="ข้อมูลการติดต่อ" name="contactInfo" defaultValue={restaurant?.contact_info ?? ""} maxLength={255} placeholder="เช่น เบอร์โทรศัพท์, Facebook" className="lg:col-span-1" />
         </div>
-      </section>
+      </AdminFormSection>
 
       <AdminSaveBar cancelHref="/admin/restaurants" isPending={isPending} submitLabel={submitLabel} />
+
+      <MediaPickerModal
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelectAsset={(asset) => {
+          const id = Number(asset.id);
+          setCoverMediaId(id);
+          setCoverPreviewUrl(asset.url);
+        }}
+        onSelect={(url) => setCoverPreviewUrl(url)}
+        title="เลือกรูปภาพร้านอาหาร"
+      />
     </form>
   );
 }

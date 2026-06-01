@@ -33,8 +33,8 @@ export default async function PassportPage() {
 
   if (result.kind === "no_identity") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] px-4 py-8">
-        <div className="max-w-md w-full rounded-[2rem] bg-white p-8 md:p-10 text-center shadow-sm border border-ink/5">
+      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+        <div className="max-w-md w-full rounded-2xl bg-white p-8 md:p-10 text-center border border-ink/5">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-cream text-coral">
             <Compass size={40} weight="fill" />
           </div>
@@ -51,7 +51,7 @@ export default async function PassportPage() {
             </Link>
             <Link
               href="/"
-              className="rounded-full bg-[#FAF8F5] border border-ink/5 px-6 py-4 text-center font-bold text-ink transition-colors hover:bg-white"
+              className="rounded-full bg-background border border-ink/5 px-6 py-4 text-center font-bold text-ink transition-colors hover:bg-white"
             >
               กลับหน้าหลัก
             </Link>
@@ -65,8 +65,8 @@ export default async function PassportPage() {
 
   if (result.kind === "error") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] px-4">
-        <div className="max-w-md w-full rounded-[2rem] bg-white p-8 text-center shadow-sm border border-ink/5">
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-md w-full rounded-2xl bg-white p-8 text-center border border-ink/5">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
             <Warning size={32} weight="fill" />
           </div>
@@ -87,7 +87,7 @@ export default async function PassportPage() {
 
   return (
     <>
-      <main className="min-h-[calc(100vh-200px)] bg-[#FAF8F5] px-4 pb-28 pt-12 md:pt-20 relative overflow-hidden text-ink">
+      <main className="min-h-[calc(100vh-200px)] bg-background px-4 pb-28 pt-12 md:pt-20 relative overflow-hidden text-ink">
         {/* Premium Background Elements */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-coral/5 rounded-full blur-[120px] -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-teal/5 rounded-full blur-[150px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>

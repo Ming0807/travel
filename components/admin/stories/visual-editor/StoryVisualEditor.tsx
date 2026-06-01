@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Export, BookmarkSimple, Image as ImageIcon } from "@phosphor-icons/react";
@@ -14,11 +14,13 @@ type EditorSection = "header" | "content" | "settings" | "cover" | null;
 interface StoryVisualEditorProps {
   story: AdminStoryRow;
   provinces: { province_id: number; province_name_th: string }[];
+  coverMediaId?: number | null;
+  coverMediaUrl?: string | null;
 }
 
 function MissingImageState({ title, description }: { title: string; description: string }) {
   return (
-    <div className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-amber-300 bg-amber-50 px-6 py-12 text-center">
+    <div className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50 px-6 py-12 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm">
         <ImageIcon size={28} weight="duotone" />
       </div>
@@ -30,7 +32,7 @@ function MissingImageState({ title, description }: { title: string; description:
 
 function PlannedContentState({ title, description }: { title: string; description: string }) {
   return (
-    <div className="rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 p-6 shadow-sm">
+    <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 shadow-sm">
       <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Not configured</p>
       <h3 className="mt-2 font-black text-slate-800 text-lg">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
@@ -41,11 +43,25 @@ function PlannedContentState({ title, description }: { title: string; descriptio
 export function StoryVisualEditor({
   story,
   provinces,
+  coverMediaId: initialCoverMediaId,
+  coverMediaUrl: initialCoverMediaUrl,
 }: StoryVisualEditorProps) {
   const [activeSection, setActiveSection] = useState<EditorSection>(null);
 
+  useEffect(() => {
+    let hash = window.location.hash.replace("#", "");
+    if (hash === "gallery") hash = "cover"; // Map generic media hash to cover
+    const validSections: EditorSection[] = ["header", "content", "settings", "cover"];
+    if (validSections.includes(hash as EditorSection)) {
+      setActiveSection(hash as EditorSection);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
+
   const title = story.title || "ยังไม่มีชื่อเรื่อง";
-  const coverImage = story.image_url;
+  const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId ?? null);
+  const [coverMediaUrl, setCoverMediaUrl] = useState(initialCoverMediaUrl ?? null);
+  const coverImage = coverMediaUrl;
   const category = story.category || "บทความทั่วไป";
 
   // Format date for display
@@ -56,7 +72,7 @@ export function StoryVisualEditor({
   const readTime = contentWords > 0 ? `Read ${Math.max(1, Math.ceil(contentWords / 220))} min` : "Add content for reading estimate";
 
   return (
-    <div className="relative min-h-screen bg-[#FAF8F5] pb-20 text-slate-800">
+    <div className="relative min-h-screen bg-background pb-20 text-slate-800">
       {/* Editor Toolbar */}
       <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/80 px-6 py-4 backdrop-blur-md">
         <div className="flex items-center gap-4">
@@ -129,7 +145,7 @@ export function StoryVisualEditor({
             </div>
 
             <EditableBlock id="cover" label="รูปภาพปก" isActive={activeSection === "cover"} onEdit={() => setActiveSection("cover")}>
-              <div className="relative w-full h-[400px] md:h-[500px] rounded-[2rem] overflow-hidden mb-12 shadow-sm border border-slate-200 pointer-events-none">
+              <div className="relative w-full h-[400px] md:h-[500px] rounded-2xl overflow-hidden mb-12 shadow-sm border border-slate-200 pointer-events-none">
                 {coverImage ? (
                   <Image src={coverImage} alt={title} fill className="object-cover" unoptimized />
                 ) : (
@@ -178,7 +194,16 @@ export function StoryVisualEditor({
         <HeaderForm story={story} onClose={() => setActiveSection(null)} />
       </Drawer>
       <Drawer isOpen={activeSection === "cover"} onClose={() => setActiveSection(null)} title="รูปภาพปก (Cover Image)">
-        <CoverForm story={story} onClose={() => setActiveSection(null)} />
+        <CoverForm
+          story={story}
+          onClose={() => setActiveSection(null)}
+          coverMediaId={coverMediaId}
+          coverMediaUrl={coverMediaUrl}
+          onCoverChange={(id, url) => {
+            setCoverMediaId(id);
+            setCoverMediaUrl(url);
+          }}
+        />
       </Drawer>
       <Drawer isOpen={activeSection === "content"} onClose={() => setActiveSection(null)} title="เนื้อหาบทความ (Content)" size="lg">
         <ContentForm story={story} onClose={() => setActiveSection(null)} />

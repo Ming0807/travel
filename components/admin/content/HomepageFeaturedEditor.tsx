@@ -43,6 +43,7 @@ export function HomepageFeaturedEditor({
   const [isSearching, setIsSearching] = useState(false);
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [provinceFilter, setProvinceFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const slugsKey = slugs.join("|");
 
   useEffect(() => {
@@ -113,13 +114,17 @@ export function HomepageFeaturedEditor({
   function imageUrl(path: string | null) {
     if (!path) return "";
     if (/^https?:\/\//i.test(path)) return path;
-    return `/api/media/image?path=${encodeURIComponent(path)}`;
+    if (path.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(path)}`;
+    return `/site-media/${path}`;
   }
 
   const selectedProvince = PROVINCE_FILTERS.find((item) => item.value === provinceFilter);
   const filteredSearchResults = searchResults.filter((result) => {
-    if (provinceFilter === "all") return true;
-    return result.province?.name_en === provinceFilter || result.province?.name_th === selectedProvince?.label;
+    if (provinceFilter !== "all" && result.province?.name_en !== provinceFilter && result.province?.name_th !== selectedProvince?.label) return false;
+    if (statusFilter === "published" && (!result.is_published || !result.is_active)) return false;
+    if (statusFilter === "draft" && result.is_published) return false;
+    if (statusFilter === "inactive" && result.is_active) return false;
+    return true;
   });
   const selectedWarnings = items.reduce(
     (acc, item) => {
@@ -135,15 +140,15 @@ export function HomepageFeaturedEditor({
     <div className="space-y-6">
       <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm sm:grid-cols-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Selected</p>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">จำนวนที่เลือก</p>
           <p className="mt-1 text-2xl font-black text-slate-900">{items.length}</p>
         </div>
         <div>
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Needs image</p>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">ขาดรูปหน้าปก</p>
           <p className={`mt-1 text-2xl font-black ${selectedWarnings.missingCover ? "text-amber-700" : "text-emerald-700"}`}>{selectedWarnings.missingCover}</p>
         </div>
         <div>
-          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Not public-ready</p>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">ไม่พร้อมแสดงผล</p>
           <p className={`mt-1 text-2xl font-black ${selectedWarnings.draft + selectedWarnings.inactive ? "text-rose-700" : "text-emerald-700"}`}>{selectedWarnings.draft + selectedWarnings.inactive}</p>
         </div>
       </div>
@@ -151,7 +156,7 @@ export function HomepageFeaturedEditor({
       {/* Search to add */}
       <div className="relative z-10">
         <label className="block text-sm font-black text-slate-700 mb-2">ค้นหาสถานที่เพื่อเพิ่ม</label>
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           {PROVINCE_FILTERS.map((item) => (
             <button
               key={item.value}
@@ -166,6 +171,17 @@ export function HomepageFeaturedEditor({
               {item.label}
             </button>
           ))}
+          <div className="h-4 w-px bg-slate-300 mx-1"></div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="min-h-9 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600 outline-none hover:bg-slate-50 focus:border-[#0A6B62] focus:ring-1 focus:ring-[#0A6B62]"
+          >
+            <option value="all">ทุกสถานะ (All Status)</option>
+            <option value="published">เผยแพร่แล้ว (Published)</option>
+            <option value="draft">ฉบับร่าง (Draft)</option>
+            <option value="inactive">ปิดใช้งาน (Inactive)</option>
+          </select>
         </div>
         <div className="relative">
           <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -218,7 +234,7 @@ export function HomepageFeaturedEditor({
 
         {searchQuery.trim() && !isSearching && searchResults.length > 0 && filteredSearchResults.length === 0 ? (
           <div className="absolute top-full left-0 right-0 mt-2 rounded-xl border border-slate-200 bg-white p-4 text-center text-sm font-semibold text-slate-500 shadow-xl">
-            ไม่พบสถานที่ในจังหวัดที่เลือก
+            ไม่พบสถานที่ที่ตรงกับเงื่อนไขการกรอง
           </div>
         ) : null}
       </div>

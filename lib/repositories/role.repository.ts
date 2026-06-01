@@ -120,15 +120,14 @@ export async function updateRole(roleId: number, data: { roleName: string; descr
 
   if (role.role_name !== "super_admin") {
     // Only sync permissions if it's not super_admin. super_admin has everything implicitly or via seed.
-    await supabase.from("role_permissions").delete().eq("role_id", roleId);
-    
-    if (data.permissionIds.length > 0) {
-      const permissionInserts = data.permissionIds.map(permId => ({
-        role_id: roleId,
-        permission_id: permId
-      }));
-      const { error: permError } = await supabase.from("role_permissions").insert(permissionInserts);
-      if (permError) throw new Error("Failed to update permissions");
+    const { error: rpcError } = await supabase.rpc('sync_role_permissions', {
+      p_role_id: roleId,
+      p_permission_ids: data.permissionIds
+    });
+
+    if (rpcError) {
+      console.error("sync_role_permissions RPC error:", rpcError);
+      throw new Error("Failed to update permissions");
     }
   }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useId, type ReactNode } from "react";
 import type { DashboardKpi, TrendPoint } from "@/types/dashboard";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
+import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import {
   Users,
   MapPin,
@@ -12,6 +13,7 @@ import {
   ChartBar,
   ArrowUp,
   ArrowDown,
+  WarningCircle,
 } from "@phosphor-icons/react/dist/ssr";
 
 /* ──────────────────────────────────────────────
@@ -200,16 +202,20 @@ export function KpiCard({
   metric,
   sparklineData,
   index = 0,
+  sampleCount,
+  sampleLabel = "responses",
 }: {
   metric: DashboardKpi;
   sparklineData?: TrendPoint[];
   index?: number;
+  sampleCount?: number;
+  sampleLabel?: string;
 }) {
   const rawNumber = extractNumber(metric.value);
   const animated = useCountUp(rawNumber, 900);
   const accent = ACCENTS[metric.valueType] ?? DEFAULT_ACCENT;
 
-  const isNoData = metric.value === "No data";
+  const isNoData = metric.value === "No data" || metric.value === "N/A";
   const displayValue = isNoData
     ? metric.value
     : rawNumber !== null
@@ -224,7 +230,11 @@ export function KpiCard({
 
   return (
     <article
-      className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600"
+      className={`group relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-slate-600 ${
+        isNoData
+          ? "border-dashed border-slate-300 dark:border-slate-600"
+          : "border-slate-200/70"
+      }`}
       style={{
         animation: `kpi-fade-in-up 0.5s ease-out ${index * 0.07}s both`,
       }}
@@ -270,18 +280,43 @@ export function KpiCard({
               <MetricTooltip definition={metric.definition} />
             </span>
           </div>
-          <p
-            className={`mt-0.5 truncate text-2xl font-black tracking-tight tabular-nums transition-colors duration-300 ${
-              isNoData ? "text-slate-300 dark:text-slate-600" : "text-slate-800 dark:text-slate-100"
-            }`}
-          >
-            {displayValue}
-          </p>
+
+          {isNoData ? (
+            <div className="mt-1 flex items-center gap-2">
+              <WarningCircle
+                size={18}
+                weight="fill"
+                className="shrink-0 text-slate-300 dark:text-slate-600"
+                aria-hidden
+              />
+              <div>
+                <p className="text-sm font-bold text-slate-400 dark:text-slate-500">
+                  No data
+                </p>
+                <p className="mt-0.5 text-[11px] leading-tight text-slate-400/70 dark:text-slate-500/70">
+                  {metric.definition}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p
+              className={`mt-0.5 truncate text-2xl font-black tracking-tight tabular-nums transition-colors duration-300 text-slate-800 dark:text-slate-100`}
+            >
+              {displayValue}
+            </p>
+          )}
         </div>
       </div>
 
+      {/* ── small sample warning ── */}
+      {sampleCount !== undefined && sampleCount < 10 && !isNoData ? (
+        <div className="mt-3">
+          <SmallSampleWarning count={sampleCount} label={sampleLabel} />
+        </div>
+      ) : null}
+
       {/* ── note / change indicator ── */}
-      {metric.note ? (
+      {metric.note && !isNoData ? (
         <div className="mt-3 flex items-center gap-1.5">
           <span
             className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none ${
@@ -295,12 +330,12 @@ export function KpiCard({
           </span>
           <span className="text-[10px] text-slate-400 dark:text-slate-500">vs expected</span>
         </div>
-      ) : (
+      ) : !isNoData ? (
         <div className="mt-3 h-[22px]" aria-hidden />
-      )}
+      ) : null}
 
       {/* ── sparkline ── */}
-      {sparklineData && sparklineData.length >= 2 && (
+      {!isNoData && sparklineData && sparklineData.length >= 2 && (
         <div className="mt-2.5 border-t border-slate-100 pt-2.5 dark:border-slate-700/50">
           <Sparkline data={sparklineData} color={accent.sparkline} />
         </div>

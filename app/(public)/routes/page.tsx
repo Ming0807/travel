@@ -7,8 +7,8 @@ import { listPublicRoutes } from "@/lib/repositories/public-content.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 
 export const metadata: Metadata = {
-  title: "Suggested Routes | Southern Border Tourism",
-  description: "Discover curated travel routes across Yala, Pattani, and Narathiwat.",
+  title: "เส้นทางแนะนำ | ท่องเที่ยวชายแดนใต้",
+  description: "ค้นพบเส้นทางท่องเที่ยวที่คัดสรรมาเป็นอย่างดีในยะลา ปัตตานี และนราธิวาส",
 };
 
 export const dynamic = "force-dynamic";
@@ -24,14 +24,14 @@ export default async function RoutesPage() {
   ]);
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
+    <div className="bg-background min-h-screen text-ink pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-20">
         
         {/* Breadcrumb */}
         <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <Link href="/" className="hover:text-coral transition-colors">Home</Link>
+          <Link href="/" className="hover:text-coral transition-colors">หน้าแรก</Link>
           <span>›</span>
-          <span className="text-ink">Routes</span>
+          <span className="text-ink">เส้นทาง</span>
         </div>
 
         {/* HERO SECTION */}
@@ -69,7 +69,7 @@ export default async function RoutesPage() {
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-sand/70 text-center text-sm font-semibold text-muted">
                       <MapTrifold size={28} className="text-leaf" />
-                      <span>Image not added</span>
+                      <span>ยังไม่มีรูปภาพ</span>
                     </div>
                   )}
                   <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold text-ink shadow-sm">

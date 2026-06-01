@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { adminAccommodationMutationSchema } from "@/lib/validation/admin-accommodation";
+import { linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminAccommodation,
   updateAdminAccommodation,
@@ -33,12 +34,29 @@ export async function createAccommodationAction(prevState: ActionResult, formDat
     }
 
     const created = await createAdminAccommodation(parsed.data);
+
+    // Link cover media if provided
+    const coverMediaUrl = parsed.data.coverMediaUrl;
+    if (coverMediaUrl) {
+      const urlPattern = /\/site-media\/(.+)$/;
+      const match = coverMediaUrl.match(urlPattern);
+      const storagePath = match ? match[1] : null;
+      if (storagePath) {
+        await linkMediaToEntityByStoragePath(storagePath, "accommodation", created.accommodation_id);
+      }
+    } else if (parsed.data.coverMediaId) {
+      const coverMediaId = Number(parsed.data.coverMediaId);
+      if (Number.isFinite(coverMediaId)) {
+        await linkMediaToEntity(coverMediaId, "accommodation", created.accommodation_id);
+      }
+    }
+
     await logAdminMutation({
       actor: guard.actor,
       action: "accommodation.create",
       entityType: "accommodation",
       entityId: created.accommodation_id,
-      newValues: parsed.data as unknown as Record<string, unknown>,
+      newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
     revalidatePath('/', 'layout');
@@ -65,13 +83,30 @@ export async function updateAccommodationAction(accommodationId: number, prevSta
 
     const old = await getAdminAccommodationById(accommodationId);
     const updated = await updateAdminAccommodation(accommodationId, parsed.data);
+
+    // Link cover media if provided
+    const coverMediaUrl = parsed.data.coverMediaUrl;
+    if (coverMediaUrl) {
+      const urlPattern = /\/site-media\/(.+)$/;
+      const match = coverMediaUrl.match(urlPattern);
+      const storagePath = match ? match[1] : null;
+      if (storagePath) {
+        await linkMediaToEntityByStoragePath(storagePath, "accommodation", updated.accommodation_id);
+      }
+    } else if (parsed.data.coverMediaId) {
+      const coverMediaId = Number(parsed.data.coverMediaId);
+      if (Number.isFinite(coverMediaId)) {
+        await linkMediaToEntity(coverMediaId, "accommodation", updated.accommodation_id);
+      }
+    }
+
     await logAdminMutation({
       actor: guard.actor,
       action: "accommodation.update",
       entityType: "accommodation",
       entityId: updated.accommodation_id,
       oldValues: old as unknown as Record<string, unknown>,
-      newValues: parsed.data as unknown as Record<string, unknown>,
+      newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
     revalidatePath('/', 'layout');

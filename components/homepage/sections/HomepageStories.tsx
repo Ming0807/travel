@@ -12,7 +12,7 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
   const sideStories = storyCards.slice(1, 4);
 
   return (
-    <section id="stories" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-[3rem] my-8 shadow-sm border border-ink/5">
+    <section id="stories" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-3xl my-8 border border-ink/5">
       <div className="mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h2 className="text-4xl font-black text-ink tracking-tight">ประสบการณ์จากนักเดินทาง</h2>
@@ -29,7 +29,7 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
         {featuredStory ? (
           <Link href={`/stories/${featuredStory.id}`} className="group block">
-            <div className="relative mb-6 aspect-[4/3] w-full overflow-hidden rounded-[2rem] shadow-card bg-cream">
+            <div className="relative mb-6 aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-card bg-cream">
               {featuredStory.imageUrl ? (
                 <Image
                   src={featuredStory.imageUrl}
@@ -40,7 +40,7 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm font-semibold text-muted">
-                  Image not added
+                  ยังไม่มีรูปภาพ
                 </div>
               )}
               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold text-coral shadow-sm">
@@ -58,8 +58,8 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
             <p className="mt-5 text-sm font-bold text-ink/40">{featuredStory.date || "เผยแพร่ล่าสุด"} · ใช้เวลาอ่าน 4 นาที</p>
           </Link>
         ) : (
-          <div className="rounded-[2rem] border border-dashed border-ink/10 bg-cream p-8 text-center text-sm font-semibold text-muted">
-            Published stories will appear here after content is added in the database.
+          <div className="rounded-2xl border border-dashed border-ink/10 bg-cream p-8 text-center text-sm font-semibold text-muted">
+            เรื่องราวที่เผยแพร่แล้วจะปรากฏที่นี่หลังจากเพิ่มเนื้อหาในฐานข้อมูล
           </div>
         )}
 
@@ -77,7 +77,7 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs font-semibold text-muted">
-                    No image
+                    ยังไม่มีรูปภาพ
                   </div>
                 )}
               </div>

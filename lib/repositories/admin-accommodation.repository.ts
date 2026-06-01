@@ -16,7 +16,6 @@ export type AdminAccommodationRow = {
   longitude: number | null;
   address_text: string | null;
   contact_info: string | null;
-  cover_image_url: string | null;
   price_range: string | null;
   is_published: boolean;
   is_active: boolean;
@@ -50,7 +49,6 @@ function mapAccommodation(row: any): AdminAccommodationRow {
     longitude: row.longitude === null ? null : Number(row.longitude),
     address_text: row.address_text,
     contact_info: row.contact_info,
-    cover_image_url: row.cover_image_url,
     price_range: row.price_range,
     is_published: row.is_published,
     is_active: row.is_active,
@@ -74,7 +72,6 @@ function toPayload(input: AdminAccommodationMutationInput) {
     longitude: input.longitude,
     address_text: input.addressText,
     contact_info: input.contactInfo,
-    cover_image_url: input.coverImageUrl,
     price_range: input.priceRange,
     is_published: input.isPublished,
     is_active: input.isActive

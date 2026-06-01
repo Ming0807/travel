@@ -113,14 +113,14 @@ export function CheckinCodeForm({
 
     return (
       <SuccessNextSteps
-        title={isEditing ? "Check-in code updated" : "Check-in code created"}
-        description={`Public QR URL /c/${newCode} is ready to test. Confirm the landing page shows the right attraction, photo spot, and certificate context before printing.`}
+        title={isEditing ? "อัปเดตรหัสเช็คอินสำเร็จ" : "สร้างรหัสเช็คอินสำเร็จ"}
+        description={`URL สาธารณะ /c/${newCode} พร้อมทดสอบแล้ว กรุณาตรวจสอบว่าหน้าเช็คอินแสดงสถานที่ จุดถ่ายภาพ และบริบทใบประกาศที่ถูกต้องก่อนพิมพ์ QR`}
         actions={[
-          { label: "Test QR landing", href: `/c/${newCode}`, primary: true, icon: ArrowSquareOut },
-          { label: "Manage attraction media", href: `/admin/attractions/${attractionId}/media`, icon: ImageSquare },
-          { label: "Return to attraction", href: `/admin/attractions/${attractionId}/edit`, icon: ArrowLeft },
-          { label: "Create another QR", href: "/admin/checkin-codes/new", icon: Plus },
-          { label: "View check-in codes", href: "/admin/checkin-codes", icon: List },
+          { label: "ทดสอบหน้า QR", href: `/c/${newCode}`, primary: true, icon: ArrowSquareOut },
+          { label: "จัดการรูปภาพของสถานที่", href: `/admin/attractions/${attractionId}/media`, icon: ImageSquare },
+          { label: "กลับไปที่สถานที่", href: `/admin/attractions/${attractionId}/edit`, icon: ArrowLeft },
+          { label: "สร้าง QR อีกอัน", href: "/admin/checkin-codes/new", icon: Plus },
+          { label: "ดูรายการรหัสเช็คอิน", href: "/admin/checkin-codes", icon: List },
         ]}
       />
     );
@@ -204,11 +204,9 @@ export function CheckinCodeForm({
                 />
               </label>
             </div>
-          </AdminFormSection>
-
-          <AdminFormSection
-            title="Attraction and photo spot"
-            description="One neutral QR should point to one attraction, with an optional photo spot for more precise certificate context."
+          </AdminFormSection>            <AdminFormSection
+            title="สถานที่และจุดถ่ายภาพ"
+            description="QR เดียวต้องชี้ไปยังสถานที่ท่องเที่ยวหนึ่งแห่ง โดยมีจุดถ่ายภาพเป็นตัวเลือกเสริมเพื่อบริบทใบประกาศที่แม่นยำยิ่งขึ้น"
             icon={QrCode}
           >
             <div className="grid gap-4 md:grid-cols-2">
@@ -349,7 +347,7 @@ export function CheckinCodeForm({
       <AdminSaveBar
         cancelHref="/admin/checkin-codes"
         isPending={isPending}
-        submitLabel={isEditing ? "Save QR changes" : "Create QR check-in"}
+        submitLabel={isEditing ? "บันทึกการเปลี่ยนแปลง QR" : "สร้าง QR เช็คอิน"}
       />
     </form>
   );

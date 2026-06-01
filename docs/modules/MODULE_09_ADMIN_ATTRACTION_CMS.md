@@ -70,7 +70,7 @@ Phase 08 primarily manages or depends on:
 
 - `attractions`
 - `attraction_types`
-- `attraction_media`
+- `content_media`
 - `photo_spots`
 - `checkin_codes`
 - `provinces`

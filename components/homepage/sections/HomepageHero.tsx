@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Play } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Play, MapPin } from "@phosphor-icons/react/dist/ssr";
 
 export function HomepageHero({
   title = "ค้นพบ ความมหัศจรรย์ ที่ซ่อนเร้น",
@@ -21,7 +21,8 @@ export function HomepageHero({
     const value = path?.trim();
     if (!value) return "";
     if (value.startsWith("http")) return value;
-    return `/api/media/image?path=${encodeURIComponent(value)}`;
+    if (value.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(value)}`;
+    return `/site-media/${value}`;
   };
 
   const img0 = getImageUrl(images?.[0]);
@@ -29,7 +30,7 @@ export function HomepageHero({
   const img2 = getImageUrl(images?.[2]);
 
   return (
-    <section className="relative overflow-hidden bg-[#FAF8F5] pt-16 pb-24 sm:pt-24 sm:pb-32 lg:pb-40 text-ink">
+    <section className="relative overflow-hidden bg-background pt-16 pb-24 sm:pt-24 sm:pb-32 lg:pb-40 text-ink">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-1/2 w-[800px] h-[600px] -translate-x-1/2 -translate-y-1/2 bg-[#F2EFE8] rounded-full blur-[100px] -z-10 opacity-70"></div>
       
@@ -60,7 +61,7 @@ export function HomepageHero({
               
               <Link
                 href="/360-vista"
-                className="flex items-center gap-3 rounded-full bg-white px-6 py-4 text-sm font-bold text-ink shadow-sm border border-ink/5 hover:bg-cream transition-colors duration-300"
+                className="flex items-center gap-3 rounded-full bg-white px-6 py-4 text-sm font-bold text-ink border border-ink/5 hover:bg-cream transition-colors duration-300"
               >
                 <div className="w-8 h-8 rounded-full bg-ink/5 flex items-center justify-center text-ink">
                   <Play weight="fill" size={12} />
@@ -69,21 +70,28 @@ export function HomepageHero({
               </Link>
             </div>
             
-            <div className="mt-12 flex items-center gap-4 text-sm font-bold text-muted">
-              <div className="flex -space-x-3">
-                <div className="w-10 h-10 rounded-full border-2 border-[#FAF8F5] bg-leaf text-white flex items-center justify-center text-xs font-black">SB</div>
-                <div className="w-10 h-10 rounded-full border-2 border-[#FAF8F5] bg-teal text-white flex items-center justify-center text-xs font-black">QR</div>
-                <div className="w-10 h-10 rounded-full border-2 border-[#FAF8F5] bg-gold text-ink flex items-center justify-center text-xs font-black">AI</div>
-                <div className="w-10 h-10 rounded-full border-2 border-[#FAF8F5] bg-coral text-white flex items-center justify-center text-xs font-black">+5k</div>
+            <div className="mt-12 flex items-center gap-6 text-sm font-bold text-muted">
+              <div className="flex items-center gap-2">
+                <MapPin weight="fill" className="text-teal" size={20} />
+                <span>ยะลา</span>
               </div>
-              <p>นักเดินทางที่ร่วมค้นพบสิ่งใหม่ๆ กับเรา</p>
+              <div className="w-1.5 h-1.5 rounded-full bg-ink/20"></div>
+              <div className="flex items-center gap-2">
+                <MapPin weight="fill" className="text-coral" size={20} />
+                <span>ปัตตานี</span>
+              </div>
+              <div className="w-1.5 h-1.5 rounded-full bg-ink/20"></div>
+              <div className="flex items-center gap-2">
+                <MapPin weight="fill" className="text-gold" size={20} />
+                <span>นราธิวาส</span>
+              </div>
             </div>
           </div>
 
           {/* Right: Premium Image Collage (Col 7-12) */}
           <div className="lg:col-span-6 relative h-[500px] md:h-[600px] w-full mt-10 lg:mt-0">
             {/* Main Center Image */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[80%] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white z-20 bg-cream">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[80%] rounded-3xl overflow-hidden shadow-2xl border-8 border-white z-20 bg-cream">
               {img0 ? (
                 <Image
                   src={img0}
@@ -95,7 +103,7 @@ export function HomepageHero({
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-sand text-center text-xs font-bold uppercase tracking-widest text-muted">
-                  Hero image not added
+                  ยังไม่มีรูปภาพ
                 </div>
               )}
               <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold shadow-sm">
@@ -104,7 +112,7 @@ export function HomepageHero({
             </div>
             
             {/* Top Right Floating Image */}
-            <div className="absolute top-0 right-0 w-[40%] h-[45%] rounded-[2rem] overflow-hidden shadow-xl border-4 border-white z-10 hidden md:block bg-cream">
+            <div className="absolute top-0 right-0 w-[40%] h-[45%] rounded-2xl overflow-hidden shadow-xl border-4 border-white z-10 hidden md:block bg-cream">
               {img1 && <Image
                 src={img1}
                 alt="Highlight 2"
@@ -115,7 +123,7 @@ export function HomepageHero({
             </div>
             
             {/* Bottom Left Floating Image */}
-            <div className="absolute bottom-0 left-0 w-[45%] h-[40%] rounded-[2rem] overflow-hidden shadow-xl border-4 border-white z-30 hidden md:block bg-cream">
+            <div className="absolute bottom-0 left-0 w-[45%] h-[40%] rounded-2xl overflow-hidden shadow-xl border-4 border-white z-30 hidden md:block bg-cream">
               {img2 && <Image
                 src={img2}
                 alt="Highlight 3"

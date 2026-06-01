@@ -11,18 +11,19 @@ export function HomepageCertificateCta({
   description?: string;
   bgImage?: string;
 }) {
-  const getImageUrl = (path: string | undefined) => {
+  const getImageUrl = (path?: string | null) => {
     const value = path?.trim();
     if (!value) return "";
     if (value.startsWith("http")) return value;
-    return `/api/media/image?path=${encodeURIComponent(value)}`;
+    if (value.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(value)}`;
+    return `/site-media/${value}`;
   };
 
   const imgSrc = getImageUrl(bgImage);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="relative overflow-hidden rounded-[3rem] bg-ink shadow-xl w-full h-[450px] flex items-center justify-center text-center px-4">
+      <div className="relative overflow-hidden rounded-3xl bg-ink shadow-xl w-full h-[450px] flex items-center justify-center text-center px-4">
         {/* Background Image */}
         {imgSrc && (
           <Image

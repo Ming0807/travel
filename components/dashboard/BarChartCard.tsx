@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { DistributionItem } from "@/types/dashboard";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { NoDataState } from "@/components/dashboard/NoDataState";
+import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 
 /* ─── 10-color palette from project theme ─── */
 const BAR_COLORS = [
@@ -18,10 +19,12 @@ type BarChartCardProps = {
   definition: string;
   data: DistributionItem[];
   emptyDescription: string;
+  sampleCount?: number;
+  sampleLabel?: string;
 };
 
 /* ─── main component ─── */
-export function BarChartCard({ title, definition, data, emptyDescription }: BarChartCardProps) {
+export function BarChartCard({ title, definition, data, emptyDescription, sampleCount, sampleLabel = "responses" }: BarChartCardProps) {
   const [mounted, setMounted] = useState(false);
   const [animProgress, setAnimProgress] = useState(0);
 
@@ -72,7 +75,13 @@ export function BarChartCard({ title, definition, data, emptyDescription }: BarC
           <NoDataState description={emptyDescription} />
         </div>
       ) : (
-        <div className="mt-5 space-y-4">
+        <>
+          {sampleCount !== undefined && sampleCount < 10 ? (
+            <div className="mt-4">
+              <SmallSampleWarning count={sampleCount} label={sampleLabel} />
+            </div>
+          ) : null}
+          <div className="mt-5 space-y-4">
           {data.slice(0, 8).map((item, i) => {
             const width = max > 0 ? Math.max((item.value / max) * 100, 2) : 0;
             const color = BAR_COLORS[i % BAR_COLORS.length];
@@ -128,6 +137,7 @@ export function BarChartCard({ title, definition, data, emptyDescription }: BarC
             );
           })}
         </div>
+        </>
       )}
 
       {/* hover glow overlay */}

@@ -16,6 +16,7 @@ import {
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { listPublicAttractionCards } from "@/lib/repositories/public-content.repository";
 import { SettingsService } from "@/lib/services/settings.service";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -48,24 +49,31 @@ export default async function AttractionsPage({
   const topDestinations = attractions.slice(1, 7);
   const trending = attractions.slice(7, 9).length > 0 ? attractions.slice(7, 9) : attractions.slice(0, 2);
   const emptyMessage = search || province
-    ? "No published attractions match the current filters."
-    : "No published attractions have been added yet.";
+    ? "ไม่พบสถานที่ท่องเที่ยวที่ตรงกับเงื่อนไขที่ค้นหา"
+    : "ยังไม่มีสถานที่ท่องเที่ยวที่เผยแพร่ในขณะนี้";
 
-  const provinces = [
-    { name: "Yala", places: "Yala" },
-    { name: "Pattani", places: "Pattani" },
-    { name: "Narathiwat", places: "Narathiwat" },
+  const supabase = await createSupabaseServerClient();
+  const { data: provincesData } = await supabase.from('provinces').select('province_name_en, province_name_th').eq('is_active', true).eq('is_target_area', true).order('province_name_th');
+  
+  const provinces = provincesData?.map(p => ({
+    name: p.province_name_en,
+    label: p.province_name_th,
+    places: p.province_name_en
+  })) || [
+    { name: "Yala", label: "ยะลา", places: "Yala" },
+    { name: "Pattani", label: "ปัตตานี", places: "Pattani" },
+    { name: "Narathiwat", label: "นราธิวาส", places: "Narathiwat" },
   ];
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
+    <div className="bg-background min-h-screen text-ink pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
 
         {/* Breadcrumb */}
         <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <span>Home</span>
+          <span>หน้าแรก</span>
           <span>›</span>
-          <span className="text-ink">Destinations</span>
+          <span className="text-ink">สถานที่ท่องเที่ยว</span>
         </div>
 
         {/* HERO SECTION */}
@@ -78,7 +86,7 @@ export default async function AttractionsPage({
             </p>
 
             {/* Search & Filters */}
-            <form action="/attractions" method="GET" className="bg-white p-2 rounded-full shadow-sm border border-ink/5 flex items-center mb-6 max-w-xl">
+            <form action="/attractions" method="GET" className="bg-white p-2 rounded-full border border-ink/5 flex items-center mb-6 max-w-xl">
               <MagnifyingGlass size={20} className="text-muted ml-3" weight="bold" />
               <input
                 type="text"
@@ -102,16 +110,18 @@ export default async function AttractionsPage({
               <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
                 ช่วงเวลาแนะนำ <CaretDown weight="bold" />
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-coral hover:underline transition-colors">
-                ล้างตัวกรอง
-              </button>
+              {(search || province) && (
+                <Link href="/attractions" className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-coral hover:underline transition-colors">
+                  ล้างตัวกรอง
+                </Link>
+              )}
             </div>
           </div>
 
           {/* Featured Destination Card */}
           <div className="lg:w-1/2 w-full">
             {featured ? (
-              <div className="relative w-full h-[350px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 group">
+              <div className="relative w-full h-[350px] rounded-2xl overflow-hidden shadow-lg border border-ink/5 group">
                 {featured.imageUrl ? (
                   <Image
                     src={featured.imageUrl}
@@ -146,7 +156,7 @@ export default async function AttractionsPage({
                 </div>
               </div>
             ) : (
-              <div className="w-full h-[350px] rounded-[2rem] bg-cream flex items-center justify-center text-muted">
+              <div className="w-full h-[350px] rounded-2xl bg-cream flex items-center justify-center text-muted">
                 {emptyMessage}
               </div>
             )}
@@ -158,11 +168,11 @@ export default async function AttractionsPage({
           <h2 className="text-2xl font-black text-ink mb-6">จังหวัดยอดนิยม</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {provinces.map((prov, idx) => (
-              <Link href={`/attractions?province=${prov.name}`} key={idx} className="group relative h-40 md:h-48 rounded-[1.5rem] overflow-hidden bg-white shadow-sm cursor-pointer border border-ink/5 block transition hover:border-coral/30 hover:shadow-md">
+              <Link href={`/attractions?province=${prov.name}`} key={idx} className="group relative h-40 md:h-48 rounded-xl overflow-hidden bg-white shadow-sm cursor-pointer border border-ink/5 block transition hover:border-coral/30 hover:shadow-md">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(243,112,76,0.16),transparent_42%),linear-gradient(135deg,rgba(10,107,98,0.08),rgba(255,255,255,0.8))]"></div>
                 <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
                   <div>
-                    <h3 className="text-ink font-bold text-lg leading-tight mb-1">{prov.name}</h3>
+                    <h3 className="text-ink font-bold text-lg leading-tight mb-1">{prov.label}</h3>
                     <p className="text-muted text-[10px] font-bold uppercase tracking-wider">{prov.places}</p>
                   </div>
                   <div className="w-6 h-6 rounded-full bg-coral/10 flex items-center justify-center text-coral">
@@ -192,7 +202,7 @@ export default async function AttractionsPage({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {topDestinations.length > 0 ? topDestinations.map((dest) => (
                   <Link href={`/attractions/${dest.slug}`} key={dest.slug} className="group block">
-                    <div className="relative h-56 w-full rounded-[1.5rem] overflow-hidden mb-4 bg-cream border border-ink/5 shadow-sm">
+                    <div className="relative h-56 w-full rounded-xl overflow-hidden mb-4 bg-cream border border-ink/5">
                       {dest.imageUrl ? (
                         <Image
                           src={dest.imageUrl}
@@ -203,7 +213,7 @@ export default async function AttractionsPage({
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-semibold text-muted">
-                          Image not added
+                          ยังไม่มีรูปภาพ
                         </div>
                       )}
                       <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-ink hover:text-coral hover:bg-white transition-colors">
@@ -239,7 +249,7 @@ export default async function AttractionsPage({
                     </div>
                   </Link>
                 )) : (
-                  <div className="md:col-span-2 rounded-[1.5rem] border border-dashed border-ink/10 bg-white p-8 text-center text-sm font-semibold text-muted">
+                  <div className="md:col-span-2 rounded-xl border border-dashed border-ink/10 bg-white p-8 text-center text-sm font-semibold text-muted">
                     {emptyMessage}
                   </div>
                 )}
@@ -252,7 +262,7 @@ export default async function AttractionsPage({
               <h2 className="text-2xl font-black text-ink mb-6">กำลังมาแรง</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {trending.map((trend) => (
-                  <Link href={`/attractions/${trend.slug}`} key={trend.slug} className="group bg-white p-3 rounded-[1.5rem] border border-ink/5 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
+                  <Link href={`/attractions/${trend.slug}`} key={trend.slug} className="group bg-white p-3 rounded-xl border border-ink/5 flex items-center gap-4 hover:shadow-md transition-all">
                     <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-cream">
                       {trend.imageUrl ? (
                         <Image
@@ -285,7 +295,7 @@ export default async function AttractionsPage({
           <div className="lg:col-span-4 space-y-8">
 
             {/* Map Widget */}
-            <div className="bg-[#F2EFE8] rounded-[2rem] p-8 text-center border border-ink/5 relative overflow-hidden">
+            <div className="bg-[#F2EFE8] rounded-2xl p-8 text-center border border-ink/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(10,107,98,0.12),transparent_36%),radial-gradient(circle_at_80%_30%,rgba(243,112,76,0.12),transparent_32%)] pointer-events-none" />
 
               <div className="relative z-10">
@@ -300,8 +310,8 @@ export default async function AttractionsPage({
             </div>
 
             {/* Travel With Confidence */}
-            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
-              <h3 className="font-black text-ink text-lg mb-6">Travel With Confidence</h3>
+            <div className="bg-white rounded-2xl p-6 border border-ink/5">
+              <h3 className="font-black text-ink text-lg mb-6">เดินทางอย่างมั่นใจ</h3>
 
               <div className="space-y-6">
                 <div className="flex gap-4">
@@ -331,7 +341,7 @@ export default async function AttractionsPage({
             </div>
 
             {/* Banner Image Ad */}
-            <Link href={bannerSettings.linkUrl} className="relative h-72 rounded-[2rem] overflow-hidden shadow-sm border border-ink/5 group cursor-pointer block">
+            <Link href={bannerSettings.linkUrl} className="relative h-72 rounded-2xl overflow-hidden border border-ink/5 group cursor-pointer block">
               {bannerSettings.image ? (
                 <Image
                   src={bannerSettings.image}
@@ -356,11 +366,11 @@ export default async function AttractionsPage({
 
         {/* BOTTOM CTA BANNER */}
         <section className="mb-20">
-          <div className="relative w-full rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
+          <div className="relative w-full rounded-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(243,112,76,0.2),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(10,107,98,0.28),transparent_42%)]" />
             <div className="relative z-10 mb-6 md:mb-0 md:w-1/2">
-              <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">Get Travel Inspiration Straight to Your Inbox</h2>
-              <p className="text-white/80 text-sm">Weekly guides, hidden gems and exclusive travel updates.</p>
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">รับแรงบันดาลใจการเดินทางส่งตรงถึงอีเมลคุณ</h2>
+              <p className="text-white/80 text-sm">คู่มือการเดินทาง สถานที่ซ่อนเร้น และอัปเดตพิเศษส่งถึงคุณทุกสัปดาห์</p>
             </div>
 
             <div className="relative z-10 w-full md:w-auto">

@@ -1,37 +1,30 @@
-import { Suspense } from "react";
-import Link from "next/link";
-import { Plus } from "@phosphor-icons/react/dist/ssr";
 import { listCertificateTemplates } from "@/app/actions/admin-certificate-templates";
 import { TemplateListClient } from "@/components/admin/certificate-templates/TemplateListClient";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ListPageShell } from "@/components/admin/ListPageShell";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function CertificateTemplatesPage() {
   const templates = await listCertificateTemplates();
+  const total = templates.length;
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <AdminPageHeader
-            eyebrow="Media & Assets"
-            title="Certificate Templates"
-            description="จัดการภาพพื้นหลังใบประกาศนียบัตร (Certificate Backgrounds) ที่จะใช้สำหรับสร้างภาพให้แก่นักท่องเที่ยว"
-          />
-          <Link
-            href="/admin/certificate-templates/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#075049]"
-          >
-            <Plus size={16} weight="bold" /> เพิ่มเทมเพลตใหม่
-          </Link>
-        </div>
-
-        <Suspense fallback={<div className="p-8 text-center text-muted animate-pulse">กำลังโหลดเทมเพลต...</div>}>
-          <TemplateListClient initialTemplates={templates} />
-        </Suspense>
-      </div>
-    </AdminShell>
+    <ListPageShell
+      eyebrow="Media & Assets"
+      title="Certificate Templates"
+      description="จัดการภาพพื้นหลังใบประกาศนียบัตร (Certificate Backgrounds) ที่จะใช้สำหรับสร้างภาพให้แก่นักท่องเที่ยว"
+      createHref="/admin/certificate-templates/new"
+      createLabel="เพิ่มเทมเพลตใหม่"
+      hideCreateButton={false}
+      headerActions={<ExportButton endpoint="/api/admin/export/certificate-templates" label="Export CSV" />}
+      total={total}
+      page={1}
+      pageSize={total || 1}
+      emptyTitle="ยังไม่มีเทมเพลตใบประกาศ"
+      emptyDescription="คุณสามารถเพิ่มภาพพื้นหลังและตั้งค่าตำแหน่งต่างๆ บนใบประกาศนียบัตรได้ โดยคลิกที่ปุ่มเพิ่มเทมเพลตใหม่"
+    >
+      <TemplateListClient initialTemplates={templates} />
+    </ListPageShell>
   );
 }

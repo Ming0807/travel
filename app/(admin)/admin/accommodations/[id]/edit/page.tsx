@@ -4,6 +4,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AccommodationForm } from "@/components/admin/accommodations/AccommodationForm";
 import { getAdminProvinces, getAdminAccommodationById } from "@/lib/repositories/admin-accommodation.repository";
+import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
 import { requirePermission } from "@/lib/auth/guards";
 import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
@@ -16,9 +17,10 @@ export default async function EditAccommodationPage({ params }: { params: Promis
   await requirePermission("attraction.update");
   const { id } = await params;
   
-  const [provincesData, accommodation] = await Promise.all([
+  const [provincesData, accommodation, coverMedia] = await Promise.all([
     getAdminProvinces(),
     getAdminAccommodationById(Number(id)),
+    getCoverMediaForEntity("accommodation", Number(id)),
   ]);
 
   if (!accommodation) notFound();
@@ -45,7 +47,9 @@ export default async function EditAccommodationPage({ params }: { params: Promis
         <AccommodationForm 
           provinces={provinces} 
           accommodation={accommodation}
-          submitLabel="บันทึกการแก้ไข" 
+          submitLabel="บันทึกการแก้ไข"
+          coverMediaId={coverMedia?.media_id ?? null}
+          coverPreviewUrl={coverMedia?.storage_path ? (coverMedia.storage_path.startsWith('cloudinary:') ? `/api/media/image?path=${encodeURIComponent(coverMedia.storage_path)}` : `/site-media/${coverMedia.storage_path}`) : null}
         />
       </div>
     </AdminShell>

@@ -67,18 +67,34 @@ function formatDate(dateStr: string | null) {
 
 // ─── Health Badge ─────────────────────────────────────────────────────────
 
-function HealthBadge({ label, tone }: { label: string; tone: "green" | "amber" | "red" | "gray" }) {
+function HealthBadge({ label, tone, href }: { label: string; tone: "green" | "amber" | "red" | "gray", href?: string }) {
   const styles = {
-    green: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    amber: "bg-amber-50 text-amber-700 border-amber-200",
-    red: "bg-rose-50 text-rose-700 border-rose-200",
-    gray: "bg-slate-100 text-slate-500 border-slate-200",
+    green: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:border-emerald-300",
+    amber: "bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-300",
+    red: "bg-rose-50 text-rose-700 border-rose-200 hover:border-rose-300",
+    gray: "bg-slate-100 text-slate-500 border-slate-200 hover:border-slate-300",
   };
+  const baseClasses = `inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold leading-5 transition ${styles[tone]}`;
+
+  if (href) {
+    return (
+      <Link href={href} className={`${baseClasses} hover:opacity-80`}>
+        {label}
+      </Link>
+    );
+  }
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold leading-5 ${styles[tone]}`}>
+    <span className={baseClasses}>
       {label}
     </span>
   );
+}
+
+function getIssueHash(issue: string): string {
+  if (issue === "draft" || issue === "inactive") return "#settings";
+  if (issue === "stock/demo media" || issue.includes("media") || issue.includes("cover")) return "#gallery";
+  if (issue.includes("English") || issue.includes("summary")) return "#content";
+  return "";
 }
 
 // ─── Summary Cards ────────────────────────────────────────────────────────
@@ -87,7 +103,7 @@ function SummaryCards({ report }: { report: ContentHealthReport }) {
   const { summary } = report;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
       <SummaryCard
         label="Total content"
         value={summary.totalItems}
@@ -118,6 +134,12 @@ function SummaryCards({ report }: { report: ContentHealthReport }) {
         value={summary.itemsMissingMedia}
         icon={summary.itemsMissingMedia > 0 ? XCircle : CheckCircle}
         tone={summary.itemsMissingMedia > 0 ? "red" : "green"}
+      />
+      <SummaryCard
+        label="Missing Alt Text"
+        value={summary.itemsMissingAltText}
+        icon={summary.itemsMissingAltText > 0 ? WarningCircle : CheckCircle}
+        tone={summary.itemsMissingAltText > 0 ? "amber" : "green"}
       />
       <SummaryCard
         label="Stock/demo media"
@@ -230,7 +252,7 @@ function TypeBreakdown({ report }: { report: ContentHealthReport }) {
 // ─── Content Health Table ────────────────────────────────────────────────
 
 type SortKey = "name" | "type" | "status" | "issues" | "updated";
-type FilterValue = "all" | "published" | "draft" | "issues" | "missing-en" | "no-media" | "stock-media";
+type FilterValue = "all" | "published" | "draft" | "issues" | "missing-en" | "no-media" | "missing-alt" | "stock-media";
 
 function ContentHealthTable({ report }: { report: ContentHealthReport }) {
   const [filter, setFilter] = useState<FilterValue>("all");
@@ -256,6 +278,9 @@ function ContentHealthTable({ report }: { report: ContentHealthReport }) {
         break;
       case "no-media":
         items = items.filter((i) => !i.hasCoverMedia);
+        break;
+      case "missing-alt":
+        items = items.filter((i) => i.hasMissingAltMedia);
         break;
       case "stock-media":
         items = items.filter((i) => i.hasPotentialStockMedia);
@@ -304,6 +329,7 @@ function ContentHealthTable({ report }: { report: ContentHealthReport }) {
     { value: "issues", label: "Has issues", count: report.summary.itemsWithIssues },
     { value: "missing-en", label: "Missing EN", count: report.summary.itemsMissingEnglish },
     { value: "no-media", label: "No cover", count: report.summary.itemsMissingMedia },
+    { value: "missing-alt", label: "Missing Alt Text", count: report.summary.itemsMissingAltText },
     { value: "stock-media", label: "Stock/demo media", count: report.summary.itemsWithPotentialStockMedia },
   ];
 
@@ -418,15 +444,23 @@ function ContentHealthTable({ report }: { report: ContentHealthReport }) {
                         {item.issues.length === 0 ? (
                           <span className="text-xs text-slate-400">None</span>
                         ) : (
-                          item.issues.slice(0, 2).map((issue) => (
-                            <HealthBadge key={issue} label={issue} tone={
-                              issue === "draft" ? "amber" :
-                              issue === "inactive" ? "red" :
-                              issue === "stock/demo media" ? "amber" :
-                              issue.startsWith("missing") ? "amber" :
-                              "gray"
-                            } />
-                          ))
+                          item.issues.slice(0, 2).map((issue) => {
+                            const hash = getIssueHash(issue);
+                            return (
+                              <HealthBadge 
+                                key={issue} 
+                                label={issue} 
+                                href={editHref + hash}
+                                tone={
+                                  issue === "draft" ? "amber" :
+                                  issue === "inactive" ? "red" :
+                                  issue === "stock/demo media" ? "amber" :
+                                  issue.startsWith("missing") ? "amber" :
+                                  "gray"
+                                } 
+                              />
+                            );
+                          })
                         )}
                         {item.issues.length > 2 ? (
                           <span className="text-[11px] text-slate-400">+{item.issues.length - 2}</span>

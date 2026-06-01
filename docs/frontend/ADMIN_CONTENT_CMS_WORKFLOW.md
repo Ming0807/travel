@@ -80,8 +80,10 @@ Implemented baseline:
 - Public attraction detail sections now use a shared, content-aware section model so public navigation and the attraction visual editor use the same order and localized labels.
 - Public attraction mobile section navigation uses a jump selector instead of rows that look expandable but only scroll.
 - Content Health now flags official content that still uses likely stock/demo media paths so admins can replace public images with verified assets.
+- Content Health issues now contain deep links that navigate directly to the specific visual editor section (e.g., `#gallery` or `#settings`) to fix the exact problem.
 - Media used-in lookup has a dedicated `/api/admin/media/references?storagePath=...` endpoint for content-media workflows.
 - Root-level HTML prototype/mockup files were removed from the active app surface.
+- Settings UI correctly guides admins back to the Content Hub when attempting to modify specific attraction records.
 
 ## Recommended CMS Direction
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -14,6 +15,9 @@ import {
   ToggleRight,
   WarningCircle,
   XCircle,
+  Users,
+  Plus,
+  Trash,
 } from "@phosphor-icons/react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
@@ -33,7 +37,7 @@ type SiteSettingRow = {
 
 type SettingsState = Record<SiteSettingKey, any>;
 
-type SettingsGroupId = "homepage" | "publicPages" | "contact" | "seo" | "system";
+type SettingsGroupId = "homepage" | "publicPages" | "contact" | "seo" | "system" | "about";
 
 type PickerTarget = {
   key: SiteSettingKey;
@@ -77,6 +81,12 @@ const GROUPS: {
     description: "เปิด/ปิดโมดูลหลัก และข้อความปิดปรับปรุง",
     icon: ToggleRight,
   },
+  {
+    id: "about",
+    label: "เกี่ยวกับเรา",
+    description: "วิสัยทัศน์ และทีมงาน",
+    icon: Users,
+  },
 ];
 
 const GROUP_KEYS: Record<SettingsGroupId, SiteSettingKey[]> = {
@@ -85,6 +95,7 @@ const GROUP_KEYS: Record<SettingsGroupId, SiteSettingKey[]> = {
   contact: ["general_info", "social_media", "footer_info"],
   seo: ["seo_settings"],
   system: ["feature_toggles", "maintenance_info"],
+  about: ["about_vision", "about_team"],
 };
 
 function createInitialSettings(rows: SiteSettingRow[]) {
@@ -229,6 +240,14 @@ export function SettingsClient({
     markDirty(key);
   }
 
+  function updateSettingFull(key: SiteSettingKey, value: unknown) {
+    setSettings((current) => ({
+      ...current,
+      [key]: value,
+    }));
+    markDirty(key);
+  }
+
   function updateHeroImage(index: number, value: string) {
     setSettings((current) => {
       const images = [...(current.homepage_hero.images ?? ["", "", ""])];
@@ -292,6 +311,19 @@ export function SettingsClient({
       return;
     }
 
+    if (pickerTarget.key === "about_team" && pickerTarget.field === "imageUrl" && pickerTarget.index !== undefined) {
+      setSettings((current) => {
+        const team = [...(current.about_team ?? [])];
+        team[pickerTarget.index!] = { ...team[pickerTarget.index!], imageUrl: url };
+        return {
+          ...current,
+          about_team: team,
+        };
+      });
+      markDirty("about_team");
+      return;
+    }
+
     updateSettingObject(pickerTarget.key, { [pickerTarget.field]: url });
   }
 
@@ -324,7 +356,7 @@ export function SettingsClient({
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
               : status.type === "error"
                 ? "border-rose-200 bg-rose-50 text-rose-700"
-                : "border-slate-200 bg-slate-50 text-slate-700"
+                : "border-amber-200 bg-amber-50 text-amber-800"
           }`}
         >
           {status.type === "success" ? (
@@ -435,6 +467,10 @@ export function SettingsClient({
             {activeGroup === "system" ? (
               <SystemSettings settings={settings} updateSettingObject={updateSettingObject} />
             ) : null}
+
+            {activeGroup === "about" ? (
+              <AboutSettings settings={settings} updateSettingObject={updateSettingObject} updateSettingFull={updateSettingFull} openPicker={setPickerTarget} />
+            ) : null}
           </div>
 
         </div>
@@ -522,6 +558,15 @@ function HomepageSettings({
           slugs={settings.homepage_featured_attractions.slugs ?? []}
           onChange={(slugs) => updateSettingObject("homepage_featured_attractions", { slugs })}
         />
+        <div className="mt-4 rounded-lg border border-[#0A6B62]/20 bg-[#E6F4EF] p-4 text-sm leading-6 text-[#073F37]">
+          <p className="font-bold">ต้องการแก้ไขเนื้อหาสถานที่?</p>
+          <p className="mt-1">
+            เนื้อหา รูปภาพ และตำแหน่งของสถานที่ จะดึงมาจากระบบจัดการสถานที่โดยตรง{" "}
+            <Link href="/admin/content" className="font-black text-[#0A6B62] underline hover:text-[#075049]">
+              ไปที่ศูนย์จัดการเนื้อหา (Content Hub)
+            </Link>
+          </p>
+        </div>
       </SettingsSection>
 
       <SettingsSection title="วิธีการทำงาน" description="บล็อกอธิบาย QR, certificate, stamp แบบสั้น">
@@ -680,6 +725,85 @@ function SystemSettings({
       <SettingsSection title="การปิดปรับปรุง" description="ข้อความสำหรับโหมดปิดปรับปรุง">
         <ToggleField label="โหมดปิดปรับปรุง" checked={settings.maintenance_info.isMaintenanceMode} onChange={(checked) => updateSettingObject("maintenance_info", { isMaintenanceMode: checked })} tone="danger" />
         <TextArea label="ข้อความแจ้งเตือน" value={settings.maintenance_info.maintenanceMessage} onChange={(value) => updateSettingObject("maintenance_info", { maintenanceMessage: value })} rows={4} />
+      </SettingsSection>
+    </>
+  );
+}
+
+function AboutSettings({
+  settings,
+  updateSettingObject,
+  updateSettingFull,
+  openPicker,
+}: {
+  settings: SettingsState;
+  updateSettingObject: (key: SiteSettingKey, patch: Record<string, unknown>) => void;
+  updateSettingFull: (key: SiteSettingKey, value: unknown) => void;
+  openPicker: (target: PickerTarget) => void;
+}) {
+  const team = settings.about_team || [];
+
+  return (
+    <>
+      <SettingsSection title="วิสัยทัศน์ (Vision)" description="ข้อความวิสัยทัศน์ในหน้าเกี่ยวกับเรา">
+        <TextInput label="หัวข้อวิสัยทัศน์" value={settings.about_vision.title} onChange={(value) => updateSettingObject("about_vision", { title: value })} />
+        <TextArea label="เนื้อหาวิสัยทัศน์" value={settings.about_vision.content} onChange={(value) => updateSettingObject("about_vision", { content: value })} rows={4} />
+      </SettingsSection>
+
+      <SettingsSection title="ทีมงาน (Team Members)" description="รายชื่อและข้อมูลทีมงาน">
+        <div className="space-y-4">
+          {team.map((member: any, i: number) => (
+            <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-4 relative">
+              <button
+                type="button"
+                onClick={() => {
+                  const newTeam = [...team];
+                  newTeam.splice(i, 1);
+                  updateSettingFull("about_team", newTeam);
+                }}
+                className="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors"
+                title="ลบทีมงาน"
+              >
+                <Trash size={20} />
+              </button>
+              
+              <div className="grid gap-4 md:grid-cols-2 mb-4">
+                <TextInput label="ชื่อ-นามสกุล" value={member.name} onChange={(val) => {
+                  const newTeam = [...team];
+                  newTeam[i] = { ...newTeam[i], name: val };
+                  updateSettingFull("about_team", newTeam);
+                }} />
+                <TextInput label="ตำแหน่ง" value={member.role} onChange={(val) => {
+                  const newTeam = [...team];
+                  newTeam[i] = { ...newTeam[i], role: val };
+                  updateSettingFull("about_team", newTeam);
+                }} />
+              </div>
+              
+              <ImageField 
+                label="รูปภาพทีมงาน (อัตราส่วน 1:1 แนะนำขนาด 400x400px)" 
+                value={member.imageUrl} 
+                onRemove={() => {
+                  const newTeam = [...team];
+                  newTeam[i] = { ...newTeam[i], imageUrl: "" };
+                  updateSettingFull("about_team", newTeam);
+                }} 
+                onPick={() => openPicker({ key: "about_team", field: "imageUrl", index: i })} 
+              />
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => {
+              updateSettingFull("about_team", [...team, { name: "ชื่อทีมงานใหม่", role: "ตำแหน่ง", imageUrl: "" }]);
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white p-4 text-sm font-bold text-slate-500 hover:border-teal-500 hover:text-teal-600 transition-colors"
+          >
+            <Plus size={20} />
+            เพิ่มสมาชิกทีมงาน
+          </button>
+        </div>
       </SettingsSection>
     </>
   );

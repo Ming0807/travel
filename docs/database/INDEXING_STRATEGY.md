@@ -424,14 +424,20 @@ on attractions(is_published, is_active);
 
 ---
 
-## 5.3 Attraction Media
+## 5.3 Content Media (Unified)
 
 ```sql
-create index idx_attraction_media_attraction_id
-on attraction_media(attraction_id);
+create index idx_content_media_attraction
+on content_media(attraction_id) where attraction_id is not null;
 
-create index idx_attraction_media_cover
-on attraction_media(attraction_id, is_cover);
+create index idx_content_media_cover
+on content_media(attraction_id, is_cover) where attraction_id is not null;
+
+create index idx_content_media_lifecycle_status
+on content_media(lifecycle_status);
+
+create index idx_content_media_public_ready
+on content_media(is_active, lifecycle_status, display_order);
 ```
 
 ---

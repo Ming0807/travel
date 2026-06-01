@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/lib/auth/guards";
+import { getContentReadiness } from "@/lib/repositories/admin-attraction.repository";
 
 export const dynamic = "force-dynamic";
 
@@ -95,9 +96,42 @@ const toneClasses: Record<string, string> = {
   rose: "bg-rose-50 text-rose-700 border-rose-100",
 };
 
+function ReadinessBadge({ ready, total }: { ready: number; total: number }) {
+  const ratio = total > 0 ? ready / total : 0;
+  let color: string;
+  let label: string;
+  if (total === 0) {
+    color = "bg-slate-100 text-slate-400";
+    label = "No data yet";
+  } else if (ratio >= 0.8) {
+    color = "bg-emerald-100 text-emerald-800";
+    label = "Good";
+  } else if (ratio >= 0.5) {
+    color = "bg-amber-100 text-amber-800";
+    label = "Fair";
+  } else {
+    color = "bg-rose-100 text-rose-800";
+    label = "Needs attention";
+  }
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${color}`}>{label}</span>;
+}
+
+function ReadinessStat({ label, value, sub }: { label: string; value: number; sub?: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2 text-sm">
+      <span className="text-slate-500">{label}</span>
+      <span className="font-bold text-slate-900">
+        {value}
+        {sub ? <span className="ml-1 text-[11px] font-normal text-slate-400">{sub}</span> : null}
+      </span>
+    </div>
+  );
+}
+
 export default async function ContentHubPage() {
   const guard = await requireAdmin();
   const admin = { displayName: guard.displayName, email: guard.email };
+  const readiness = await getContentReadiness();
 
   return (
     <AdminShell admin={admin}>
@@ -149,6 +183,94 @@ export default async function ContentHubPage() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">Publish readiness</h2>
+            <p className="mt-1 text-sm text-slate-500">ภาพรวมความพร้อมของเนื้อหาที่เผยแพร่แล้ว</p>
+          </div>
+          <Link
+            href="/admin/content-health"
+            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            ดูรายละเอียดปัญหา <ArrowRight size={14} weight="bold" />
+          </Link>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
+          
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <MapPin size={18} className="text-[#0A6B62]" weight="duotone" />
+              <ReadinessBadge ready={readiness.attractions.publishedWithCover} total={readiness.attractions.published} />
+            </div>
+            <h3 className="mt-3 text-lg font-black text-slate-900">{readiness.attractions.total}</h3>
+            <p className="text-xs font-bold text-slate-500">Attractions</p>
+            <div className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
+              <ReadinessStat label="Published" value={readiness.attractions.published} />
+              <ReadinessStat label="With cover image" value={readiness.attractions.publishedWithCover} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <Article size={18} className="text-[#E8590C]" weight="duotone" />
+              <ReadinessBadge ready={readiness.stories.publishedWithHero} total={readiness.stories.published} />
+            </div>
+            <h3 className="mt-3 text-lg font-black text-slate-900">{readiness.stories.total}</h3>
+            <p className="text-xs font-bold text-slate-500">Stories</p>
+            <div className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
+              <ReadinessStat label="Published" value={readiness.stories.published} />
+              <ReadinessStat label="With hero image" value={readiness.stories.publishedWithHero} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <MapPinLine size={18} className="text-[#2563EB]" weight="duotone" />
+              <ReadinessBadge ready={readiness.routes.publishedWithStops} total={readiness.routes.published} />
+            </div>
+            <h3 className="mt-3 text-lg font-black text-slate-900">{readiness.routes.total}</h3>
+            <p className="text-xs font-bold text-slate-500">Routes</p>
+            <div className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
+              <ReadinessStat label="Published" value={readiness.routes.published} />
+              <ReadinessStat label="With stops" value={readiness.routes.publishedWithStops} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <QrCode size={18} className="text-[#E11D48]" weight="duotone" />
+              <ReadinessBadge ready={readiness.checkinCodes.active} total={readiness.checkinCodes.total} />
+            </div>
+            <h3 className="mt-3 text-lg font-black text-slate-900">{readiness.checkinCodes.total}</h3>
+            <p className="text-xs font-bold text-slate-500">Check-in codes</p>
+            <div className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
+              <ReadinessStat label="Total" value={readiness.checkinCodes.total} />
+              <ReadinessStat label="Active" value={readiness.checkinCodes.active} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <ImageIcon size={18} className="text-[#9333EA]" weight="duotone" />
+              <ReadinessBadge ready={readiness.media.withAltText} total={readiness.media.totalActive} />
+            </div>
+            <h3 className="mt-3 text-lg font-black text-slate-900">{readiness.media.totalActive}</h3>
+            <p className="text-xs font-bold text-slate-500">Active media</p>
+            <div className="mt-3 space-y-1.5 border-t border-slate-200 pt-3">
+              <ReadinessStat label="Active files" value={readiness.media.totalActive} />
+              <ReadinessStat label="With alt text" value={readiness.media.withAltText} />
+            </div>
+          </div>
+
+        </div>
+        <p className="mt-4 text-[11px] leading-5 text-slate-400">
+          Readiness compares published-with-cover/stops/hero against total published. 
+          "Needs attention" means fewer than 50% of published items have the required asset. 
+          Media alt-text readiness: active files with Thai alt text set.
+        </p>
       </section>
 
       <section>

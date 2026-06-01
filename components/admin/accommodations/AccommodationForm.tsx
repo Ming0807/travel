@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createAccommodationAction, updateAccommodationAction } from "@/app/actions/admin-accommodation-actions";
 import type { AdminAccommodationRow } from "@/lib/repositories/admin-accommodation.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
 import { Image, List } from "@phosphor-icons/react";
+import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 
 export type AdminSelectOption = {
   id: number;
@@ -17,6 +18,8 @@ type AccommodationFormProps = {
   accommodation?: AdminAccommodationRow | null;
   provinces: AdminSelectOption[];
   submitLabel?: string;
+  coverMediaId?: number | null;
+  coverPreviewUrl?: string | null;
 };
 
 const FIELD_LABELS = {
@@ -33,10 +36,15 @@ const FIELD_LABELS = {
 export function AccommodationForm({
   accommodation,
   provinces,
-  submitLabel = "บันทึกข้อมูล"
+  submitLabel = "บันทึกข้อมูล",
+  coverMediaId: initialMediaId,
+  coverPreviewUrl: initialPreviewUrl,
 }: AccommodationFormProps) {
   const router = useRouter();
   const isEditing = !!accommodation;
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState(initialPreviewUrl ?? "");
+  const [coverMediaId, setCoverMediaId] = useState<number | string | null>(initialMediaId ?? null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const action = isEditing ? updateAccommodationAction.bind(null, accommodation.accommodation_id) : createAccommodationAction;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -223,14 +231,42 @@ export function AccommodationForm({
               </label>
 
               <label className="block">
-                <span className="text-sm font-bold text-slate-700">รูปภาพปก (Cover Image URL)</span>
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={accommodation?.cover_image_url ?? ""}
-                  maxLength={500}
-                  name="coverImageUrl"
-                  placeholder="https://example.com/image.jpg"
-                />
+                <span className="text-sm font-bold text-slate-700">รูปภาพปก (Cover Image)</span>
+                <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                  <div className="aspect-video bg-slate-100">
+                    {coverPreviewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={coverPreviewUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
+                        ยังไม่ได้เลือกรูปภาพ
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 p-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => setIsPickerOpen(true)}
+                      className="min-h-10 flex-1 rounded-lg bg-[#073F37] px-3 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62]"
+                    >
+                      เลือกจาก Media Library
+                    </button>
+                    {coverPreviewUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCoverPreviewUrl("");
+                          setCoverMediaId(null);
+                        }}
+                        className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                      >
+                        เอาออก
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                <input type="hidden" name="coverMediaId" value={coverMediaId ?? ""} />
+                <input type="hidden" name="coverMediaUrl" value={coverPreviewUrl ?? ""} />
               </label>
             </div>
           </section>
@@ -262,6 +298,18 @@ export function AccommodationForm({
       </section>
 
       <AdminSaveBar cancelHref="/admin/accommodations" isPending={isPending} submitLabel={submitLabel} />
+
+      <MediaPickerModal
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelectAsset={(asset) => {
+          const id = Number(asset.id);
+          setCoverMediaId(Number.isNaN(id) ? asset.id : id);
+          setCoverPreviewUrl(asset.url);
+        }}
+        onSelect={(url) => setCoverPreviewUrl(url)}
+        title="เลือกรูปภาพที่พัก"
+      />
     </form>
   );
 }

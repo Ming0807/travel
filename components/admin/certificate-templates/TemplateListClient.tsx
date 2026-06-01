@@ -47,7 +47,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: any
 
   if (!initialTemplates.length) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-[2rem] border border-dashed border-ink/10 bg-white p-12 text-center">
+      <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-ink/10 bg-white p-12 text-center">
         <div className="mb-4 rounded-full bg-slate-50 p-4 text-slate-400">
           <ImageIcon size={48} weight="light" />
         </div>
@@ -64,7 +64,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: any
       {initialTemplates.map((template) => (
         <div 
           key={template.template_id} 
-          className={`group flex flex-col overflow-hidden rounded-[1.5rem] border bg-white shadow-sm transition-all hover:shadow-md ${
+          className={`group flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:shadow-md ${
             template.is_default ? "border-[#E18868] ring-1 ring-[#E18868]" : "border-ink/5"
           }`}
         >

@@ -3,25 +3,25 @@ import { z } from "zod";
 const optionalText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
   z.string().trim().max(5000).nullable()
-);
+).default(null);
 
 const optionalShortText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
   z.string().trim().max(255).nullable()
-);
+).default(null);
 
 const requiredId = z.coerce.number().int().positive();
 
 const optionalId = z.preprocess(
   (value) => (value === "" || value === null || value === undefined ? null : value),
   z.coerce.number().int().positive().nullable()
-);
+).default(null);
 
 const optionalCoordinate = (min: number, max: number) =>
   z.preprocess(
     (value) => (value === "" || value === null || value === undefined ? null : value),
     z.coerce.number().min(min).max(max).nullable()
-  );
+  ).default(null);
 
 const booleanFromForm = z.preprocess((value) => {
   if (typeof value === "boolean") return value;
@@ -68,10 +68,11 @@ export const adminAccommodationMutationSchema = z.object({
   longitude: optionalCoordinate(-180, 180),
   addressText: optionalText,
   contactInfo: optionalShortText,
-  coverImageUrl: optionalShortText,
   priceRange: optionalShortText,
   isPublished: booleanFromForm,
-  isActive: booleanFromForm
+  isActive: booleanFromForm,
+  coverMediaId: z.preprocess((val) => (val === "" || val === null || val === undefined ? null : val), z.union([z.coerce.number().int().positive(), z.string()]).nullable()).default(null),
+  coverMediaUrl: optionalText
 });
 
 export type AdminAccommodationFilters = z.infer<typeof adminAccommodationFiltersSchema>;

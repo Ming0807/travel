@@ -20,6 +20,7 @@ import {
   formatRating,
   safeRate
 } from "@/lib/services/dashboard-math";
+import { buildDashboardAlerts } from "@/lib/services/dashboard-alert.service";
 import { parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 import type {
   DashboardFilters,
@@ -45,6 +46,12 @@ export class DashboardServiceError extends Error {
     super(message);
     this.name = "DashboardServiceError";
   }
+}
+
+/* ─── helper: get data source description ─── */
+
+function dataSourceLabel(refreshTimestamp: string | null): "live_database" | "pre_aggregated" {
+  return refreshTimestamp ? "pre_aggregated" : "live_database";
 }
 
 function isRecord(value: unknown): value is Row {
@@ -519,46 +526,107 @@ export async function getDashboardAnalytics(searchParams: RawSearchParams, activ
     throw mapAdminError(error as AdminAuthError);
   }
 
+  return buildDashboardResponse(parsed.data as DashboardFilters, activeTab, {
+    displayName: guard.displayName,
+    email: guard.email,
+    permissions: guard.permissions
+  });
+}
+
+export async function getPublicDashboardAnalytics(searchParams: RawSearchParams, activeTab: string = "executive"): Promise<DashboardViewModel> {
+  const parsed = parseDashboardFilters(searchParams);
+  if (!parsed.success) {
+    throw new DashboardServiceError(
+      "VALIDATION_ERROR",
+      "Dashboard filters are invalid. Please check date range and selected filters.",
+      parsed.error.flatten().fieldErrors
+    );
+  }
+
+  return buildDashboardResponse(parsed.data as DashboardFilters, activeTab, {
+    displayName: "Public Viewer",
+    email: "",
+    permissions: []
+  });
+}
+
+async function buildDashboardResponse(filters: DashboardFilters, activeTab: string, viewer: DashboardViewModel['viewer']): Promise<DashboardViewModel> {
   let payload: DashboardRepositoryPayload;
   try {
-    payload = await getDashboardRepositoryPayload(parsed.data as DashboardFilters, activeTab);
+    payload = await getDashboardRepositoryPayload(filters, activeTab);
   } catch {
     throw new DashboardServiceError("QUERY_FAILED", "Could not load dashboard data. Please try again.");
   }
 
   const visits = getVisitRows(payload);
-  const uniqueTouristKeys = new Set(visits.map((visit) => stringValue(visit.tourist_id)).filter(Boolean));
-  const topAttractions = buildTopAttractions(visits, payload.certificates, payload.surveys);
-  const visitsByProvince = buildVisitsByProvince(visits);
+  const useSummary = payload.summary.kpis !== null;
+
+  // Use pre-aggregated summary data when available; fall back to live query computation
+  const summary = payload.summary;
+  const topAttractions = useSummary && summary.topAttractions.length > 0
+    ? summary.topAttractions
+    : buildTopAttractions(visits, payload.certificates, payload.surveys);
+  const visitsByProvince = useSummary && summary.visitsByProvince.length > 0
+    ? summary.visitsByProvince
+    : buildVisitsByProvince(visits);
   const expenseSection = buildExpenseSection(payload.expenses);
   const satisfactionSection = buildSatisfactionSection(payload.surveys, topAttractions);
-  const eventCounts = new Map<string, number>();
-  payload.funnelEvents.forEach((event) => increment(eventCounts, stringValue(event.event_type)));
-  const funnelStages = buildFunnelStages(eventCounts);
+
+  // Build funnel stages from summary or live data
+  let funnelStages;
+  if (useSummary && summary.funnelEventCounts.size > 0) {
+    funnelStages = buildFunnelStages(summary.funnelEventCounts);
+  } else {
+    const eventCounts = new Map<string, number>();
+    payload.funnelEvents.forEach((event) => increment(eventCounts, stringValue(event.event_type)));
+    funnelStages = buildFunnelStages(eventCounts);
+  }
   const largestDropOffStage =
     [...funnelStages]
       .filter((stage) => stage.dropOffFromPrevious !== null)
       .sort((a, b) => (b.dropOffFromPrevious ?? 0) - (a.dropOffFromPrevious ?? 0))[0] ?? null;
-  const surveyCompletionRate = safeRate(payload.surveys.length, payload.certificates.length);
 
+  // Survey completion rate: use summary if available, otherwise live data
+  const summaryKpis = summary.kpis;
+  const surveyCompletionRate = useSummary
+    ? safeRate(summaryKpis!.surveyCount, summaryKpis!.certificateCount)
+    : safeRate(payload.surveys.length, payload.certificates.length);
+
+  const uniqueTouristKeys = new Set(visits.map((visit) => stringValue(visit.tourist_id)).filter(Boolean));
   const kpis = buildKpis({
-    touristProfileCount: uniqueTouristKeys.size,
-    visitCount: visits.length,
-    qrScanCount: eventCounts.get("qr_scanned") ?? 0,
-    landingViewCount: eventCounts.get("landing_viewed") ?? 0,
-    certificateCount: payload.certificates.length,
-    stampCount: payload.stamps.length,
+    touristProfileCount: useSummary ? summaryKpis!.uniqueTourists : uniqueTouristKeys.size,
+    visitCount: useSummary ? summaryKpis!.totalVisits : visits.length,
+    qrScanCount: useSummary ? summaryKpis!.qrScanCount : (() => {
+      const ec = new Map<string, number>();
+      payload.funnelEvents.forEach((e) => increment(ec, stringValue(e.event_type)));
+      return ec.get("qr_scanned") ?? 0;
+    })(),
+    landingViewCount: useSummary ? summaryKpis!.landingViewCount : (() => {
+      const ec = new Map<string, number>();
+      payload.funnelEvents.forEach((e) => increment(ec, stringValue(e.event_type)));
+      return ec.get("landing_viewed") ?? 0;
+    })(),
+    certificateCount: useSummary ? summaryKpis!.certificateCount : payload.certificates.length,
+    stampCount: useSummary ? summaryKpis!.stampCount : payload.stamps.length,
     surveyCompletionRate,
-    averageSatisfaction: satisfactionSection.averageOverall,
-    estimatedMin: expenseSection.estimatedMin,
-    estimatedMax: expenseSection.estimatedMax,
-    hasOpenEndedRange: expenseSection.hasOpenEndedRange,
+    averageSatisfaction: useSummary ? summaryKpis!.avgSatisfaction : satisfactionSection.averageOverall,
+    estimatedMin: useSummary ? summaryKpis!.totalExpenseMin : expenseSection.estimatedMin,
+    estimatedMax: useSummary ? summaryKpis!.totalExpenseMax : expenseSection.estimatedMax,
+    hasOpenEndedRange: useSummary ? summaryKpis!.hasOpenEndedRange : expenseSection.hasOpenEndedRange,
     topAttraction: topAttractions[0] ?? null
   });
 
+  // Build trend from summary or live data
+  const visitTrend = useSummary && summary.trend.length > 0
+    ? summary.trend
+    : buildVisitTrend(visits  );
+
   const dataQualityWarnings: string[] = [];
   if (payload.isTruncated) {
-    dataQualityWarnings.push(`Dashboard query reached the ${DASHBOARD_ROW_LIMIT.toLocaleString("th-TH")} row MVP limit. Narrow filters for more precise live results.`);
+    dataQualityWarnings.push(`Dashboard query reached the ${DASHBOARD_ROW_LIMIT.toLocaleString("th-TH")} row MVP limit. Narrow filters for more precise results.`);
+  }
+  if (useSummary) {
+    dataQualityWarnings.push(`Pre-aggregated summary data refreshed ${summary.refreshTimestamp ? new Date(summary.refreshTimestamp).toLocaleDateString("th-TH") : "N/A"}. Demographic distributions (origin, age, transport) still use live queries.`);
   }
   if (satisfactionSection.responseCount === 0) {
     dataQualityWarnings.push("No satisfaction responses for the selected filters. Average satisfaction is No data, not 0.");
@@ -567,19 +635,16 @@ export async function getDashboardAnalytics(searchParams: RawSearchParams, activ
     dataQualityWarnings.push("No expense survey responses for the selected filters. Estimated spending is No data.");
   }
 
-  return {
-    filters: parsed.data as DashboardFilters,
+  const viewModel: Omit<DashboardViewModel, 'dashboardAlerts'> = {
+    filters,
     generatedAt: new Date().toISOString(),
-    dataSource: "live_database",
-    viewer: {
-      displayName: guard.displayName,
-      email: guard.email,
-      permissions: guard.permissions
-    },
+    dataSource: dataSourceLabel(payload.summary.refreshTimestamp),
+    summaryRefreshTimestamp: payload.summary.refreshTimestamp,
+    viewer,
     referenceOptions: payload.referenceOptions,
     kpis,
     executive: {
-      visitTrend: buildVisitTrend(visits),
+      visitTrend,
       visitsByProvince,
       topAttractions
     },
@@ -594,4 +659,9 @@ export async function getDashboardAnalytics(searchParams: RawSearchParams, activ
     insights: buildInsights(visits, topAttractions, satisfactionSection.responseCount, surveyCompletionRate, visitsByProvince),
     dataQualityWarnings
   };
+
+  // Build alerts from the assembled ViewModel
+  const dashboardAlerts = buildDashboardAlerts(viewModel as DashboardViewModel);
+
+  return { ...viewModel, dashboardAlerts };
 }

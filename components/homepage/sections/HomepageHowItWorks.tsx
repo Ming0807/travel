@@ -38,7 +38,7 @@ const steps = [
 
 export function HomepageHowItWorks({ title = "ใช้งานง่ายเหมือนแอป", subtitle = "แต่ไม่ต้องโหลดแอป", description = "ระบบออกแบบให้เริ่มจากการให้คุณค่าก่อน — นักท่องเที่ยวกรอกน้อยที่สุด รับใบประกาศก่อน แล้วค่อยให้ข้อมูลเพิ่มเติมแบบสมัครใจ" }: { title?: string, subtitle?: string, description?: string }) {
   return (
-    <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24 bg-[#FAF8F5] rounded-[3rem] my-8 shadow-sm">
+    <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24 bg-background rounded-3xl my-8 shadow-sm">
 
       {/* Header — asymmetric layout */}
       <div className="mb-16 grid lg:grid-cols-[1fr_auto] lg:items-end gap-8">
@@ -79,7 +79,7 @@ export function HomepageHowItWorks({ title = "ใช้งานง่ายเ�
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map(({ num, icon: Icon, label, desc, accent }) => (
-            <div key={num} className="group relative flex flex-col bg-white p-8 rounded-[2rem] shadow-sm border border-ink/5 hover:shadow-md transition-all">
+            <div key={num} className="group relative flex flex-col bg-white p-8 rounded-2xl border border-ink/5 hover:shadow-md transition-all">
               {/* Icon */}
               <div className="mb-8">
                 <div

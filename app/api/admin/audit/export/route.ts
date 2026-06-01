@@ -1,10 +1,13 @@
-import { NextRequest } from "next/server";
-import { requirePermission } from "@/lib/auth/guards";
+import { NextRequest, NextResponse } from "next/server";
+import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
 import { getAuditLogsPaginated } from "@/lib/repositories/admin-audit.repository";
-import { format } from "date-fns";
+import { generateCsv } from "@/lib/utils/csv";
+import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 
 export async function GET(request: NextRequest) {
   try {
+    const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
+
     // Requires the specific export permission
     await requirePermission("audit.export");
 
@@ -21,45 +24,47 @@ export async function GET(request: NextRequest) {
     // Fetch up to 10000 records for export to prevent overwhelming server
     const { data: logs } = await getAuditLogsPaginated(1, 10000, filters);
 
-    // Build CSV
-    const headers = ["Timestamp", "Admin Name", "Admin Email", "Action", "Entity Type", "Entity ID", "New Data", "Old Data"];
-    
-    // Simple CSV escaping
-    const escapeCsv = (str: any) => {
-      if (str === null || str === undefined) return '""';
-      const s = String(str).replace(/"/g, '""');
-      return `"${s}"`;
-    };
-
-    let csvContent = headers.map(escapeCsv).join(",") + "\n";
-
-    for (const log of logs) {
-      const row = [
-        format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss"),
-        log.admin_users?.display_name || "System",
-        log.admin_users?.email || "system@local",
-        log.action,
-        log.entity_type,
-        log.entity_id || "",
-        log.new_data ? JSON.stringify(log.new_data) : "",
-        log.old_data ? JSON.stringify(log.old_data) : ""
-      ];
-      csvContent += row.map(escapeCsv).join(",") + "\n";
+    if (!logs || logs.length === 0) {
+      const emptyCsv = generateCsv([{ "Message": "No data available" }]);
+      return new NextResponse(emptyCsv, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="audit_logs_export_empty.csv"`,
+        },
+      });
     }
 
-    const filename = `audit_logs_export_${format(new Date(), "yyyyMMdd_HHmmss")}.csv`;
+    // Map logs to flat CSV rows
+    const rows = logs.map((log) => ({
+      "Timestamp": formatDate(log.created_at),
+      "Admin Name": log.admin_users?.display_name || "System",
+      "Admin Email": log.admin_users?.email || "system@local",
+      "Action": log.action,
+      "Entity Type": log.entity_type,
+      "Entity ID": log.entity_id || "",
+      "New Data": log.new_data ? JSON.stringify(log.new_data) : "",
+      "Old Data": log.old_data ? JSON.stringify(log.old_data) : "",
+    }));
 
-    return new Response(csvContent, {
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-      },
-    });
-  } catch (error: any) {
+    const now = new Date();
+    const baseFilename = `audit_logs_export_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
+
+    return await createExportResponse(rows, baseFilename, format);
+  } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
+    }
     console.error("Export audit logs error:", error);
-    return new Response(JSON.stringify({ error: "Failed to export audit logs" }), {
-      status: error.message.includes("FORBIDDEN") ? 403 : 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ error: "Failed to export audit logs" }, { status: 500 });
+  }
+}
+
+function formatDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+  } catch {
+    return dateStr;
   }
 }

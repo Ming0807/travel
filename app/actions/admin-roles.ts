@@ -39,7 +39,7 @@ export async function saveRoleAction(formData: FormData) {
     });
 
     if (!validated.success) {
-      return { error: validated.error.issues[0]?.message || "Validation failed" };
+      return { error: validated.error.issues[0]?.message || "กรุณาตรวจสอบข้อมูลให้ถูกต้อง" };
     }
 
     let newId;
@@ -82,7 +82,7 @@ export async function saveRoleAction(formData: FormData) {
     return { success: true, id: newId };
   } catch (error: any) {
     console.error("saveRoleAction error:", error);
-    return { error: error.message || "Failed to save role" };
+    return { error: error.message || "ไม่สามารถบันทึกบทบาทได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -96,7 +96,7 @@ export async function deleteRoleAction(formData: FormData) {
     await requirePermission("role.manage");
 
     const id = formData.get("id") as string;
-    if (!id) throw new Error("Role ID is required");
+    if (!id) throw new Error("กรุณาระบุ ID บทบาท");
     
     const numId = parseInt(id, 10);
 
@@ -113,6 +113,6 @@ export async function deleteRoleAction(formData: FormData) {
     return { success: true };
   } catch (error: any) {
     console.error("deleteRoleAction error:", error);
-    return { error: error.message || "Failed to delete role" };
+    return { error: error.message || "ไม่สามารถลบบทบาทได้ กรุณาลองอีกครั้ง" };
   }
 }

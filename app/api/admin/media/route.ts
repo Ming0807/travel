@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import crypto from "crypto";
@@ -16,6 +15,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
+    const lifecycleStatus = searchParams.get("lifecycle_status");
 
     const query = supabase
       .from("media_assets" as any)
@@ -24,6 +24,15 @@ export async function GET(req: NextRequest) {
 
     if (category && category !== "All") {
       query.eq("category", category);
+    }
+
+    // Filter by lifecycle: default to active; "all" shows everything
+    if (lifecycleStatus === "all") {
+      // No filter — show all including archived
+    } else if (lifecycleStatus === "archived") {
+      query.eq("lifecycle_status", "archived");
+    } else {
+      query.eq("lifecycle_status", "active");
     }
 
     const { data, error } = await query;

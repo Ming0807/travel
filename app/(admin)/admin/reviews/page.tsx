@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/auth/guards";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ReviewsListClient } from "@/components/admin/reviews/ReviewsListClient";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function AdminReviewsPage({
           eyebrow="Content Moderation"
           title="Reviews"
           description="Moderate tourist reviews for attractions and restaurants"
+          actions={<ExportButton endpoint="/api/admin/export/reviews" label="Export CSV" />}
         />
 
         <Suspense fallback={<div className="text-sm text-slate-500">Loading reviews...</div>}>

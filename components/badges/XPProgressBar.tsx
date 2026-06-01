@@ -22,7 +22,7 @@ export function XPProgressBar({ xp, compact = false }: XPProgressBarProps) {
   }, [progressPercent]);
 
   return (
-    <div className={`rounded-[1.5rem] bg-white shadow-card transition-shadow duration-300 hover:shadow-lg ${compact ? "p-4" : "p-6"}`}>
+    <div className={`rounded-xl bg-white shadow-card transition-shadow duration-300 hover:shadow-lg ${compact ? "p-4" : "p-6"}`}>
       {/* Header */}
       <div className={`flex items-center justify-between ${compact ? "mb-2" : "mb-4"}`}>
         <div>

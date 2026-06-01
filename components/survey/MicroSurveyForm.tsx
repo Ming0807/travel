@@ -228,7 +228,7 @@ export function MicroSurveyForm({
         </div>
       </section>
 
-      <div className="sticky bottom-[calc(92px+env(safe-area-inset-bottom))] z-20 rounded-[1.5rem] bg-white/90 p-3 shadow-soft backdrop-blur lg:static lg:shadow-none">
+      <div className="sticky bottom-[calc(92px+env(safe-area-inset-bottom))] z-20 rounded-xl bg-white/90 p-3 shadow-soft backdrop-blur lg:static lg:shadow-none">
         <button
           type="submit"
           className="w-full rounded-full bg-teal px-5 py-4 font-black text-white shadow-lg shadow-teal/20"

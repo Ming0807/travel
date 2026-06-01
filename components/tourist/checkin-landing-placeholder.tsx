@@ -40,7 +40,7 @@ export function CheckinLandingPlaceholder({ code, routeVariant }: CheckinLanding
           </div>
         </div>
 
-        <div className="rounded-[2rem] bg-white p-6 shadow-card">
+        <div className="rounded-2xl bg-white p-6 shadow-card">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-black text-[#D36B4B]">Location context</p>

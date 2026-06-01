@@ -141,7 +141,7 @@ export async function searchAttractionsAction(query: string) {
     });
 
     if (error) {
-      return { success: false, error: "Failed to search attractions" };
+      return { success: false, error: "ไม่สามารถค้นหาสถานที่ได้ กรุณาลองอีกครั้ง" };
     }
 
     return { success: true, data: (data ?? []).map(mapHomepagePickerAttraction) };
@@ -165,7 +165,7 @@ export async function getAttractionsBySlugsAction(slugs: string[]) {
     );
 
     if (error) {
-      return { success: false, error: "Failed to get attractions" };
+      return { success: false, error: "ไม่สามารถโหลดข้อมูลสถานที่ได้ กรุณาลองอีกครั้ง" };
     }
 
     const rows = data ?? [];

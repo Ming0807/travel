@@ -6,6 +6,7 @@ import { createAttractionAction, updateAttractionAction } from "@/app/actions/ad
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { ImageSquare, QrCode, ArrowLeft, Info, MapPinLine, FileText, CheckCircle, WarningCircle, List, MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 
@@ -203,14 +204,8 @@ export function AttractionForm({
                     <span className="text-sm font-bold text-slate-600 mb-1.5 block">คำอธิบายสั้น</span>
                     <textarea className="w-full min-h-[100px] rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all resize-none" defaultValue={attraction?.short_description_th ?? ""} maxLength={500} name="shortDescriptionTh" placeholder="สรุปจุดเด่นของสถานที่สั้นๆ..." />
                   </label>
-                  <label className="block">
-                    <span className="text-sm font-bold text-slate-600 mb-1.5 block">รายละเอียดเชิงลึก</span>
-                    <textarea className="w-full min-h-[160px] rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all resize-none" defaultValue={attraction?.description_th ?? ""} maxLength={4000} name="descriptionTh" placeholder="รายละเอียดของสถานที่ กิจกรรม สิ่งอำนวยความสะดวก..." />
-                  </label>
-                  <label className="block">
-                    <span className="text-sm font-bold text-slate-600 mb-1.5 block">ประวัติศาสตร์ / เรื่องเล่า (Storytelling)</span>
-                    <textarea className="w-full min-h-[160px] rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all resize-none" defaultValue={attraction?.history_th ?? ""} maxLength={4000} name="historyTh" placeholder="ประวัติความเป็นมา เรื่องเล่า ตำนาน..." />
-                  </label>
+                  <FormRichText label="รายละเอียดเชิงลึก" name="descriptionTh" defaultValue={attraction?.description_th ?? ""} minHeight={200} placeholder="รายละเอียดของสถานที่ กิจกรรม สิ่งอำนวยความสะดวก..." />
+                  <FormRichText label="ประวัติศาสตร์ / เรื่องเล่า (Storytelling)" name="historyTh" defaultValue={attraction?.history_th ?? ""} minHeight={200} placeholder="ประวัติความเป็นมา เรื่องเล่า ตำนาน..." />
                 </div>
 
                 <div className="space-y-5">
@@ -219,14 +214,8 @@ export function AttractionForm({
                     <span className="text-sm font-bold text-slate-600 mb-1.5 block">Short Description</span>
                     <textarea className="w-full min-h-[100px] rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all resize-none" defaultValue={attraction?.short_description_en ?? ""} maxLength={500} name="shortDescriptionEn" placeholder="Brief summary of the attraction..." />
                   </label>
-                  <label className="block">
-                    <span className="text-sm font-bold text-slate-600 mb-1.5 block">Full Description</span>
-                    <textarea className="w-full min-h-[160px] rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all resize-none" defaultValue={attraction?.description_en ?? ""} maxLength={4000} name="descriptionEn" placeholder="Detailed description of activities and facilities..." />
-                  </label>
-                  <label className="block">
-                    <span className="text-sm font-bold text-slate-600 mb-1.5 block">History / Storytelling</span>
-                    <textarea className="w-full min-h-[160px] rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all resize-none" defaultValue={attraction?.history_en ?? ""} maxLength={4000} name="historyEn" placeholder="Historical background and storytelling..." />
-                  </label>
+                  <FormRichText label="Full Description" name="descriptionEn" defaultValue={attraction?.description_en ?? ""} minHeight={200} placeholder="Detailed description of activities and facilities..." />
+                  <FormRichText label="History / Storytelling" name="historyEn" defaultValue={attraction?.history_en ?? ""} minHeight={200} placeholder="Historical background and storytelling..." />
                 </div>
               </div>
             </section>

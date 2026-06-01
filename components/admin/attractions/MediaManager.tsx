@@ -27,36 +27,41 @@ interface MediaManagerProps {
   initialMedia: AdminMediaRow[];
 }
 
-const MEDIA_TYPE_OPTIONS: { value: MediaType; label: string; help: string; needsUpload: boolean }[] = [
+const MEDIA_TYPE_OPTIONS: { value: MediaType; label: string; help: string; needsUpload: boolean; needsAlt: boolean }[] = [
   {
     value: "image",
     label: "รูปภาพทั่วไป",
     help: "ใช้เป็นภาพหน้าปก การ์ดหน้าเว็บ หรือแกลเลอรี",
     needsUpload: true,
+    needsAlt: true,
   },
   {
     value: "panorama",
     label: "ภาพพาโนรามา / 360",
     help: "ใช้กับภาพมุมกว้างหรือภาพ 360 ที่เป็นไฟล์รูป",
     needsUpload: true,
+    needsAlt: true,
   },
   {
     value: "video360",
     label: "วิดีโอ 360",
     help: "ใช้ URL ของวิดีโอ 360 จากผู้ให้บริการภายนอก",
     needsUpload: false,
+    needsAlt: false,
   },
   {
     value: "embed",
     label: "Embed",
     help: "ใช้ iframe หรือ embed code เช่น virtual tour",
     needsUpload: false,
+    needsAlt: false,
   },
   {
     value: "external_url",
     label: "ลิงก์ภายนอก",
     help: "ใช้ URL รูปหรือสื่อที่ถูกโฮสต์ไว้ภายนอก",
     needsUpload: false,
+    needsAlt: true,
   },
 ];
 
@@ -81,7 +86,8 @@ const FIELD_LABELS: Record<string, string> = {
 function mediaPreviewUrl(storagePath: string) {
   if (!storagePath) return "";
   if (/^https?:\/\//i.test(storagePath)) return storagePath;
-  return `/api/media/image?path=${encodeURIComponent(storagePath)}`;
+  if (storagePath.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(storagePath)}`;
+  return `/site-media/${storagePath}`;
 }
 
 function getMediaTypeOption(value: string) {
@@ -253,7 +259,7 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
             { label: "Cover role", complete: !isVisual || media.is_cover },
           ];
           return (
-            <article key={media.media_id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <article key={media.media_id} className={`rounded-lg border border-slate-200 bg-white p-4 shadow-sm ${editingId === media.media_id ? 'col-span-full' : ''}`}>
               {editingId === media.media_id ? (
                 <MediaForm
                   entityId={entityId}
@@ -286,14 +292,23 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
                           {MEDIA_TYPE_LABELS[media.media_type] ?? media.media_type}
                         </span>
-                        {media.is_cover ? (
+                        {media.is_active && media.is_cover ? (
                           <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
-                            Cover
+                            COVER
+                          </span>
+                        ) : media.is_active ? (
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                            GALLERY
                           </span>
                         ) : null}
                         {!media.is_active ? (
                           <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600">
-                            Inactive
+                            DRAFT / INACTIVE
+                          </span>
+                        ) : null}
+                        {isVisual && media.is_active && !hasAltText ? (
+                          <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700 border border-rose-200">
+                            MISSING ALT
                           </span>
                         ) : null}
                       </div>
@@ -388,7 +403,7 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
                       {archiveReferences.map((ref, idx) => (
                         <div key={idx} className="flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs">
                           <EntityTypeLabel type={ref.entityType} />
-                          <span className="font-bold text-slate-700">{ref.name}</span>
+                          <span className="font-bold text-amber-900">{ref.name}</span>
                         </div>
                       ))}
                     </div>
@@ -452,6 +467,7 @@ function MediaForm({
   const action = isEditing ? updateMediaAction.bind(null, initialData.media_id) : createMediaAction;
   const [mediaType, setMediaType] = useState<MediaType>((initialData?.media_type as MediaType) || "image");
   const [storagePath, setStoragePath] = useState(initialData?.storage_path || "");
+  const [altTextTh, setAltTextTh] = useState(initialData?.alt_text_th || "");
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -467,6 +483,8 @@ function MediaForm({
   const selectedMediaType = useMemo(() => getMediaTypeOption(mediaType), [mediaType]);
   const fieldErrors = readableFieldErrors(state?.fieldErrors);
   const canSubmit = !uploadingFile && !isPending && storagePath.trim().length > 0;
+  const isVisual = mediaType === "image" || mediaType === "panorama";
+  const missingAltWarning = isVisual && altTextTh.trim().length === 0;
 
   useEffect(() => {
     if (state?.success) {
@@ -564,8 +582,8 @@ function MediaForm({
         </div>
       ) : null}
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-5">
+      <div className="mt-5 flex flex-wrap gap-6 items-start">
+        <div className="flex-1 basis-[360px] space-y-6">
           <label className="block">
             <span className="text-sm font-black text-slate-700">ประเภทสื่อ</span>
             <select
@@ -585,7 +603,7 @@ function MediaForm({
                 </option>
               ))}
             </select>
-            <span id="media-type-help" className="mt-1 block text-xs leading-5 text-slate-500">{selectedMediaType.help}</span>
+            <span id="media-type-help" className="mt-1.5 block text-xs leading-5 text-slate-500">{selectedMediaType.help}</span>
           </label>
 
           {selectedMediaType.needsUpload ? (
@@ -662,55 +680,69 @@ function MediaForm({
               <p className="font-black text-slate-700">Storage / URL</p>
               <p className="mt-1 break-all font-mono">{storagePath}</p>
             </div>
-          ) : null}                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-black uppercase tracking-wider text-slate-500">Metadata — accessibility & search</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">Alt text is required for public images. Caption shows below the image on public pages.</p>
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    <label className="block">
-                      <span className="text-sm font-black text-slate-700">Alt text (ภาษาไทย) <span className="text-rose-500">*</span></span>
-                      <input
-                        name="altTextTh"
-                        defaultValue={initialData?.alt_text_th ?? ""}
-                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                        placeholder="อธิบายภาพเพื่อ accessibility"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-black text-slate-700">Alt text (English)</span>
-                      <input
-                        name="altTextEn"
-                        defaultValue={initialData?.alt_text_en ?? ""}
-                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                        placeholder="Short image description"
-                      />
-                    </label>
-                  </div>
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    <label className="block">
-                      <span className="text-sm font-black text-slate-700">Caption ภาษาไทย</span>
-                      <input
-                        name="captionTh"
-                        defaultValue={initialData?.caption_th ?? ""}
-                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                        placeholder="ข้อความใต้ภาพ"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-black text-slate-700">Caption ภาษาอังกฤษ</span>
-                      <input
-                        name="captionEn"
-                        defaultValue={initialData?.caption_en ?? ""}
-                        className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                        placeholder="Image subtitle"
-                      />
-                    </label>
-                  </div>
+          ) : null}
+        </div>
+
+        <div className="space-y-4">
+          {selectedMediaType.needsAlt ? (
+            <div className="space-y-4">
+              <div className={`rounded-lg border p-4 ${missingAltWarning ? 'border-rose-300 bg-rose-50' : 'border-slate-200 bg-slate-50'}`}>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-500">Metadata</p>
+                  {missingAltWarning && (
+                    <span className="flex items-center gap-1 text-[10px] font-black text-rose-600">
+                      <WarningCircle size={12} weight="fill" />
+                      MISSING ALT
+                    </span>
+                  )}
+                </div>
+                <p className={`mt-1 text-xs leading-5 ${missingAltWarning ? 'text-rose-600 font-medium' : 'text-slate-500'}`}>Alt text is required for public images. Caption shows below the image on public pages.</p>
+                <div className="mt-5 flex flex-col gap-5">
+                  <label className="block">
+                    <span className="text-sm font-black text-slate-700">Alt text (ภาษาไทย) <span className="text-rose-500">*</span></span>
+                    <input
+                      name="altTextTh"
+                      value={altTextTh}
+                      onChange={(e) => setAltTextTh(e.target.value)}
+                      className={`mt-2 min-h-11 w-full rounded-lg border px-3 py-2 text-sm outline-none transition focus:ring-2 ${missingAltWarning ? 'border-rose-300 bg-rose-50/50 focus:border-rose-500 focus:ring-rose-500/15' : 'border-slate-300 bg-white focus:border-[#0A6B62] focus:ring-[#0A6B62]/15'}`}
+                      placeholder="อธิบายภาพเพื่อ accessibility"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm font-black text-slate-700">Alt text (English)</span>
+                    <input
+                      name="altTextEn"
+                      defaultValue={initialData?.alt_text_en ?? ""}
+                      className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                      placeholder="Short image description"
+                    />
+                  </label>
+                  <div className="h-px bg-slate-100" />
+                  <label className="block">
+                    <span className="text-sm font-black text-slate-700">Caption ภาษาไทย</span>
+                    <input
+                      name="captionTh"
+                      defaultValue={initialData?.caption_th ?? ""}
+                      className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                      placeholder="ข้อความใต้ภาพ"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm font-black text-slate-700">Caption ภาษาอังกฤษ</span>
+                    <input
+                      name="captionEn"
+                      defaultValue={initialData?.caption_en ?? ""}
+                      className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                      placeholder="Image subtitle"
+                    />
+                  </label>
+                </div>
                 </div>
 
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <p className="text-xs font-black uppercase tracking-wider text-slate-500">Attribution & licensing</p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">Credit the source for public-facing images. Optional but recommended for third-party images.</p>
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div className="mt-5 flex flex-col gap-5">
                     <label className="block">
                       <span className="text-sm font-black text-slate-700">Credit / Source name</span>
                       <input
@@ -729,8 +761,7 @@ function MediaForm({
                         placeholder="https://..."
                       />
                     </label>
-                  </div>
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div className="h-px bg-slate-100" />
                     <label className="block">
                       <span className="text-sm font-black text-slate-700">License type</span>
                       <input
@@ -751,9 +782,11 @@ function MediaForm({
                     </label>
                   </div>
                 </div>
+              </div>
+            ) : null}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="w-full shrink-0 basis-[300px] flex-grow space-y-4 md:max-w-[320px]">
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
             <div className="aspect-video bg-slate-100">
               {storagePath && (mediaType === "image" || mediaType === "panorama" || mediaType === "external_url") ? (

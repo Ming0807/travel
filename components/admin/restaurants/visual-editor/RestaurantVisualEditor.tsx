@@ -15,6 +15,8 @@ type EditorSection = "header" | "content" | "location" | "settings" | "cover" | 
 interface RestaurantVisualEditorProps {
   restaurant: AdminRestaurantRow;
   provinces: AdminSelectOption[];
+  coverMediaId?: number | null;
+  coverMediaUrl?: string | null;
 }
 
 function MissingImageState({ title, description }: { title: string; description: string }) {
@@ -32,15 +34,19 @@ function MissingImageState({ title, description }: { title: string; description:
 export function RestaurantVisualEditor({
   restaurant,
   provinces,
+  coverMediaId: initialCoverMediaId,
+  coverMediaUrl: initialCoverMediaUrl,
 }: RestaurantVisualEditorProps) {
   const [activeSection, setActiveSection] = useState<EditorSection>(null);
+  const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId ?? null);
+  const [coverMediaUrl, setCoverMediaUrl] = useState(initialCoverMediaUrl ?? null);
 
   const provinceName = provinces.find((p) => p.id === restaurant.province_id)?.label ?? "ไม่ระบุจังหวัด";
   const name = restaurant.name_th || "ยังไม่มีชื่อ";
-  const coverImage = restaurant.cover_image_url;
+  const coverImage = coverMediaUrl;
 
   return (
-    <div className="relative min-h-screen bg-[#FAF8F5] pb-20">
+    <div className="relative min-h-screen bg-background pb-20">
       {/* Editor Toolbar */}
       <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/80 px-6 py-4 backdrop-blur-md">
         <div className="flex items-center gap-4">
@@ -75,7 +81,7 @@ export function RestaurantVisualEditor({
 
         {/* Hero Section */}
         <EditableBlock id="header" label="ข้อมูลหลักและรูปภาพ" isActive={activeSection === "header"} onEdit={() => setActiveSection("header")}>
-          <div className="relative w-full h-[300px] md:h-[400px] rounded-[2rem] overflow-hidden shadow-lg border border-slate-200 mb-10 pointer-events-none">
+          <div className="relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-lg border border-slate-200 mb-10 pointer-events-none">
             {coverImage ? (
               <>
                 <Image src={coverImage} alt={name} fill className="object-cover" unoptimized />
@@ -140,7 +146,7 @@ export function RestaurantVisualEditor({
               {/* Quick Info Card */}
               <EditableBlock id="location" label="ข้อมูลร้านอาหาร & พิกัด" isActive={activeSection === "location"} onEdit={() => setActiveSection("location")}>
                 <div className="pointer-events-none">
-                  <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-200 mb-6">
+                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-6">
                     <h3 className="font-black text-slate-800 text-lg mb-6">ข้อมูลร้านอาหาร</h3>
 
                     <div className="space-y-5">
@@ -181,7 +187,7 @@ export function RestaurantVisualEditor({
                   </div>
 
                   {/* Map readiness */}
-                  <div className="bg-slate-50 rounded-[2rem] p-6 text-center border-2 border-dashed border-slate-200 relative overflow-hidden h-48">
+                  <div className="bg-slate-50 rounded-2xl p-6 text-center border-2 border-dashed border-slate-200 relative overflow-hidden h-48">
                     <div className="relative z-10 flex flex-col items-center justify-center h-full">
                       <Compass size={32} className="text-orange-500 mb-2" weight="fill" />
                       <p className="text-sm font-bold text-slate-800">
@@ -201,7 +207,7 @@ export function RestaurantVisualEditor({
               </EditableBlock>
 
               {/* Reviews readiness */}
-              <div className="relative rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center mt-6">
+              <div className="relative rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center mt-6">
                 <div className="absolute top-4 right-4 rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold text-slate-500">
                   Planned content
                 </div>
@@ -248,7 +254,13 @@ export function RestaurantVisualEditor({
         onClose={() => setActiveSection(null)}
         title="ตั้งค่าหมวดหมู่และสถานะ"
       >
-        <SettingsForm restaurant={restaurant} provinces={provinces} onClose={() => setActiveSection(null)} />
+        <SettingsForm
+          restaurant={restaurant}
+          provinces={provinces}
+          onClose={() => setActiveSection(null)}
+          coverMediaId={coverMediaId}
+          coverMediaUrl={coverMediaUrl}
+        />
       </Drawer>
 
     </div>

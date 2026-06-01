@@ -30,7 +30,7 @@ export function MobileAdminNav() {
 
       {/* Drawer */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#FCFAF8] shadow-2xl transition-transform duration-300 ease-in-out lg:hidden overflow-y-auto ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-50 shadow-2xl transition-transform duration-300 ease-in-out lg:hidden overflow-y-auto ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -49,7 +49,7 @@ export function MobileAdminNav() {
           </button>
         </div>
 
-        <nav className="p-4 space-y-6">
+        <nav className="p-4 pb-20 space-y-6" aria-label="Mobile admin navigation">
           {navGroups.map((group) => (
             <MobileNavGroup key={group.group} group={group} pathname={pathname} closeDrawer={() => setIsOpen(false)} />
           ))}

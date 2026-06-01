@@ -47,7 +47,7 @@ export default async function RestaurantsPage({
 
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
+    <div className="bg-background min-h-screen text-ink pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
 
         {/* Breadcrumb */}
@@ -62,7 +62,7 @@ export default async function RestaurantsPage({
           <div className="lg:w-1/2 pt-4">
             <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 border border-orange-200 px-4 py-1.5 text-xs font-bold text-orange-700 mb-6">
               <ForkKnife size={14} weight="fill" />
-              Local Economy
+              เศรษฐกิจท้องถิ่น
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight" dangerouslySetInnerHTML={{ __html: heroSettings.title }}>
             </h1>
@@ -71,7 +71,7 @@ export default async function RestaurantsPage({
             </p>
 
             {/* Search */}
-            <form action="/restaurants" method="GET" className="bg-white p-2 rounded-full shadow-sm border border-ink/5 flex items-center mb-6 max-w-xl">
+            <form action="/restaurants" method="GET" className="bg-white p-2 rounded-full border border-ink/5 flex items-center mb-6 max-w-xl">
               <MagnifyingGlass size={20} className="text-muted ml-3" weight="bold" />
               <input
                 type="text"
@@ -98,7 +98,7 @@ export default async function RestaurantsPage({
 
           {/* Featured Image */}
           <div className="lg:w-1/2 w-full">
-            <div className="relative w-full h-[350px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5">
+            <div className="relative w-full h-[350px] rounded-2xl overflow-hidden shadow-lg border border-ink/5">
               {featureSettings.image ? (
                 <Image
                   src={featureSettings.image}
@@ -149,7 +149,7 @@ export default async function RestaurantsPage({
                 <Link
                   href={`/restaurants/${restaurant.slug}`}
                   key={restaurant.slug}
-                  className="group block bg-white rounded-[1.5rem] overflow-hidden border border-ink/5 shadow-sm hover:shadow-md transition-all"
+                  className="group block bg-white rounded-xl overflow-hidden border border-ink/5 hover:shadow-md transition-all"
                 >
                   <div className="relative h-48 w-full overflow-hidden bg-cream">
                     {restaurant.imageUrl ? (
@@ -162,7 +162,7 @@ export default async function RestaurantsPage({
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-semibold text-muted">
-                        Image not added
+                        ยังไม่มีรูปภาพ
                       </div>
                     )}
                     <div className="absolute top-4 left-4">
@@ -204,7 +204,7 @@ export default async function RestaurantsPage({
 
         {/* CTA Section */}
         <section className="mb-20">
-          <div className="relative w-full rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
+          <div className="relative w-full rounded-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
             {ctaSettings.image ? (
               <Image
                 src={ctaSettings.image}

@@ -1,5 +1,3 @@
-"use client";
-
 import { 
   Target,
   Eye,
@@ -16,11 +14,17 @@ import {
   GlobeHemisphereEast
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { projectVision, teamMembers } from "@/lib/data/about";
+import { projectVision as defaultVision, teamMembers as defaultTeam } from "@/lib/data/about";
+import { SettingsService } from "@/lib/services/settings.service";
+import Link from "next/link";
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const settingsService = new SettingsService();
+  const projectVision = await settingsService.getSetting("about_vision", defaultVision);
+  const teamMembers = await settingsService.getSetting("about_team", defaultTeam);
+
   return (
-    <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
+    <div className="bg-background min-h-screen text-ink pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
         
         {/* HERO SECTION */}
@@ -38,9 +42,9 @@ export default function AboutPage() {
             <p className="text-muted leading-relaxed text-lg max-w-md mb-8">
               เราคือนักเล่าเรื่อง นักสำรวจ และผู้สร้างสรรค์แพลตฟอร์มที่มุ่งหวังจะเปิดมุมมองใหม่ของการท่องเที่ยวใน 3 จังหวัดชายแดนใต้ — หนึ่งการเดินทาง หนึ่งความประทับใจ
             </p>
-            <button className="inline-flex items-center gap-2 bg-coral text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-coral/90 transition-all">
+            <Link href="/attractions" className="inline-flex items-center gap-2 bg-coral text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-coral/90 transition-all">
               ค้นพบเรื่องราวของเรา
-            </button>
+            </Link>
             
             {/* Dashed line decorative SVG */}
             <div className="mt-8 opacity-40">
@@ -53,9 +57,9 @@ export default function AboutPage() {
           
           <div className="lg:w-1/2 relative h-[500px] w-full">
             {/* Background Shape */}
-            <div className="absolute top-10 left-10 w-[350px] h-[400px] bg-[#F2EFE8] rounded-[3rem] -z-10 opacity-70"></div>
+            <div className="absolute top-10 left-10 w-[350px] h-[400px] bg-[#F2EFE8] rounded-3xl -z-10 opacity-70"></div>
             
-            <div className="absolute top-0 left-0 w-64 h-80 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-10 bg-white">
+            <div className="absolute top-0 left-0 w-64 h-80 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-10 bg-white">
               <div className="flex h-full flex-col justify-between bg-[linear-gradient(135deg,#F8EDE7_0%,#F7F3EA_50%,#E9F0EC_100%)] p-6">
                 <MapPin size={40} weight="fill" className="text-coral" />
                 <div>
@@ -69,14 +73,14 @@ export default function AboutPage() {
               </div>
             </div>
             
-            <div className="absolute top-8 right-4 w-48 h-48 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-20 bg-[#EAF2F0] p-5">
+            <div className="absolute top-8 right-4 w-48 h-48 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-20 bg-[#EAF2F0] p-5">
               <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-teal/20 bg-white/50 text-center">
                 <GlobeHemisphereEast size={42} weight="light" className="text-teal" />
                 <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Official content</p>
               </div>
             </div>
             
-            <div className="absolute bottom-4 right-12 w-56 h-40 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-30 bg-[#FFF8EF] p-5">
+            <div className="absolute bottom-4 right-12 w-56 h-40 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-30 bg-[#FFF8EF] p-5">
               <div className="flex h-full items-end justify-between rounded-2xl border border-coral/20 bg-white/60 p-4">
                 <Camera size={34} weight="light" className="text-coral" />
                 <div className="space-y-2">
@@ -182,9 +186,9 @@ export default function AboutPage() {
             </p>
           </div>
           
-          <div className="lg:col-span-8 relative h-[400px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 bg-[#EDF3F0]">
+          <div className="lg:col-span-8 relative h-[400px] rounded-2xl overflow-hidden shadow-lg border border-ink/5 bg-[#EDF3F0]">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#FFF8EF_0%,#EDF3F0_52%,#F8E7DF_100%)]" />
-            <div className="absolute inset-8 rounded-[1.5rem] border border-white/70 bg-white/35 p-8 backdrop-blur-sm">
+            <div className="absolute inset-8 rounded-xl border border-white/70 bg-white/35 p-8 backdrop-blur-sm">
               <div className="grid h-full grid-cols-3 gap-4">
                 <div className="flex flex-col justify-end rounded-2xl bg-white/60 p-5">
                   <MapPin size={36} weight="fill" className="text-coral" />
@@ -208,58 +212,38 @@ export default function AboutPage() {
         <section className="mb-24">
           <div className="flex justify-between items-end mb-12">
             <h2 className="text-3xl font-black text-ink">ทีมงานของเรา</h2>
-            <button className="border border-ink/20 rounded-full px-5 py-2 text-xs font-bold hover:bg-ink hover:text-white transition-colors">
+            <Link href="/contact" className="border border-ink/20 rounded-full px-5 py-2 text-xs font-bold hover:bg-ink hover:text-white transition-colors">
               ร่วมงานกับเรา
-            </button>
+            </Link>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {teamMembers.map((member, idx) => (
-              <div key={idx} className="bg-white rounded-[1.5rem] p-5 shadow-sm border border-ink/5 flex flex-col items-center text-center">
+            {teamMembers.map((member: { name: string; role: string; imageUrl: string }, idx: number) => (
+              <div key={idx} className="bg-white rounded-xl p-5 border border-ink/5 flex flex-col items-center text-center hover:shadow-md transition-shadow">
                 <div className="w-full h-48 relative rounded-xl overflow-hidden mb-4 bg-cream">
-                  <div className="flex h-full flex-col items-center justify-center bg-[#F4F1EA] text-center">
-                    <Users size={42} weight="light" className="text-coral" />
-                    <span className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Team profile</span>
-                  </div>
+                  {member.imageUrl ? (
+                    <img src={member.imageUrl} alt={member.name} className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center bg-[#F4F1EA] text-center">
+                      <Users size={42} weight="light" className="text-coral" />
+                      <span className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Team profile</span>
+                    </div>
+                  )}
                 </div>
                 <h3 className="font-black text-ink">{member.name}</h3>
-                <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-3 mt-1">{member.role}</p>
-                <p className="text-xs text-muted leading-relaxed mb-4 flex-1">
-                  {idx === 0 ? "นักสำรวจโดยสายเลือด นักเล่าเรื่องโดยความหลงใหล" : 
-                   idx === 1 ? "เปลี่ยนข้อมูลเป็นอินไซต์ที่สร้างแรงบันดาลใจ" : 
-                   "เก็บบันทึกความงามของโลกผ่านสายตาที่แม่นยำ"}
-                </p>
-                <div className="flex gap-3 text-ink/40 mt-auto">
+                <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-3 mt-1 flex-1">{member.role}</p>
+                <div className="flex gap-3 text-ink/40 mt-auto pt-4 border-t border-ink/5 w-full justify-center">
                   <InstagramLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
                   <FacebookLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
                   <LinkedinLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
                 </div>
               </div>
             ))}
-            
-            <div className="bg-white rounded-[1.5rem] p-5 shadow-sm border border-ink/5 flex flex-col items-center text-center">
-              <div className="w-full h-48 relative rounded-xl overflow-hidden mb-4 bg-cream">
-                <div className="flex h-full flex-col items-center justify-center bg-[#F4F1EA] text-center">
-                  <Users size={42} weight="light" className="text-coral" />
-                  <span className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Team profile</span>
-                </div>
-              </div>
-              <h3 className="font-black text-ink">อามีนา สะมะแอ</h3>
-              <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-3 mt-1">Community Manager</p>
-              <p className="text-xs text-muted leading-relaxed mb-4 flex-1">
-                สร้างความเชื่อมโยงและคัดสรรประสบการณ์ร่วมกับชุมชน
-              </p>
-              <div className="flex gap-3 text-ink/40 mt-auto">
-                <InstagramLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
-                <FacebookLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
-                <LinkedinLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
-              </div>
-            </div>
           </div>
         </section>
 
         {/* STATS BANNER */}
-        <section className="bg-white rounded-[2rem] border border-coral/20 shadow-sm p-12 mb-24 relative overflow-hidden">
+        <section className="bg-white rounded-2xl border border-coral/20 shadow-sm p-12 mb-24 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#FAF3EE] rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center divide-x divide-ink/5">
@@ -298,7 +282,7 @@ export default function AboutPage() {
           <h2 className="text-3xl font-black text-ink mb-12">คุณค่าของเรา</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-ink/5">
+            <div className="bg-white p-6 rounded-xl border border-ink/5">
               <div className="text-coral mb-4"><Heart size={28} weight="light" /></div>
               <h3 className="font-bold text-ink mb-2">ประสบการณ์ที่แท้จริง</h3>
               <p className="text-xs text-muted leading-relaxed">
@@ -306,7 +290,7 @@ export default function AboutPage() {
               </p>
             </div>
             
-            <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-ink/5">
+            <div className="bg-white p-6 rounded-xl border border-ink/5">
               <div className="text-coral mb-4"><Users size={28} weight="light" /></div>
               <h3 className="font-bold text-ink mb-2">เคารพในวัฒนธรรมท้องถิ่น</h3>
               <p className="text-xs text-muted leading-relaxed">
@@ -314,7 +298,7 @@ export default function AboutPage() {
               </p>
             </div>
             
-            <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-ink/5">
+            <div className="bg-white p-6 rounded-xl border border-ink/5">
               <div className="text-coral mb-4"><Target size={28} weight="light" /></div>
               <h3 className="font-bold text-ink mb-2">คัดสรรอย่างมีจุดมุ่งหมาย</h3>
               <p className="text-xs text-muted leading-relaxed">
@@ -322,7 +306,7 @@ export default function AboutPage() {
               </p>
             </div>
             
-            <div className="bg-white p-6 rounded-[1.5rem] shadow-sm border border-ink/5">
+            <div className="bg-white p-6 rounded-xl border border-ink/5">
               <div className="text-coral mb-4"><ShieldCheck size={28} weight="light" /></div>
               <h3 className="font-bold text-ink mb-2">น่าเชื่อถือและโปร่งใส</h3>
               <p className="text-xs text-muted leading-relaxed">
@@ -334,15 +318,15 @@ export default function AboutPage() {
 
         {/* CTA BANNER */}
         <section className="mb-20">
-          <div className="relative w-full h-[300px] rounded-[2rem] overflow-hidden flex flex-col items-center justify-center text-center px-4 shadow-xl">
+          <div className="relative w-full h-[300px] rounded-2xl overflow-hidden flex flex-col items-center justify-center text-center px-4 shadow-xl">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#173F37_0%,#31685B_48%,#E18868_100%)]" />
             <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(90deg,rgba(255,255,255,.25)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.25)_1px,transparent_1px)] [background-size:48px_48px]" />
             <div className="relative z-10">
               <h2 className="text-4xl font-black text-white mb-3">ออกเดินทางสำรวจโลกไปด้วยกัน</h2>
               <p className="text-white/90 mb-8">การผจญภัยครั้งยิ่งใหญ่ครั้งต่อไปของคุณเริ่มต้นจากเรื่องราวเหล่านี้</p>
-              <button className="bg-coral text-white px-8 py-3.5 rounded-full font-bold shadow-md hover:bg-coral/90 transition-all">
+              <Link href="/attractions" className="inline-block bg-coral text-white px-8 py-3.5 rounded-full font-bold shadow-md hover:bg-coral/90 transition-all">
                 เริ่มต้นการสำรวจ
-              </button>
+              </Link>
             </div>
           </div>
         </section>

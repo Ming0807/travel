@@ -4,19 +4,19 @@ import { adminPaginationSchema } from "./admin-attraction";
 const optionalText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
   z.string().trim().nullable()
-);
+).default(null);
 
 const optionalShortText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
   z.string().trim().max(255).nullable()
-);
+).default(null);
 
 const requiredId = z.coerce.number().int().positive();
 
 const optionalId = z.preprocess(
   (value) => (value === "" || value === null || value === undefined ? null : value),
   z.coerce.number().int().positive().nullable()
-);
+).default(null);
 
 const booleanFromForm = z.preprocess((value) => {
   if (typeof value === "boolean") return value;
@@ -49,8 +49,8 @@ export const adminStoryMutationSchema = z.object({
   content: optionalText,
   provinceId: optionalId,
   category: optionalShortText,
-  imageUrl: optionalText,
-  isPublished: booleanFromForm
+  isPublished: booleanFromForm,
+  coverMediaId: optionalId
 });
 
 export const adminStoryIdSchema = z.object({

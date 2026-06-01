@@ -15,7 +15,7 @@ export async function listCertificateTemplates() {
     .order("is_default", { ascending: false })
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error("Failed to fetch templates");
+  if (error) throw new Error("ไม่สามารถโหลดเทมเพลตได้");
   return data;
 }
 
@@ -28,7 +28,7 @@ export async function toggleTemplateStatus(templateId: number, isActive: boolean
     .update({ is_active: isActive })
     .eq("template_id", templateId);
 
-  if (error) throw new Error("Failed to update template status");
+  if (error) throw new Error("ไม่สามารถเปลี่ยนสถานะเทมเพลตได้");
   revalidatePath("/admin/certificate-templates");
 }
 
@@ -43,7 +43,7 @@ export async function setTemplateAsDefault(templateId: number) {
     .eq("template_id", templateId)
     .single();
 
-  if (fetchError || !template) throw new Error("Template not found");
+  if (fetchError || !template) throw new Error("ไม่พบเทมเพลต");
 
   // First, unset all defaults for the same language (and attraction if applicable)
   let query = supabase
@@ -66,7 +66,7 @@ export async function setTemplateAsDefault(templateId: number) {
     .update({ is_default: true, is_active: true }) // make sure it's active
     .eq("template_id", templateId);
 
-  if (error) throw new Error("Failed to set template as default");
+  if (error) throw new Error("ไม่สามารถตั้งเป็นค่าเริ่มต้นได้");
   revalidatePath("/admin/certificate-templates");
 }
 
@@ -81,9 +81,9 @@ export async function deleteTemplate(templateId: number) {
 
   if (error) {
     if (error.code === '23503') { // Foreign key constraint violation
-      throw new Error("Cannot delete this template because it is currently used by issued certificates.");
+      throw new Error("ไม่สามารถลบเทมเพลตนี้ได้เนื่องจากมีใบประกาศที่ใช้งานอยู่");
     }
-    throw new Error("Failed to delete template");
+    throw new Error("ไม่สามารถลบเทมเพลตได้ กรุณาลองอีกครั้ง");
   }
   revalidatePath("/admin/certificate-templates");
 }

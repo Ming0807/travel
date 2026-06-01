@@ -93,7 +93,7 @@ export default async function ProfilePage() {
   if (result.kind === "no_identity") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cream px-4">
-        <div className="max-w-sm rounded-[2rem] bg-white p-8 text-center shadow-card">
+        <div className="max-w-sm rounded-2xl bg-white p-8 text-center shadow-card">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gold/20 text-gold">
             <Compass size={36} weight="fill" />
           </div>
@@ -115,7 +115,7 @@ export default async function ProfilePage() {
   if (result.kind === "error") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cream px-4">
-        <div className="max-w-sm rounded-[2rem] bg-white p-8 text-center shadow-card">
+        <div className="max-w-sm rounded-2xl bg-white p-8 text-center shadow-card">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-coral/15 text-coral">
             <Warning size={28} weight="fill" />
           </div>
@@ -138,7 +138,7 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <main className="min-h-[calc(100vh-200px)] bg-[#FAF8F5] px-4 pb-28 pt-8 relative overflow-hidden text-ink">
+      <main className="min-h-[calc(100vh-200px)] bg-background px-4 pb-28 pt-8 relative overflow-hidden text-ink">
         {/* Premium Background Elements */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal/5 rounded-full blur-[100px] -z-10 translate-x-1/4 -translate-y-1/4 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[700px] h-[700px] bg-coral/5 rounded-full blur-[120px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
@@ -162,7 +162,7 @@ export default async function ProfilePage() {
           <XPProgressBar xp={xp} />
 
           {/* Badges */}
-          <section className="rounded-[2rem] bg-white p-6 shadow-sm border border-ink/5">
+          <section className="rounded-2xl bg-white p-6 border border-ink/5">
             <h2 className="flex items-center gap-2 text-xl font-black text-ink">
               <Trophy weight="fill" className="text-gold" /> Badges ที่สะสม
             </h2>
@@ -184,7 +184,7 @@ export default async function ProfilePage() {
 
           {/* Info Cards */}
           <section className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[2rem] bg-white p-5 shadow-sm border border-ink/5">
+            <div className="rounded-2xl bg-white p-5 border border-ink/5">
               <div className="mb-3 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-coral/10 text-coral">
                   <GlobeHemisphereEast size={22} weight="fill" />
@@ -194,7 +194,7 @@ export default async function ProfilePage() {
               <p className="text-xl font-black text-ink">{profile.origin}</p>
             </div>
 
-            <div className="rounded-[2rem] bg-white p-5 shadow-sm border border-ink/5">
+            <div className="rounded-2xl bg-white p-5 border border-ink/5">
               <div className="mb-3 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
                   <IdentificationCard size={22} weight="fill" />
@@ -206,7 +206,7 @@ export default async function ProfilePage() {
           </section>
 
           {/* Passport Summary */}
-          <section className="rounded-[2rem] bg-white p-6 shadow-sm border border-ink/5">
+          <section className="rounded-2xl bg-white p-6 border border-ink/5">
             <h2 className="flex items-center gap-2 text-xl font-black text-ink">
               <Stamp weight="fill" className="text-gold" /> ตราประทับที่สะสม
             </h2>
@@ -246,12 +246,12 @@ export default async function ProfilePage() {
           </section>
 
           {/* Certificate History */}
-          <section className="rounded-[2rem] bg-white p-6 shadow-sm border border-ink/5">
+          <section className="rounded-2xl bg-white p-6 border border-ink/5">
             <h2 className="flex items-center gap-2 text-xl font-black text-ink">
               <Certificate weight="fill" className="text-coral" /> ประวัติใบประกาศ
             </h2>
             {profile.certificateHistory.length === 0 ? (
-              <div className="mt-4 p-6 text-center rounded-[1.5rem] bg-cream/50 border border-ink/5">
+              <div className="mt-4 p-6 text-center rounded-xl bg-cream/50 border border-ink/5">
                 <p className="text-sm leading-6 text-muted">
                   ยังไม่มีใบประกาศ — ลองสแกน QR Code ที่สถานที่ท่องเที่ยวที่เข้าร่วม
                 </p>
@@ -261,7 +261,7 @@ export default async function ProfilePage() {
                 {profile.certificateHistory.map((cert, index) => (
                   <div
                     key={`${cert.attractionName}-${cert.generatedAt}-${index}`}
-                    className="rounded-[1.5rem] border border-ink/5 bg-white p-4 shadow-sm hover:border-coral/20 transition-colors"
+                    className="rounded-xl border border-ink/5 bg-white p-4 shadow-sm hover:border-coral/20 transition-colors"
                   >
                     <p className="font-bold text-ink text-base">{cert.attractionName}</p>
                     <div className="mt-2 flex items-center gap-3 text-xs text-muted font-medium">

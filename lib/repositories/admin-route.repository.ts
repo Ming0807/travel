@@ -10,7 +10,6 @@ export type AdminRouteRow = {
   name_en: string | null;
   description_th: string | null;
   description_en: string | null;
-  cover_image_path: string | null;
   is_published: boolean;
   is_active: boolean;
   created_at: string;
@@ -45,7 +44,6 @@ function mapRoute(row: any, stopCounts = new Map<number, number>()): AdminRouteR
     name_en: row.name_en,
     description_th: row.description_th,
     description_en: row.description_en,
-    cover_image_path: row.cover_image_path,
     is_published: row.is_published,
     is_active: row.is_active,
     created_at: row.created_at,
@@ -61,7 +59,6 @@ function toPayload(input: AdminRouteMutationInput) {
     name_en: input.nameEn,
     description_th: input.descriptionTh,
     description_en: input.descriptionEn,
-    cover_image_path: input.coverImagePath,
     is_published: input.isPublished,
     is_active: input.isActive
   };
@@ -224,36 +221,31 @@ export async function getRouteStops(routeId: number): Promise<AdminRouteStopRow[
 
 export async function updateRouteStopsBatch(routeId: number, stops: AdminRouteStopMutationInput[]): Promise<void> {
   const supabase = createSupabaseServiceRoleClient();
-  
-  // Start a pseudo-transaction by deleting existing and inserting new
-  // Wait, Supabase client doesn't support transactions via RPC directly without creating a postgres function,
-  // but we can just delete then insert since this is an admin panel action with low concurrency on a single route.
-  
-  const { error: deleteError } = await supabase
-    .from("suggested_route_stops")
-    .delete()
-    .eq("route_id", routeId);
-    
-  if (deleteError) {
-    throw new Error("ADMIN_ROUTE_STOPS_UPDATE_FAILED");
+
+  // Use the RPC function that wraps delete+insert in a single Postgres transaction.
+  // If the insert fails, the delete is also rolled back — no data loss.
+  const stopsJson = stops.map(stop => ({
+    attractionId: stop.attractionId,
+    dayNumber: stop.dayNumber,
+    displayOrder: stop.displayOrder,
+    stopNoteTh: stop.stopNoteTh,
+    stopNoteEn: stop.stopNoteEn
+  }));
+
+  const { data, error } = await supabase.rpc("update_route_stops", {
+    p_route_id: routeId,
+    p_stops_json: stopsJson
+  });
+
+  if (error) {
+    console.error("updateRouteStopsBatch RPC error:", { code: error.code, message: error.message, details: error.details, hint: error.hint });
+    throw new Error(`ADMIN_ROUTE_STOPS_UPDATE_FAILED: ${error.message}`);
   }
 
-  if (stops.length > 0) {
-    const payload = stops.map(stop => ({
-      route_id: routeId,
-      attraction_id: stop.attractionId,
-      day_number: stop.dayNumber,
-      display_order: stop.displayOrder,
-      stop_note_th: stop.stopNoteTh,
-      stop_note_en: stop.stopNoteEn
-    }));
-
-    const { error: insertError } = await supabase
-      .from("suggested_route_stops")
-      .insert(payload);
-
-    if (insertError) {
-      throw new Error("ADMIN_ROUTE_STOPS_UPDATE_FAILED");
-    }
+  // Parse the JSON result from the RPC
+  const result = data as { success: boolean; error?: string; error_code?: string } | null;
+  if (!result?.success) {
+    console.error("updateRouteStopsBatch RPC returned failure:", result);
+    throw new Error(`ADMIN_ROUTE_STOPS_UPDATE_FAILED: ${result?.error ?? "Unknown error"}`);
   }
 }

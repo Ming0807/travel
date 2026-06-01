@@ -73,7 +73,8 @@ export function CertificatePreview({
       }
 
       // 3. Navigate to success page
-      router.push(`/visit/${visitId}/certificate/success?certId=${data.certificateId}&stamp=${data.stamp?.status || "none"}`);
+      const certUrl = data.certificateUrl ? `&certUrl=${encodeURIComponent(data.certificateUrl)}` : '';
+      router.push(`/visit/${visitId}/certificate/success?certId=${data.certificateId}&stamp=${data.stamp?.status || "none"}${certUrl}`);
     } catch (err: unknown) {
       console.error(err);
       const msg = err instanceof Error ? err.message : "สร้างใบประกาศไม่สำเร็จ กรุณาลองใหม่";
@@ -104,7 +105,7 @@ export function CertificatePreview({
 
       {/* Certificate DOM to Capture */}
       <div 
-        className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden shadow-lg border-4 border-white animate-in fade-in zoom-in-95 duration-700 delay-200 fill-mode-both"
+        className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-lg border-4 border-white animate-in fade-in zoom-in-95 duration-700 delay-200 fill-mode-both"
         style={{ width: "100%", maxWidth: "400px" }}
       >
         <div 
@@ -120,10 +121,20 @@ export function CertificatePreview({
             <p className="text-xs font-semibold text-gold tracking-widest mb-6">SOUTHERN BORDER DIGITAL PASSPORT</p>
             
             {/* Photo */}
-            <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-lg mb-6 flex-shrink-0">
-              {/* Using standard img for html-to-image to bypass Next.js image optimization cross-origin issues during capture */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={previewUrl} alt="Tourist Memory" className="w-full h-full object-cover" crossOrigin="anonymous" />
+            <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-lg mb-6 flex-shrink-0 bg-gradient-to-br from-teal/10 to-coral/10 flex items-center justify-center">
+              {previewUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={previewUrl} alt="Tourist Memory" className="w-full h-full object-cover" crossOrigin="anonymous" />
+              ) : (
+                <div className="flex flex-col items-center text-ink/30">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  <span className="mt-1 text-[10px] font-medium">No photo</span>
+                </div>
+              )}
             </div>
 
             <div className="flex-1 flex flex-col justify-center w-full">
@@ -162,7 +173,7 @@ export function CertificatePreview({
         )}
       </div>
 
-      <div className="w-full bg-white p-6 rounded-[2rem] border border-ink/5 shadow-sm mt-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
+      <div className="w-full bg-white p-6 rounded-2xl border border-ink/5 mt-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
         <h3 className="font-bold text-lg text-ink mb-2">ยืนยันและสร้างใบประกาศ</h3>
         <p className="text-sm text-muted mb-6">
           คุณสามารถบันทึกภาพนี้เพื่อเก็บเป็นความทรงจำ หรือแชร์ให้เพื่อนๆ ได้

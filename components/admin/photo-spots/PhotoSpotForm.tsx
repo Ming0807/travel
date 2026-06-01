@@ -7,10 +7,12 @@ import { ArrowLeft, FileText, ImageSquare, List, MapPinLine, QrCode } from "@pho
 import { AdminSelectOption } from "@/components/admin/attractions/AttractionForm";
 import {
   AdminFormErrorSummary,
+  AdminFormSection,
   AdminHelpPanel,
   AdminReadinessPanel,
   AdminSaveBar,
 } from "@/components/admin/forms/AdminFormUX";
+import { FormInput, FormTextarea, FormSelect, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 
 interface PhotoSpotFormProps {
@@ -54,6 +56,8 @@ export function PhotoSpotForm({
     fieldErrors: undefined,
   });
 
+  const fe = (name: string) => getFieldError(state?.fieldErrors, name);
+
   const selectedAttraction = useMemo(
     () => attractions.find((attraction) => attraction.id === Number(selectedAttractionId)),
     [attractions, selectedAttractionId]
@@ -67,27 +71,27 @@ export function PhotoSpotForm({
 
     return (
       <SuccessNextSteps
-        title={isEditing ? "Photo spot updated" : "Photo spot created"}
-        description={`${photoSpotLabel || "This photo spot"} is now linked to ${selectedAttraction?.label || "the selected attraction"}. Next, create or test the QR entry point that opens the tourist certificate flow.`}
+        title={isEditing ? "อัปเดตจุดถ่ายภาพสำเร็จ" : "สร้างจุดถ่ายภาพสำเร็จ"}
+        description={`${photoSpotLabel || "จุดถ่ายภาพนี้"} เชื่อมโยงกับ ${selectedAttraction?.label || "สถานที่ที่เลือก"} แล้ว ขั้นตอนต่อไปคือสร้างหรือทดสอบ QR เช็คอินสำหรับนักท่องเที่ยว`}
         actions={[
           {
-            label: "Create QR check-in code",
+            label: "สร้าง QR Code เช็คอิน",
             href: `/admin/checkin-codes/new?attraction_id=${attractionId}${photoSpotId ? `&photo_spot_id=${photoSpotId}` : ""}`,
             icon: QrCode,
             primary: true,
           },
           {
-            label: "Manage attraction media",
+            label: "จัดการรูปภาพสถานที่",
             href: `/admin/attractions/${attractionId}/media`,
             icon: ImageSquare,
           },
           {
-            label: "Return to attraction",
+            label: "กลับไปที่สถานที่",
             href: `/admin/attractions/${attractionId}/edit`,
             icon: ArrowLeft,
           },
           {
-            label: "View photo spots",
+            label: "ดูรายการจุดถ่ายภาพ",
             href: "/admin/photo-spots",
             icon: List,
           },
@@ -114,177 +118,145 @@ export function PhotoSpotForm({
     },
   ];
 
-  function fieldError(name: string) {
-    return state?.fieldErrors?.[name]?.[0];
-  }
-
   return (
     <form action={formAction} className="space-y-8">
       {photoSpot?.photo_spot_id ? <input name="photoSpotId" type="hidden" value={photoSpot.photo_spot_id} /> : null}
 
       <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} fieldLabels={FIELD_LABELS} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         {/* Left Column (Main Content) */}
-        <div className="lg:col-span-7 space-y-8">
-          
-          <section className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-            <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-lg shadow-sm">
-                <FileText size={20} className="text-ink" weight="duotone" />
+        <div className="space-y-8 lg:col-span-7">
+          <AdminFormSection title="ข้อมูลหลัก (Basic Info)" icon={FileText}>
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="block">
+                  <span className="text-sm font-bold text-slate-700">แหล่งท่องเที่ยว *</span>
+                  <select
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                    value={selectedAttractionId}
+                    onChange={(event) => setSelectedAttractionId(event.target.value === "" ? "" : Number(event.target.value))}
+                    name="attractionId"
+                    required
+                  >
+                    <option value="">เลือกแหล่งท่องเที่ยว</option>
+                    {attractions.map((a) => (
+                      <option key={a.id} value={a.id}>{a.label}</option>
+                    ))}
+                  </select>
+                  {fe("attractionId") ? <p className="mt-1 text-xs font-bold text-rose-600">{fe("attractionId")}</p> : null}
+                </label>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">ข้อมูลหลัก (Basic Info)</h2>
-              </div>
+
+              <FormInput
+                label="ชื่อจุดถ่ายภาพ (TH)"
+                value={spotNameTh}
+                onChange={(event) => setSpotNameTh(event.target.value)}
+                maxLength={255}
+                name="spotNameTh"
+                required
+                error={fe("spotNameTh")}
+                className="md:col-span-2"
+              />
+
+              <FormInput
+                label="ชื่อจุดถ่ายภาพ (EN)"
+                defaultValue={photoSpot?.spot_name_en ?? ""}
+                maxLength={255}
+                name="spotNameEn"
+                className="md:col-span-2"
+              />
+
+              <FormTextarea
+                label="รายละเอียด (TH)"
+                defaultValue={photoSpot?.description_th ?? ""}
+                name="descriptionTh"
+                className="md:col-span-2"
+              />
+
+              <FormTextarea
+                label="รายละเอียด (EN)"
+                defaultValue={photoSpot?.description_en ?? ""}
+                name="descriptionEn"
+                className="md:col-span-2"
+              />
             </div>
-            <div className="p-6 grid gap-5 md:grid-cols-2">
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">แหล่งท่องเที่ยว *</span>
-                <select
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  value={selectedAttractionId}
-                  onChange={(event) => setSelectedAttractionId(event.target.value === "" ? "" : Number(event.target.value))}
-                  name="attractionId"
-                  required
-                >
-                  <option value="">เลือกแหล่งท่องเที่ยว</option>
-                  {attractions.map((a) => (
-                    <option key={a.id} value={a.id}>{a.label}</option>
-                  ))}
-                </select>
-                {fieldError("attractionId") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("attractionId")}</span> : null}
-              </label>
-
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">ชื่อจุดถ่ายภาพ (TH) *</span>
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  value={spotNameTh}
-                  onChange={(event) => setSpotNameTh(event.target.value)}
-                  maxLength={255}
-                  name="spotNameTh"
-                  required
-                />
-                {fieldError("spotNameTh") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("spotNameTh")}</span> : null}
-              </label>
-
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">ชื่อจุดถ่ายภาพ (EN)</span>
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={photoSpot?.spot_name_en ?? ""}
-                  maxLength={255}
-                  name="spotNameEn"
-                />
-              </label>
-              
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">รายละเอียด (TH)</span>
-                <textarea
-                  className="mt-2 w-full min-h-[100px] rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={photoSpot?.description_th ?? ""}
-                  name="descriptionTh"
-                />
-              </label>
-
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">รายละเอียด (EN)</span>
-                <textarea
-                  className="mt-2 w-full min-h-[100px] rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  defaultValue={photoSpot?.description_en ?? ""}
-                  name="descriptionEn"
-                />
-              </label>
-            </div>
-          </section>
-
+          </AdminFormSection>
         </div>
 
         {/* Right Column */}
-        <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-8 lg:h-max lg:self-start">
-          
-          <section className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-            <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-lg shadow-sm">
-                <QrCode size={20} className="text-ink" weight="duotone" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">สถานะ (Status)</h2>
-              </div>
-            </div>
-            <div className="p-6 flex flex-col gap-3">
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 has-[:checked]:border-teal has-[:checked]:bg-teal/5 has-[:checked]:text-teal-800">
-                เปิดใช้งาน (Active)
-                <input
-                  checked={isActive}
-                  onChange={(event) => setIsActive(event.target.checked)}
-                  name="isActive"
-                  type="checkbox"
-                  value="true"
-                  className="h-4 w-4 accent-teal"
-                />
-              </label>
-              
-              <label className="block mt-4">
-                <span className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider block">ลำดับการแสดงผล</span>
-                <input
-                  type="number"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all"
-                  defaultValue={photoSpot?.display_order ?? ""}
-                  name="displayOrder"
-                />
-              </label>
-            </div>
-          </section>
+        <div className="space-y-8 lg:sticky lg:top-8 lg:col-span-5 lg:self-start">
+          <AdminFormSection title="สถานะ (Status)" icon={QrCode}>
+            <div className="flex flex-col gap-3">
+              <FormCheckbox
+                label="เปิดใช้งาน (Active)"
+                name="isActive"
+                checked={isActive}
+                onChange={setIsActive}
+                accent="teal"
+              />
 
-          <section className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-            <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-lg shadow-sm">
-                <MapPinLine size={20} className="text-ink" weight="duotone" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">พิกัดตัวอย่าง (Location)</h2>
+              <div className="mt-4">
+                <label className="block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600">ลำดับการแสดงผล</span>
+                  <input
+                    type="number"
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                    defaultValue={photoSpot?.display_order ?? ""}
+                    name="displayOrder"
+                  />
+                </label>
               </div>
             </div>
-            <div className="p-6 grid gap-5">
-              <label className="block">
-                <span className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider block">Latitude</span>
-                <input className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all" defaultValue={photoSpot?.latitude ?? ""} name="latitude" type="number" step="0.0000001" placeholder="เช่น 6.5233" />
-                {fieldError("latitude") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("latitude")}</span> : null}
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider block">Longitude</span>
-                <input className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all" defaultValue={photoSpot?.longitude ?? ""} name="longitude" type="number" step="0.0000001" placeholder="เช่น 101.281" />
-                {fieldError("longitude") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("longitude")}</span> : null}
-              </label>
-              
-              <label className="block">
-                <span className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider block">รูปภาพตัวอย่าง (URL)</span>
-                <input className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all" defaultValue={photoSpot?.sample_image_path ?? ""} name="sampleImagePath" placeholder="https://..." />
-              </label>
+          </AdminFormSection>
+
+          <AdminFormSection title="พิกัด (Location)" icon={MapPinLine}>
+            <div className="grid gap-5">
+              <FormInput
+                label="Latitude"
+                defaultValue={photoSpot?.latitude ?? ""}
+                name="latitude"
+                type="number"
+                step="0.0000001"
+                placeholder="เช่น 6.5233"
+                error={fe("latitude")}
+              />
+              <FormInput
+                label="Longitude"
+                defaultValue={photoSpot?.longitude ?? ""}
+                name="longitude"
+                type="number"
+                step="0.0000001"
+                placeholder="เช่น 101.281"
+                error={fe("longitude")}
+              />
+              <FormInput
+                label="รูปภาพตัวอย่าง (URL)"
+                defaultValue={photoSpot?.sample_image_path ?? ""}
+                name="sampleImagePath"
+                placeholder="https://..."
+              />
             </div>
-          </section>
+          </AdminFormSection>
 
-          <AdminReadinessPanel title="Photo spot readiness" items={readiness} />
+          <AdminReadinessPanel title="ความพร้อมจุดถ่ายภาพ" items={readiness} />
 
-          <AdminHelpPanel title="Operational flow" tone="info">
+          <AdminHelpPanel title="ขั้นตอนการดำเนินงาน" tone="info">
             <div className="space-y-2">
-              <p>Photo Spot -&gt; Check-in Code -&gt; QR Landing -&gt; Certificate Context.</p>
+              <p>จุดถ่ายภาพ → รหัสเช็คอิน → หน้า QR → ใบประกาศนียบัตร</p>
               <p>
-                Use one neutral QR per physical point. The tourist page detects guest, LINE, language, and visit context after
-                opening.
+                ใช้ QR เดียวต่อจุดถ่ายภาพ ระบบจะตรวจจับผู้ใช้ LINE ภาษา และบริบทการเยี่ยมชมโดยอัตโนมัติ
               </p>
             </div>
           </AdminHelpPanel>
 
-          <AdminHelpPanel title="After saving" tone="success">
+          <AdminHelpPanel title="หลังจากบันทึก" tone="success">
             <ul className="list-disc space-y-1 pl-5">
-              <li>Create a check-in code for this point.</li>
-              <li>Open and test /c/[code] before printing the QR.</li>
-              <li>Check attraction media so the landing and certificate context feel complete.</li>
+              <li>สร้างรหัสเช็คอินสำหรับจุดนี้</li>
+              <li>ทดสอบ /c/[code] ก่อนพิมพ์ QR</li>
+              <li>ตรวจสอบรูปภาพของสถานที่เพื่อให้หน้าเช็คอินสมบูรณ์</li>
             </ul>
           </AdminHelpPanel>
-
         </div>
       </div>
 

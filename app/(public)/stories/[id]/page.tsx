@@ -42,7 +42,7 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
   const paragraphs = storyParagraphs(story.content, story.excerpt);
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-ink">
+    <div className="min-h-screen bg-slate-50 text-ink">
       <main className="mx-auto max-w-7xl px-4 pt-12 pb-20 sm:px-6 md:pt-20 lg:px-8">
         <Link href="/stories" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-muted transition-colors hover:text-coral">
           <ArrowLeft size={16} weight="bold" />
@@ -85,7 +85,7 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
               </div>
             </div>
 
-            <div className="relative mt-10 h-[320px] overflow-hidden rounded-[2rem] border border-ink/5 bg-cream shadow-sm md:h-[500px]">
+            <div className="relative mt-10 h-[320px] overflow-hidden rounded-2xl border border-ink/5 bg-cream shadow-sm md:h-[500px]">
               {story.imageUrl ? (
                 <Image
                   src={story.imageUrl}
@@ -114,7 +114,7 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
           </article>
 
           <aside className="space-y-6 lg:col-span-4">
-            <div className="rounded-[2rem] border border-ink/5 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-ink/5 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-black text-ink">Story Details</h2>
               <dl className="mt-5 space-y-4 text-sm">
                 <div>
@@ -133,7 +133,7 @@ export default async function StoryDetailsPage({ params }: { params: Promise<{ i
             </div>
 
             {relatedStories.length > 0 ? (
-              <div className="rounded-[2rem] border border-ink/5 bg-white p-6 shadow-sm">
+              <div className="rounded-2xl border border-ink/5 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-black text-ink">Related Stories</h2>
                 <div className="mt-5 space-y-5">
                   {relatedStories.map((related) => (

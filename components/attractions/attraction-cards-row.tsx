@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Star } from "@phosphor-icons/react/dist/ssr";
 
 type CardItem = {
@@ -16,23 +17,24 @@ type AttractionCardsRowProps = {
   title: string;
   items: CardItem[];
   viewAllText?: string;
+  linkPrefix: string;
 };
 
-export function AttractionCardsRow({ id, title, items, viewAllText }: AttractionCardsRowProps) {
+export function AttractionCardsRow({ id, title, items, viewAllText, linkPrefix }: AttractionCardsRowProps) {
   return (
     <div id={id} className="scroll-mt-24 pt-8">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-ink">{title}</h2>
         {viewAllText && (
-          <button className="hidden rounded-full border border-ink/10 px-4 py-2 text-xs font-bold text-ink hover:bg-cream transition-colors sm:block">
+          <Link href={linkPrefix} className="hidden rounded-full border border-ink/10 px-4 py-2 text-xs font-bold text-ink hover:bg-cream transition-colors sm:block">
             {viewAllText}
-          </button>
+          </Link>
         )}
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
         {items.map((item) => (
-          <div key={item.id} className="min-w-[240px] max-w-[240px] flex-shrink-0 group cursor-pointer">
+          <Link href={`${linkPrefix}/${item.id}`} key={item.id} className="min-w-[240px] max-w-[240px] flex-shrink-0 group cursor-pointer block">
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl mb-4 bg-ink/5">
               {item.imageUrl ? (
                 <Image
@@ -66,14 +68,14 @@ export function AttractionCardsRow({ id, title, items, viewAllText }: Attraction
                 )}
               </div>
             )}
-          </div>
+          </Link>
         ))}
       </div>
       
       {viewAllText && (
-        <button className="mt-4 w-full rounded-full border border-ink/10 py-3 text-sm font-bold text-ink hover:bg-cream transition-colors sm:hidden">
+        <Link href={linkPrefix} className="mt-4 w-full rounded-full border border-ink/10 py-3 text-sm font-bold text-ink hover:bg-cream transition-colors sm:hidden text-center block">
           {viewAllText}
-        </button>
+        </Link>
       )}
     </div>
   );

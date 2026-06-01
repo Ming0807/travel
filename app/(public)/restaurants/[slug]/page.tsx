@@ -58,7 +58,7 @@ export default async function RestaurantDetailPage({
   }
 
   return (
-    <main className="bg-[#FAF8F5] min-h-screen pb-12">
+    <main className="bg-slate-50 min-h-screen pb-12">
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8 lg:pt-10">
 
         {/* Breadcrumb */}
@@ -71,7 +71,7 @@ export default async function RestaurantDetailPage({
         </div>
 
         {/* Hero Section */}
-        <div className="relative w-full h-[300px] md:h-[400px] rounded-[2rem] overflow-hidden shadow-lg border border-ink/5 mb-10">
+        <div className="relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-lg border border-ink/5 mb-10">
           {restaurant.imageUrl ? (
             <Image
               src={restaurant.imageUrl}
@@ -123,7 +123,7 @@ export default async function RestaurantDetailPage({
                     <Link
                       key={attraction.slug}
                       href={`/attractions/${attraction.slug}`}
-                      className="group flex items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-ink/5 shadow-sm hover:shadow-md transition-all"
+                      className="group flex items-center gap-4 bg-white p-3 rounded-xl border border-ink/5 shadow-sm hover:shadow-md transition-all"
                     >
                       <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-cream">
                         {attraction.imageUrl ? (
@@ -164,7 +164,7 @@ export default async function RestaurantDetailPage({
             <div className="sticky top-24 space-y-6">
 
               {/* Quick Info Card */}
-              <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-ink/5">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-ink/5">
                 <h3 className="font-black text-ink text-lg mb-6">ข้อมูลร้านอาหาร</h3>
 
                 <div className="space-y-5">
@@ -212,7 +212,7 @@ export default async function RestaurantDetailPage({
 
               {/* Map Placeholder */}
               {restaurant.latitude && restaurant.longitude && (
-                <div className="bg-[#F2EFE8] rounded-[2rem] p-6 text-center border border-ink/5 relative overflow-hidden h-48">
+                <div className="bg-[#F2EFE8] rounded-2xl p-6 text-center border border-ink/5 relative overflow-hidden h-48">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(243,112,76,0.16),transparent_34%),radial-gradient(circle_at_80%_35%,rgba(10,107,98,0.14),transparent_36%)] pointer-events-none" />
                   <div className="relative z-10 flex flex-col items-center justify-center h-full">
                     <Compass size={32} className="text-[#E18868] mb-2" weight="fill" />
@@ -232,7 +232,7 @@ export default async function RestaurantDetailPage({
               )}
 
               {/* CTA */}
-              <div className="bg-gradient-to-br from-coral to-coral/90 rounded-[2rem] p-6 text-white">
+              <div className="bg-gradient-to-br from-coral to-coral/90 rounded-2xl p-6 text-white">
                 <h3 className="font-black text-lg mb-2">มาเที่ยวชายแดนใต้ใช่ไหม?</h3>
                 <p className="text-sm text-white/90 mb-4">
                   เริ่มต้นการเดินทางและสะสมตราประทับพร้อมรับใบประกาศดิจิทัล

@@ -6,18 +6,19 @@ const requiredId = z.coerce.number().int().positive();
 const optionalId = z.preprocess(
   (value) => (value === "" || value === null || value === undefined ? null : value),
   z.coerce.number().int().positive().nullable()
-);
+).default(null);
 
 const optionalText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
   z.string().trim().max(255).nullable()
-);
+).default(null);
 
 const optionalDateTime = z
   .preprocess(
     (value) => (value === "" || value === null || value === undefined ? null : value),
     z.string().trim().nullable()
   )
+  .default(null)
   .refine((value) => value === null || !Number.isNaN(Date.parse(value)), {
     message: "Date and time must be valid."
   })

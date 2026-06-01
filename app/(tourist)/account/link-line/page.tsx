@@ -14,7 +14,7 @@ export default function LinkLinePage() {
           กลับไปพาสปอร์ต
         </Link>
 
-        <section className="rounded-[2rem] bg-gradient-to-br from-teal to-ink p-6 text-white shadow-glow">
+        <section className="rounded-2xl bg-gradient-to-br from-teal to-ink p-6 text-white shadow-glow">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/12 text-gold">
             <ShieldCheck size={28} weight="fill" />
           </div>

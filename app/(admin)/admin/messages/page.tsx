@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ListPageShell } from "@/components/admin/ListPageShell";
 import { listAdminMessages } from "@/app/actions/admin-messages";
 import { MessageListClient } from "@/components/admin/messages/MessageListClient";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 export const dynamic = "force-dynamic";
 
@@ -24,26 +24,25 @@ export default async function AdminMessagesPage({
   });
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <AdminPageHeader
-            eyebrow="System"
-            title="Messages"
-            description="จัดการข้อความติดต่อสอบถามและแบบฟอร์มติดต่อจากหน้าเว็บไซต์"
-          />
-        </div>
-
-        <Suspense fallback={<div className="p-8 text-center text-muted animate-pulse">กำลังโหลดข้อความ...</div>}>
-          <MessageListClient
-            initialMessages={result.messages}
-            totalPages={result.totalPages}
-            currentPage={result.page}
-            total={result.total}
-            pageSize={result.limit}
-          />
-        </Suspense>
-      </div>
-    </AdminShell>
+    <ListPageShell
+      eyebrow="System"
+      title="Messages"
+      description="จัดการข้อความติดต่อสอบถามและแบบฟอร์มติดต่อจากหน้าเว็บไซต์"
+      headerActions={<ExportButton endpoint="/api/admin/export/messages" label="Export CSV" />}
+      hideCreateButton
+      total={result.total ?? 0}
+      page={result.page}
+      pageSize={result.limit}
+    >
+      <Suspense fallback={<div className="p-8 text-center text-muted animate-pulse">กำลังโหลดข้อความ...</div>}>
+        <MessageListClient
+          initialMessages={result.messages}
+          totalPages={result.totalPages}
+          currentPage={result.page}
+          total={result.total}
+          pageSize={result.limit}
+        />
+      </Suspense>
+    </ListPageShell>
   );
 }

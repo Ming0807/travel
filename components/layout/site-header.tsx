@@ -27,6 +27,7 @@ const navGroups = [
     label: "สำรวจ",
     items: [
       { href: "/restaurants", label: "ร้านอาหารแนะนำ" },
+      { href: "/accommodations", label: "ที่พักแนะนำ" },
       { href: "/stories", label: "บทความและเรื่องราว" },
       { href: "/360-vista", label: "ทัวร์เสมือนจริง 360°" }
     ]
@@ -63,6 +64,11 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
   const mobileHeaderClass = scrolled
     ? "bg-cream/90 backdrop-blur-md border-ink/5 shadow-sm"
     : "bg-transparent border-transparent shadow-none";
+
+  // Prevent rendering on admin routes
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <>

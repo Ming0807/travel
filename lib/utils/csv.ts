@@ -9,7 +9,8 @@ export function generateCsv(data: Array<Record<string, unknown>>): string {
   
   const escapeCsv = (val: unknown) => {
     if (val === null || val === undefined) return '""';
-    const str = neutralizeFormulaValue(String(val));
+    // Numbers are never formula injection risks; avoid breaking legitimate negative values
+    const str = typeof val === 'number' ? String(val) : neutralizeFormulaValue(String(val));
     // Always wrap in quotes to be safe and handle commas/newlines
     // Escape existing quotes by doubling them
     return `"${str.replace(/"/g, '""')}"`;

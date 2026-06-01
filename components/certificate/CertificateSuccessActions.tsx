@@ -80,7 +80,7 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={handleDownload}
-          className="flex flex-col items-center justify-center rounded-[1.5rem] border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-[#FAF3EE]"
+          className="flex flex-col items-center justify-center rounded-xl border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-[#FAF3EE]"
         >
           <DownloadSimple size={28} className="mb-2 text-[#E18868]" />
           <span className="text-sm font-bold text-ink">บันทึกรูปภาพ</span>
@@ -88,7 +88,7 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
 
         <button
           onClick={handleShare}
-          className="flex flex-col items-center justify-center rounded-[1.5rem] border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-[#FAF3EE]"
+          className="flex flex-col items-center justify-center rounded-xl border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-[#FAF3EE]"
         >
           <ShareNetwork size={28} className="mb-2 text-[#E18868]" />
           <span className="text-sm font-bold text-ink">{copied ? "คัดลอกลิงก์แล้ว" : "แชร์ให้เพื่อน"}</span>
@@ -99,7 +99,7 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
         ดาวน์โหลดใบประกาศได้ทันที ไม่ต้องเชื่อม LINE หรือทำแบบสอบถามก่อน
       </p>
 
-      <div className="mt-4 flex flex-col items-center rounded-[1.5rem] border border-ink/5 bg-white p-6 text-center shadow-sm">
+      <div className="mt-4 flex flex-col items-center rounded-xl border border-ink/5 bg-white p-6 text-center shadow-sm">
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FAF3EE] text-[#E18868]">
           <ClipboardText size={24} weight="fill" />
         </div>
@@ -116,10 +116,10 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-center text-sm font-bold text-ink">
-        <Link href="/passport" className="rounded-full bg-white px-4 py-4 shadow-sm border border-ink/5 hover:bg-[#FAF8F5]">
+        <Link href="/passport" className="rounded-full bg-white px-4 py-4 border border-ink/5 hover:bg-background">
           ดูพาสปอร์ต
         </Link>
-        <Link href="/" className="rounded-full bg-white px-4 py-4 shadow-sm border border-ink/5 hover:bg-[#FAF8F5]">
+        <Link href="/" className="rounded-full bg-white px-4 py-4 border border-ink/5 hover:bg-background">
           กลับหน้าหลัก
         </Link>
       </div>

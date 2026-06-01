@@ -19,11 +19,12 @@ export function HomepageHighlights({
   imageCover?: string;
   imageTitle?: string;
 }) {
-  const getImageUrl = (path: string | undefined) => {
+  const getImageUrl = (path?: string | null) => {
     const value = path?.trim();
     if (!value) return "";
     if (value.startsWith("http")) return value;
-    return `/api/media/image?path=${encodeURIComponent(value)}`;
+    if (value.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(value)}`;
+    return `/site-media/${value}`;
   };
 
   const videoSrc = getImageUrl(videoCover);
@@ -37,7 +38,7 @@ export function HomepageHighlights({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Testimonial Card */}
-        <article className="flex flex-col justify-between bg-white rounded-3xl p-6 shadow-sm border border-ink/5">
+        <article className="flex flex-col justify-between bg-white rounded-3xl p-6 border border-ink/5">
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-full bg-leaf text-white overflow-hidden relative flex items-center justify-center text-sm font-black">
@@ -77,13 +78,13 @@ export function HomepageHighlights({
         </article>
 
         {/* Image Card */}
-        <article className="flex flex-col bg-white rounded-3xl p-4 shadow-sm border border-ink/5">
+        <article className="flex flex-col bg-white rounded-3xl p-4 border border-ink/5">
           <div className="relative w-full aspect-square overflow-hidden rounded-2xl mb-4 bg-slate-100">
             {imageSrc ? (
               <Image src={imageSrc} alt="Market" fill className="object-cover" unoptimized />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-sand text-center text-xs font-bold uppercase tracking-widest text-muted">
-                Image not added
+                ยังไม่มีรูปภาพ
               </div>
             )}
           </div>

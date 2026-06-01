@@ -1,10 +1,8 @@
 import { requirePermission } from "@/lib/auth/guards";
 import { getAdminUsers } from "@/lib/repositories/admin-user.repository";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminShell } from "@/components/admin/AdminShell";
+import { ListPageShell } from "@/components/admin/ListPageShell";
 import { UserListClient } from "@/components/admin/users/UserListClient";
-import Link from "next/link";
-import { Plus } from "@phosphor-icons/react/dist/ssr";
+import { ExportButton } from "@/components/admin/ExportButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -17,24 +15,21 @@ export default async function AdminUsersPage() {
   const users = await getAdminUsers();
 
   return (
-    <AdminShell>
-      <AdminPageHeader
-        title="Admin Users"
-        description="Manage admin users, their active status, and view their assigned roles."
-        actions={
-          <Link
-            href="/admin/users/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-teal px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal/90 transition-colors"
-          >
-            <Plus size={20} weight="bold" />
-            Invite User
-          </Link>
-        }
-      />
-
+    <ListPageShell
+      eyebrow="Access Control"
+      title="Admin Users"
+      description="Manage admin users, their active status, and view their assigned roles."
+      createHref="/admin/users/new"
+      createLabel="Invite User"
+      headerActions={<ExportButton endpoint="/api/admin/export/users" label="Export CSV" />}
+      hideCreateButton
+      total={users.length}
+      page={1}
+      pageSize={users.length || 100}
+    >
       <div className="mt-8">
         <UserListClient initialUsers={users} />
       </div>
-    </AdminShell>
+    </ListPageShell>
   );
 }

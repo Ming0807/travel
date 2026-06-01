@@ -271,13 +271,62 @@ Rules:
 - preserve form data after errors
 - warn for destructive actions
 
-Implemented shared primitives:
+Shared admin components are consolidated in:
+
+```text
+components/admin/
+```
+
+**Core layout & navigation:**
+- `AdminShell` — main admin layout with sidebar + topbar
+- `AdminPageHeader` — uniform page header (eyebrow, title, description, actions)
+
+**List & table components:**
+- `DataTable` — responsive table with consistent styling (rounded-2xl, shadow-card)
+- `Pagination` — URL-param-driven page navigation with Thai labels
+- `SearchInput` — debounced search (400ms) with URL param sync and clear button
+- `FilterBar` / `FilterSelect` — URL-param-driven filter controls
+- `StatusBadge` — colored status indicator (green/gold/gray/red/teal)
+
+**Content/action components:**
+- `AdminFormSection` — sectioned form card with optional icon header
+- `AdminFormErrorSummary` — top-of-form error list with admin-friendly field labels
+- `AdminHelpPanel` — contextual help box (info/warning/success tones)
+- `AdminReadinessPanel` — grouped publish-readiness items with progress counter
+- `AdminReadinessBadge` — single readiness status line (checkmark or warning)
+- `AdminSaveBar` — sticky bottom save bar with cancel/submit/pending states
+- `AdminPreviewLink` — public preview link (icon-only or labeled variant)
+- `AdminCopyButton` — clipboard copy with 2-second "copied" feedback
+- `AdminUsedInList` — "used in" impact list showing entity type + label + link
+- `ExportButton` — download link that passes current URL filter params
+- `SuccessNextSteps` — success state with contextual action cards
+
+**State components:**
+- `EmptyState` — icon + title + description + optional action
+- `LoadingState` — spinner or skeleton variant
+- `ErrorState` — error display with retry action and collapsible technical detail
+- `ConfirmDialog` — portal-based modal (danger/warning/info tones) with keyboard escape
+
+**Shared form primitives:**
 
 ```text
 components/admin/forms/AdminFormUX.tsx
 ```
 
-This module provides section, error summary, help panel, readiness panel, and save bar primitives for admin CMS forms.
+This module provides `AdminFormSection`, `AdminFormErrorSummary`, `AdminHelpPanel`, `AdminReadinessPanel`, `AdminSaveBar`, and the `readableFieldErrors` utility.
+
+All components use consistent design tokens:
+
+```text
+Border radius:     rounded-lg (8px), rounded-xl (12px), rounded-2xl (16px)
+Primary color:     #073F37 / #0A6B62
+Error color:       rose-600 / rose-50
+Warning color:     amber-600 / amber-50
+Focus ring:        ring-2 ring-[#0A6B62]/50
+Typography:        font-black for headings, font-bold for labels
+Icon-only buttons: title + aria-label attributes
+Accessibility:     role="status", role="alert", role="dialog", aria-modal
+```
 
 ---
 

@@ -5,12 +5,14 @@ import { exportAdminSurveys, toSafeSurveyExportRows } from "@/lib/repositories/a
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import { adminSurveyFiltersSchema } from "@/lib/validation/admin-survey";
 import { generateCsv } from "@/lib/utils/csv";
+import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
     const guard = await requirePermission("export.survey_data");
+    const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
 
     const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries());
     const parsed = adminSurveyFiltersSchema.safeParse(rawParams);
@@ -45,23 +47,16 @@ export async function GET(request: NextRequest) {
     const csvData = generateCsv(toSafeSurveyExportRows(data));
     await logAuditAction({
       actor: guard.actor,
-      action: "export.surveys.csv",
+      action: `export.surveys.${format}`,
       entityType: "survey_export",
       result: "success",
-      metadata: { rowCount: data.length, maxRows }
+      metadata: { rowCount: data.length, maxRows, format }
     });
 
-    // Format filename with current date
     const date = new Date().toISOString().split("T")[0];
-    const filename = `survey_responses_export_${date}.csv`;
+    const baseFilename = `survey_responses_export_${date}`;
 
-    return new NextResponse(csvData, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-      },
-    });
+    return await createExportResponse(toSafeSurveyExportRows(data), baseFilename, format);
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });

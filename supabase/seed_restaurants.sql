@@ -34,7 +34,7 @@ WITH restaurant_seed(province_en, slug, name_th, name_en, description_th, descri
 INSERT INTO public.restaurants (
   province_id, slug, name_th, name_en,
   description_th, description_en, food_type,
-  latitude, longitude, opening_hours, cover_image_url,
+  latitude, longitude, opening_hours,
   is_published, is_active
 )
 SELECT
@@ -48,7 +48,6 @@ SELECT
   s.latitude,
   s.longitude,
   s.opening_hours,
-  s.cover_image_url,
   true,
   true
 FROM restaurant_seed s
@@ -63,7 +62,6 @@ SET province_id = EXCLUDED.province_id,
     latitude = EXCLUDED.latitude,
     longitude = EXCLUDED.longitude,
     opening_hours = EXCLUDED.opening_hours,
-    cover_image_url = EXCLUDED.cover_image_url,
     is_published = EXCLUDED.is_published,
     is_active = EXCLUDED.is_active;
 

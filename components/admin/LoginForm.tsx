@@ -57,6 +57,15 @@ export function LoginForm() {
         />
       </div>
 
+      <div className="-mt-2 flex justify-end">
+        <a
+          href="/admin/forgot-password"
+          className="text-xs font-semibold text-[#0A6B62] transition hover:text-[#085A53] hover:underline"
+        >
+          Forgot password?
+        </a>
+      </div>
+
       <button
         type="submit"
         disabled={isLoading}

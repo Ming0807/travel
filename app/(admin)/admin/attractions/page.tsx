@@ -1,20 +1,16 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { Pagination } from "@/components/admin/Pagination";
 import { SearchInput } from "@/components/admin/SearchInput";
 import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
+import { ListPageShell } from "@/components/admin/ListPageShell";
 import { requirePermission } from "@/lib/auth/guards";
 import { listAdminAttractions } from "@/lib/repositories/admin-attraction.repository";
 import { adminAttractionFiltersSchema } from "@/lib/validation/admin-attraction";
 import { AttractionStatusActions } from "@/components/admin/attractions/AttractionStatusActions";
-import Link from "next/link";
-import { Plus } from "@phosphor-icons/react/dist/ssr";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 export const metadata: Metadata = {
   title: "Attractions Management | Admin",
@@ -47,23 +43,19 @@ export default async function AdminAttractionsPage({
   const { items, total, page, pageSize } = await listAdminAttractions(filters);
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <AdminPageHeader
-            eyebrow="Content Management"
-            title="แหล่งท่องเที่ยว"
-            description="จัดการข้อมูลสถานที่ท่องเที่ยวในยะลา ปัตตานี และนราธิวาส"
-          />
-          <Link
-            href="/admin/attractions/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#F3704C] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#E55A35] transition-colors"
-          >
-            <Plus size={20} weight="bold" />
-            เพิ่มสถานที่ใหม่
-          </Link>
-        </div>
-
+    <ListPageShell
+      eyebrow="Content Management"
+      title="แหล่งท่องเที่ยว"
+      description="จัดการข้อมูลสถานที่ท่องเที่ยวในยะลา ปัตตานี และนราธิวาส"
+      createHref="/admin/attractions/new"
+      createLabel="เพิ่มสถานที่ใหม่"
+      headerActions={<ExportButton endpoint="/api/admin/export/attractions" label="Export CSV" />}
+      emptyTitle="ไม่พบแหล่งท่องเที่ยว"
+      emptyDescription="ลองเปลี่ยนเงื่อนไขการค้นหาหรือตัวกรอง"
+      total={total}
+      page={page}
+      pageSize={pageSize}
+      filters={
         <FilterBar>
           <div className="min-w-[220px] flex-1">
             <SearchInput placeholder="ค้นหาชื่อ, slug..." />
@@ -74,16 +66,10 @@ export default async function AdminAttractionsPage({
             options={statusOptions}
           />
         </FilterBar>
-
-        {items.length === 0 ? (
-          <EmptyState
-            title="ไม่พบแหล่งท่องเที่ยว"
-            description="ลองเปลี่ยนเงื่อนไขการค้นหาหรือตัวกรอง"
-          />
-        ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden md:block">
+      }
+    >
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
               <DataTable columns={columns}>
                 {items.map((attraction) => (
                   <tr key={attraction.attraction_id} className="hover:bg-slate-50/50">
@@ -191,10 +177,6 @@ export default async function AdminAttractionsPage({
               ))}
             </div>
 
-            <Pagination page={page} pageSize={pageSize} total={total} />
-          </>
-        )}
-      </div>
-    </AdminShell>
+    </ListPageShell>
   );
 }

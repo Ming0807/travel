@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { adminStoryMutationSchema } from "@/lib/validation/story";
+import { linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminStory,
   updateAdminStory,
@@ -20,7 +21,7 @@ type ActionResult = {
   data?: any;
 };
 
-export async function createStoryAction(formData: FormData): Promise<ActionResult> {
+export async function createStoryAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("story.create");
     const parsed = adminStoryMutationSchema.safeParse(Object.fromEntries(formData));
@@ -34,23 +35,30 @@ export async function createStoryAction(formData: FormData): Promise<ActionResul
     }
 
     const created = await createAdminStory(parsed.data);
+
+    // Link cover media if provided
+    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
+    if (coverMediaId && Number.isFinite(coverMediaId)) {
+      await linkMediaToEntity(coverMediaId, "story", created.story_id);
+    }
+
     await logAdminMutation({
       actor: guard.actor,
       action: "story.create",
       entityType: "travel_story",
       entityId: created.story_id,
-      newValues: parsed.data as unknown as Record<string, unknown>,
+      newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
     revalidatePath("/admin/stories");
-    return { success: true, data: { id: created.story_id } };
+    return { success: true, data: { id: created.story_id, slug: created.slug } };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังสร้างเรื่องราวไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
-export async function updateStoryAction(storyId: number, formData: FormData): Promise<ActionResult> {
+export async function updateStoryAction(storyId: number, _prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("story.update");
     const parsed = adminStoryMutationSchema.safeParse(Object.fromEntries(formData));
@@ -67,13 +75,20 @@ export async function updateStoryAction(storyId: number, formData: FormData): Pr
     if (!old) return { success: false, error: "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminStory(storyId, parsed.data);
+
+    // Link cover media if provided
+    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
+    if (coverMediaId && Number.isFinite(coverMediaId)) {
+      await linkMediaToEntity(coverMediaId, "story", updated.story_id);
+    }
+
     await logAdminMutation({
       actor: guard.actor,
       action: "story.update",
       entityType: "travel_story",
       entityId: updated.story_id,
       oldValues: old as unknown as Record<string, unknown>,
-      newValues: parsed.data as unknown as Record<string, unknown>,
+      newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
     revalidatePath("/admin/stories");

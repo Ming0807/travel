@@ -11,7 +11,7 @@ export default function GlobalError({
 }) {
   return (
     <html lang="th">
-      <body className="m-0 bg-[#FAF8F5] font-sans antialiased">
+      <body className="m-0 bg-background font-sans antialiased">
         <div
           style={{
             display: "flex",

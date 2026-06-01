@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { adminRouteMutationSchema, adminRouteStopsBatchSchema } from "@/lib/validation/route";
+import { linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminRoute,
   updateAdminRoute,
@@ -21,7 +22,7 @@ type ActionResult = {
   data?: any;
 };
 
-export async function createRouteAction(formData: FormData): Promise<ActionResult> {
+export async function createRouteAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("route.create");
     const parsed = adminRouteMutationSchema.safeParse(Object.fromEntries(formData));
@@ -35,12 +36,19 @@ export async function createRouteAction(formData: FormData): Promise<ActionResul
     }
 
     const created = await createAdminRoute(parsed.data);
+
+    // Link cover media if provided
+    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
+    if (coverMediaId && Number.isFinite(coverMediaId)) {
+      await linkMediaToEntity(coverMediaId, "route", created.route_id);
+    }
+
     await logAdminMutation({
       actor: guard.actor,
       action: "route.create",
       entityType: "suggested_route",
       entityId: created.route_id,
-      newValues: parsed.data as unknown as Record<string, unknown>,
+      newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
     revalidatePath("/admin/routes");
@@ -51,7 +59,7 @@ export async function createRouteAction(formData: FormData): Promise<ActionResul
   }
 }
 
-export async function updateRouteAction(routeId: number, formData: FormData): Promise<ActionResult> {
+export async function updateRouteAction(routeId: number, _prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("route.update");
     const parsed = adminRouteMutationSchema.safeParse(Object.fromEntries(formData));
@@ -68,13 +76,20 @@ export async function updateRouteAction(routeId: number, formData: FormData): Pr
     if (!old) return { success: false, error: "ไม่พบเส้นทางนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminRoute(routeId, parsed.data);
+
+    // Link cover media if provided
+    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
+    if (coverMediaId && Number.isFinite(coverMediaId)) {
+      await linkMediaToEntity(coverMediaId, "route", updated.route_id);
+    }
+
     await logAdminMutation({
       actor: guard.actor,
       action: "route.update",
       entityType: "suggested_route",
       entityId: updated.route_id,
       oldValues: old as unknown as Record<string, unknown>,
-      newValues: parsed.data as unknown as Record<string, unknown>,
+      newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
     revalidatePath("/admin/routes");
@@ -135,7 +150,7 @@ export async function toggleRouteActiveAction(routeId: number): Promise<ActionRe
   }
 }
 
-export async function updateRouteStopsAction(routeId: number, formData: FormData): Promise<ActionResult> {
+export async function updateRouteStopsAction(routeId: number, _prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("route.update");
     const stopsJson = formData.get("stops") as string;
@@ -163,6 +178,12 @@ export async function updateRouteStopsAction(routeId: number, formData: FormData
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    console.error("updateRouteStopsAction failed:", {
+      name: error instanceof Error ? error.name : typeof error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack?.split('\n').slice(0, 3).join('\n') : undefined,
+      routeId,
+    });
     return { success: false, error: "ยังบันทึกจุดแวะของเส้นทางไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }

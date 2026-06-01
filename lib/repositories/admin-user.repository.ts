@@ -131,18 +131,15 @@ export async function updateAdminUser(adminId: string, data: { displayName: stri
 
   if (updateError) throw new Error("Failed to update admin user record");
 
-  // 2. Sync roles
-  // Delete existing roles
-  await supabase.from("admin_user_roles").delete().eq("admin_id", adminId);
-  
-  // Insert new roles
-  if (data.roleIds.length > 0) {
-    const roleInserts = data.roleIds.map(roleId => ({
-      admin_id: adminId,
-      role_id: roleId
-    }));
-    const { error: rolesError } = await supabase.from("admin_user_roles").insert(roleInserts);
-    if (rolesError) throw new Error("Failed to update roles");
+  // 2. Sync roles atomically via RPC
+  const { error: rpcError } = await supabase.rpc('sync_admin_user_roles', {
+    p_admin_id: adminId,
+    p_role_ids: data.roleIds
+  });
+
+  if (rpcError) {
+    console.error("sync_admin_user_roles RPC error:", rpcError);
+    throw new Error("Failed to update roles");
   }
 
   return true;

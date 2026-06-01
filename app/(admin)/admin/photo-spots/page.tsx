@@ -1,20 +1,18 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { Pagination } from "@/components/admin/Pagination";
 import { SearchInput } from "@/components/admin/SearchInput";
 import { FilterBar } from "@/components/admin/FilterBar";
+import { ListPageShell } from "@/components/admin/ListPageShell";
 import { requirePermission } from "@/lib/auth/guards";
 import { listAdminPhotoSpots } from "@/lib/repositories/photo-spot.repository";
 import { adminPhotoSpotFiltersSchema } from "@/lib/validation/photo-spot";
 import { PhotoSpotStatusAction } from "@/components/admin/photo-spots/PhotoSpotStatusAction";
+import { ExportButton } from "@/components/admin/ExportButton";
 import Link from "next/link";
-import { Plus, PencilSimple } from "@phosphor-icons/react/dist/ssr";
+import { PencilSimple } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = {
   title: "Photo Spots Management | Admin",
@@ -41,38 +39,28 @@ export default async function AdminPhotoSpotsPage({
   const { items, total, page, pageSize } = await listAdminPhotoSpots(filters);
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <AdminPageHeader
-            eyebrow="Content Management"
-            title="จุดถ่ายภาพ"
-            description="จัดการจุดถ่ายภาพในแต่ละแหล่งท่องเที่ยว"
-          />
-          <Link
-            href="/admin/photo-spots/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#F3704C] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#E55A35] transition-colors"
-          >
-            <Plus size={20} weight="bold" />
-            เพิ่มจุดถ่ายภาพ
-          </Link>
-        </div>
-
+    <ListPageShell
+      eyebrow="Content Management"
+      title="จุดถ่ายภาพ"
+      description="จัดการจุดถ่ายภาพในแต่ละแหล่งท่องเที่ยว"
+      createHref="/admin/photo-spots/new"
+      createLabel="เพิ่มจุดถ่ายภาพ"
+      headerActions={<ExportButton endpoint="/api/admin/export/photo-spots" label="Export CSV" />}
+      total={total}
+      page={page}
+      pageSize={pageSize}
+      emptyTitle="ไม่พบจุดถ่ายภาพ"
+      emptyDescription="ลองเปลี่ยนเงื่อนไขการค้นหา หรือเพิ่มจุดถ่ายภาพใหม่ก่อนเชื่อมกับรหัส Check-in"
+      filters={
         <FilterBar>
           <div className="min-w-[220px] flex-1">
             <SearchInput placeholder="ค้นหาชื่อจุดถ่ายภาพ..." />
           </div>
         </FilterBar>
-
-        {items.length === 0 ? (
-          <EmptyState
-            title="ไม่พบจุดถ่ายภาพ"
-            description="ลองเปลี่ยนเงื่อนไขการค้นหาหรือตัวกรอง"
-          />
-        ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden md:block">
+      }
+    >
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
               <DataTable columns={columns}>
                 {items.map((spot) => (
                   <tr key={spot.photo_spot_id} className="hover:bg-slate-50/50">
@@ -180,10 +168,6 @@ export default async function AdminPhotoSpotsPage({
               ))}
             </div>
 
-            <Pagination page={page} pageSize={pageSize} total={total} />
-          </>
-        )}
-      </div>
-    </AdminShell>
+    </ListPageShell>
   );
 }

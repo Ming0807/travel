@@ -13,11 +13,11 @@ export default async function IdentitySelectionPage({ params }: { params: Promis
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] flex flex-col relative pb-24 overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col relative pb-24 overflow-hidden">
       {/* Hero Background */}
-      <div className="absolute top-0 left-0 w-full h-[40vh] bg-gradient-to-b from-ink/90 to-[#FAF8F5]">
+      <div className="absolute top-0 left-0 w-full h-[40vh] bg-gradient-to-b from-ink/90 to-slate-50">
         <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay animate-scale-in" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?q=80&w=2000&auto=format&fit=crop')" }}></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#FAF8F5]/50 to-[#FAF8F5]"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/50 to-slate-50"></div>
       </div>
       
       <div className="relative z-10 pt-[10vh]">

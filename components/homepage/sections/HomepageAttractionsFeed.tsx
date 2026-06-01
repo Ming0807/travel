@@ -6,10 +6,10 @@ import { useMemo, useState } from "react";
 import type { AttractionCard } from "@/types/tourism";
 
 const PROVINCE_FILTERS = [
-  { value: "all", label: "All", href: "/attractions", aliases: [] },
-  { value: "Yala", label: "Yala", href: "/attractions?province=Yala", aliases: ["Yala", "\u0e22\u0e30\u0e25\u0e32"] },
-  { value: "Pattani", label: "Pattani", href: "/attractions?province=Pattani", aliases: ["Pattani", "\u0e1b\u0e31\u0e15\u0e15\u0e32\u0e19\u0e35"] },
-  { value: "Narathiwat", label: "Narathiwat", href: "/attractions?province=Narathiwat", aliases: ["Narathiwat", "\u0e19\u0e23\u0e32\u0e18\u0e34\u0e27\u0e32\u0e2a"] },
+  { value: "all", label: "ทั้งหมด", href: "/attractions", aliases: [] },
+  { value: "Yala", label: "ยะลา", href: "/attractions?province=Yala", aliases: ["Yala", "\u0e22\u0e30\u0e25\u0e32"] },
+  { value: "Pattani", label: "ปัตตานี", href: "/attractions?province=Pattani", aliases: ["Pattani", "\u0e1b\u0e31\u0e15\u0e15\u0e32\u0e19\u0e35"] },
+  { value: "Narathiwat", label: "นราธิวาส", href: "/attractions?province=Narathiwat", aliases: ["Narathiwat", "\u0e19\u0e23\u0e32\u0e18\u0e34\u0e27\u0e32\u0e2a"] },
 ];
 
 function matchesProvince(attraction: AttractionCard, province: string) {
@@ -29,7 +29,7 @@ export function HomepageAttractionsFeed({ attractions = [] }: { attractions?: At
   const topDestinations = filteredAttractions.slice(0, 4);
 
   return (
-    <section id="attractions" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-[3rem] my-8 shadow-sm border border-ink/5">
+    <section id="attractions" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-3xl my-8 border border-ink/5">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
         <div>
           <h2 className="text-4xl font-black text-ink tracking-tight">สถานที่ยอดนิยม</h2>
@@ -61,7 +61,7 @@ export function HomepageAttractionsFeed({ attractions = [] }: { attractions?: At
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {topDestinations.length > 0 ? topDestinations.map((attraction, index) => (
           <Link href={`/attractions/${attraction.slug}`} key={attraction.slug} className="group flex flex-col">
-            <div className="relative w-full aspect-[3/4] overflow-hidden rounded-[2rem] mb-5 shadow-md border border-ink/5 bg-cream">
+            <div className="relative w-full aspect-[3/4] overflow-hidden rounded-2xl mb-5 shadow-md border border-ink/5 bg-cream">
               {attraction.imageUrl ? (
                 <Image
                   src={attraction.imageUrl}
@@ -84,11 +84,11 @@ export function HomepageAttractionsFeed({ attractions = [] }: { attractions?: At
             <p className="text-xs font-bold text-muted mt-2 uppercase tracking-wider">{attraction.province}</p>
           </Link>
         )) : (
-          <div className="rounded-[2rem] border border-dashed border-ink/10 bg-cream p-8 text-center text-sm font-semibold text-muted sm:col-span-2 lg:col-span-4">
+          <div className="rounded-2xl border border-dashed border-ink/10 bg-cream p-8 text-center text-sm font-semibold text-muted sm:col-span-2 lg:col-span-4">
             <p>
               {activeProvince === "all"
-                ? "Published attractions will appear here after content is added in the database."
-                : `No featured attractions for ${activeFilter.label} yet.`}
+                ? "สถานที่ท่องเที่ยวที่เผยแพร่แล้วจะปรากฏที่นี่หลังจากเพิ่มเนื้อหาในฐานข้อมูล"
+                : `ยังไม่มีสถานที่แนะนำสำหรับ${activeFilter.label}`}
             </p>
             {activeProvince !== "all" ? (
               <button
@@ -96,7 +96,7 @@ export function HomepageAttractionsFeed({ attractions = [] }: { attractions?: At
                 onClick={() => setActiveProvince("all")}
                 className="mt-4 inline-flex rounded-full border border-ink/10 bg-white px-4 py-2 text-xs font-black text-ink transition hover:text-coral"
               >
-                Show all
+                ดูทั้งหมด
               </button>
             ) : null}
           </div>

@@ -122,7 +122,7 @@ export function LineLinkPanel({
   };
 
   return (
-    <section className={`rounded-[1.5rem] border border-ink/5 bg-white p-6 shadow-sm ${className}`}>
+    <section className={`rounded-xl border border-ink/5 bg-white p-6 shadow-sm ${className}`}>
       <div className="flex items-start gap-4">
         <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#FAF3EE] text-[#E18868]">
           <ChatCircleDots size={24} weight="fill" />
@@ -135,7 +135,7 @@ export function LineLinkPanel({
       </div>
 
       <div className="mt-6 grid gap-4">
-        <div className="rounded-[1rem] bg-[#FAF8F5] p-5 border border-ink/5">
+        <div className="rounded-[1rem] bg-background p-5 border border-ink/5">
           <div className="flex gap-3">
             <DeviceMobile className="mt-0.5 shrink-0 text-[#E18868]" size={20} weight="fill" />
             <p className="text-sm leading-6 text-ink">
@@ -172,7 +172,7 @@ export function LineLinkPanel({
             </span>
           </label>
         ) : (
-          <div className="rounded-[1rem] border border-ink/10 bg-[#FAF8F5] p-5 text-sm leading-6 text-muted">
+          <div className="rounded-[1rem] border border-ink/10 bg-background p-5 text-sm leading-6 text-muted">
             ระบบยังไม่ได้เปิดใช้ LINE LIFF ในสภาพแวดล้อมนี้ คุณยังสามารถดูพาสปอร์ตและดาวน์โหลดใบประกาศต่อแบบ Guest ได้ตามปกติ
           </div>
         )}
@@ -192,7 +192,7 @@ export function LineLinkPanel({
         )}
 
         {uiState.kind === "not_configured" && (
-          <div className="flex gap-3 rounded-[1rem] border border-ink/10 bg-[#FAF8F5] p-5 text-sm font-semibold leading-6 text-ink">
+          <div className="flex gap-3 rounded-[1rem] border border-ink/10 bg-background p-5 text-sm font-semibold leading-6 text-ink">
             <WarningCircle className="mt-0.5 shrink-0 text-ink/40" size={20} weight="fill" />
             <span>LINE ยังไม่พร้อมใช้งานในตอนนี้ คุณสามารถใช้ Guest ต่อได้โดยไม่เสียสิทธิ์ใบประกาศหรือตราประทับ</span>
           </div>
@@ -213,7 +213,7 @@ export function LineLinkPanel({
         {showContinueLink && (
           <Link
             href={continueHref}
-            className="flex min-h-12 items-center justify-center rounded-full bg-[#FAF8F5] border border-ink/5 px-6 py-4 text-center text-sm font-bold text-ink hover:bg-white transition-colors"
+            className="flex min-h-12 items-center justify-center rounded-full bg-background border border-ink/5 px-6 py-4 text-center text-sm font-bold text-ink hover:bg-white transition-colors"
           >
             ใช้งานต่อแบบ Guest
           </Link>

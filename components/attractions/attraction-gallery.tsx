@@ -42,6 +42,7 @@ export function AttractionGallery({ mainImage, gallery }: AttractionGalleryProps
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                   unoptimized
+                  priority
                 />
                 {isLast && (
                   <div className="absolute inset-0 flex items-center justify-center bg-ink/40 transition-colors group-hover:bg-ink/50 backdrop-blur-[2px]">

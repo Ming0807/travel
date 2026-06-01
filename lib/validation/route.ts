@@ -4,14 +4,19 @@ import { adminPaginationSchema } from "./admin-attraction";
 const optionalText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
   z.string().trim().nullable()
-);
+).default(null);
 
 const optionalShortText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
   z.string().trim().max(255).nullable()
-);
+).default(null);
 
 const requiredId = z.coerce.number().int().positive();
+
+const optionalId = z.preprocess(
+  (value) => (value === "" || value === null || value === undefined ? null : value),
+  z.coerce.number().int().positive().nullable()
+).default(null);
 
 const booleanFromForm = z.preprocess((value) => {
   if (typeof value === "boolean") return value;
@@ -46,9 +51,9 @@ export const adminRouteMutationSchema = z.object({
   nameEn: optionalShortText,
   descriptionTh: optionalText,
   descriptionEn: optionalText,
-  coverImagePath: optionalText,
   isPublished: booleanFromForm,
-  isActive: booleanFromForm
+  isActive: booleanFromForm,
+  coverMediaId: optionalId
 });
 
 export const adminRouteStopMutationSchema = z.object({

@@ -15,8 +15,8 @@ export default function TouristError({
   }, [error]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] px-4">
-      <div className="max-w-md w-full rounded-[2rem] bg-white p-8 md:p-10 text-center shadow-sm border border-ink/5">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md w-full rounded-2xl bg-white p-8 md:p-10 text-center border border-ink/5">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
           <WarningCircle size={32} weight="fill" />
         </div>

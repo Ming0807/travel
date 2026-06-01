@@ -2,9 +2,82 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { MagnifyingGlass, FileText, Funnel, DownloadSimple, X } from "@phosphor-icons/react/dist/ssr";
+import {
+  MagnifyingGlass,
+  FileText,
+  Funnel,
+  DownloadSimple,
+  X,
+  CheckCircle,
+  WarningCircle,
+  XCircle,
+  Sliders,
+} from "@phosphor-icons/react/dist/ssr";
 import { useRouter, usePathname } from "next/navigation";
 import { Pagination } from "@/components/admin/Pagination";
+
+const ENTITY_TYPE_OPTIONS = [
+  { value: "", label: "All Types" },
+  { value: "attraction", label: "Attraction" },
+  { value: "story", label: "Story" },
+  { value: "route", label: "Route" },
+  { value: "restaurant", label: "Restaurant" },
+  { value: "accommodation", label: "Accommodation" },
+  { value: "media", label: "Media" },
+  { value: "photo_spot", label: "Photo Spot" },
+  { value: "checkin_code", label: "Check-in Code" },
+  { value: "badge", label: "Badge" },
+  { value: "review", label: "Review" },
+  { value: "admin_users", label: "Admin User" },
+  { value: "roles", label: "Role" },
+  { value: "content_media", label: "Content Media" },
+  { value: "settings", label: "Settings" },
+  { value: "site_settings", label: "Site Settings" },
+  { value: "certificate", label: "Certificate" },
+];
+
+const ACTION_PREFIX_OPTIONS = [
+  { value: "", label: "All Actions" },
+  { value: "create", label: "Create" },
+  { value: "update", label: "Update" },
+  { value: "delete", label: "Delete" },
+  { value: "archive", label: "Archive" },
+  { value: "publish", label: "Publish" },
+  { value: "unpublish", label: "Unpublish" },
+  { value: "activate", label: "Activate" },
+  { value: "deactivate", label: "Deactivate" },
+  { value: "approve", label: "Approve" },
+  { value: "reject", label: "Reject" },
+  { value: "export", label: "Export" },
+  { value: "login", label: "Login" },
+];
+
+function extractResult(newData: any): "success" | "failed" | "denied" | null {
+  const result = newData?._audit?.result;
+  if (result === "success" || result === "failed" || result === "denied") return result;
+  return null;
+}
+
+function ResultBadge({ result }: { result: "success" | "failed" | "denied" | null }) {
+  if (!result) return null;
+  const styles = {
+    success: { bg: "bg-emerald-50", text: "text-emerald-700", icon: CheckCircle },
+    failed: { bg: "bg-rose-50", text: "text-rose-700", icon: XCircle },
+    denied: { bg: "bg-amber-50", text: "text-amber-700", icon: WarningCircle },
+  };
+  const s = styles[result];
+  const Icon = s.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${s.bg} ${s.text}`}>
+      <Icon size={11} weight="fill" />
+      {result}
+    </span>
+  );
+}
+
+function activeFilterCount(filters: Record<string, string | undefined>): number {
+  return Object.entries(filters).filter(([key, val]) => key !== "search" && val).length;
+}
 
 type AuditListClientProps = {
   initialData: {
@@ -103,13 +176,18 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              isFilterOpen || Object.keys(filters).some(k => k !== 'search' && (filters as any)[k])
+              isFilterOpen || activeFilterCount(filters) > 0
                 ? "bg-[#E6F4EF] text-[#0A6B62] border border-[#0A6B62]/20"
                 : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
             }`}
           >
-            <Funnel size={18} />
+            <Sliders size={18} />
             Filters
+            {activeFilterCount(filters) > 0 ? (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0A6B62] px-1.5 text-[10px] font-extrabold text-white">
+                {activeFilterCount(filters)}
+              </span>
+            ) : null}
           </button>
           
           <button
@@ -122,6 +200,50 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
           </button>
         </div>
       </div>
+
+      {/* Active Filter Badges */}
+      {activeFilterCount(filters) > 0 && !isFilterOpen ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-slate-500">Active filters:</span>              {Object.entries(filters).map(([key, val]) => {
+            if (!val || key === "search") return null;
+            const labelMap: Record<string, string> = {
+              adminId: "Admin",
+              action: "Action",
+              entityType: "Entity",
+              startDate: "From",
+              endDate: "To",
+            };
+            const displayKey = labelMap[key] || key;
+            const displayVal = key === "adminId"
+              ? (adminUsers.find(u => u.admin_id === val)?.display_name ?? val)
+              : val;
+            return (
+              <span
+                key={key}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-sm"
+              >
+                {displayKey}: {displayVal.length > 20 ? displayVal.slice(0, 20) + "..." : displayVal}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = { ...filters, [key]: "" } as Record<string, string>;
+                    setFilters(updated);
+                    const params = new URLSearchParams();
+                    Object.entries(updated).forEach(([k, v]) => {
+                      if (v) params.set(k, v);
+                    });
+                    router.push(`${pathname}?${params.toString()}`);
+                  }}
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-slate-200"
+                  aria-label={`Remove ${key} filter`}
+                >
+                  <X size={12} weight="bold" />
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      ) : null}
 
       {/* Advanced Filters */}
       {isFilterOpen && (
@@ -142,32 +264,48 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
               </select>
             </div>
             <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">Action</label>
+              <select
+                className="w-full rounded-md border border-slate-300 p-2 text-sm"
+                value={filters.action || ""}
+                onChange={(e) => handleFilterChange("action", e.target.value)}
+              >
+                {ACTION_PREFIX_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">Entity Type</label>
-              <input
-                type="text"
-                placeholder="e.g. users, roles, attractions"
+              <select
                 className="w-full rounded-md border border-slate-300 p-2 text-sm"
                 value={filters.entityType || ""}
                 onChange={(e) => handleFilterChange("entityType", e.target.value)}
-              />
+              >
+                {ENTITY_TYPE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Start Date</label>
-              <input
-                type="date"
-                className="w-full rounded-md border border-slate-300 p-2 text-sm"
-                value={filters.startDate || ""}
-                onChange={(e) => handleFilterChange("startDate", e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">End Date</label>
-              <input
-                type="date"
-                className="w-full rounded-md border border-slate-300 p-2 text-sm"
-                value={filters.endDate || ""}
-                onChange={(e) => handleFilterChange("endDate", e.target.value)}
-              />
+              <label className="block text-xs font-medium text-slate-700 mb-1">Date Range</label>
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  className="w-full rounded-md border border-slate-300 p-2 text-sm"
+                  value={filters.startDate || ""}
+                  onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                  aria-label="Start date"
+                />
+                <span className="flex items-center text-slate-400 text-xs">-</span>
+                <input
+                  type="date"
+                  className="w-full rounded-md border border-slate-300 p-2 text-sm"
+                  value={filters.endDate || ""}
+                  onChange={(e) => handleFilterChange("endDate", e.target.value)}
+                  aria-label="End date"
+                />
+              </div>
             </div>
           </div>
           <div className="mt-4 flex justify-end gap-2">
@@ -175,7 +313,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
               onClick={clearFilters}
               className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900"
             >
-              Clear
+              Clear All
             </button>
             <button 
               onClick={() => applyFilters(1)}
@@ -190,75 +328,148 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
       {/* Table */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Timestamp
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Admin User
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Action
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Entity
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Details
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 bg-white text-sm">
-              {logs.length === 0 ? (
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                    No audit logs match your filters.
-                  </td>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Timestamp
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Admin User
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Action
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Entity
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Result
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Details
+                  </th>
                 </tr>
-              ) : (
-                logs.map((log) => (
-                  <tr key={log.log_id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-500 font-mono text-xs">
-                      {format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss")}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {log.admin_users ? (
-                        <>
-                          <div className="font-medium text-slate-900">{log.admin_users.display_name}</div>
-                          <div className="text-xs text-slate-500">{log.admin_users.email}</div>
-                        </>
-                      ) : (
-                        <span className="text-slate-400 italic">System</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex rounded-md bg-[#E6F4EF] border border-[#0A6B62]/10 px-2.5 py-0.5 text-xs font-medium text-[#0A6B62]">
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-mono text-xs">
-                      {log.entity_type} {log.entity_id ? `(${log.entity_id.length > 12 ? log.entity_id.substring(0, 8) + '...' : log.entity_id})` : ""}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {((log.new_data && Object.keys(log.new_data).length > 0) || (log.old_data && Object.keys(log.old_data).length > 0)) ? (
-                        <button 
-                          onClick={() => setSelectedDetails(log.log_id)}
-                          className="text-[#0A6B62] hover:text-[#F3704C] inline-flex items-center gap-1 bg-[#E6F4EF] px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                        >
-                          <FileText size={16} />
-                          View Data
-                        </button>
-                      ) : (
-                        <span className="text-slate-300">-</span>
-                      )}
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white text-sm">
+                {logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                      No audit logs match your filters.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  logs.map((log) => (
+                    <tr key={log.log_id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-500 font-mono text-xs">
+                        {format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss")}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {log.admin_users ? (
+                          <>
+                            <div className="font-medium text-slate-900">{log.admin_users.display_name}</div>
+                            <div className="text-xs text-slate-500">{log.admin_users.email}</div>
+                          </>
+                        ) : (
+                          <span className="text-slate-400 italic">System</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex rounded-md bg-[#E6F4EF] border border-[#0A6B62]/10 px-2.5 py-0.5 text-xs font-medium text-[#0A6B62]">
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-mono text-xs">
+                        {log.entity_type} {log.entity_id ? `(${log.entity_id.length > 12 ? log.entity_id.substring(0, 8) + '...' : log.entity_id})` : ""}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <ResultBadge result={extractResult(log.new_data)} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        {((log.new_data && Object.keys(log.new_data).length > 0) || (log.old_data && Object.keys(log.old_data).length > 0)) ? (
+                          <button 
+                            onClick={() => setSelectedDetails(log.log_id)}
+                            className="text-[#0A6B62] hover:text-[#F3704C] inline-flex items-center gap-1 bg-[#E6F4EF] px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                          >
+                            <FileText size={16} />
+                            View Data
+                          </button>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="grid gap-3 p-4 md:hidden">
+            {logs.length === 0 ? (
+              <div className="px-6 py-12 text-center text-sm text-slate-500">
+                No audit logs match your filters.
+              </div>
+            ) : (
+              logs.map((log) => {
+                const result = extractResult(log.new_data);
+                return (
+                  <div
+                    key={log.log_id}
+                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-mono text-[11px] text-slate-500">
+                          {format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss")}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="inline-flex rounded-md bg-[#E6F4EF] border border-[#0A6B62]/10 px-2 py-0.5 text-xs font-medium text-[#0A6B62]">
+                            {log.action}
+                          </span>
+                          <ResultBadge result={result} />
+                        </div>
+                      </div>
+                      {((log.new_data && Object.keys(log.new_data).length > 0) || (log.old_data && Object.keys(log.old_data).length > 0)) ? (
+                        <button
+                          onClick={() => setSelectedDetails(log.log_id)}
+                          className="shrink-0 rounded-lg bg-[#E6F4EF] p-2 text-[#0A6B62] transition hover:bg-[#d1ede3]"
+                          aria-label="View data"
+                        >
+                          <FileText size={18} weight="bold" />
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <p className="font-bold text-slate-500">Admin</p>
+                        <p className="mt-0.5 font-semibold text-slate-800">
+                          {log.admin_users?.display_name || "System"}
+                        </p>
+                        {log.admin_users?.email ? (
+                          <p className="text-[10px] text-slate-500">{log.admin_users.email}</p>
+                        ) : null}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-500">Entity</p>
+                        <p className="mt-0.5 font-mono text-xs text-slate-800">
+                          {log.entity_type}
+                        </p>
+                        {log.entity_id ? (
+                          <p className="truncate text-[10px] text-slate-500">
+                            ID: {log.entity_id.length > 16 ? log.entity_id.substring(0, 14) + "..." : log.entity_id}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
         
         {/* Pagination */}

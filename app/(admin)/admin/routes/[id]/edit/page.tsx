@@ -1,9 +1,9 @@
 import { Metadata } from "next";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { RouteForm } from "@/components/admin/routes/RouteForm";
+import { RouteVisualEditor } from "@/components/admin/routes/visual-editor/RouteVisualEditor";
 import { requirePermission } from "@/lib/auth/guards";
-import { getAdminRouteById } from "@/lib/repositories/admin-route.repository";
+import { getAdminRouteById, getRouteStops } from "@/lib/repositories/admin-route.repository";
+import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
+import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -23,24 +23,23 @@ export default async function EditAdminRoutePage({
     notFound();
   }
 
-  const route = await getAdminRouteById(routeId);
+  const [route, coverMedia, stops, attractions] = await Promise.all([
+    getAdminRouteById(routeId),
+    getCoverMediaForEntity("route", routeId),
+    getRouteStops(routeId),
+    getAdminAttractionsList(),
+  ]);
   if (!route) {
     notFound();
   }
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="Content Management"
-          title={`แก้ไขเส้นทาง: ${route.name_th}`}
-          description="แก้ไขรายละเอียดเส้นทางท่องเที่ยวแนะนำ"
-        />
-
-        <div className="mt-8">
-          <RouteForm initialData={route} />
-        </div>
-      </div>
-    </AdminShell>
+    <RouteVisualEditor
+      route={route}
+      coverMediaId={coverMedia?.media_id ?? null}
+      coverMediaUrl={coverMedia?.storage_path ? (coverMedia.storage_path.startsWith('cloudinary:') ? `/api/media/image?path=${encodeURIComponent(coverMedia.storage_path)}` : `/site-media/${coverMedia.storage_path}`) : null}
+      stops={stops}
+      attractions={attractions}
+    />
   );
 }

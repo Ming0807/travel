@@ -143,7 +143,7 @@ Geography
 
 Attractions
     attraction_types -> attractions
-    attractions -> attraction_media
+    attractions -> content_media
     attractions -> photo_spots
     attractions -> checkin_codes
     attractions -> visits
@@ -399,12 +399,12 @@ or restrict and deactivate attraction type.
 
 ---
 
-## 5.2 attractions to attraction_media
+## 5.2 attractions to content_media
 
 ### Relationship
 
 ```text
-attractions.attraction_id 1 -> many attraction_media.attraction_id
+attractions.attraction_id 1 -> many content_media.attraction_id
 ```
 
 ### Purpose
@@ -414,7 +414,7 @@ Supports image gallery, public media, panoramas, embeds, and external URLs for a
 ### Foreign Key
 
 ```text
-attraction_media.attraction_id references attractions(attraction_id)
+content_media.attraction_id references attractions(attraction_id)
 ```
 
 ### Required?
@@ -453,7 +453,7 @@ attractions.attraction_id 1 -> many attraction_360_media.attraction_id
 
 Future normalized support for immersive attraction content.
 
-Current MVP stores image, panorama, video360, embed, and external URL references in `attraction_media`.
+Current MVP stores image, panorama, video360, embed, and external URL references in `content_media`.
 
 ### Foreign Key
 
@@ -1606,7 +1606,7 @@ districts.province_id -> provinces.province_id
 attractions.province_id -> provinces.province_id
 attractions.district_id -> districts.district_id
 attractions.attraction_type_id -> attraction_types.attraction_type_id
-attraction_media.attraction_id -> attractions.attraction_id
+content_media.attraction_id -> attractions.attraction_id
 photo_spots.attraction_id -> attractions.attraction_id
 checkin_codes.attraction_id -> attractions.attraction_id
 checkin_codes.photo_spot_id -> photo_spots.photo_spot_id
@@ -1662,6 +1662,7 @@ provinces.province_name_en
 districts(province_id, district_name_th)
 attractions.slug
 checkin_codes.code
+content_media(attraction_id, storage_path)
 tourist_identities(provider, provider_user_id)
 tourist_stamps(tourist_id, attraction_id)
 satisfaction_surveys.visit_id

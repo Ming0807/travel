@@ -19,9 +19,16 @@ import { useState } from "react";
 
 export default function ContactPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
+  };
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitted(true);
+    setTimeout(() => setIsSubmitted(false), 5000);
   };
 
   const faqs = [
@@ -40,7 +47,7 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen text-ink pb-0">
+    <div className="bg-background min-h-screen text-ink pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
         
         {/* HERO SECTION */}
@@ -70,7 +77,7 @@ export default function ContactPage() {
             {/* Background Map Graphic (Optional - simulated with light shape) */}
             <div className="absolute top-0 right-10 w-[400px] h-[350px] bg-[#F2EFE8] rounded-3xl -z-10 opacity-70" style={{ clipPath: 'polygon(10% 0, 100% 10%, 90% 100%, 0 90%)' }}></div>
             
-            <div className="absolute top-4 right-32 w-64 h-72 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-10 bg-white">
+            <div className="absolute top-4 right-32 w-64 h-72 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-10 bg-white">
               <div className="flex h-full flex-col justify-between bg-[linear-gradient(135deg,#F8EDE7_0%,#F7F3EA_55%,#E9F0EC_100%)] p-6">
                 <EnvelopeSimple size={40} weight="fill" className="text-coral" />
                 <div>
@@ -84,7 +91,7 @@ export default function ContactPage() {
               </div>
             </div>
             
-            <div className="absolute bottom-4 right-4 w-56 h-64 rounded-[2rem] overflow-hidden shadow-xl border-4 border-[#FAF8F5] z-20 bg-[#EAF2F0] p-5">
+            <div className="absolute bottom-4 right-4 w-56 h-64 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-20 bg-[#EAF2F0] p-5">
               <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-teal/20 bg-white/55 text-center">
                 <PaperPlaneRight size={42} weight="light" className="text-teal" />
                 <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Route support</p>
@@ -93,7 +100,7 @@ export default function ContactPage() {
             
             {/* Stamp Badge */}
             <div className="absolute top-12 right-4 z-30 transform rotate-12">
-              <div className="w-24 h-24 rounded-full border border-dashed border-[#CBA07D] flex items-center justify-center bg-[#FAF8F5]/80 backdrop-blur-sm p-1">
+              <div className="w-24 h-24 rounded-full border border-dashed border-[#CBA07D] flex items-center justify-center bg-background/80 backdrop-blur-sm p-1">
                 <div className="w-full h-full rounded-full border border-[#CBA07D] flex flex-col items-center justify-center text-center">
                   <span className="text-[#CBA07D] text-[10px] font-black leading-tight tracking-widest uppercase">
                     ท่องเที่ยว<br/>ชายแดนใต้
@@ -112,7 +119,7 @@ export default function ContactPage() {
             <h2 className="text-2xl font-black text-ink mb-2">ส่งข้อความหาเรา</h2>
             <p className="text-muted text-sm mb-8">กรอกแบบฟอร์มด้านล่าง แล้วเราจะติดต่อกลับโดยเร็วที่สุด</p>
             
-            <form className="space-y-6" onSubmit={e => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={handleContactSubmit}>
               <div>
                 <label className="block text-xs font-bold text-ink mb-2">ชื่อ-นามสกุล</label>
                 <input 
@@ -167,6 +174,12 @@ export default function ContactPage() {
                 ส่งข้อความ <PaperPlaneRight weight="fill" />
               </button>
               
+              {isSubmitted && (
+                <div className="bg-teal/10 text-teal p-3 rounded-xl text-sm text-center font-bold">
+                  ส่งข้อความสำเร็จ! เราจะติดต่อกลับโดยเร็วที่สุด
+                </div>
+              )}
+              
               <p className="text-[11px] text-muted text-center flex items-center justify-center gap-2">
                 <span className="opacity-70">🔒</span> ข้อมูลของคุณจะถูกเก็บรักษาอย่างปลอดภัยตามนโยบายความเป็นส่วนตัว
               </p>
@@ -178,7 +191,7 @@ export default function ContactPage() {
             <h2 className="text-2xl font-black text-ink mb-6">ช่องทางการติดต่อ</h2>
             
             {/* Contact Cards */}
-            <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-ink/5 flex items-start gap-4">
+            <div className="bg-white p-5 rounded-xl border border-ink/5 flex items-start gap-4">
               <div className="bg-[#FAF3EE] text-coral p-3 rounded-full shrink-0">
                 <EnvelopeSimple size={24} weight="fill" />
               </div>
@@ -191,7 +204,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-ink/5 flex items-start gap-4">
+            <div className="bg-white p-5 rounded-xl border border-ink/5 flex items-start gap-4">
               <div className="bg-[#FAF3EE] text-coral p-3 rounded-full shrink-0">
                 <Phone size={24} weight="fill" />
               </div>
@@ -202,7 +215,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="bg-[#FAF8F5] border border-ink/10 p-5 rounded-[1.5rem] flex items-start gap-4">
+            <div className="bg-background border border-ink/10 p-5 rounded-xl flex items-start gap-4">
               <div className="bg-[#EBECE8] text-ink p-3 rounded-full shrink-0">
                 <MapPin size={24} weight="fill" />
               </div>
@@ -213,13 +226,13 @@ export default function ContactPage() {
                   181 ถ.เจริญประดิษฐ์ ต.รูสะมิแล<br/>
                   ปัตตานี 94000
                 </p>
-                <a href="#" className="text-xs font-bold text-coral mt-2 inline-block hover:underline">
+                <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-coral mt-2 inline-block hover:underline">
                   ดูบน Google Maps
                 </a>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-ink/5 flex items-start gap-4">
+            <div className="bg-white p-5 rounded-xl border border-ink/5 flex items-start gap-4">
               <div className="bg-[#FAF3EE] text-coral p-3 rounded-full shrink-0">
                 <Clock size={24} weight="fill" />
               </div>
@@ -244,7 +257,7 @@ export default function ContactPage() {
               <h2 className="text-2xl font-black text-ink">เยี่ยมชมสำนักงานของเรา</h2>
             </div>
             
-            <div className="bg-white rounded-[2rem] overflow-hidden border border-ink/5 shadow-sm">
+            <div className="bg-white rounded-2xl overflow-hidden border border-ink/5">
               <div className="p-8">
                 <p className="text-sm text-muted leading-relaxed mb-6">
                   เรายินดีต้อนรับทุกคนที่สนใจโครงการ หรือต้องการพูดคุยเรื่องความร่วมมือในการพัฒนาแพลตฟอร์มการท่องเที่ยว
@@ -272,12 +285,12 @@ export default function ContactPage() {
           <div>
             <div className="flex justify-between items-end mb-6">
               <h2 className="text-2xl font-black text-ink">คำถามที่พบบ่อย</h2>
-              <a href="#" className="text-xs font-bold text-ink hover:text-coral">ดูคำถามทั้งหมด &rarr;</a>
+              <span className="text-xs font-bold text-ink hover:text-coral cursor-pointer">ดูคำถามทั้งหมด &rarr;</span>
             </div>
             
             <div className="space-y-3 mb-10">
               {faqs.map((faq, idx) => (
-                <div key={idx} className="bg-white rounded-[1.5rem] border border-ink/5 shadow-sm overflow-hidden transition-all">
+                <div key={idx} className="bg-white rounded-xl border border-ink/5 overflow-hidden transition-all">
                   <button 
                     onClick={() => toggleFaq(idx)}
                     className="w-full p-5 flex items-center justify-between text-left focus:outline-none"
@@ -305,21 +318,21 @@ export default function ContactPage() {
             <div className="flex items-center gap-6">
               <h3 className="font-bold text-ink">ติดตามเรา</h3>
               <div className="flex gap-3">
-                <a href="#" className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
+                <button className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
                   <InstagramLogo size={18} />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
+                </button>
+                <button className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
                   <FacebookLogo size={18} />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
+                </button>
+                <button className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
                   <YoutubeLogo size={18} />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
+                </button>
+                <button className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
                   <PinterestLogo size={18} />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
+                </button>
+                <button className="w-10 h-10 rounded-full border border-ink/10 flex items-center justify-center text-ink hover:bg-ink hover:text-white transition-colors bg-white shadow-sm">
                   <Envelope size={18} />
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -328,7 +341,7 @@ export default function ContactPage() {
 
         {/* NEWSLETTER (Stay Inspired) */}
         <section className="mb-20">
-          <div className="relative rounded-[2rem] overflow-hidden bg-ink py-16 px-8 md:px-16 flex flex-col justify-center shadow-2xl">
+          <div className="relative rounded-2xl overflow-hidden bg-ink py-16 px-8 md:px-16 flex flex-col justify-center shadow-2xl">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#173F37_0%,#264D48_52%,#E18868_100%)] opacity-95" />
             <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(255,255,255,.28)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.28)_1px,transparent_1px)] [background-size:44px_44px]" />
             <div className="relative z-10 max-w-md">
@@ -337,16 +350,17 @@ export default function ContactPage() {
                 รับข่าวสารเกี่ยวกับการท่องเที่ยว โปรโมชัน และจุด Check-in ใหม่ๆ ในจังหวัดชายแดนใต้ ส่งตรงถึงอีเมลคุณ
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-3 p-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+              <form onSubmit={e => { e.preventDefault(); alert("ขอบคุณสำหรับการติดตามข่าวสาร!"); }} className="flex flex-col sm:flex-row gap-3 p-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
                 <input 
                   type="email" 
+                  required
                   placeholder="กรอกอีเมลของคุณ"
                   className="flex-1 bg-white rounded-full px-5 py-3 text-sm text-ink outline-none placeholder:text-muted/70"
                 />
-                <button className="bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <button type="submit" className="bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm">
                   ติดตามข่าวสาร <PaperPlaneRight weight="fill" />
                 </button>
-              </div>
+              </form>
               <p className="text-[10px] text-white/50 mt-3 pl-2">เราไม่ส่งสแปม และคุณสามารถยกเลิกได้ตลอดเวลา</p>
             </div>
           </div>

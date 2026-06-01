@@ -70,12 +70,11 @@ const entityIdColumnByType: Record<AdminMediaEntityType, "attraction_id" | "rest
 function toPayload(input: AdminMediaMutationInput) {
   const isArchived = input.lifecycleStatus === "archived";
 
-  return {
-    attraction_id: input.entityType === 'attraction' ? input.entityId : null,
-    restaurant_id: input.entityType === 'restaurant' ? input.entityId : null,
-    accommodation_id: input.entityType === 'accommodation' ? input.entityId : null,
-    story_id: input.entityType === 'story' ? input.entityId : null,
-    route_id: input.entityType === 'route' ? input.entityId : null,
+  // Build dynamic payload — only set the entity column that matches entityType.
+  // This avoids sending null for columns that may not exist in the remote DB
+  // (e.g., accommodation_id if the migration hasn't been applied yet).
+  const payload: Record<string, unknown> = {
+    [entityIdColumnByType[input.entityType]]: input.entityId,
     media_type: input.mediaType,
     storage_path: input.storagePath,
     alt_text_th: input.altTextTh,
@@ -92,6 +91,8 @@ function toPayload(input: AdminMediaMutationInput) {
     is_cover: input.isCover,
     is_active: isArchived ? false : input.isActive
   };
+
+  return payload;
 }
 
 export async function listAdminMedia(filters: AdminMediaFilters): Promise<PaginatedResult<AdminMediaRow>> {
@@ -116,7 +117,8 @@ export async function listAdminMedia(filters: AdminMediaFilters): Promise<Pagina
   const { data, error, count } = await query;
 
   if (error) {
-    throw new Error("ADMIN_MEDIA_LIST_FAILED");
+    console.error("ADMIN_MEDIA_LIST_FAILED", { filters, errorMessage: error.message, errorDetails: error.details, errorHint: error.hint, errorCode: error.code });
+    throw new Error(`ADMIN_MEDIA_LIST_FAILED: ${error.message} (${error.code || "unknown"})`);
   }
 
   return {
@@ -136,7 +138,8 @@ export async function getAdminMediaById(mediaId: number): Promise<AdminMediaRow 
     .maybeSingle();
 
   if (error) {
-    throw new Error("ADMIN_MEDIA_READ_FAILED");
+    console.error("ADMIN_MEDIA_READ_FAILED", { mediaId, errorMessage: error.message, errorDetails: error.details, errorHint: error.hint, errorCode: error.code });
+    throw new Error(`ADMIN_MEDIA_READ_FAILED: ${error.message} (${error.code || "unknown"})`);
   }
 
   if (!data) return null;
@@ -146,14 +149,16 @@ export async function getAdminMediaById(mediaId: number): Promise<AdminMediaRow 
 
 export async function createAdminMedia(input: AdminMediaMutationInput): Promise<AdminMediaRow> {
   const supabase = createSupabaseServiceRoleClient();
+  const payload = toPayload(input);
   const { data, error } = await supabase
     .from("content_media")
-    .insert(toPayload(input))
+    .insert(payload)
     .select("*")
     .single();
 
   if (error) {
-    throw new Error("ADMIN_MEDIA_CREATE_FAILED");
+    console.error("ADMIN_MEDIA_CREATE_FAILED", { payload, errorMessage: error.message, errorDetails: error.details, errorHint: error.hint, errorCode: error.code });
+    throw new Error(`ADMIN_MEDIA_CREATE_FAILED: ${error.message} (${error.code || "unknown"})`);
   }
 
   return mapMedia(data);
@@ -161,15 +166,17 @@ export async function createAdminMedia(input: AdminMediaMutationInput): Promise<
 
 export async function updateAdminMedia(mediaId: number, input: AdminMediaMutationInput): Promise<AdminMediaRow> {
   const supabase = createSupabaseServiceRoleClient();
+  const payload = toPayload(input);
   const { data, error } = await supabase
     .from("content_media")
-    .update(toPayload(input))
+    .update(payload)
     .eq("media_id", mediaId)
     .select("*")
     .single();
 
   if (error) {
-    throw new Error("ADMIN_MEDIA_UPDATE_FAILED");
+    console.error("ADMIN_MEDIA_UPDATE_FAILED", { mediaId, payload, errorMessage: error.message, errorDetails: error.details, errorHint: error.hint, errorCode: error.code });
+    throw new Error(`ADMIN_MEDIA_UPDATE_FAILED: ${error.message} (${error.code || "unknown"})`);
   }
 
   return mapMedia(data);
@@ -188,7 +195,8 @@ export async function updateAdminMediaStatus(
     .single();
 
   if (error) {
-    throw new Error("ADMIN_MEDIA_UPDATE_FAILED");
+    console.error("ADMIN_MEDIA_STATUS_UPDATE_FAILED", { mediaId, patch, errorMessage: error.message, errorDetails: error.details, errorHint: error.hint, errorCode: error.code });
+    throw new Error(`ADMIN_MEDIA_STATUS_UPDATE_FAILED: ${error.message} (${error.code || "unknown"})`);
   }
 
   return mapMedia(data);
@@ -208,10 +216,115 @@ export async function archiveAdminMedia(mediaId: number): Promise<AdminMediaRow>
     .single();
 
   if (error) {
-    throw new Error("ADMIN_MEDIA_ARCHIVE_FAILED");
+    console.error("ADMIN_MEDIA_ARCHIVE_FAILED", { mediaId, errorMessage: error.message, errorDetails: error.details, errorHint: error.hint, errorCode: error.code });
+    throw new Error(`ADMIN_MEDIA_ARCHIVE_FAILED: ${error.message} (${error.code || "unknown"})`);
   }
 
   return mapMedia(data);
+}
+
+/**
+ * Get the cover media for an entity (the content_media record with is_cover=true)
+ */
+export async function getCoverMediaForEntity(
+  entityType: AdminMediaEntityType,
+  entityId: number
+): Promise<{ media_id: number; storage_path: string } | null> {
+  const supabase = createSupabaseServiceRoleClient();
+  const column = entityIdColumnByType[entityType];
+
+  const { data, error } = await supabase
+    .from("content_media")
+    .select("media_id, storage_path")
+    .eq(column, entityId)
+    .eq("is_cover", true)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return {
+    media_id: Number(data.media_id),
+    storage_path: data.storage_path as string,
+  };
+}
+
+/**
+ * Link an existing content_media record to an entity and mark it as cover.
+ * Unsets any previous cover for the same entity first.
+ */
+export async function linkMediaToEntity(
+  mediaId: number,
+  entityType: AdminMediaEntityType,
+  entityId: number
+): Promise<void> {
+  const supabase = createSupabaseServiceRoleClient();
+  const column = entityIdColumnByType[entityType];
+
+  // Unset any existing cover for this entity
+  await supabase
+    .from("content_media")
+    .update({ is_cover: false })
+    .eq(column, entityId)
+    .eq("is_cover", true);
+
+  // Link the new cover media to the entity
+  const { error } = await supabase
+    .from("content_media")
+    .update({
+      [column]: entityId,
+      is_cover: true,
+    })
+    .eq("media_id", mediaId);
+
+  if (error) {
+    console.error("LINK_MEDIA_FAILED", { mediaId, entityType, entityId, errorMessage: error.message });
+    throw new Error(`LINK_MEDIA_FAILED: ${error.message}`);
+  }
+}
+
+export async function linkMediaToEntityByStoragePath(
+  storagePath: string,
+  entityType: AdminMediaEntityType,
+  entityId: number
+): Promise<void> {
+  const supabase = createSupabaseServiceRoleClient();
+  const column = entityIdColumnByType[entityType];
+
+  // Unset any existing cover for this entity
+  await supabase
+    .from("content_media")
+    .update({ is_cover: false })
+    .eq(column, entityId)
+    .eq("is_cover", true);
+
+  // Check if content_media already has this storage_path (even if not linked to this entity)
+  const { data: existing } = await supabase
+    .from("content_media")
+    .select("media_id")
+    .eq("storage_path", storagePath)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("content_media")
+      .update({
+        [column]: entityId,
+        is_cover: true,
+      })
+      .eq("media_id", existing.media_id);
+  } else {
+    await supabase
+      .from("content_media")
+      .insert({
+        storage_path: storagePath,
+        media_type: "image",
+        [column]: entityId,
+        is_cover: true,
+        is_active: true,
+        lifecycle_status: "active"
+      });
+  }
 }
 
 export async function deleteAdminMedia(mediaId: number): Promise<void> {
@@ -222,6 +335,7 @@ export async function deleteAdminMedia(mediaId: number): Promise<void> {
     .eq("media_id", mediaId);
 
   if (error) {
-    throw new Error("ADMIN_MEDIA_DELETE_FAILED");
+    console.error("ADMIN_MEDIA_DELETE_FAILED", { mediaId, errorMessage: error.message, errorDetails: error.details, errorHint: error.hint, errorCode: error.code });
+    throw new Error(`ADMIN_MEDIA_DELETE_FAILED: ${error.message} (${error.code || "unknown"})`);
   }
 }

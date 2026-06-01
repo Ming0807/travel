@@ -53,7 +53,7 @@ DDL must support these domain groups:
 | Group | Tables |
 |---|---|
 | Geography and reference data | `countries`, `provinces`, `districts`, `attraction_types`, `transport_modes`, `travel_purposes`, `travel_companions`, `expense_categories`, `spending_ranges`, `age_groups` |
-| Public tourism content | `attractions`, `attraction_media`, `photo_spots`, `suggested_routes`, `suggested_route_stops`, `travel_stories` |
+| Public tourism content | `attractions`, `content_media`, `photo_spots`, `suggested_routes`, `suggested_route_stops`, `travel_stories` |
 | QR and visit loop | `checkin_codes`, `funnel_events`, `tourists`, `tourist_identities`, `consent_records`, `visits` |
 | Reward system | `visit_photos`, `certificate_templates`, `certificates`, `stamp_definitions`, `tourist_stamps` |
 | Survey and planning data | `satisfaction_surveys`, `visit_expenses` |

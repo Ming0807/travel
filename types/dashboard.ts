@@ -74,6 +74,19 @@ export type FunnelStage = {
   definition: string;
 };
 
+export type DashboardAlertSeverity = "critical" | "warning" | "info";
+
+export type DashboardAlert = {
+  id: string;
+  severity: DashboardAlertSeverity;
+  title: string;
+  message: string;
+  source: "satisfaction" | "funnel" | "survey" | "expense" | "data_quality" | "general";
+  actionable?: boolean;
+  actionLabel?: string;
+  actionHref?: string;
+};
+
 export type InsightCardData = {
   title: string;
   category: "improvement" | "promotion" | "concentration" | "data_quality" | "opportunity";
@@ -86,7 +99,8 @@ export type InsightCardData = {
 export type DashboardViewModel = {
   filters: DashboardFilters;
   generatedAt: string;
-  dataSource: "live_database";
+  dataSource: "live_database" | "pre_aggregated";
+  summaryRefreshTimestamp: string | null;
   viewer: {
     displayName: string | null;
     email: string;
@@ -141,5 +155,6 @@ export type DashboardViewModel = {
     largestDropOffStage: FunnelStage | null;
   };
   insights: InsightCardData[];
+  dashboardAlerts: DashboardAlert[];
   dataQualityWarnings: string[];
 };

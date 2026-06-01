@@ -1,20 +1,16 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { Pagination } from "@/components/admin/Pagination";
 import { SearchInput } from "@/components/admin/SearchInput";
 import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
+import { ListPageShell } from "@/components/admin/ListPageShell";
 import { requirePermission } from "@/lib/auth/guards";
 import { listAdminRestaurants } from "@/lib/repositories/admin-restaurant.repository";
 import { adminRestaurantFiltersSchema } from "@/lib/validation/admin-restaurant";
 import { RestaurantStatusActions } from "@/components/admin/restaurants/RestaurantStatusActions";
-import Link from "next/link";
-import { Plus } from "@phosphor-icons/react/dist/ssr";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 export const metadata: Metadata = {
   title: "Restaurants Management | Admin",
@@ -46,23 +42,19 @@ export default async function AdminRestaurantsPage({
   const { items, total, page, pageSize } = await listAdminRestaurants(filters);
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <AdminPageHeader
-            eyebrow="Local Economy"
-            title="ร้านอาหาร"
-            description="จัดการข้อมูลร้านอาหารและธุรกิจชุมชนในยะลา ปัตตานี และนราธิวาส"
-          />
-          <Link
-            href="/admin/restaurants/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#F3704C] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#E55A35] transition-colors"
-          >
-            <Plus size={20} weight="bold" />
-            เพิ่มร้านอาหารใหม่
-          </Link>
-        </div>
-
+    <ListPageShell
+      eyebrow="Local Economy"
+      title="ร้านอาหาร"
+      description="จัดการข้อมูลร้านอาหารและธุรกิจชุมชนในยะลา ปัตตานี และนราธิวาส"
+      createHref="/admin/restaurants/new"
+      createLabel="เพิ่มร้านอาหารใหม่"
+      headerActions={<ExportButton endpoint="/api/admin/export/restaurants" label="Export CSV" />}
+      total={total}
+      page={page}
+      pageSize={pageSize}
+      emptyTitle="ไม่พบร้านอาหาร"
+      emptyDescription="ลองเปลี่ยนเงื่อนไขการค้นหา หรือเพิ่มร้านอาหารใหม่"
+      filters={
         <FilterBar>
           <div className="min-w-[220px] flex-1">
             <SearchInput placeholder="ค้นหาชื่อร้าน, slug..." />
@@ -73,16 +65,10 @@ export default async function AdminRestaurantsPage({
             options={statusOptions}
           />
         </FilterBar>
-
-        {items.length === 0 ? (
-          <EmptyState
-            title="ไม่พบร้านอาหาร"
-            description="ลองเปลี่ยนเงื่อนไขการค้นหาหรือตัวกรอง"
-          />
-        ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden md:block">
+      }
+    >
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
               <DataTable columns={columns}>
                 {items.map((restaurant) => (
                   <tr key={restaurant.restaurant_id} className="hover:bg-slate-50/50">
@@ -183,10 +169,6 @@ export default async function AdminRestaurantsPage({
               ))}
             </div>
 
-            <Pagination page={page} pageSize={pageSize} total={total} />
-          </>
-        )}
-      </div>
-    </AdminShell>
+    </ListPageShell>
   );
 }

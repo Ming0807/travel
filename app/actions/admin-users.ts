@@ -32,7 +32,7 @@ export async function toggleAdminUserAction(adminId: string, isActive: boolean) 
     return { success: true };
   } catch (error: any) {
     console.error("toggleAdminUserAction error:", error);
-    return { error: error.message || "Failed to toggle user status" };
+    return { error: error.message || "ไม่สามารถเปลี่ยนสถานะผู้ใช้ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -62,7 +62,7 @@ export async function saveAdminUserAction(formData: FormData) {
     });
 
     if (!validated.success) {
-      return { error: validated.error.issues[0]?.message || "Validation failed" };
+      return { error: validated.error.issues[0]?.message || "กรุณาตรวจสอบข้อมูลให้ถูกต้อง" };
     }
 
     let newId = id;
@@ -84,7 +84,7 @@ export async function saveAdminUserAction(formData: FormData) {
       });
     } else {
       // Create new user
-      if (!validated.data.email) throw new Error("Email is required for new users");
+      if (!validated.data.email) throw new Error("กรุณากรอกอีเมลสำหรับผู้ใช้ใหม่");
       
       newId = await inviteAdminUser({
         email: validated.data.email,
@@ -109,6 +109,6 @@ export async function saveAdminUserAction(formData: FormData) {
     return { success: true, id: newId };
   } catch (error: any) {
     console.error("saveAdminUserAction error:", error);
-    return { error: error.message || "Failed to save user" };
+    return { error: error.message || "ไม่สามารถบันทึกผู้ใช้ได้ กรุณาลองอีกครั้ง" };
   }
 }

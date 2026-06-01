@@ -5,7 +5,7 @@ import { ChatCircle, EnvelopeSimple, User } from "@phosphor-icons/react/dist/ssr
 
 export function IdentitySelection({ checkinCode }: { checkinCode: string }) {
   return (
-    <div className="w-full bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white p-6 md:p-8 animate-scale-in">
+    <div className="w-full bg-white rounded-2xl shadow-card border border-ink/5 p-6 md:p-8 animate-scale-in">
       <div className="space-y-4">
         {/* LINE Login */}
         <Link 

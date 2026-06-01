@@ -22,17 +22,17 @@ export async function SiteFooter() {
           </p>
           <div className="mt-6 flex gap-4 text-ink">
             {socialMedia.facebook && (
-              <a href={socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-coral transition-colors bg-white p-2 rounded-full shadow-sm border border-ink/5">
+              <a href={socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-coral transition-colors bg-white p-2 rounded-full border border-ink/5">
                 <FacebookLogo size={20} weight="fill" />
               </a>
             )}
             {socialMedia.instagram && (
-              <a href={socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-coral transition-colors bg-white p-2 rounded-full shadow-sm border border-ink/5">
+              <a href={socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-coral transition-colors bg-white p-2 rounded-full border border-ink/5">
                 <InstagramLogo size={20} weight="fill" />
               </a>
             )}
             {socialMedia.line && (
-              <a href={socialMedia.line} target="_blank" rel="noopener noreferrer" className="hover:text-coral transition-colors bg-white p-2 rounded-full shadow-sm border border-ink/5 font-bold text-xs flex items-center justify-center w-[38px] h-[38px]">
+              <a href={socialMedia.line} target="_blank" rel="noopener noreferrer" className="hover:text-coral transition-colors bg-white p-2 rounded-full border border-ink/5 font-bold text-xs flex items-center justify-center w-[38px] h-[38px]">
                 LINE
               </a>
             )}
@@ -44,28 +44,28 @@ export async function SiteFooter() {
           <div>
             <h4 className="font-bold mb-4">เกี่ยวกับเรา</h4>
             <ul className="space-y-3">
-              <li><Link href="#" className="hover:text-coral">พันธกิจของเรา</Link></li>
-              <li><Link href="#" className="hover:text-coral">ติดต่อเรา</Link></li>
-              <li><Link href="#" className="hover:text-coral">นโยบายความเป็นส่วนตัว</Link></li>
-              <li><Link href="#" className="hover:text-coral">ข้อตกลงการใช้งาน</Link></li>
+              <li><Link href="/about" className="hover:text-coral">พันธกิจของเรา</Link></li>
+              <li><Link href="/contact" className="hover:text-coral">ติดต่อเรา</Link></li>
+              <li><Link href="/privacy" className="hover:text-coral">นโยบายความเป็นส่วนตัว</Link></li>
+              <li><Link href="/terms" className="hover:text-coral">ข้อตกลงการใช้งาน</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-bold mb-4">ความสนใจ</h4>
             <ul className="space-y-3">
-              <li><Link href="#" className="hover:text-coral">ธรรมชาติ</Link></li>
-              <li><Link href="#" className="hover:text-coral">วัฒนธรรม</Link></li>
-              <li><Link href="#" className="hover:text-coral">อาหารการกิน</Link></li>
-              <li><Link href="#" className="hover:text-coral">จุดถ่ายภาพ</Link></li>
+              <li><Link href="/attractions" className="hover:text-coral">ธรรมชาติ</Link></li>
+              <li><Link href="/attractions" className="hover:text-coral">วัฒนธรรม</Link></li>
+              <li><Link href="/restaurants" className="hover:text-coral">อาหารการกิน</Link></li>
+              <li><Link href="/attractions" className="hover:text-coral">จุดถ่ายภาพ</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-bold mb-4">จุดหมายปลายทาง</h4>
             <ul className="space-y-3">
-              <li><Link href="#" className="hover:text-coral">ยะลา</Link></li>
-              <li><Link href="#" className="hover:text-coral">ปัตตานี</Link></li>
-              <li><Link href="#" className="hover:text-coral">นราธิวาส</Link></li>
-              <li><Link href="#" className="hover:text-coral">เบตง</Link></li>
+              <li><Link href="/attractions?province=Yala" className="hover:text-coral">ยะลา</Link></li>
+              <li><Link href="/attractions?province=Pattani" className="hover:text-coral">ปัตตานี</Link></li>
+              <li><Link href="/attractions?province=Narathiwat" className="hover:text-coral">นราธิวาส</Link></li>
+              <li><Link href="/attractions?province=Yala" className="hover:text-coral">เบตง</Link></li>
             </ul>
           </div>
           <div>
@@ -82,9 +82,9 @@ export async function SiteFooter() {
       <div className="mt-16 pt-8 border-t border-ink/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted">
         <p>{footerInfo.copyright}</p>
         <div className="flex gap-4">
-          <Link href="#" className="hover:text-ink">ข้อกำหนด</Link>
-          <Link href="#" className="hover:text-ink">ความเป็นส่วนตัว</Link>
-          <Link href="#" className="hover:text-ink">คุกกี้</Link>
+          <Link href="/terms" className="hover:text-ink">ข้อกำหนด</Link>
+          <Link href="/privacy" className="hover:text-ink">ความเป็นส่วนตัว</Link>
+          <Link href="/privacy#cookies" className="hover:text-ink">คุกกี้</Link>
         </div>
       </div>
     </footer>

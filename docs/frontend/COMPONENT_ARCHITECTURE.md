@@ -411,15 +411,50 @@ components/admin/
 Examples:
 
 ```text
-AdminPageHeader
-AdminSection
-AdminDataTable
-AdminFilterBar
-AdminStatusBadge
-AdminActionMenu
-ConfirmDeactivateDialog
-AuditInfoPanel
+AdminShell — main admin layout wrapper
+AdminPageHeader — page title, description, actions
+DataTable — responsive table with consistent styling
+StatusBadge — colored status indicator (green/gold/gray/red/teal)
+EmptyState — empty list state with icon, title, description, action
+LoadingState — spinner and skeleton variants
+ErrorState — error display with retry action and technical detail toggle
+ConfirmDialog — portal-based modal for destructive/warning/info confirmations
+AdminPreviewLink — public preview link button (icon or labeled variant)
+AdminCopyButton — clipboard copy with visual feedback (icon or labeled variant)
+AdminReadinessBadge — individual publish-readiness status line
+AdminReadinessPanel — group of readiness items with progress counter
+AdminUsedInList — "used in" impact list for media/entity references
+AdminFormErrorSummary — top-of-form error list with field labels
+AdminHelpPanel — info/warning/success contextual help box
+AdminSaveBar — sticky bottom save bar with cancel/submit
+AdminFormSection — sectioned form card with icon header
+PermissionGate — client-side permission visibility guard
+Pagination — URL-param-driven page navigation
+SearchInput — debounced search with URL param sync
+FilterBar / FilterSelect — URL-param-driven filter controls
+ExportButton — download link that passes current filters
+SuccessNextSteps — success state with contextual action cards
+Drawer — right-slide portal panel
 ```
+
+All shared admin components follow consistent styling:
+- Border radius: rounded-lg (8px), rounded-xl (12px), rounded-2xl (16px)
+- Primary color: `#073F37` (dark teal) / `#0A6B62` (teal)
+- Alert color: rose tones for errors, amber for warnings
+- Focus ring: `ring-2 ring-[#0A6B62]/50`
+- Font weight hierarchy: `font-black` for headings, `font-bold` for labels
+- Icon-only buttons include accessible `aria-label` and `title` attributes
+- Loading states use `role="status"` with `aria-label` for screen readers
+- Error states use `role="alert"`
+- Dialogs use `role="dialog"` with `aria-modal="true"`
+
+Shared form primitives are consolidated in:
+
+```text
+components/admin/forms/AdminFormUX.tsx
+```
+
+This module provides `AdminFormSection`, `AdminFormErrorSummary`, `AdminHelpPanel`, `AdminReadinessPanel`, `AdminSaveBar`, and the `readableFieldErrors` utility.
 
 ---
 

@@ -37,13 +37,27 @@ export async function resolveAndValidateCheckinCode(code: string): Promise<Resol
   return { status: "valid", details };
 }
 
+export type FunnelEventName = 
+  | "qr_scanned"
+  | "landing_viewed"
+  | "certificate_started"
+  | "minimal_form_completed"
+  | "photo_uploaded"
+  | "certificate_generated"
+  | "survey_started"
+  | "survey_completed"
+  | "passport_saved";
+
 export async function trackCheckinFunnelEvent(
-  eventName: "qr_scanned" | "landing_viewed" | "certificate_started", 
-  codeDetails: CheckinCodeDetails
+  eventName: FunnelEventName, 
+  codeDetails: CheckinCodeDetails,
+  extra?: { touristId?: string; visitId?: string }
 ) {
   await recordFunnelEvent({
     eventName,
     checkinCodeId: codeDetails.checkin_code_id,
     attractionId: codeDetails.attraction?.attraction_id,
+    touristId: extra?.touristId,
+    visitId: extra?.visitId,
   });
 }

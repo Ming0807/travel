@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { adminRestaurantMutationSchema } from "@/lib/validation/admin-restaurant";
+import { linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminRestaurant,
   updateAdminRestaurant,
@@ -20,7 +21,7 @@ type ActionResult = {
   data?: any;
 };
 
-export async function createRestaurantAction(formData: FormData): Promise<ActionResult> {
+export async function createRestaurantAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("restaurant.create");
     const parsed = adminRestaurantMutationSchema.safeParse(Object.fromEntries(formData));
@@ -34,12 +35,19 @@ export async function createRestaurantAction(formData: FormData): Promise<Action
     }
 
     const created = await createAdminRestaurant(parsed.data);
+
+    // Link cover media if provided
+    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
+    if (coverMediaId && Number.isFinite(coverMediaId)) {
+      await linkMediaToEntity(coverMediaId, "restaurant", created.restaurant_id);
+    }
+
     await logAdminMutation({
       actor: guard.actor,
       action: "restaurant.create",
       entityType: "restaurant",
       entityId: created.restaurant_id,
-      newValues: parsed.data as unknown as Record<string, unknown>,
+      newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
     revalidatePath("/admin/restaurants");
@@ -50,7 +58,7 @@ export async function createRestaurantAction(formData: FormData): Promise<Action
   }
 }
 
-export async function updateRestaurantAction(restaurantId: number, formData: FormData): Promise<ActionResult> {
+export async function updateRestaurantAction(restaurantId: number, _prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("restaurant.update");
     const parsed = adminRestaurantMutationSchema.safeParse(Object.fromEntries(formData));
@@ -67,13 +75,20 @@ export async function updateRestaurantAction(restaurantId: number, formData: For
     if (!old) return { success: false, error: "ไม่พบร้านอาหารนี้ อาจถูกลบหรือย้ายแล้ว" };
 
     const updated = await updateAdminRestaurant(restaurantId, parsed.data);
+
+    // Link cover media if provided
+    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
+    if (coverMediaId && Number.isFinite(coverMediaId)) {
+      await linkMediaToEntity(coverMediaId, "restaurant", updated.restaurant_id);
+    }
+
     await logAdminMutation({
       actor: guard.actor,
       action: "restaurant.update",
       entityType: "restaurant",
       entityId: updated.restaurant_id,
       oldValues: old as unknown as Record<string, unknown>,
-      newValues: parsed.data as unknown as Record<string, unknown>,
+      newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
     revalidatePath("/admin/restaurants");

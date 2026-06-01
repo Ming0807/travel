@@ -359,6 +359,8 @@ export async function getAdminAttractionRelatedContent(attractionId: number) {
   };
 }
 
+// ─── Inline field update (used by InlineEditableText) ─────────────────────
+
 const INLINE_FIELD_MAP: Record<string, string> = {
   nameTh: "name_th",
   nameEn: "name_en",
@@ -404,23 +406,163 @@ export async function updateAdminAttractionField(
 
 export async function updateAdminAttractionRelatedContent(attractionId: number, type: 'attractions' | 'restaurants' | 'accommodations' | 'stories', relatedIds: number[]) {
   const supabase = createSupabaseServiceRoleClient();
-  const table = `attraction_related_${type}`;
-  const idColumn = type === 'attractions' ? 'related_attraction_id' : type === 'restaurants' ? 'restaurant_id' : type === 'accommodations' ? 'accommodation_id' : 'story_id';
 
-  // Delete existing
-  const { error: deleteError } = await supabase.from(table).delete().eq("attraction_id", attractionId);
-  if (deleteError) throw new Error("ADMIN_ATTRACTION_RELATED_UPDATE_FAILED");
+  // Use atomic RPC transaction instead of delete + insert
+  const { error: rpcError } = await supabase.rpc('sync_attraction_related_content', {
+    p_attraction_id: attractionId,
+    p_entity_type: type,
+    p_related_ids: relatedIds
+  });
 
-  // Insert new
-  if (relatedIds.length > 0) {
-    const payload = relatedIds.map((id, index) => ({
-      attraction_id: attractionId,
-      [idColumn]: id,
-      display_order: index + 1
-    }));
-    const { error: insertError } = await supabase.from(table).insert(payload);
-    if (insertError) throw new Error("ADMIN_ATTRACTION_RELATED_UPDATE_FAILED");
+  if (rpcError) {
+    console.error("sync_attraction_related_content RPC error:", rpcError);
+    throw new Error("ADMIN_ATTRACTION_RELATED_UPDATE_FAILED");
   }
+}
+
+export type ContentReadiness = {
+  attractions: { total: number; published: number; publishedWithCover: number };
+  stories: { total: number; published: number; publishedWithHero: number };
+  routes: { total: number; published: number; publishedWithStops: number };
+  checkinCodes: { total: number; active: number };
+  media: { totalActive: number; withAltText: number };
+};
+
+export async function getContentReadiness(): Promise<ContentReadiness> {
+  const supabase = createSupabaseServiceRoleClient();
+
+  const [
+    attractionsRes,
+    storiesRes,
+    routesRes,
+    checkinRes,
+    mediaRes,
+    attractionsPublishedRes,
+    storiesPublishedRes,
+    activeCheckinRes,
+  ] = await Promise.all([
+    supabase.from("attractions").select("attraction_id, is_published", { count: "exact", head: true }),
+    supabase.from("travel_stories").select("story_id, is_published", { count: "exact", head: true }),
+    supabase.from("suggested_routes").select("route_id, is_published", { count: "exact", head: true }),
+    supabase.from("checkin_codes").select("checkin_code_id, is_active", { count: "exact", head: true }),
+    supabase.from("content_media").select("media_id, alt_text_th, is_active", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("attractions").select("attraction_id", { count: "exact", head: true }).eq("is_published", true).eq("is_active", true),
+    supabase.from("travel_stories").select("story_id", { count: "exact", head: true }).eq("is_published", true),
+    supabase.from("checkin_codes").select("checkin_code_id", { count: "exact", head: true }).eq("is_active", true),
+  ]);
+
+  // Published attractions with active cover media (join via content_media)
+  let publishedWithCover = 0;
+  try {
+    const { data: coverData } = await supabase
+      .from("content_media")
+      .select("attraction_id")
+      .eq("is_cover", true)
+      .eq("is_active", true)
+      .eq("lifecycle_status", "active")
+      .not("attraction_id", "is", null);
+    if (coverData) {
+      // Deduplicate by attraction_id — only count each attraction once
+      const uniqueCovers = new Set(coverData.map((r: { attraction_id: number | null }) => r.attraction_id));
+      // Further filter to only published attractions
+      const { data: publishedIds } = await supabase
+        .from("attractions")
+        .select("attraction_id")
+        .eq("is_published", true)
+        .eq("is_active", true)
+        .in("attraction_id", Array.from(uniqueCovers).filter(Boolean) as number[]);
+      publishedWithCover = publishedIds?.length ?? 0;
+    }
+  } catch {
+    // Gracefully handle missing view or table
+  }
+
+  // Published stories with active hero image (any active content_media)
+  let publishedWithHero = 0;
+  try {
+    const { data: storyMedia } = await supabase
+      .from("content_media")
+      .select("story_id")
+      .eq("is_active", true)
+      .eq("lifecycle_status", "active")
+      .not("story_id", "is", null);
+    if (storyMedia) {
+      const uniqueStories = new Set(storyMedia.map((r: { story_id: number | null }) => r.story_id));
+      const { data: publishedStories } = await supabase
+        .from("travel_stories")
+        .select("story_id")
+        .eq("is_published", true)
+        .in("story_id", Array.from(uniqueStories).filter(Boolean) as number[]);
+      publishedWithHero = publishedStories?.length ?? 0;
+    }
+  } catch {
+    // Gracefully handle missing data
+  }
+
+  // Published routes (total) and published routes with at least 1 stop
+  let routesPublished = 0;
+  let publishedWithStops = 0;
+  try {
+    const { data: publishedRoutes } = await supabase
+      .from("suggested_routes")
+      .select("route_id")
+      .eq("is_published", true)
+      .eq("is_active", true);
+    if (publishedRoutes && publishedRoutes.length > 0) {
+      routesPublished = publishedRoutes.length;
+      const routeIds = publishedRoutes.map((r: { route_id: number }) => r.route_id);
+      const { data: stopCounts } = await supabase
+        .from("suggested_route_stops")
+        .select("route_id")
+        .in("route_id", routeIds);
+      if (stopCounts) {
+        const routesWithStops = new Set(stopCounts.map((r: { route_id: number }) => r.route_id));
+        publishedWithStops = routesWithStops.size;
+      }
+    }
+  } catch {
+    // Gracefully handle missing data
+  }
+
+  // Active media with alt_text_th filled in
+  let withAltText = 0;
+  try {
+    const { data: altTextData, count: altCount } = await supabase
+      .from("content_media")
+      .select("media_id", { count: "exact", head: true })
+      .eq("is_active", true)
+      .not("alt_text_th", "is", null)
+      .neq("alt_text_th", "");
+    withAltText = altCount ?? altTextData?.length ?? 0;
+  } catch {
+    // Gracefully handle
+  }
+
+  return {
+    attractions: {
+      total: attractionsRes.count ?? 0,
+      published: attractionsPublishedRes.count ?? 0,
+      publishedWithCover,
+    },
+    stories: {
+      total: storiesRes.count ?? 0,
+      published: storiesPublishedRes.count ?? 0,
+      publishedWithHero,
+    },
+    routes: {
+      total: routesRes.count ?? 0,
+      published: routesPublished,
+      publishedWithStops,
+    },
+    checkinCodes: {
+      total: checkinRes.count ?? 0,
+      active: activeCheckinRes.count ?? 0,
+    },
+    media: {
+      totalActive: mediaRes.count ?? 0,
+      withAltText,
+    },
+  };
 }
 
 export async function getAdminAllContentList() {

@@ -94,6 +94,7 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                   title={sectionLabel("things_to_do")}
                   items={data.thingsToDo}
                   viewAllText="ดูกิจกรรมทั้งหมด"
+                  linkPrefix="/attractions"
                 />
               )}
 
@@ -104,6 +105,7 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                   title={sectionLabel("where_to_stay")}
                   items={data.whereToStay}
                   viewAllText="ดูที่พักทั้งหมด"
+                  linkPrefix="/accommodations"
                 />
               )}
 
@@ -114,6 +116,7 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                   title={sectionLabel("food_drink")}
                   items={data.foodAndDrink}
                   viewAllText="ดูร้านอาหารทั้งหมด"
+                  linkPrefix="/restaurants"
                 />
               )}
 
@@ -188,6 +191,7 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                   title={sectionLabel("articles")}
                   items={data.articles}
                   viewAllText="ดูบทความทั้งหมด"
+                  linkPrefix="/stories"
                 />
               )}
             </div>

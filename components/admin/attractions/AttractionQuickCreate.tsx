@@ -82,13 +82,13 @@ export function AttractionQuickCreate({
           </label>
 
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">จังหวัด *</span>
+            <span className="text-sm font-bold text-slate-700">จังหวัด (Province) *</span>
             <select
               className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
               name="provinceId"
               required
             >
-              <option value="">เลือกจังหวัด</option>
+              <option value="">เลือกจังหวัด (Select province)</option>
               {provinces.map((province) => (
                 <option key={province.id} value={province.id}>
                   {province.label}
@@ -99,12 +99,12 @@ export function AttractionQuickCreate({
           </label>
 
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Attraction category</span>
+            <span className="text-sm font-bold text-slate-700">หมวดหมู่ (Attraction Category)</span>
             <select
               className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
               name="attractionTypeId"
             >
-              <option value="">Choose later in Visual Editor</option>
+              <option value="">เลือกภายหลังใน Visual Editor (Choose later)</option>
               {attractionTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.label}
@@ -115,7 +115,7 @@ export function AttractionQuickCreate({
 
           <label className="block">
             <div className="mb-2 flex items-center gap-2">
-              <span className="text-sm font-bold text-slate-700">URL Slug *</span>
+              <span className="text-sm font-bold text-slate-700">ลิงก์ URL (Slug) *</span>
             </div>
             <input
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition-all focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10"
@@ -123,10 +123,10 @@ export function AttractionQuickCreate({
               value={slug}
               onChange={handleSlugChange}
               maxLength={200}
-              placeholder="e.g. betong-hot-spring"
+              placeholder="เช่น betong-hot-spring"
               required
             />
-            <p className="mt-1 text-xs text-slate-500">ใช้สำหรับสร้างลิงก์ (เฉพาะภาษาอังกฤษและยัติภังค์)</p>
+            <p className="mt-1 text-xs text-slate-500">ใช้สำหรับสร้างลิงก์ (เฉพาะอักษรภาษาอังกฤษและเครื่องหมายขีดกลาง)</p>
             {fieldError("slug") && <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("slug")}</span>}
           </label>
         </div>
@@ -158,14 +158,14 @@ export function AttractionQuickCreate({
 
       <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-coral">After creating draft</p>
-          <h3 className="mt-2 text-base font-black text-slate-900">Draft first, publish later</h3>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-coral">ขั้นตอนต่อไป</p>
+          <h3 className="mt-2 text-base font-black text-slate-900">สร้างฉบับร่างก่อน ค่อยจัดหน้าทีหลัง</h3>
           <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
             {[
-              { icon: FileText, text: "Add overview, history, travel tips, and how to get there." },
-              { icon: ImageSquare, text: "Add cover and gallery images from the media editor." },
-              { icon: MapPinLine, text: "Check province, coordinates, sustainability, and capacity." },
-              { icon: QrCode, text: "Create photo spots and check-in codes when the QR flow is ready." },
+              { icon: FileText, text: "เพิ่มรายละเอียด, คำอธิบายสั้น, ข้อแนะนำ และการเดินทาง" },
+              { icon: ImageSquare, text: "อัปโหลดรูปภาพหน้าปกและแกลเลอรี" },
+              { icon: MapPinLine, text: "ระบุพิกัดแผนที่ อำเภอ และข้อมูลความยั่งยืน" },
+              { icon: QrCode, text: "สร้างจุดถ่ายรูปและ QR เช็คอิน เมื่อข้อมูลหลักพร้อม" },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -182,7 +182,7 @@ export function AttractionQuickCreate({
           <div className="flex gap-3">
             <CheckCircle className="mt-0.5 shrink-0 text-emerald-700" size={20} weight="fill" />
             <p className="text-sm font-bold leading-6 text-emerald-900">
-              New attractions are saved as drafts. They will not appear publicly until an admin reviews content, media, QR readiness, and publish status.
+              ระบบจะบันทึกเป็นฉบับร่าง (Draft) โดยอัตโนมัติ ข้อมูลนี้จะไม่เผยแพร่สู่สาธารณะจนกว่าแอดมินจะกดยืนยันการเผยแพร่ในหน้าถัดไป
             </p>
           </div>
         </div>

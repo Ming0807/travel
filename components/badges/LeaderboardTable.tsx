@@ -58,7 +58,7 @@ export function LeaderboardTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-[2rem] bg-white shadow-card border border-ink/5">
+      <div className="overflow-hidden rounded-2xl bg-white shadow-card border border-ink/5">
         {/* Header */}
         <div className="grid grid-cols-12 gap-2 border-b border-slate-100 bg-cream/50 px-5 py-4 text-xs font-black uppercase tracking-wide text-slate-500">
           <div className="col-span-1 text-center">#</div>

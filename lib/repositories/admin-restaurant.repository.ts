@@ -17,7 +17,6 @@ export type AdminRestaurantRow = {
   address_text: string | null;
   opening_hours: string | null;
   contact_info: string | null;
-  cover_image_url: string | null;
   is_published: boolean;
   is_active: boolean;
   created_at: string;
@@ -51,7 +50,6 @@ function mapRestaurant(row: any): AdminRestaurantRow {
     address_text: row.address_text,
     opening_hours: row.opening_hours,
     contact_info: row.contact_info,
-    cover_image_url: row.cover_image_url,
     is_published: row.is_published,
     is_active: row.is_active,
     created_at: row.created_at,
@@ -75,7 +73,6 @@ function toPayload(input: AdminRestaurantMutationInput) {
     address_text: input.addressText,
     opening_hours: input.openingHours,
     contact_info: input.contactInfo,
-    cover_image_url: input.coverImageUrl,
     is_published: input.isPublished,
     is_active: input.isActive
   };

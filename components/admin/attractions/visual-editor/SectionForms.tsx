@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { updateAttractionAction } from "@/app/actions/admin-attraction-actions";
 import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { HiddenAttractionFields } from "./HiddenAttractionFields";
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
 import type { AdminSelectOption } from "@/components/admin/attractions/AttractionForm";
@@ -42,19 +43,19 @@ export function HeaderForm({ attraction, onClose }: SectionFormProps) {
 
       <div className="grid gap-5">
         <label className="block">
-          <span className="text-sm font-bold text-slate-700">ชื่อภาษาไทย *</span>
+          <span className="text-sm font-bold text-slate-700">ชื่อภาษาไทย (Thai Name) *</span>
           <input className={inputClass} defaultValue={attraction.name_th} maxLength={255} name="nameTh" required />
         </label>
         <label className="block">
-          <span className="text-sm font-bold text-slate-700">ชื่อภาษาอังกฤษ</span>
+          <span className="text-sm font-bold text-slate-700">ชื่อภาษาอังกฤษ (English Name)</span>
           <input className={inputClass} defaultValue={attraction.name_en ?? ""} maxLength={255} name="nameEn" />
         </label>
         <label className="block">
-          <span className="text-sm font-bold text-slate-700">Slug สำหรับ URL *</span>
+          <span className="text-sm font-bold text-slate-700">ลิงก์ URL (Slug) *</span>
           <input className={inputClass} defaultValue={attraction.slug} maxLength={200} name="slug" required />
           <p className={helpClass}>
-            ใช้ตัวอักษรอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น เช่น `aiyerweng-skywalk`.
-            Slug นี้คือ URL สาธารณะ `/attractions/{attraction.slug || "your-slug"}`.
+            ใช้ตัวอักษรอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น เช่น `aiyerweng-skywalk`<br/>
+            Slug นี้คือ URL สาธารณะ `/attractions/{attraction.slug || "your-slug"}`
           </p>
         </label>
       </div>
@@ -88,49 +89,37 @@ export function ContentForm({ attraction, onClose }: SectionFormProps) {
 
       <div className="space-y-8">
         <div className="space-y-5">
-          <h3 className="border-b border-slate-100 pb-2 font-bold text-slate-800">เนื้อหาภาษาไทย</h3>
+          <h3 className="border-b border-slate-100 pb-2 font-bold text-slate-800">เนื้อหาภาษาไทย (Thai Content)</h3>
           <label className="block">
-            <span className="text-sm font-bold text-slate-600">คำอธิบายสั้น</span>
+            <span className="text-sm font-bold text-slate-600">คำอธิบายสั้น (Short Description)</span>
             <textarea className={`${textareaClass} min-h-[96px]`} defaultValue={attraction.short_description_th ?? ""} maxLength={500} name="shortDescriptionTh" />
           </label>
+          <FormRichText label="รายละเอียด (Full Description)" name="descriptionTh" defaultValue={attraction.description_th ?? ""} minHeight={200} />
+          <FormRichText label="ประวัติ / เรื่องเล่า (History & Story)" name="historyTh" defaultValue={attraction.history_th ?? ""} minHeight={200} />
           <label className="block">
-            <span className="text-sm font-bold text-slate-600">รายละเอียด</span>
-            <textarea className={`${textareaClass} min-h-[150px]`} defaultValue={attraction.description_th ?? ""} maxLength={4000} name="descriptionTh" />
-          </label>
-          <label className="block">
-            <span className="text-sm font-bold text-slate-600">ประวัติ / เรื่องเล่า</span>
-            <textarea className={`${textareaClass} min-h-[140px]`} defaultValue={attraction.history_th ?? ""} maxLength={4000} name="historyTh" />
-          </label>
-          <label className="block">
-            <span className="text-sm font-bold text-slate-600">ข้อแนะนำการเดินทาง</span>
+            <span className="text-sm font-bold text-slate-600">ข้อแนะนำการเดินทาง (Travel Tips)</span>
             <textarea className={`${textareaClass} min-h-[110px]`} defaultValue={attraction.travel_tips_th ?? ""} maxLength={5000} name="travelTipsTh" />
           </label>
           <label className="block">
-            <span className="text-sm font-bold text-slate-600">วิธีการเดินทาง</span>
+            <span className="text-sm font-bold text-slate-600">วิธีการเดินทาง (How to Get There)</span>
             <textarea className={`${textareaClass} min-h-[110px]`} defaultValue={attraction.how_to_get_there_th ?? ""} maxLength={5000} name="howToGetThereTh" />
           </label>
         </div>
 
         <div className="space-y-5">
-          <h3 className="border-b border-slate-100 pb-2 font-bold text-slate-800">English Content</h3>
+          <h3 className="border-b border-slate-100 pb-2 font-bold text-slate-800">เนื้อหาภาษาอังกฤษ (English Content)</h3>
           <label className="block">
-            <span className="text-sm font-bold text-slate-600">Short Description</span>
+            <span className="text-sm font-bold text-slate-600">คำอธิบายสั้น (Short Description)</span>
             <textarea className={`${textareaClass} min-h-[96px]`} defaultValue={attraction.short_description_en ?? ""} maxLength={500} name="shortDescriptionEn" />
           </label>
+          <FormRichText label="รายละเอียด (Full Description)" name="descriptionEn" defaultValue={attraction.description_en ?? ""} minHeight={200} />
+          <FormRichText label="ประวัติ / เรื่องเล่า (History & Story)" name="historyEn" defaultValue={attraction.history_en ?? ""} minHeight={200} />
           <label className="block">
-            <span className="text-sm font-bold text-slate-600">Full Description</span>
-            <textarea className={`${textareaClass} min-h-[150px]`} defaultValue={attraction.description_en ?? ""} maxLength={4000} name="descriptionEn" />
-          </label>
-          <label className="block">
-            <span className="text-sm font-bold text-slate-600">History / Storytelling</span>
-            <textarea className={`${textareaClass} min-h-[140px]`} defaultValue={attraction.history_en ?? ""} maxLength={4000} name="historyEn" />
-          </label>
-          <label className="block">
-            <span className="text-sm font-bold text-slate-600">Travel Tips</span>
+            <span className="text-sm font-bold text-slate-600">ข้อแนะนำการเดินทาง (Travel Tips)</span>
             <textarea className={`${textareaClass} min-h-[110px]`} defaultValue={attraction.travel_tips_en ?? ""} maxLength={5000} name="travelTipsEn" />
           </label>
           <label className="block">
-            <span className="text-sm font-bold text-slate-600">How to Get There</span>
+            <span className="text-sm font-bold text-slate-600">วิธีการเดินทาง (How to Get There)</span>
             <textarea className={`${textareaClass} min-h-[110px]`} defaultValue={attraction.how_to_get_there_en ?? ""} maxLength={5000} name="howToGetThereEn" />
           </label>
         </div>
@@ -151,28 +140,28 @@ export function LocationForm({ attraction, onClose }: SectionFormProps) {
 
       <div className="grid gap-5">
         <label className="block">
-          <span className="text-sm font-bold text-slate-700">ที่อยู่ / จุดสังเกต</span>
+          <span className="text-sm font-bold text-slate-700">ที่อยู่ / จุดสังเกต (Address)</span>
           <input className={inputClass} defaultValue={attraction.address_text ?? ""} maxLength={1000} name="addressText" />
         </label>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Latitude</span>
+            <span className="text-sm font-bold text-slate-700">ละติจูด (Latitude)</span>
             <input className={inputClass} defaultValue={attraction.latitude ?? ""} name="latitude" type="number" step="0.0000001" />
           </label>
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Longitude</span>
+            <span className="text-sm font-bold text-slate-700">ลองจิจูด (Longitude)</span>
             <input className={inputClass} defaultValue={attraction.longitude ?? ""} name="longitude" type="number" step="0.0000001" />
           </label>
         </div>
         <p className={helpClass}>
-          Coordinates help maps, QR landing context, and future route planning. Use decimal degrees from a verified map source.
+          พิกัดช่วยให้ผู้ใช้ดูแผนที่ นำทาง และเช็คอินผ่าน QR ได้แม่นยำขึ้น โปรดใช้ค่า Decimal Degrees จาก Google Maps
         </p>
         <label className="block">
-          <span className="text-sm font-bold text-slate-700">เวลาเปิดทำการ</span>
+          <span className="text-sm font-bold text-slate-700">เวลาเปิดทำการ (Opening Hours)</span>
           <input className={inputClass} defaultValue={attraction.opening_hours ?? ""} maxLength={255} name="openingHours" />
         </label>
         <label className="block">
-          <span className="text-sm font-bold text-slate-700">ข้อมูลการติดต่อ</span>
+          <span className="text-sm font-bold text-slate-700">ข้อมูลติดต่อ (Contact Info)</span>
           <input className={inputClass} defaultValue={attraction.contact_info ?? ""} maxLength={255} name="contactInfo" />
         </label>
       </div>
@@ -213,21 +202,23 @@ export function SettingsForm({
       <div className="grid gap-6">
         <div className="space-y-3">
           <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-700">
-            Active
+            เปิดใช้งาน (Active)
             <input defaultChecked={attraction.is_active} name="isActive" type="checkbox" value="true" className="h-4 w-4" />
           </label>
           <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-700">
-            Published
+            เผยแพร่สู่สาธารณะ (Published)
             <input defaultChecked={attraction.is_published} name="isPublished" type="checkbox" value="true" className="h-4 w-4" />
           </label>
           <p className={helpClass}>
-            Keep draft attractions unpublished until content, media, and QR readiness are checked. Active controls admin/tourism operations; Published controls public visibility.
+            เก็บเนื้อหาที่ไม่สมบูรณ์ไว้เป็นแบบร่างเสมอ <br/>
+            - <strong>Active</strong> ใช้สำหรับการควบคุมระบบภายใน (เพิ่มเช็คอิน)<br/>
+            - <strong>Published</strong> ใช้สำหรับแสดงผลให้บุคคลทั่วไปเข้าชมทางหน้าเว็บ
           </p>
         </div>
 
         <div className="space-y-5">
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Province *</span>
+            <span className="text-sm font-bold text-slate-700">จังหวัด (Province) *</span>
             <select
               className={inputClass}
               value={selectedProvinceId ?? ""}
@@ -240,27 +231,27 @@ export function SettingsForm({
               ))}
             </select>
             <p className={helpClass}>
-              Province controls public filters, homepage grouping, dashboard province analysis, and related content suggestions.
+              จังหวัดส่งผลต่อตัวกรอง (Filters), การแนะนำสถานที่ใกล้เคียง และข้อมูล Dashboard
             </p>
           </label>
 
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">District</span>
+            <span className="text-sm font-bold text-slate-700">อำเภอ (District)</span>
             <select className={inputClass} defaultValue={attraction.district_id ?? ""} name="districtId">
-              <option value="">Not specified</option>
+              <option value="">ไม่ระบุ (Not specified)</option>
               {filteredDistricts.map((district) => (
                 <option key={district.id} value={district.id}>{district.label}</option>
               ))}
             </select>
             <p className={helpClass}>
-              Choose a district when known. It improves local filtering and reporting, but leave it blank if the source is not verified.
+              กรุณาระบุอำเภอหากทราบ เพื่อช่วยในการกรองและทำสถิติ หากไม่ทราบให้เว้นว่างไว้ก่อน
             </p>
           </label>
 
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Attraction category</span>
+            <span className="text-sm font-bold text-slate-700">หมวดหมู่สถานที่ (Attraction Category)</span>
             <select className={inputClass} defaultValue={attraction.attraction_type_id ?? ""} name="attractionTypeId">
-              <option value="">Not specified</option>
+              <option value="">ไม่ระบุ (Not specified)</option>
               {attractionTypes.map((type) => (
                 <option key={type.id} value={type.id}>{type.label}</option>
               ))}
@@ -268,25 +259,20 @@ export function SettingsForm({
           </label>
 
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Sustainability category</span>
+            <span className="text-sm font-bold text-slate-700">หมวดหมู่ความยั่งยืน (Sustainability Category)</span>
             <select className={inputClass} defaultValue={attraction.sustainability_category ?? ""} name="sustainabilityCategory">
-              <option value="">Not specified</option>
-              <option value="Nature Conservation">Nature Conservation</option>
-              <option value="Community Based">Community Based</option>
-              <option value="Cultural Heritage">Cultural Heritage</option>
-              <option value="Health & Wellness">Health & Wellness</option>
+              <option value="">ไม่ระบุ (None)</option>
+              <option value="eco">Eco-tourism (เชิงนิเวศ)</option>
+              <option value="community">Community-based (อิงชุมชน)</option>
+              <option value="heritage">Heritage & Culture (มรดกและวัฒนธรรม)</option>
             </select>
-            <p className={helpClass}>
-              Use this for sustainable tourism planning and dashboard segmentation. Pick the closest primary value, not every possible theme.
-            </p>
+            <p className={helpClass}>ใช้สำหรับแสดงตราสัญลักษณ์พิเศษและเก็บสถิติ</p>
           </label>
 
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">Estimated capacity per day</span>
+            <span className="text-sm font-bold text-slate-700">ความจุผู้เข้าชมต่อวัน (Daily Capacity)</span>
             <input className={inputClass} defaultValue={attraction.estimated_capacity_per_day ?? ""} name="estimatedCapacityPerDay" type="number" min="1" placeholder="เช่น 500" />
-            <p className={helpClass}>
-              Estimate daily visitor capacity for planning pressure, staffing, and sustainable tourism indicators. Leave blank if unknown.
-            </p>
+            <p className={helpClass}>ใช้สำหรับวางแผนลดความหนาแน่นในจุดต่างๆ ของ Dashboard</p>
           </label>
         </div>
       </div>

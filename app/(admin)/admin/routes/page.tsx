@@ -1,20 +1,16 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { Pagination } from "@/components/admin/Pagination";
 import { SearchInput } from "@/components/admin/SearchInput";
 import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
+import { ListPageShell } from "@/components/admin/ListPageShell";
 import { requirePermission } from "@/lib/auth/guards";
 import { listAdminRoutes } from "@/lib/repositories/admin-route.repository";
 import { adminRouteFiltersSchema } from "@/lib/validation/route";
 import { RouteStatusActions } from "@/components/admin/routes/RouteStatusActions";
-import Link from "next/link";
-import { Plus } from "@phosphor-icons/react/dist/ssr";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 export const metadata: Metadata = {
   title: "Suggested Routes Management | Admin",
@@ -44,23 +40,19 @@ export default async function AdminRoutesPage({
   const { items, total, page, pageSize } = await listAdminRoutes(filters);
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <AdminPageHeader
-            eyebrow="Content Management"
-            title="เส้นทางแนะนำ"
-            description="จัดการข้อมูลเส้นทางท่องเที่ยวแนะนำ (Suggested Routes)"
-          />
-          <Link
-            href="/admin/routes/new"
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#075049] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62]"
-          >
-            <Plus size={16} weight="bold" />
-            เพิ่มเส้นทางใหม่
-          </Link>
-        </div>
-
+    <ListPageShell
+      eyebrow="Content Management"
+      title="เส้นทางแนะนำ"
+      description="จัดการข้อมูลเส้นทางท่องเที่ยวแนะนำ (Suggested Routes)"
+      createHref="/admin/routes/new"
+      createLabel="เพิ่มเส้นทางใหม่"
+      headerActions={<ExportButton endpoint="/api/admin/export/routes" label="Export CSV" />}
+      total={total}
+      page={page}
+      pageSize={pageSize}
+      emptyTitle="ไม่พบเส้นทางแนะนำ"
+      emptyDescription="ลองเปลี่ยนเงื่อนไขการค้นหา หรือเพิ่มเส้นทางใหม่"
+      filters={
         <FilterBar>
           <div className="min-w-[220px] flex-1">
             <SearchInput placeholder="ค้นหาชื่อเส้นทาง..." />
@@ -71,25 +63,10 @@ export default async function AdminRoutesPage({
             options={statusOptions}
           />
         </FilterBar>
-
-        {items.length === 0 ? (
-          <EmptyState
-            title="ไม่พบเส้นทางแนะนำ"
-            description="ลองเปลี่ยนเงื่อนไขการค้นหา หรือเพิ่มเส้นทางใหม่"
-            action={
-              <Link
-                href="/admin/routes/new"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white hover:bg-[#075049]"
-              >
-                <Plus size={16} weight="bold" />
-                เพิ่มเส้นทาง
-              </Link>
-            }
-          />
-        ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden md:block">
+      }
+    >
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
               <DataTable columns={columns}>
                 {items.map((route) => (
                   <tr key={route.route_id} className="hover:bg-slate-50/50">
@@ -170,10 +147,6 @@ export default async function AdminRoutesPage({
               ))}
             </div>
 
-            <Pagination page={page} pageSize={pageSize} total={total} />
-          </>
-        )}
-      </div>
-    </AdminShell>
+    </ListPageShell>
   );
 }

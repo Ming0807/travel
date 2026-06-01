@@ -35,6 +35,7 @@ export type PermissionKey =
   | "media.upload"
   | "media.update"
   | "media.deactivate"
+  | "media.activate"
   | "media.delete"
   | "story.read"
   | "story.create"
@@ -43,8 +44,6 @@ export type PermissionKey =
   | "story.unpublish"
   | "story.delete"
   | "story.manage"
-  | "story.publish"
-  | "story.unpublish"
   | "route.read"
   | "route.create"
   | "route.update"
@@ -103,6 +102,21 @@ export type PermissionKey =
   | "stamp.definition_manage"
   | "stamp.revoke"
   | "stamp.award_manual"
+  | "export.attractions"
+  | "export.badges"
+  | "export.photo_spots"
+  | "export.checkin_codes"
+  | "export.media"
+  | "export.stories"
+  | "export.routes"
+  | "export.restaurants"
+  | "export.accommodations"
+  | "export.reviews"
+  | "export.messages"
+  | "export.tourists"
+  | "export.users"
+  | "export.roles"
+  | "export.certificate_templates"
   | "export.summary"
   | "export.detailed"
   | "export.create"
@@ -169,6 +183,7 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   "media.upload",
   "media.update",
   "media.deactivate",
+  "media.activate",
   "media.delete",
   "story.read",
   "story.create",
@@ -235,6 +250,21 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   "stamp.definition_manage",
   "stamp.revoke",
   "stamp.award_manual",
+  "export.attractions",
+  "export.badges",
+  "export.photo_spots",
+  "export.checkin_codes",
+  "export.media",
+  "export.stories",
+  "export.routes",
+  "export.restaurants",
+  "export.accommodations",
+  "export.reviews",
+  "export.messages",
+  "export.tourists",
+  "export.users",
+  "export.roles",
+  "export.certificate_templates",
   "export.summary",
   "export.detailed",
   "export.create",
@@ -295,6 +325,7 @@ const CONTENT_ADMIN_PERMISSIONS: PermissionKey[] = [
   "media.upload",
   "media.update",
   "media.deactivate",
+  "media.activate",
   "story.read",
   "story.create",
   "story.update",
@@ -321,6 +352,21 @@ const CONTENT_ADMIN_PERMISSIONS: PermissionKey[] = [
   "survey.detail",
   "certificate.read",
   "stamp.read",
+  "export.attractions",
+  "export.badges",
+  "export.photo_spots",
+  "export.checkin_codes",
+  "export.media",
+  "export.stories",
+  "export.routes",
+  "export.restaurants",
+  "export.accommodations",
+  "export.reviews",
+  "export.messages",
+  "export.tourists",
+  "export.users",
+  "export.roles",
+  "export.certificate_templates",
   "export.summary",
   "export.create",
   "export.visit_records",
@@ -359,7 +405,8 @@ const LEGACY_PERMISSION_EXPANSIONS: Record<string, PermissionKey[]> = {
     "media.read",
     "media.upload",
     "media.update",
-    "media.deactivate"
+    "media.deactivate",
+    "media.activate"
   ],
   "checkin_code.manage": [
     "checkin_code.read",

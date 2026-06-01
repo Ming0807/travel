@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AttractionHeader } from "@/components/attractions/attraction-header";
 import { AttractionGallery } from "@/components/attractions/attraction-gallery";
 import { AttractionTabs } from "@/components/attractions/attraction-tabs";
@@ -83,7 +83,7 @@ function ReadinessState({
 }) {
   return (
     <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 p-8">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Missing content</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">ข้อมูลยังไม่ครบ (Missing content)</p>
       <h3 className="mt-2 text-lg font-black text-slate-800">{title}</h3>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{description}</p>
       {onAction && actionLabel ? (
@@ -127,14 +127,14 @@ function PageMap({
       <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-coral">Public page map</p>
-            <h2 className="mt-1 text-base font-black text-slate-900">Edit by the same sections visitors see</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-coral">แผนผังส่วนประกอบหน้าเว็บ (Public Page Map)</p>
+            <h2 className="mt-1 text-base font-black text-slate-900">จัดการเนื้อหาตามส่วนที่แสดงให้ผู้เข้าชมเห็นจริง</h2>
             <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-              Each card maps to a public attraction page section. Fix warnings before publishing or sharing QR links.
+              การ์ดแต่ละใบแสดงสถานะของข้อมูลในหน้าสาธารณะ ควรแก้ไขคำเตือนต่างๆ ให้เรียบร้อยก่อนกดเผยแพร่หรือแชร์ลิงก์ให้ผู้ใช้งาน
             </p>
           </div>
           <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-700">
-            Ready {completeCount}/{items.length}
+            พร้อมใช้งาน {completeCount}/{items.length} ส่วน
           </div>
         </div>
 
@@ -204,6 +204,15 @@ export function AttractionVisualEditor({
 }: AttractionVisualEditorProps) {
   const [activeSection, setActiveSection] = useState<EditorSection>(null);
 
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    const validSections: EditorSection[] = ["header", "content", "location", "settings", "gallery", "related_attractions", "related_accommodations", "related_restaurants", "related_stories"];
+    if (validSections.includes(hash as EditorSection)) {
+      setActiveSection(hash as EditorSection);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
+
   // Derive display data to match frontend components
   const provinceName = provinces.find((p) => p.id === attraction.province_id)?.label ?? "ไม่ระบุจังหวัด";
   const name = attraction.name_th || "ยังไม่มีชื่อ";
@@ -216,7 +225,8 @@ export function AttractionVisualEditor({
     .filter(m => m.media_type === "image" || m.media_type === "panorama" || m.media_type === "external_url")
     .map(m => {
       if (m.storage_path.startsWith("http")) return m.storage_path;
-      return `/api/media/image?path=${encodeURIComponent(m.storage_path)}`;
+      if (m.storage_path.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(m.storage_path)}`;
+      return `/site-media/${m.storage_path}`;
     });
   const hasGalleryImages = images.length > 0;
   const relatedAttractionCount = relatedContent?.attractions?.length ?? 0;
@@ -250,20 +260,20 @@ export function AttractionVisualEditor({
   const pageMapItems: PageMapItem[] = [
     {
       id: "header",
-      label: "Header",
-      publicSection: "Title, slug, province",
+      label: "ข้อมูลหลัก (Header)",
+      publicSection: "ชื่อสถานที่, ลิงก์ (Slug), จังหวัด",
       complete: Boolean(attraction.name_th && attraction.slug && attraction.province_id && attraction.is_active),
-      help: attraction.name_th && attraction.slug ? "Visitor identity fields are in place." : "Add the Thai name, slug, and province.",
-      actionLabel: "Edit header",
+      help: attraction.name_th && attraction.slug ? "ระบุข้อมูลพื้นฐานครบถ้วนแล้ว" : "กรุณาระบุชื่อสถานที่ภาษาไทย, ลิงก์ (Slug) และจังหวัด",
+      actionLabel: "แก้ไขข้อมูลหลัก",
       targetSection: "header",
     },
     {
       id: "gallery",
-      label: "Gallery",
-      publicSection: "Cover and images",
+      label: "รูปภาพ (Gallery)",
+      publicSection: "รูปหน้าปก และ แกลเลอรี",
       complete: hasGalleryImages,
-      help: hasGalleryImages ? `${images.length} image(s) linked.` : "Add an official cover or gallery image.",
-      actionLabel: "Manage media",
+      help: hasGalleryImages ? `เชื่อมโยงรูปภาพแล้ว ${images.length} รูป` : "เพิ่มรูปหน้าปกหรือแกลเลอรี เพื่อให้หน้าเว็บน่าสนใจ",
+      actionLabel: "จัดการรูปภาพ",
       targetSection: "gallery",
     },
     {
@@ -271,8 +281,8 @@ export function AttractionVisualEditor({
       label: sectionLabel("overview"),
       publicSection: `${sectionLabel("overview")}, ${sectionLabel("travel_tips")}`,
       complete: hasPublicText,
-      help: hasPublicText ? "Public description is available." : "Add short or full Thai description.",
-      actionLabel: "Edit content",
+      help: hasPublicText ? "มีเนื้อหาคำอธิบายสถานที่แล้ว" : "เพิ่มคำอธิบายสั้น หรือ รายละเอียดแบบเต็มภาษาไทย",
+      actionLabel: "แก้ไขเนื้อหา",
       targetSection: "content",
     },
     {
@@ -280,35 +290,35 @@ export function AttractionVisualEditor({
       label: sectionLabel("how_to_get_there"),
       publicSection: sectionLabel("how_to_get_there"),
       complete: hasLocationDetails,
-      help: hasLocationDetails ? "Location details are present." : "Add address, travel guidance, or coordinates.",
-      actionLabel: "Edit location",
+      help: hasLocationDetails ? "มีข้อมูลการเดินทางหรือพิกัดแล้ว" : "เพิ่มที่อยู่, คำแนะนำการเดินทาง หรือพิกัดแผนที่",
+      actionLabel: "แก้ไขตำแหน่งที่ตั้ง",
       targetSection: "location",
     },
     {
       id: "qr",
-      label: "QR flow",
-      publicSection: "CTA and check-in",
+      label: "QR เช็คอิน",
+      publicSection: "ปุ่มเช็คอิน และ จุดถ่ายรูป",
       complete: photoSpotCount > 0 && checkinCodeCount > 0,
-      help: `${photoSpotCount} photo spot(s), ${checkinCodeCount} check-in code(s).`,
-      actionLabel: photoSpotCount > 0 ? "Manage QR codes" : "Create photo spot",
+      help: `จุดถ่ายรูป ${photoSpotCount} จุด, QR โค้ด ${checkinCodeCount} รหัส`,
+      actionLabel: photoSpotCount > 0 ? "จัดการ QR โค้ด" : "สร้างจุดถ่ายรูป",
       href: photoSpotCount > 0 ? `/admin/checkin-codes?attractionId=${attraction.attraction_id}` : `/admin/photo-spots/new?attraction_id=${attraction.attraction_id}`,
     },
     {
       id: "related",
-      label: "Related content",
+      label: "สถานที่ที่เกี่ยวข้อง",
       publicSection: `${sectionLabel("things_to_do")}, ${sectionLabel("food_drink")}, ${sectionLabel("articles")}`,
       complete: hasRelatedContent,
-      help: hasRelatedContent ? "At least one related section has saved records." : "Optional: link real stays, restaurants, stories, or nearby attractions.",
-      actionLabel: "Select related records",
+      help: hasRelatedContent ? "มีการเชื่อมโยงเนื้อหาอย่างน้อย 1 รายการแล้ว" : "ทางเลือก: เชื่อมโยงที่พัก ร้านอาหาร บทความ หรือสถานที่ใกล้เคียง",
+      actionLabel: "เลือกสถานที่ที่เกี่ยวข้อง",
       targetSection: "related_attractions",
     },
     {
       id: "publish",
-      label: "Publish",
-      publicSection: "Visibility",
+      label: "การเผยแพร่ (Publish)",
+      publicSection: "สถานะการแสดงผล",
       complete: Boolean(attraction.is_active && attraction.is_published),
-      help: attraction.is_published ? "Record is visible when public rules pass." : "Keep as draft until content and media are ready.",
-      actionLabel: "Edit status",
+      help: attraction.is_published ? "สถานที่นี้สามารถแสดงบนหน้าเว็บสาธารณะได้แล้ว" : "คงสถานะฉบับร่างไว้ จนกว่าเนื้อหาและรูปภาพจะพร้อม",
+      actionLabel: "แก้ไขสถานะ",
       targetSection: "settings",
     },
   ];
@@ -316,24 +326,25 @@ export function AttractionVisualEditor({
   return (
     <div className="relative min-h-screen bg-white pb-20">
       {/* Editor Toolbar */}
-      <div className="sticky top-0 z-30 flex flex-col gap-4 border-b border-slate-200 bg-white/80 px-6 py-4 backdrop-blur-md lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex w-full items-center gap-4 lg:w-auto">
-          <Link href="/admin/attractions" className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+      <div className="sticky top-0 z-30 flex flex-col gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex w-full items-center gap-3 lg:w-auto">
+          <Link href="/admin/attractions" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
             <ArrowLeft size={20} weight="bold" />
           </Link>
-          <div>
-            <h1 className="text-lg font-black text-slate-800">Visual Editor: {name}</h1>
-            <p className="text-xs font-bold text-slate-500">คุณกำลังแก้ไขหน้าตาแบบเดียวกับที่แสดงผลจริง</p>
+          <div className="min-w-0">
+            <h1 className="truncate text-base sm:text-lg font-black text-slate-800">Visual Editor: {name}</h1>
+            <p className="truncate text-[10px] sm:text-xs font-bold text-slate-500">คุณกำลังแก้ไขหน้าตาแบบเดียวกับที่แสดงผลจริง</p>
           </div>
         </div>
-        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
+        <div className="flex w-full items-center gap-2 lg:w-auto lg:justify-end">
           <Link
             href={`/attractions/${attraction.slug}`}
             target="_blank"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex flex-1 justify-center sm:flex-none items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
             <Eye size={16} weight="bold" />
-            Preview public page
+            <span className="hidden sm:inline">Preview public page</span>
+            <span className="sm:hidden">Preview</span>
           </Link>
           <Link
             href={`/admin/attractions/${attraction.attraction_id}/media`}
@@ -349,13 +360,13 @@ export function AttractionVisualEditor({
             <QrCode size={16} weight="bold" />
             QR
           </Link>
-          <div className="rounded-lg bg-teal/10 px-3 py-1.5 text-xs font-bold text-teal">
+          <div className="hidden sm:block rounded-lg bg-teal/10 px-3 py-1.5 text-xs font-bold text-teal">
             สถานะ: {attraction.is_published ? "เผยแพร่แล้ว" : "ยังไม่เผยแพร่"}
           </div>
           <button
             type="button"
             onClick={() => setActiveSection("settings")}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="flex-1 justify-center sm:flex-none inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
             ตั้งค่า / สถานะ
           </button>
@@ -491,7 +502,8 @@ export function AttractionVisualEditor({
                       id="things-to-do"
                       title={sectionLabel("things_to_do")}
                       items={publicThingsToDo}
-                      viewAllText="View all things to do"
+                      viewAllText="ดูทั้งหมด (View all)"
+                      linkPrefix="/attractions"
                     />
                   </div>
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
@@ -502,9 +514,9 @@ export function AttractionVisualEditor({
                 </div>
               ) : (
                 <ReadinessState
-                  title="No related attractions selected"
-                  description="This editor will not show automatic or sample destination cards. Select saved related attractions if this public section should appear."
-                  actionLabel="Select related attractions"
+                  title="ยังไม่ได้เลือกสถานที่ท่องเที่ยวใกล้เคียง (No related attractions)"
+                  description="ในโหมด Editor นี้จะไม่แสดงข้อมูลจำลอง หากต้องการให้แสดงในหน้าเว็บจริง กรุณาเลือกสถานที่ท่องเที่ยวที่เกี่ยวข้อง"
+                  actionLabel="เลือกสถานที่ใกล้เคียง"
                   onAction={() => setActiveSection("related_attractions")}
                 />
               )}
@@ -517,7 +529,8 @@ export function AttractionVisualEditor({
                       id="where-to-stay"
                       title={sectionLabel("where_to_stay")}
                       items={publicWhereToStay}
-                      viewAllText="View all hotels"
+                      viewAllText="ดูที่พักทั้งหมด (View all hotels)"
+                      linkPrefix="/accommodations"
                     />
                   </div>
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
@@ -528,9 +541,9 @@ export function AttractionVisualEditor({
                 </div>
               ) : (
                 <ReadinessState
-                  title="No related accommodations selected"
-                  description="Accommodation cards are hidden until saved accommodation relationships exist. This avoids showing sample lodging cards in the CMS preview."
-                  actionLabel="Select accommodations"
+                  title="ยังไม่ได้เลือกที่พักแนะนำ (No related accommodations)"
+                  description="การ์ดที่พักจะถูกซ่อนจนกว่าจะมีการเชื่อมโยงที่พักจริงเข้าระบบ เพื่อป้องกันการแสดงผลข้อมูลจำลองในหน้าพรีวิว"
+                  actionLabel="เลือกที่พัก"
                   onAction={() => setActiveSection("related_accommodations")}
                 />
               )}
@@ -543,7 +556,8 @@ export function AttractionVisualEditor({
                       id="food"
                       title={sectionLabel("food_drink")}
                       items={publicFoodAndDrink}
-                      viewAllText="View all restaurants"
+                      viewAllText="ดูร้านอาหารทั้งหมด (View all restaurants)"
+                      linkPrefix="/restaurants"
                     />
                   </div>
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
@@ -554,9 +568,9 @@ export function AttractionVisualEditor({
                 </div>
               ) : (
                 <ReadinessState
-                  title="No related restaurants selected"
-                  description="Restaurant cards are hidden until saved restaurant relationships exist. Add real related records instead of using preview filler."
-                  actionLabel="Select restaurants"
+                  title="ยังไม่ได้เลือกร้านอาหารแนะนำ (No related restaurants)"
+                  description="การ์ดร้านอาหารจะถูกซ่อนจนกว่าจะมีการเชื่อมโยงร้านอาหารจริงเข้าระบบ"
+                  actionLabel="เลือกร้านอาหาร"
                   onAction={() => setActiveSection("related_restaurants")}
                 />
               )}
@@ -585,9 +599,10 @@ export function AttractionVisualEditor({
                   <div className="pointer-events-none">
                     <AttractionCardsRow
                       id="articles"
-                    title={sectionLabel("articles")}
+                      title={sectionLabel("articles")}
                       items={publicArticles}
-                      viewAllText="View all articles"
+                      viewAllText="ดูบทความทั้งหมด (View all articles)"
+                      linkPrefix="/stories"
                     />
                   </div>
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">

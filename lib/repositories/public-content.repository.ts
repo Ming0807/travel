@@ -76,7 +76,9 @@ function imageUrlFromStoragePath(value: unknown): string | null {
   const storagePath = text(value);
   if (!storagePath) return null;
   if (storagePath.startsWith("http")) return storagePath;
-  return `/api/media/image?path=${encodeURIComponent(storagePath)}`;
+  if (storagePath.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(storagePath)}`;
+  // Use the Next.js rewrite /site-media which maps to the Supabase public bucket
+  return `/site-media/${storagePath}`;
 }
 
 function publicAttractionMedia(row: DbRecord): DbRecord | null {
@@ -144,46 +146,63 @@ function mapStoryDetail(row: DbRecord): PublicStoryDetail {
 export async function listPublicAttractionCards(limit = 16, options?: { search?: string; province?: string; featuredSlugs?: string[] }): Promise<AttractionCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
-    let query = supabase
-      .from("attractions")
-      .select(`
-        slug,
-        name_th,
-        name_en,
-        short_description_th,
-        short_description_en,
-        provinces!inner (province_name_th, province_name_en),
-        attraction_types (type_name_th, type_name_en),
-        content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
-      `)
-      .eq("is_published", true)
-      .eq("is_active", true);
+    const buildBaseQuery = () => {
+      let q = supabase
+        .from("attractions")
+        .select(`
+          slug,
+          name_th,
+          name_en,
+          short_description_th,
+          short_description_en,
+          provinces!inner (province_name_th, province_name_en),
+          attraction_types (type_name_th, type_name_en),
+          content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
+        `)
+        .eq("is_published", true)
+        .eq("is_active", true);
 
-    if (options?.search) {
-      query = query.or(`name_th.ilike.%${options.search}%,name_en.ilike.%${options.search}%`);
-    }
+      if (options?.search) {
+        q = q.or(`name_th.ilike.%${options.search}%,name_en.ilike.%${options.search}%`);
+      }
 
-    if (options?.province) {
-      query = query.eq('provinces.province_name_en', options.province);
-    }
+      if (options?.province) {
+        q = q.eq('provinces.province_name_en', options.province);
+      }
+      
+      return q;
+    };
+
+    let finalResults: AttractionCard[] = [];
+    const usedSlugs = new Set<string>();
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
-      query = query.in('slug', options.featuredSlugs);
+      const { data, error } = await buildBaseQuery().in('slug', options.featuredSlugs).limit(limit);
+      
+      if (!error && data && data.length > 0) {
+        const results = (data as DbRecord[]).map(mapAttractionCard).filter((item) => item.slug);
+        finalResults = results.sort((a, b) => options.featuredSlugs!.indexOf(a.slug) - options.featuredSlugs!.indexOf(b.slug));
+        finalResults.forEach(r => usedSlugs.add(r.slug));
+      }
     }
 
-    if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
-      const { data, error } = await query.limit(limit);
-      if (error || !data || data.length === 0) return [];
+    if (finalResults.length < limit) {
+      const remaining = limit - finalResults.length;
+      const { data, error } = await buildBaseQuery()
+        .order("created_at", { ascending: false })
+        .limit(remaining + usedSlugs.size); // Fetch extra in case of overlap
 
-      const results = (data as DbRecord[]).map(mapAttractionCard).filter((item) => item.slug);
-      return results.sort((a, b) => options.featuredSlugs!.indexOf(a.slug) - options.featuredSlugs!.indexOf(b.slug));
-    } else {
-      const { data, error } = await query
-        .order("created_at", { ascending: true })
-        .limit(limit);
-      if (error || !data || data.length === 0) return [];
-      return (data as DbRecord[]).map(mapAttractionCard).filter((item) => item.slug);
+      if (!error && data && data.length > 0) {
+        const fallbackResults = (data as DbRecord[])
+          .map(mapAttractionCard)
+          .filter((item) => item.slug && !usedSlugs.has(item.slug))
+          .slice(0, remaining);
+        
+        finalResults = [...finalResults, ...fallbackResults];
+      }
     }
+
+    return finalResults;
   } catch {
     return [];
   }
@@ -636,6 +655,96 @@ export async function listPublicAccommodations(options?: { search?: string; prov
   }
 }
 
+export type PublicAccommodationDetail = {
+  slug: string;
+  name: string;
+  province: string;
+  provinceId: number;
+  accommodationType: string | null;
+  description: string | null;
+  addressText: string | null;
+  contactInfo: string | null;
+  priceRange: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  imageUrl: string | null;
+  isPublished: boolean;
+  nearbyAttractions: {
+    slug: string;
+    name: string;
+    distanceText: string | null;
+    imageUrl: string | null;
+  }[];
+};
+
+export async function getPublicAccommodationDetail(slug: string): Promise<PublicAccommodationDetail | null> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("accommodations")
+      .select(`
+        *,
+        provinces (province_name_th, province_name_en, province_id),
+        content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order),
+        attraction_related_accommodations (
+          attractions (
+            slug,
+            name_th,
+            name_en,
+            content_media (storage_path, is_cover, is_active, lifecycle_status)
+          )
+        )
+      `)
+      .eq("slug", slug)
+      .eq("is_published", true)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const row = data as DbRecord & { attraction_related_accommodations?: DbRecord[] };
+    const province = one(row.provinces);
+    const nearbyAttractions = Array.isArray(row.attraction_related_accommodations)
+      ? (row.attraction_related_accommodations as DbRecord[]).map(link => {
+          const attraction = one(link.attractions);
+          return {
+            slug: text(attraction?.slug),
+            name: text(attraction?.name_th, text(attraction?.name_en, "")),
+            distanceText: null, // this table doesn't have distance text currently
+            imageUrl: (() => {
+              if (!attraction) return null;
+              const media = Array.isArray(attraction.content_media)
+                ? (attraction.content_media as DbRecord[])
+                : [];
+              const publicReadyMedia = media.filter((item) => item.is_active !== false && text(item.lifecycle_status, "active") === "active");
+              const cover = publicReadyMedia.find(m => m.is_cover === true) ?? publicReadyMedia[0];
+              return imageUrlFromStoragePath(cover?.storage_path);
+            })()
+          };
+        })
+      : [];
+
+    return {
+      slug: text(row.slug, slug),
+      name: text(row.name_th, text(row.name_en, slug)),
+      province: text(province?.province_name_th, text(province?.province_name_en, "")),
+      provinceId: Number(province?.province_id ?? 0),
+      accommodationType: row.accommodation_type as string | null,
+      description: text(row.description_th, row.description_en as string | undefined) || null,
+      addressText: (row.address_text as string | undefined) ?? null,
+      contactInfo: (row.contact_info as string | undefined) ?? null,
+      priceRange: (row.price_range as string | undefined) ?? null,
+      latitude: row.latitude === null ? null : Number(row.latitude),
+      longitude: row.longitude === null ? null : Number(row.longitude),
+      imageUrl: publicImage(row as DbRecord),
+      isPublished: Boolean(row.is_published),
+      nearbyAttractions
+    };
+  } catch {
+    return null;
+  }
+}
+
 export type PublicRouteCard = {
   slug: string;
   name: string;
@@ -649,7 +758,7 @@ export async function listPublicRoutes(limit = 10): Promise<PublicRouteCard[]> {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("suggested_routes")
-      .select("slug, name_th, name_en, description_th, description_en, content_media (storage_path, is_cover, is_active, lifecycle_status)")
+      .select("slug, name_th, name_en, description_th, description_en, content_media (storage_path, is_cover, is_active, lifecycle_status), suggested_route_stops (day_number)")
       .eq("is_published", true)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
@@ -657,13 +766,18 @@ export async function listPublicRoutes(limit = 10): Promise<PublicRouteCard[]> {
 
     if (error || !data) return [];
 
-    return (data as DbRecord[]).map(row => ({
-      slug: text(row.slug),
-      name: text(row.name_th, text(row.name_en)),
-      description: text(row.description_th, text(row.description_en)),
-      days: 1,
-      imageUrl: publicImage(row as DbRecord),
-    }));
+    return (data as DbRecord[]).map(row => {
+      const stops = Array.isArray(row.suggested_route_stops) ? row.suggested_route_stops as { day_number: number }[] : [];
+      const days = stops.length > 0 ? Math.max(...stops.map(s => s.day_number || 1)) : 1;
+
+      return {
+        slug: text(row.slug),
+        name: text(row.name_th, text(row.name_en)),
+        description: text(row.description_th, text(row.description_en)),
+        days,
+        imageUrl: publicImage(row as DbRecord),
+      };
+    });
   } catch {
     return [];
   }

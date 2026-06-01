@@ -1,76 +1,64 @@
-import { resolveAndValidateCheckinCode, trackCheckinFunnelEvent } from "@/lib/services/checkin.service";
+import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
 import { CheckinUnavailable } from "@/components/checkin/CheckinUnavailable";
-import { MinimalProfileForm } from "@/components/checkin/MinimalProfileForm";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getGuestIdentity } from "@/lib/auth/guest";
-import { findTouristByIdentity, getTouristById } from "@/lib/repositories/tourist.repository";
+import { MinimalForm } from "@/components/checkin/MinimalForm";
+import { MapPin, Compass } from "@phosphor-icons/react/dist/ssr";
 
-export default async function MinimalProfilePage({ params }: { params: Promise<{ code: string }> }) {
+export default async function StartCheckinPage({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}) {
   const { code } = await params;
-  
   const context = await resolveAndValidateCheckinCode(code);
 
   if (context.status !== "valid" || !context.details) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return <CheckinUnavailable status={context.status as any} />;
+    return <CheckinUnavailable status={context.status === "valid" ? "unavailable" : context.status} />;
   }
 
-  await trackCheckinFunnelEvent("certificate_started", context.details);
-
-  const supabase = await createSupabaseServerClient();
-  
-  // Fetch countries and active provinces for the form
-  const [{ data: countries }, { data: provinces }] = await Promise.all([
-    supabase.from("countries").select("country_id, country_name_th").order("country_id"),
-    supabase.from("provinces").select("province_id, province_name_th").order("province_name_th")
-  ]);
-
-  let defaultValues = undefined;
-  const guestToken = await getGuestIdentity();
-  if (guestToken) {
-    const touristId = await findTouristByIdentity("anonymous_device", guestToken);
-    if (touristId) {
-      const touristData = await getTouristById(touristId);
-      if (touristData) {
-        defaultValues = {
-          displayName: touristData.display_name,
-          ageGroup: touristData.age_group,
-          originCountryId: touristData.origin_country_id?.toString() || "1",
-          originProvinceId: touristData.origin_province_id?.toString() || "",
-        };
-      }
-    }
-  }
+  const { attraction, photo_spot } = context.details;
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] flex flex-col relative pb-24">
-      {/* Hero Background */}
-      <div className="absolute top-0 left-0 w-full h-[40vh] bg-gradient-to-b from-ink/90 to-[#FAF8F5]">
-        {/* Placeholder for balloons image, currently using a nice subtle gradient */}
-        <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?q=80&w=2000&auto=format&fit=crop')" }}></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#FAF8F5]/50 to-[#FAF8F5]"></div>
-      </div>
-      
-      <div className="relative z-10 pt-[10vh]">
-        <div className="max-w-5xl mx-auto px-4 mb-8 flex items-center justify-center md:justify-start gap-4 text-ink">
-          <div className="bg-white/80 backdrop-blur rounded-2xl p-3 shadow-sm">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-coral">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M10.42 12.61a2.1 2.1 0 1 1 2.97 2.97L7.95 21 4 22l.99-3.95 5.43-5.44Z"></path>
-            </svg>
+    <main className="min-h-screen bg-slate-50 relative pb-24 overflow-hidden">
+      {/* Premium Background Elements */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-coral/5 rounded-full blur-[120px] -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-teal/5 rounded-full blur-[150px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 w-full h-[400px] -translate-x-1/2 -translate-y-1/2 bg-[url('/noise.png')] opacity-20 mix-blend-overlay -z-10 pointer-events-none" />
+
+      <div className="relative z-10 mx-auto max-w-lg px-4 pt-8 md:pt-16">
+        {/* Back Link */}
+        <a
+          href={`/checkin/${code}/identity`}
+          className="inline-flex items-center gap-2 text-sm font-bold text-muted hover:text-coral transition-colors mb-6"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5m7-7-7 7 7 7"/>
+          </svg>
+          เปลี่ยนวิธีการเข้าใช้งาน
+        </a>
+
+        {/* Header */}
+        <div className="text-center mb-8 animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur shadow-sm text-coral px-4 py-1.5 rounded-full text-xs font-bold mb-4 border border-white">
+            <MapPin weight="fill" size={14} />
+            <span>{photo_spot ? photo_spot.spot_name_th : attraction?.name_th}</span>
           </div>
-          <div>
-            <h1 className="text-2xl font-black">สร้างใบประกาศ</h1>
-            <p className="text-sm font-medium opacity-80">ใช้เวลาเพียงเล็กน้อยเพื่อเริ่มเก็บความทรงจำ</p>
-          </div>
+          <h1 className="text-3xl font-black text-ink tracking-tight">ข้อมูลของคุณ</h1>
+          <p className="text-muted text-sm font-medium mt-2 max-w-xs mx-auto">
+            กรอกข้อมูลสั้น ๆ เพื่อสร้างใบประกาศดิจิทัลและสะสมตราประทับ
+          </p>
         </div>
 
-        <MinimalProfileForm 
-          checkinCode={code} 
-          countries={countries || []} 
-          provinces={provinces || []} 
-          defaultValues={defaultValues}
-        />
+        {/* Form Card */}
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/50 animate-scale-in">
+          <MinimalForm checkinCode={code} />
+        </div>
+
+        {/* Privacy Trust Cue */}
+        <div className="flex items-center justify-center gap-2 mt-6 text-[11px] text-muted font-bold tracking-wide uppercase">
+          <Compass size={14} weight="fill" className="text-coral" />
+          <span>ท่องเที่ยวชายแดนใต้</span>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -25,6 +25,11 @@ export function MobileBottomNav() {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: "0%", width: "20%" });
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
+  // Prevent rendering on admin routes
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   useEffect(() => {
     const el = itemRefs.current[activeIndex >= 0 ? activeIndex : 0];
     if (el) {

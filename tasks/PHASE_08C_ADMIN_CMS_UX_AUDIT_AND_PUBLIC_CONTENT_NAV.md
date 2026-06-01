@@ -1,6 +1,6 @@
 # Phase 08C: Admin CMS UX Audit and Public Content Navigation
 
-Status: In progress
+Status: Completed
 Created: 2026-06-01
 Baseline commit reviewed: `cec27e9 chore: checkpoint before content_media lifecycle governance audit`
 
@@ -296,4 +296,48 @@ For authenticated admin pages, verify with an admin session:
 - Added `media.activate` to seed permissions and created a migration for existing environments.
 - Added a Content Health rule and filter for likely stock/demo media paths.
 - Fixed the global anchor selector so Tailwind text color utilities work on link-styled buttons.
-- Re-ran typecheck, targeted unit tests, impeccable detector, and public mobile/desktop screenshots.
+- Added deep links from Content Health issues to the specific visual editor sections (`#settings`, `#gallery`/`#cover`, `#content`).
+- Updated `AttractionVisualEditor` and `StoryVisualEditor` to parse `#hash` from the URL on mount and open the respective drawer.
+- Fixed alert color contrast in `MediaManager.tsx` and `SettingsClient.tsx` by using `text-amber-900`.
+- Added a direct link from Homepage settings to the `/admin/content` hub.
+- Added a link to the Content Health dashboard from the `/admin/content` hub.
+- Updated `ADMIN_CONTENT_CMS_WORKFLOW.md` baseline to reflect these changes.
+-  
+ F i x e d  
+ N a N   v a l i d a t i o n  
+ e r r o r  
+ i n  
+ A c c o m m o d a t i o n F o r m   w h e n  
+ a  
+ n e w  
+ i m a g e  
+ i s  
+ s e l e c t e d  
+ f r o m  
+ t h e  
+ M e d i a  
+ L i b r a r y .  
+ U p d a t e d  
+ A c c o m m o d a t i o n F o r m   t o  
+ p a s s  
+ t h e  
+ i m a g e  
+ s t o r a g e  
+ p a t h  
+ v i a  
+ c o v e r M e d i a U r l   a n d  
+ m o d i f i e d  
+ t h e  
+ s e r v e r  
+ a c t i o n  
+ t o  
+ s e c u r e l y  
+ l o o k  
+ u p  
+ o r  
+ i n s e r t  
+ t h e  
+ c o n t e n t _ m e d i a   r e c o r d  
+ v i a  
+ l i n k M e d i a T o E n t i t y B y S t o r a g e P a t h .  
+ 

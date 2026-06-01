@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { DistributionItem } from "@/types/dashboard";
 import { NoDataState } from "@/components/dashboard/NoDataState";
+import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 
 const DONUT_COLORS = [
@@ -23,6 +24,8 @@ type DonutChartCardProps = {
   definition: string;
   data: DistributionItem[];
   emptyDescription: string;
+  sampleCount?: number;
+  sampleLabel?: string;
 };
 
 const SIZE = 220;
@@ -36,6 +39,8 @@ export function DonutChartCard({
   definition,
   data,
   emptyDescription,
+  sampleCount,
+  sampleLabel = "responses",
 }: DonutChartCardProps) {
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const total = data.reduce((sum, item) => sum + item.value, 0);
@@ -47,6 +52,11 @@ export function DonutChartCard({
           <h2 className="text-lg font-black text-slate-800">{title}</h2>
           <MetricTooltip definition={definition} />
         </div>
+        {sampleCount !== undefined && sampleCount < 10 ? (
+          <div className="mt-4">
+            <SmallSampleWarning count={sampleCount} label={sampleLabel} />
+          </div>
+        ) : null}
         <div className="mt-4">
           <NoDataState description={emptyDescription} />
         </div>
@@ -80,6 +90,11 @@ export function DonutChartCard({
         <MetricTooltip definition={definition} />
       </div>
 
+      {sampleCount !== undefined && sampleCount < 10 ? (
+        <div className="mt-4">
+          <SmallSampleWarning count={sampleCount} label={sampleLabel} />
+        </div>
+      ) : null}
       <div className="mt-4 flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
         {/* Donut */}
         <div className="relative shrink-0">

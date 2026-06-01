@@ -60,14 +60,30 @@ export async function findAdminMediaReferences(storagePath: string): Promise<Adm
   const supabase = createSupabaseServiceRoleClient();
   const references: AdminMediaReference[] = [];
 
+  // 1. Check settings table
+  const { data: settings } = await supabase.from("settings").select("setting_key, value");
+  if (settings) {
+    for (const setting of settings) {
+      if (setting.value !== null && setting.value !== undefined) {
+        const valStr = typeof setting.value === "string" ? setting.value : JSON.stringify(setting.value);
+        if (valStr.includes(storagePath)) {
+          references.push({
+            entityType: "settings",
+            entityId: null,
+            name: `System Setting: ${setting.setting_key}`,
+          });
+        }
+      }
+    }
+  }
+
+  // 2. Check content_media table
   const { data: contentMediaRefs } = await supabase
     .from("content_media")
     .select("media_id, attraction_id, restaurant_id, story_id, route_id, accommodation_id")
     .eq("storage_path", storagePath);
 
-  if (!Array.isArray(contentMediaRefs) || contentMediaRefs.length === 0) {
-    return references;
-  }
+  if (Array.isArray(contentMediaRefs) && contentMediaRefs.length > 0) {
 
   for (const contentMediaRef of contentMediaRefs as Record<string, number | null>[]) {
     for (const config of entityReferenceConfigs(contentMediaRef)) {
@@ -87,6 +103,7 @@ export async function findAdminMediaReferences(storagePath: string): Promise<Adm
         });
       }
     }
+  }
   }
 
   return references;

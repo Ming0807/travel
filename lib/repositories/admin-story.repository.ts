@@ -11,7 +11,6 @@ export type AdminStoryRow = {
   content: string | null;
   province_id: number | null;
   category: string | null;
-  image_url: string | null;
   is_published: boolean;
   published_at: string | null;
   created_at: string;
@@ -38,7 +37,6 @@ function mapStory(row: any): AdminStoryRow {
     content: row.content,
     province_id: row.province_id === null ? null : Number(row.province_id),
     category: row.category,
-    image_url: row.image_url,
     is_published: row.is_published,
     published_at: row.published_at,
     created_at: row.created_at,
@@ -55,7 +53,6 @@ function toPayload(input: AdminStoryMutationInput) {
     content: input.content,
     province_id: input.provinceId,
     category: input.category,
-    image_url: input.imageUrl,
     is_published: input.isPublished,
     published_at: input.isPublished ? new Date().toISOString() : null
   };

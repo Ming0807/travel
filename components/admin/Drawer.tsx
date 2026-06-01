@@ -48,7 +48,7 @@ export function Drawer({ isOpen, onClose, title, children, size = "md" }: Drawer
   };
 
   const drawerContent = (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-labelledby={`drawer-title-${title.replace(/\s+/g, "-")}`}>
       <div 
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" 
         onClick={onClose} 
@@ -58,12 +58,13 @@ export function Drawer({ isOpen, onClose, title, children, size = "md" }: Drawer
         className={`relative flex flex-col w-full h-full bg-slate-50 shadow-2xl transition-transform transform ${sizeClasses[size]}`}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
-          <h2 className="text-lg font-black text-slate-800">{title}</h2>
+          <h2 className="text-lg font-black text-slate-800" id={`drawer-title-${title.replace(/\s+/g, "-")}`}>{title}</h2>
           <button
             onClick={onClose}
             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+            aria-label={`Close ${title}`}
           >
-            <X size={20} weight="bold" />
+            <X size={20} weight="bold" aria-hidden="true" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-6">

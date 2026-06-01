@@ -4,7 +4,8 @@ import { requirePermission, type AdminAuthError } from "@/lib/auth/guards";
 import { getDashboardRepositoryPayload } from "@/lib/repositories/dashboard.repository";
 import { parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 import type { DashboardFilters } from "@/types/dashboard";
-import Papa from "papaparse";
+import { generateCsv } from "@/lib/utils/csv";
+import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 
 function mapAdminError(error: AdminAuthError): DashboardServiceError {
   if (error.code === "UNAUTHORIZED") {
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
       params[key] = value;
     });
 
+    const format = parseExportFormat(searchParams.get("format"));
     const exportType = params.type || "summary";
     const parsed = parseDashboardFilters(params);
     if (!parsed.success) {
@@ -39,10 +41,31 @@ export async function GET(request: Request) {
       return new NextResponse(err.message, { status: err.code === "UNAUTHORIZED" ? 401 : 403 });
     }
 
+    const datePrefix = new Date().toISOString().split('T')[0];
     let csv = "";
-    let filename = `dashboard_export_${exportType}_${new Date().toISOString().split('T')[0]}.csv`;
+    // Inline CSV types (expenses, summary) remain CSV-only; structured types (tourists, visits, surveys) get xlsx support
+    let filename = `dashboard_export_${exportType}_${datePrefix}.csv`;
 
-    if (exportType === "summary") {
+    if (exportType === "expenses") {
+      const data = await getDashboardAnalytics(params, "expenses");
+
+      csv += "Expense Category,Responses,Min Range (THB),Max Range (THB)\n";
+      data.expense.spendingRanges.forEach((range) => {
+        csv += `"${range.label}",${range.value},,,\n`;
+      });
+      csv += "\n";
+      csv += `Estimated Range,${data.expense.estimatedMin ?? "N/A"},${data.expense.estimatedMax ?? "N/A (+ if open-ended)"}\n`;
+      csv += `Response Count,${data.expense.responseCount}\n`;
+      csv += `Has Open-Ended Range,${data.expense.hasOpenEndedRange}\n`;
+      csv += `Methodology Note,"${data.expense.methodologyNote}"\n`;
+
+      // Expense category breakdown
+      csv += "\nExpense Categories\n";
+      csv += "Category,Responses,Percentage\n";
+      data.expense.expenseCategories.forEach((cat) => {
+        csv += `"${cat.label}",${cat.value},${cat.percent !== null ? (cat.percent * 100).toFixed(1) + "%" : "N/A"}\n`;
+      });
+    } else if (exportType === "summary") {
       const data = await getDashboardAnalytics(params, "executive");
 
       csv += "Dashboard Export - Top Attractions Summary\n";
@@ -57,7 +80,6 @@ export async function GET(request: Request) {
       const payload = await getDashboardRepositoryPayload(parsed.data as DashboardFilters, exportType);
 
       if (exportType === "tourists") {
-        // Aggregate unique tourists from visits since there's no direct "tourists" array in payload
         const uniqueTourists = new Map<string, any>();
         payload.visits.forEach(v => {
           if (v.tourists && v.tourist_id) {
@@ -75,8 +97,14 @@ export async function GET(request: Request) {
             "Origin Province (EN)": safeString(province?.province_name_en)
           };
         });
-        csv = Papa.unparse(rows);
-        if (rows.length === 0) csv = "No data available";
+
+        if (rows.length === 0) {
+          csv = '"No data available"';
+        } else if (format === "xlsx") {
+          return await createExportResponse(rows, `dashboard_export_tourists_${datePrefix}`, format);
+        } else {
+          csv = generateCsv(rows);
+        }
       } else if (exportType === "visits") {
         const rows = payload.visits.map(v => {
           const t = v.tourists as any;
@@ -102,8 +130,14 @@ export async function GET(request: Request) {
             "Purpose": safeString(purpose?.name_en)
           };
         });
-        csv = Papa.unparse(rows);
-        if (rows.length === 0) csv = "No data available";
+
+        if (rows.length === 0) {
+          csv = '"No data available"';
+        } else if (format === "xlsx") {
+          return await createExportResponse(rows, `dashboard_export_visits_${datePrefix}`, format);
+        } else {
+          csv = generateCsv(rows);
+        }
       } else if (exportType === "surveys") {
         const rows = payload.surveys.map(s => {
           const v = s.visits as any;
@@ -122,8 +156,14 @@ export async function GET(request: Request) {
             "Recommend Intention": safeString(s.recommend_intention)
           };
         });
-        csv = Papa.unparse(rows);
-        if (rows.length === 0) csv = "No data available";
+
+        if (rows.length === 0) {
+          csv = '"No data available"';
+        } else if (format === "xlsx") {
+          return await createExportResponse(rows, `dashboard_export_surveys_${datePrefix}`, format);
+        } else {
+          csv = generateCsv(rows);
+        }
       } else {
         return new NextResponse("Unknown export type", { status: 400 });
       }

@@ -1,13 +1,16 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createStoryAction, updateStoryAction } from "@/app/actions/admin-story-actions";
 import type { AdminStoryRow } from "@/lib/repositories/admin-story.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
-import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
-import { ArrowSquareOut, CheckCircle, Image, List, Plus, WarningCircle } from "@phosphor-icons/react";
+import { AdminFormErrorSummary, AdminFormSection, AdminReadinessPanel, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { FormInput, FormTextarea, FormSelect, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
+import { FormRichText } from "@/components/admin/forms/FormRichText";
+import { ArrowSquareOut, Image, List, Plus, MapPin } from "@phosphor-icons/react";
+import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 
 interface StoryFormProps {
   initialData?: AdminStoryRow | null;
@@ -18,13 +21,6 @@ const FIELD_LABELS = {
   title: "ชื่อบทความ",
   slug: "Slug",
   provinceId: "จังหวัด",
-  imageUrl: "รูปภาพปก",
-};
-
-type ReadinessItem = {
-  label: string;
-  detail: string;
-  isReady: boolean;
 };
 
 function hasText(value: string | null | undefined) {
@@ -34,58 +30,31 @@ function hasText(value: string | null | undefined) {
 export function StoryForm({ initialData, provinces }: StoryFormProps) {
   const router = useRouter();
   const isEditing = !!initialData;
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [coverMediaId, setCoverMediaId] = useState<number | null>(null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const action = isEditing ? updateStoryAction.bind(null, initialData.story_id) : createStoryAction;
   const publicHref = isEditing && initialData?.slug ? `/stories/${initialData.slug}` : null;
-  const readinessItems: ReadinessItem[] = [
-    {
-      label: "Title",
-      detail: "Shown as the public story headline.",
-      isReady: hasText(initialData?.title),
-    },
-    {
-      label: "Slug",
-      detail: publicHref ? publicHref : "Needed for the public story URL.",
-      isReady: hasText(initialData?.slug),
-    },
-    {
-      label: "Excerpt",
-      detail: "Used on story cards and near the story headline.",
-      isReady: hasText(initialData?.excerpt),
-    },
-    {
-      label: "Content",
-      detail: "Rendered as the saved public article body.",
-      isReady: hasText(initialData?.content),
-    },
-    {
-      label: "Hero image",
-      detail: "Controls the main image on the story detail page.",
-      isReady: hasText(initialData?.image_url),
-    },
-    {
-      label: "Province",
-      detail: "Helps visitors and admins filter regional content.",
-      isReady: initialData?.province_id != null,
-    },
-    {
-      label: "Category",
-      detail: "Shown as the story label on public pages.",
-      isReady: hasText(initialData?.category),
-    },
-    {
-      label: "Publish status",
-      detail: initialData?.is_published ? "Currently visible on public story surfaces." : "Saved as draft until published.",
-      isReady: !!initialData?.is_published,
-    },
+
+  const readinessItems = [
+    { label: "ชื่อบทความ", complete: hasText(initialData?.title), help: "แสดงเป็นหัวข้อข่าวบนหน้า public" },
+    { label: "Slug (URL)", complete: hasText(initialData?.slug), help: publicHref ? publicHref : "จำเป็นสำหรับ URL หน้า public" },
+    { label: "เกริ่นนำ", complete: hasText(initialData?.excerpt), help: "ใช้บนการ์ดบทความและใกล้หัวข้อข่าว" },
+    { label: "เนื้อหา", complete: hasText(initialData?.content), help: "เนื้อหาบทความที่บันทึกแล้ว" },
+    { label: "รูปภาพปก", complete: !!initialData?.slug, help: "จัดการรูปภาพปกผ่าน Media Library ในหน้าแก้ไขเรื่องราว" },
+    { label: "จังหวัด", complete: initialData?.province_id != null, help: "ช่วยผู้เยี่ยมชมและผู้ดูแลระบบกรองเนื้อหา" },
+    { label: "หมวดหมู่", complete: hasText(initialData?.category), help: "ป้ายกำกับบทความบนหน้า public" },
+    { label: "สถานะเผยแพร่", complete: !!initialData?.is_published, help: initialData?.is_published ? "ปัจจุบันแสดงบนหน้า public" : "บันทึกเป็นร่างจนกว่าจะเผยแพร่" },
   ];
-  const readyCount = readinessItems.filter((item) => item.isReady).length;
-  
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [state, formAction, isPending] = useActionState<any, FormData>(action, {
     success: false,
     error: undefined,
     fieldErrors: undefined,
   });
+
+  const fe = (name: string) => getFieldError(state?.fieldErrors, name);
 
   useEffect(() => {
     if (state?.success && isEditing) {
@@ -96,13 +65,16 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
 
   if (state?.success && !isEditing) {
     const newId = state.data?.id;
+    const slug = state.data?.slug;
     if (newId) {
       return (
         <SuccessNextSteps
           title="สร้างบทความสำเร็จ!"
-          description="ระบบได้บันทึกข้อมูลบทความใหม่ของคุณเรียบร้อยแล้ว คุณสามารถจัดการรูปภาพหน้าปก หรือกลับไปยังหน้ารายการได้"
+          description="ระบบได้บันทึกข้อมูลบทความใหม่ของคุณเรียบร้อยแล้ว ขั้นตอนต่อไปคือการจัดการรูปภาพและเนื้อหาที่เกี่ยวข้อง"
           actions={[
             { label: "จัดการรูปภาพของบทความ", href: `/admin/stories/${newId}/edit`, primary: true, icon: Image },
+            ...(slug ? [{ label: "แสดงตัวอย่างหน้า Public", href: `/stories/${slug}`, primary: false, icon: ArrowSquareOut }] : []),
+            { label: "จัดการเนื้อหาที่เกี่ยวข้อง", href: `/admin/stories/${newId}/edit`, primary: false, icon: MapPin },
             { label: "เขียนบทความใหม่", href: "/admin/stories/new", primary: false, icon: Plus },
             { label: "กลับไปหน้ารายการ", href: "/admin/stories", primary: false, icon: List }
           ]}
@@ -111,189 +83,122 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
     }
   }
 
-  function fieldError(name: string) {
-    return state?.fieldErrors?.[name]?.[0];
-  }
-
   return (
     <form action={formAction} className="space-y-8">
       <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} fieldLabels={FIELD_LABELS} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         {/* Left Column (Main Content) */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          {/* 1. Basic Info */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">ข้อมูลหลัก (Basic Info)</h2>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">ชื่อบทความ *</span>
-                <input
-                  type="text"
-                  name="title"
-                  defaultValue={initialData?.title}
-                  required
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                />
-                {fieldError("title") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("title")}</span> : null}
-              </label>
-
-              <label className="block md:col-span-2">
-                <span className="text-sm font-bold text-slate-700">Slug (สำหรับ URL) *</span>
-                <input
-                  type="text"
-                  name="slug"
-                  defaultValue={initialData?.slug}
-                  required
-                  pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
-                  placeholder="e.g. pattani-central-mosque"
-                  onChange={(e) => {
-                    e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
-                  }}
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                />
-                {fieldError("slug") ? <span className="mt-1 block text-xs font-bold text-rose-600">{fieldError("slug")}</span> : null}
-              </label>
+        <div className="space-y-8 lg:col-span-8">
+          <AdminFormSection title="ข้อมูลหลัก (Basic Info)">
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormInput label="ชื่อบทความ" name="title" defaultValue={initialData?.title} required error={fe("title")} className="md:col-span-2" />
+              <FormInput
+                label="Slug (สำหรับ URL)"
+                name="slug"
+                defaultValue={initialData?.slug}
+                required
+                pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                placeholder="e.g. pattani-central-mosque"
+                onChange={(e) => {
+                  e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+                }}
+                error={fe("slug")}
+                className="md:col-span-2"
+              />
             </div>
-          </section>
+          </AdminFormSection>
 
-          {/* 2. Content */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">เนื้อหาบทความ (Content)</h2>
-            <div className="mt-5 space-y-6">
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">เกริ่นนำ (Excerpt)</span>
-                <textarea
-                  name="excerpt"
-                  defaultValue={initialData?.excerpt ?? ""}
-                  rows={3}
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">เนื้อหาฉบับเต็ม</span>
-                <textarea
-                  name="content"
-                  defaultValue={initialData?.content ?? ""}
-                  rows={15}
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                />
-              </label>
+          <AdminFormSection title="เนื้อหาบทความ (Content)">
+            <div className="space-y-6">
+              <FormTextarea label="เกริ่นนำ (Excerpt)" name="excerpt" defaultValue={initialData?.excerpt ?? ""} rows={3} />
+              <FormRichText label="เนื้อหาฉบับเต็ม" name="content" defaultValue={initialData?.content ?? ""} minHeight={400} placeholder="เริ่มเขียนเนื้อหาบทความ..." />
             </div>
-          </section>
-
+          </AdminFormSection>
         </div>
 
         {/* Right Column (Settings & Metadata) */}
-        <div className="lg:col-span-4 space-y-8 lg:sticky lg:top-8 lg:h-max lg:self-start">
-          
-          {/* Status */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-black uppercase tracking-wide text-[#0A6B62]">Public page readiness</p>
-                <h2 className="mt-1 text-lg font-black text-[#073F37]">
-                  {readyCount}/{readinessItems.length} checks ready
-                </h2>
-              </div>
-              {publicHref ? (
-                <Link
-                  href={publicHref}
-                  target="_blank"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-[#0A6B62] hover:text-[#0A6B62]"
-                  title="Preview public story"
-                >
-                  <ArrowSquareOut size={17} weight="bold" />
-                </Link>
-              ) : null}
-            </div>
-            <p className="mt-3 text-xs leading-5 text-slate-500">
-              These checks map this editor to the public story page. Update and save the form to refresh this readiness view.
-            </p>
-            <div className="mt-4 space-y-2">
-              {readinessItems.map((item) => (
-                <div key={item.label} className="flex gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
-                  {item.isReady ? (
-                    <CheckCircle className="mt-0.5 shrink-0 text-emerald-600" size={16} weight="fill" />
-                  ) : (
-                    <WarningCircle className="mt-0.5 shrink-0 text-amber-600" size={16} weight="fill" />
-                  )}
-                  <div>
-                    <p className="text-xs font-black text-slate-700">{item.label}</p>
-                    <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{item.detail}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+        <div className="space-y-8 lg:sticky lg:top-8 lg:col-span-4 lg:self-start">
+          {/* Readiness */}
+          <AdminReadinessPanel title="ความพร้อมหน้าเรื่องราว" items={readinessItems} />
+          {publicHref ? (
+            <Link
+              href={publicHref}
+              target="_blank"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-600 transition hover:border-[#0A6B62] hover:text-[#0A6B62]"
+            >
+              <ArrowSquareOut size={15} weight="bold" />
+              Preview public story
+            </Link>
+          ) : null}
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">สถานะ (Status)</h2>
-            <div className="mt-5 flex flex-col gap-3">
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 has-[:checked]:border-[#F3704C] has-[:checked]:bg-orange-50 has-[:checked]:text-orange-800">
-                เผยแพร่สู่สาธารณะ
-                <input
-                  type="checkbox"
-                  name="isPublished"
-                  defaultChecked={initialData?.is_published ?? false}
-                  className="h-4 w-4 accent-[#F3704C]"
-                />
-              </label>
-            </div>
-          </section>
+          {/* Status */}
+          <AdminFormSection title="สถานะ (Status)">
+            <FormCheckbox label="เผยแพร่สู่สาธารณะ" name="isPublished" defaultChecked={initialData?.is_published ?? false} accent="coral" />
+          </AdminFormSection>
 
           {/* Classification */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">การจัดหมวดหมู่</h2>
-            <div className="mt-5 space-y-4">
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">หมวดหมู่</span>
-                <input
-                  type="text"
-                  name="category"
-                  defaultValue={initialData?.category ?? ""}
-                  placeholder="e.g. วัฒนธรรม, ธรรมชาติ"
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">จังหวัดที่เกี่ยวข้อง</span>
-                <select
-                  name="provinceId"
-                  defaultValue={initialData?.province_id ?? ""}
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                >
-                  <option value="">-- ไม่ระบุ --</option>
-                  {provinces.map((p) => (
-                    <option key={p.province_id} value={p.province_id}>
-                      {p.province_name_th}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          <AdminFormSection title="การจัดหมวดหมู่">
+            <div className="space-y-4">
+              <FormInput label="หมวดหมู่" name="category" defaultValue={initialData?.category ?? ""} placeholder="e.g. วัฒนธรรม, ธรรมชาติ" />
+              <FormSelect
+                label="จังหวัดที่เกี่ยวข้อง"
+                name="provinceId"
+                defaultValue={initialData?.province_id ?? ""}
+                placeholder="-- ไม่ระบุ --"
+                options={provinces.map((p) => ({ value: p.province_id, label: p.province_name_th }))}
+              />
             </div>
-          </section>
+          </AdminFormSection>
+
+          {/* Related Content */}
+          <AdminFormSection title="เนื้อหาที่เกี่ยวข้อง">
+            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+              <p className="text-sm font-black text-slate-700">เชื่อมโยงสถานที่ท่องเที่ยว</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                เนื้อหาที่เกี่ยวข้อง (Related content) สามารถจัดการได้จากหน้าแก้ไขสถานที่ท่องเที่ยว (Attraction edit)
+                ในส่วน "Attractions → Related stories" ซึ่งจะเชื่อม story นี้เข้ากับ attraction ที่ต้องการ
+              </p>
+            </div>
+          </AdminFormSection>
 
           {/* Media */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#073F37]">สื่อ (Media)</h2>
-            <div className="mt-5 space-y-4">
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">รูปภาพปก (URL)</span>
-                <input
-                  type="text"
-                  name="imageUrl"
-                  defaultValue={initialData?.image_url ?? ""}
-                  placeholder="https://..."
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                />
-              </label>
+          <AdminFormSection title="สื่อ (Media)">
+            <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+              <div className="aspect-video bg-slate-100">
+                {imagePreviewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imagePreviewUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
+                    ยังไม่ได้เลือกรูปภาพ
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 p-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setIsPickerOpen(true)}
+                  className="min-h-10 flex-1 rounded-lg bg-[#073F37] px-3 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62]"
+                >
+                  เลือกจาก Media Library
+                </button>
+                {imagePreviewUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImagePreviewUrl("");
+                      setCoverMediaId(null);
+                    }}
+                    className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                  >
+                    เอาออก
+                  </button>
+                ) : null}
+              </div>
             </div>
-          </section>
-
+            <input type="hidden" name="coverMediaId" value={coverMediaId ?? ""} />
+          </AdminFormSection>
         </div>
       </div>
 
@@ -301,6 +206,18 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
         cancelHref="/admin/stories"
         isPending={isPending}
         submitLabel={isEditing ? "บันทึกการแก้ไขเรื่องราว" : "สร้างเรื่องราว"}
+      />
+
+      <MediaPickerModal
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelectAsset={(asset) => {
+          const id = Number(asset.id);
+          setCoverMediaId(id);
+          setImagePreviewUrl(asset.url);
+        }}
+        onSelect={(url) => setImagePreviewUrl(url)}
+        title="เลือกรูปภาพปกเรื่องราว"
       />
     </form>
   );

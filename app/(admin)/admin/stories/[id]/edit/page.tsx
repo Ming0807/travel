@@ -4,6 +4,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { StoryVisualEditor } from "@/components/admin/stories/visual-editor/StoryVisualEditor";
 import { requirePermission } from "@/lib/auth/guards";
 import { getAdminStoryById } from "@/lib/repositories/admin-story.repository";
+import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
@@ -24,7 +25,10 @@ export default async function EditAdminStoryPage({
     notFound();
   }
 
-  const story = await getAdminStoryById(storyId);
+  const [story, coverMedia] = await Promise.all([
+    getAdminStoryById(storyId),
+    getCoverMediaForEntity("story", storyId),
+  ]);
   if (!story) {
     notFound();
   }
@@ -39,6 +43,8 @@ export default async function EditAdminStoryPage({
     <StoryVisualEditor
       story={story}
       provinces={provinces ?? []}
+      coverMediaId={coverMedia?.media_id ?? null}
+      coverMediaUrl={coverMedia?.storage_path ? (coverMedia.storage_path.startsWith('cloudinary:') ? `/api/media/image?path=${encodeURIComponent(coverMedia.storage_path)}` : `/site-media/${coverMedia.storage_path}`) : null}
     />
   );
 }

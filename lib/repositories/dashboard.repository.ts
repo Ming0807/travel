@@ -3,6 +3,16 @@ import "server-only";
 import { DASHBOARD_ROW_LIMIT } from "@/constants/dashboard-metrics";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { DashboardFilters, DashboardReferenceOptions } from "@/types/dashboard";
+import {
+  type DashboardSummaryKpis,
+  getDashboardSummaryKpis as fetchSummaryKpis,
+  getDashboardSummaryTrend as fetchSummaryTrend,
+  getDashboardSummaryByProvince as fetchSummaryByProvince,
+  getDashboardSummaryTopAttractions as fetchSummaryTopAttractions,
+  getDashboardSummaryFunnelCounts as fetchSummaryFunnelCounts,
+  getDashboardSummaryRefreshTime
+} from "@/lib/repositories/dashboard-summary.repository";
+import type { TrendPoint, DistributionItem, RankedAttraction } from "@/types/dashboard";
 
 export type DashboardVisitRow = Record<string, unknown>;
 export type DashboardCertificateRow = Record<string, unknown>;
@@ -10,6 +20,15 @@ export type DashboardStampRow = Record<string, unknown>;
 export type DashboardSurveyRow = Record<string, unknown>;
 export type DashboardExpenseRow = Record<string, unknown>;
 export type DashboardFunnelRow = Record<string, unknown>;
+
+export type DashboardSummaryData = {
+  kpis: DashboardSummaryKpis | null;
+  trend: TrendPoint[];
+  visitsByProvince: DistributionItem[];
+  topAttractions: RankedAttraction[];
+  funnelEventCounts: Map<string, number>;
+  refreshTimestamp: string | null;
+};
 
 export type DashboardRepositoryPayload = {
   visits: DashboardVisitRow[];
@@ -20,6 +39,7 @@ export type DashboardRepositoryPayload = {
   funnelEvents: DashboardFunnelRow[];
   referenceOptions: DashboardReferenceOptions;
   isTruncated: boolean;
+  summary: DashboardSummaryData;
 };
 
 function toOption(value: string | number | null | undefined, label: string | null | undefined) {
@@ -345,14 +365,37 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
   const needExpenses = ["executive", "expenses", "sustainability"].includes(activeTab);
   const needFunnel = ["executive", "funnel"].includes(activeTab);
 
-  const [visits, certificates, stamps, surveys, expenses, funnelEvents, referenceOptions] = await Promise.all([
+  // Fetch pre-aggregated summary data in parallel with live queries
+  const needSummary = ["executive", "tourists", "visits", "expenses", "satisfaction", "funnel", "sustainability"].includes(activeTab);
+
+  const [
+    visits,
+    certificates,
+    stamps,
+    surveys,
+    expenses,
+    funnelEvents,
+    referenceOptions,
+    summaryKpis,
+    summaryTrend,
+    summaryProvince,
+    summaryTop,
+    summaryFunnel,
+    summaryRefreshTime
+  ] = await Promise.all([
     needVisits ? visitsQuery : Promise.resolve({ data: [], error: null }),
     needCertificates ? certificatesQuery : Promise.resolve({ data: [], error: null }),
     needStamps ? stampsQuery : Promise.resolve({ data: [], error: null }),
     needSurveys ? surveysQuery : Promise.resolve({ data: [], error: null }),
     needExpenses ? expensesQuery : Promise.resolve({ data: [], error: null }),
     needFunnel ? funnelQuery : Promise.resolve({ data: [], error: null }),
-    getDashboardReferenceOptions()
+    getDashboardReferenceOptions(),
+    needSummary ? fetchSummaryKpis(filters) : Promise.resolve(null),
+    needSummary ? fetchSummaryTrend(filters) : Promise.resolve([]),
+    needSummary ? fetchSummaryByProvince(filters) : Promise.resolve([]),
+    needSummary ? fetchSummaryTopAttractions(filters) : Promise.resolve([]),
+    needSummary ? fetchSummaryFunnelCounts(filters) : Promise.resolve(new Map()),
+    needSummary ? getDashboardSummaryRefreshTime() : Promise.resolve(null)
   ]);
 
   for (const result of [visits, certificates, stamps, surveys, expenses, funnelEvents]) {
@@ -382,6 +425,14 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
       (needStamps && stampRows.length >= DASHBOARD_ROW_LIMIT) ||
       (needSurveys && surveyRows.length >= DASHBOARD_ROW_LIMIT) ||
       (needExpenses && expenseRows.length >= DASHBOARD_ROW_LIMIT) ||
-      (needFunnel && funnelRows.length >= DASHBOARD_ROW_LIMIT)
+      (needFunnel && funnelRows.length >= DASHBOARD_ROW_LIMIT),
+    summary: {
+      kpis: summaryKpis,
+      trend: summaryTrend,
+      visitsByProvince: summaryProvince,
+      topAttractions: summaryTop,
+      funnelEventCounts: summaryFunnel,
+      refreshTimestamp: summaryRefreshTime
+    }
   };
 }

@@ -30,7 +30,7 @@ export async function getAdminReviewsAction(formData: FormData) {
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to load reviews." };
+    return { success: false, error: "ไม่สามารถโหลดรีวิวได้" };
   }
 }
 
@@ -54,7 +54,7 @@ export async function approveReviewAction(reviewId: number): Promise<ActionResul
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to approve review." };
+    return { success: false, error: "ไม่สามารถอนุมัติรีวิวได้" };
   }
 }
 
@@ -78,7 +78,7 @@ export async function rejectReviewAction(reviewId: number): Promise<ActionResult
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to reject review." };
+    return { success: false, error: "ไม่สามารถปฏิเสธรีวิวได้" };
   }
 }
 
@@ -97,7 +97,7 @@ export async function deleteReviewAction(reviewId: number): Promise<ActionResult
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "Failed to delete review." };
+    return { success: false, error: "ไม่สามารถลบรีวิวได้" };
   }
 }
 

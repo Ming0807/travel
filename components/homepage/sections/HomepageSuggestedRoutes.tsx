@@ -21,7 +21,7 @@ export function HomepageSuggestedRoutes({ routes }: HomepageSuggestedRoutesProps
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {routes.map((route) => (
-          <article key={route.slug} className="group relative flex flex-col bg-white rounded-3xl p-4 shadow-sm border border-ink/5 hover:shadow-md transition-shadow">
+          <article key={route.slug} className="group relative flex flex-col bg-white rounded-3xl p-4 border border-ink/5 hover:shadow-md transition-shadow">
             <div className="relative w-full aspect-video overflow-hidden rounded-2xl mb-4">
               {route.imageUrl ? (
                 <Image
@@ -34,7 +34,7 @@ export function HomepageSuggestedRoutes({ routes }: HomepageSuggestedRoutesProps
               ) : (
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-sand/70 text-center text-xs font-semibold text-muted">
                   <MapTrifold size={24} className="text-leaf" />
-                  <span>Image not added</span>
+                  <span>ยังไม่มีรูปภาพ</span>
                 </div>
               )}
               <div className="absolute top-2 left-2 rounded-full bg-white/90 backdrop-blur px-3 py-1 text-xs font-bold text-ink">

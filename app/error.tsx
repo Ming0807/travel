@@ -11,7 +11,7 @@ export default function GlobalError({
 }) {
   return (
     <section className="tourism-container grid min-h-[70vh] place-items-center py-20 text-center">
-      <div className="max-w-lg rounded-[2rem] bg-white p-8 shadow-card">
+      <div className="max-w-lg rounded-2xl bg-white p-8 shadow-card">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-rose-50 text-rose-600">
           <WarningCircle size={24} aria-hidden="true" />
         </div>

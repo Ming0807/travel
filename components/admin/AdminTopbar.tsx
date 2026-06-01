@@ -9,7 +9,7 @@ type AdminTopbarProps = {
 
 export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
   return (
-    <div className="sticky top-0 z-20 bg-[#FCFAF8] px-4 py-4 md:px-6 lg:px-8 xl:px-10">
+    <div className="sticky top-0 z-20 bg-slate-50 px-4 py-4 md:px-6 lg:px-8 xl:px-10">
       <div className="flex items-center justify-between gap-4">
         {/* Mobile Nav Drawer & Logo */}
         <div className="flex items-center gap-3 lg:hidden">

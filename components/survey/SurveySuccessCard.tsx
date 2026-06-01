@@ -4,7 +4,7 @@ import { CheckCircle, Compass, Stamp } from "@phosphor-icons/react/dist/ssr";
 export function SurveySuccessCard({ visitId, skipped }: { visitId: string; skipped: boolean }) {
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col justify-center px-4 py-8">
-      <div className="rounded-[2rem] bg-white p-6 text-center shadow-card">
+      <div className="rounded-2xl bg-white p-6 text-center shadow-card">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-teal text-white shadow-lg shadow-teal/20">
           <CheckCircle size={36} weight="fill" />
         </div>
