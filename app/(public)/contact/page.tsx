@@ -75,9 +75,9 @@ export default function ContactPage() {
           
           <div className="lg:w-1/2 relative h-[400px] w-full">
             {/* Background Map Graphic (Optional - simulated with light shape) */}
-            <div className="absolute top-0 right-10 w-[400px] h-[350px] bg-[#F2EFE8] rounded-3xl -z-10 opacity-70" style={{ clipPath: 'polygon(10% 0, 100% 10%, 90% 100%, 0 90%)' }}></div>
+            <div className="absolute top-0 right-10 w-[400px] h-[350px] bg-teal/5 rounded-2xl -z-10 opacity-70" style={{ clipPath: 'polygon(10% 0, 100% 10%, 90% 100%, 0 90%)' }}></div>
             
-            <div className="absolute top-4 right-32 w-64 h-72 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-10 bg-white">
+            <div className="absolute top-4 right-32 w-64 h-72 rounded-2xl overflow-hidden shadow-md border-4 border-background z-10 bg-white">
               <div className="flex h-full flex-col justify-between bg-[linear-gradient(135deg,#F8EDE7_0%,#F7F3EA_55%,#E9F0EC_100%)] p-6">
                 <EnvelopeSimple size={40} weight="fill" className="text-coral" />
                 <div>
@@ -91,7 +91,7 @@ export default function ContactPage() {
               </div>
             </div>
             
-            <div className="absolute bottom-4 right-4 w-56 h-64 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-20 bg-[#EAF2F0] p-5">
+            <div className="absolute bottom-4 right-4 w-56 h-64 rounded-2xl overflow-hidden shadow-md border-4 border-background z-20 bg-[#EAF2F0] p-5">
               <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-teal/20 bg-white/55 text-center">
                 <PaperPlaneRight size={42} weight="light" className="text-teal" />
                 <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Route support</p>
@@ -192,7 +192,7 @@ export default function ContactPage() {
             
             {/* Contact Cards */}
             <div className="bg-white p-5 rounded-xl border border-ink/5 flex items-start gap-4">
-              <div className="bg-[#FAF3EE] text-coral p-3 rounded-full shrink-0">
+              <div className="bg-coral/5 text-coral p-3 rounded-full shrink-0">
                 <EnvelopeSimple size={24} weight="fill" />
               </div>
               <div className="flex-1 flex items-center justify-between">
@@ -205,7 +205,7 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-ink/5 flex items-start gap-4">
-              <div className="bg-[#FAF3EE] text-coral p-3 rounded-full shrink-0">
+              <div className="bg-coral/5 text-coral p-3 rounded-full shrink-0">
                 <Phone size={24} weight="fill" />
               </div>
               <div>
@@ -233,7 +233,7 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-ink/5 flex items-start gap-4">
-              <div className="bg-[#FAF3EE] text-coral p-3 rounded-full shrink-0">
+              <div className="bg-coral/5 text-coral p-3 rounded-full shrink-0">
                 <Clock size={24} weight="fill" />
               </div>
               <div>
@@ -272,7 +272,7 @@ export default function ContactPage() {
                 <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-teal/20" />
                 <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-teal/20" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white px-4 py-2 rounded-xl shadow-lg border border-ink/5 flex items-center gap-2">
+                  <div className="bg-white px-4 py-2 rounded-xl shadow-md border border-ink/5 flex items-center gap-2">
                     <MapPin size={20} weight="fill" className="text-coral" />
                     <span className="font-bold text-xs uppercase tracking-wider text-ink">PSU Pattani</span>
                   </div>
@@ -296,7 +296,7 @@ export default function ContactPage() {
                     className="w-full p-5 flex items-center justify-between text-left focus:outline-none"
                   >
                     <div className="flex gap-4 items-center">
-                      <div className="w-8 h-8 rounded-full bg-[#FAF3EE] text-coral flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-coral/5 text-coral flex items-center justify-center shrink-0">
                         <MapPin size={16} weight="fill" />
                       </div>
                       <span className="font-bold text-sm text-ink">{faq.question}</span>
@@ -341,7 +341,7 @@ export default function ContactPage() {
 
         {/* NEWSLETTER (Stay Inspired) */}
         <section className="mb-20">
-          <div className="relative rounded-2xl overflow-hidden bg-ink py-16 px-8 md:px-16 flex flex-col justify-center shadow-2xl">
+          <div className="relative rounded-2xl overflow-hidden bg-ink py-16 px-8 md:px-16 flex flex-col justify-center shadow-md">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#173F37_0%,#264D48_52%,#E18868_100%)] opacity-95" />
             <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(90deg,rgba(255,255,255,.28)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.28)_1px,transparent_1px)] [background-size:44px_44px]" />
             <div className="relative z-10 max-w-md">
@@ -350,7 +350,7 @@ export default function ContactPage() {
                 รับข่าวสารเกี่ยวกับการท่องเที่ยว โปรโมชัน และจุด Check-in ใหม่ๆ ในจังหวัดชายแดนใต้ ส่งตรงถึงอีเมลคุณ
               </p>
               
-              <form onSubmit={e => { e.preventDefault(); alert("ขอบคุณสำหรับการติดตามข่าวสาร!"); }} className="flex flex-col sm:flex-row gap-3 p-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
+              <form onSubmit={e => { e.preventDefault(); alert("ขอบคุณสำหรับการติดตามข่าวสาร!"); }} className="flex flex-col sm:flex-row gap-3 p-1.5 bg-white/10 backdrop-blur-sm rounded-full border border-white/20">
                 <input 
                   type="email" 
                   required

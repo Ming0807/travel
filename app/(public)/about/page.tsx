@@ -57,9 +57,9 @@ export default async function AboutPage() {
           
           <div className="lg:w-1/2 relative h-[500px] w-full">
             {/* Background Shape */}
-            <div className="absolute top-10 left-10 w-[350px] h-[400px] bg-[#F2EFE8] rounded-3xl -z-10 opacity-70"></div>
+            <div className="absolute top-10 left-10 w-[350px] h-[400px] bg-teal/5 rounded-2xl -z-10 opacity-70"></div>
             
-            <div className="absolute top-0 left-0 w-64 h-80 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-10 bg-white">
+            <div className="absolute top-0 left-0 w-64 h-80 rounded-2xl overflow-hidden shadow-md border-4 border-background z-10 bg-white">
               <div className="flex h-full flex-col justify-between bg-[linear-gradient(135deg,#F8EDE7_0%,#F7F3EA_50%,#E9F0EC_100%)] p-6">
                 <MapPin size={40} weight="fill" className="text-coral" />
                 <div>
@@ -73,14 +73,14 @@ export default async function AboutPage() {
               </div>
             </div>
             
-            <div className="absolute top-8 right-4 w-48 h-48 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-20 bg-[#EAF2F0] p-5">
+            <div className="absolute top-8 right-4 w-48 h-48 rounded-2xl overflow-hidden shadow-md border-4 border-background z-20 bg-[#EAF2F0] p-5">
               <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-teal/20 bg-white/50 text-center">
                 <GlobeHemisphereEast size={42} weight="light" className="text-teal" />
                 <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Official content</p>
               </div>
             </div>
             
-            <div className="absolute bottom-4 right-12 w-56 h-40 rounded-2xl overflow-hidden shadow-xl border-4 border-background z-30 bg-[#FFF8EF] p-5">
+            <div className="absolute bottom-4 right-12 w-56 h-40 rounded-2xl overflow-hidden shadow-md border-4 border-background z-30 bg-coral/5 p-5">
               <div className="flex h-full items-end justify-between rounded-2xl border border-coral/20 bg-white/60 p-4">
                 <Camera size={34} weight="light" className="text-coral" />
                 <div className="space-y-2">
@@ -93,7 +93,7 @@ export default async function AboutPage() {
         </section>
 
         {/* MISSION & VISION */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24 bg-[#F2EFE8] p-10 md:p-12 rounded-[2.5rem]">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24 bg-teal/5 p-10 md:p-12 rounded-2xl">
           <div className="flex gap-6 items-start">
             <div className="bg-coral text-white p-4 rounded-full shrink-0 shadow-sm">
               <Target size={32} weight="fill" />
@@ -186,7 +186,7 @@ export default async function AboutPage() {
             </p>
           </div>
           
-          <div className="lg:col-span-8 relative h-[400px] rounded-2xl overflow-hidden shadow-lg border border-ink/5 bg-[#EDF3F0]">
+          <div className="lg:col-span-8 relative h-[400px] rounded-2xl overflow-hidden shadow-md border border-ink/5 bg-teal/5">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#FFF8EF_0%,#EDF3F0_52%,#F8E7DF_100%)]" />
             <div className="absolute inset-8 rounded-xl border border-white/70 bg-white/35 p-8 backdrop-blur-sm">
               <div className="grid h-full grid-cols-3 gap-4">
@@ -244,7 +244,7 @@ export default async function AboutPage() {
 
         {/* STATS BANNER */}
         <section className="bg-white rounded-2xl border border-coral/20 shadow-sm p-12 mb-24 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#FAF3EE] rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-coral/5 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center divide-x divide-ink/5">
             <div className="flex flex-col items-center">
@@ -318,7 +318,7 @@ export default async function AboutPage() {
 
         {/* CTA BANNER */}
         <section className="mb-20">
-          <div className="relative w-full h-[300px] rounded-2xl overflow-hidden flex flex-col items-center justify-center text-center px-4 shadow-xl">
+          <div className="relative w-full h-[300px] rounded-2xl overflow-hidden flex flex-col items-center justify-center text-center px-4 shadow-md">
             <div className="absolute inset-0 bg-[linear-gradient(135deg,#173F37_0%,#31685B_48%,#E18868_100%)]" />
             <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(90deg,rgba(255,255,255,.25)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.25)_1px,transparent_1px)] [background-size:48px_48px]" />
             <div className="relative z-10">

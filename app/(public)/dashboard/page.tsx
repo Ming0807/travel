@@ -85,7 +85,7 @@ export default async function PublicDashboardPage() {
                   {recentTrend.map((pt, i) => {
                     const heightPercent = maxVisits > 0 ? (pt.value / maxVisits) * 100 : 0;
                     return (
-                      <div key={i} className="flex flex-col items-center gap-2 w-full mx-1 group">
+                      <div key={pt.label || i} className="flex flex-col items-center justify-end h-full w-full gap-2 group">
                         <div className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity bg-ink text-white text-xs font-bold py-1 px-2 rounded">
                           {pt.value}
                         </div>

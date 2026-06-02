@@ -50,10 +50,18 @@ export default async function CertificatePreviewPage({
   let photoId = rawPhotoId || "";
   let previewUrl = rawPreviewUrl || "";
 
-  if (rawPhotoId && !rawPreviewUrl) {
+  // If previewUrl is missing OR if it's an old broken public URL, we generate a fresh signed URL
+  if (rawPhotoId && (!rawPreviewUrl || rawPreviewUrl.includes("/object/public/visit-photos/"))) {
     const photo = await getPhotoById(rawPhotoId as string);
-    if (photo) {
-      previewUrl = photo.storage_path || "";
+    if (photo && photo.storage_path) {
+      // The bucket is private, so we need a signed URL
+      const { createSupabaseServiceRoleClient } = await import("@/lib/supabase/service-role");
+      const supabase = createSupabaseServiceRoleClient();
+      const { data } = await supabase.storage
+        .from("visit-photos")
+        .createSignedUrl(photo.storage_path, 60 * 60);
+      
+      previewUrl = data?.signedUrl || "";
     }
   }
 

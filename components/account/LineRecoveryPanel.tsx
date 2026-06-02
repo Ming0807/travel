@@ -58,7 +58,7 @@ export function LineRecoveryPanel({ className = "" }: { className?: string }) {
     <div className={`mt-6 pt-6 border-t border-ink/10 ${className}`}>
       <p className="text-sm text-ink mb-4 font-semibold">เคยใช้งานแล้ว? กู้คืนพาสปอร์ตเดิมของคุณ</p>
       {uiState.kind === "error" && (
-        <div className="mb-4 flex gap-3 rounded-[1rem] border border-red-500/20 bg-red-50 p-4 text-sm font-semibold leading-6 text-red-500">
+        <div className="mb-4 flex gap-3 rounded-2xl border border-red-500/20 bg-red-50 p-4 text-sm font-semibold leading-6 text-red-500">
           <WarningCircle className="mt-0.5 shrink-0" size={20} weight="fill" />
           <span>{uiState.message}</span>
         </div>

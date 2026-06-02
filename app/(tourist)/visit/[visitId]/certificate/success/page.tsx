@@ -66,7 +66,7 @@ export default async function CertificateSuccessPage({
       <div className="relative z-10 mx-auto max-w-lg px-4 pt-12 md:pt-20 pb-24">
         {/* Success Header */}
         <div className="text-center mb-8 animate-fade-in-up">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-teal to-emerald text-white shadow-lg shadow-teal/20 rotate-6 hover:rotate-0 transition-transform duration-500">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-teal to-emerald text-white shadow-md shadow-teal/20 rotate-6 hover:rotate-0 transition-transform duration-500">
             <CheckCircle size={48} weight="fill" />
           </div>
           <h1 className="text-3xl font-black text-ink tracking-tight">ใบประกาศพร้อมแล้ว!</h1>
@@ -78,7 +78,7 @@ export default async function CertificateSuccessPage({
         {/* Stamp Notification */}
         {stampStatus === "earned" && (
           <div className="mb-6 animate-scale-in">
-            <div className="rounded-[1.75rem] bg-gradient-to-br from-amber-50 to-amber-100/80 border border-amber-200 p-5 text-center shadow-sm">
+            <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/80 border border-amber-200 p-5 text-center shadow-sm">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Sparkle weight="fill" className="text-amber-600" size={20} />
                 <span className="text-sm font-black text-amber-700 uppercase tracking-wider">ได้รับตราประทับใหม่!</span>

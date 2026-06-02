@@ -13,7 +13,7 @@ export function AttractionGallery({ mainImage, gallery }: AttractionGalleryProps
     <div className="mb-12">
       <div className="grid gap-3 lg:grid-cols-4 lg:grid-rows-2 lg:h-[500px]">
         {/* Main large image */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl lg:col-span-4 lg:row-span-1 lg:aspect-auto lg:h-[340px]">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl lg:col-span-4 lg:row-span-1 lg:aspect-auto lg:h-[340px]">
           {mainImage ? (
             <Image
               src={mainImage}

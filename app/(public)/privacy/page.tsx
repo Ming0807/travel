@@ -335,7 +335,7 @@ export default function PrivacyPage() {
         
         <div className="mx-auto max-w-4xl relative z-10">
           {/* Header */}
-          <div className="text-center bg-white/40 backdrop-blur-md rounded-3xl py-12 px-6 border border-white shadow-sm relative overflow-hidden mb-12">
+          <div className="text-center bg-white/40 backdrop-blur-sm rounded-2xl py-12 px-6 border border-white shadow-sm relative overflow-hidden mb-12">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[4px] bg-gradient-to-r from-transparent via-teal to-transparent" />
             
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white text-teal text-xs font-black uppercase tracking-widest mb-6 shadow-sm border border-teal/10">

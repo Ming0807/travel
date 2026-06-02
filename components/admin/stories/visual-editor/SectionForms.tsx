@@ -31,6 +31,7 @@ export function HeaderForm({ story, onClose }: SectionFormProps) {
         {/* Hidden required fields */}
         <input type="hidden" name="provinceId" value={story.province_id ?? ""} />
         <input type="hidden" name="isPublished" value={story.is_published ? "true" : "false"} />
+        <input type="hidden" name="status" value={story.status} />
         <input type="hidden" name="category" value={story.category ?? ""} />
         <input type="hidden" name="content" value={story.content ?? ""} />
 
@@ -74,6 +75,7 @@ export function ContentForm({ story, onClose }: SectionFormProps) {
         <input type="hidden" name="excerpt" value={story.excerpt ?? ""} />
         <input type="hidden" name="provinceId" value={story.province_id ?? ""} />
         <input type="hidden" name="isPublished" value={story.is_published ? "true" : "false"} />
+        <input type="hidden" name="status" value={story.status} />
         <input type="hidden" name="category" value={story.category ?? ""} />
 
         <div className="space-y-4">
@@ -106,10 +108,16 @@ export function SettingsForm({ story, provinces = [], onClose }: SectionFormProp
         <input type="hidden" name="content" value={story.content ?? ""} />
 
         <div className="space-y-6">
-          <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700">
-            เผยแพร่สู่สาธารณะ
-            <input defaultChecked={story.is_published} name="isPublished" type="checkbox" value="true" className="h-4 w-4 accent-[#F3704C]" />
+          <label className="block">
+            <span className="text-sm font-bold text-slate-700">สถานะ *</span>
+            <select className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={story.status} name="status">
+              <option value="draft">Draft</option>
+              <option value="pending">Pending Review</option>
+              <option value="published">Published</option>
+              <option value="rejected">Rejected</option>
+            </select>
           </label>
+          <input type="hidden" name="isPublished" value={story.is_published ? "true" : "false"} />
 
           <label className="block">
             <span className="text-sm font-bold text-slate-700">หมวดหมู่</span>
@@ -153,6 +161,7 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
         <input type="hidden" name="excerpt" value={story.excerpt ?? ""} />
         <input type="hidden" name="content" value={story.content ?? ""} />
         <input type="hidden" name="isPublished" value={story.is_published ? "true" : "false"} />
+        <input type="hidden" name="status" value={story.status} />
         <input type="hidden" name="category" value={story.category ?? ""} />
         <input type="hidden" name="provinceId" value={story.province_id ?? ""} />
 

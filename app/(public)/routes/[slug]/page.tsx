@@ -77,7 +77,7 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
 
         {/* Content Section */}
         <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-          <div className="rounded-3xl bg-white p-6 shadow-sm md:p-10 mb-12">
+          <div className="rounded-2xl bg-white p-6 shadow-sm md:p-10 mb-12">
             <h2 className="text-xl font-bold text-ink mb-4">ภาพรวมเส้นทาง</h2>
             <div className="prose prose-slate max-w-none prose-p:leading-relaxed prose-p:text-muted">
               {route.fullDescription.split('\n').map((paragraph, idx) => (

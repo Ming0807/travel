@@ -25,7 +25,7 @@ export default async function MediaPage() {
           />
         </div>
 
-        <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <ErrorBoundary fallbackTitle="Media Library unavailable" fallbackDescription="Could not render the Media Library. Try refreshing the page.">
             <MediaLibrary mode="manage" />
           </ErrorBoundary>

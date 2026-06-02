@@ -74,7 +74,12 @@ export async function updateStoryAction(storyId: number, _prevState: ActionResul
     const old = await getAdminStoryById(storyId);
     if (!old) return { success: false, error: "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว" };
 
-    const updated = await updateAdminStory(storyId, parsed.data);
+    const payload = { ...parsed.data };
+    if (payload.status) {
+      payload.isPublished = payload.status === 'published';
+    }
+
+    const updated = await updateAdminStory(storyId, payload);
 
     // Link cover media if provided
     const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
@@ -99,27 +104,29 @@ export async function updateStoryAction(storyId: number, _prevState: ActionResul
   }
 }
 
-export async function toggleStoryPublishAction(storyId: number): Promise<ActionResult> {
+export async function changeStoryStatusAction(storyId: number, newStatus: string): Promise<ActionResult> {
   try {
     const current = await getAdminStoryById(storyId);
     if (!current) return { success: false, error: "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว" };
 
-    const guard = await requirePermission(current.is_published ? "story.unpublish" : "story.publish");
+    const actionName = newStatus === 'published' ? 'story.publish' : 'story.unpublish';
+    const guard = await requirePermission(actionName as "story.publish" | "story.unpublish");
 
-    const updated = await updateAdminStoryStatus(storyId, { is_published: !current.is_published });
+    const updated = await updateAdminStoryStatus(storyId, { status: newStatus, is_published: newStatus === 'published' });
     await logAdminMutation({
       actor: guard.actor,
-      action: current.is_published ? "story.unpublish" : "story.publish",
+      action: actionName as "story.publish" | "story.unpublish",
       entityType: "travel_story",
       entityId: storyId,
-      oldValues: { is_published: current.is_published },
-      newValues: { is_published: updated.is_published },
+      oldValues: { status: current.status },
+      newValues: { status: updated.status },
     });
 
     revalidatePath("/admin/stories");
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "ยังเปลี่ยนสถานะเผยแพร่ไม่ได้ กรุณาลองอีกครั้ง" };
+    return { success: false, error: "ยังเปลี่ยนสถานะไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
+

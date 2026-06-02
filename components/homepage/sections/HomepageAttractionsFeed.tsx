@@ -29,7 +29,7 @@ export function HomepageAttractionsFeed({ attractions = [] }: { attractions?: At
   const topDestinations = filteredAttractions.slice(0, 4);
 
   return (
-    <section id="attractions" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-3xl my-8 border border-ink/5">
+    <section id="attractions" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-2xl my-8 border border-ink/5">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
         <div>
           <h2 className="text-4xl font-black text-ink tracking-tight">สถานที่ยอดนิยม</h2>

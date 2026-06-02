@@ -23,7 +23,7 @@ export function HomepageCertificateCta({
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="relative overflow-hidden rounded-3xl bg-ink shadow-xl w-full h-[450px] flex items-center justify-center text-center px-4">
+      <div className="relative overflow-hidden rounded-2xl bg-ink shadow-xl w-full h-[450px] flex items-center justify-center text-center px-4">
         {/* Background Image */}
         {imgSrc && (
           <Image

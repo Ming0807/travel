@@ -219,8 +219,8 @@ export function RouteVisualEditor({
                     <MapPin size={18} />
                     <span>{stopCount} สถานที่</span>
                   </div>
-                  <Link
-                    href="#"
+                  <button
+                    type="button"
                     onClick={(e) => { e.preventDefault(); setActiveSection("cover"); }}
                     className={`ml-auto rounded-lg border px-3 py-1 text-xs font-bold pointer-events-auto ${
                       coverImage
@@ -229,7 +229,7 @@ export function RouteVisualEditor({
                     }`}
                   >
                     {coverImage ? "Change cover" : "Add cover image"}
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>

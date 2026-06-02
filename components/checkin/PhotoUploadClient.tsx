@@ -6,8 +6,52 @@ import { Camera, Spinner, Image as ImageIcon, Trash } from "@phosphor-icons/reac
 
 const initialFormState: PhotoUploadState = {};
 
+const compressImage = async (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    const img = new globalThis.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      let width = img.width;
+      let height = img.height;
+      
+      // Max 1920px
+      if (width > 1920 || height > 1920) {
+        if (width > height) {
+          height = Math.round((height * 1920) / width);
+          width = 1920;
+        } else {
+          width = Math.round((width * 1920) / height);
+          height = 1920;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return resolve(file); // fallback
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), { type: "image/webp" }));
+          } else {
+            resolve(file); // fallback
+          }
+        },
+        "image/webp",
+        0.8
+      );
+    };
+    img.onerror = () => resolve(file);
+    img.src = url;
+  });
+};
+
 export function PhotoUploadClient({ visitId }: { visitId: string }) {
-  const [state, formAction, isPending] = useActionState(uploadVisitPhoto.bind(null, visitId), initialFormState);
+  const [state, formAction, isPending] = useActionState(uploadVisitPhoto, initialFormState);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -16,14 +60,9 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
     const file = e.target.files?.[0];
     if (file) {
       // Validate type
-      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-      if (!allowedTypes.includes(file.type)) {
-        alert("รองรับเฉพาะไฟล์ JPEG, PNG และ WebP เท่านั้น");
-        return;
-      }
-      // Validate size
-      if (file.size > 10 * 1024 * 1024) {
-        alert("รูปภาพต้องมีขนาดไม่เกิน 10MB");
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+      if (!allowedTypes.includes(file.type) && !file.name.toLowerCase().match(/\.(jpg|jpeg|png|webp|heic|heif)$/)) {
+        alert("รองรับเฉพาะไฟล์รูปภาพ (JPEG, PNG, WebP) เท่านั้น");
         return;
       }
       setSelectedFile(file);
@@ -40,8 +79,27 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
     }
   };
 
+  const handleFormAction = async (formData: FormData) => {
+    const file = formData.get("photo") as File | null;
+    if (file && file.size > 0) {
+      try {
+        // Compress image on the client side to bypass Next.js 1MB Server Action limit and save bandwidth
+        const compressed = await compressImage(file);
+        formData.set("photo", compressed);
+      } catch (err) {
+        console.error("Failed to compress image", err);
+      }
+    }
+    
+    import("react").then(({ startTransition }) => {
+      startTransition(() => {
+        formAction(formData);
+      });
+    });
+  };
+
   return (
-    <form action={formAction} className="w-full space-y-6">
+    <form action={handleFormAction} className="w-full space-y-6">
       <input type="hidden" name="visitId" value={visitId} />
 
       {/* Error Summary */}
@@ -72,7 +130,10 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
             <div className="flex items-center gap-2 mt-4">
               <button
                 type="button"
-                onClick={handleRemove}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove();
+                }}
                 className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-100"
               >
                 <Trash size={14} />
@@ -80,7 +141,10 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
               </button>
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
                 className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white px-4 py-2 text-xs font-bold text-ink transition-colors hover:bg-ink/5"
               >
                 <ImageIcon size={14} />
@@ -94,7 +158,7 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
               <Camera size={32} weight="fill" />
             </div>
             <p className="text-base font-bold text-ink">แตะเพื่ออัปโหลดรูป</p>
-            <p className="mt-1 text-xs text-muted">รูป JPEG, PNG หรือ WebP ขนาดไม่เกิน 10MB</p>
+            <p className="mt-1 text-xs text-muted">รูปภาพขนาดไม่จำกัด (ระบบจะย่อให้อัตโนมัติ)</p>
             <p className="mt-3 text-[11px] font-medium text-ink/40">หรือถ่ายรูปจากกล้องของคุณ</p>
           </>
         )}
@@ -102,7 +166,7 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
           ref={fileInputRef}
           type="file"
           name="photo"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/*"
           capture="environment"
           onChange={handleFileChange}
           className="hidden"

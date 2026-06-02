@@ -86,7 +86,7 @@ export function StoryVisualEditor({
         </div>
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700">
-            สถานะ: {story.is_published ? "เผยแพร่แล้ว" : "ยังไม่เผยแพร่"}
+            สถานะ: <span className="uppercase">{story.status}</span>
           </div>
           <button 
             onClick={() => setActiveSection("settings")}
@@ -127,15 +127,19 @@ export function StoryVisualEditor({
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 py-6 border-y border-slate-200 mb-8 pointer-events-none">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-slate-50 text-[10px] font-black uppercase text-slate-400 shadow-sm">
-                  N/A
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-slate-50 text-[10px] font-black uppercase text-slate-400 shadow-sm overflow-hidden">
+                  {story.author_type === "tourist" ? "T" : "A"}
                 </div>
                 <div>
-                  <p className="font-black text-slate-800">Author profile not configured</p>
-                  <p className="text-xs text-slate-500">{dateStr} - {readTime}</p>
-                  <p className="mt-1 max-w-md text-xs leading-5 text-slate-400">
-                    The current story schema has no author fields, so the preview does not invent author details.
+                  <p className="font-black text-slate-800">
+                    {story.author_type === "tourist" ? (story.tourist_name ?? "Unknown Tourist") : "Admin"}
                   </p>
+                  <p className="text-xs text-slate-500">{dateStr} - {readTime}</p>
+                  {story.author_type === "tourist" && (
+                    <p className="mt-1 max-w-md text-[10px] uppercase font-bold tracking-wider text-orange-500">
+                      Tourist UGC Story
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 text-slate-400">
@@ -157,11 +161,18 @@ export function StoryVisualEditor({
               </div>
             </EditableBlock>
 
-            <EditableBlock id="content" label="เนื้อหาบทความ" isActive={activeSection === "content"} onEdit={() => setActiveSection("content")}>
-              <article className="prose prose-lg max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-black prose-a:text-orange-500 pointer-events-none whitespace-pre-wrap">
-                {story.content || "Missing story body. Add real editorial content before publishing this story."}
-              </article>
-            </EditableBlock>
+              <EditableBlock id="content" label="เนื้อหาบทความ" isActive={activeSection === "content"} onEdit={() => setActiveSection("content")}>
+                {story.content && /<[a-z][\s\S]*>/i.test(story.content) ? (
+                  <article 
+                    className="prose prose-lg max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-black prose-a:text-orange-500 pointer-events-none prose-img:rounded-2xl"
+                    dangerouslySetInnerHTML={{ __html: story.content }}
+                  />
+                ) : (
+                  <article className="prose prose-lg max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-black prose-a:text-orange-500 pointer-events-none whitespace-pre-wrap">
+                    {story.content || "Missing story body. Add real editorial content before publishing this story."}
+                  </article>
+                )}
+              </EditableBlock>
 
           </div>
 
@@ -177,10 +188,20 @@ export function StoryVisualEditor({
               </div>
 
               <div className="pointer-events-none">
-                <PlannedContentState
-                  title="Author profile unavailable"
-                  description="Author metadata is not stored on travel stories yet. Add schema support before this public section is shown."
-                />
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <h3 className="font-black text-slate-800 text-sm uppercase tracking-widest mb-4">ผู้เขียน</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-black text-slate-500">
+                      {story.author_type === "tourist" ? "T" : "A"}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-800">
+                        {story.author_type === "tourist" ? (story.tourist_name ?? "Unknown Tourist") : "Admin"}
+                      </p>
+                      <p className="text-xs text-slate-500 capitalize">{story.author_type}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
             </div>

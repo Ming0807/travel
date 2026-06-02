@@ -31,6 +31,10 @@ export const adminStoryFiltersSchema = adminPaginationSchema.extend({
     z.string().max(120).optional()
   ),
   provinceId: optionalId.optional(),
+  status: z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? undefined : value),
+    z.string().optional()
+  ),
   isPublished: z.preprocess(
     (value) => (value === "" || value === null || value === undefined ? undefined : value),
     z.coerce.boolean().optional()
@@ -50,6 +54,7 @@ export const adminStoryMutationSchema = z.object({
   provinceId: optionalId,
   category: optionalShortText,
   isPublished: booleanFromForm,
+  status: z.enum(["draft", "pending", "published", "rejected"]).optional(),
   coverMediaId: optionalId
 });
 

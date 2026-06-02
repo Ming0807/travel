@@ -49,7 +49,7 @@ export default function Vista360Page() {
               href={VISTA_360_EXTERNAL_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 bg-coral text-white px-8 py-4 rounded-full text-sm font-bold shadow-lg hover:bg-coral/90 transition-all hover:shadow-xl"
+              className="inline-flex items-center gap-3 bg-coral text-white px-8 py-4 rounded-full text-sm font-bold shadow-md hover:bg-coral/90 transition-all hover:shadow-md"
             >
               <Compass size={22} weight="fill" />
               เปิด 360 Vista
@@ -63,14 +63,14 @@ export default function Vista360Page() {
               href={VISTA_360_EXTERNAL_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="group block relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-ink/5 bg-[#EAF2F0]"
+              className="group block relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md border border-ink/5 bg-[#EAF2F0]"
             >
               <div className="absolute inset-0 bg-[linear-gradient(135deg,#EAF2F0_0%,#F8EDE7_58%,#173F37_100%)] transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:28px_28px]" />
               <div className="absolute inset-8 rounded-xl border border-white/60 bg-white/25 backdrop-blur-sm" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-2 border-white/40 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/40 group-hover:scale-110 transition-transform duration-300">
                   <Compass size={36} className="text-white" weight="fill" />
                 </div>
               </div>
@@ -131,7 +131,7 @@ export default function Vista360Page() {
             href={VISTA_360_EXTERNAL_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 bg-ink text-white px-10 py-5 rounded-full text-base font-bold shadow-lg hover:bg-[#073F37] transition-all hover:shadow-xl"
+            className="inline-flex items-center gap-3 bg-ink text-white px-10 py-5 rounded-full text-base font-bold shadow-md hover:bg-[#073F37] transition-all hover:shadow-md"
           >
             <Compass size={24} weight="fill" />
             เปิด 360 Vista — Yala City Virtual Tour

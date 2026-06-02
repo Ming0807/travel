@@ -121,7 +121,7 @@ export default async function AttractionsPage({
           {/* Featured Destination Card */}
           <div className="lg:w-1/2 w-full">
             {featured ? (
-              <div className="relative w-full h-[350px] rounded-2xl overflow-hidden shadow-lg border border-ink/5 group">
+              <div className="relative w-full h-[350px] rounded-2xl overflow-hidden shadow-md border border-ink/5 group">
                 {featured.imageUrl ? (
                   <Image
                     src={featured.imageUrl}
@@ -295,7 +295,7 @@ export default async function AttractionsPage({
           <div className="lg:col-span-4 space-y-8">
 
             {/* Map Widget */}
-            <div className="bg-[#F2EFE8] rounded-2xl p-8 text-center border border-ink/5 relative overflow-hidden">
+            <div className="bg-teal/5 rounded-2xl p-8 text-center border border-ink/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(10,107,98,0.12),transparent_36%),radial-gradient(circle_at_80%_30%,rgba(243,112,76,0.12),transparent_32%)] pointer-events-none" />
 
               <div className="relative z-10">
@@ -366,7 +366,7 @@ export default async function AttractionsPage({
 
         {/* BOTTOM CTA BANNER */}
         <section className="mb-20">
-          <div className="relative w-full rounded-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
+          <div className="relative w-full rounded-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-md bg-ink">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(243,112,76,0.2),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(10,107,98,0.28),transparent_42%)]" />
             <div className="relative z-10 mb-6 md:mb-0 md:w-1/2">
               <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">รับแรงบันดาลใจการเดินทางส่งตรงถึงอีเมลคุณ</h2>
@@ -374,7 +374,7 @@ export default async function AttractionsPage({
             </div>
 
             <div className="relative z-10 w-full md:w-auto">
-              <div className="flex flex-col sm:flex-row gap-3 bg-white/10 p-1.5 rounded-full backdrop-blur-md border border-white/20">
+              <div className="flex flex-col sm:flex-row gap-3 bg-white/10 p-1.5 rounded-full backdrop-blur-sm border border-white/20">
                 <input
                   type="email"
                   placeholder="กรอกอีเมลของคุณ"

@@ -98,7 +98,7 @@ export default async function RestaurantsPage({
 
           {/* Featured Image */}
           <div className="lg:w-1/2 w-full">
-            <div className="relative w-full h-[350px] rounded-2xl overflow-hidden shadow-lg border border-ink/5">
+            <div className="relative w-full h-[350px] rounded-2xl overflow-hidden shadow-md border border-ink/5">
               {featureSettings.image ? (
                 <Image
                   src={featureSettings.image}
@@ -204,7 +204,7 @@ export default async function RestaurantsPage({
 
         {/* CTA Section */}
         <section className="mb-20">
-          <div className="relative w-full rounded-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-xl bg-ink">
+          <div className="relative w-full rounded-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-md bg-ink">
             {ctaSettings.image ? (
               <Image
                 src={ctaSettings.image}

@@ -58,7 +58,7 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
               <div key={star} className="flex items-center gap-4 text-sm font-bold text-ink">
                 <div className="w-4">{star}</div>
                 <Star size={12} weight="fill" className="text-amber-400" />
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#F0EBE1]">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-50">
                   <div className="h-full rounded-full bg-amber-400" style={{ width: `${pct}%` }} />
                 </div>
                 <div className="w-8 text-right text-muted">{pct}%</div>
@@ -92,7 +92,7 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
       {/* View All Reviews Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm sm:p-6">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-3xl bg-white shadow-2xl flex flex-col">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-ink/5 p-6">
               <div>
@@ -122,7 +122,7 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
 
 function ReviewItem({ review }: { review: ReviewCard }) {
   return (
-    <div className="rounded-3xl border border-ink/5 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-ink/5 bg-white p-6 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <p className="text-sm font-bold text-ink">{review.touristName}</p>

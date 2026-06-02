@@ -3,7 +3,7 @@
 @theme {
   --color-ink: #17212B;
   --color-muted: #6B7280;
-  --color-cream: #FAF8F5;
+  --color-cream: #F8FAFC;
   --color-sand: #F0DFC8;
   --color-teal: #0A6B62;
   --color-tealSoft: #E6F4EF;
@@ -22,12 +22,12 @@
 }
 
 :root {
-  --background: #FAF8F5;
+  --background: #F8FAFC;
   --foreground: #17212B;
   --teal: #0A6B62;
   --coral: #E77455;
   --gold: #D6A13D;
-  --cream: #FAF8F5;
+  --cream: #F8FAFC;
   --ink: #17212B;
 }
 
@@ -158,7 +158,7 @@ input {
   font-size: 0.75rem;
   font-weight: 800;
   color: #D36B4B;
-  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
 }
 
 /* ─── Filter Chips ─── */

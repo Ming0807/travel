@@ -1,4 +1,4 @@
-type StatusBadgeTone = "green" | "gold" | "gray" | "red" | "teal";
+export type StatusBadgeTone = "green" | "gold" | "gray" | "red" | "teal";
 
 const toneClasses: Record<StatusBadgeTone, string> = {
   green: "border-emerald-200 bg-emerald-50 text-emerald-700",

@@ -32,7 +32,7 @@ export function StampCard({ stamp }: { stamp: SafePassportStamp }) {
       </div>
 
       <div className="relative z-10 flex items-start gap-4">
-        <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#FAF3EE] text-[#E18868] ring-4 ring-white shadow-inner transform ${rotationClass} group-hover:scale-110 group-hover:rotate-0 group-hover:shadow-[#E18868]/20 group-hover:shadow-lg transition-all duration-500`}>
+        <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[#E18868] ring-4 ring-white shadow-inner transform ${rotationClass} group-hover:scale-110 group-hover:rotate-0 group-hover:shadow-[#E18868]/20 group-hover:shadow-lg transition-all duration-500`}>
           <SealCheck size={36} weight="fill" />
         </div>
         <div className="min-w-0 pt-1">

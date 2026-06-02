@@ -71,7 +71,7 @@ export default async function RestaurantDetailPage({
         </div>
 
         {/* Hero Section */}
-        <div className="relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-lg border border-ink/5 mb-10">
+        <div className="relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-md border border-ink/5 mb-10">
           {restaurant.imageUrl ? (
             <Image
               src={restaurant.imageUrl}
@@ -86,7 +86,7 @@ export default async function RestaurantDetailPage({
           <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/30 to-transparent"></div>
           <div className="absolute bottom-8 left-8 right-8 text-white">
             {restaurant.foodType && (
-              <span className="inline-flex items-center rounded-full bg-white/20 backdrop-blur-md text-white px-3 py-1 text-[10px] font-bold mb-3 uppercase tracking-wider border border-white/20">
+              <span className="inline-flex items-center rounded-full bg-white/20 backdrop-blur-sm text-white px-3 py-1 text-[10px] font-bold mb-3 uppercase tracking-wider border border-white/20">
                 {restaurant.foodType}
               </span>
             )}
@@ -212,7 +212,7 @@ export default async function RestaurantDetailPage({
 
               {/* Map Placeholder */}
               {restaurant.latitude && restaurant.longitude && (
-                <div className="bg-[#F2EFE8] rounded-2xl p-6 text-center border border-ink/5 relative overflow-hidden h-48">
+                <div className="bg-teal/5 rounded-2xl p-6 text-center border border-ink/5 relative overflow-hidden h-48">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(243,112,76,0.16),transparent_34%),radial-gradient(circle_at_80%_35%,rgba(10,107,98,0.14),transparent_36%)] pointer-events-none" />
                   <div className="relative z-10 flex flex-col items-center justify-center h-full">
                     <Compass size={32} className="text-[#E18868] mb-2" weight="fill" />

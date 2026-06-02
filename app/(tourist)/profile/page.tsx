@@ -103,7 +103,7 @@ export default async function ProfilePage() {
           </p>
           <Link
             href="/attractions"
-            className="mt-5 inline-flex rounded-full bg-teal px-5 py-4 font-black text-white shadow-lg shadow-teal/20"
+            className="mt-5 inline-flex rounded-full bg-teal px-5 py-4 font-black text-white shadow-md shadow-teal/20"
           >
             สำรวจสถานที่ท่องเที่ยว
           </Link>
@@ -145,7 +145,7 @@ export default async function ProfilePage() {
 
         <div className="mx-auto max-w-lg space-y-5 relative z-10">
           {/* Profile Header */}
-          <section className="rounded-[2.5rem] bg-gradient-to-br from-teal to-ink p-8 text-white shadow-lg relative overflow-hidden">
+          <section className="rounded-2xl bg-gradient-to-br from-teal to-ink p-8 text-white shadow-md relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4"></div>
             <p className="text-xs font-black uppercase tracking-[0.24em] text-gold relative z-10">
               Tourist Profile

@@ -38,7 +38,7 @@ export function HomepageHighlights({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Testimonial Card */}
-        <article className="flex flex-col justify-between bg-white rounded-3xl p-6 border border-ink/5">
+        <article className="flex flex-col justify-between bg-white rounded-2xl p-6 border border-ink/5">
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-full bg-leaf text-white overflow-hidden relative flex items-center justify-center text-sm font-black">
@@ -64,7 +64,7 @@ export function HomepageHighlights({
         </article>
 
         {/* Video Card */}
-        <article className="relative bg-ink rounded-3xl overflow-hidden shadow-sm aspect-square md:aspect-auto">
+        <article className="relative bg-ink rounded-2xl overflow-hidden shadow-sm aspect-square md:aspect-auto">
           {videoSrc ? (
             <Image src={videoSrc} alt="Video cover" fill className="object-cover opacity-80" unoptimized />
           ) : (
@@ -78,7 +78,7 @@ export function HomepageHighlights({
         </article>
 
         {/* Image Card */}
-        <article className="flex flex-col bg-white rounded-3xl p-4 border border-ink/5">
+        <article className="flex flex-col bg-white rounded-2xl p-4 border border-ink/5">
           <div className="relative w-full aspect-square overflow-hidden rounded-2xl mb-4 bg-slate-100">
             {imageSrc ? (
               <Image src={imageSrc} alt="Market" fill className="object-cover" unoptimized />

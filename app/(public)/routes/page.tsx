@@ -56,7 +56,7 @@ export default async function RoutesPage() {
         {routes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {routes.map((route) => (
-              <Link href={`/routes/${route.slug}`} key={route.slug} className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-ink/5">
+              <Link href={`/routes/${route.slug}`} key={route.slug} className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-ink/5">
                 <div className="relative h-64 w-full overflow-hidden">
                   {route.imageUrl ? (
                     <Image 
@@ -96,7 +96,7 @@ export default async function RoutesPage() {
             ))}
           </div>
         ) : (
-          <div className="py-20 text-center bg-white rounded-3xl border border-ink/5">
+          <div className="py-20 text-center bg-white rounded-2xl border border-ink/5">
             <MapTrifold size={48} className="mx-auto text-muted mb-4 opacity-50" />
             <h3 className="text-xl font-bold text-ink mb-2">ยังไม่มีเส้นทางแนะนำในขณะนี้</h3>
             <p className="text-muted">กำลังเตรียมเส้นทางท่องเที่ยวใหม่ๆ สำหรับคุณ โปรดติดตาม</p>

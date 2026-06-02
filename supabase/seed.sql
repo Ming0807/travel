@@ -439,13 +439,13 @@ SET province_id = EXCLUDED.province_id,
 
 WITH media_seed(slug, storage_path, alt_text_th, caption_th, display_order, is_cover) AS (
   VALUES
-    ('aiyerweng-skywalk', 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop', 'ทะเลหมอกอัยเยอร์เวง', 'จุดชมวิวทะเลหมอกยามเช้า', 1, true),
-    ('betong-hot-spring', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop', 'บ่อน้ำร้อนเบตง', 'พักผ่อนเชิงสุขภาพ', 1, true),
-    ('pattani-central-mosque', 'https://images.unsplash.com/photo-1587823527237-770498eb7909?q=80&w=1200&auto=format&fit=crop', 'มัสยิดกลางปัตตานี', 'สถาปัตยกรรมศาสนสถาน', 1, true),
-    ('pattani-old-town', 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=1200&auto=format&fit=crop', 'เมืองเก่าปัตตานี', 'เดินชมเมืองเก่าและอาหารท้องถิ่น', 1, true),
-    ('narathat-beach', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop', 'หาดนราทัศน์', 'ชายหาดเมืองนราธิวาส', 1, true),
-    ('songkhla-old-town', 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=1200&auto=format&fit=crop', 'เมืองเก่าสงขลา', 'สถาปัตยกรรมและศิลปะชุมชน', 1, true),
-    ('pak-bara-pier', 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1200&auto=format&fit=crop', 'ท่าเรือปากบารา', 'ประตูสู่ทะเลสตูล', 1, true)
+    ('aiyerweng-skywalk', 'ทะเลหมอกอัยเยอร์เวง', 'จุดชมวิวทะเลหมอกยามเช้า', 1, true),
+    ('betong-hot-spring', 'บ่อน้ำร้อนเบตง', 'พักผ่อนเชิงสุขภาพ', 1, true),
+    ('pattani-central-mosque', 'มัสยิดกลางปัตตานี', 'สถาปัตยกรรมศาสนสถาน', 1, true),
+    ('pattani-old-town', 'เมืองเก่าปัตตานี', 'เดินชมเมืองเก่าและอาหารท้องถิ่น', 1, true),
+    ('narathat-beach', 'หาดนราทัศน์', 'ชายหาดเมืองนราธิวาส', 1, true),
+    ('songkhla-old-town', 'เมืองเก่าสงขลา', 'สถาปัตยกรรมและศิลปะชุมชน', 1, true),
+    ('pak-bara-pier', 'ท่าเรือปากบารา', 'ประตูสู่ทะเลสตูล', 1, true)
 )
 INSERT INTO public.content_media (attraction_id, media_type, storage_path, alt_text_th, caption_th, display_order, is_cover, is_active, lifecycle_status)
 SELECT a.attraction_id, 'external_url', m.storage_path, m.alt_text_th, m.caption_th, m.display_order, m.is_cover, true, 'active'
@@ -600,23 +600,22 @@ ON CONFLICT (route_id, day_number, display_order) DO UPDATE
 SET attraction_id = EXCLUDED.attraction_id,
     stop_note_th = EXCLUDED.stop_note_th;
 
-INSERT INTO public.travel_stories (slug, title, excerpt, content, province_id, category, image_url, is_published, published_at)
+INSERT INTO public.travel_stories (slug, title, excerpt, content, province_id, category, is_published, published_at)
 VALUES
-  ('mist-morning-aiyerweng', 'เช้าวันใหม่เหนือทะเลหมอกอัยเยอร์เวง', 'แรงบันดาลใจสำหรับการเดินทางเบตงและการเก็บ stamp แรก', 'เรื่องเล่าการเดินทางแบบสั้นสำหรับหน้า SEO และ discovery feed', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Yala'), 'Nature', 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop', true, now()),
-  ('faith-and-architecture-pattani', 'ศรัทธาและสถาปัตยกรรมในปัตตานี', 'เส้นทางศาสนสถานและเมืองเก่าในวันเดียว', 'เนื้อหา SEO สำหรับการเดินทางเชิงวัฒนธรรม', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Pattani'), 'Culture', 'https://images.unsplash.com/photo-1587823527237-770498eb7909?q=80&w=1200&auto=format&fit=crop', true, now()),
-  ('narathiwat-coastal-day', 'หนึ่งวันริมทะเลนราธิวาส', 'หาดนราทัศน์ อ่าวมะนาว และตลาดชายแดน', 'เรื่องเล่าสำหรับ route planning และ travel story', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Narathiwat'), 'Coastal', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop', true, now()),
-  ('songkhla-old-town-walk', 'เดินเมืองเก่าสงขลาแบบช้า ๆ', 'สถาปัตยกรรม อาหาร และศิลปะชุมชน', 'เรื่องเล่าสำหรับเมืองเก่าและเส้นทางเดิน', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Songkhla'), 'Old Town', 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?q=80&w=1200&auto=format&fit=crop', true, now()),
-  ('satun-sea-gateway', 'ปากบารา ประตูสู่ทะเลสตูล', 'เตรียมตัวก่อนออกสู่เส้นทางเกาะและอุทยาน', 'เนื้อหาสำหรับทะเลสตูลและเส้นทางต่อเนื่อง', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Satun'), 'Sea', 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1200&auto=format&fit=crop', true, now()),
-  ('southern-border-food', 'รสชาติชายแดนใต้ที่ควรลอง', 'อาหารท้องถิ่น คาเฟ่ และของฝากที่เชื่อมโยงการเดินทาง', 'เรื่องเล่าอาหารสำหรับ feed และ suggested route', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Pattani'), 'Food', 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop', true, now()),
-  ('community-market-border', 'ตลาดชายแดนกับชีวิตประจำวัน', 'มองเมืองชายแดนผ่านการเดินตลาดและพูดคุยกับชุมชน', 'เรื่องเล่าชุมชนสำหรับ sustainable tourism', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Narathiwat'), 'Community', 'https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop', true, now()),
-  ('responsible-travel-south', 'เที่ยวชายแดนใต้อย่างรับผิดชอบ', 'ข้อคิดด้านความเป็นส่วนตัว ความเคารพพื้นที่ และการท่องเที่ยวยั่งยืน', 'เนื้อหาความเชื่อมั่นและ privacy-friendly tourism', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Yala'), 'Responsible Travel', 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop', true, now())
+  ('mist-morning-aiyerweng', 'เช้าวันใหม่เหนือทะเลหมอกอัยเยอร์เวง', 'แรงบันดาลใจสำหรับการเดินทางเบตงและการเก็บ stamp แรก', 'เรื่องเล่าการเดินทางแบบสั้นสำหรับหน้า SEO และ discovery feed', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Yala'), 'Nature', true, now()),
+  ('faith-and-architecture-pattani', 'ศรัทธาและสถาปัตยกรรมในปัตตานี', 'เส้นทางศาสนสถานและเมืองเก่าในวันเดียว', 'เนื้อหา SEO สำหรับการเดินทางเชิงวัฒนธรรม', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Pattani'), 'Culture', true, now()),
+  ('narathiwat-coastal-day', 'หนึ่งวันริมทะเลนราธิวาส', 'หาดนราทัศน์ อ่าวมะนาว และตลาดชายแดน', 'เรื่องเล่าสำหรับ route planning และ travel story', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Narathiwat'), 'Coastal', true, now()),
+  ('songkhla-old-town-walk', 'เดินเมืองเก่าสงขลาแบบช้า ๆ', 'สถาปัตยกรรม อาหาร และศิลปะชุมชน', 'เรื่องเล่าสำหรับเมืองเก่าและเส้นทางเดิน', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Songkhla'), 'Old Town', true, now()),
+  ('satun-sea-gateway', 'ปากบารา ประตูสู่ทะเลสตูล', 'เตรียมตัวก่อนออกสู่เส้นทางเกาะและอุทยาน', 'เนื้อหาสำหรับทะเลสตูลและเส้นทางต่อเนื่อง', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Satun'), 'Sea', true, now()),
+  ('southern-border-food', 'รสชาติชายแดนใต้ที่ควรลอง', 'อาหารท้องถิ่น คาเฟ่ และของฝากที่เชื่อมโยงการเดินทาง', 'เรื่องเล่าอาหารสำหรับ feed และ suggested route', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Pattani'), 'Food', true, now()),
+  ('community-market-border', 'ตลาดชายแดนกับชีวิตประจำวัน', 'มองเมืองชายแดนผ่านการเดินตลาดและพูดคุยกับชุมชน', 'เรื่องเล่าชุมชนสำหรับ sustainable tourism', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Narathiwat'), 'Community', true, now()),
+  ('responsible-travel-south', 'เที่ยวชายแดนใต้อย่างรับผิดชอบ', 'ข้อคิดด้านความเป็นส่วนตัว ความเคารพพื้นที่ และการท่องเที่ยวยั่งยืน', 'เนื้อหาความเชื่อมั่นและ privacy-friendly tourism', (SELECT province_id FROM public.provinces WHERE province_name_en = 'Yala'), 'Responsible Travel', true, now())
 ON CONFLICT (slug) DO UPDATE
 SET title = EXCLUDED.title,
     excerpt = EXCLUDED.excerpt,
     content = EXCLUDED.content,
     province_id = EXCLUDED.province_id,
     category = EXCLUDED.category,
-    image_url = EXCLUDED.image_url,
     is_published = EXCLUDED.is_published,
     published_at = EXCLUDED.published_at;
 
@@ -1161,3 +1160,81 @@ SET province_id = EXCLUDED.province_id,
     price_range = EXCLUDED.price_range,
     is_published = EXCLUDED.is_published,
     is_active = EXCLUDED.is_active;
+
+-- Add tourist stories
+INSERT INTO public.travel_stories (slug, title, excerpt, content, province_id, category, is_published, published_at, author_type, tourist_id, status)
+VALUES
+  (
+    'sea-of-mist-aiyerweng-2026', 
+    'หนีความวุ่นวายไปกอดทะเลหมอกอัยเยอร์เวง เบตง', 
+    'ครั้งแรกกับการเยือนยะลาใต้สุดแดนสยาม สัมผัสทะเลหมอกอัยเยอร์เวงที่สวยจนลืมหายใจ ท่ามกลางอากาศเย็นสบายตลอดปี', 
+    'การเดินทางลงใต้ครั้งนี้เป็นความทรงจำที่ยากจะลืมเลือน เราเริ่มต้นทริปที่ "สกายวอล์คอัยเยอร์เวง" อำเภอเบตง จังหวัดยะลา ตื่นตั้งแต่ตี 4 เพื่อไปให้ทันแสงแรกของวัน เมื่อพระอาทิตย์เริ่มทอแสง ทะเลหมอกสีขาวนวลก็ค่อยๆ ปรากฏขึ้นเต็มหุบเขา สวยงามราวกับภาพวาด อากาศเย็นสบายจนต้องหยิบเสื้อกันหนาวมาใส่ ใครจะเชื่อว่าภาคใต้ของเราก็มีโมเมนต์แบบนี้\n\nนอกจากทะเลหมอกแล้ว อาหารเบตงก็เด็ดไม่แพ้กัน ไก่เบตงเนื้อนุ่ม เคาหยก และผักน้ำผัดน้ำมันหอย คือเมนูที่ห้ามพลาด การเดินทางมาที่นี่อาจจะไกลสักหน่อย แต่รับรองว่าคุ้มค่าทุกวินาทีแน่นอนครับ', 
+    (SELECT province_id FROM public.provinces WHERE province_name_en = 'Yala'), 
+    'Nature', 
+    true, 
+    now() - interval '2 days', 
+    'tourist', 
+    (SELECT tourist_id FROM public.tourists LIMIT 1), 
+    'published'
+  ),
+  (
+    'pattani-old-town-charm', 
+    'เดินเล่นย่านเมืองเก่าปัตตานี สัมผัสมนต์เสน่ห์พหุวัฒนธรรม', 
+    'หลงรักสถาปัตยกรรมเก่าแก่และวิถีชีวิตที่ผสมผสานกันอย่างลงตัวของชาวไทยพุทธ มุสลิม และคนไทยเชื้อสายจีนในปัตตานี', 
+    'ปัตตานีไม่ใช่แค่ทางผ่าน แต่เป็นเมืองที่มีเสน่ห์ซ่อนอยู่มากมาย วันนี้เราขอพาทุกคนไปเดินเล่นที่ "ย่านเมืองเก่าปัตตานี" หรือ กือดาจีนอ (ถนนอาเนาะรู) ที่นี่เต็มไปด้วยบ้านเรือนสถาปัตยกรรมแบบชิโน-ยูโรเปียนที่สวยงาม คลาสสิก เหมาะกับการเดินถ่ายรูปชิคๆ\n\nเราแวะกินชาชักเจ้าดัง รสชาติเข้มข้น หอมกลิ่นชาแท้ๆ ทานคู่กับโรตีคือฟินสุดๆ ความน่ารักของที่นี่คือความหลากหลายทางวัฒนธรรมที่อยู่ร่วมกันอย่างกลมกลืน ทั้งศาลเจ้าแม่ลิ้มกอเหนี่ยว และมัสยิดกลางที่อยู่ไม่ไกลกันนัก เป็นอีกหนึ่งทริปที่ประทับใจและอยากให้ทุกคนได้มาลองสัมผัสด้วยตัวเอง', 
+    (SELECT province_id FROM public.provinces WHERE province_name_en = 'Pattani'), 
+    'Culture', 
+    false, 
+    null, 
+    'tourist', 
+    (SELECT tourist_id FROM public.tourists LIMIT 1 OFFSET 1), 
+    'pending'
+  ),
+  (
+    'narathat-beach-sunset', 
+    'นั่งโง่ๆ ดูพระอาทิตย์ตกที่หาดนราทัศน์ นราธิวาส', 
+    'บรรยากาศยามเย็นที่หาดนราทัศน์ ลมพัดเย็นสบาย ฟังเสียงคลื่นกระทบฝั่ง เป็นการชาร์จแบตให้ตัวเองได้ดีเยี่ยม', 
+    'บางครั้งการพักผ่อนที่ดีที่สุดก็คือการได้นั่งมองทะเลเฉยๆ วันนี้เรามากันที่ "หาดนราทัศน์" จังหวัดนราธิวาส หาดทรายทอดยาวขนานไปกับทิวสนที่ร่มรื่น ช่วงเย็นๆ จะมีชาวบ้านและนักท่องเที่ยวมานั่งพักผ่อน ปูเสื่อปิกนิกกันเยอะมาก\n\nแสงสีทองของพระอาทิตย์ที่กำลังจะตกดิน ตัดกับสีน้ำทะเลและท้องฟ้า เป็นภาพที่โรแมนติกสุดๆ เราซื้อของกินเล่นจากพ่อค้าแม่ค้าแถวนั้นมานั่งกินริมหาด ปล่อยใจให้ล่องลอยไปกับเสียงคลื่น เป็นอีกหนึ่งวันหยุดที่สมบูรณ์แบบมาก ใครที่กำลังมองหาสถานที่พักผ่อนเงียบสงบ แนะนำที่นี่เลยค่ะ', 
+    (SELECT province_id FROM public.provinces WHERE province_name_en = 'Narathiwat'), 
+    'Review', 
+    false, 
+    null, 
+    'tourist', 
+    (SELECT tourist_id FROM public.tourists LIMIT 1 OFFSET 2), 
+    'pending'
+  ),
+  (
+    'hala-bala-wildlife-encounter', 
+    'ผจญภัยป่าฮาลา-บาลา อเมซอนแห่งอาเซียน', 
+    'เปิดประสบการณ์ส่องนกเงือกและสัตว์ป่าหายากในผืนป่าที่อุดมสมบูรณ์ที่สุดของภาคใต้', 
+    'ทริปนี้สำหรับสายลุยโดยเฉพาะ! เราเดินทางมุ่งหน้าสู่ "เขตรักษาพันธุ์สัตว์ป่าฮาลา-บาลา" ที่ได้รับฉายาว่าเป็นอเมซอนแห่งอาเซียน ความอุดมสมบูรณ์ของที่นี่ทำให้เราตื่นตาตื่นใจตั้งแต่เริ่มก้าวเท้าเข้าป่า\n\nไฮไลท์ของทริปนี้คือการได้เห็น "นกเงือก" ตัวเป็นๆ ตามธรรมชาติ ซึ่งที่นี่เป็นแหล่งที่มีนกเงือกมากที่สุดในประเทศไทย การเดินป่าที่นี่ต้องอาศัยเจ้าหน้าที่นำทาง เส้นทางอาจจะท้าทายไปบ้างแต่ก็ทำให้เราได้เห็นความยิ่งใหญ่ของธรรมชาติอย่างแท้จริง เป็นประสบการณ์ที่คุ้มค่ากับความเหนื่อยล้าจริงๆ', 
+    (SELECT province_id FROM public.provinces WHERE province_name_en = 'Narathiwat'), 
+    'Adventure', 
+    true, 
+    now() - interval '1 days', 
+    'tourist', 
+    (SELECT tourist_id FROM public.tourists LIMIT 1 OFFSET 1), 
+    'published'
+  ),
+  (
+    'disappointing-hotel-experience', 
+    'รีวิวโรงแรมแห่งหนึ่งในตัวเมือง ไม่ประทับใจอย่างแรง', 
+    'เจอห้องพักไม่สะอาด แอร์ไม่เย็น พนักงานบริการแย่มาก ไม่แนะนำให้มาพักเด็ดขาด', 
+    'ขออนุญาตมารีวิวเพื่อเป็นอุทาหรณ์นะคะ เราจองโรงแรมแห่งหนึ่งในตัวเมือง (ขอไม่เอ่ยชื่อ) รูปในเน็ตดูดีมาก แต่พอไปถึงจริงคือพังมาก! ห้องมีกลิ่นอับ ผ้าปูที่นอนมีคราบ แอร์เปิดตั้งนานก็ไม่เย็น \n\nที่แย่ที่สุดคือพนักงานต้อนรับพูดจาไม่ดีเลย พอเราขอเปลี่ยนห้องก็บอกว่าเต็มหมดแล้ว สุดท้ายต้องทนพักไปหนึ่งคืน เช้ามาก็รีบเช็คเอาท์ออกเลย เสียความรู้สึกมากค่ะ ใครจะจองที่พักแนะนำให้อ่านรีวิวเยอะๆ นะคะ จะได้ไม่พลาดแบบเรา', 
+    (SELECT province_id FROM public.provinces WHERE province_name_en = 'Yala'), 'Review', false, 
+    null, 
+    'tourist', 
+    (SELECT tourist_id FROM public.tourists LIMIT 1 OFFSET 2), 
+    'rejected'
+  )
+ON CONFLICT (slug) DO UPDATE
+SET title = EXCLUDED.title,
+    excerpt = EXCLUDED.excerpt,
+    content = EXCLUDED.content,
+    province_id = EXCLUDED.province_id,
+    category = EXCLUDED.category,
+    is_published = EXCLUDED.is_published,
+    published_at = EXCLUDED.published_at,
+    author_type = EXCLUDED.author_type,
+    tourist_id = EXCLUDED.tourist_id,
+    status = EXCLUDED.status;

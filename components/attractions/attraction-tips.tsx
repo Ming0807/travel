@@ -9,7 +9,7 @@ export function AttractionTips({ tips, title = "Travel Tips" }: AttractionTipsPr
   return (
     <div id="tips" className="scroll-mt-24 pt-8">
       <h2 className="mb-6 text-2xl font-bold text-ink">{title}</h2>
-      <div className="rounded-3xl bg-[#F0EBE1] p-8">
+      <div className="rounded-2xl bg-slate-50 p-8">
         <ul className="flex flex-col gap-4">
           {tips.map((tip, index) => (
             <li key={index} className="flex items-start gap-3">

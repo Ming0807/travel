@@ -22,13 +22,18 @@ export type PhotoUploadState = {
  * and creates a visit_photo record.
  */
 export async function uploadVisitPhoto(
-  visitId: string,
   prevState: PhotoUploadState,
   formData: FormData
 ): Promise<PhotoUploadState> {
+  const visitId = formData.get("visitId") as string;
+
+  if (!visitId) {
+    return { errors: { _form: ["Missing visit ID"] } };
+  }
+
   // These need to be accessible after the try/catch for the redirect
   let photoId: string;
-  let storagePath: string;
+  let previewUrl: string;
 
   try {
     // 1. Verify visit exists and belongs to this tourist
@@ -74,19 +79,27 @@ export async function uploadVisitPhoto(
       return { errors: { photo: ["รูปภาพต้องมีขนาดไม่เกิน 10MB"] } };
     }
 
-    // 5. Read file as buffer
+    // 5. Compress to WebP using sharp
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const originalBuffer = Buffer.from(bytes);
+    
+    const sharp = (await import("sharp")).default;
+    const webpBuffer = await sharp(originalBuffer)
+      .resize(1920, 1920, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    // We use Blob instead of Buffer for Supabase to avoid Next.js Buffer fetch bug
+    const webpBlob = new Blob([webpBuffer], { type: "image/webp" });
 
     // 6. Upload to Supabase Storage
     const supabase = createSupabaseServiceRoleClient();
-    const fileExt = file.name.split(".").pop() || "jpg";
-    const fileName = `visits/${visitId}/photo-${Date.now()}.${fileExt}`;
+    const fileName = `visits/${visitId}/photo-${Date.now()}.webp`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("visit-photos")
-      .upload(fileName, buffer, {
-        contentType: file.type,
+      .upload(fileName, webpBlob, {
+        contentType: "image/webp",
         upsert: false,
       });
 
@@ -95,20 +108,23 @@ export async function uploadVisitPhoto(
       return { errors: { _form: ["ไม่สามารถอัปโหลดรูปภาพได้ กรุณาลองใหม่"] } };
     }
 
-    // 7. Get public URL
-    const { data: publicUrlData } = supabase.storage
+    // 7. Get Signed URL for preview (valid for 1 hour)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from("visit-photos")
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 60 * 60);
 
-    storagePath = publicUrlData?.publicUrl || fileName;
+    if (signedUrlError) {
+      console.error("Storage signed URL error:", signedUrlError);
+    }
+    previewUrl = signedUrlData?.signedUrl || "";
 
     // 8. Create visit_photo record
     photoId = await handlePhotoUploadMetadata({
       visitId,
       storagePath: fileName,
       originalFilename: file.name,
-      mimeType: file.type,
-      fileSizeBytes: file.size,
+      mimeType: "image/webp",
+      fileSizeBytes: webpBlob.size,
     });
   } catch (error) {
     console.error("Photo upload error:", error);
@@ -118,5 +134,5 @@ export async function uploadVisitPhoto(
 
   // Redirect MUST be outside try/catch so Next.js can handle the RedirectError
   revalidatePath(`/visit/${visitId}`);
-  redirect(`/visit/${visitId}/certificate/preview?photoId=${photoId}&previewUrl=${encodeURIComponent(storagePath)}`);
+  redirect(`/visit/${visitId}/certificate/preview?photoId=${photoId}&previewUrl=${encodeURIComponent(previewUrl)}`);
 }

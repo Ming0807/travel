@@ -16,7 +16,7 @@ export function ProvinceProgress({ progress }: { progress: PassportProvinceProgr
                   {item.totalCount ? ` / ${item.totalCount}` : ""} stamps
                 </span>
               </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-[#FAF3EE]">
+              <div className="h-2.5 overflow-hidden rounded-full bg-orange-50">
                 <div className="h-full rounded-full bg-[#E18868] transition-all duration-1000" style={{ width: `${percent}%` }} />
               </div>
             </div>

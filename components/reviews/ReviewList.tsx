@@ -50,7 +50,7 @@ export function ReviewList({ stats, reviews }: ReviewListProps) {
               <div key={star} className="flex items-center gap-4 text-sm font-bold text-ink">
                 <div className="w-4">{star}</div>
                 <Star size={12} weight="fill" className="text-amber-400" />
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#F0EBE1]">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-50">
                   <div className="h-full rounded-full bg-amber-400" style={{ width: `${pct}%` }} />
                 </div>
                 <div className="w-8 text-right text-muted">{pct}%</div>

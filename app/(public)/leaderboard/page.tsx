@@ -48,10 +48,10 @@ async function LeaderboardData() {
           {/* 1st Place */}
           <div className="relative flex w-1/3 flex-col items-center z-10">
             <Trophy size={32} weight="fill" className="absolute -top-20 text-gold drop-shadow-md animate-bounce" />
-            <div className="absolute -top-10 flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-gold to-yellow-500 text-xl font-black text-white shadow-xl ring-4 ring-gold/20">
+            <div className="absolute -top-10 flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-gold to-yellow-500 text-xl font-black text-white shadow-md ring-4 ring-gold/20">
               {allTime[0].touristName.substring(0, 2)}
             </div>
-            <div className="flex h-40 w-full flex-col items-center justify-center rounded-t-2xl bg-gradient-to-t from-coral to-coral/80 shadow-lg shadow-coral/20">
+            <div className="flex h-40 w-full flex-col items-center justify-center rounded-t-2xl bg-gradient-to-t from-coral to-coral/80 shadow-md shadow-coral/20">
               <span className="text-4xl font-black text-white/90">1</span>
               <span className="mt-2 text-sm font-bold text-white truncate w-full px-2 text-center">{allTime[0].touristName}</span>
               <span className="text-xs font-black text-white/90">{allTime[0].totalXp.toLocaleString()} XP</span>
@@ -108,7 +108,7 @@ export default async function LeaderboardPage() {
             กลับหน้าหลัก
           </Link>
 
-          <div className="text-center bg-white/40 backdrop-blur-md rounded-3xl py-12 px-6 border border-white shadow-sm relative overflow-hidden">
+          <div className="text-center bg-white/40 backdrop-blur-sm rounded-2xl py-12 px-6 border border-white shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[4px] bg-gradient-to-r from-transparent via-coral to-transparent"></div>
             
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white text-coral text-xs font-black uppercase tracking-widest mb-6 shadow-sm border border-coral/10">

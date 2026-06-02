@@ -31,14 +31,14 @@ const steps = [
     icon: Stamp,
     label: "สะสมตราประทับ",
     desc: "รับตราประทับในพาสปอร์ต แล้วเลือกตอบแบบสอบถามสั้นๆ เพื่อช่วยพัฒนาพื้นที่",
-    accent: "bg-[#D46549] text-white",
+    accent: "bg-coral text-white",
     iconBg: "bg-white/20",
   },
 ];
 
 export function HomepageHowItWorks({ title = "ใช้งานง่ายเหมือนแอป", subtitle = "แต่ไม่ต้องโหลดแอป", description = "ระบบออกแบบให้เริ่มจากการให้คุณค่าก่อน — นักท่องเที่ยวกรอกน้อยที่สุด รับใบประกาศก่อน แล้วค่อยให้ข้อมูลเพิ่มเติมแบบสมัครใจ" }: { title?: string, subtitle?: string, description?: string }) {
   return (
-    <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24 bg-background rounded-3xl my-8 shadow-sm">
+    <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24 bg-background my-8">
 
       {/* Header — asymmetric layout */}
       <div className="mb-16 grid lg:grid-cols-[1fr_auto] lg:items-end gap-8">
@@ -83,7 +83,7 @@ export function HomepageHowItWorks({ title = "ใช้งานง่ายเ�
               {/* Icon */}
               <div className="mb-8">
                 <div
-                  className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-[1.2rem] ${accent} shadow-md transition-transform duration-500 group-hover:scale-110`}
+                  className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-xl ${accent} shadow-md transition-transform duration-500 group-hover:scale-110`}
                 >
                   <Icon size={32} weight="fill" />
                 </div>
@@ -100,7 +100,7 @@ export function HomepageHowItWorks({ title = "ใช้งานง่ายเ�
       </div>
 
       {/* Bottom CTA strip */}
-      <div className="mt-16 flex flex-col md:flex-row items-center justify-between rounded-[2.5rem] border border-coral/20 bg-white px-10 py-8 shadow-sm">
+      <div className="mt-16 flex flex-col md:flex-row items-center justify-between rounded-2xl border border-coral/20 bg-white px-10 py-8 shadow-sm">
         <div>
           <h4 className="text-xl font-black text-ink mb-1">ครบ 4 จุดเช็กอิน รับรางวัลพิเศษประจำจังหวัด 🎁</h4>
           <p className="text-sm text-muted">สะสมตราประทับให้ครบเพื่อปลดล็อกของรางวัลสุดพิเศษในแต่ละพื้นที่</p>

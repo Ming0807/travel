@@ -50,7 +50,7 @@ export default async function SurveyPage({
 
         {/* Header */}
         <div className="text-center mb-8 animate-fade-in-up">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal to-emerald text-white shadow-lg shadow-teal/20 rotate-3">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal to-emerald text-white shadow-md shadow-teal/20 rotate-3">
             <ClipboardText size={28} weight="fill" />
           </div>
           <h1 className="text-3xl font-black text-ink tracking-tight">
@@ -64,7 +64,7 @@ export default async function SurveyPage({
         </div>
 
         {/* Privacy Notice */}
-        <div className="mb-6 rounded-[1.25rem] bg-white/80 backdrop-blur border border-ink/5 p-4 text-xs leading-5 text-muted shadow-sm animate-fade-in-up delay-100">
+        <div className="mb-6 rounded-xl bg-white/80 backdrop-blur border border-ink/5 p-4 text-xs leading-5 text-muted shadow-sm animate-fade-in-up delay-100">
           <p className="font-medium">
             <strong className="text-ink">ข้อมูลของคุณปลอดภัย:</strong> คำตอบทั้งหมดถูกเก็บเป็นข้อมูลรวมเพื่อการวางแผนเท่านั้น
             ไม่มีการระบุตัวตน และคุณสามารถข้ามข้อใดก็ได้

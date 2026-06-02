@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 
 const columns = [
   { key: "title", label: "ชื่อบทความ" },
+  { key: "author", label: "ผู้เขียน", className: "hidden md:table-cell" },
   { key: "category", label: "หมวดหมู่", className: "hidden md:table-cell" },
   { key: "province", label: "จังหวัด", className: "hidden lg:table-cell" },
   { key: "status", label: "สถานะ" },
@@ -25,9 +26,20 @@ const columns = [
 ];
 
 const statusOptions = [
-  { value: "true", label: "Published" },
-  { value: "false", label: "Draft" },
+  { value: "published", label: "Published" },
+  { value: "pending", label: "Pending Review" },
+  { value: "draft", label: "Draft" },
+  { value: "rejected", label: "Rejected" },
 ];
+
+function getTone(status: string): import("@/components/admin/StatusBadge").StatusBadgeTone {
+  switch(status) {
+    case 'published': return 'green';
+    case 'pending': return 'gold';
+    case 'rejected': return 'red';
+    default: return 'gray';
+  }
+}
 
 export default async function AdminStoriesPage({
   searchParams,
@@ -60,7 +72,7 @@ export default async function AdminStoriesPage({
           </div>
           <FilterSelect
             label="สถานะ"
-            paramKey="isPublished"
+            paramKey="status"
             options={statusOptions}
           />
         </FilterBar>
@@ -78,6 +90,16 @@ export default async function AdminStoriesPage({
                       </div>
                     </td>
                     <td className="hidden px-4 py-3 md:table-cell">
+                      {story.author_type === 'tourist' ? (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-700">{story.tourist_name ?? 'Unknown Tourist'}</p>
+                          <p className="text-[10px] text-slate-400">Tourist UGC</p>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-semibold text-slate-500">Admin</span>
+                      )}
+                    </td>
+                    <td className="hidden px-4 py-3 md:table-cell">
                       <span className="text-xs text-slate-500">
                         {story.category ?? "—"}
                       </span>
@@ -89,14 +111,14 @@ export default async function AdminStoriesPage({
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge
-                        label={story.is_published ? "Published" : "Draft"}
-                        tone={story.is_published ? "green" : "gray"}
+                        label={story.status}
+                        tone={getTone(story.status)}
                       />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <StoryStatusActions
                         storyId={story.story_id}
-                        isPublished={story.is_published}
+                        status={story.status}
                       />
                     </td>
                   </tr>
@@ -117,8 +139,8 @@ export default async function AdminStoriesPage({
                       <p className="mt-0.5 text-[11px] text-slate-400">{story.slug}</p>
                     </div>
                     <StatusBadge
-                      label={story.is_published ? "Published" : "Draft"}
-                      tone={story.is_published ? "green" : "gray"}
+                      label={story.status}
+                      tone={getTone(story.status)}
                     />
                   </div>
 
@@ -131,12 +153,18 @@ export default async function AdminStoriesPage({
                       <p className="text-xs text-slate-400">จังหวัด</p>
                       <p className="font-semibold text-slate-700">{story.province_name_th ?? "—"}</p>
                     </div>
+                    <div>
+                      <p className="text-xs text-slate-400">ผู้เขียน</p>
+                      <p className="font-semibold text-slate-700">
+                        {story.author_type === 'tourist' ? (story.tourist_name ?? 'Tourist') : 'Admin'}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-end border-t border-slate-100 pt-4">
                     <StoryStatusActions
                       storyId={story.story_id}
-                      isPublished={story.is_published}
+                      status={story.status}
                     />
                   </div>
                 </div>

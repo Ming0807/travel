@@ -13,6 +13,8 @@ export type PublicStoryCard = {
   date: string;
   imageUrl: string | null;
   category: string;
+  authorType: string;
+  authorName: string;
 };
 
 export type PublicStoryDetail = PublicStoryCard & {
@@ -77,8 +79,9 @@ function imageUrlFromStoragePath(value: unknown): string | null {
   if (!storagePath) return null;
   if (storagePath.startsWith("http")) return storagePath;
   if (storagePath.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(storagePath)}`;
-  // Use the Next.js rewrite /site-media which maps to the Supabase public bucket
-  return `/site-media/${storagePath}`;
+  // Return absolute Supabase URL so next/image can optimize it properly
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://zaahkhmnqcczswxrcuhw.supabase.co";
+  return `${supabaseUrl}/storage/v1/object/public/site-media/${storagePath}`;
 }
 
 function publicAttractionMedia(row: DbRecord): DbRecord | null {
@@ -132,7 +135,9 @@ function mapStory(row: DbRecord): PublicStoryCard {
     province: text(province?.province_name_th, text(province?.province_name_en)),
     date: formatStoryDate(row.published_at),
     imageUrl: publicImage(row),
-    category: text(row.category, "Story")
+    category: text(row.category, "Story"),
+    authorType: text(row.author_type, "admin"),
+    authorName: row.author_type === 'tourist' ? text(one(row.tourists)?.display_name, "Tourist") : "Admin",
   };
 }
 
@@ -371,8 +376,8 @@ export async function listPublicStories(options?: { limit?: number; province?: s
     const joinType = options?.province ? '!inner' : '';
     let query = supabase
       .from("travel_stories")
-      .select(`slug, title, excerpt, category, published_at, provinces${joinType} (province_name_th, province_name_en), content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)`)
-      .eq("is_published", true);
+      .select(`slug, title, excerpt, category, published_at, author_type, tourists (display_name), provinces${joinType} (province_name_th, province_name_en), content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)`)
+      .eq("status", "published");
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       query = query.in("slug", options.featuredSlugs);
@@ -401,9 +406,9 @@ export async function getPublicStory(slug: string): Promise<{ story: PublicStory
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("travel_stories")
-      .select("slug, title, excerpt, content, category, published_at, provinces (province_name_th, province_name_en), content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)")
+      .select("slug, title, excerpt, content, category, published_at, author_type, tourists (display_name), provinces (province_name_th, province_name_en), content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)")
       .eq("slug", slug)
-      .eq("is_published", true)
+      .eq("status", "published")
       .maybeSingle();
 
     if (error || !data) return null;

@@ -21,7 +21,7 @@ export function HomepageSuggestedRoutes({ routes }: HomepageSuggestedRoutesProps
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {routes.map((route) => (
-          <article key={route.slug} className="group relative flex flex-col bg-white rounded-3xl p-4 border border-ink/5 hover:shadow-md transition-shadow">
+          <article key={route.slug} className="group relative flex flex-col bg-white rounded-2xl p-4 border border-ink/5 hover:shadow-md transition-shadow">
             <div className="relative w-full aspect-video overflow-hidden rounded-2xl mb-4">
               {route.imageUrl ? (
                 <Image

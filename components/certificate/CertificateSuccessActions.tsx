@@ -80,7 +80,7 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={handleDownload}
-          className="flex flex-col items-center justify-center rounded-xl border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-[#FAF3EE]"
+          className="flex flex-col items-center justify-center rounded-xl border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-orange-50"
         >
           <DownloadSimple size={28} className="mb-2 text-[#E18868]" />
           <span className="text-sm font-bold text-ink">บันทึกรูปภาพ</span>
@@ -88,7 +88,7 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
 
         <button
           onClick={handleShare}
-          className="flex flex-col items-center justify-center rounded-xl border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-[#FAF3EE]"
+          className="flex flex-col items-center justify-center rounded-xl border border-ink/5 bg-white py-4 shadow-sm transition-colors hover:border-[#E18868]/30 hover:bg-orange-50"
         >
           <ShareNetwork size={28} className="mb-2 text-[#E18868]" />
           <span className="text-sm font-bold text-ink">{copied ? "คัดลอกลิงก์แล้ว" : "แชร์ให้เพื่อน"}</span>
@@ -100,7 +100,7 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
       </p>
 
       <div className="mt-4 flex flex-col items-center rounded-xl border border-ink/5 bg-white p-6 text-center shadow-sm">
-        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FAF3EE] text-[#E18868]">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-[#E18868]">
           <ClipboardText size={24} weight="fill" />
         </div>
         <h3 className="mb-1 font-bold text-ink">แบบสอบถามสั้น ๆ (ไม่บังคับ)</h3>

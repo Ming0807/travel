@@ -130,7 +130,7 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                   {data.howToGetThere || "ยังไม่ได้เพิ่มรายละเอียดการเดินทาง"}
                 </p>
                 {hasCoordinates ? (
-                  <div className="rounded-3xl border border-ink/10 bg-slate-50 p-5">
+                  <div className="rounded-2xl border border-ink/10 bg-slate-50 p-5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-start gap-3">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-coral text-white">
@@ -157,7 +157,7 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
                     <div className="flex items-start gap-3">
                       <MapPinLine className="mt-0.5 shrink-0 text-amber-700" size={22} weight="duotone" />
                       <div>

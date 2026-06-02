@@ -22,7 +22,7 @@ export default async function IdentitySelectionPage({ params }: { params: Promis
       
       <div className="relative z-10 pt-[10vh]">
         <div className="max-w-md mx-auto px-5 mb-8 flex flex-col items-center text-center text-ink animate-fade-in-up">
-          <div className="bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white mb-4">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white mb-4">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-coral">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>

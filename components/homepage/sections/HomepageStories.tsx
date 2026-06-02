@@ -12,7 +12,7 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
   const sideStories = storyCards.slice(1, 4);
 
   return (
-    <section id="stories" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-3xl my-8 border border-ink/5">
+    <section id="stories" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-2xl my-8 border border-ink/5">
       <div className="mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h2 className="text-4xl font-black text-ink tracking-tight">ประสบการณ์จากนักเดินทาง</h2>
@@ -66,7 +66,7 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
         <div className="flex flex-col gap-8">
           {sideStories.map((story, index) => (
             <Link href={`/stories/${story.id}`} key={story.id} className="group flex flex-col sm:flex-row items-center sm:items-start gap-6 border-b border-ink/5 pb-8 last:border-0 last:pb-0">
-              <div className="relative h-48 sm:h-36 w-full sm:w-36 shrink-0 overflow-hidden rounded-3xl shadow-sm bg-cream">
+              <div className="relative h-48 sm:h-36 w-full sm:w-36 shrink-0 overflow-hidden rounded-2xl shadow-sm bg-cream">
                 {story.imageUrl ? (
                   <Image
                     src={story.imageUrl}

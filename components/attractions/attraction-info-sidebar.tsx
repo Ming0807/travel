@@ -12,7 +12,7 @@ type InfoProps = {
 
 export function AttractionInfoSidebar({ info }: InfoProps) {
   return (
-    <div className="rounded-3xl bg-[#F0EBE1] p-8">
+    <div className="rounded-2xl bg-slate-50 p-8">
       <ul className="flex flex-col gap-6">
         <li className="flex items-center gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-sm">

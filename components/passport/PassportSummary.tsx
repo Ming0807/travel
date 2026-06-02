@@ -3,7 +3,7 @@ import { Compass, BookBookmark } from "@phosphor-icons/react/dist/ssr";
 
 export function PassportSummary({ passport }: { passport: PassportViewModel }) {
   return (
-    <section className="rounded-[2.5rem] bg-[#1a1c23] p-8 text-white shadow-2xl relative overflow-hidden border border-white/10 group">
+    <section className="rounded-2xl bg-[#1a1c23] p-8 text-white shadow-2xl relative overflow-hidden border border-white/10 group">
       {/* Leather texture / noise overlay */}
       <div 
         className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none"

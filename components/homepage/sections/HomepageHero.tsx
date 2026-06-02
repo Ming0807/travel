@@ -32,7 +32,7 @@ export function HomepageHero({
   return (
     <section className="relative overflow-hidden bg-background pt-16 pb-24 sm:pt-24 sm:pb-32 lg:pb-40 text-ink">
       {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-1/2 w-[800px] h-[600px] -translate-x-1/2 -translate-y-1/2 bg-[#F2EFE8] rounded-full blur-[100px] -z-10 opacity-70"></div>
+      <div className="absolute top-0 left-1/2 w-[800px] h-[600px] -translate-x-1/2 -translate-y-1/2 bg-slate-50 rounded-full blur-[100px] -z-10 opacity-70"></div>
       
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -91,7 +91,7 @@ export function HomepageHero({
           {/* Right: Premium Image Collage (Col 7-12) */}
           <div className="lg:col-span-6 relative h-[500px] md:h-[600px] w-full mt-10 lg:mt-0">
             {/* Main Center Image */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[80%] rounded-3xl overflow-hidden shadow-2xl border-8 border-white z-20 bg-cream">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[80%] rounded-2xl overflow-hidden shadow-2xl border-8 border-white z-20 bg-cream">
               {img0 ? (
                 <Image
                   src={img0}

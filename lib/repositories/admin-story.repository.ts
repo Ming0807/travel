@@ -16,6 +16,10 @@ export type AdminStoryRow = {
   created_at: string;
   updated_at: string | null;
   province_name_th: string | null;
+  author_type: string;
+  tourist_id: string | null;
+  status: string;
+  tourist_name: string | null;
 };
 
 export type PaginatedResult<T> = {
@@ -28,6 +32,7 @@ export type PaginatedResult<T> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapStory(row: any): AdminStoryRow {
   const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
+  const tourist = Array.isArray(row.tourists) ? row.tourists[0] : row.tourists;
 
   return {
     story_id: Number(row.story_id),
@@ -41,7 +46,11 @@ function mapStory(row: any): AdminStoryRow {
     published_at: row.published_at,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    province_name_th: province?.province_name_th ?? null
+    province_name_th: province?.province_name_th ?? null,
+    author_type: row.author_type,
+    tourist_id: row.tourist_id,
+    status: row.status,
+    tourist_name: tourist?.display_name ?? null
   };
 }
 
@@ -54,7 +63,8 @@ function toPayload(input: AdminStoryMutationInput) {
     province_id: input.provinceId,
     category: input.category,
     is_published: input.isPublished,
-    published_at: input.isPublished ? new Date().toISOString() : null
+    published_at: input.isPublished ? new Date().toISOString() : null,
+    ...(input.status && { status: input.status })
   };
 }
 
@@ -68,7 +78,8 @@ export async function listAdminStories(filters: AdminStoryFilters): Promise<Pagi
     .select(
       `
         *,
-        provinces (province_name_th)
+        provinces (province_name_th),
+        tourists (display_name)
       `,
       { count: "exact" }
     )
@@ -80,12 +91,14 @@ export async function listAdminStories(filters: AdminStoryFilters): Promise<Pagi
     query = query.or(`title.ilike.%${filters.search}%,slug.ilike.%${filters.search}%`);
   }
   if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
+  if (filters.status) query = query.eq("status", filters.status);
   if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
 
   const { data, error, count } = await query;
 
   if (error) {
-    throw new Error("ADMIN_STORY_LIST_FAILED");
+    console.error("ADMIN_STORY_LIST_FAILED Error details:", error);
+    throw new Error(`ADMIN_STORY_LIST_FAILED: ${error.message}`);
   }
 
   return {
@@ -103,7 +116,8 @@ export async function getAdminStoryById(storyId: number): Promise<AdminStoryRow 
     .select(
       `
         *,
-        provinces (province_name_th)
+        provinces (province_name_th),
+        tourists (display_name)
       `
     )
     .eq("story_id", storyId)
@@ -164,7 +178,7 @@ export async function updateAdminStory(storyId: number, input: AdminStoryMutatio
 
 export async function updateAdminStoryStatus(
   storyId: number,
-  patch: { is_published?: boolean }
+  patch: { is_published?: boolean; status?: string }
 ): Promise<AdminStoryRow> {
   const supabase = createSupabaseServiceRoleClient();
   

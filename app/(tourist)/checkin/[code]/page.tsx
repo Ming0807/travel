@@ -32,8 +32,8 @@ export default async function CheckinLandingPage({ params }: { params: Promise<{
       </div>
 
       <div className="relative z-10 pt-[28vh] px-5 flex flex-col items-center max-w-lg mx-auto w-full">
-        <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-8 w-full shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/50 text-center motion-safe:animate-fade-in-up delay-100">
-          <div className="w-24 h-24 bg-gradient-to-br from-coral to-[#E05C3A] text-white rounded-xl rotate-3 flex items-center justify-center mx-auto -mt-16 shadow-xl mb-6 border-[6px] border-white/90 backdrop-blur-md motion-safe:animate-scale-in delay-200 transition-transform hover:rotate-0 duration-300">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-8 w-full shadow-xl border border-white/50 text-center motion-safe:animate-fade-in-up delay-100">
+          <div className="w-24 h-24 bg-gradient-to-br from-coral to-[#E05C3A] text-white rounded-xl rotate-3 flex items-center justify-center mx-auto -mt-16 shadow-md mb-6 border-[6px] border-white/90 backdrop-blur-sm motion-safe:animate-scale-in delay-200 transition-transform hover:rotate-0 duration-300">
             <Camera size={44} weight="fill" className="-rotate-3" />
           </div>
 
@@ -72,7 +72,7 @@ export default async function CheckinLandingPage({ params }: { params: Promise<{
           <div className="motion-safe:animate-fade-in-up delay-400">
             <Link
               href={`/checkin/${code}/identity`}
-              className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-ink text-white rounded-2xl font-bold text-lg hover:bg-ink/90 hover:-translate-y-1 hover:shadow-lg transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-ink text-white rounded-2xl font-bold text-lg hover:bg-ink/90 hover:-translate-y-1 hover:shadow-md transition-all active:scale-[0.98]"
             >
               เริ่มต้นเช็คอิน
             </Link>

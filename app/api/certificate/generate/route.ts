@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const fileName = `certificates/${visitId}/certificate-${Date.now()}.png`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("certificates")
+      .from("certificate-files")
       .upload(fileName, buffer, {
         contentType: "image/png",
         upsert: false,
@@ -71,10 +71,8 @@ export async function POST(request: NextRequest) {
       visitId,
     });
 
-    // 6. Get certificate public URL
-    const { data: publicUrlData } = supabase.storage
-      .from("certificates")
-      .getPublicUrl(fileName);
+    // 6. Return internal media proxy URL instead of public URL since bucket is private
+    const internalCertUrl = `/api/media/image?path=${encodeURIComponent(fileName)}`;
 
     // Build stamp response safely
     const stampResponse = stampResult.success
@@ -85,7 +83,7 @@ export async function POST(request: NextRequest) {
       success: true,
       certificateId,
       stamp: stampResponse,
-      certificateUrl: publicUrlData?.publicUrl || fileName,
+      certificateUrl: internalCertUrl,
     });
   } catch (error) {
     console.error("Certificate generation error:", error);

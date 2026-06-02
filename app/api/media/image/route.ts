@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
       return placeholderResponse();
     }
 
-    const signedUrl = await createPrivateFileSignedUrl("visit-photos", path, 3600);
+    const bucket = path.startsWith("certificates/") ? "certificate-files" : "visit-photos";
+    const signedUrl = await createPrivateFileSignedUrl(bucket, path, 3600);
     return NextResponse.redirect(signedUrl);
   } catch (error) {
     // File not found is expected (seed data paths, not-yet-uploaded files)

@@ -124,7 +124,7 @@ export function LineLinkPanel({
   return (
     <section className={`rounded-xl border border-ink/5 bg-white p-6 shadow-sm ${className}`}>
       <div className="flex items-start gap-4">
-        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#FAF3EE] text-[#E18868]">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-orange-50 text-[#E18868]">
           <ChatCircleDots size={24} weight="fill" />
         </div>
         <div>
@@ -135,7 +135,7 @@ export function LineLinkPanel({
       </div>
 
       <div className="mt-6 grid gap-4">
-        <div className="rounded-[1rem] bg-background p-5 border border-ink/5">
+        <div className="rounded-2xl bg-background p-5 border border-ink/5">
           <div className="flex gap-3">
             <DeviceMobile className="mt-0.5 shrink-0 text-[#E18868]" size={20} weight="fill" />
             <p className="text-sm leading-6 text-ink">
@@ -153,7 +153,7 @@ export function LineLinkPanel({
         {isConfigured ? (
           <label
             htmlFor={consentId}
-            className="flex cursor-pointer gap-3 rounded-[1rem] border border-[#E18868]/15 bg-[#FAF3EE]/60 p-5 text-sm leading-6 text-ink hover:bg-[#FAF3EE] transition-colors"
+            className="flex cursor-pointer gap-3 rounded-2xl border border-[#E18868]/15 bg-orange-50/60 p-5 text-sm leading-6 text-ink hover:bg-orange-50 transition-colors"
           >
             <input
               id={consentId}
@@ -172,27 +172,27 @@ export function LineLinkPanel({
             </span>
           </label>
         ) : (
-          <div className="rounded-[1rem] border border-ink/10 bg-background p-5 text-sm leading-6 text-muted">
+          <div className="rounded-2xl border border-ink/10 bg-background p-5 text-sm leading-6 text-muted">
             ระบบยังไม่ได้เปิดใช้ LINE LIFF ในสภาพแวดล้อมนี้ คุณยังสามารถดูพาสปอร์ตและดาวน์โหลดใบประกาศต่อแบบ Guest ได้ตามปกติ
           </div>
         )}
 
         {uiState.kind === "success" && (
-          <div className="flex gap-3 rounded-[1rem] bg-[#E18868]/10 p-5 text-sm font-semibold leading-6 text-[#E18868]">
+          <div className="flex gap-3 rounded-2xl bg-[#E18868]/10 p-5 text-sm font-semibold leading-6 text-[#E18868]">
             <CheckCircle className="mt-0.5 shrink-0" size={20} weight="fill" />
             <span>เชื่อม LINE สำเร็จ พาสปอร์ตของคุณพร้อมสำหรับการใช้งานครั้งถัดไปแล้ว</span>
           </div>
         )}
 
         {uiState.kind === "error" && (
-          <div className="flex gap-3 rounded-[1rem] border border-red-500/20 bg-red-50 p-5 text-sm font-semibold leading-6 text-red-500">
+          <div className="flex gap-3 rounded-2xl border border-red-500/20 bg-red-50 p-5 text-sm font-semibold leading-6 text-red-500">
             <WarningCircle className="mt-0.5 shrink-0" size={20} weight="fill" />
             <span>{uiState.message}</span>
           </div>
         )}
 
         {uiState.kind === "not_configured" && (
-          <div className="flex gap-3 rounded-[1rem] border border-ink/10 bg-background p-5 text-sm font-semibold leading-6 text-ink">
+          <div className="flex gap-3 rounded-2xl border border-ink/10 bg-background p-5 text-sm font-semibold leading-6 text-ink">
             <WarningCircle className="mt-0.5 shrink-0 text-ink/40" size={20} weight="fill" />
             <span>LINE ยังไม่พร้อมใช้งานในตอนนี้ คุณสามารถใช้ Guest ต่อได้โดยไม่เสียสิทธิ์ใบประกาศหรือตราประทับ</span>
           </div>
