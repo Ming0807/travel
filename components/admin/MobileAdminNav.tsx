@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { List, X, MapPin, CaretDown } from "@phosphor-icons/react";
-import { navGroups } from "./admin-nav-items";
+import { navGroups, type NavGroup as NavGroupType, type NavItem } from "./admin-nav-items";
 
 export function MobileAdminNav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,7 +51,7 @@ export function MobileAdminNav() {
 
         <nav className="p-4 pb-20 space-y-6" aria-label="Mobile admin navigation">
           {navGroups.map((group) => (
-            <MobileNavGroup key={group.group} group={group} pathname={pathname} closeDrawer={() => setIsOpen(false)} />
+            <MobileNavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} closeDrawer={() => setIsOpen(false)} />
           ))}
         </nav>
       </div>
@@ -59,13 +59,9 @@ export function MobileAdminNav() {
   );
 }
 
-function MobileNavGroup({ group, pathname, closeDrawer }: { group: any; pathname: string; closeDrawer: () => void }) {
-  const hasActiveItem = group.items.some((i: any) => pathname === i.href || pathname.startsWith(i.href + "/"));
-  const [isGroupOpen, setIsGroupOpen] = require("react").useState(hasActiveItem);
-
-  require("react").useEffect(() => {
-    if (hasActiveItem) setIsGroupOpen(true);
-  }, [hasActiveItem]);
+function MobileNavGroup({ group, pathname, closeDrawer }: { group: NavGroupType; pathname: string; closeDrawer: () => void }) {
+  const hasActiveItem = group.items.some((i: NavItem) => pathname === i.href || pathname.startsWith(i.href + "/"));
+  const [isGroupOpen, setIsGroupOpen] = useState(hasActiveItem);
 
   return (
     <details className="group" open={isGroupOpen} onToggle={(e) => setIsGroupOpen((e.target as HTMLDetailsElement).open)}>
@@ -74,8 +70,8 @@ function MobileNavGroup({ group, pathname, closeDrawer }: { group: any; pathname
         <CaretDown size={12} weight="bold" className="transition-transform group-open:-rotate-180" />
       </summary>
       <div className="space-y-1 pb-4">
-        {group.items.map((item: any) => {
-          const Icon = item.icon;
+        {group.items.map((item: NavItem) => {
+          const Icon = item.icon as React.ComponentType<{ size?: number; weight?: "fill" | "regular" }>;
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
 
           return (

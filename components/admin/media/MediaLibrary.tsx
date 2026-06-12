@@ -263,11 +263,6 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
   const [refViewLoading, setRefViewLoading] = useState(false);
   const [refViewError, setRefViewError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void fetchMedia();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, showArchived]);
-
   const filteredAssets = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return assets;
@@ -304,6 +299,13 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
       setLoading(false);
     }
   };
+
+ 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchMedia();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, showArchived]);
 
   const uploadFile = async (file: File) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -747,7 +749,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                     {archived ? (
                       <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs leading-5 text-amber-800">
                         <Archive className="mt-0.5 shrink-0" size={15} weight="fill" />
-                        สื่อนี้ถูก archive แล้ว กด "กู้คืน" เพื่อให้นำกลับมาใช้ใน Media Library และตัวเลือกสื่อได้อีกครั้ง
+                        สื่อนี้ถูก archive แล้ว กด &quot;กู้คืน&quot; เพื่อให้นำกลับมาใช้ใน Media Library และตัวเลือกสื่อได้อีกครั้ง
                       </div>
                     ) : (
                       <div className="flex gap-2 rounded-lg border border-slate-200 bg-white p-2 text-xs leading-5 text-slate-600">
