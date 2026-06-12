@@ -68,7 +68,7 @@ function ResultBadge({ result }: { result: "success" | "failed" | "denied" | nul
   const s = styles[result];
   const Icon = s.icon;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${s.bg} ${s.text}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-extrabold uppercase ${s.bg} ${s.text}`}>
       <Icon size={11} weight="fill" />
       {result}
     </span>
@@ -184,7 +184,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
             <Sliders size={18} />
             Filters
             {activeFilterCount(filters) > 0 ? (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0A6B62] px-1.5 text-[10px] font-extrabold text-white">
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0A6B62] px-1.5 text-xs font-extrabold text-white">
                 {activeFilterCount(filters)}
               </span>
             ) : null}
@@ -450,7 +450,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                           {log.admin_users?.display_name || "System"}
                         </p>
                         {log.admin_users?.email ? (
-                          <p className="text-[10px] text-slate-500">{log.admin_users.email}</p>
+                          <p className="text-xs text-slate-500">{log.admin_users.email}</p>
                         ) : null}
                       </div>
                       <div>
@@ -459,7 +459,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                           {log.entity_type}
                         </p>
                         {log.entity_id ? (
-                          <p className="truncate text-[10px] text-slate-500">
+                          <p className="truncate text-xs text-slate-500">
                             ID: {log.entity_id.length > 16 ? log.entity_id.substring(0, 14) + "..." : log.entity_id}
                           </p>
                         ) : null}

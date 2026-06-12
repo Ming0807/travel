@@ -85,7 +85,7 @@ export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
                   <div className="flex flex-wrap gap-1.5">
                     {user.roles && user.roles.length > 0 ? (
                       user.roles.map((r: string) => (
-                        <span key={r} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ring-1 ring-inset ${
+                        <span key={r} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wider ring-1 ring-inset ${
                           r.toLowerCase() === 'admin' 
                             ? 'bg-coral/10 text-coral ring-coral/20' 
                             : 'bg-teal/10 text-teal ring-teal/20'
@@ -155,7 +155,7 @@ export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
                         <div className="flex flex-wrap gap-1.5 max-w-sm">
                           {user.roles && user.roles.length > 0 ? (
                             user.roles.map((r: string) => (
-                              <span key={r} className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ring-1 ring-inset ${
+                              <span key={r} className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ring-1 ring-inset ${
                                 r.toLowerCase() === 'admin' 
                                   ? 'bg-coral/10 text-coral ring-coral/20' 
                                   : 'bg-teal/10 text-teal ring-teal/20'

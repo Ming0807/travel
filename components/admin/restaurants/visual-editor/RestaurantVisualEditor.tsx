@@ -95,7 +95,7 @@ export function RestaurantVisualEditor({
             )}
             <div className={`absolute bottom-8 left-8 right-8 ${coverImage ? "text-white" : "text-slate-800"}`}>
               {restaurant.food_type && (
-                <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold mb-3 uppercase tracking-wider border ${coverImage ? "border-white/20 bg-white/20 text-white backdrop-blur-md" : "border-amber-200 bg-white text-amber-700"}`}>
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold mb-3 uppercase tracking-wider border ${coverImage ? "border-white/20 bg-white/20 text-white backdrop-blur-md" : "border-amber-200 bg-white text-amber-700"}`}>
                   {restaurant.food_type}
                 </span>
               )}
@@ -126,7 +126,7 @@ export function RestaurantVisualEditor({
 
             {/* Nearby Attractions readiness */}
             <div className="relative rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center mt-12">
-              <div className="absolute top-4 right-4 rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold text-slate-500">
+              <div className="absolute top-4 right-4 rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-500">
                 Missing content
               </div>
               <h3 className="text-lg font-bold text-slate-800 mb-2">สถานที่ท่องเที่ยวใกล้เคียง</h3>
@@ -208,7 +208,7 @@ export function RestaurantVisualEditor({
 
               {/* Reviews readiness */}
               <div className="relative rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center mt-6">
-                <div className="absolute top-4 right-4 rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold text-slate-500">
+                <div className="absolute top-4 right-4 rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-500">
                   Planned content
                 </div>
                 <h3 className="font-bold text-slate-800 mb-2">รีวิวร้านอาหาร</h3>

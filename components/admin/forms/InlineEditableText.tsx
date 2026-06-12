@@ -250,7 +250,7 @@ export function InlineEditableText({
             <X size={14} weight="bold" />
             ยกเลิก
           </button>
-          <span className="text-[10px] text-slate-400">
+          <span className="text-xs text-slate-400">
             {maxLength ? `${draft.length}/${maxLength} - ` : ""}
             {multiline ? "Enter บันทึก - Shift+Enter ขึ้นบรรทัดใหม่ - Escape ยกเลิก" : "Enter บันทึก - Escape ยกเลิก"}
           </span>
@@ -280,7 +280,7 @@ export function InlineEditableText({
 
       <div className="absolute right-0 top-0 z-10 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         {saved && !undoAvailable ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
             <Check size={12} weight="bold" />
             บันทึกแล้ว
           </span>
@@ -291,7 +291,7 @@ export function InlineEditableText({
             type="button"
             onClick={() => void handleUndo()}
             disabled={isSaving}
-            className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
             title="ย้อนกลับการแก้ไขนี้"
           >
             <ArrowCounterClockwise size={12} weight="bold" />

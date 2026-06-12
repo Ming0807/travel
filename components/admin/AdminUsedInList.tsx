@@ -43,7 +43,7 @@ export function AdminUsedInList({ references, emptyMessage }: AdminUsedInListPro
                 href={ref.href}
                 className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-slate-600 transition hover:bg-slate-50 hover:text-[#0A6B62]"
               >
-                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 group-hover:bg-[#E6F4EF] group-hover:text-[#0A6B62]">
+                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-500 group-hover:bg-[#E6F4EF] group-hover:text-[#0A6B62]">
                   {typeLabels[ref.type] ?? ref.type}
                 </span>
                 <span className="flex-1 truncate font-semibold">{ref.label}</span>
@@ -51,7 +51,7 @@ export function AdminUsedInList({ references, emptyMessage }: AdminUsedInListPro
               </Link>
             ) : (
               <span className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-slate-500">
-                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-500">
                   {typeLabels[ref.type] ?? ref.type}
                 </span>
                 <span className="flex-1 truncate">{ref.label}</span>

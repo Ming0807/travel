@@ -31,7 +31,7 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
               placeholder="Search anything..."
             />
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-               <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">⌘ /</span>
+               <span className="text-xs font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">⌘ /</span>
             </div>
           </div>
         </div>

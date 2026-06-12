@@ -77,7 +77,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
     render(<MediaLibrary mode="manage" />);
 
     expect(screen.getByText("อัปโหลดภาพของระบบ")).toBeInTheDocument();
-    expect(screen.getByText("Active assets")).toBeInTheDocument();
+    expect(screen.getByText("สื่อที่ใช้งาน")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -119,7 +119,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
     );
 
     // Find the archive toggle button (not "Archive" action button)
-    const toggleBtns = screen.getAllByRole("button", { name: /Archived/i });
+    const toggleBtns = screen.getAllByRole("button", { name: /แสดงที่เก็บ|ซ่อนที่เก็บ/i });
     expect(toggleBtns.length).toBeGreaterThan(0);
 
     // Mock the re-fetch triggered by toggle
@@ -155,7 +155,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
     mouseEnterCard("hero-beach.jpg");
 
     // Now click the Archive action button (not the Archived toggle)
-    const [archiveBtn] = screen.getAllByRole("button", { name: /^Archive$/ });
+    const [archiveBtn] = screen.getAllByRole("button", { name: /Archive/ });
     await userEvent.click(archiveBtn);
 
     await waitFor(() => {
@@ -179,7 +179,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
     });
 
     mouseEnterCard("hero-beach.jpg");
-    const [archiveBtn] = screen.getAllByRole("button", { name: /^Archive$/ });
+    const [archiveBtn] = screen.getAllByRole("button", { name: /Archive/ });
     await userEvent.click(archiveBtn);
 
     await waitFor(() => {
@@ -216,7 +216,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
     });
 
     mouseEnterCard("hero-beach.jpg");
-    const [archiveBtn] = screen.getAllByRole("button", { name: /^Archive$/ });
+    const [archiveBtn] = screen.getAllByRole("button", { name: /Archive/ });
     await userEvent.click(archiveBtn);
 
     await waitFor(() => {
@@ -263,7 +263,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
     });
 
     mouseEnterCard("hero-beach.jpg");
-    const [archiveBtn] = screen.getAllByRole("button", { name: /^Archive$/ });
+    const [archiveBtn] = screen.getAllByRole("button", { name: /Archive/ });
     await userEvent.click(archiveBtn);
 
     await waitFor(() => {
@@ -298,7 +298,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
     });
 
     // Toggle to show archived assets
-    const toggleBtns = screen.getAllByRole("button", { name: /Archived/i });
+    const toggleBtns = screen.getAllByRole("button", { name: /แสดงที่เก็บ|ซ่อนที่เก็บ/i });
     await userEvent.click(toggleBtns[0]);
 
     await waitFor(() => {
@@ -359,7 +359,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
     });
 
     mouseEnterCard("hero-beach.jpg");
-    const [archiveBtn] = screen.getAllByRole("button", { name: /^Archive$/ });
+    const [archiveBtn] = screen.getAllByRole("button", { name: /Archive/ });
     await userEvent.click(archiveBtn);
 
     await waitFor(() => {
@@ -429,7 +429,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
     render(<MediaLibrary mode="pick" onSelect={onSelect} />);
 
     // Toggle to show archived
-    const toggleBtns = screen.getAllByRole("button", { name: /Archived/i });
+    const toggleBtns = screen.getAllByRole("button", { name: /แสดงที่เก็บ|ซ่อนที่เก็บ/i });
     await userEvent.click(toggleBtns[0]);
 
     await waitFor(() => {

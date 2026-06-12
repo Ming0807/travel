@@ -40,7 +40,7 @@ export function FilterSelect({ label, paramKey, options, allLabel = "ทั้�
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+      <label className="text-xs font-bold uppercase tracking-wide text-slate-500">
         {label}
       </label>
       <select

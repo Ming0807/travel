@@ -246,12 +246,12 @@ export function MessageListClient({
               </div>
               <div className="flex flex-wrap gap-1 shrink-0">
                 {msg.status === "unread" && (
-                  <span className="rounded-full bg-[#FFEBE5] px-2 py-0.5 text-[10px] font-bold text-[#F3704C]">
+                  <span className="rounded-full bg-[#FFEBE5] px-2 py-0.5 text-xs font-bold text-[#F3704C]">
                     New
                   </span>
                 )}
                 {msg.is_replied && (
-                  <span className="rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                  <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">
                     Replied
                   </span>
                 )}

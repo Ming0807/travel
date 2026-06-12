@@ -94,7 +94,7 @@ function MobileNavGroup({ group, pathname, closeDrawer }: { group: any; pathname
                 {item.label}
               </div>
               {item.badge && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F3704C] text-[10px] font-bold text-white">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F3704C] text-xs font-bold text-white">
                   {item.badge}
                 </span>
               )}

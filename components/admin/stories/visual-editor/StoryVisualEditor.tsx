@@ -33,7 +33,7 @@ function MissingImageState({ title, description }: { title: string; description:
 function PlannedContentState({ title, description }: { title: string; description: string }) {
   return (
     <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 shadow-sm">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Not configured</p>
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Not configured</p>
       <h3 className="mt-2 font-black text-slate-800 text-lg">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
     </div>
@@ -111,7 +111,7 @@ export function StoryVisualEditor({
                   <span>หน้าแรก</span> <span>/</span> <span>บทความและเรื่องราว</span> <span>/</span> <span className="text-slate-800">{category}</span>
                 </div>
 
-                <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
                   <span className="bg-orange-500 text-white px-2 py-0.5 rounded-sm">{category}</span>
                   <span>{readTime}</span>
                 </div>
@@ -127,7 +127,7 @@ export function StoryVisualEditor({
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 py-6 border-y border-slate-200 mb-8 pointer-events-none">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-slate-50 text-[10px] font-black uppercase text-slate-400 shadow-sm overflow-hidden">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-slate-50 text-xs font-black uppercase text-slate-400 shadow-sm overflow-hidden">
                   {story.author_type === "tourist" ? "T" : "A"}
                 </div>
                 <div>
@@ -136,7 +136,7 @@ export function StoryVisualEditor({
                   </p>
                   <p className="text-xs text-slate-500">{dateStr} - {readTime}</p>
                   {story.author_type === "tourist" && (
-                    <p className="mt-1 max-w-md text-[10px] uppercase font-bold tracking-wider text-orange-500">
+                    <p className="mt-1 max-w-md text-xs uppercase font-bold tracking-wider text-orange-500">
                       Tourist UGC Story
                     </p>
                   )}

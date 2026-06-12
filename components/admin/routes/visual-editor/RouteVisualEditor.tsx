@@ -355,7 +355,7 @@ export function RouteVisualEditor({
 
               {/* Related Stops Management */}
               <div className="relative rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
-                <div className="absolute right-4 top-4 rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold text-slate-500">
+                <div className="absolute right-4 top-4 rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-500">
                   Management
                 </div>
                 <MapPin size={28} className="mx-auto text-green-600 mb-2" weight="fill" />
@@ -379,7 +379,7 @@ export function RouteVisualEditor({
                         </li>
                       ))}
                     </ul>
-                    <p className="mt-2 text-[10px] font-bold text-amber-800">
+                    <p className="mt-2 text-xs font-bold text-amber-800">
                       ไปที่จัดการจุดแวะพักเพื่อลบรายการซ้ำ
                     </p>
                   </div>

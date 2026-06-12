@@ -48,7 +48,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectAsset, tit
         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div>
             <h2 className="text-lg sm:text-xl font-black text-slate-900">{title}</h2>
-            <p className="mt-0.5 text-[10px] sm:text-xs text-slate-500 hidden sm:block">เลือกภาพจากคลังเพื่อใช้งานซ้ำ หรืออัปโหลดใหม่เพื่อช่วยประหยัดพื้นที่จัดเก็บ</p>
+            <p className="mt-0.5 text-xs text-slate-500 hidden sm:block">เลือกภาพจากคลังเพื่อใช้งานซ้ำ หรืออัปโหลดใหม่เพื่อช่วยประหยัดพื้นที่จัดเก็บ</p>
           </div>
           <button
             onClick={onClose}

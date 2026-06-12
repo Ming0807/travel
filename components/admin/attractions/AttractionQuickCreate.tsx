@@ -158,7 +158,7 @@ export function AttractionQuickCreate({
 
       <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-coral">ขั้นตอนต่อไป</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-coral">ขั้นตอนต่อไป</p>
           <h3 className="mt-2 text-base font-black text-slate-900">สร้างฉบับร่างก่อน ค่อยจัดหน้าทีหลัง</h3>
           <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
             {[

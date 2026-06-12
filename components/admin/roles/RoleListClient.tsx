@@ -56,7 +56,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                     <div className="flex items-center gap-2">
                       <h3 className="text-base font-bold text-slate-900">{role.role_name}</h3>
                       {isProtectedRole(role.role_name) && (
-                        <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 uppercase tracking-wider">
+                        <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 uppercase tracking-wider">
                           System
                         </span>
                       )}
@@ -82,12 +82,12 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                   <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Permissions ({role.permissions.length})</span>
                   <div className="flex flex-wrap gap-1.5">
                     {role.permissions.slice(0, 4).map((perm) => (
-                      <span key={perm} className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-[10px] font-mono font-medium text-slate-600 border border-slate-200">
+                      <span key={perm} className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-mono font-medium text-slate-600 border border-slate-200">
                         {perm}
                       </span>
                     ))}
                     {role.permissions.length > 4 && (
-                      <span className="inline-flex rounded-md bg-slate-50 px-2 py-1 text-[10px] font-mono font-medium text-slate-500 border border-slate-200">
+                      <span className="inline-flex rounded-md bg-slate-50 px-2 py-1 text-xs font-mono font-medium text-slate-500 border border-slate-200">
                         +{role.permissions.length - 4} more
                       </span>
                     )}
@@ -141,7 +141,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-slate-900">{role.role_name}</span>
                             {isProtectedRole(role.role_name) && (
-                              <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 uppercase tracking-wider">
+                              <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 uppercase tracking-wider">
                                 System
                               </span>
                             )}
@@ -154,12 +154,12 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1.5 max-w-md">
                           {role.permissions.slice(0, 5).map((perm) => (
-                            <span key={perm} className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-[10px] font-mono font-medium text-slate-600 border border-slate-200">
+                            <span key={perm} className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-mono font-medium text-slate-600 border border-slate-200">
                               {perm}
                             </span>
                           ))}
                           {role.permissions.length > 5 && (
-                            <span className="inline-flex rounded-md bg-slate-50 px-2 py-1 text-[10px] font-mono font-medium text-slate-500 border border-slate-200">
+                            <span className="inline-flex rounded-md bg-slate-50 px-2 py-1 text-xs font-mono font-medium text-slate-500 border border-slate-200">
                               +{role.permissions.length - 5} more
                             </span>
                           )}

@@ -46,12 +46,12 @@ const ENTITY_EDIT_PATHS: Record<string, string> = {
 };
 
 const CATEGORIES = [
-  { value: "All", label: "All" },
-  { value: "General", label: "General" },
-  { value: "Homepage", label: "Homepage" },
-  { value: "Attractions", label: "Attractions" },
-  { value: "Badges", label: "Badges" },
-  { value: "Certificates", label: "Certificates" },
+  { value: "All", label: "ทั้งหมด" },
+  { value: "General", label: "ทั่วไป" },
+  { value: "Homepage", label: "หน้าแรก" },
+  { value: "Attractions", label: "สถานที่" },
+  { value: "Badges", label: "เหรียญตรา" },
+  { value: "Certificates", label: "ใบประกาศ" },
 ];
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -151,7 +151,7 @@ function ReferencesDialog({
               {asset.file_name}
             </p>
             <p
-              className="mt-0.5 truncate font-mono text-[10px] text-slate-400"
+              className="mt-0.5 truncate font-mono text-xs text-slate-400"
               title={asset.storage_path}
             >
               {asset.storage_path}
@@ -555,12 +555,12 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
               {showArchived ? (
                 <>
                   <Eye size={16} weight="bold" />
-                  Archived
+                  แสดงที่เก็บ
                 </>
               ) : (
                 <>
                   <EyeSlash size={16} weight="bold" />
-                  Archived
+                  ซ่อนที่เก็บ
                 </>
               )}
             </button>
@@ -569,19 +569,19 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
 
         <div className="mt-4 hidden sm:grid gap-3 sm:grid-cols-4" role="list" aria-label="Media statistics">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" role="listitem">
-            <p className="text-xs font-bold text-slate-500">Active assets</p>
+            <p className="text-xs font-bold text-slate-500">สื่อที่ใช้งาน</p>
             <p className="mt-1 text-xl font-black text-slate-900" aria-label={`${stats.total} active assets`}>{stats.total}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" role="listitem">
-            <p className="text-xs font-bold text-slate-500">Archived</p>
+            <p className="text-xs font-bold text-slate-500">เก็บถาวรแล้ว</p>
             <p className="mt-1 text-xl font-black text-slate-900" aria-label={`${stats.archivedCount} archived`}>{stats.archivedCount}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" role="listitem">
-            <p className="text-xs font-bold text-slate-500">Large files</p>
+            <p className="text-xs font-bold text-slate-500">ไฟล์ขนาดใหญ่</p>
             <p className={`mt-1 text-xl font-black ${stats.largeCount ? "text-amber-700" : "text-slate-900"}`} aria-label={`${stats.largeCount} large files`}>{stats.largeCount}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" role="listitem">
-            <p className="text-xs font-bold text-slate-500">Unsupported types</p>
+            <p className="text-xs font-bold text-slate-500">ประเภทไม่รองรับ</p>
             <p className={`mt-1 text-xl font-black ${stats.unsupportedCount ? "text-rose-700" : "text-slate-900"}`} aria-label={`${stats.unsupportedCount} unsupported files`}>{stats.unsupportedCount}</p>
           </div>
         </div>

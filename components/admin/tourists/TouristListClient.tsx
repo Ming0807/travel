@@ -87,7 +87,7 @@ export function TouristListClient({ initialTourists }: { initialTourists: Touris
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-wrap gap-1">
                           {Array.from(new Set(tourist.providers)).map((provider) => (
-                            <span key={provider} className="inline-flex items-center gap-1 rounded-md bg-[#E6F4EF] px-2 py-1 text-[10px] font-bold text-[#0A6B62] uppercase tracking-wider">
+                            <span key={provider} className="inline-flex items-center gap-1 rounded-md bg-[#E6F4EF] px-2 py-1 text-xs font-bold text-[#0A6B62] uppercase tracking-wider">
                               {provider.replace("_", " ")}
                             </span>
                           ))}
@@ -134,7 +134,7 @@ export function TouristListClient({ initialTourists }: { initialTourists: Touris
                   <p className="text-xs text-slate-400">Auth Methods</p>
                   <div className="flex flex-wrap gap-1">
                     {Array.from(new Set(tourist.providers)).map((provider) => (
-                      <span key={provider} className="inline-flex items-center gap-1 rounded-md bg-[#E6F4EF] px-2 py-1 text-[10px] font-bold text-[#0A6B62] uppercase tracking-wider">
+                      <span key={provider} className="inline-flex items-center gap-1 rounded-md bg-[#E6F4EF] px-2 py-1 text-xs font-bold text-[#0A6B62] uppercase tracking-wider">
                         {provider.replace("_", " ")}
                       </span>
                     ))}
