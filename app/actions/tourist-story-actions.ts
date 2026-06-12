@@ -10,29 +10,51 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 /**
  * Normalizes user-submitted content to safe plain text.
  *
- * 1. Decodes HTML entities first (so &lt;script&gt; becomes <script>)
- * 2. Strips ALL HTML tags, comments, and anything between angle brackets
- * 3. Result: pure plain text — no raw HTML can survive this pipeline
+ * Bounded decode loop (max 3 passes) handles double-encoded attacks
+ * like &amp;lt;script&amp;gt; → &lt;script&gt; → <script> → stripped.
  *
- * Tourist UGC is stored as plain text. The public detail page renders
- * plain text as paragraphs — never via dangerouslySetInnerHTML.
- * Admin/staff editorial content is the only content that may contain
- * safe HTML and is authored through the admin CMS, not this action.
+ * Pipeline:
+ * 1. Bounded entity decode (lowercase, uppercase, decimal, hex, double-encoded)
+ * 2. Strip HTML comments
+ * 3. Strip all HTML tags
+ *
+ * Result: pure plain text — no raw HTML can survive.
+ * Tourist UGC is stored as plain text and never rendered via dangerouslySetInnerHTML.
  */
 function normalizePlainText(input: string): string {
-  // Decode HTML entities first — this converts &lt;script&gt; into <script>
-  // so the tag-stripping pass can remove it
-  let result = input
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/&#(\d+);/g, (_match, digits) => String.fromCharCode(Number(digits)));
-  // Remove HTML comments
+  // ---- entity decode --------------------------------------------------
+  let result = input;
+
+  for (let pass = 0; pass < 3; pass++) {
+    const before = result;
+
+    // Named angle-bracket entities (lowercase + uppercase)
+    result = result
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&amp;/gi, "&");
+
+    // Decimal numeric character references
+    result = result.replace(/&#(\d+);/g, (_match, digits) =>
+      String.fromCharCode(Number(digits)));
+
+    // Hex numeric character references (case-insensitive)
+    result = result.replace(/&#[xX]([\da-fA-F]+);/g, (_match, hex) =>
+      String.fromCharCode(parseInt(hex, 16)));
+
+    // Quote entities
+    result = result.replace(/&quot;/g, '"').replace(/&#x27;/g, "'");
+
+    // Stop if no more entities were decoded in this pass
+    if (result === before) break;
+  }
+
+  // ---- strip markup ----------------------------------------------------
+  // HTML comments
   result = result.replace(/<!--[\s\S]*?-->/g, "");
-  // Remove all HTML tags
+  // All HTML tags (self-closing + paired)
   result = result.replace(/<[^>]*>/g, "");
+
   return result;
 }
 

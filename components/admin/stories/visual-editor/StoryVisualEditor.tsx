@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Export, BookmarkSimple, Image as ImageIcon } from "@phosphor-icons/react";
@@ -46,17 +46,17 @@ export function StoryVisualEditor({
   coverMediaId: initialCoverMediaId,
   coverMediaUrl: initialCoverMediaUrl,
 }: StoryVisualEditorProps) {
-  const [activeSection, setActiveSection] = useState<EditorSection>(null);
-
-  useEffect(() => {
+  const [activeSection, setActiveSection] = useState<EditorSection>(() => {
+    if (typeof window === "undefined") return null;
     let hash = window.location.hash.replace("#", "");
-    if (hash === "gallery") hash = "cover"; // Map generic media hash to cover
+    if (hash === "gallery") hash = "cover";
     const validSections: EditorSection[] = ["header", "content", "settings", "cover"];
     if (validSections.includes(hash as EditorSection)) {
-      setActiveSection(hash as EditorSection);
       window.history.replaceState(null, "", window.location.pathname);
+      return hash as EditorSection;
     }
-  }, []);
+    return null;
+  });
 
   const title = story.title || "ยังไม่มีชื่อเรื่อง";
   const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId ?? null);

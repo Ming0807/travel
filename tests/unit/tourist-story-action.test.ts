@@ -295,6 +295,41 @@ describe("submitTouristStoryAction — XSS protection (entity decode + tag strip
     expect(payload.content).not.toContain("<a");
     expect(payload.content).toBe("click");
   });
+
+  it("strips hex entity-encoded img tag: &#x3c;img src=x onerror=alert(1)&#x3e;", async () => {
+    const fd = makeForm({ content: "&#x3c;img src=x onerror=alert(1)&#x3e;" });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).not.toContain("<img");
+    expect(payload.content).not.toContain("onerror");
+    expect(payload.content).not.toContain("alert");
+  });
+
+  it("strips uppercase hex entity-encoded script: &#X3C;script&#X3E;alert(1)&#X3C;/script&#X3E;", async () => {
+    const fd = makeForm({ content: "&#X3C;script&#X3E;alert(1)&#X3C;/script&#X3E;" });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).not.toContain("<script");
+    expect(payload.content).not.toContain("</script");
+  });
+
+  it("strips uppercase named entity: &LT;img src=x onerror=alert(1)&GT;", async () => {
+    const fd = makeForm({ content: "&LT;img src=x onerror=alert(1)&GT;" });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).not.toContain("<img");
+    expect(payload.content).not.toContain("onerror");
+  });
+
+  it("strips double-encoded script: &amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;", async () => {
+    const fd = makeForm({ content: "&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;" });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    // After 3-pass decode: &amp;lt; → &lt; → < — all tags stripped
+    expect(payload.content).not.toContain("<script");
+    expect(payload.content).not.toContain("</script");
+    expect(payload.content).not.toContain("&lt;");
+  });
 });
 
 describe("submitTouristStoryAction — identity resolution", () => {
@@ -336,6 +371,14 @@ describe("submitTouristStoryAction — province verification", () => {
     const result = await submitTouristStoryAction(makeForm({ provinceId: "999" }));
     expect(result.success).toBe(false);
     expect(result.error).toBe("ไม่พบจังหวัดที่ระบุ กรุณาลองใหม่");
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
+  });
+
+  it("returns safe error when province query fails", async () => {
+    mockSupabaseFromChain.maybeSingle.mockResolvedValue({ data: null, error: new Error("connection error") });
+    const result = await submitTouristStoryAction(makeForm({ provinceId: "3" }));
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("ไม่สามารถตรวจสอบข้อมูลจังหวัดได้ กรุณาลองใหม่");
     expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
   });
 });
