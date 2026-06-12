@@ -120,21 +120,64 @@ async function runAttractionPickerQuery(
   return (await buildQuery(ATTRACTION_BASE_SELECT)) as AttractionQueryResponse;
 }
 
-export async function searchAttractionsAction(query: string) {
+type AttractionSearchOptions = {
+  query?: string;
+  province?: string;
+  status?: "all" | "published" | "draft" | "inactive" | "has_cover";
+  limit?: number;
+};
+
+export async function searchAttractionsAction(queryOrOptions: string | AttractionSearchOptions) {
   try {
     await requirePermission("attraction.read");
     const supabase = await createSupabaseServerClient();
-    const trimmedQuery = query.trim();
+
+    const options: AttractionSearchOptions =
+      typeof queryOrOptions === "string"
+        ? { query: queryOrOptions }
+        : queryOrOptions;
+
+    const trimmedQuery = (options.query ?? "").trim();
+    const limit = options.limit ?? 20;
 
     const { data, error } = await runAttractionPickerQuery((selectClause) => {
       let dbQuery = supabase
         .from("attractions")
         .select(selectClause)
         .order("name_th", { ascending: true })
-        .limit(20);
+        .limit(limit);
 
+      // Search by name (Thai + English) AND slug
       if (trimmedQuery) {
-        dbQuery = dbQuery.or(`name_th.ilike.%${trimmedQuery}%,name_en.ilike.%${trimmedQuery}%`);
+        const escaped = trimmedQuery.replace(/%/g, "\\%").replace(/_/g, "\\_");
+        dbQuery = dbQuery.or(
+          `name_th.ilike.%${escaped}%,name_en.ilike.%${escaped}%,slug.ilike.%${escaped}%`
+        );
+      }
+
+      // Server-side province filter
+      if (options.province && options.province !== "all") {
+        dbQuery = dbQuery.eq("provinces.province_name_en", options.province);
+      }
+
+      // Server-side status filter
+      if (options.status && options.status !== "all") {
+        switch (options.status) {
+          case "published":
+            dbQuery = dbQuery.eq("is_published", true).eq("is_active", true);
+            break;
+          case "draft":
+            dbQuery = dbQuery.eq("is_published", false);
+            break;
+          case "inactive":
+            dbQuery = dbQuery.eq("is_active", false);
+            break;
+          case "has_cover":
+            // Has-cover filter: requires a non-null content_media with is_cover=true and is_active=true
+            // We filter this post-query since it requires nested relation filtering.
+            // The query still fetches media; client filters for cover presence.
+            break;
+        }
       }
 
       return dbQuery;
@@ -144,7 +187,14 @@ export async function searchAttractionsAction(query: string) {
       return { success: false, error: "ไม่สามารถค้นหาสถานที่ได้ กรุณาลองอีกครั้ง" };
     }
 
-    return { success: true, data: (data ?? []).map(mapHomepagePickerAttraction) };
+    let results = (data ?? []).map(mapHomepagePickerAttraction);
+
+    // Post-query filter for has_cover (needs media relation inspection)
+    if (options.status === "has_cover") {
+      results = results.filter((item) => item.cover_media_path !== null);
+    }
+
+    return { success: true, data: results };
   } catch {
     return { success: false, error: "Internal server error" };
   }

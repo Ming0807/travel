@@ -18,6 +18,14 @@ const PROVINCE_FILTERS = [
   { value: "Narathiwat", label: "นราธิวาส" },
 ];
 
+const STATUS_FILTERS = [
+  { value: "all", label: "ทุกสถานะ" },
+  { value: "published", label: "เผยแพร่แล้ว" },
+  { value: "draft", label: "ฉบับร่าง" },
+  { value: "inactive", label: "ปิดใช้งาน" },
+  { value: "has_cover", label: "มีรูปหน้าปก" },
+];
+
 type AttractionData = {
   id: number;
   name_th: string;
@@ -61,12 +69,17 @@ export function HomepageFeaturedEditor({
 
   async function handleSearch(q: string) {
     setSearchQuery(q);
-    if (!q.trim()) {
+    if (!q.trim() && provinceFilter === "all" && statusFilter === "all") {
       setSearchResults([]);
       return;
     }
     setIsSearching(true);
-    const res = await searchAttractionsAction(q);
+    const res = await searchAttractionsAction({
+      query: q,
+      province: provinceFilter !== "all" ? provinceFilter : undefined,
+      status: statusFilter as "all" | "published" | "draft" | "inactive" | "has_cover" | undefined,
+      limit: 30,
+    });
     if (res.success && res.data) {
       setSearchResults(res.data);
     }
@@ -118,14 +131,7 @@ export function HomepageFeaturedEditor({
     return `/site-media/${path}`;
   }
 
-  const selectedProvince = PROVINCE_FILTERS.find((item) => item.value === provinceFilter);
-  const filteredSearchResults = searchResults.filter((result) => {
-    if (provinceFilter !== "all" && result.province?.name_en !== provinceFilter && result.province?.name_th !== selectedProvince?.label) return false;
-    if (statusFilter === "published" && (!result.is_published || !result.is_active)) return false;
-    if (statusFilter === "draft" && result.is_published) return false;
-    if (statusFilter === "inactive" && result.is_active) return false;
-    return true;
-  });
+  const filteredSearchResults = searchResults;
   const selectedWarnings = items.reduce(
     (acc, item) => {
       if (!item.cover_media_path) acc.missingCover += 1;
@@ -161,7 +167,7 @@ export function HomepageFeaturedEditor({
             <button
               key={item.value}
               type="button"
-              onClick={() => setProvinceFilter(item.value)}
+              onClick={() => { setProvinceFilter(item.value); handleSearch(searchQuery); }}
               className={`min-h-9 rounded-full border px-3 text-xs font-black transition ${
                 provinceFilter === item.value
                   ? "border-[#0A6B62] bg-[#E6F4EF] text-[#073F37]"
@@ -174,13 +180,12 @@ export function HomepageFeaturedEditor({
           <div className="h-4 w-px bg-slate-300 mx-1"></div>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); handleSearch(searchQuery); }}
             className="min-h-9 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600 outline-none hover:bg-slate-50 focus:border-[#0A6B62] focus:ring-1 focus:ring-[#0A6B62]"
           >
-            <option value="all">ทุกสถานะ (All Status)</option>
-            <option value="published">เผยแพร่แล้ว (Published)</option>
-            <option value="draft">ฉบับร่าง (Draft)</option>
-            <option value="inactive">ปิดใช้งาน (Inactive)</option>
+            {STATUS_FILTERS.map((item) => (
+              <option key={item.value} value={item.value}>{item.label}</option>
+            ))}
           </select>
         </div>
         <div className="relative">
@@ -189,7 +194,7 @@ export function HomepageFeaturedEditor({
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="พิมพ์ชื่อสถานที่ท่องเที่ยว..."
+            placeholder="พิมพ์ชื่อ, slug หรือคำค้น..."
             className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
           />
           {isSearching && (
