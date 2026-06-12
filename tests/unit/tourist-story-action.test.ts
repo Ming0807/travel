@@ -4,19 +4,18 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 // ── Mocks ──────────────────────────────────────────────────────────────────
 
-const mockFindTouristByIdentity = vi.fn();
-const mockCreateTouristProfile = vi.fn();
-const mockCreateTouristIdentity = vi.fn();
-const mockGetGuestIdentity = vi.fn();
+const mockResolveCurrentTouristId = vi.fn();
 
-vi.mock("@/lib/repositories/tourist.repository", () => ({
-  findTouristByIdentity: (...args: any[]) => mockFindTouristByIdentity(...args),
-  createTouristIdentity: (...args: any[]) => mockCreateTouristIdentity(...args),
-  createTouristProfile: (...args: any[]) => mockCreateTouristProfile(...args),
-}));
-
-vi.mock("@/lib/auth/guest", () => ({
-  getGuestIdentity: () => mockGetGuestIdentity(),
+vi.mock("@/lib/auth/guards", () => ({
+  resolveCurrentTouristId: () => mockResolveCurrentTouristId(),
+  TouristAccessError: class extends Error {
+    code: string;
+    constructor(code: string, message: string) {
+      super(message);
+      this.code = code;
+      this.name = "TouristAccessError";
+    }
+  },
 }));
 
 const mockSupabaseAuth = {
@@ -24,18 +23,28 @@ const mockSupabaseAuth = {
     getUser: vi.fn(),
   },
 };
-const mockSupabaseFrom = {
-  insert: vi.fn().mockReturnThis(),
-  select: vi.fn().mockReturnThis(),
-  single: vi.fn(),
-};
-const mockAdminSupabase = {
-  from: vi.fn().mockReturnValue(mockSupabaseFrom),
-};
 
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: () => mockSupabaseAuth,
 }));
+
+type InsertPayload = Record<string, unknown>;
+
+const mockSupabaseFromChain = {
+  insert: vi.fn().mockReturnThis(),
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  order: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
+  ilike: vi.fn().mockReturnThis(),
+  or: vi.fn().mockReturnThis(),
+  single: vi.fn(),
+  maybeSingle: vi.fn(),
+};
+
+const mockAdminSupabase = {
+  from: vi.fn().mockReturnValue(mockSupabaseFromChain),
+};
 
 vi.mock("@/lib/supabase/service-role", () => ({
   createSupabaseServiceRoleClient: () => mockAdminSupabase,
@@ -56,41 +65,46 @@ function makeForm(overrides: Record<string, string> = {}) {
 function mockAuthUser() {
   mockSupabaseAuth.auth.getUser.mockResolvedValue({
     data: {
-      user: {
-        id: "auth-uuid-test",
-        app_metadata: { provider: "google" },
-        user_metadata: { full_name: "Test User" },
-      },
+      user: { id: "auth-uuid-test", app_metadata: {}, user_metadata: {} },
     },
     error: null,
   });
 }
 
+function mockIdentityResolved() {
+  mockResolveCurrentTouristId.mockResolvedValue("tourist-uuid-resolved");
+}
+
+function mockProvinceExists() {
+  mockSupabaseFromChain.maybeSingle.mockResolvedValue({ data: { province_id: 3 }, error: null });
+}
+
 function mockStoryInsertSuccess() {
-  mockSupabaseFrom.single.mockResolvedValue({
+  mockSupabaseFromChain.single.mockResolvedValue({
     data: { slug: "my-amazing-trip-1234" },
     error: null,
   });
+}
+
+function getInsertPayload(): InsertPayload {
+  return (mockSupabaseFromChain.insert as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] ?? {};
 }
 
 describe("submitTouristStoryAction — validation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthUser();
+    mockIdentityResolved();
+    mockProvinceExists();
     mockStoryInsertSuccess();
-    mockGetGuestIdentity.mockResolvedValue(null);
-    mockFindTouristByIdentity.mockResolvedValue("tourist-uuid");
   });
 
   it("returns Thai error for missing title", async () => {
     const fd = makeForm({ title: "" });
     const result = await submitTouristStoryAction(fd);
-
     expect(result.success).toBe(false);
     expect(result.error).toBe("กรุณากรอกชื่อเรื่อง");
-    // Must NOT call any DB operations
-    expect(mockFindTouristByIdentity).not.toHaveBeenCalled();
-    expect(mockCreateTouristProfile).not.toHaveBeenCalled();
+    expect(mockResolveCurrentTouristId).not.toHaveBeenCalled();
     expect(mockAdminSupabase.from).not.toHaveBeenCalled();
   });
 
@@ -115,16 +129,6 @@ describe("submitTouristStoryAction — validation", () => {
     expect(result.error).toBe("กรุณากรอกเนื้อหาเรื่องราว");
   });
 
-  it("rejects non-string provinceId (number)", async () => {
-    const fd = new FormData();
-    fd.set("title", "Test");
-    fd.set("content", "Content here");
-    fd.set("provinceId", "abc"); // Non-numeric
-    const result = await submitTouristStoryAction(fd);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("กรุณาเลือกจังหวัดที่ถูกต้อง");
-  });
-
   it("rejects provinceId = 0", async () => {
     const fd = makeForm({ provinceId: "0" });
     const result = await submitTouristStoryAction(fd);
@@ -146,11 +150,35 @@ describe("submitTouristStoryAction — validation", () => {
     expect(result.error).toBe("กรุณาเลือกจังหวัดที่ถูกต้อง");
   });
 
+  it("rejects provinceId = exponent notation 1e2", async () => {
+    const fd = makeForm({ provinceId: "1e2" });
+    const result = await submitTouristStoryAction(fd);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects provinceId = hex notation 0x10", async () => {
+    const fd = makeForm({ provinceId: "0x10" });
+    const result = await submitTouristStoryAction(fd);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects provinceId = whitespace-only", async () => {
+    const fd = makeForm({ provinceId: "   " });
+    const result = await submitTouristStoryAction(fd);
+    expect(result.success).toBe(false);
+  });
+
   it("rejects provinceId = junk prefix like 12abc", async () => {
     const fd = makeForm({ provinceId: "12abc" });
     const result = await submitTouristStoryAction(fd);
     expect(result.success).toBe(false);
     expect(result.error).toBe("กรุณาเลือกจังหวัดที่ถูกต้อง");
+  });
+
+  it("rejects provinceId = NaN string", async () => {
+    const fd = makeForm({ provinceId: "NaN" });
+    const result = await submitTouristStoryAction(fd);
+    expect(result.success).toBe(false);
   });
 
   it("rejects title exceeding 200 characters", async () => {
@@ -167,121 +195,130 @@ describe("submitTouristStoryAction — validation", () => {
     expect(result.error).toContain("10000");
   });
 
-  it("invalid form does NOT call findTouristByIdentity", async () => {
+  it("invalid form does NOT call identity lookup or DB insert", async () => {
     const fd = makeForm({ title: "" });
     await submitTouristStoryAction(fd);
-    expect(mockFindTouristByIdentity).not.toHaveBeenCalled();
-    expect(mockCreateTouristProfile).not.toHaveBeenCalled();
-    expect(mockCreateTouristIdentity).not.toHaveBeenCalled();
+    expect(mockResolveCurrentTouristId).not.toHaveBeenCalled();
     expect(mockAdminSupabase.from).not.toHaveBeenCalled();
   });
 });
 
-describe("submitTouristStoryAction — guest/OAuth merge", () => {
+describe("submitTouristStoryAction — XSS protection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthUser();
+    mockIdentityResolved();
+    mockProvinceExists();
     mockStoryInsertSuccess();
   });
 
-  it("uses existing guest identity when OAuth not linked", async () => {
-    mockFindTouristByIdentity
-      .mockResolvedValueOnce(null)                // OAuth lookup: not found
-      .mockResolvedValueOnce("guest-tourist-uuid"); // Guest lookup: found
-    mockGetGuestIdentity.mockResolvedValue("guest-token-xyz");
-
-    const result = await submitTouristStoryAction(makeForm());
-    expect(result.success).toBe(true);
-
-    // Should have linked OAuth identity to the existing guest tourist
-    expect(mockCreateTouristIdentity).toHaveBeenCalledWith(
-      "guest-tourist-uuid",
-      "google",
-      "auth-uuid-test"
-    );
-    // Must NOT have created a new tourist profile
-    expect(mockCreateTouristProfile).not.toHaveBeenCalled();
+  it("strips <script> tags from content", async () => {
+    const fd = makeForm({ content: "Hello <script>alert('xss')</script> World" });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).toBe("Hello alert('xss') World");
+    expect(payload.excerpt).not.toContain("script");
   });
 
-  it("creates new tourist when no OAuth and no guest identity", async () => {
-    mockFindTouristByIdentity.mockResolvedValue(null);
-    mockGetGuestIdentity.mockResolvedValue(null);
-    mockCreateTouristProfile.mockResolvedValue("new-tourist-uuid");
-
-    const result = await submitTouristStoryAction(makeForm());
-    expect(result.success).toBe(true);
-    expect(mockCreateTouristProfile).toHaveBeenCalled();
-    expect(mockCreateTouristIdentity).toHaveBeenCalledWith(
-      "new-tourist-uuid",
-      "google",
-      "auth-uuid-test"
-    );
+  it("strips event handler attributes", async () => {
+    const fd = makeForm({ content: '<img src=x onerror="alert(1)">Photo' });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).not.toContain("onerror");
+    expect(payload.content).not.toContain("alert");
+    expect(payload.content).toBe("Photo");
   });
 
-  it("recovers from identity race via re-read", async () => {
-    // First OAuth lookup: not found
-    mockFindTouristByIdentity.mockResolvedValueOnce(null);
-    mockGetGuestIdentity.mockResolvedValue(null);
-    mockCreateTouristProfile.mockResolvedValue("new-tourist-uuid");
-    // createTouristIdentity throws (race condition)
-    mockCreateTouristIdentity.mockRejectedValueOnce(new Error("duplicate key"));
-    // Re-read succeeds
-    mockFindTouristByIdentity.mockResolvedValueOnce("recovered-tourist-uuid");
-
-    const result = await submitTouristStoryAction(makeForm());
-    expect(result.success).toBe(true);
-    // Profile was created once
-    expect(mockCreateTouristProfile).toHaveBeenCalledTimes(1);
-    // Identity was attempted once, then recovered
-    expect(mockCreateTouristIdentity).toHaveBeenCalledTimes(1);
+  it("strips javascript: URLs", async () => {
+    const fd = makeForm({ content: '<a href="javascript:void(0)">link</a>' });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).not.toContain("javascript:");
+    expect(payload.content).not.toContain("<a");
+    expect(payload.content).toBe("link");
   });
 
-  it("fails when identity race is unrecoverable", async () => {
-    mockFindTouristByIdentity.mockResolvedValue(null);
-    mockGetGuestIdentity.mockResolvedValue(null);
-    mockCreateTouristProfile.mockResolvedValue("new-tourist-uuid");
-    mockCreateTouristIdentity.mockRejectedValue(new Error("duplicate key value violates unique constraint"));
+  it("strips iframe tags", async () => {
+    const fd = makeForm({ content: 'Before <iframe src="http://evil"></iframe> After' });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).not.toContain("iframe");
+    expect(payload.content).toBe("Before  After");
+  });
 
-    const result = await submitTouristStoryAction(makeForm());
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("ไม่สามารถยืนยันตัวตนนักเดินทางได้ กรุณาลองใหม่");
+  it("strips object/embed tags", async () => {
+    const fd = makeForm({ content: '<object data="x"></object><embed src="y"> text' });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).not.toContain("object");
+    expect(payload.content).not.toContain("embed");
+    expect(payload.content).toContain("text");
+  });
+
+  it("handles malformed HTML gracefully", async () => {
+    const fd = makeForm({ content: "text <unclosed <b>bold</b> more <<<" });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).toBe("text bold more <<<");
+  });
+
+  it("preserves legitimate plain text with Thai characters", async () => {
+    const fd = makeForm({ content: "เที่ยวปัตตานี สุดยอด! 👍" });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).toBe("เที่ยวปัตตานี สุดยอด! 👍");
   });
 });
 
-describe("submitTouristStoryAction — happy path", () => {
+describe("submitTouristStoryAction — identity resolution", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthUser();
+    mockProvinceExists();
     mockStoryInsertSuccess();
-    mockGetGuestIdentity.mockResolvedValue(null);
-    mockFindTouristByIdentity.mockResolvedValue("tourist-uuid");
   });
 
-  it("accepts valid form and returns success", async () => {
+  it("resolves tourist via resolveCurrentTouristId", async () => {
+    mockIdentityResolved();
     const result = await submitTouristStoryAction(makeForm());
     expect(result.success).toBe(true);
-    expect(result.storyId).toBeDefined();
+    expect(mockResolveCurrentTouristId).toHaveBeenCalled();
   });
 
-  it("computes excerpt from content and trims whitespace", async () => {
-    const fd = makeForm({ content: "  Short  story  here.  ".repeat(4) });
-    const result = await submitTouristStoryAction(fd);
-    expect(result.success).toBe(true);
+  it("returns Thai error when no tourist identity found", async () => {
+    mockResolveCurrentTouristId.mockRejectedValue(
+      new (await import("@/lib/auth/guards")).TouristAccessError("TOURIST_IDENTITY_NOT_FOUND", "ไม่พบข้อมูลพาสปอร์ต")
+    );
+    const result = await submitTouristStoryAction(makeForm());
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("ไม่พบพาสปอร์ตของคุณ กรุณาเข้าสู่ระบบใหม่หรือสร้างพาสปอร์ตก่อน");
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
+  });
+});
+
+describe("submitTouristStoryAction — province verification", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthUser();
+    mockIdentityResolved();
+    mockStoryInsertSuccess();
   });
 
-  it("generates slug from title with timestamp suffix", async () => {
-    const fd = makeForm({ title: "เที่ยวปัตตานี สุดยอด!" });
-    const result = await submitTouristStoryAction(fd);
-    expect(result.success).toBe(true);
-    expect(result.storyId).toMatch(/^[a-z0-9ก-๙-]+-\d{4}$/);
+  it("returns error when province does not exist", async () => {
+    mockSupabaseFromChain.maybeSingle.mockResolvedValue({ data: null, error: null });
+    const result = await submitTouristStoryAction(makeForm({ provinceId: "999" }));
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("ไม่พบจังหวัดที่ระบุ กรุณาลองใหม่");
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
   });
 });
 
 describe("submitTouristStoryAction — auth failure", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIdentityResolved();
+    mockProvinceExists();
     mockStoryInsertSuccess();
-    mockGetGuestIdentity.mockResolvedValue(null);
   });
 
   it("returns Thai error when not authenticated", async () => {
@@ -289,8 +326,62 @@ describe("submitTouristStoryAction — auth failure", () => {
     const result = await submitTouristStoryAction(makeForm());
     expect(result.success).toBe(false);
     expect(result.error).toBe("กรุณาเข้าสู่ระบบก่อนแบ่งปันเรื่องราว");
-    // Must not call identity lookups or DB insert
-    expect(mockFindTouristByIdentity).not.toHaveBeenCalled();
+    expect(mockResolveCurrentTouristId).not.toHaveBeenCalled();
     expect(mockAdminSupabase.from).not.toHaveBeenCalled();
+  });
+});
+
+describe("submitTouristStoryAction — insert payload", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthUser();
+    mockIdentityResolved();
+    mockProvinceExists();
+    mockStoryInsertSuccess();
+  });
+
+  it("inserts correct payload with safe content", async () => {
+    await submitTouristStoryAction(makeForm({
+      title: "เที่ยวปัตตานี",
+      content: "เรื่องราวการเดินทาง <b>สุดยอด</b>",
+      provinceId: "3",
+    }));
+    const payload = getInsertPayload();
+    expect(payload.title).toBe("เที่ยวปัตตานี");
+    expect(payload.content).toBe("เรื่องราวการเดินทาง สุดยอด");
+    expect(payload.excerpt).not.toContain("<b>");
+    expect(payload.province_id).toBe(3);
+    expect(payload.tourist_id).toBe("tourist-uuid-resolved");
+    expect(payload.author_type).toBe("tourist");
+    expect(payload.status).toBe("pending");
+    expect(payload.is_published).toBe(false);
+    expect(payload.category).toBe("Story");
+    expect(typeof payload.slug).toBe("string");
+    expect((payload.slug as string).length).toBeGreaterThan(0);
+  });
+
+  it("computes excerpt from safe content, truncating at 150 chars", async () => {
+    const longText = "บทความ".repeat(40);
+    await submitTouristStoryAction(makeForm({ content: longText }));
+    const payload = getInsertPayload();
+    expect(payload.content).toBe(longText);
+    expect((payload.excerpt as string).length).toBeLessThanOrEqual(154);
+    expect((payload.excerpt as string).endsWith("...")).toBe(true);
+  });
+});
+
+describe("submitTouristStoryAction — happy path", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthUser();
+    mockIdentityResolved();
+    mockProvinceExists();
+    mockStoryInsertSuccess();
+  });
+
+  it("accepts valid form and returns success", async () => {
+    const result = await submitTouristStoryAction(makeForm());
+    expect(result.success).toBe(true);
+    expect(result.storyId).toBeDefined();
   });
 });

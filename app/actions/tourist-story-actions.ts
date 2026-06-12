@@ -2,15 +2,45 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getGuestIdentity } from "@/lib/auth/guest";
-import {
-  findTouristByIdentity,
-  createTouristIdentity,
-  createTouristProfile,
-} from "@/lib/repositories/tourist.repository";
+import { resolveCurrentTouristId, TouristAccessError } from "@/lib/auth/guards";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
+// ─── XSS / Content Safety ──────────────────────────────────────────────────
+
+/**
+ * Strips ALL HTML tags from user-submitted content.
+ * Tourist UGC is stored as plain text — no allowlist needed.
+ * Handles script tags, event handlers, javascript: URLs, iframe/object/embed,
+ * and malformed HTML by removing anything between angle brackets.
+ */
+function stripHtml(input: string): string {
+  // Remove HTML comments
+  let result = input.replace(/<!--[\s\S]*?-->/g, "");
+  // Remove all HTML tags — catches script, iframe, object, embed, event handlers
+  result = result.replace(/<[^>]*>/g, "");
+  // Decode common HTML entities to their plain-text equivalents
+  result = result
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'");
+  return result;
+}
+
 // ─── Validation ────────────────────────────────────────────────────────────
+
+const STRICT_INTEGER_RE = /^\d+$/;
+
+function validateProvinceId(raw: string): number | null {
+  // Reject empty, whitespace, hex (0x), exponent (1e2), float, negative, zero
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (!STRICT_INTEGER_RE.test(trimmed)) return null;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 1) return null;
+  return parsed;
+}
 
 function validateStoryInput(formData: FormData):
   | { valid: true; title: string; content: string; provinceId: number }
@@ -20,7 +50,6 @@ function validateStoryInput(formData: FormData):
   const rawContent = formData.get("content");
   const rawProvinceId = formData.get("provinceId");
 
-  // Type coercion — reject non-string values silently
   if (typeof rawTitle !== "string" || typeof rawContent !== "string" || typeof rawProvinceId !== "string") {
     return { valid: false, error: "กรุณากรอกข้อมูลให้ครบทุกช่อง", field: "form" };
   }
@@ -35,9 +64,8 @@ function validateStoryInput(formData: FormData):
     return { valid: false, error: "กรุณากรอกเนื้อหาเรื่องราว", field: "content" };
   }
 
-  // Strict positive integer validation — reject "12abc", "0", "-5", float strings
-  const provinceId = Number(rawProvinceId);
-  if (!Number.isFinite(provinceId) || !Number.isInteger(provinceId) || provinceId < 1) {
+  const provinceId = validateProvinceId(rawProvinceId);
+  if (provinceId === null) {
     return { valid: false, error: "กรุณาเลือกจังหวัดที่ถูกต้อง", field: "provinceId" };
   }
 
@@ -51,53 +79,6 @@ function validateStoryInput(formData: FormData):
   }
 
   return { valid: true, title, content, provinceId };
-}
-
-// ─── Identity resolution (consistent with auth/callback) ──────────────────
-
-async function resolveOrCreateTourist(user: {
-  id: string;
-  app_metadata: { provider?: string };
-  user_metadata?: { full_name?: string; name?: string };
-}): Promise<string> {
-  const provider = user.app_metadata.provider || "email";
-
-  // 1. Check if this OAuth user is already linked to a tourist profile
-  let touristId = await findTouristByIdentity(provider, user.id);
-  if (touristId) return touristId;
-
-  // 2. Not linked. Check if they have a guest token on this device
-  const guestToken = await getGuestIdentity();
-  if (guestToken) {
-    const guestTouristId = await findTouristByIdentity("anonymous_device", guestToken);
-    if (guestTouristId) {
-      // Found a guest profile — link OAuth identity to it
-      await createTouristIdentity(guestTouristId, provider, user.id);
-      return guestTouristId;
-    }
-  }
-
-  // 3. No guest profile — create a brand new tourist profile
-  const displayName =
-    user.user_metadata?.full_name || user.user_metadata?.name || "นักเดินทาง";
-  touristId = await createTouristProfile({
-    displayName,
-    ageGroup: "prefer_not_to_answer",
-  });
-
-  // Create identity — handle race condition
-  try {
-    await createTouristIdentity(touristId, provider, user.id);
-  } catch (identityError: unknown) {
-    // If identity insert failed (e.g. duplicate key), the tourist was already
-    // created by a race. Re-read identity to avoid orphaning the profile.
-    const recoveredId = await findTouristByIdentity(provider, user.id);
-    if (recoveredId) return recoveredId;
-    // Re-throw if truly unrecoverable
-    throw identityError;
-  }
-
-  return touristId;
 }
 
 // ─── Server Action ─────────────────────────────────────────────────────────
@@ -118,23 +99,25 @@ export async function submitTouristStoryAction(formData: FormData) {
       return { success: false, error: "กรุณาเข้าสู่ระบบก่อนแบ่งปันเรื่องราว" };
     }
 
-    // 3. Resolve or create tourist identity
+    // 3. Resolve tourist identity — does NOT create or link profiles.
+    //    Profile creation/linking belongs in auth callback or explicit identity-linking flow.
     let touristId: string;
     try {
-      touristId = await resolveOrCreateTourist(user);
-    } catch (identityErr: unknown) {
-      // Distinguish between recoverable and unrecoverable
-      const message = identityErr instanceof Error ? identityErr.message : "";
-      if (message.includes("race") || message.includes("duplicate")) {
-        return { success: false, error: "ไม่สามารถยืนยันตัวตนนักเดินทางได้ กรุณาลองใหม่" };
+      touristId = await resolveCurrentTouristId();
+    } catch (err) {
+      if (err instanceof TouristAccessError && err.code === "TOURIST_IDENTITY_NOT_FOUND") {
+        return { success: false, error: "ไม่พบพาสปอร์ตของคุณ กรุณาเข้าสู่ระบบใหม่หรือสร้างพาสปอร์ตก่อน" };
       }
-      return { success: false, error: "เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่" };
+      return { success: false, error: "ไม่สามารถยืนยันตัวตนได้ กรุณาลองใหม่" };
     }
 
-    // 4. Compute excerpt from validated content
-    const excerpt = content.slice(0, 150).replace(/\s+/g, " ").trim() + (content.length > 150 ? "..." : "");
+    // 4. Sanitize content — strip all HTML tags, store as plain text
+    const safeContent = stripHtml(content);
+    // Compute excerpt from safe plain text
+    const excerpt = safeContent.slice(0, 150).replace(/\s+/g, " ").trim()
+      + (safeContent.length > 150 ? "..." : "");
 
-    // 5. Generate slug
+    // 5. Generate slug from title
     const slug = title
       .toLowerCase()
       .replace(/[^a-z0-9ก-๙\s-]/g, "")
@@ -143,15 +126,25 @@ export async function submitTouristStoryAction(formData: FormData) {
       .replace(/^-|-$/g, "")
       + "-" + Date.now().toString().slice(-4);
 
-    // 6. Insert story (service role required for admin-controlled tables)
+    // 6. Verify province exists before inserting story
     const adminSupabase = createSupabaseServiceRoleClient();
+    const { data: provinceExists } = await adminSupabase
+      .from("provinces")
+      .select("province_id")
+      .eq("province_id", provinceId)
+      .maybeSingle();
+    if (!provinceExists) {
+      return { success: false, error: "ไม่พบจังหวัดที่ระบุ กรุณาลองใหม่" };
+    }
+
+    // 7. Insert story
     const { data: story, error: storyError } = await adminSupabase
       .from("travel_stories")
       .insert({
         slug,
         title,
         excerpt,
-        content,
+        content: safeContent,
         category: "Story",
         province_id: provinceId,
         author_type: "tourist",
