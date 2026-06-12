@@ -233,11 +233,11 @@ export default async function StoriesPage(props: { searchParams: Promise<{ [key:
                     </Link>
                   ))}
                 </div>
-                
+
                 {/* Load More Action */}
                 {hasMore && (
                   <div className="mt-20 flex justify-center border-t border-ink/10 pt-16">
-                    <Link 
+                    <Link
                       href={`/stories?limit=${limit + 12}${authorType ? `&category=${authorType}` : ''}`}
                       className="group inline-flex items-center gap-2 rounded-full border border-ink/20 bg-transparent px-8 py-4 text-sm font-bold uppercase tracking-widest text-ink transition-all hover:border-ink hover:bg-ink hover:text-white"
                       scroll={false}

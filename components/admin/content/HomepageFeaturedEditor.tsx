@@ -67,23 +67,29 @@ export function HomepageFeaturedEditor({
     load();
   }, [slugsKey]);
 
-  async function handleSearch(q: string) {
+  async function performSearch(q: string, prov?: string, stat?: string) {
+    const effectiveProvince = prov ?? provinceFilter;
+    const effectiveStatus = stat ?? statusFilter;
     setSearchQuery(q);
-    if (!q.trim() && provinceFilter === "all" && statusFilter === "all") {
+    if (!q.trim() && effectiveProvince === "all" && effectiveStatus === "all") {
       setSearchResults([]);
       return;
     }
     setIsSearching(true);
     const res = await searchAttractionsAction({
       query: q,
-      province: provinceFilter !== "all" ? provinceFilter : undefined,
-      status: statusFilter as "all" | "published" | "draft" | "inactive" | "has_cover" | undefined,
+      province: effectiveProvince !== "all" ? effectiveProvince : undefined,
+      status: effectiveStatus as "all" | "published" | "draft" | "inactive" | "has_cover" | undefined,
       limit: 30,
     });
     if (res.success && res.data) {
       setSearchResults(res.data);
     }
     setIsSearching(false);
+  }
+
+  function handleSearch(q: string) {
+    performSearch(q);
   }
 
   function handleAdd(item: AttractionData) {
@@ -167,7 +173,7 @@ export function HomepageFeaturedEditor({
             <button
               key={item.value}
               type="button"
-              onClick={() => { setProvinceFilter(item.value); handleSearch(searchQuery); }}
+              onClick={() => { setProvinceFilter(item.value); performSearch(searchQuery, item.value); }}
               className={`min-h-9 rounded-full border px-3 text-xs font-black transition ${
                 provinceFilter === item.value
                   ? "border-[#0A6B62] bg-[#E6F4EF] text-[#073F37]"
@@ -180,7 +186,7 @@ export function HomepageFeaturedEditor({
           <div className="h-4 w-px bg-slate-300 mx-1"></div>
           <select
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); handleSearch(searchQuery); }}
+            onChange={(e) => { setStatusFilter(e.target.value); performSearch(searchQuery, undefined, e.target.value); }}
             className="min-h-9 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600 outline-none hover:bg-slate-50 focus:border-[#0A6B62] focus:ring-1 focus:ring-[#0A6B62]"
           >
             {STATUS_FILTERS.map((item) => (
@@ -279,8 +285,8 @@ export function HomepageFeaturedEditor({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={imageUrl(item.cover_media_path)} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-slate-400 bg-rose-50" title="ไม่มีรูปภาพหน้าปก">
-                      <WarningCircle size={16} className="text-rose-500" />
+                    <div className="absolute inset-0 flex items-center justify-center text-rose-600 bg-rose-50" title="ไม่มีรูปภาพหน้าปก">
+                      <WarningCircle size={16} className="text-rose-600" />
                     </div>
                   )}
                 </div>
@@ -298,7 +304,7 @@ export function HomepageFeaturedEditor({
                   <button
                     type="button"
                     onClick={() => handleRemove(index)}
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                    className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                     title="นำออก"
                   >
                     <Trash size={18} />

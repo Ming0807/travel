@@ -12,7 +12,7 @@ export function TouristAuthGate({ title = "กรุณาเข้าสู่�
   const handleSignIn = async (provider: Provider) => {
     setLoadingProvider(provider);
     const supabase = createSupabaseBrowserClient();
-    
+
     await supabase.auth.signInWithOAuth({
       provider: provider as any,
       options: {
@@ -32,11 +32,11 @@ export function TouristAuthGate({ title = "กรุณาเข้าสู่�
           <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-teal/5 text-teal">
             <ShieldCheck size={28} weight="fill" />
           </div>
-          
+
           <h2 className="text-2xl font-semibold text-center text-ink tracking-tight mb-3">
             {title}
           </h2>
-          
+
           <p className="text-center text-ink/60 text-[15px] leading-relaxed mb-10">
             {description}
           </p>

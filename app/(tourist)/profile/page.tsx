@@ -143,12 +143,12 @@ export default async function ProfilePage() {
       <div className="fixed bottom-0 left-0 w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] bg-coral/5 rounded-full blur-[120px] pointer-events-none translate-y-1/3 -translate-x-1/3"></div>
 
       <main className="flex-1 relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-        
+
         <div className="flex flex-col lg:flex-row gap-8 xl:gap-12 items-start">
-          
+
           {/* LEFT COLUMN (Sticky on Desktop) */}
           <div className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-24 flex flex-col gap-6">
-            
+
             {/* Identity Card */}
             <div className="bg-white rounded-3xl border border-ink/10 shadow-[0_4px_30px_rgb(0,0,0,0.02)] overflow-hidden">
               <div className="bg-ink p-8 relative">
@@ -167,7 +167,7 @@ export default async function ProfilePage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-8 pb-10">
                 <p className="text-sm font-medium text-ink/60 mb-6">
                   {profile.isGuest
@@ -197,12 +197,12 @@ export default async function ProfilePage() {
 
             {/* Account Linking Context */}
             <AccountLinkingTeaser isGuest={profile.isGuest} context="profile" />
-            
+
           </div>
 
           {/* RIGHT COLUMN (Scrollable Content) */}
           <div className="flex-1 min-w-0 w-full flex flex-col gap-12 lg:gap-16 lg:pt-0 pt-6">
-            
+
             {/* Visas & Achievements */}
             <section>
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
@@ -222,7 +222,7 @@ export default async function ProfilePage() {
                   </Link>
                 )}
               </div>
-              
+
               <div className="bg-white border border-ink/10 rounded-3xl p-6 sm:p-10 shadow-[0_4px_30px_rgb(0,0,0,0.02)]">
                 <BadgeGrid allBadges={allBadges} earnedBadges={badges} compact />
               </div>
@@ -235,7 +235,7 @@ export default async function ProfilePage() {
                 สถิติการเช็คอินแยกตามจังหวัด
               </h2>
               <p className="text-sm text-ink/50 mb-8 border-b border-ink/5 pb-4">Check-in statistics by province</p>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-10">
                 {profile.passportSummary.provinceProgress.map((item) => {
                   const percent =
@@ -269,7 +269,7 @@ export default async function ProfilePage() {
                 บันทึกการเดินทาง
               </h2>
               <p className="text-sm text-ink/50 mb-8 border-b border-ink/5 pb-4">Travel Log & Certificates</p>
-              
+
               {profile.certificateHistory.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-ink/10 rounded-3xl bg-white/50">
                   <p className="text-sm font-medium text-ink/40">ยังไม่มีบันทึกการเดินทาง</p>
@@ -278,8 +278,8 @@ export default async function ProfilePage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {profile.certificateHistory.map((cert, index) => (
-                    <div 
-                      key={`${cert.attractionName}-${cert.generatedAt}-${index}`} 
+                    <div
+                      key={`${cert.attractionName}-${cert.generatedAt}-${index}`}
                       className="group bg-white p-5 rounded-2xl border border-ink/5 shadow-sm hover:shadow-md hover:border-teal/20 transition-all flex items-start gap-4"
                     >
                       <div className="w-10 h-10 shrink-0 rounded-full bg-teal/10 text-teal flex items-center justify-center">

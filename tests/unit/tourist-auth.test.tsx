@@ -32,7 +32,7 @@ describe("UserNavMenu Component", () => {
       },
     };
     (createSupabaseBrowserClient as any).mockReturnValue(mockSupabase);
-    
+
     // Mock window.location.reload
     Object.defineProperty(window, "location", {
       configurable: true,
@@ -58,7 +58,7 @@ describe("UserNavMenu Component", () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { email: "test@example.com", user_metadata: { full_name: "Test User" } } },
     });
-    
+
     render(<UserNavMenu />);
     await waitFor(() => {
       expect(screen.getByText("Test User")).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe("UserNavMenu Component", () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { email: "test@example.com", user_metadata: { full_name: "Test User" } } },
     });
-    
+
     render(<UserNavMenu />);
     await waitFor(() => {
       expect(screen.getByText("Test User")).toBeInTheDocument();
@@ -82,10 +82,10 @@ describe("UserNavMenu Component", () => {
         // Need to find signout using icon or container
         // we can just find it by text content from the rendered component or the button element itself
     });
-    
+
     const signOutBtn = screen.getAllByRole("button")[1]; // first is the toggle, second is sign out
     fireEvent.click(signOutBtn);
-    
+
     expect(mockSupabase.auth.signOut).toHaveBeenCalled();
     await waitFor(() => {
       expect(window.location.reload).toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe("TouristAuthGate Component", () => {
       },
     };
     (createSupabaseBrowserClient as any).mockReturnValue(mockSupabase);
-    
+
     Object.defineProperty(window, "location", {
       configurable: true,
       value: { origin: "http://localhost:3000", pathname: "/stories/share" },
@@ -113,7 +113,7 @@ describe("TouristAuthGate Component", () => {
 
   it("renders both Google and LINE login buttons", () => {
     render(<TouristAuthGate />);
-    
+
     const buttons = screen.getAllByRole("button");
     expect(buttons.length).toBe(2);
     expect(buttons[0].textContent).toMatch(/Google/i);
@@ -122,11 +122,11 @@ describe("TouristAuthGate Component", () => {
 
   it("calls signInWithOAuth with 'google' when Google button is clicked", async () => {
     render(<TouristAuthGate />);
-    
+
     const buttons = screen.getAllByRole("button");
     const googleBtn = buttons.find(b => b.textContent?.includes("Google"));
     if (googleBtn) fireEvent.click(googleBtn);
-    
+
     expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: "google",
       options: {
@@ -137,11 +137,11 @@ describe("TouristAuthGate Component", () => {
 
   it("calls signInWithOAuth with 'line' when LINE button is clicked", async () => {
     render(<TouristAuthGate />);
-    
+
     const buttons = screen.getAllByRole("button");
     const lineBtn = buttons.find(b => b.textContent?.includes("LINE"));
     if (lineBtn) fireEvent.click(lineBtn);
-    
+
     expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: "line",
       options: {

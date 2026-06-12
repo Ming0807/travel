@@ -122,9 +122,9 @@ export function UserNavMenu({ mobile = false }: { mobile?: boolean }) {
 
       {menuOpen && (
         <>
-          <div 
-            className="fixed inset-0 z-40 sm:hidden" 
-            onClick={() => setMenuOpen(false)} 
+          <div
+            className="fixed inset-0 z-40 sm:hidden"
+            onClick={() => setMenuOpen(false)}
           />
           <div className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-xl border border-ink/10 bg-white p-1.5 shadow-sm animate-in fade-in zoom-in-95 duration-100">
             <div className="px-3 py-2 border-b border-ink/5 mb-1.5">
