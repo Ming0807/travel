@@ -145,7 +145,7 @@ export default async function StoryDetailsPage({
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-12">
           {/* Main Content */}
           <article className="lg:col-span-8 lg:col-start-3">
-            {story.content && /<[a-z][\s\S]*>/i.test(story.content) ? (
+            {story.content && story.authorType !== "tourist" && /<[a-z][\s\S]*>/i.test(story.content) ? (
               <div 
                 className="prose prose-lg md:prose-xl mx-auto max-w-[65ch] prose-headings:font-black prose-headings:text-ink prose-p:leading-relaxed prose-p:text-ink/80 prose-p:mb-8 prose-a:text-ink prose-a:font-bold prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-ink/70 prose-img:rounded-2xl prose-img:mx-auto prose-img:my-10"
                 dangerouslySetInnerHTML={{ __html: story.content }}

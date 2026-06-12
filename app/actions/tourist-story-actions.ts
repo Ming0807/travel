@@ -5,26 +5,34 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveCurrentTouristId, TouristAccessError } from "@/lib/auth/guards";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
-// ─── XSS / Content Safety ──────────────────────────────────────────────────
+// ─── Content Safety ────────────────────────────────────────────────────────
 
 /**
- * Strips ALL HTML tags from user-submitted content.
- * Tourist UGC is stored as plain text — no allowlist needed.
- * Handles script tags, event handlers, javascript: URLs, iframe/object/embed,
- * and malformed HTML by removing anything between angle brackets.
+ * Normalizes user-submitted content to safe plain text.
+ *
+ * 1. Decodes HTML entities first (so &lt;script&gt; becomes <script>)
+ * 2. Strips ALL HTML tags, comments, and anything between angle brackets
+ * 3. Result: pure plain text — no raw HTML can survive this pipeline
+ *
+ * Tourist UGC is stored as plain text. The public detail page renders
+ * plain text as paragraphs — never via dangerouslySetInnerHTML.
+ * Admin/staff editorial content is the only content that may contain
+ * safe HTML and is authored through the admin CMS, not this action.
  */
-function stripHtml(input: string): string {
-  // Remove HTML comments
-  let result = input.replace(/<!--[\s\S]*?-->/g, "");
-  // Remove all HTML tags — catches script, iframe, object, embed, event handlers
-  result = result.replace(/<[^>]*>/g, "");
-  // Decode common HTML entities to their plain-text equivalents
-  result = result
+function normalizePlainText(input: string): string {
+  // Decode HTML entities first — this converts &lt;script&gt; into <script>
+  // so the tag-stripping pass can remove it
+  let result = input
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'");
+    .replace(/&#x27;/g, "'")
+    .replace(/&#(\d+);/g, (_match, digits) => String.fromCharCode(Number(digits)));
+  // Remove HTML comments
+  result = result.replace(/<!--[\s\S]*?-->/g, "");
+  // Remove all HTML tags
+  result = result.replace(/<[^>]*>/g, "");
   return result;
 }
 
@@ -111,8 +119,8 @@ export async function submitTouristStoryAction(formData: FormData) {
       return { success: false, error: "ไม่สามารถยืนยันตัวตนได้ กรุณาลองใหม่" };
     }
 
-    // 4. Sanitize content — strip all HTML tags, store as plain text
-    const safeContent = stripHtml(content);
+    // 4. Normalize to plain text — entity-decode first, then strip all tags
+    const safeContent = normalizePlainText(content);
     // Compute excerpt from safe plain text
     const excerpt = safeContent.slice(0, 150).replace(/\s+/g, " ").trim()
       + (safeContent.length > 150 ? "..." : "");
@@ -128,11 +136,14 @@ export async function submitTouristStoryAction(formData: FormData) {
 
     // 6. Verify province exists before inserting story
     const adminSupabase = createSupabaseServiceRoleClient();
-    const { data: provinceExists } = await adminSupabase
+    const { data: provinceExists, error: provinceError } = await adminSupabase
       .from("provinces")
       .select("province_id")
       .eq("province_id", provinceId)
       .maybeSingle();
+    if (provinceError) {
+      return { success: false, error: "ไม่สามารถตรวจสอบข้อมูลจังหวัดได้ กรุณาลองใหม่" };
+    }
     if (!provinceExists) {
       return { success: false, error: "ไม่พบจังหวัดที่ระบุ กรุณาลองใหม่" };
     }

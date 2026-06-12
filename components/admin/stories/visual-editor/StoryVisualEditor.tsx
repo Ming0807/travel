@@ -162,7 +162,7 @@ export function StoryVisualEditor({
             </EditableBlock>
 
               <EditableBlock id="content" label="เนื้อหาบทความ" isActive={activeSection === "content"} onEdit={() => setActiveSection("content")}>
-                {story.content && /<[a-z][\s\S]*>/i.test(story.content) ? (
+                {story.content && story.author_type !== "tourist" && /<[a-z][\s\S]*>/i.test(story.content) ? (
                   <article 
                     className="prose prose-lg max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-black prose-a:text-orange-500 pointer-events-none prose-img:rounded-2xl"
                     dangerouslySetInnerHTML={{ __html: story.content }}

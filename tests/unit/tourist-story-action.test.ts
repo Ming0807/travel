@@ -203,7 +203,7 @@ describe("submitTouristStoryAction — validation", () => {
   });
 });
 
-describe("submitTouristStoryAction — XSS protection", () => {
+describe("submitTouristStoryAction — XSS protection (entity decode + tag strip)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthUser();
@@ -267,6 +267,33 @@ describe("submitTouristStoryAction — XSS protection", () => {
     await submitTouristStoryAction(fd);
     const payload = getInsertPayload();
     expect(payload.content).toBe("เที่ยวปัตตานี สุดยอด! 👍");
+  });
+
+  it("strips entity-encoded img tag: &lt;img src=x onerror=alert(1)&gt;", async () => {
+    const fd = makeForm({ content: "&lt;img src=x onerror=alert(1)&gt;" });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).not.toContain("<img");
+    expect(payload.content).not.toContain("onerror");
+    expect(payload.content).not.toContain("alert");
+  });
+
+  it("strips entity-encoded script tag: &#60;script&#62;alert(1)&#60;/script&#62;", async () => {
+    const fd = makeForm({ content: "&#60;script&#62;alert(1)&#60;/script&#62;" });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    // Tags are stripped; inner text remains but is harmless without <script> wrapper
+    expect(payload.content).not.toContain("<script");
+    expect(payload.content).not.toContain("</script");
+  });
+
+  it("strips entity-encoded anchor with javascript: URL", async () => {
+    const fd = makeForm({ content: '&lt;a href=&quot;javascript:alert(1)&quot;&gt;click&lt;/a&gt;' });
+    await submitTouristStoryAction(fd);
+    const payload = getInsertPayload();
+    expect(payload.content).not.toContain("javascript:");
+    expect(payload.content).not.toContain("<a");
+    expect(payload.content).toBe("click");
   });
 });
 
