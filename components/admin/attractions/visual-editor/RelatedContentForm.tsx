@@ -112,7 +112,7 @@ export function RelatedContentForm({
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-slate-700">{item.name}</p>
-                      {isRecommended && <span className="rounded bg-teal/10 px-1.5 py-0.5 text-[10px] font-bold text-teal">แนะนำ</span>}
+                      {isRecommended && <span className="rounded bg-teal/10 px-1.5 py-0.5 text-xs font-bold text-teal">แนะนำ</span>}
                     </div>
                     {item.province && <p className="text-xs text-slate-500">{item.province}</p>}
                   </div>

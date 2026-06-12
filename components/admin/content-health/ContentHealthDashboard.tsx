@@ -33,12 +33,12 @@ const TYPE_ICONS: Record<ContentType, typeof MapPin> = {
 };
 
 const TYPE_LABELS: Record<ContentType, string> = {
-  attraction: "Destinations",
-  story: "Articles",
-  route: "Routes",
-  restaurant: "Restaurants",
-  accommodation: "Accommodations",
-  photo_spot: "Photo Spots",
+  attraction: "สถานที่ท่องเที่ยว",
+  story: "บทความ",
+  route: "เส้นทาง",
+  restaurant: "ร้านอาหาร",
+  accommodation: "ที่พัก",
+  photo_spot: "จุดถ่ายภาพ",
 };
 
 const TYPE_EDIT_HREFS: Record<ContentType, string> = {
@@ -74,7 +74,7 @@ function HealthBadge({ label, tone, href }: { label: string; tone: "green" | "am
     red: "bg-rose-50 text-rose-700 border-rose-200 hover:border-rose-300",
     gray: "bg-slate-100 text-slate-500 border-slate-200 hover:border-slate-300",
   };
-  const baseClasses = `inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold leading-5 transition ${styles[tone]}`;
+  const baseClasses = `inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold leading-5 transition ${styles[tone]}`;
 
   if (href) {
     return (
@@ -190,7 +190,7 @@ function SummaryCard({
       </div>
       <p className="mt-3 text-2xl font-black tracking-tight">{value}</p>
       <p className="mt-0.5 text-xs font-bold leading-4">{label}</p>
-      {subtext ? <p className="mt-0.5 text-[11px] font-bold opacity-70">{subtext}</p> : null}
+      {subtext ? <p className="mt-0.5 text-xs font-bold opacity-70">{subtext}</p> : null}
     </div>
   );
 }
@@ -203,7 +203,7 @@ function TypeBreakdown({ report }: { report: ContentHealthReport }) {
 
   return (
     <section>
-      <h2 className="mb-3 text-sm font-black text-slate-700">By content type</h2>
+      <h2 className="mb-3 text-sm font-black text-slate-700">จำแนกตามประเภทเนื้อหา</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {types.map(([type, stats]) => {
           const Icon = TYPE_ICONS[type];
@@ -334,7 +334,7 @@ function ContentHealthTable({ report }: { report: ContentHealthReport }) {
   ];
 
   const SortIcon = () => (
-    <span className="ml-1 text-[10px] opacity-50">{sortAsc ? "▲" : "▼"}</span>
+    <span className="ml-1 text-xs opacity-50">{sortAsc ? "▲" : "▼"}</span>
   );
 
   return (
@@ -488,7 +488,7 @@ function ContentHealthTable({ report }: { report: ContentHealthReport }) {
       </div>
 
       <p className="mt-3 text-xs text-slate-400">
-        Showing {filtered.length} of {report.items.length} items.{filter !== "all" ? " Filtered." : ""}
+        แสดง {filtered.length} จาก {report.items.length} รายการ{filter !== "all" ? " (กรองแล้ว)" : ""}
       </p>
     </section>
   );

@@ -402,7 +402,7 @@ export function SettingsClient({
                   <span className="mt-0.5 block text-xs leading-5 text-slate-500">{group.description}</span>
                 </span>
                 {dirtyCountPerGroup[group.id] ? (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#F3704C] text-[10px] font-black text-white shadow-sm">
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#F3704C] text-xs font-black text-white shadow-sm">
                     {dirtyCountPerGroup[group.id]! > 9 ? "9+" : dirtyCountPerGroup[group.id]}
                   </span>
                 ) : null}

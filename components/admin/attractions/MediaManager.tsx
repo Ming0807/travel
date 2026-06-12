@@ -118,7 +118,7 @@ function EntityTypeLabel({ type }: { type: string }) {
     route: { label: "Route", badge: "bg-emerald-50 text-emerald-700" },
   };
   const info = labelMap[type] ?? { label: type, badge: "bg-slate-50 text-slate-700" };
-  return <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${info.badge}`}>{info.label}</span>;
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${info.badge}`}>{info.label}</span>;
 }
 
 function formatDate(dateStr: string) {
@@ -690,7 +690,7 @@ function MediaForm({
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-black uppercase tracking-wider text-slate-500">Metadata</p>
                   {missingAltWarning && (
-                    <span className="flex items-center gap-1 text-[10px] font-black text-rose-600">
+                    <span className="flex items-center gap-1 text-xs font-black text-rose-600">
                       <WarningCircle size={12} weight="fill" />
                       MISSING ALT
                     </span>

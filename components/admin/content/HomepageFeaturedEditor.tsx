@@ -213,9 +213,9 @@ export function HomepageFeaturedEditor({
                     <p className="font-bold text-sm text-slate-800 truncate">{result.name_th}</p>
                     <p className="text-xs text-slate-500 truncate">{result.province?.name_th} • {result.slug}</p>
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {!result.cover_media_path ? <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">NO IMAGE</span> : null}
-                      {!result.is_published ? <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">DRAFT</span> : null}
-                      {!result.is_active ? <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-700">INACTIVE</span> : null}
+                      {!result.cover_media_path ? <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-800">ไม่มีรูป</span> : null}
+                      {!result.is_published ? <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-600">ฉบับร่าง</span> : null}
+                      {!result.is_active ? <span className="rounded bg-rose-100 px-1.5 py-0.5 text-xs font-bold text-rose-700">ไม่เปิดใช้งาน</span> : null}
                     </div>
                   </div>
                   <button
@@ -285,10 +285,10 @@ export function HomepageFeaturedEditor({
                 </div>
                 <div className="flex items-center gap-2">
                   {!item.is_published && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">DRAFT</span>
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">ฉบับร่าง</span>
                   )}
                   {!item.is_active && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">INACTIVE</span>
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-700">ไม่เปิดใช้งาน</span>
                   )}
                   <button
                     type="button"

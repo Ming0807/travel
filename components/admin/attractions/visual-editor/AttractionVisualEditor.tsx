@@ -83,7 +83,7 @@ function ReadinessState({
 }) {
   return (
     <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 p-8">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">ข้อมูลยังไม่ครบ (Missing content)</p>
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">ข้อมูลยังไม่ครบ (Missing content)</p>
       <h3 className="mt-2 text-lg font-black text-slate-800">{title}</h3>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{description}</p>
       {onAction && actionLabel ? (
@@ -127,7 +127,7 @@ function PageMap({
       <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-coral">แผนผังส่วนประกอบหน้าเว็บ (Public Page Map)</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-coral">แผนผังส่วนประกอบหน้าเว็บ (Public Page Map)</p>
             <h2 className="mt-1 text-base font-black text-slate-900">จัดการเนื้อหาตามส่วนที่แสดงให้ผู้เข้าชมเห็นจริง</h2>
             <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
               การ์ดแต่ละใบแสดงสถานะของข้อมูลในหน้าสาธารณะ ควรแก้ไขคำเตือนต่างๆ ให้เรียบร้อยก่อนกดเผยแพร่หรือแชร์ลิงก์ให้ผู้ใช้งาน
@@ -158,7 +158,7 @@ function PageMap({
                   )}
                   <div className="min-w-0">
                     <p className="text-sm font-black text-slate-900">{item.label}</p>
-                    <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-500">{item.publicSection}</p>
+                    <p className="mt-0.5 text-xs font-bold uppercase tracking-wide text-slate-500">{item.publicSection}</p>
                     <p className="mt-2 text-xs leading-5 text-slate-600">{item.help}</p>
                     <span className="mt-3 inline-flex text-xs font-black text-teal">{item.actionLabel}</span>
                   </div>
@@ -333,7 +333,7 @@ export function AttractionVisualEditor({
           </Link>
           <div className="min-w-0">
             <h1 className="truncate text-base sm:text-lg font-black text-slate-800">Visual Editor: {name}</h1>
-            <p className="truncate text-[10px] sm:text-xs font-bold text-slate-500">คุณกำลังแก้ไขหน้าตาแบบเดียวกับที่แสดงผลจริง</p>
+            <p className="truncate text-xs font-bold text-slate-500">คุณกำลังแก้ไขหน้าตาแบบเดียวกับที่แสดงผลจริง</p>
           </div>
         </div>
         <div className="flex w-full items-center gap-2 lg:w-auto lg:justify-end">
@@ -490,7 +490,7 @@ export function AttractionVisualEditor({
 
             {/* Relational Content Block (Rendered visually but edits navigate away) */}
             <div className="space-y-12 mt-12 relative border-t border-slate-200 pt-12">
-              <div className="absolute top-0 right-0 -mt-3 rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold text-slate-500">
+              <div className="absolute top-0 right-0 -mt-3 rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-500">
                 ข้อมูลเชื่อมโยง (Relational Data)
               </div>
 
