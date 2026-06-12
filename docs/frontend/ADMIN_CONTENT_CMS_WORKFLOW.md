@@ -497,6 +497,17 @@ The CMS workflow is acceptable when:
 - Publish/unpublish/archive actions are permission-protected.
 - Important content changes are audit logged or explicitly planned.
 
+## Recent Defenses (June 2026)
+
+Security hardening applied to all tourist-submitted content:
+
+- **XSS protection**: Tourist UGC (story submissions, reviews) is normalized to plain text via `normalizePlainText()` in `app/actions/tourist-story-actions.ts`. The pipeline decodes all HTML entity variants (named, decimal, hex, double-encoded) before stripping tags. Stored content is pure plain text.
+- **Rendering guards**: Public story detail page and admin story editor now check `authorType !== "tourist"` before using `dangerouslySetInnerHTML`. Tourist content always renders as safe paragraphs.
+- **Strict validation**: Province IDs are validated with `/^\d+$/` (rejecting floats, hex, exponents, junk). Province existence is verified via DB before story insertion.
+- **OAuth identity**: `resolveTouristId()` in `lib/auth/guards.ts` supports Google, email, and LINE OAuth sessions, falling back to anonymous_device guest cookies. No identity creation/linking in story submission — only resolve.
+
+These defenses apply to all admin CMS content operations where tourist-submitted data is displayed or stored.
+
 ## Implementation Note
 
 `/admin/content` is the recommended command center for content operations. It should guide admins to the correct module instead of forcing them to guess whether a change belongs in attractions, media, stories, routes, photo spots, or QR codes.

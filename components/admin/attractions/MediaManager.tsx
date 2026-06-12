@@ -703,6 +703,7 @@ function MediaForm({
                     <input
                       name="altTextTh"
                       value={altTextTh}
+                      aria-label="Alt text ภาษาไทย"
                       onChange={(e) => setAltTextTh(e.target.value)}
                       className={`mt-2 min-h-11 w-full rounded-lg border px-3 py-2 text-sm outline-none transition focus:ring-2 ${missingAltWarning ? 'border-rose-300 bg-rose-50/50 focus:border-rose-500 focus:ring-rose-500/15' : 'border-slate-300 bg-white focus:border-[#0A6B62] focus:ring-[#0A6B62]/15'}`}
                       placeholder="อธิบายภาพเพื่อ accessibility"

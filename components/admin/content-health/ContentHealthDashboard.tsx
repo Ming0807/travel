@@ -90,7 +90,7 @@ function HealthBadge({ label, tone, href }: { label: string; tone: "green" | "am
   );
 }
 
-function getIssueHash(issue: string): string {
+export function getIssueHash(issue: string): string {
   if (issue === "draft" || issue === "inactive") return "#settings";
   if (issue === "stock/demo media" || issue.includes("media") || issue.includes("cover")) return "#gallery";
   if (issue.includes("English") || issue.includes("summary")) return "#content";
