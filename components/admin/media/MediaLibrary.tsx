@@ -300,7 +300,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
     }
   };
 
- 
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchMedia();

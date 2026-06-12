@@ -1,5 +1,31 @@
 # API_ENDPOINTS.md
 
+## Tourist Identity Resolution (Server Actions)
+
+These server actions and auth guards support the OAuth tourist identity resolution added in June 2026. They resolve tourist identity from Supabase Auth sessions (Google, email, LINE) with guest fallback.
+
+| Function | Location | Status | Purpose | Notes |
+|---|---|---|---|---|
+| `resolveTouristId()` | `lib/auth/guards.ts:726` | Implemented | Resolves tourist from OAuth session then falls back to guest cookie. | Does NOT create new profiles — only resolves existing identities. |
+| `resolveCurrentTouristId()` | `lib/auth/guards.ts:715` | Implemented | Backward-compatible alias for `resolveTouristId()`. | Delegates to `resolveTouristId`. |
+| `submitTouristStoryAction()` | `app/actions/tourist-story-actions.ts` | Implemented | Submits tourist stories with XSS-safe plain text normalization, strict province validation, and identity-only resolve. | Identity resolution uses `resolveCurrentTouristId()`. |
+| `submitReviewAction()` | `app/actions/submit-review-action.ts` | Implemented | Submits reviews using `resolveCurrentTouristId()` for OAuth + guest identity. | Previously only supported guest identity. |
+
+### OAuth Provider Mapping
+
+The `resolveTouristId()` function resolves identity from Supabase Auth metadata:
+
+- `user.app_metadata.provider` → mapped to `tourist_identities.provider` (google, email, line)
+- `user.id` (Supabase Auth UUID) → mapped to `tourist_identities.provider_user_id`
+- Falls back to `anonymous_device` guest cookie if no auth session
+
+### Security / Privacy Notes
+
+- Never exposes `provider_user_id` in client responses
+- Service role used only in server-only repository boundaries
+- Guest flow remains fully functional
+- No duplicate tourist profiles for same OAuth identity
+
 ## Admin Media Endpoints
 
 These endpoints support official CMS media management. They require admin authentication and server-side permission checks.
