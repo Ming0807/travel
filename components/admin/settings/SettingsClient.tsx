@@ -338,12 +338,10 @@ export function SettingsClient({
             type="button"
             onClick={saveChanges}
             disabled={saving || dirtyKeys.size === 0}
-            className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50 ${
-              dirtyKeys.size > 0 ? "bg-slate-400" : "bg-[#073F37]"
-            }`}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#073F37] px-4 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <FloppyDisk size={18} weight="bold" />
-            {saving ? "กำลังบันทึก..." : dirtyKeys.size ? `บันทึก ${dirtyKeys.size} รายการ` : "บันทึกแล้ว"}
+            {saving ? "กำลังบันทึก..." : dirtyKeys.size ? `บันทึก ${dirtyKeys.size} รายการ` : "บันทึกสำเร็จ"}
           </button>
         }
       />
@@ -751,9 +749,12 @@ function AboutSettings({
       </SettingsSection>
 
       <SettingsSection title="ทีมงาน (Team Members)" description="รายชื่อและข้อมูลทีมงาน">
+        <div className="mb-4 rounded-lg border border-amber-100 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+          <strong>หมายเหตุ:</strong> ในเวอร์ชันปัจจุบัน ข้อมูลทีมงานยังจัดการผ่าน Settings อยู่ ในอนาคตจะย้ายไปยังระบบจัดการเนื้อหา (Content Hub) เพื่อให้สามารถนำไปใช้ซ้ำในหน้าอื่นๆ ได้
+        </div>
         <div className="space-y-4">
           {team.map((member: any, i: number) => (
-            <div key={i} className="rounded-xl border border-slate-200 bg-slate-50 p-4 relative">
+            <div key={i} className="relative border-b border-slate-100 pb-5 last:border-b-0 last:pb-0">
               <button
                 type="button"
                 onClick={() => {
@@ -811,12 +812,14 @@ function AboutSettings({
 
 function SettingsSection({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-5 py-4">
-        <h3 className="text-base font-black text-[#073F37]">{title}</h3>
-        <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+    <section className="border-b border-slate-100 pb-6 last:border-b-0 last:pb-0">
+      <div className="mb-4">
+        <h3 className="text-sm font-black text-slate-800">{title}</h3>
+        {description ? (
+          <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+        ) : null}
       </div>
-      <div className="space-y-5 p-5">{children}</div>
+      <div className="space-y-4">{children}</div>
     </section>
   );
 }
