@@ -137,161 +137,179 @@ export default async function ProfilePage() {
   const { profile, xp, badges, allBadges } = result;
 
   return (
-    <>
-      <main className="min-h-[calc(100vh-200px)] bg-background px-4 pb-28 pt-8 relative overflow-hidden text-ink">
-        {/* Premium Background Elements */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal/5 rounded-full blur-[100px] -z-10 translate-x-1/4 -translate-y-1/4 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-[700px] h-[700px] bg-coral/5 rounded-full blur-[120px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
+    <div className="overflow-x-hidden min-h-screen bg-slate-50 text-ink selection:bg-teal selection:text-white flex flex-col">
+      {/* Background Ambience */}
+      <div className="fixed top-0 right-0 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] bg-teal/5 rounded-full blur-[100px] pointer-events-none -translate-y-1/3 translate-x-1/3"></div>
+      <div className="fixed bottom-0 left-0 w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] bg-coral/5 rounded-full blur-[120px] pointer-events-none translate-y-1/3 -translate-x-1/3"></div>
 
-        <div className="mx-auto max-w-lg space-y-5 relative z-10">
-          {/* Profile Header */}
-          <section className="rounded-2xl bg-gradient-to-br from-teal to-ink p-8 text-white shadow-md relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4"></div>
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-gold relative z-10">
-              Tourist Profile
-            </p>
-            <h1 className="mt-4 text-4xl font-black relative z-10 leading-tight">{profile.displayName}</h1>
-            <p className="mt-3 text-sm leading-6 text-white/80 relative z-10">
-              {profile.isGuest
-                ? "Guest profile — link Google or LINE later to recover across devices."
-                : `Linked with ${profile.linkedProviders.join(", ")}`}
-            </p>
-          </section>
+      <main className="flex-1 relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+        
+        <div className="flex flex-col lg:flex-row gap-8 xl:gap-12 items-start">
+          
+          {/* LEFT COLUMN (Sticky on Desktop) */}
+          <div className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-24 flex flex-col gap-6">
+            
+            {/* Identity Card */}
+            <div className="bg-white rounded-3xl border border-ink/10 shadow-[0_4px_30px_rgb(0,0,0,0.02)] overflow-hidden">
+              <div className="bg-ink p-8 relative">
+                <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
+                <div className="relative z-10 flex justify-between items-start">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal/80 mb-2">
+                      Digital Passport
+                    </p>
+                    <h1 className="text-3xl font-semibold tracking-tight text-white leading-tight">
+                      {profile.displayName}
+                    </h1>
+                  </div>
+                  <div className="w-12 h-12 rounded-full border border-white/20 bg-white/5 flex items-center justify-center backdrop-blur-md shrink-0">
+                    <GlobeHemisphereEast size={24} className="text-white/40" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-8 pb-10">
+                <p className="text-sm font-medium text-ink/60 mb-6">
+                  {profile.isGuest
+                    ? "บัญชีผู้เยี่ยมชม (Guest Account)"
+                    : `เชื่อมต่อบัญชี: ${profile.linkedProviders.join(", ")}`}
+                </p>
 
-          {/* XP Progress */}
-          <XPProgressBar xp={xp} />
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1">ภูมิลำเนา (Origin)</p>
+                    <p className="text-base font-semibold text-ink truncate">{profile.origin}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-1">กลุ่มอายุ (Age)</p>
+                    <p className="text-base font-semibold text-ink">{formatAgeGroup(profile.ageGroup)}</p>
+                  </div>
+                </div>
 
-          {/* Badges */}
-          <section className="rounded-2xl bg-white p-6 border border-ink/5">
-            <h2 className="flex items-center gap-2 text-xl font-black text-ink">
-              <Trophy weight="fill" className="text-gold" /> Badges ที่สะสม
-            </h2>
-            <div className="mt-5">
-              <BadgeGrid allBadges={allBadges} earnedBadges={badges} compact />
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-3 flex items-center justify-between">
+                    <span>ระดับนักเดินทาง (Level)</span>
+                  </p>
+                  <XPProgressBar xp={xp} />
+                </div>
+              </div>
+            </div>
 
-              {allBadges.length > 0 && badges.length < allBadges.length && (
-                <div className="mt-5 text-center">
+            {/* Account Linking Context */}
+            <AccountLinkingTeaser isGuest={profile.isGuest} context="profile" />
+            
+          </div>
+
+          {/* RIGHT COLUMN (Scrollable Content) */}
+          <div className="flex-1 min-w-0 w-full flex flex-col gap-12 lg:gap-16 lg:pt-0 pt-6">
+            
+            {/* Visas & Achievements */}
+            <section>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-semibold tracking-tight text-ink flex items-center gap-2">
+                    <Trophy weight="fill" className="text-gold" />
+                    ความสำเร็จและตราประทับ
+                  </h2>
+                  <p className="text-sm text-ink/50 mt-1">Visas & Achievements</p>
+                </div>
+                {allBadges.length > 0 && badges.length < allBadges.length && (
                   <Link
                     href="/leaderboard"
-                    className="inline-flex items-center gap-2 text-sm font-bold text-ink hover:text-teal transition-colors px-4 py-2 rounded-full bg-cream hover:bg-teal/10"
+                    className="inline-flex items-center gap-1 text-[13px] font-bold text-teal hover:text-teal/80 transition-colors"
                   >
-                    ดู Leaderboard <span className="text-teal font-black">→</span>
+                    ดู Leaderboard &rarr;
                   </Link>
+                )}
+              </div>
+              
+              <div className="bg-white border border-ink/10 rounded-3xl p-6 sm:p-10 shadow-[0_4px_30px_rgb(0,0,0,0.02)]">
+                <BadgeGrid allBadges={allBadges} earnedBadges={badges} compact />
+              </div>
+            </section>
+
+            {/* Province Progress (Stamps) */}
+            <section>
+              <h2 className="text-xl font-semibold tracking-tight text-ink mb-2 flex items-center gap-2">
+                <Stamp weight="fill" className="text-coral" />
+                สถิติการเช็คอินแยกตามจังหวัด
+              </h2>
+              <p className="text-sm text-ink/50 mb-8 border-b border-ink/5 pb-4">Check-in statistics by province</p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-10">
+                {profile.passportSummary.provinceProgress.map((item) => {
+                  const percent =
+                    item.totalCount > 0
+                      ? Math.min(100, Math.round((item.earnedCount / item.totalCount) * 100))
+                      : 0;
+                  return (
+                    <div key={item.provinceName} className="group flex flex-col">
+                      <div className="mb-3 flex items-end justify-between">
+                        <span className="font-semibold text-ink text-base leading-none">{item.provinceName}</span>
+                        <span className="font-mono font-medium text-ink/40 text-xs">
+                          {item.earnedCount} / {item.totalCount || 0}
+                        </span>
+                      </div>
+                      <div className="h-1 overflow-hidden rounded-full bg-ink/5 w-full">
+                        <div
+                          className="h-full rounded-full bg-teal transition-all duration-1000 ease-out"
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Travel Log (Certificates) */}
+            <section>
+              <h2 className="text-xl font-semibold tracking-tight text-ink mb-2 flex items-center gap-2">
+                <Certificate weight="fill" className="text-teal" />
+                บันทึกการเดินทาง
+              </h2>
+              <p className="text-sm text-ink/50 mb-8 border-b border-ink/5 pb-4">Travel Log & Certificates</p>
+              
+              {profile.certificateHistory.length === 0 ? (
+                <div className="text-center py-12 border border-dashed border-ink/10 rounded-3xl bg-white/50">
+                  <p className="text-sm font-medium text-ink/40">ยังไม่มีบันทึกการเดินทาง</p>
+                  <p className="text-[13px] text-ink/30 mt-1">แสกน QR Code เพื่อรับใบประกาศและเริ่มบันทึก</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {profile.certificateHistory.map((cert, index) => (
+                    <div 
+                      key={`${cert.attractionName}-${cert.generatedAt}-${index}`} 
+                      className="group bg-white p-5 rounded-2xl border border-ink/5 shadow-sm hover:shadow-md hover:border-teal/20 transition-all flex items-start gap-4"
+                    >
+                      <div className="w-10 h-10 shrink-0 rounded-full bg-teal/10 text-teal flex items-center justify-center">
+                        <MapPin weight="fill" size={20} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-1.5">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-coral truncate pr-2">
+                            {cert.provinceName}
+                          </span>
+                          {cert.visitDate && (
+                            <span className="text-[10px] font-semibold text-ink/40 shrink-0">
+                              {new Date(cert.visitDate).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[15px] font-semibold text-ink leading-snug line-clamp-2">
+                          {cert.attractionName}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-            </div>
-          </section>
+            </section>
 
-          {/* Info Cards */}
-          <section className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl bg-white p-5 border border-ink/5">
-              <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-coral/10 text-coral">
-                  <GlobeHemisphereEast size={22} weight="fill" />
-                </div>
-                <span className="text-xs font-bold uppercase tracking-widest text-muted">ภูมิลำเนา</span>
-              </div>
-              <p className="text-xl font-black text-ink">{profile.origin}</p>
-            </div>
-
-            <div className="rounded-2xl bg-white p-5 border border-ink/5">
-              <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                  <IdentificationCard size={22} weight="fill" />
-                </div>
-                <span className="text-xs font-bold uppercase tracking-widest text-muted">กลุ่มอายุ</span>
-              </div>
-              <p className="text-xl font-black text-ink">{formatAgeGroup(profile.ageGroup)}</p>
-            </div>
-          </section>
-
-          {/* Passport Summary */}
-          <section className="rounded-2xl bg-white p-6 border border-ink/5">
-            <h2 className="flex items-center gap-2 text-xl font-black text-ink">
-              <Stamp weight="fill" className="text-gold" /> ตราประทับที่สะสม
-            </h2>
-            <div className="mt-5 space-y-4">
-              {profile.passportSummary.provinceProgress.map((item) => {
-                const percent =
-                  item.totalCount > 0
-                    ? Math.min(100, Math.round((item.earnedCount / item.totalCount) * 100))
-                    : 0;
-                return (
-                  <div key={item.provinceName}>
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="font-bold text-ink">{item.provinceName}</span>
-                      <span className="font-semibold text-muted bg-cream px-2 py-0.5 rounded-md text-[10px] tracking-wide">
-                        {item.earnedCount}
-                        {item.totalCount ? ` / ${item.totalCount}` : ""} stamps
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-tealSoft">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-teal to-gold"
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-6 text-center">
-              <Link
-                href="/passport"
-                className="inline-flex items-center gap-2 text-sm font-bold text-ink hover:text-teal transition-colors px-4 py-2 rounded-full bg-cream hover:bg-teal/10"
-              >
-                ดูพาสปอร์ตฉบับเต็ม <span className="text-teal font-black">→</span>
-              </Link>
-            </div>
-          </section>
-
-          {/* Certificate History */}
-          <section className="rounded-2xl bg-white p-6 border border-ink/5">
-            <h2 className="flex items-center gap-2 text-xl font-black text-ink">
-              <Certificate weight="fill" className="text-coral" /> ประวัติใบประกาศ
-            </h2>
-            {profile.certificateHistory.length === 0 ? (
-              <div className="mt-4 p-6 text-center rounded-xl bg-cream/50 border border-ink/5">
-                <p className="text-sm leading-6 text-muted">
-                  ยังไม่มีใบประกาศ — ลองสแกน QR Code ที่สถานที่ท่องเที่ยวที่เข้าร่วม
-                </p>
-              </div>
-            ) : (
-              <div className="mt-5 space-y-3">
-                {profile.certificateHistory.map((cert, index) => (
-                  <div
-                    key={`${cert.attractionName}-${cert.generatedAt}-${index}`}
-                    className="rounded-xl border border-ink/5 bg-white p-4 shadow-sm hover:border-coral/20 transition-colors"
-                  >
-                    <p className="font-bold text-ink text-base">{cert.attractionName}</p>
-                    <div className="mt-2 flex items-center gap-3 text-xs text-muted font-medium">
-                      <span className="flex items-center gap-1.5 bg-cream px-2 py-1 rounded-md">
-                        <MapPin weight="fill" className="text-coral" />
-                        {cert.provinceName}
-                      </span>
-                      {cert.visitDate && (
-                        <span className="bg-cream px-2 py-1 rounded-md">
-                          {new Date(cert.visitDate).toLocaleDateString("th-TH", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Account Linking */}
-          <div className="pt-2">
-            <AccountLinkingTeaser isGuest={profile.isGuest} />
           </div>
         </div>
       </main>
       <SiteFooter />
-    </>
+    </div>
   );
 }

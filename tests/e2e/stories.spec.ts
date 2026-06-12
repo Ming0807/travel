@@ -63,7 +63,7 @@ test.describe('Tourist Stories (UGC) Public & Admin', () => {
     await expect(page.locator('main h1').first()).toBeVisible();
     
     // Check for CTA
-    await expect(page.locator('text=Share Your Story').first()).toBeVisible();
+    await expect(page.locator('text=แบ่งปันเรื่องราว').first()).toBeVisible();
     
     // Verify articles are rendered
     const articles = page.locator('article');

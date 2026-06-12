@@ -90,7 +90,7 @@ export async function uploadVisitPhoto(
       .toBuffer();
 
     // We use Blob instead of Buffer for Supabase to avoid Next.js Buffer fetch bug
-    const webpBlob = new Blob([webpBuffer], { type: "image/webp" });
+    const webpBlob = new Blob([new Uint8Array(webpBuffer)], { type: "image/webp" });
 
     // 6. Upload to Supabase Storage
     const supabase = createSupabaseServiceRoleClient();

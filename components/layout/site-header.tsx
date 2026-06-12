@@ -8,9 +8,9 @@ import {
   MagnifyingGlass,
   List,
   X,
-  UserCircle,
   CaretDown
 } from "@phosphor-icons/react/dist/ssr";
+import { UserNavMenu } from "@/components/account/UserNavMenu";
 
 type SiteHeaderProps = {
   appName: string;
@@ -157,18 +157,12 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
             </button>
             
             <div className="h-4 w-px bg-ink/10"></div>
-            
-            <Link
-              href="/passport"
-              className="flex items-center gap-2 text-sm font-semibold text-ink hover:text-coral transition-colors"
-            >
-              <UserCircle size={20} weight="fill" />
-              สมุดพาสปอร์ต
-            </Link>
+
+            <UserNavMenu />
 
             <Link
               href="/checkin/demo-code"
-              className="ml-2 rounded-full bg-coral px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-coral/90 transition-colors"
+              className="ml-2 whitespace-nowrap rounded-full bg-coral px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-coral/90 transition-colors"
             >
               รับใบประกาศ
             </Link>
@@ -183,13 +177,13 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
         className={`sticky top-0 z-50 border-b px-4 py-3 transition-all duration-300 lg:hidden ${mobileHeaderClass}`}
       >
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2" aria-label={`${appName} home`}>
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-ink">
+          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label={`${appName} home`}>
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink">
               <Compass weight="fill" size={20} className="text-white" />
             </div>
-            <div>
-              <h1 className="text-base font-bold tracking-tight text-ink uppercase leading-none">ท่องเที่ยวชายแดนใต้</h1>
-              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mt-0.5">Digital Passport</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-bold tracking-tight text-ink uppercase leading-none truncate">ท่องเที่ยวชายแดนใต้</h1>
+              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mt-0.5 truncate">Digital Passport</p>
             </div>
           </Link>
 
@@ -254,16 +248,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               <li>
                 <div className="my-2 h-px w-full bg-ink/10"></div>
               </li>
-              <li>
-                <Link
-                  href="/passport"
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-ink hover:bg-ink/5"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <UserCircle size={20} weight="fill" />
-                  สมุดพาสปอร์ต
-                </Link>
-              </li>
+              <UserNavMenu mobile={true} />
               <li>
                 <Link
                   href="/checkin/demo-code"

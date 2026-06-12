@@ -188,6 +188,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
       }),
     ],
     content,
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         class: "prose prose-slate max-w-none focus:outline-none min-h-[300px]",

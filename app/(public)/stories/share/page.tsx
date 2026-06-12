@@ -1,13 +1,13 @@
-import { redirect } from "next/navigation";
 import { ArrowLeft, PenNib } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { ShareStoryForm } from "@/components/stories/ShareStoryForm";
+import { TouristAuthGate } from "@/components/auth/TouristAuthGate";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Share Your Story | Southern Border Tourism",
+  title: "แบ่งปันเรื่องราวของคุณ | ท่องเที่ยวชายแดนใต้",
 };
 
 export const dynamic = "force-dynamic";
@@ -19,11 +19,7 @@ export default async function ShareStoryPage() {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session?.user) {
-    // Redirect to login (assuming there's a login route or we can just show a message)
-    // For now we'll just redirect to the sign-in page if it exists, or show a not authenticated UI.
-    redirect("/auth/sign-in?callbackUrl=/stories/share");
-  }
+  const isAuthenticated = !!session?.user;
 
   // Fetch provinces for the form
   const { data: provinces } = await supabase
@@ -33,7 +29,7 @@ export default async function ShareStoryPage() {
 
   const formattedProvinces = (provinces || []).map((p) => ({
     id: p.province_id,
-    name: p.province_name_en || p.province_name_th,
+    name: p.province_name_th || p.province_name_en, // Prefer Thai name
   }));
 
   return (
@@ -44,22 +40,24 @@ export default async function ShareStoryPage() {
           className="mb-16 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ink/50 transition-colors hover:text-ink"
         >
           <ArrowLeft size={16} weight="bold" />
-          <span>Back to stories</span>
+          <span>กลับไปหน้าเรื่องราวทั้งหมด</span>
         </Link>
 
         <header className="mb-16">
           <h1 className="text-4xl font-black leading-[1.05] text-ink md:text-6xl tracking-tight mb-6">
-            Share Your Experience
+            แบ่งปันประสบการณ์ของคุณ
           </h1>
           <p className="text-xl text-ink/70 font-medium leading-relaxed max-w-2xl">
-            Your journey matters. Inspire others by sharing your travel
-            experiences, discoveries, and moments from Yala, Pattani, and
-            Narathiwat.
+            ทุกการเดินทางมีความหมาย ส่งต่อแรงบันดาลใจให้ผู้อื่นผ่านเรื่องราวการเดินทาง การค้นพบ และช่วงเวลาประทับใจใน ยะลา ปัตตานี และนราธิวาส
           </p>
         </header>
 
         <div className="border-t border-ink/10 pt-16">
-          <ShareStoryForm provinces={formattedProvinces} />
+          {!isAuthenticated ? (
+            <TouristAuthGate />
+          ) : (
+            <ShareStoryForm provinces={formattedProvinces} />
+          )}
         </div>
       </main>
       <SiteFooter />

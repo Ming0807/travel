@@ -15,6 +15,7 @@ export type PublicStoryCard = {
   category: string;
   authorType: string;
   authorName: string;
+  status?: string;
 };
 
 export type PublicStoryDetail = PublicStoryCard & {
@@ -133,11 +134,12 @@ function mapStory(row: DbRecord): PublicStoryCard {
     title: text(row.title, "Untitled story"),
     excerpt: text(row.excerpt),
     province: text(province?.province_name_th, text(province?.province_name_en)),
-    date: formatStoryDate(row.published_at),
+    date: formatStoryDate(row.published_at || row.created_at),
     imageUrl: publicImage(row),
     category: text(row.category, "Story"),
     authorType: text(row.author_type, "admin"),
     authorName: row.author_type === 'tourist' ? text(one(row.tourists)?.display_name, "Tourist") : "Admin",
+    status: text(row.status),
   };
 }
 
@@ -369,7 +371,7 @@ export async function getPublicAttractionDetail(slug: string): Promise<PublicAtt
   }
 }
 
-export async function listPublicStories(options?: { limit?: number; province?: string; featuredSlugs?: string[] }): Promise<PublicStoryCard[]> {
+export async function listPublicStories(options?: { limit?: number; province?: string; featuredSlugs?: string[]; authorType?: string }): Promise<PublicStoryCard[]> {
   const limit = options?.limit ?? 12;
   try {
     const supabase = await createSupabaseServerClient();
@@ -381,8 +383,13 @@ export async function listPublicStories(options?: { limit?: number; province?: s
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       query = query.in("slug", options.featuredSlugs);
-    } else if (options?.province) {
-      query = query.eq('provinces.province_name_en', options.province);
+    } else {
+      if (options?.province) {
+        query = query.eq('provinces.province_name_en', options.province);
+      }
+      if (options?.authorType) {
+        query = query.eq('author_type', options.authorType);
+      }
     }
 
     const { data, error } = await query
@@ -395,6 +402,26 @@ export async function listPublicStories(options?: { limit?: number; province?: s
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       return results.sort((a, b) => options.featuredSlugs!.indexOf(a.id) - options.featuredSlugs!.indexOf(b.id));
     }
+    return results;
+  } catch {
+    return [];
+  }
+}
+
+export async function listMyStories(touristId: string, options?: { limit?: number }): Promise<PublicStoryCard[]> {
+  const limit = options?.limit ?? 12;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("travel_stories")
+      .select(`slug, title, excerpt, category, published_at, created_at, author_type, status, tourists (display_name), provinces (province_name_th, province_name_en), content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)`)
+      .eq("author_type", "tourist")
+      .eq("tourist_id", touristId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error || !data || data.length === 0) return [];
+    const results = (data as DbRecord[]).map(mapStory).filter((item) => item.id);
     return results;
   } catch {
     return [];

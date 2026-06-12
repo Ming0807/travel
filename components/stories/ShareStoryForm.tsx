@@ -35,10 +35,10 @@ export function ShareStoryForm({
           router.refresh();
         }, 3000);
       } else {
-        setError(result.error || "Something went wrong.");
+        setError(result.error || "เกิดข้อผิดพลาดบางอย่าง กรุณาลองใหม่อีกครั้ง");
       }
     } catch (err: any) {
-      setError("An unexpected error occurred.");
+      setError("เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง");
     } finally {
       setIsSubmitting(false);
     }
@@ -52,13 +52,12 @@ export function ShareStoryForm({
           weight="fill"
           className="mx-auto text-ink mb-6"
         />
-        <h3 className="text-2xl font-black text-ink mb-3">Story Submitted!</h3>
+        <h3 className="text-2xl font-black text-ink mb-3">ส่งเรื่องราวเรียบร้อยแล้ว!</h3>
         <p className="text-ink/70 mb-8 max-w-sm mx-auto text-lg">
-          Thank you for sharing your experience. Your story has been sent for
-          review and will be published soon.
+          ขอบคุณที่ร่วมแบ่งปันประสบการณ์การเดินทางของคุณ เรื่องราวของคุณถูกส่งไปตรวจสอบและจะได้รับการเผยแพร่เร็วๆ นี้
         </p>
         <p className="text-sm font-bold text-ink/50 uppercase tracking-widest">
-          Redirecting to stories...
+          กำลังพากลับไปหน้าเรื่องราว...
         </p>
       </div>
     );
@@ -78,7 +77,7 @@ export function ShareStoryForm({
           htmlFor="title"
           className="block text-sm font-bold text-ink uppercase tracking-widest mb-3"
         >
-          Story Title
+          หัวข้อเรื่องราว
         </label>
         <input
           type="text"
@@ -86,7 +85,7 @@ export function ShareStoryForm({
           name="title"
           required
           maxLength={100}
-          placeholder="e.g., My weekend in Betong"
+          placeholder="เช่น วันหยุดสุดสัปดาห์ที่เบตง"
           className="w-full border-b border-ink/20 bg-transparent px-0 py-4 text-2xl font-medium text-ink placeholder:text-ink/20 focus:border-ink focus:outline-none transition-colors"
         />
       </div>
@@ -96,7 +95,7 @@ export function ShareStoryForm({
           htmlFor="provinceId"
           className="block text-sm font-bold text-ink uppercase tracking-widest mb-3"
         >
-          Location
+          สถานที่ (จังหวัด)
         </label>
         <div className="relative">
           <select
@@ -106,7 +105,7 @@ export function ShareStoryForm({
             className="w-full appearance-none border-b border-ink/20 bg-transparent px-0 py-4 text-lg font-medium text-ink focus:border-ink focus:outline-none transition-colors cursor-pointer rounded-none"
           >
             <option value="" disabled hidden>
-              Select a province
+              เลือกจังหวัด...
             </option>
             {provinces.map((p) => (
               <option key={p.id} value={p.id}>
@@ -131,7 +130,7 @@ export function ShareStoryForm({
           htmlFor="content"
           className="block text-sm font-bold text-ink uppercase tracking-widest mb-3"
         >
-          Your Story
+          เรื่องราวของคุณ
         </label>
         
         {/* Hidden textarea to capture HTML content for FormData */}
@@ -156,10 +155,10 @@ export function ShareStoryForm({
         className="group inline-flex w-full items-center justify-center gap-3 bg-ink py-5 text-sm font-bold text-white transition-all hover:bg-ink/80 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:pointer-events-none"
       >
         {isSubmitting ? (
-          "Submitting..."
+          "กำลังส่งข้อมูล..."
         ) : (
           <>
-            Submit Story{" "}
+            ส่งเรื่องราวของคุณ{" "}
             <PaperPlaneRight
               size={18}
               weight="fill"

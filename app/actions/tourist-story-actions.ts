@@ -7,29 +7,31 @@ export async function submitTouristStoryAction(formData: FormData) {
   try {
     const supabase = await createSupabaseServerClient();
     
-    // Check authentication
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
+    const { createSupabaseServiceRoleClient } = await import("@/lib/supabase/service-role");
+    const adminSupabase = createSupabaseServiceRoleClient();
+
+    // Check authentication (use getUser to avoid warning)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return { success: false, error: "Please log in to share your story." };
     }
 
+    const provider = user.app_metadata.provider || "email";
+
     // Check tourist profile
-    let { data: touristProfile } = await supabase
+    let { data: touristProfile } = await adminSupabase
       .from("tourist_identities")
       .select("tourist_id")
-      .eq("provider_user_id", session.user.email || session.user.id)
+      .eq("provider", provider)
+      .eq("provider_user_id", user.id)
       .maybeSingle();
 
     if (!touristProfile) {
-      // Use service role client to bypass RLS when auto-creating profiles
-      const { createSupabaseServiceRoleClient } = await import("@/lib/supabase/service-role");
-      const adminSupabase = createSupabaseServiceRoleClient();
-      
       // Auto-create a basic tourist profile for the logged-in user
       const { data: newTourist, error: createError } = await adminSupabase
         .from("tourists")
         .insert({
-          display_name: session.user.email?.split("@")[0] || "Tourist",
+          display_name: user.email?.split("@")[0] || "Tourist",
           age_group: null
         })
         .select("tourist_id")
@@ -42,8 +44,8 @@ export async function submitTouristStoryAction(formData: FormData) {
 
       await adminSupabase.from("tourist_identities").insert({
         tourist_id: newTourist.tourist_id,
-        provider: "email",
-        provider_user_id: session.user.email || session.user.id,
+        provider: provider,
+        provider_user_id: user.id,
         is_primary: true
       });
 
@@ -67,7 +69,7 @@ export async function submitTouristStoryAction(formData: FormData) {
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "") + "-" + Date.now().toString().slice(-4);
 
-    const { data: story, error: storyError } = await supabase
+    const { data: story, error: storyError } = await adminSupabase
       .from("travel_stories")
       .insert({
         slug,
