@@ -111,11 +111,11 @@ type MediaReference = {
 
 function EntityTypeLabel({ type }: { type: string }) {
   const labelMap: Record<string, { label: string; badge: string }> = {
-    attraction: { label: "Attraction", badge: "bg-blue-50 text-blue-700" },
-    restaurant: { label: "Restaurant", badge: "bg-rose-50 text-rose-700" },
-    accommodation: { label: "Accommodation", badge: "bg-purple-50 text-purple-700" },
-    story: { label: "Story", badge: "bg-amber-50 text-amber-700" },
-    route: { label: "Route", badge: "bg-emerald-50 text-emerald-700" },
+    attraction: { label: "สถานที่", badge: "bg-blue-50 text-blue-700" },
+    restaurant: { label: "ร้านอาหาร", badge: "bg-rose-50 text-rose-700" },
+    accommodation: { label: "ที่พัก", badge: "bg-purple-50 text-purple-700" },
+    story: { label: "บทความ", badge: "bg-amber-50 text-amber-700" },
+    route: { label: "เส้นทาง", badge: "bg-emerald-50 text-emerald-700" },
   };
   const info = labelMap[type] ?? { label: type, badge: "bg-slate-50 text-slate-700" };
   return <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${info.badge}`}>{info.label}</span>;
@@ -201,7 +201,7 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
     <div className="space-y-5">
       <div className="flex flex-col gap-3 rounded-lg border border-[#0A6B62]/20 bg-[#E6F4EF] p-4 text-sm leading-6 text-[#073F37] sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="font-black">Media workflow</p>
+          <p className="font-black">ขั้นตอนการจัดการสื่อ</p>
           <p className="mt-0.5">
             อัปโหลดไฟล์ก่อน แล้วระบบจะสร้าง path ให้อัตโนมัติ แอดมินไม่ต้องกรอก storage path เอง ยกเว้นกรณีใช้ URL หรือ embed ภายนอก
           </p>
@@ -254,9 +254,9 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
           const isVisual = media.media_type === "image" || media.media_type === "panorama";
           const hasAltText = Boolean(media.alt_text_th || media.alt_text_en);
           const readinessItems = [
-            { label: "Active", complete: media.is_active },
-            { label: "Alt text", complete: !isVisual || hasAltText },
-            { label: "Cover role", complete: !isVisual || media.is_cover },
+            { label: "ใช้งานอยู่", complete: media.is_active },
+            { label: "มี alt text", complete: !isVisual || hasAltText },
+            { label: "เป็นภาพหน้าปก", complete: !isVisual || media.is_cover },
           ];
           return (
             <article key={media.media_id} className={`rounded-lg border border-slate-200 bg-white p-4 shadow-sm ${editingId === media.media_id ? 'col-span-full' : ''}`}>
@@ -294,21 +294,21 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
                         </span>
                         {media.is_active && media.is_cover ? (
                           <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
-                            COVER
+                            หน้าปก
                           </span>
                         ) : media.is_active ? (
                           <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
-                            GALLERY
+                            แกลเลอรี
                           </span>
                         ) : null}
                         {!media.is_active ? (
                           <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600">
-                            DRAFT / INACTIVE
+                            ฉบับร่าง / ไม่ทำงาน
                           </span>
                         ) : null}
                         {isVisual && media.is_active && !hasAltText ? (
                           <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700 border border-rose-200">
-                            MISSING ALT
+                            ไม่มี alt
                           </span>
                         ) : null}
                       </div>
@@ -339,7 +339,7 @@ export function MediaManager({ entityId, entityType, initialMedia }: MediaManage
                   </div>
 
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-xs font-black uppercase text-slate-500">Public readiness</p>
+                    <p className="text-xs font-black uppercase text-slate-500">ความพร้อมแสดงผล</p>
                     <div className="mt-2 grid gap-2">
                       {readinessItems.map((item) => (
                         <div key={item.label} className="flex items-center gap-2 text-xs font-bold text-slate-700">

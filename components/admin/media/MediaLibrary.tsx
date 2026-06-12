@@ -81,14 +81,14 @@ function getAssetReadiness(asset: MediaAsset) {
 
 function EntityTypeLabel({ type }: { type: string }) {
   const labelMap: Record<string, { label: string; badge: string }> = {
-    attraction: { label: "Attraction", badge: "bg-blue-50 text-blue-700" },
-    restaurant: { label: "Restaurant", badge: "bg-rose-50 text-rose-700" },
-    accommodation: { label: "Accommodation", badge: "bg-purple-50 text-purple-700" },
-    story: { label: "Story", badge: "bg-amber-50 text-amber-700" },
-    route: { label: "Route", badge: "bg-emerald-50 text-emerald-700" },
+    attraction: { label: "สถานที่", badge: "bg-blue-50 text-blue-700" },
+    restaurant: { label: "ร้านอาหาร", badge: "bg-rose-50 text-rose-700" },
+    accommodation: { label: "ที่พัก", badge: "bg-purple-50 text-purple-700" },
+    story: { label: "บทความ", badge: "bg-amber-50 text-amber-700" },
+    route: { label: "เส้นทาง", badge: "bg-emerald-50 text-emerald-700" },
   };
   const info = labelMap[type] ?? { label: type, badge: "bg-slate-50 text-slate-700" };
-  return <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${info.badge}`}>{info.label}</span>;
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${info.badge}`}>{info.label}</span>;
 }
 
 // ─── References Dialog ──────────────────────────────────────────────────────
@@ -119,9 +119,9 @@ function ReferencesDialog({
           <div className="flex items-center gap-3">
             <ListMagnifyingGlass className="text-[#0A6B62]" size={22} weight="fill" />
             <div>
-              <h2 className="text-base font-black text-slate-900">Where This Image Is Used</h2>
+              <h2 className="text-base font-black text-slate-900">สื่อนี้ถูกใช้งานที่ไหนบ้าง</h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                All content records that reference this asset
+                รายการเนื้อหาทั้งหมดที่อ้างอิงถึงไฟล์นี้
               </p>
             </div>
           </div>
@@ -161,8 +161,8 @@ function ReferencesDialog({
           {/* Reference list */}
           <div className="min-w-0 flex-1">
             <p className="mb-3 text-sm font-black text-slate-800">
-              Used in <span className="text-[#0A6B62]">{loading ? "..." : references.length}</span>{" "}
-              {references.length === 1 ? "record" : "records"}
+              ใช้งานใน <span className="text-[#0A6B62]">{loading ? "..." : references.length}</span>{" "}
+              {references.length === 0 ? "รายการ" : references.length === 1 ? "รายการ" : "รายการ"}
             </p>
 
             {loading ? (
@@ -178,9 +178,9 @@ function ReferencesDialog({
               </div>
             ) : references.length === 0 ? (
               <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center">
-                <p className="text-sm font-bold text-slate-500">No content records reference this asset</p>
+                <p className="text-sm font-bold text-slate-500">ไม่มีเนื้อหาใดใช้สื่อนี้อยู่</p>
                 <p className="mt-1 text-xs leading-5 text-slate-400">
-                  This file exists in the library but is not linked to any attraction, story, route, restaurant, or accommodation.
+                  ไฟล์นี้มีอยู่ในคลังแต่ไม่ได้ถูกเชื่อมโยงกับสถานที่ บทความ เส้นทาง ร้านอาหาร หรือที่พักใด
                 </p>
               </div>
             ) : (
@@ -207,7 +207,7 @@ function ReferencesDialog({
                           className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 hover:text-[#0A6B62]"
                         >
                           <ArrowSquareOut size={13} weight="bold" />
-                          Edit
+                          แก้ไข
                         </Link>
                       ) : null}
                     </div>
@@ -232,7 +232,7 @@ function ReferencesDialog({
             onClick={onClose}
             className="min-h-10 rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
           >
-            Close
+            ปิด
           </button>
         </div>
       </div>
@@ -494,8 +494,8 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
             />
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-black text-slate-800">Upload official image</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">JPG, PNG, WebP up to 10MB. Storage path is generated automatically.</p>
+                <p className="text-sm font-black text-slate-800">อัปโหลดภาพของระบบ</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">รองรับ JPG, PNG, WebP ไม่เกิน 10MB ระบบสร้าง path ให้อัตโนมัติ</p>
               </div>
               <button
                 type="button"
@@ -508,7 +508,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                 ) : (
                   <UploadSimple size={18} weight="bold" />
                 )}
-                {uploading ? "Uploading..." : "Upload"}
+                {uploading ? "กำลังอัปโหลด..." : "อัปโหลด"}
               </button>
             </div>
           </div>
@@ -522,7 +522,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               className="min-h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-              placeholder="Search file name, path, category, or type"
+              placeholder="ค้นหาชื่อไฟล์, path, ประเภท หรือหมวดหมู่"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Category filter">
@@ -602,10 +602,10 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
         ) : filteredAssets.length === 0 ? (
           <div className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-5 text-center">
             <ImageIcon size={48} weight="duotone" className="text-slate-300" />
-            <p className="mt-3 text-sm font-black text-slate-800">No matching media assets</p>
+            <p className="mt-3 text-sm font-black text-slate-800">ไม่พบสื่อที่ตรงกับคำค้น</p>
             <p className="mt-1 max-w-md text-sm leading-6 text-slate-500">
-              Try another search, switch category, upload an official image, or {showArchived ? "hide" : "show"} archived assets.
-              Content-specific cover and gallery metadata is managed from the content editor.
+              ลองเปลี่ยนคำค้น เปลี่ยนหมวดหมู่ อัปโหลดภาพใหม่ หรือ{showArchived ? "ซ่อน" : "แสดง"}สื่อที่ archive แล้ว
+              การตั้งค่าหน้าปก alt text และความพร้อมแสดงผล จัดการได้จากตัวแก้ไขเนื้อหาที่ใช้สื่อนี้
             </p>
           </div>
         ) : (
@@ -724,7 +724,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                           className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-black text-white"
                         >
                           <ArrowCounterClockwise size={15} weight="bold" />
-                          Restore
+                          กู้คืน
                         </button>
                       </div>
                     )}
@@ -747,12 +747,12 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                     {archived ? (
                       <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs leading-5 text-amber-800">
                         <Archive className="mt-0.5 shrink-0" size={15} weight="fill" />
-                        This asset is archived. Use &quot;Restore&quot; to make it available again in the Media Library and picker
+                        สื่อนี้ถูก archive แล้ว กด "กู้คืน" เพื่อให้นำกลับมาใช้ใน Media Library และตัวเลือกสื่อได้อีกครั้ง
                       </div>
                     ) : (
                       <div className="flex gap-2 rounded-lg border border-slate-200 bg-white p-2 text-xs leading-5 text-slate-600">
                         <Info className="mt-0.5 shrink-0 text-slate-400" size={15} weight="fill" />
-                        Alt text, cover role, and public readiness are set inside the content editor that uses this asset.
+                        Alt text, หน้าปก และความพร้อมแสดงผล จัดการได้จากตัวแก้ไขเนื้อหาที่ใช้สื่อนี้
                       </div>
                     )}
                   </div>
@@ -797,7 +797,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                 <h2 className="text-base font-black text-slate-900">Archive this asset?</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   This will hide the file from the active Media Library and content pickers.
-                  The storage file and database record are preserved so you can restore it later.
+                  ไฟล์และข้อมูลในฐานข้อมูลจะยังคงอยู่เพื่อให้กู้คืนได้ภายหลัง
                 </p>
                 <p className="mt-3 break-all rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-600">
                   {deleteCandidate.storage_path}
@@ -806,11 +806,11 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                 {loadingReferences ? (
                   <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
                     <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-[#0A6B62]" />
-                    Checking where this asset is used...
+                    กำลังตรวจสอบว่าสื่อนี้ถูกใช้ที่ไหนบ้าง...
                   </div>
                 ) : archiveReferences.length > 0 ? (
                   <div className="mt-4">
-                    <p className="text-xs font-bold text-amber-700">Used in these content records:</p>
+                    <p className="text-xs font-bold text-amber-700">สื่อนี้ถูกใช้ในเนื้อหาเหล่านี้:</p>
                     <div className="mt-2 space-y-1.5">
                       {archiveReferences.map((ref, idx) => (
                         <div key={idx} className="flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs">
@@ -840,7 +840,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                 }}
                 className="min-h-11 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
               >
-                {archiveReferences.length > 0 ? "Close" : "Cancel"}
+                {archiveReferences.length > 0 ? "ปิด" : "ยกเลิก"}
               </button>
               {archiveReferences.length === 0 && !loadingReferences ? (
                 <button
@@ -854,7 +854,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                   ) : (
                     <Archive size={16} weight="bold" />
                   )}
-                  {isArchiving ? "Archiving..." : "Archive asset"}
+                  {isArchiving ? "กำลัง archive..." : "archive สื่อนี้"}
                 </button>
               ) : null}
               {archiveReferences.length > 0 ? (
@@ -869,7 +869,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                   ) : (
                     <Archive size={16} weight="bold" />
                   )}
-                  {isArchiving ? "Archiving..." : "Archive anyway"}
+                  {isArchiving ? "กำลัง archive..." : "archive ต่อไป"}
                 </button>
               ) : null}
             </div>

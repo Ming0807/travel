@@ -76,7 +76,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
 
     render(<MediaLibrary mode="manage" />);
 
-    expect(screen.getByText("Upload official image")).toBeInTheDocument();
+    expect(screen.getByText("อัปโหลดภาพของระบบ")).toBeInTheDocument();
     expect(screen.getByText("Active assets")).toBeInTheDocument();
 
     await waitFor(() => {
@@ -162,8 +162,8 @@ describe("MediaLibrary archive/unarchive flow", () => {
       expect(screen.getByText("Archive this asset?")).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("button", { name: /Archive asset/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /archive สื่อนี้/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /ยกเลิก/i })).toBeInTheDocument();
   });
 
   it("closes archive dialog when Cancel is clicked", async () => {
@@ -186,7 +186,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
       expect(screen.getByText("Archive this asset?")).toBeInTheDocument();
     });
 
-    await userEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    await userEvent.click(screen.getByRole("button", { name: /ยกเลิก/i }));
 
     await waitFor(() => {
       expect(screen.queryByText("Archive this asset?")).not.toBeInTheDocument();
@@ -225,15 +225,15 @@ describe("MediaLibrary archive/unarchive flow", () => {
 
     // References are fetched automatically when the dialog opens
     await waitFor(() => {
-      expect(screen.getByText("Used in these content records:")).toBeInTheDocument();
+      expect(screen.getByText("สื่อนี้ถูกใช้ในเนื้อหาเหล่านี้:")).toBeInTheDocument();
       expect(screen.getByText("หาดทรายขาว")).toBeInTheDocument();
       expect(screen.getByText("เที่ยวทะเลใต้")).toBeInTheDocument();
     });
 
     // When references exist, the confirm button says "Archive anyway" and Close button appears
-    expect(screen.getByRole("button", { name: /Archive anyway/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Close/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Archive asset/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /archive ต่อไป/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /ปิด/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /archive สื่อนี้/i })).not.toBeInTheDocument();
   });
 
   it("auto-closes archive dialog when no references are returned", async () => {
@@ -270,7 +270,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
       expect(screen.getByText("Archive this asset?")).toBeInTheDocument();
     });
 
-    await userEvent.click(screen.getByRole("button", { name: /Archive asset/i }));
+    await userEvent.click(screen.getByRole("button", { name: /archive สื่อนี้/i }));
 
     await waitFor(() => {
       expect(screen.queryByText("Archive this asset?")).not.toBeInTheDocument();
@@ -322,7 +322,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
       json: async () => ACTIVE_ASSETS,
     });
 
-    const restoreBtn = screen.getByRole("button", { name: /Restore/i });
+    const restoreBtn = screen.getByRole("button", { name: /กู้คืน/i });
     await userEvent.click(restoreBtn);
 
     // Should call PATCH with action=unarchive
@@ -368,11 +368,11 @@ describe("MediaLibrary archive/unarchive flow", () => {
 
     // Wait for references fetch to fail before clicking confirm
     await waitFor(() => {
-      expect(screen.queryByText("Checking where this asset is used...")).not.toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /Archive asset/i })).toBeInTheDocument();
+      expect(screen.queryByText("กำลังตรวจสอบว่าสื่อนี้ถูกใช้ที่ไหนบ้าง...")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /archive สื่อนี้/i })).toBeInTheDocument();
     });
 
-    await userEvent.click(screen.getByRole("button", { name: /Archive asset/i }));
+    await userEvent.click(screen.getByRole("button", { name: /archive สื่อนี้/i }));
 
     await waitFor(() => {
       expect(
