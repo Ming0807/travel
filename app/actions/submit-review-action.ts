@@ -2,8 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { resolveCurrentTouristId } from "@/lib/auth/guards";
-import { getGuestIdentity } from "@/lib/auth/guest";
-import { findTouristByIdentity } from "@/lib/repositories/tourist.repository";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
 type SubmitReviewInput = {
@@ -31,15 +29,12 @@ export async function submitReviewAction(input: SubmitReviewInput): Promise<Acti
       return { success: false, error: "Rating must be between 1 and 5." };
     }
 
-    // Resolve tourist identity
-    const guestToken = await getGuestIdentity();
-    if (!guestToken) {
-      return { success: false, error: "Please create your passport first before submitting a review." };
-    }
-
-    const touristId = await findTouristByIdentity("anonymous_device", guestToken);
-    if (!touristId) {
-      return { success: false, error: "Tourist identity not found. Please create your passport first." };
+    // Resolve tourist identity (supports OAuth + guest)
+    let touristId: string;
+    try {
+      touristId = await resolveCurrentTouristId();
+    } catch {
+      return { success: false, error: "กรุณาสร้างพาสปอร์ตก่อนส่งรีวิว" };
     }
 
     // Check for duplicate review

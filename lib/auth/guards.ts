@@ -713,6 +713,43 @@ export class TouristAccessError extends Error {
 }
 
 export async function resolveCurrentTouristId(): Promise<string> {
+  return resolveTouristId();
+}
+
+/**
+ * Resolves the current tourist identity, supporting both authenticated (OAuth) and guest flows.
+ *
+ * Resolution order:
+ * 1. Try Supabase Auth session → look up linked tourist identity
+ * 2. Fall back to anonymous_device guest cookie
+ * 3. Throw TOURIST_IDENTITY_NOT_FOUND if neither exists
+ *
+ * Does NOT create new tourist profiles — only resolves existing ones.
+ * Supported providers: google, email, line, anonymous_device.
+ */
+export async function resolveTouristId(): Promise<string> {
+  // 1. Try Supabase Auth session (OAuth: Google, email, LINE)
+  try {
+    const authClient = await createSupabaseServerClient();
+    const { data: { user }, error } = await authClient.auth.getUser();
+
+    if (!error && user) {
+      // Determine the identity provider from Supabase metadata
+      const provider = user.app_metadata.provider || "email";
+      // user.id is the Supabase Auth UUID, used as provider_user_id
+      const providerUserId = user.id;
+
+      const touristId = await findTouristByIdentity(provider, providerUserId);
+      if (touristId) {
+        return touristId;
+      }
+      // If no linked tourist identity exists, fall through to guest check
+    }
+  } catch {
+    // Auth check failed — fall through to guest check
+  }
+
+  // 2. Fall back to anonymous_device guest cookie
   const guestToken = await getGuestIdentity();
 
   if (!guestToken) {

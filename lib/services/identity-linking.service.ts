@@ -49,7 +49,7 @@ export async function linkVerifiedIdentityToCurrentTourist(params: {
   } catch {
     throw new IdentityLinkingError(
       "TOURIST_IDENTITY_NOT_FOUND",
-      "No current guest passport was found for account linking."
+      "No current passport was found for account linking. Please create a passport first."
     );
   }
 
