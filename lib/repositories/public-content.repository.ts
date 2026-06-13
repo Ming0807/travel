@@ -80,9 +80,8 @@ function imageUrlFromStoragePath(value: unknown): string | null {
   if (!storagePath) return null;
   if (storagePath.startsWith("http")) return storagePath;
   if (storagePath.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(storagePath)}`;
-  // Return absolute Supabase URL so next/image can optimize it properly
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://zaahkhmnqcczswxrcuhw.supabase.co";
-  return `${supabaseUrl}/storage/v1/object/public/site-media/${storagePath}`;
+  // Use /site-media/ route handler for resilient image serving with placeholder fallback
+  return `/site-media/${storagePath}`;
 }
 
 function publicAttractionMedia(row: DbRecord): DbRecord | null {

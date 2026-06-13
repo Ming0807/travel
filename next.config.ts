@@ -47,16 +47,6 @@ const nextConfig: NextConfig = {
       }
     ]
   },
-  async rewrites() {
-    // Expose public site-media bucket via a friendly URL
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://zaahkhmnqcczswxrcuhw.supabase.co";
-    return [
-      {
-        source: "/site-media/:path*",
-        destination: `${supabaseUrl}/storage/v1/object/public/site-media/:path*`,
-      },
-    ];
-  },
   async headers() {
     return [
       {
