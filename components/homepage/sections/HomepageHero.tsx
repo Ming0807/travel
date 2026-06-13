@@ -134,6 +134,7 @@ export function HomepageHero({
                 src={img1}
                 alt="Highlight 2"
                 fill
+                priority
                 className="object-cover"
                 sizes="(max-width: 1024px) 0px, 20vw"
               />}
@@ -145,6 +146,7 @@ export function HomepageHero({
                 src={img2}
                 alt="Highlight 3"
                 fill
+                priority
                 className="object-cover"
                 sizes="(max-width: 1024px) 0px, 22vw"
               />}

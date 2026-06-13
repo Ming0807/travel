@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     const lifecycleStatus = searchParams.get("lifecycle_status");
 
     const query = supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase table type not in generated types
       .from("media_assets" as any)
       .select("*")
       .order("created_at", { ascending: false });
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Construct public URLs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query returns untyped rows
     const assets = data.map((asset: any) => {
       const { data: urlData } = supabase.storage
         .from("site-media")
@@ -54,6 +56,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(assets);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- catch clause
   } catch (error: any) {
     console.error("Error fetching media assets:", error);
     if (error instanceof AdminAuthError) {
@@ -89,29 +92,48 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const extensionMap: Record<string, string> = {
-      "image/jpeg": "jpg",
-      "image/png": "png",
-      "image/webp": "webp",
-    };
-    const ext = extensionMap[file.type] || "jpg";
-    
     const originalName = file.name || "upload";
     const uuid = crypto.randomUUID();
     const safeCategory = category.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const storagePath = `${safeCategory}/${uuid}.${ext}`;
+    const storagePath = `${safeCategory}/${uuid}.webp`;
+    const thumbnailStoragePath = `${safeCategory}/${uuid}_thumb.webp`;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    // --- Image processing: WebP conversion + thumbnail generation ---
+    let webpBuffer: Buffer;
+    let thumbnailBuffer: Buffer | null = null;
+
+    try {
+      const sharp = (await import("sharp")).default;
+      webpBuffer = await sharp(buffer)
+        .resize(1920, 1920, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer();
+
+      try {
+        thumbnailBuffer = await sharp(buffer)
+          .resize(400, 400, { fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 70 })
+          .toBuffer();
+      } catch (thumbErr) {
+        console.warn("Thumbnail generation failed, skipping:", thumbErr);
+      }
+    } catch (sharpErr) {
+      console.warn("Sharp processing failed, falling back to original buffer:", sharpErr);
+      webpBuffer = buffer;
+    }
+    // --- End image processing ---
+
     // Use Service Role to upload and bypass RLS if needed, though Admin should have access
     const adminSupabase = createSupabaseServiceRoleClient();
     
-    // Upload to Storage
+    // Upload main WebP to Storage
     const { error: uploadError } = await adminSupabase.storage
       .from("site-media")
-      .upload(storagePath, buffer, {
-        contentType: file.type,
+      .upload(storagePath, webpBuffer, {
+        contentType: "image/webp",
         upsert: false,
       });
 
@@ -119,39 +141,67 @@ export async function POST(req: NextRequest) {
       throw uploadError;
     }
 
+    // Upload thumbnail if generated
+    if (thumbnailBuffer) {
+      const { error: thumbUploadError } = await adminSupabase.storage
+        .from("site-media")
+        .upload(thumbnailStoragePath, thumbnailBuffer, {
+          contentType: "image/webp",
+          upsert: false,
+        });
+
+      if (thumbUploadError) {
+        console.warn("Thumbnail upload failed, continuing without it:", thumbUploadError);
+      }
+    }
+
     // Insert to Database
     const { data: asset, error: dbError } = await adminSupabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase table type not in generated types
       .from("media_assets" as any)
       .insert({
         file_name: originalName,
         storage_path: storagePath,
-        mime_type: file.type,
-        size_bytes: file.size,
+        mime_type: "image/webp",
+        size_bytes: webpBuffer.length,
         category: category,
-        uploaded_by: guard.authUserId
+        uploaded_by: guard.authUserId,
+        thumbnail_storage_path: thumbnailBuffer ? thumbnailStoragePath : null,
       })
       .select()
       .single();
 
     if (dbError) {
       // Rollback storage if DB fails
-      await adminSupabase.storage.from("site-media").remove([storagePath]);
+      const pathsToRemove = [storagePath];
+      if (thumbnailBuffer) pathsToRemove.push(thumbnailStoragePath);
+      await adminSupabase.storage.from("site-media").remove(pathsToRemove);
       throw dbError;
     }
 
-    // Get public URL
+    // Get public URLs
     const { data: urlData } = adminSupabase.storage
       .from("site-media")
       .getPublicUrl(asset.storage_path);
+
+    let thumbnailUrl: string | null = null;
+    if (asset.thumbnail_storage_path) {
+      const { data: thumbUrlData } = adminSupabase.storage
+        .from("site-media")
+        .getPublicUrl(asset.thumbnail_storage_path);
+      thumbnailUrl = thumbUrlData.publicUrl;
+    }
 
     return NextResponse.json({
       success: true,
       asset: {
         ...asset,
-        url: urlData.publicUrl
+        url: urlData.publicUrl,
+        thumbnail_url: thumbnailUrl,
       }
     });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- catch clause
   } catch (error: any) {
     console.error("Media upload error:", error);
     if (error instanceof AdminAuthError) {

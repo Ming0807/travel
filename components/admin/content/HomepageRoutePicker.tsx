@@ -27,7 +27,6 @@ export function HomepageRoutePicker({
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const latestQueryRef = useRef("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef(0);
   const slugsKey = slugs.join("|");
@@ -56,7 +55,6 @@ export function HomepageRoutePicker({
     setSearchResults([]);
     setSearchError(null);
     setIsSearching(false);
-    latestQueryRef.current = "";
     requestIdRef.current += 1;
   }
 
@@ -131,7 +129,6 @@ export function HomepageRoutePicker({
   );
 
   const problematicCount = selectedWarnings.draft + selectedWarnings.inactive;
-  const isExpanded = searchQuery.trim() !== "" && (searchResults.length > 0 || isSearching || searchError !== null);
 
   return (
     <div className="space-y-4">
@@ -148,10 +145,8 @@ export function HomepageRoutePicker({
             onChange={(e) => handleSearch(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Escape") { clearSearch(); (e.target as HTMLInputElement).blur(); } }}
             placeholder="พิมพ์ชื่อเส้นทางหรือ slug..."
-            role="combobox"
-            aria-expanded={isExpanded}
+            aria-label="ค้นหาเส้นทาง"
             aria-controls="search-results-listbox"
-            aria-autocomplete="list"
             className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
           />
           {isSearching && <Spinner className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 animate-spin" size={18} />}
@@ -169,7 +164,7 @@ export function HomepageRoutePicker({
         {searchQuery.trim() && searchResults.length > 0 && (
           <div
             id="search-results-listbox"
-            role="listbox"
+            role="list"
             className="absolute top-full left-0 right-0 mt-2 max-w-full bg-white border border-slate-200 rounded-xl shadow-xl max-h-60 overflow-y-auto z-20"
           >
             {searchResults.map((result) => {
@@ -177,8 +172,7 @@ export function HomepageRoutePicker({
               return (
                 <div
                   key={result.id}
-                  role="option"
-                  aria-selected={isAdded}
+
                   className={`flex items-center gap-3 p-3 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition ${isAdded ? "opacity-50" : ""}`}
                 >
                   <div className="flex-1 min-w-0">

@@ -606,7 +606,10 @@ function HomepageSettings({
         <TextArea label="คำอธิบาย" value={settings.homepage_how_it_works.description} onChange={(value) => updateSettingObject("homepage_how_it_works", { description: value })} rows={3} />
       </SettingsSection>
 
-      <SettingsSection title="ไฮไลต์" description="เรื่องเล่าและภาพประกอบช่วงกลางหน้าแรก">
+      <SettingsSection title="ไฮไลต์" description="เรื่องเล่าและภาพประกอบช่วงกลางหน้าแรก (ข้อความและภาพประกอบนี้จัดการโดยตรงจาก Settings — ไม่ได้เชื่อมกับ CMS)">
+        <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+          ข้อความคำคม ชื่อผู้เขียน และภาพประกอบในส่วนนี้ เป็นข้อความตั้งค่าที่แก้ไขโดยตรง ไม่ได้ดึงจากบทความหรือ CMS หากต้องการเปลี่ยนเนื้อหาหลักของไฮไลต์ กรุณาแก้ไขที่นี่
+        </div>
         <TextInput label="หัวข้อ" value={settings.homepage_highlights.title} onChange={(value) => updateSettingObject("homepage_highlights", { title: value })} />
         <div className="grid gap-4 md:grid-cols-2">
           <TextInput label="ชื่อผู้เขียน" value={settings.homepage_highlights.authorName} onChange={(value) => updateSettingObject("homepage_highlights", { authorName: value })} />

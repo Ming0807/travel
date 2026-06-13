@@ -59,7 +59,7 @@ export function HomepageAttractionsFeed({ attractions = [] }: { attractions?: At
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {topDestinations.length > 0 ? topDestinations.map((attraction, index) => (
+        {topDestinations.length > 0 ? topDestinations.map((attraction) => (
           <Link href={`/attractions/${attraction.slug}`} key={attraction.slug} className="group flex flex-col">
             <div className="relative w-full aspect-[3/4] overflow-hidden rounded-2xl mb-5 shadow-md border border-ink/5 bg-cream">
               {attraction.imageUrl ? (
@@ -67,7 +67,6 @@ export function HomepageAttractionsFeed({ attractions = [] }: { attractions?: At
                   src={attraction.imageUrl}
                   alt={attraction.imageAlt}
                   fill
-                  priority={index < 2}
                   className="object-cover group-hover:scale-105 transition-transform duration-700"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />

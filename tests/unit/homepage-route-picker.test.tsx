@@ -73,7 +73,7 @@ describe("HomepageRoutePicker", () => {
 
     await waitFor(() => expect(screen.getByText("เส้นทาง ก")).toBeInTheDocument());
 
-    const input = screen.getByRole("combobox");
+    const input = screen.getByPlaceholderText("พิมพ์ชื่อเส้นทางหรือ slug...");
     await userEvent.type(input, "เส้นทาง");
 
     await waitFor(() => {
@@ -97,7 +97,7 @@ describe("HomepageRoutePicker", () => {
     render(<HomepageRoutePicker slugs={[]} onChange={onChange} />);
     await waitFor(() => expect(screen.queryByText("กำลังโหลด")).not.toBeInTheDocument());
 
-    const input = screen.getByRole("combobox");
+    const input = screen.getByPlaceholderText("พิมพ์ชื่อเส้นทางหรือ slug...");
     await userEvent.type(input, "เส้");
 
     // Search is in flight (spinner visible), clear input
@@ -112,7 +112,7 @@ describe("HomepageRoutePicker", () => {
 
     // Stale data must NOT appear
     expect(screen.queryByText("เส้นทาง ข")).not.toBeInTheDocument();
-    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
   // ── Escape clears query/results and invalidates stale response ────────
@@ -126,7 +126,7 @@ describe("HomepageRoutePicker", () => {
     render(<HomepageRoutePicker slugs={[]} onChange={onChange} />);
     await waitFor(() => expect(screen.queryByText("กำลังโหลด")).not.toBeInTheDocument());
 
-    const input = screen.getByRole("combobox");
+    const input = screen.getByPlaceholderText("พิมพ์ชื่อเส้นทางหรือ slug...");
     await userEvent.type(input, "เส้น");
     await userEvent.keyboard("{Escape}");
 
@@ -136,7 +136,7 @@ describe("HomepageRoutePicker", () => {
     await vi.waitFor(() => expect(mockSearchRoutesAction).toHaveBeenCalled(), { timeout: 100 });
 
     expect(screen.queryByText("เส้นทาง ข")).not.toBeInTheDocument();
-    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
   // ── Remove and up/down reorder call onChange ──────────────────────────
@@ -184,7 +184,7 @@ describe("HomepageRoutePicker", () => {
     render(<HomepageRoutePicker slugs={[]} onChange={onChange} />);
     await waitFor(() => expect(screen.queryByText("กำลังโหลด")).not.toBeInTheDocument());
 
-    await userEvent.type(screen.getByRole("combobox"), "xxx");
+    await userEvent.type(screen.getByPlaceholderText("พิมพ์ชื่อเส้นทางหรือ slug..."), "xxx");
 
     await waitFor(() => {
       expect(screen.getByText("ค้นหาเส้นทางไม่สำเร็จ")).toBeInTheDocument();
@@ -220,7 +220,7 @@ describe("HomepageRoutePicker", () => {
     render(<HomepageRoutePicker slugs={[]} onChange={onChange} />);
     await waitFor(() => expect(screen.queryByText("กำลังโหลด")).not.toBeInTheDocument());
 
-    const input = screen.getByRole("combobox");
+    const input = screen.getByPlaceholderText("พิมพ์ชื่อเส้นทางหรือ slug...");
     await userEvent.type(input, "abc");
 
     // Resolve last search first (abc → ROUTE_C)
