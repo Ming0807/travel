@@ -785,7 +785,17 @@ export type PublicRouteCard = {
   imageUrl: string | null;
 };
 
-export async function listPublicRoutes(limit = 10): Promise<PublicRouteCard[]> {
+function mapRouteCard(row: DbRecord): PublicRouteCard {
+  return {
+    slug: text(row.slug),
+    name: text(row.name_th, text(row.name_en)),
+    description: text(row.description_th, text(row.description_en)),
+    days: numberValue(row.days, 1),
+    imageUrl: publicImage(row),
+  };
+}
+
+export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Promise<PublicRouteCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase

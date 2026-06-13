@@ -28,6 +28,18 @@ export const SITE_SETTING_DEFAULTS = {
   homepage_featured_attractions: {
     slugs: [] as string[],
   },
+  homepage_stories: {
+    title: "ประสบการณ์จากนักเดินทาง",
+    subtitle: "อ่านเรื่องราวแห่งแรงบันดาลใจจากผู้ที่ได้สัมผัสมนต์เสน่ห์ของปลายด้ามขวาน",
+    buttonText: "อ่านบทความทั้งหมด",
+    limit: 4,
+  },
+  homepage_featured_routes: {
+    slugs: [] as string[],
+    title: "เส้นทางแนะนำ",
+    subtitle: "ออกเดินทางสัมผัสประสบการณ์ใหม่ในแบบที่คุณเลือก",
+    limit: 3,
+  },
   attractions_page_hero: {
     title: "สำรวจสถานที่ท่องเที่ยวใน 3 จังหวัดชายแดนใต้",
     description: "ค้นหาสถานที่ท่องเที่ยวตามจังหวัด ประเภท และเรื่องราวที่เหมาะกับแผนการเดินทางของคุณ",

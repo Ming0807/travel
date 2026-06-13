@@ -31,18 +31,18 @@ export function HomepageCertificateCta({
             src={imgSrc}
             alt="Landscape"
             fill
-            unoptimized
+
           />
         )}
-        
+
         {/* Decorative Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-transparent opacity-80"></div>
-        
+
         <div className="relative z-10 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold uppercase tracking-widest mb-6">
             <span className="text-coral">✦</span> จดหมายข่าวสาร
           </div>
-          
+
           <h2 className="text-4xl font-black text-white sm:text-5xl leading-[1.1] mb-6">
             {title}<br />
             {subtitle && <span className="font-['Playfair_Display'] italic font-normal text-coral">{subtitle}</span>}
@@ -50,15 +50,15 @@ export function HomepageCertificateCta({
           <p className="text-white/80 text-sm md:text-base mb-10 max-w-lg mx-auto leading-relaxed">
             {description}
           </p>
-          
+
           <form className="flex flex-col sm:flex-row items-center justify-center w-full max-w-md mx-auto gap-3 bg-white/10 backdrop-blur-md p-2 rounded-full border border-white/20 shadow-2xl">
-            <input 
-              type="email" 
-              placeholder="กรอกอีเมลของคุณ" 
+            <input
+              type="email"
+              placeholder="กรอกอีเมลของคุณ"
               className="flex-1 w-full bg-white rounded-full px-6 py-3.5 text-sm text-ink outline-none border-none placeholder:text-muted/70 focus:ring-2 focus:ring-coral/50"
               required
             />
-            <button 
+            <button
               type="submit"
               className="w-full sm:w-auto rounded-full bg-coral px-8 py-3.5 text-sm font-bold text-white hover:bg-coral/90 transition-all shadow-md hover:-translate-y-0.5"
             >

@@ -18,7 +18,7 @@ export async function Homepage() {
   const featuredAttractionsSetting = await settingsService.getSetting("homepage_featured_attractions", { slugs: [] });
   const featuredSlugs = featuredAttractionsSetting?.slugs || [];
 
-  const [attractions, stories, routes, heroSettings, howItWorksSettings, highlightsSettings, ctaSettings] = await Promise.all([
+  const [attractions, stories, routes, heroSettings, storiesSettings, routesSettings, howItWorksSettings, highlightsSettings, ctaSettings] = await Promise.all([
     listPublicAttractionCards(8, { featuredSlugs }),
     listPublicStories({ limit: 4 }),
     listPublicRoutes(3),
@@ -26,11 +26,19 @@ export async function Homepage() {
       title: "ค้นพบ<br/>ความมหัศจรรย์<br/>ที่ซ่อนเร้น",
       subtitle: "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์",
       description: "ตามหาช่วงเวลาสุดพิเศษและสถานที่ที่ซ่อนเร้นเพื่อจุดประกายประสบการณ์ที่ไม่มีวันลืม ในยะลา ปัตตานี และนราธิวาส",
-      images: [
-        "",
-        "",
-        ""
-      ]
+      images: ["", "", ""]
+    }),
+    settingsService.getSetting("homepage_stories", {
+      title: "ประสบการณ์จากนักเดินทาง",
+      subtitle: "อ่านเรื่องราวแห่งแรงบันดาลใจจากผู้ที่ได้สัมผัสมนต์เสน่ห์ของปลายด้ามขวาน",
+      buttonText: "อ่านบทความทั้งหมด",
+      limit: 4,
+    }),
+    settingsService.getSetting("homepage_featured_routes", {
+      slugs: [] as string[],
+      title: "เส้นทางแนะนำ",
+      subtitle: "ออกเดินทางสัมผัสประสบการณ์ใหม่ในแบบที่คุณเลือก",
+      limit: 3,
     }),
     settingsService.getSetting("homepage_how_it_works", {
       title: "ใช้งานง่ายเหมือนแอป",
@@ -54,13 +62,18 @@ export async function Homepage() {
     })
   ]);
 
+  const featuredRouteSlugs = routesSettings.slugs ?? [];
+  const displayRoutes = featuredRouteSlugs.length > 0
+    ? await listPublicRoutes(featuredRouteSlugs.length, featuredRouteSlugs)
+    : routes;
+
   return (
     <>
       <HomepageHero {...heroSettings} />
       <RevealOnScroll delay={100}><HomepageAttractionsFeed attractions={attractions} /></RevealOnScroll>
       <RevealOnScroll delay={100}><HomepageHowItWorks {...howItWorksSettings} /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageStories stories={stories} /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageSuggestedRoutes routes={routes} /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageStories stories={stories} title={storiesSettings.title} subtitle={storiesSettings.subtitle} buttonText={storiesSettings.buttonText} /></RevealOnScroll>
+      <RevealOnScroll delay={100}><HomepageSuggestedRoutes routes={displayRoutes.slice(0, routesSettings.limit)} title={routesSettings.title} subtitle={routesSettings.subtitle} /></RevealOnScroll>
       <RevealOnScroll delay={100}><HomepageHighlights {...highlightsSettings} /></RevealOnScroll>
       <RevealOnScroll delay={100}><HomepageDashboardPreview /></RevealOnScroll>
       <RevealOnScroll delay={100}><HomepageCertificateCta {...ctaSettings} /></RevealOnScroll>

@@ -90,7 +90,7 @@ const GROUPS: {
 ];
 
 const GROUP_KEYS: Record<SettingsGroupId, SiteSettingKey[]> = {
-  homepage: ["homepage_hero", "homepage_featured_attractions", "homepage_how_it_works", "homepage_highlights", "homepage_cta"],
+  homepage: ["homepage_hero", "homepage_featured_attractions", "homepage_stories", "homepage_featured_routes", "homepage_how_it_works", "homepage_highlights", "homepage_cta"],
   publicPages: ["attractions_page_hero", "attractions_page_banner", "stories_page_hero", "stories_page_cta", "routes_page_hero", "restaurants_page_hero", "restaurants_page_feature", "restaurants_page_cta"],
   contact: ["general_info", "social_media", "footer_info"],
   seo: ["seo_settings"],
@@ -134,6 +134,8 @@ function isSettingsGroupId(value: unknown): value is SettingsGroupId {
 const KEY_TO_GROUP: Record<string, SettingsGroupId> = {
   homepage_hero: "homepage",
   homepage_featured_attractions: "homepage",
+  homepage_stories: "homepage",
+  homepage_featured_routes: "homepage",
   homepage_how_it_works: "homepage",
   homepage_highlights: "homepage",
   homepage_cta: "homepage",
@@ -563,6 +565,33 @@ function HomepageSettings({
             <Link href="/admin/content" className="font-black text-[#0A6B62] underline hover:text-[#075049]">
               ไปที่ศูนย์จัดการเนื้อหา (Content Hub)
             </Link>
+          </p>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection title="เรื่องราวนักเดินทาง" description="ข้อความและจำนวนบทความที่แสดงในส่วน Stories ของหน้าแรก">
+        <TextInput label="หัวข้อ" value={settings.homepage_stories.title} onChange={(value) => updateSettingObject("homepage_stories", { title: value })} />
+        <TextInput label="หัวข้อย่อย" value={settings.homepage_stories.subtitle} onChange={(value) => updateSettingObject("homepage_stories", { subtitle: value })} />
+        <TextInput label="ข้อความปุ่ม" value={settings.homepage_stories.buttonText} onChange={(value) => updateSettingObject("homepage_stories", { buttonText: value })} />
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+          บทความจะดึงจากตาราง travel_stories โดยอัตโนมัติ ใช้ฟิลเตอร์ status=published
+        </div>
+      </SettingsSection>
+
+      <SettingsSection title="เส้นทางแนะนำ" description="เลือกเส้นทาง (slug) ที่ต้องการแสดงบนหน้าแรก พร้อมกำหนดจำนวน">
+        <TextInput label="หัวข้อ" value={settings.homepage_featured_routes.title} onChange={(value) => updateSettingObject("homepage_featured_routes", { title: value })} />
+        <TextInput label="หัวข้อย่อย" value={settings.homepage_featured_routes.subtitle} onChange={(value) => updateSettingObject("homepage_featured_routes", { subtitle: value })} />
+        <TextArea
+          label="รายการ slug เส้นทาง (หนึ่งบรรทัดต่อ 1 เส้นทาง)"
+          value={(settings.homepage_featured_routes.slugs ?? []).join("\n")}
+          onChange={(value) => updateSettingObject("homepage_featured_routes", { slugs: value.split("\n").map((s: string) => s.trim()).filter(Boolean) })}
+          rows={4}
+        />
+        <TextInput label="จำนวนที่แสดงสูงสุด" value={String(settings.homepage_featured_routes.limit ?? 3)} onChange={(value) => updateSettingObject("homepage_featured_routes", { limit: Math.max(1, parseInt(value) || 3) })} />
+        <div className="rounded-lg border border-[#0A6B62]/20 bg-[#E6F4EF] p-4 text-sm leading-6 text-[#073F37]">
+          <p className="font-bold">เส้นทางมาจากไหน?</p>
+          <p className="mt-1">
+            ใช้ slug จากเส้นทางที่สร้างไว้แล้วใน <Link href="/admin/routes" className="font-black text-[#0A6B62] underline hover:text-[#075049]">จัดการเส้นทาง</Link> จะแสดงเฉพาะเส้นทางที่เผยแพร่แล้ว
           </p>
         </div>
       </SettingsSection>

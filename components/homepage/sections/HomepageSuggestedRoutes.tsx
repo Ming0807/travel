@@ -5,17 +5,23 @@ import type { PublicRouteCard } from "@/lib/repositories/public-content.reposito
 
 interface HomepageSuggestedRoutesProps {
   routes: PublicRouteCard[];
+  title?: string;
+  subtitle?: string;
 }
 
-export function HomepageSuggestedRoutes({ routes }: HomepageSuggestedRoutesProps) {
+export function HomepageSuggestedRoutes({
+  routes,
+  title = "เส้นทางแนะนำ",
+  subtitle = "ออกเดินทางสัมผัสประสบการณ์ใหม่ในแบบที่คุณเลือก",
+}: HomepageSuggestedRoutesProps) {
   if (!routes || routes.length === 0) return null;
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 border-t border-ink/5">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-ink">เส้นทางแนะนำ</h2>
-          <p className="mt-2 text-muted">ออกเดินทางสัมผัสประสบการณ์ใหม่ในแบบที่คุณเลือก</p>
+          <h2 className="text-3xl font-bold text-ink">{title}</h2>
+          <p className="mt-2 text-muted">{subtitle}</p>
         </div>
       </div>
 
@@ -29,7 +35,7 @@ export function HomepageSuggestedRoutes({ routes }: HomepageSuggestedRoutesProps
                   alt={route.name}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  unoptimized
+
                 />
               ) : (
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-sand/70 text-center text-xs font-semibold text-muted">

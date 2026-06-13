@@ -6,7 +6,17 @@ function storyImageAlt(title: string) {
   return `${title} story image`;
 }
 
-export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
+export function HomepageStories({
+  stories,
+  title = "ประสบการณ์จากนักเดินทาง",
+  subtitle = "อ่านเรื่องราวแห่งแรงบันดาลใจจากผู้ที่ได้สัมผัสมนต์เสน่ห์ของปลายด้ามขวาน",
+  buttonText = "อ่านบทความทั้งหมด",
+}: {
+  stories?: PublicStoryCard[];
+  title?: string;
+  subtitle?: string;
+  buttonText?: string;
+}) {
   const storyCards = stories ?? [];
   const featuredStory = storyCards[0];
   const sideStories = storyCards.slice(1, 4);
@@ -15,14 +25,14 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
     <section id="stories" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-2xl my-8 border border-ink/5">
       <div className="mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h2 className="text-4xl font-black text-ink tracking-tight">ประสบการณ์จากนักเดินทาง</h2>
-          <p className="mt-4 text-muted text-sm md:text-base font-medium max-w-lg">อ่านเรื่องราวแห่งแรงบันดาลใจจากผู้ที่ได้สัมผัสมนต์เสน่ห์ของปลายด้ามขวาน</p>
+          <h2 className="text-4xl font-black text-ink tracking-tight">{title}</h2>
+          <p className="mt-4 text-muted text-sm md:text-base font-medium max-w-lg">{subtitle}</p>
         </div>
         <Link
           href="/stories"
           className="inline-flex rounded-full border border-ink/10 px-6 py-3 text-sm font-bold text-ink hover:bg-cream hover:text-coral transition-colors"
         >
-          อ่านบทความทั้งหมด &rarr;
+          {buttonText} &rarr;
         </Link>
       </div>
 
@@ -36,7 +46,7 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
                   alt={storyImageAlt(featuredStory.title)}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  unoptimized
+
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm font-semibold text-muted">
@@ -73,7 +83,7 @@ export function HomepageStories({ stories }: { stories?: PublicStoryCard[] }) {
                     alt={storyImageAlt(story.title)}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    unoptimized
+
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs font-semibold text-muted">

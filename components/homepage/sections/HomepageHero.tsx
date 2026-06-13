@@ -35,25 +35,42 @@ export function HomepageHero({
       <div className="absolute top-0 left-1/2 w-[800px] h-[600px] -translate-x-1/2 -translate-y-1/2 bg-slate-50 rounded-full blur-[100px] -z-10 opacity-70"></div>
       
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+        {/* Mobile Hero Image — visible below sm breakpoint */}
+        {img0 && (
+          <div className="relative w-full h-[280px] sm:hidden mb-8 rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-cream">
+            <Image
+              src={img0}
+              alt="Southern Border Tourism"
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
+            />
+            <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
+              📍 จุดเช็กอินยอดฮิต
+            </div>
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-8 items-center">
           
           {/* Left: Text Content (Col 1-6) */}
           <div className="lg:col-span-6 lg:pr-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-coral/20 text-coral text-xs font-bold uppercase tracking-widest mb-8 shadow-sm">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-coral/20 text-coral text-xs font-bold uppercase tracking-widest mb-6 sm:mb-8 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-coral animate-pulse"></span>
               {subtitle}
             </div>
             
-            <h1 className="text-5xl md:text-6xl xl:text-[5.5rem] font-black tracking-tight leading-[1.05] text-ink mb-6" dangerouslySetInnerHTML={{ __html: title.replace('ความมหัศจรรย์', `<span class="font-['Playfair_Display'] italic text-coral font-light">ความมหัศจรรย์</span>`).replace('\n', '<br />') }} />
+            <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-[5.5rem] font-black tracking-tight leading-[1.05] text-ink mb-6" dangerouslySetInnerHTML={{ __html: title.replace('ความมหัศจรรย์', `<span class="font-['Playfair_Display'] italic text-coral font-light">ความมหัศจรรย์</span>`).replace('\n', '<br />') }} />
             
-            <p className="mt-6 text-lg md:text-xl leading-relaxed text-muted max-w-lg font-medium">
+            <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl leading-relaxed text-muted max-w-lg font-medium">
               {description}
             </p>
             
-            <div className="mt-10 flex flex-wrap items-center gap-4">
+            <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
               <Link
                 href="/attractions"
-                className="group flex items-center justify-center gap-2 rounded-full bg-coral px-8 py-4 text-sm font-bold text-white shadow-lg shadow-coral/30 hover:bg-coral/90 hover:-translate-y-1 transition-all duration-300"
+                className="group flex items-center justify-center gap-2 rounded-full bg-coral px-6 sm:px-8 py-3 sm:py-4 text-sm font-bold text-white shadow-lg shadow-coral/30 hover:bg-coral/90 hover:-translate-y-1 transition-all duration-300"
               >
                 เริ่มวางแผนทริป
                 <ArrowRight weight="bold" className="group-hover:translate-x-1 transition-transform" />
@@ -61,35 +78,35 @@ export function HomepageHero({
               
               <Link
                 href="/360-vista"
-                className="flex items-center gap-3 rounded-full bg-white px-6 py-4 text-sm font-bold text-ink border border-ink/5 hover:bg-cream transition-colors duration-300"
+                className="flex items-center gap-3 rounded-full bg-white px-5 sm:px-6 py-3 sm:py-4 text-sm font-bold text-ink border border-ink/5 hover:bg-cream transition-colors duration-300"
               >
-                <div className="w-8 h-8 rounded-full bg-ink/5 flex items-center justify-center text-ink">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-ink/5 flex items-center justify-center text-ink">
                   <Play weight="fill" size={12} />
                 </div>
                 ชมบรรยากาศ 360°
               </Link>
             </div>
             
-            <div className="mt-12 flex items-center gap-6 text-sm font-bold text-muted">
+            <div className="mt-8 sm:mt-12 flex items-center gap-4 sm:gap-6 text-sm font-bold text-muted">
               <div className="flex items-center gap-2">
-                <MapPin weight="fill" className="text-teal" size={20} />
+                <MapPin weight="fill" className="text-teal" size={18} />
                 <span>ยะลา</span>
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-ink/20"></div>
               <div className="flex items-center gap-2">
-                <MapPin weight="fill" className="text-coral" size={20} />
+                <MapPin weight="fill" className="text-coral" size={18} />
                 <span>ปัตตานี</span>
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-ink/20"></div>
               <div className="flex items-center gap-2">
-                <MapPin weight="fill" className="text-gold" size={20} />
+                <MapPin weight="fill" className="text-gold" size={18} />
                 <span>นราธิวาส</span>
               </div>
             </div>
           </div>
 
-          {/* Right: Premium Image Collage (Col 7-12) */}
-          <div className="lg:col-span-6 relative h-[500px] md:h-[600px] w-full mt-10 lg:mt-0">
+          {/* Right: Premium Image Collage (Col 7-12) — desktop only */}
+          <div className="hidden lg:block lg:col-span-6 relative h-[500px] md:h-[600px] w-full">
             {/* Main Center Image */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[80%] rounded-2xl overflow-hidden shadow-2xl border-8 border-white z-20 bg-cream">
               {img0 ? (
@@ -99,7 +116,6 @@ export function HomepageHero({
                   fill
                   priority
                   className="object-cover scale-105"
-                  unoptimized
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-sand text-center text-xs font-bold uppercase tracking-widest text-muted">
@@ -118,7 +134,6 @@ export function HomepageHero({
                 alt="Highlight 2"
                 fill
                 className="object-cover"
-                unoptimized
               />}
             </div>
             
@@ -129,7 +144,6 @@ export function HomepageHero({
                 alt="Highlight 3"
                 fill
                 className="object-cover"
-                unoptimized
               />}
             </div>
             
