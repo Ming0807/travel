@@ -574,48 +574,58 @@ Never use EXIF for hidden tracking.
 
 ## 12. Image Processing Strategy
 
-## 12.1 MVP
+> **Status: Partially Implemented, Splits by Upload Path**
 
-MVP can avoid complex processing.
+### 12.1 Tourist Upload Path — Implemented (sharp)
 
-Required:
+| Step | Status | Detail |
+|---|---|---|
+| Resize (max 1920px) | ✅ Implemented | `app/actions/photo-actions.ts` line 81 (`sharp(…).resize(1920)`) |
+| WebP conversion | ✅ Implemented | `photo-actions.ts` line 82 (`.webp({ quality: 80 })`) |
+| Tourist story image upload | ✅ Implemented | `app/api/upload/route.ts` line 25 (`.resize(1200).webp({ quality: 80 })`) |
+| EXIF stripping | ✅ Implicit | sharp strips EXIF by default when converting to WebP |
+| `sharp` in dependencies | ✅ Confirmed | `package.json`: `"sharp": "^0.34.5"` |
+| Metadata stored | ✅ Implemented | `handlePhotoUploadMetadata()` in `lib/services/photo-upload.service.ts` |
+| Signed URL for private view | ✅ Implemented | `photo-actions.ts` line 95 — 1-hour signed URL |
+
+### 12.2 Admin Media Upload Path — Raw File Storage Only (No Processing)
+
+| Step | Status | Detail |
+|---|---|---|
+| File validation (MIME, size) | ✅ Implemented | `app/api/admin/media/upload/route.ts` lines 40–56 |
+| Path generation | ✅ Implemented | Route handler constructs `content-media/{type}/{year}/{month}/{id}/{uuid}.{ext}` |
+| Upload to storage | ✅ Implemented | Raw `buffer` uploaded via `uploadPrivateFile` — no transform |
+| sharp / WebP conversion | ❌ Not implemented | Admin upload stores original file format as-is. No resize, no format conversion. |
+| Thumbnail generation | ❌ Not implemented | No thumbnail variant created for admin uploads |
+| Width/height extraction | ❌ Not implemented | `content_media` metadata does not store dimensions |
+| Responsive variants | ❌ Not implemented | See §12.3 below |
+
+### 12.3 Planned: Admin Media Optimization (Migration Pending)
+
+> **Status: Planned — not yet scheduled**
+
+The following processing will be added to the admin upload path in a future migration:
 
 ```text
-validate file
-upload original or browser-compressed image
-store metadata
-use preview
+- resize large images (max ~2000px)
+- convert to WebP (unify format for all admin media)
+- generate thumbnail variant (150x150 or similar for admin lists / pickers)
+- extract EXIF and strip GPS before storing
+- store width/height in content_media metadata
 ```
 
-Optional:
+No other variants (card, hero, gallery, og) are planned yet — see §39 Future Enhancements.
 
-```text
-client-side compression
-```
-
-## 12.2 Phase 2
+### 12.4 Production (Future)
 
 Add:
 
 ```text
-resize large images
-generate thumbnails
-strip EXIF
-convert to WebP
-crop tool
-rotate correction
-```
-
-## 12.3 Production
-
-Add:
-
-```text
-server-side image pipeline
-background jobs
-CDN optimization
-malware scanning if available
-moderation support
+server-side image pipeline          future
+background jobs                      future
+CDN optimization                     future
+malware scanning if available        future
+moderation support                   future
 ```
 
 ---
@@ -684,6 +694,8 @@ Rules:
 
 ## 14. Attraction Media Upload Requirements
 
+> **Status: Implemented (raw upload only); Optimization planned**
+
 Admin-uploaded attraction images can be public.
 
 Allowed MIME types:
@@ -694,10 +706,10 @@ image/png
 image/webp
 ```
 
-Recommended size limit:
+Size limit (enforced):
 
 ```text
-5 MB to 10 MB
+10 MB
 ```
 
 Admin image metadata:
@@ -714,13 +726,13 @@ is_cover
 is_active
 ```
 
-Rules:
+Rules (current implementation):
 
-- validate file type and size
-- allow cover selection
-- provide alt text
-- avoid huge images in public list cards
-- generate optimized variants later
+- ✅ validate file type and size — `app/api/admin/media/upload/route.ts` lines 40–56
+- ✅ allow cover selection — `is_cover` field in `content_media` table
+- ✅ provide alt text — required before publishing (readiness check in `MediaManager.tsx`)
+- ❌ avoid huge images in public list cards — not yet implemented; no resize variant exists
+- ❌ generate optimized variants later — still pending (see §12.3 Planned)
 
 ---
 

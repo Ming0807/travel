@@ -299,21 +299,21 @@ Normal image workflows should start from the content being edited:
 
 Required media metadata:
 
-| Field | Purpose |
-|---|---|
-| file | Original uploaded asset |
-| mime type | Validate allowed formats |
-| file size | Prevent heavy public pages |
-| width and height | Generate responsive variants |
-| alt text | Accessibility and SEO |
-| caption | Public context when needed |
-| credit | Attribution and governance |
-| license or usage note | Legal usage clarity |
-| linked entity | Attraction, story, route, or province |
-| role | Cover, gallery, hero, thumbnail, QR landing |
-| status | Draft, approved, published, archived |
-| uploaded by | Audit trail |
-| updated at | Content freshness |
+| Field | Purpose | Admin Status |
+|---|---|---|
+| file | Original uploaded asset | ✅ Stored |
+| mime type | Validate allowed formats | ✅ Stored |
+| file size | Prevent heavy public pages | ✅ Stored |
+| width and height | Generate responsive variants | ❌ Not captured — planned |
+| alt text | Accessibility and SEO | ✅ Required before publish |
+| caption | Public context when needed | ✅ Optional field |
+| credit | Attribution and governance | ⚠️ Not enforced |
+| license or usage note | Legal usage clarity | ⚠️ Not enforced |
+| linked entity | Attraction, story, route, or province | ✅ Stored as `entity_type` + `entity_id` |
+| role | Cover, gallery, hero, thumbnail, QR landing | ✅ `is_cover` boolean; other roles not yet distinguished |
+| status | Draft, approved, published, archived | ✅ `is_active` + `lifecycle_status` |
+| uploaded by | Audit trail | ✅ Via `logAdminMutation()` |
+| updated at | Content freshness | ✅ `updated_at` timestamp |
 
 Allowed public image types:
 
@@ -325,13 +325,17 @@ image/webp
 
 Recommended generated variants:
 
-| Variant | Use |
-|---|---|
-| thumbnail | Admin tables and media picker |
-| card | Homepage and listing cards |
-| hero | Attraction/story hero sections |
-| gallery | Detail image gallery |
-| og | Social sharing image |
+| Variant | Use | Admin Status | Tourist Status |
+|---|---|---|---|
+| thumbnail | Admin tables and media picker | ❌ Future — migration pending | ❌ Not applicable |
+| card | Homepage and listing cards | ❌ Future — not yet planned | ❌ Not applicable |
+| hero | Attraction/story hero sections | ❌ Future — not yet planned | ❌ Not applicable |
+| gallery | Detail image gallery | ❌ Future — not yet planned | ❌ Not applicable |
+| og | Social sharing image | ❌ Future — not yet planned | ❌ Not applicable |
+
+> **Current reality**: Admin upload stores raw files as-is. No thumbnail, no WebP conversion, no responsive variants.
+> **Tourist upload**: Already uses sharp to resize + WebP convert (`app/actions/photo-actions.ts`).
+> **Next step**: Admin media optimization (WebP conversion + thumbnail only) is planned as a migration — see `docs/backend/STORAGE_FILE_UPLOADS.md §12.3`.
 
 Image UX recommendations:
 

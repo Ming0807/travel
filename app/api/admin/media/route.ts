@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import crypto from "crypto";
@@ -119,10 +120,14 @@ export async function POST(req: NextRequest) {
           .toBuffer();
       } catch (thumbErr) {
         console.warn("Thumbnail generation failed, skipping:", thumbErr);
+        thumbnailBuffer = null;
       }
     } catch (sharpErr) {
-      console.warn("Sharp processing failed, falling back to original buffer:", sharpErr);
-      webpBuffer = buffer;
+      console.error("Sharp processing failed:", sharpErr);
+      return NextResponse.json(
+        { error: "ไม่สามารถประมวลผลภาพได้ กรุณาลองอีกครั้งหรือใช้ไฟล์อื่น" },
+        { status: 500 },
+      );
     }
     // --- End image processing ---
 
@@ -152,6 +157,7 @@ export async function POST(req: NextRequest) {
 
       if (thumbUploadError) {
         console.warn("Thumbnail upload failed, continuing without it:", thumbUploadError);
+        thumbnailBuffer = null;
       }
     }
 
