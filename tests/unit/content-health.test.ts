@@ -1,12 +1,7 @@
-import { describe, it, expect, beforeAll } from "vitest";
-
-let getIssueHash: (issue: string) => string;
+import { describe, it, expect } from "vitest";
+import { getIssueHash } from "@/lib/content-health/issue-links";
 
 describe("getIssueHash", () => {
-  beforeAll(async () => {
-    const mod = await import("@/components/admin/content-health/ContentHealthDashboard");
-    getIssueHash = mod.getIssueHash;
-  });
 
   it("maps draft to #settings", () => {
     expect(getIssueHash("draft")).toBe("#settings");

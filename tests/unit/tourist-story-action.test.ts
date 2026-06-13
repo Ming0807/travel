@@ -220,6 +220,22 @@ describe("submitTouristStoryAction — XSS protection (entity decode + tag strip
     expect(payload.excerpt).not.toContain("script");
   });
 
+  it("rejects content that is only HTML tags after normalization", async () => {
+    const fd = makeForm({ content: "<b></b><i></i>" });
+    const result = await submitTouristStoryAction(fd);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("กรุณากรอกเนื้อหาเรื่องราว");
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
+  });
+
+  it("rejects content that is only HTML entities after normalization", async () => {
+    const fd = makeForm({ content: "&lt;p&gt;&lt;/p&gt;" });
+    const result = await submitTouristStoryAction(fd);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("กรุณากรอกเนื้อหาเรื่องราว");
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
+  });
+
   it("strips event handler attributes", async () => {
     const fd = makeForm({ content: '<img src=x onerror="alert(1)">Photo' });
     await submitTouristStoryAction(fd);
@@ -269,13 +285,12 @@ describe("submitTouristStoryAction — XSS protection (entity decode + tag strip
     expect(payload.content).toBe("เที่ยวปัตตานี สุดยอด! 👍");
   });
 
-  it("strips entity-encoded img tag: &lt;img src=x onerror=alert(1)&gt;", async () => {
+  it("rejects entity-encoded all-tag content: &lt;img src=x onerror=alert(1)&gt;", async () => {
     const fd = makeForm({ content: "&lt;img src=x onerror=alert(1)&gt;" });
-    await submitTouristStoryAction(fd);
-    const payload = getInsertPayload();
-    expect(payload.content).not.toContain("<img");
-    expect(payload.content).not.toContain("onerror");
-    expect(payload.content).not.toContain("alert");
+    const result = await submitTouristStoryAction(fd);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("กรุณากรอกเนื้อหาเรื่องราว");
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
   });
 
   it("strips entity-encoded script tag: &#60;script&#62;alert(1)&#60;/script&#62;", async () => {
@@ -296,13 +311,12 @@ describe("submitTouristStoryAction — XSS protection (entity decode + tag strip
     expect(payload.content).toBe("click");
   });
 
-  it("strips hex entity-encoded img tag: &#x3c;img src=x onerror=alert(1)&#x3e;", async () => {
+  it("rejects hex entity-encoded all-tag content: &#x3c;img src=x onerror=alert(1)&#x3e;", async () => {
     const fd = makeForm({ content: "&#x3c;img src=x onerror=alert(1)&#x3e;" });
-    await submitTouristStoryAction(fd);
-    const payload = getInsertPayload();
-    expect(payload.content).not.toContain("<img");
-    expect(payload.content).not.toContain("onerror");
-    expect(payload.content).not.toContain("alert");
+    const result = await submitTouristStoryAction(fd);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("กรุณากรอกเนื้อหาเรื่องราว");
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
   });
 
   it("strips uppercase hex entity-encoded script: &#X3C;script&#X3E;alert(1)&#X3C;/script&#X3E;", async () => {
@@ -313,12 +327,12 @@ describe("submitTouristStoryAction — XSS protection (entity decode + tag strip
     expect(payload.content).not.toContain("</script");
   });
 
-  it("strips uppercase named entity: &LT;img src=x onerror=alert(1)&GT;", async () => {
+  it("rejects uppercase named entity all-tag content: &LT;img src=x onerror=alert(1)&GT;", async () => {
     const fd = makeForm({ content: "&LT;img src=x onerror=alert(1)&GT;" });
-    await submitTouristStoryAction(fd);
-    const payload = getInsertPayload();
-    expect(payload.content).not.toContain("<img");
-    expect(payload.content).not.toContain("onerror");
+    const result = await submitTouristStoryAction(fd);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("กรุณากรอกเนื้อหาเรื่องราว");
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
   });
 
   it("strips double-encoded script: &amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;", async () => {

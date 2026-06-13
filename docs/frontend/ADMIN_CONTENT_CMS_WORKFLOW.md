@@ -501,7 +501,7 @@ The CMS workflow is acceptable when:
 
 Security hardening applied to all tourist-submitted content:
 
-- **XSS protection**: Tourist UGC (story submissions, reviews) is normalized to plain text via `normalizePlainText()` in `app/actions/tourist-story-actions.ts`. The pipeline decodes all HTML entity variants (named, decimal, hex, double-encoded) before stripping tags. Stored content is pure plain text.
+- **XSS protection**: Tourist story submissions are normalized to plain text via `normalizePlainText()` in `app/actions/tourist-story-actions.ts`. The pipeline decodes all HTML entity variants (named, decimal, hex, double-encoded) before stripping tags. Stored content is pure plain text. Review comments are rendered as React text nodes (not `dangerouslySetInnerHTML`).
 - **Rendering guards**: Public story detail page and admin story editor now check `authorType !== "tourist"` before using `dangerouslySetInnerHTML`. Tourist content always renders as safe paragraphs.
 - **Strict validation**: Province IDs are validated with `/^\d+$/` (rejecting floats, hex, exponents, junk). Province existence is verified via DB before story insertion.
 - **OAuth identity**: `resolveTouristId()` in `lib/auth/guards.ts` supports Google, email, and LINE OAuth sessions, falling back to anonymous_device guest cookies. No identity creation/linking in story submission — only resolve.

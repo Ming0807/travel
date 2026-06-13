@@ -6,7 +6,6 @@ import {
   Archive,
   CheckCircle,
   Image as ImageIcon,
-  Info,
   PencilSimple,
   Plus,
   UploadSimple,

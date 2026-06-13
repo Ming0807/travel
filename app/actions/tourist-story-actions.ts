@@ -143,6 +143,13 @@ export async function submitTouristStoryAction(formData: FormData) {
 
     // 4. Normalize to plain text — entity-decode first, then strip all tags
     const safeContent = normalizePlainText(content);
+
+    // Guard: if normalization leaves only whitespace (e.g. user typed only HTML tags),
+    // return a field-level error before any DB operations
+    if (safeContent.trim().length === 0) {
+      return { success: false, error: "กรุณากรอกเนื้อหาเรื่องราว (ไม่อนุญาตเฉพาะ HTML tags หรือ entities)" };
+    }
+
     // Compute excerpt from safe plain text
     const excerpt = safeContent.slice(0, 150).replace(/\s+/g, " ").trim()
       + (safeContent.length > 150 ? "..." : "");

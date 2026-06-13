@@ -14,6 +14,7 @@ import {
   ImageIcon,
 } from "@phosphor-icons/react";
 import type { ContentHealthReport, ContentType } from "@/lib/repositories/content-health.repository";
+import { getIssueHash } from "@/lib/content-health/issue-links";
 
 // ─── Props ────────────────────────────────────────────────────────────────
 
@@ -88,13 +89,6 @@ function HealthBadge({ label, tone, href }: { label: string; tone: "green" | "am
       {label}
     </span>
   );
-}
-
-export function getIssueHash(issue: string): string {
-  if (issue === "draft" || issue === "inactive") return "#settings";
-  if (issue === "stock/demo media" || issue.includes("media") || issue.includes("cover")) return "#gallery";
-  if (issue.includes("English") || issue.includes("summary")) return "#content";
-  return "";
 }
 
 // ─── Summary Cards ────────────────────────────────────────────────────────
@@ -333,9 +327,7 @@ function ContentHealthTable({ report }: { report: ContentHealthReport }) {
     { value: "stock-media", label: "Stock/demo media", count: report.summary.itemsWithPotentialStockMedia },
   ];
 
-  const SortIcon = () => (
-    <span className="ml-1 text-xs opacity-50">{sortAsc ? "▲" : "▼"}</span>
-  );
+  const sortIcon = <span className="ml-1 text-xs opacity-50">{sortAsc ? "▲" : "▼"}</span>;
 
   return (
     <section>
@@ -363,21 +355,21 @@ function ContentHealthTable({ report }: { report: ContentHealthReport }) {
           <thead className="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
             <tr>
               <th className="cursor-pointer px-4 py-3 text-left" onClick={() => toggleSort("type")}>
-                Type {sortKey === "type" && <SortIcon />}
+                Type {sortKey === "type" && sortIcon}
               </th>
               <th className="cursor-pointer px-4 py-3 text-left" onClick={() => toggleSort("name")}>
-                Name {sortKey === "name" && <SortIcon />}
+                Name {sortKey === "name" && sortIcon}
               </th>
               <th className="cursor-pointer px-4 py-3 text-left" onClick={() => toggleSort("status")}>
-                Status {sortKey === "status" && <SortIcon />}
+                Status {sortKey === "status" && sortIcon}
               </th>
               <th className="px-4 py-3 text-left">Cover</th>
               <th className="px-4 py-3 text-left">EN</th>
               <th className="cursor-pointer px-4 py-3 text-left" onClick={() => toggleSort("issues")}>
-                Issues {sortKey === "issues" && <SortIcon />}
+                Issues {sortKey === "issues" && sortIcon}
               </th>
               <th className="cursor-pointer px-4 py-3 text-left" onClick={() => toggleSort("updated")}>
-                Updated {sortKey === "updated" && <SortIcon />}
+                Updated {sortKey === "updated" && sortIcon}
               </th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
