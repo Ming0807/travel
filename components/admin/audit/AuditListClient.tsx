@@ -51,7 +51,8 @@ const ACTION_PREFIX_OPTIONS = [
   { value: "login", label: "Login" },
 ];
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractResult(newData: any): "success" | "failed" | "denied" | null {
   const result = newData?._audit?.result;
   if (result === "success" || result === "failed" || result === "denied") return result;
@@ -103,7 +104,7 @@ type AuditListClientProps = {
 export function AuditListClient({ initialData, adminUsers, initialFilters }: AuditListClientProps) {
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const [filters, setFilters] = useState(initialFilters);
   const [selectedDetails, setSelectedDetails] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -116,11 +117,11 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
   const applyFilters = (page = 1) => {
     const params = new URLSearchParams();
     if (page > 1) params.set("page", page.toString());
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.set(key, value);
     });
-    
+
     router.push(`${pathname}?${params.toString()}`);
   };
 
@@ -136,7 +137,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
       Object.entries(filters).forEach(([key, value]) => {
         if (value) params.set(key, value);
       });
-      
+
       // Just redirecting to an API endpoint that streams the CSV
       window.location.href = `/api/admin/audit/export?${params.toString()}`;
     } finally {
@@ -147,8 +148,8 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
   const logs = initialData.data;
 
   // Render JSON beautifully
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderDetails = (json: any) => {
+
+  const renderDetails = (json: Record<string, unknown>) => {
     if (!json) return null;
     return (
       <div className="bg-slate-900 rounded-lg p-4 text-emerald-400 font-mono text-xs overflow-auto max-h-[60vh]">
@@ -174,7 +175,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
             onKeyDown={(e) => e.key === 'Enter' && applyFilters(1)}
           />
         </div>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -192,7 +193,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
               </span>
             ) : null}
           </button>
-          
+
           <button
             onClick={handleExport}
             disabled={isExporting}
@@ -312,13 +313,13 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
             </div>
           </div>
           <div className="mt-4 flex justify-end gap-2">
-            <button 
+            <button
               onClick={clearFilters}
               className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900"
             >
               Clear All
             </button>
-            <button 
+            <button
               onClick={() => applyFilters(1)}
               className="rounded-lg bg-[#F3704C] px-4 py-2 text-sm font-medium text-white hover:bg-[#E55A35]"
             >
@@ -392,7 +393,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         {((log.new_data && Object.keys(log.new_data).length > 0) || (log.old_data && Object.keys(log.old_data).length > 0)) ? (
-                          <button 
+                          <button
                             onClick={() => setSelectedDetails(log.log_id)}
                             className="text-[#0A6B62] hover:text-[#F3704C] inline-flex items-center gap-1 bg-[#E6F4EF] px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
                           >
@@ -474,7 +475,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
             )}
           </div>
         </div>
-        
+
         {/* Pagination */}
         {initialData.totalPages > 1 && (
           <div className="border-t border-slate-200 bg-slate-50 px-6 py-3">
@@ -489,14 +490,14 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <h3 className="text-lg font-bold text-slate-900">Audit Log Record Data</h3>
-              <button 
+              <button
                 onClick={() => setSelectedDetails(null)}
                 className="text-slate-400 hover:text-slate-600 rounded-full p-1 hover:bg-slate-100 transition-colors"
               >
                 <X size={20} weight="bold" />
               </button>
             </div>
-            
+
             <div className="p-6 flex flex-col gap-4">
               {logs.find(l => l.log_id === selectedDetails)?.old_data && (
                 <div>
@@ -511,9 +512,9 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                 </div>
               )}
             </div>
-            
+
             <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-end">
-              <button 
+              <button
                 onClick={() => setSelectedDetails(null)}
                 className="rounded-lg bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
               >

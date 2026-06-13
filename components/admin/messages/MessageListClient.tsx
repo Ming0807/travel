@@ -12,11 +12,7 @@ import {
   MagnifyingGlass
 } from "@phosphor-icons/react/dist/ssr";
 import { Pagination } from "@/components/admin/Pagination";
-import { 
-  setAdminMessageStatus, 
-  removeAdminMessage, 
-  toggleAdminMessageReplied 
-} from "@/app/actions/admin-messages";
+import { removeAdminMessage } from "@/app/actions/admin-messages";
 
 export function MessageListClient({
   initialMessages,
@@ -47,16 +43,6 @@ export function MessageListClient({
     return matchesStatus && matchesSearch;
   });
 
-  const handleStatusChange = (id: string, status: "unread" | "read" | "archived") => {
-    startTransition(async () => {
-      try {
-        await setAdminMessageStatus(id, status);
-        router.refresh();
-      } catch (e) {
-        alert("Failed to update status");
-      }
-    });
-  };
 
   const handleDelete = (id: string) => {
     if (!confirm("Are you sure you want to delete this message?")) return;
@@ -64,22 +50,12 @@ export function MessageListClient({
       try {
         await removeAdminMessage(id);
         router.refresh();
-      } catch (e) {
+      } catch {
         alert("Failed to delete message");
       }
     });
   };
 
-  const handleToggleReplied = (id: string, isReplied: boolean) => {
-    startTransition(async () => {
-      try {
-        await toggleAdminMessageReplied(id, isReplied);
-        router.refresh();
-      } catch (e) {
-        alert("Failed to update replied status");
-      }
-    });
-  };
 
   if (initialMessages.length === 0) {
     return (

@@ -7,8 +7,9 @@ import { toggleAdminUserAction } from "@/app/actions/admin-users";
 import Link from "next/link";
 import { useState } from "react";
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
+
+export function UserListClient({ initialUsers }: { // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialUsers: any[] }) {
   const [isPending, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -87,8 +88,8 @@ export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
                     {user.roles && user.roles.length > 0 ? (
                       user.roles.map((r: string) => (
                         <span key={r} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-wider ring-1 ring-inset ${
-                          r.toLowerCase() === 'admin' 
-                            ? 'bg-coral/10 text-coral ring-coral/20' 
+                          r.toLowerCase() === 'admin'
+                            ? 'bg-coral/10 text-coral ring-coral/20'
                             : 'bg-teal/10 text-teal ring-teal/20'
                         }`}>
                           <Shield size={12} />
@@ -118,8 +119,8 @@ export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
                     onClick={() => handleToggle(user.admin_id, user.is_active)}
                     disabled={isPending}
                     className={`flex flex-1 items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold ring-1 ring-inset disabled:opacity-50 transition-colors ${
-                      user.is_active 
-                        ? "text-red-600 ring-red-300 hover:bg-red-50" 
+                      user.is_active
+                        ? "text-red-600 ring-red-300 hover:bg-red-50"
                         : "text-emerald-600 ring-emerald-300 hover:bg-emerald-50"
                     }`}
                   >
@@ -157,8 +158,8 @@ export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
                           {user.roles && user.roles.length > 0 ? (
                             user.roles.map((r: string) => (
                               <span key={r} className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ring-1 ring-inset ${
-                                r.toLowerCase() === 'admin' 
-                                  ? 'bg-coral/10 text-coral ring-coral/20' 
+                                r.toLowerCase() === 'admin'
+                                  ? 'bg-coral/10 text-coral ring-coral/20'
                                   : 'bg-teal/10 text-teal ring-teal/20'
                               }`}>
                                 <Shield size={10} />
@@ -200,8 +201,8 @@ export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
                             onClick={() => handleToggle(user.admin_id, user.is_active)}
                             disabled={isPending}
                             className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold transition-colors disabled:opacity-50 ${
-                              user.is_active 
-                                ? "text-slate-600 ring-1 ring-inset ring-slate-300 hover:bg-slate-50" 
+                              user.is_active
+                                ? "text-slate-600 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
                                 : "bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm"
                             }`}
                           >
