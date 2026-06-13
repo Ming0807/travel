@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { adminRouteMutationSchema, adminRouteStopsBatchSchema } from "@/lib/validation/route";
-import { clearCoverMediaForEntity, linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
+import { clearCoverMediaForEntity, linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminRoute,
   updateAdminRoute,
@@ -80,9 +80,12 @@ export async function updateRouteAction(routeId: number, _prevState: ActionResul
     const coverMediaAction = formData.get("coverMediaAction");
 
     // Link or clear cover media only when the cover editor explicitly asks for it.
+    const coverStoragePath = formData.get("coverStoragePath");
     const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
     if (coverMediaAction === "clear") {
       await clearCoverMediaForEntity("route", updated.route_id);
+    } else if (coverMediaAction === "set" && typeof coverStoragePath === "string" && coverStoragePath.trim() !== "") {
+      await linkMediaToEntityByStoragePath(coverStoragePath.trim(), "route", updated.route_id);
     } else if (coverMediaId && Number.isFinite(coverMediaId)) {
       await linkMediaToEntity(coverMediaId, "route", updated.route_id);
     }

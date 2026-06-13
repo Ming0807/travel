@@ -23,14 +23,18 @@ vi.mock("@/components/admin/media/MediaPickerModal", () => ({
   }: {
     isOpen: boolean;
     onClose: () => void;
-    onSelectAsset?: (asset: { id: number; url: string }) => void;
+    onSelectAsset?: (asset: { id: number | string; url: string; storage_path: string }) => void;
     title: string;
   }) =>
     isOpen ? (
       <div role="dialog" aria-label={title}>
         <button
           onClick={() => {
-            onSelectAsset?.({ id: 42, url: "/site-media/stories/test-cover.webp" });
+            onSelectAsset?.({
+              id: "f04a9a4e-4e2a-4f7f-9fb5-000000000042",
+              url: "/site-media/stories/test-cover.webp",
+              storage_path: "stories/test-cover.webp",
+            });
             onClose();
           }}
         >
@@ -116,21 +120,26 @@ describe("CoverForm", () => {
     expect(hiddenInput.value).toBe("");
   });
 
-  it("hidden coverMediaId input value is a string when media selected", async () => {
+  it("stores selected media asset storage path when media_assets id is a UUID", async () => {
     render(<CoverForm story={baseStory} onClose={vi.fn()} />);
 
     // Open the media picker
     await userEvent.click(screen.getByText("เลือกจาก Media Library"));
 
-    // Click the mock "Pick Media Asset" button (id=42)
+    // Click the mock "Pick Media Asset" button (uuid id, like media_assets.id)
     await userEvent.click(screen.getByText("Pick Media Asset"));
 
-    // The hidden input should now have value "42"
+    // The legacy content_media id stays empty, but the storage path persists the selection.
         const hiddenInput = document.querySelector(
       'input[name="coverMediaId"]',
     ) as HTMLInputElement;
+    const storagePathInput = document.querySelector(
+      'input[name="coverStoragePath"]',
+    ) as HTMLInputElement;
     expect(hiddenInput).not.toBeNull();
-    expect(hiddenInput.value).toBe("42");
+    expect(hiddenInput.value).toBe("");
+    expect(storagePathInput).not.toBeNull();
+    expect(storagePathInput.value).toBe("stories/test-cover.webp");
     // Must be a string, not NaN
     expect(hiddenInput.value).not.toBe("NaN");
     expect(typeof hiddenInput.value).toBe("string");

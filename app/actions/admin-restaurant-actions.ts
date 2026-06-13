@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { adminRestaurantMutationSchema } from "@/lib/validation/admin-restaurant";
-import { clearCoverMediaForEntity, linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
+import { clearCoverMediaForEntity, linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminRestaurant,
   updateAdminRestaurant,
@@ -79,9 +79,12 @@ export async function updateRestaurantAction(restaurantId: number, _prevState: A
     const coverMediaAction = formData.get("coverMediaAction");
 
     // Link or clear cover media only when the cover editor explicitly asks for it.
+    const coverStoragePath = formData.get("coverStoragePath");
     const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
     if (coverMediaAction === "clear") {
       await clearCoverMediaForEntity("restaurant", updated.restaurant_id);
+    } else if (coverMediaAction === "set" && typeof coverStoragePath === "string" && coverStoragePath.trim() !== "") {
+      await linkMediaToEntityByStoragePath(coverStoragePath.trim(), "restaurant", updated.restaurant_id);
     } else if (coverMediaId && Number.isFinite(coverMediaId)) {
       await linkMediaToEntity(coverMediaId, "restaurant", updated.restaurant_id);
     }

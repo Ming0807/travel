@@ -415,7 +415,11 @@ describe("MediaLibrary archive/unarchive flow", () => {
     await userEvent.click(card!);
 
     expect(onSelect).toHaveBeenCalledWith(
-      "https://example.com/storage/hero-beach.jpg"
+      "https://example.com/storage/hero-beach.jpg",
+      expect.objectContaining({
+        id: "media-1",
+        storage_path: "attractions/abc-123.jpg",
+      }),
     );
   });
 

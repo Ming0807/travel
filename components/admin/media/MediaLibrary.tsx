@@ -620,11 +620,11 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
               return (
                 <article
                   key={asset.id}
-                  onClick={() => isPickMode && !archived && onSelect?.(asset.url)}
+                  onClick={() => isPickMode && !archived && onSelect?.(asset.url, asset)}
                   onKeyDown={(e) => {
                     if (isPickMode && !archived && (e.key === "Enter" || e.key === " ")) {
                       e.preventDefault();
-                      onSelect?.(asset.url);
+                      onSelect?.(asset.url, asset);
                     }
                   }}
                   tabIndex={isPickMode && !archived ? 0 : -1}

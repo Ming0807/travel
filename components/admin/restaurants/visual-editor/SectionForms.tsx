@@ -186,6 +186,7 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
   const [coverPreviewUrl, setCoverPreviewUrl] = useState(cmUrl ?? "");
   const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
   const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");
+  const [coverStoragePath, setCoverStoragePath] = useState("");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
@@ -272,6 +273,7 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
                        setCoverPreviewUrl("");
                        setCurrentMediaId(null);
                        setCoverMediaAction("clear");
+                       setCoverStoragePath("");
                      }}
                     className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
                   >
@@ -287,6 +289,7 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
 
           <input type="hidden" name="coverMediaId" value={currentMediaId ? String(currentMediaId) : ""} />
           <input type="hidden" name="coverMediaAction" value={coverMediaAction} />
+          <input type="hidden" name="coverStoragePath" value={coverStoragePath} />
         </div>
       </div>
       <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
@@ -298,9 +301,9 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
         onClose={() => setIsPickerOpen(false)}
         onSelectAsset={(asset) => {
           const mediaId = toFiniteMediaId(asset.id);
-          if (!mediaId) return;
           setCurrentMediaId(mediaId);
           setCoverPreviewUrl(asset.url);
+          setCoverStoragePath(asset.storage_path);
           setCoverMediaAction("set");
         }}
         onSelect={() => {}}
