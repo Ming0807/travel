@@ -577,7 +577,7 @@ function HomepageSettings({
         <TextInput label="หัวข้อ" value={settings.homepage_stories.title} onChange={(value) => updateSettingObject("homepage_stories", { title: value })} />
         <TextInput label="หัวข้อย่อย" value={settings.homepage_stories.subtitle} onChange={(value) => updateSettingObject("homepage_stories", { subtitle: value })} />
         <TextInput label="ข้อความปุ่ม" value={settings.homepage_stories.buttonText} onChange={(value) => updateSettingObject("homepage_stories", { buttonText: value })} />
-        <TextInput label="จำนวนที่แสดงสูงสุด" value={String(settings.homepage_stories.limit ?? 4)} onChange={(value) => updateSettingObject("homepage_stories", { limit: Math.max(1, Math.min(8, parseInt(value) || 4)) })} />
+        <TextInput label="จำนวนที่แสดงสูงสุด" type="number" min="1" max="8" value={String(settings.homepage_stories.limit ?? 4)} onChange={(value) => updateSettingObject("homepage_stories", { limit: Math.max(1, Math.min(8, parseInt(value, 10) || 4)) })} />
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
           บทความจะดึงจากตาราง travel_stories โดยอัตโนมัติ ใช้ฟิลเตอร์ status=published
         </div>
@@ -597,7 +597,7 @@ function HomepageSettings({
             <Link href="/admin/routes" className="font-black text-[#0A6B62] underline hover:text-[#075049]">จัดการเส้นทาง</Link>
           </p>
         </div>
-        <TextInput label="จำนวนที่แสดงสูงสุด" value={String(settings.homepage_featured_routes.limit ?? 3)} onChange={(value) => updateSettingObject("homepage_featured_routes", { limit: Math.max(1, parseInt(value) || 3) })} />
+        <TextInput label="จำนวนที่แสดงสูงสุด" type="number" min="1" max="12" value={String(settings.homepage_featured_routes.limit ?? 3)} onChange={(value) => updateSettingObject("homepage_featured_routes", { limit: Math.max(1, Math.min(12, parseInt(value, 10) || 3)) })} />
       </SettingsSection>
 
       <SettingsSection title="วิธีการทำงาน" description="บล็อกอธิบาย QR, certificate, stamp แบบสั้น">
@@ -863,12 +863,16 @@ function TextInput({
   onChange,
   type = "text",
   placeholder,
+  min,
+  max,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  type?: "text" | "email" | "url";
+  type?: "text" | "email" | "url" | "number";
   placeholder?: string;
+  min?: number | string;
+  max?: number | string;
 }) {
   return (
     <label className="block">
@@ -878,6 +882,8 @@ function TextInput({
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        min={min}
+        max={max}
         className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
       />
     </label>

@@ -46,7 +46,7 @@ export function HomepageStories({
                   alt={storyImageAlt(featuredStory.title)}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
-
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm font-semibold text-muted">
@@ -83,7 +83,7 @@ export function HomepageStories({
                     alt={storyImageAlt(story.title)}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
-
+                    sizes="(max-width: 640px) 100vw, 144px"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs font-semibold text-muted">

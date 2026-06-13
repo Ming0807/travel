@@ -37,7 +37,7 @@ export function HomepageHero({
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Mobile Hero Image — visible below sm breakpoint */}
         {img0 && (
-          <div className="relative w-full h-[280px] sm:hidden mb-8 rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-cream">
+          <div className="relative w-full aspect-[4/3] max-h-[360px] sm:hidden mb-8 rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-cream">
             <Image
               src={img0}
               alt="Southern Border Tourism"
@@ -116,6 +116,7 @@ export function HomepageHero({
                   fill
                   priority
                   className="object-cover scale-105"
+                  sizes="(max-width: 1024px) 0px, 50vw"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-sand text-center text-xs font-bold uppercase tracking-widest text-muted">
@@ -134,6 +135,7 @@ export function HomepageHero({
                 alt="Highlight 2"
                 fill
                 className="object-cover"
+                sizes="(max-width: 1024px) 0px, 20vw"
               />}
             </div>
             
@@ -144,6 +146,7 @@ export function HomepageHero({
                 alt="Highlight 3"
                 fill
                 className="object-cover"
+                sizes="(max-width: 1024px) 0px, 22vw"
               />}
             </div>
             

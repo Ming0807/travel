@@ -176,7 +176,7 @@ describe("SettingsClient", () => {
     const limitInputs = screen.getAllByLabelText("จำนวนที่แสดงสูงสุด");
     expect(limitInputs.length).toBeGreaterThanOrEqual(1);
     // The first "จำนวนที่แสดงสูงสุด" input is for stories (value=4), second is for routes (value=3)
-    expect(limitInputs[0]).toHaveValue("4");
+    expect(limitInputs[0]).toHaveValue(4);
   });
 
   it("clamps stories limit between 1 and 8", async () => {

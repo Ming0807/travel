@@ -29,9 +29,9 @@ export function HomepageCertificateCta({
           <Image
             className="absolute inset-0 h-full w-full object-cover opacity-50 mix-blend-overlay"
             src={imgSrc}
-            alt="Landscape"
+            alt=""
             fill
-
+            sizes="(max-width: 1280px) 100vw, 1280px"
           />
         )}
 

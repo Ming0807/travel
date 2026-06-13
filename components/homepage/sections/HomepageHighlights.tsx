@@ -66,7 +66,7 @@ export function HomepageHighlights({
         {/* Video Card */}
         <article className="relative bg-ink rounded-2xl overflow-hidden shadow-sm aspect-square md:aspect-auto">
           {videoSrc ? (
-            <Image src={videoSrc} alt="Video cover" fill className="object-cover opacity-80" />
+            <Image src={videoSrc} alt="" fill className="object-cover opacity-80" sizes="(max-width: 768px) 100vw, 33vw" />
           ) : (
             <div className="absolute inset-0 bg-slate-800 opacity-80" />
           )}
@@ -81,7 +81,7 @@ export function HomepageHighlights({
         <article className="flex flex-col bg-white rounded-2xl p-4 border border-ink/5">
           <div className="relative w-full aspect-square overflow-hidden rounded-2xl mb-4 bg-slate-100">
             {imageSrc ? (
-              <Image src={imageSrc} alt="Market" fill className="object-cover" />
+              <Image src={imageSrc} alt="Market" fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-sand text-center text-xs font-bold uppercase tracking-widest text-muted">
                 ยังไม่มีรูปภาพ

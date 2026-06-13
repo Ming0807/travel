@@ -69,7 +69,7 @@ export function HomepageAttractionsFeed({ attractions = [] }: { attractions?: At
                   fill
                   priority={index < 2}
                   className="object-cover group-hover:scale-105 transition-transform duration-700"
-
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm font-semibold text-muted">
