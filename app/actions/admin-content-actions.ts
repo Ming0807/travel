@@ -147,7 +147,6 @@ export async function searchAttractionsAction(queryOrOptions: string | Attractio
         .order("name_th", { ascending: true })
         .limit(limit);
 
-      // Search by name (Thai + English) AND slug
       if (trimmedQuery) {
         const escaped = trimmedQuery.replace(/%/g, "\\%").replace(/_/g, "\\_");
         dbQuery = dbQuery.or(
@@ -155,12 +154,10 @@ export async function searchAttractionsAction(queryOrOptions: string | Attractio
         );
       }
 
-      // Server-side province filter
       if (options.province && options.province !== "all") {
         dbQuery = dbQuery.eq("provinces.province_name_en", options.province);
       }
 
-      // Server-side status filter
       if (options.status && options.status !== "all") {
         switch (options.status) {
           case "published":
@@ -173,9 +170,6 @@ export async function searchAttractionsAction(queryOrOptions: string | Attractio
             dbQuery = dbQuery.eq("is_active", false);
             break;
           case "has_cover":
-            // Has-cover filter: requires a non-null content_media with is_cover=true and is_active=true
-            // We filter this post-query since it requires nested relation filtering.
-            // The query still fetches media; client filters for cover presence.
             break;
         }
       }
@@ -189,7 +183,6 @@ export async function searchAttractionsAction(queryOrOptions: string | Attractio
 
     let results = (data ?? []).map(mapHomepagePickerAttraction);
 
-    // Post-query filter for has_cover (needs media relation inspection)
     if (options.status === "has_cover") {
       results = results.filter((item) => item.cover_media_path !== null);
     }
@@ -228,4 +221,45 @@ export async function getAttractionsBySlugsAction(slugs: string[]) {
   } catch {
     return { success: false, error: "Internal server error" };
   }
+}
+
+// ─── Route picker for settings ────────────────────────────────────────
+
+export async function searchRoutesAction(query: string) {
+  try {
+    await requirePermission("attraction.read");
+    const supabase = await createSupabaseServerClient();
+    const trimmed = query.trim();
+    if (!trimmed) return { success: true, data: [] };
+
+    const { data, error } = await supabase
+      .from("suggested_routes")
+      .select("route_id, name_th, name_en, slug, is_published, is_active")
+      .or(`name_th.ilike.%${trimmed}%,name_en.ilike.%${trimmed}%,slug.ilike.%${trimmed}%`)
+      .order("name_th", { ascending: true })
+      .limit(20);
+
+    if (error) return { success: false, error: "ไม่สามารถค้นหาเส้นทางได้" };
+    return { success: true, data: (data ?? []).map((r) => ({
+      id: Number(r.route_id), name_th: String(r.name_th ?? ""), name_en: (r.name_en as string | null),
+      slug: String(r.slug ?? ""), is_published: Boolean(r.is_published), is_active: Boolean(r.is_active),
+    })) };
+  } catch { return { success: false, error: "Internal server error" }; }
+}
+
+export async function getRoutesBySlugsAction(slugs: string[]) {
+  if (!slugs?.length) return { success: true, data: [] };
+  try {
+    await requirePermission("attraction.read");
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("suggested_routes").select("route_id, name_th, name_en, slug, is_published, is_active")
+      .in("slug", slugs).limit(slugs.length);
+    if (error) return { success: false, error: "ไม่สามารถโหลดข้อมูลเส้นทางได้" };
+    const rows = (data ?? []).map((r) => ({
+      id: Number(r.route_id), name_th: String(r.name_th ?? ""), name_en: (r.name_en as string | null),
+      slug: String(r.slug ?? ""), is_published: Boolean(r.is_published), is_active: Boolean(r.is_active),
+    }));
+    return { success: true, data: slugs.map((s) => rows.find((r) => r.slug === s)).filter(Boolean) };
+  } catch { return { success: false, error: "Internal server error" }; }
 }

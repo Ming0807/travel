@@ -176,7 +176,7 @@ export async function listPublicAttractionCards(limit = 16, options?: { search?:
       if (options?.province) {
         q = q.eq('provinces.province_name_en', options.province);
       }
-      
+
       return q;
     };
 
@@ -185,7 +185,7 @@ export async function listPublicAttractionCards(limit = 16, options?: { search?:
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       const { data, error } = await buildBaseQuery().in('slug', options.featuredSlugs).limit(limit);
-      
+
       if (!error && data && data.length > 0) {
         const results = (data as DbRecord[]).map(mapAttractionCard).filter((item) => item.slug);
         finalResults = results.sort((a, b) => options.featuredSlugs!.indexOf(a.slug) - options.featuredSlugs!.indexOf(b.slug));
@@ -204,7 +204,7 @@ export async function listPublicAttractionCards(limit = 16, options?: { search?:
           .map(mapAttractionCard)
           .filter((item) => item.slug && !usedSlugs.has(item.slug))
           .slice(0, remaining);
-        
+
         finalResults = [...finalResults, ...fallbackResults];
       }
     }
@@ -797,7 +797,24 @@ function mapRouteCard(row: DbRecord): PublicRouteCard {
 
 export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Promise<PublicRouteCard[]> {
   try {
+
     const supabase = await createSupabaseServerClient();
+
+    if (featuredSlugs && featuredSlugs.length > 0) {
+      const { data: fd, error: fe } = await supabase
+        .from("suggested_routes")
+        .select("slug, name_th, name_en, description_th, description_en, content_media (storage_path, is_cover, is_active, lifecycle_status), suggested_route_stops (day_number)")
+        .in("slug", featuredSlugs)
+        .eq("is_published", true)
+        .eq("is_active", true)
+        .limit(featuredSlugs.length);
+      if (!fe && fd && fd.length > 0) {
+        const results = (fd as DbRecord[]).map(mapRouteCard).filter(r => r.slug);
+        return featuredSlugs.map(s => results.find(r => r.slug === s)).filter(r => Boolean(r)).slice(0, limit);
+      }
+      return [];
+    }
+
     const { data, error } = await supabase
       .from("suggested_routes")
       .select("slug, name_th, name_en, description_th, description_en, content_media (storage_path, is_cover, is_active, lifecycle_status), suggested_route_stops (day_number)")

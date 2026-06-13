@@ -578,22 +578,17 @@ function HomepageSettings({
         </div>
       </SettingsSection>
 
-      <SettingsSection title="เส้นทางแนะนำ" description="เลือกเส้นทาง (slug) ที่ต้องการแสดงบนหน้าแรก พร้อมกำหนดจำนวน">
+      <SettingsSection title="เส้นทางแนะนำ" description="เลือกเส้นทางที่ต้องการแสดงบนหน้าแรก (ลากวางเพื่อสลับตำแหน่ง)">
         <TextInput label="หัวข้อ" value={settings.homepage_featured_routes.title} onChange={(value) => updateSettingObject("homepage_featured_routes", { title: value })} />
         <TextInput label="หัวข้อย่อย" value={settings.homepage_featured_routes.subtitle} onChange={(value) => updateSettingObject("homepage_featured_routes", { subtitle: value })} />
-        <TextArea
-          label="รายการ slug เส้นทาง (หนึ่งบรรทัดต่อ 1 เส้นทาง)"
-          value={(settings.homepage_featured_routes.slugs ?? []).join("\n")}
-          onChange={(value) => updateSettingObject("homepage_featured_routes", { slugs: value.split("\n").map((s: string) => s.trim()).filter(Boolean) })}
-          rows={4}
-        />
-        <TextInput label="จำนวนที่แสดงสูงสุด" value={String(settings.homepage_featured_routes.limit ?? 3)} onChange={(value) => updateSettingObject("homepage_featured_routes", { limit: Math.max(1, parseInt(value) || 3) })} />
         <div className="rounded-lg border border-[#0A6B62]/20 bg-[#E6F4EF] p-4 text-sm leading-6 text-[#073F37]">
-          <p className="font-bold">เส้นทางมาจากไหน?</p>
+          <p className="font-bold">เลือกเส้นทางที่เผยแพร่แล้ว</p>
           <p className="mt-1">
-            ใช้ slug จากเส้นทางที่สร้างไว้แล้วใน <Link href="/admin/routes" className="font-black text-[#0A6B62] underline hover:text-[#075049]">จัดการเส้นทาง</Link> จะแสดงเฉพาะเส้นทางที่เผยแพร่แล้ว
+            พิมพ์ชื่อเส้นทางเพื่อค้นหา เพิ่มเข้าลิสต์ และจัดลำดับด้วยการลาก เนื้อหาเส้นทางจัดการได้ที่{" "}
+            <Link href="/admin/routes" className="font-black text-[#0A6B62] underline hover:text-[#075049]">จัดการเส้นทาง</Link>
           </p>
         </div>
+        <TextInput label="จำนวนที่แสดงสูงสุด" value={String(settings.homepage_featured_routes.limit ?? 3)} onChange={(value) => updateSettingObject("homepage_featured_routes", { limit: Math.max(1, parseInt(value) || 3) })} />
       </SettingsSection>
 
       <SettingsSection title="วิธีการทำงาน" description="บล็อกอธิบาย QR, certificate, stamp แบบสั้น">
