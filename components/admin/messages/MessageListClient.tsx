@@ -9,7 +9,6 @@ import {
   Trash, 
   Archive, 
   CheckCircle,
-  Funnel,
   MagnifyingGlass
 } from "@phosphor-icons/react/dist/ssr";
 import { Pagination } from "@/components/admin/Pagination";
@@ -26,6 +25,7 @@ export function MessageListClient({
   total,
   pageSize,
 }: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialMessages: any[];
   totalPages: number;
   currentPage: number;

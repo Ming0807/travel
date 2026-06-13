@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import {
   MagnifyingGlass,
   FileText,
-  Funnel,
   DownloadSimple,
   X,
   CheckCircle,
@@ -52,6 +51,7 @@ const ACTION_PREFIX_OPTIONS = [
   { value: "login", label: "Login" },
 ];
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractResult(newData: any): "success" | "failed" | "denied" | null {
   const result = newData?._audit?.result;
   if (result === "success" || result === "failed" || result === "denied") return result;
@@ -81,12 +81,14 @@ function activeFilterCount(filters: Record<string, string | undefined>): number 
 
 type AuditListClientProps = {
   initialData: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any[];
     total: number;
     page: number;
     limit: number;
     totalPages: number;
   };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
   adminUsers: any[];
   initialFilters: {
     adminId?: string;
@@ -145,6 +147,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
   const logs = initialData.data;
 
   // Render JSON beautifully
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderDetails = (json: any) => {
     if (!json) return null;
     return (

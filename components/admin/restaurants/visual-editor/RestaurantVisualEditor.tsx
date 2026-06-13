@@ -38,8 +38,8 @@ export function RestaurantVisualEditor({
   coverMediaUrl: initialCoverMediaUrl,
 }: RestaurantVisualEditorProps) {
   const [activeSection, setActiveSection] = useState<EditorSection>(null);
-  const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId ?? null);
-  const [coverMediaUrl, setCoverMediaUrl] = useState(initialCoverMediaUrl ?? null);
+  const [coverMediaId] = useState(initialCoverMediaId ?? null);
+  const [coverMediaUrl] = useState(initialCoverMediaUrl ?? null);
 
   const provinceName = provinces.find((p) => p.id === restaurant.province_id)?.label ?? "ไม่ระบุจังหวัด";
   const name = restaurant.name_th || "ยังไม่มีชื่อ";

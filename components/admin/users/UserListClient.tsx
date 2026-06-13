@@ -7,6 +7,7 @@ import { toggleAdminUserAction } from "@/app/actions/admin-users";
 import Link from "next/link";
 import { useState } from "react";
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function UserListClient({ initialUsers }: { initialUsers: any[] }) {
   const [isPending, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("");

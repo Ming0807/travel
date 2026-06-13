@@ -92,11 +92,11 @@ export function RouteVisualEditor({
     setToast({ message: "", visible: false });
   }, []);
 
-  // Show toast on mount if duplicates exist
   useEffect(() => {
     if (hasDuplicateStops) {
       const names = Array.from(duplicatedAttractions.values()).map((info) => info.name);
-      showToast(`พบจุดแวะซ้ำ ${duplicatedAttractions.size} แห่ง (${names.join(", ")}) — ไปที่จัดการจุดแวะพักเพื่อแก้ไข`);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      showToast(`พบจุดแวะซ้ำ ${duplicatedAttractions.size} แห่ง (${names.join(", ")}) \u2014 ไปที่จัดการจุดแวะพักเพื่อแก้ไข`);
     }
     // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -253,7 +253,7 @@ export function RouteVisualEditor({
                   <div className="prose prose-slate max-w-none prose-p:leading-relaxed prose-p:text-slate-600 whitespace-pre-line">
                     {route.description_th || (
                       <p className="text-slate-400 italic">
-                        ยังไม่มีรายละเอียดเส้นทาง คลิก "แก้ไข" เพื่อเพิ่มคำอธิบายเส้นทาง
+                        ยังไม่มีรายละเอียดเส้นทาง คลิก &quot;แก้ไข&quot; เพื่อเพิ่มคำอธิบายเส้นทาง
                       </p>
                     )}
                   </div>
