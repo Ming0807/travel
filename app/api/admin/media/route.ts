@@ -2,12 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_SIZE_MB = 10;
+
+type MediaAssetRow = Record<string, unknown> & {
+  storage_path: string;
+  thumbnail_storage_path?: string | null;
+};
+
+function withMediaUrls(asset: MediaAssetRow) {
+  return {
+    ...asset,
+    url: siteMediaImageUrl(asset.storage_path) ?? "",
+    thumbnail_url: asset.thumbnail_storage_path
+      ? siteMediaImageUrl(asset.thumbnail_storage_path)
+      : null,
+  };
+}
+
+function isMissingThumbnailColumnError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const record = error as { code?: string; message?: string };
+  return (
+    record.code === "PGRST204" &&
+    typeof record.message === "string" &&
+    record.message.includes("thumbnail_storage_path")
+  );
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -45,13 +71,7 @@ export async function GET(req: NextRequest) {
 
     // Construct public URLs via /site-media/ proxy (resilient to missing files)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query returns untyped rows
-    const assets = data.map((asset: any) => ({
-      ...asset,
-      url: `/site-media/${asset.storage_path}`,
-      thumbnail_url: asset.thumbnail_storage_path
-        ? `/site-media/${asset.thumbnail_storage_path}`
-        : null,
-    }));
+    const assets = data.map((asset: any) => withMediaUrls(asset));
 
     return NextResponse.json(assets);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- catch clause
@@ -158,21 +178,44 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const insertPayload = {
+      file_name: originalName,
+      storage_path: storagePath,
+      mime_type: "image/webp",
+      size_bytes: webpBuffer.length,
+      category: category,
+      uploaded_by: guard.authUserId,
+    };
+
+    const insertPayloadWithThumbnail = {
+      ...insertPayload,
+      thumbnail_storage_path: thumbnailBuffer ? thumbnailStoragePath : null,
+    };
+
     // Insert to Database
-    const { data: asset, error: dbError } = await adminSupabase
+    let { data: asset, error: dbError } = await adminSupabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase table type not in generated types
       .from("media_assets" as any)
-      .insert({
-        file_name: originalName,
-        storage_path: storagePath,
-        mime_type: "image/webp",
-        size_bytes: webpBuffer.length,
-        category: category,
-        uploaded_by: guard.authUserId,
-        thumbnail_storage_path: thumbnailBuffer ? thumbnailStoragePath : null,
-      })
+      .insert(insertPayloadWithThumbnail)
       .select()
       .single();
+
+    if (isMissingThumbnailColumnError(dbError)) {
+      if (thumbnailBuffer) {
+        await adminSupabase.storage.from("site-media").remove([thumbnailStoragePath]);
+        thumbnailBuffer = null;
+      }
+
+      const fallbackInsert = await adminSupabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase table type not in generated types
+        .from("media_assets" as any)
+        .insert(insertPayload)
+        .select()
+        .single();
+
+      asset = fallbackInsert.data;
+      dbError = fallbackInsert.error;
+    }
 
     if (dbError) {
       // Rollback storage if DB fails
@@ -185,11 +228,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       asset: {
-        ...asset,
-        url: `/site-media/${asset.storage_path}`,
-        thumbnail_url: asset.thumbnail_storage_path
-          ? `/site-media/${asset.thumbnail_storage_path}`
-          : null,
+        ...withMediaUrls(asset),
       }
     });
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { normalizeSiteMediaStoragePath } from "@/lib/media/storage-paths";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://zaahkhmnqcczswxrcuhw.supabase.co";
 
@@ -7,19 +8,6 @@ const PLACEHOLDER_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAABJRU5ErkJggg==";
 const PLACEHOLDER_PNG = Buffer.from(PLACEHOLDER_PNG_BASE64, "base64");
 
-function assertSafeStoragePath(raw: string): string {
-  const trimmed = raw.trim();
-  if (!trimmed) throw new Error("INVALID_STORAGE_PATH");
-  if (trimmed.includes("..")) throw new Error("INVALID_STORAGE_PATH");
-  if (trimmed.includes("\\")) throw new Error("INVALID_STORAGE_PATH");
-  if (/^https?:\/\//i.test(trimmed)) throw new Error("INVALID_STORAGE_PATH");
-  if (trimmed.startsWith("/")) throw new Error("INVALID_STORAGE_PATH");
-  // Block control characters and percent-encoded traversal
-  if (/[\x00-\x1f\x7f]/.test(trimmed)) throw new Error("INVALID_STORAGE_PATH");
-  if (/%2[ef]/i.test(trimmed)) throw new Error("INVALID_STORAGE_PATH");
-  return trimmed;
-}
-
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
@@ -27,7 +15,7 @@ export async function GET(
   const { path } = await params;
   let storagePath: string;
   try {
-    storagePath = assertSafeStoragePath(path.join("/"));
+    storagePath = normalizeSiteMediaStoragePath(path.join("/"));
   } catch {
     return new NextResponse(PLACEHOLDER_PNG, {
       status: 200,
@@ -41,7 +29,7 @@ export async function GET(
   try {
     const supabaseResp = await fetch(
       `${SUPABASE_URL}/storage/v1/object/public/site-media/${storagePath}`,
-      { signal: AbortSignal.timeout(25000) },
+      { signal: AbortSignal.timeout(5000) },
     );
 
     if (!supabaseResp.ok) {

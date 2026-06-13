@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import type { AttractionCard } from "@/types/tourism";
 
 type DbRecord = Record<string, unknown>;
@@ -77,11 +78,7 @@ function numberValue(value: unknown, fallback = 0) {
 
 function imageUrlFromStoragePath(value: unknown): string | null {
   const storagePath = text(value);
-  if (!storagePath) return null;
-  if (storagePath.startsWith("http")) return storagePath;
-  if (storagePath.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(storagePath)}`;
-  // Use /site-media/ route handler for resilient image serving with placeholder fallback
-  return `/site-media/${storagePath}`;
+  return siteMediaImageUrl(storagePath);
 }
 
 function publicAttractionMedia(row: DbRecord): DbRecord | null {

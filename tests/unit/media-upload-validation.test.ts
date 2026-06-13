@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // ── Admin media route POST handler import ──────────────────────────────────
 
@@ -97,24 +97,28 @@ describe("Admin media upload — sharp processing logic (simulated)", () => {
     expect(thumbnailBuffer!.length).toBeGreaterThan(0);
   });
 
-  it("falls back to original buffer when sharp fails", async () => {
-    const originalBuffer = Buffer.from("original-data");
-    let webpBuffer: Buffer;
-    let thumbnailBuffer: Buffer | null = null;
-    let usedOriginal = false;
+  it("rejects the upload when sharp main conversion fails", async () => {
+    let shouldReturnError = false;
+    let uploadedBytes: Buffer | null = null;
 
-    // Simulate sharp failure
     try {
       throw new Error("Sharp not available");
     } catch {
-      webpBuffer = originalBuffer;
-      thumbnailBuffer = null;
-      usedOriginal = true;
+      shouldReturnError = true;
+      uploadedBytes = null;
     }
 
-    expect(usedOriginal).toBe(true);
-    expect(webpBuffer).toBe(originalBuffer);
-    expect(thumbnailBuffer).toBeNull();
+    expect(shouldReturnError).toBe(true);
+    expect(uploadedBytes).toBeNull();
+  });
+
+  it("stores no thumbnail path when thumbnail generation or upload fails", () => {
+    let thumbnailBuffer: Buffer | null = Buffer.from("thumbnail-webp");
+
+    thumbnailBuffer = null;
+    const thumbnailStoragePath = thumbnailBuffer ? "general/uuid_thumb.webp" : null;
+
+    expect(thumbnailStoragePath).toBeNull();
   });
 
   it("stores mime_type as image/webp after conversion", () => {

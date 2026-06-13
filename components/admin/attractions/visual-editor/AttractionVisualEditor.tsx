@@ -20,6 +20,7 @@ import { AttractionCardsRow } from "@/components/attractions/attraction-cards-ro
 import { AttractionReviews } from "@/components/attractions/attraction-reviews";
 import type { PublicAttractionDetail } from "@/lib/repositories/public-content.repository";
 import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 type EditorSection = "header" | "content" | "location" | "settings" | "gallery" | "related_attractions" | "related_accommodations" | "related_restaurants" | "related_stories" | null;
 
@@ -35,6 +36,26 @@ type AttractionRelatedContent = {
   restaurants?: { restaurant_id: number | string | null }[];
   stories?: { story_id: number | string | null }[];
 };
+
+const EDITOR_SECTIONS: Exclude<EditorSection, null>[] = [
+  "header",
+  "content",
+  "location",
+  "settings",
+  "gallery",
+  "related_attractions",
+  "related_accommodations",
+  "related_restaurants",
+  "related_stories",
+];
+
+function getInitialEditorSection(): EditorSection {
+  if (typeof window === "undefined") return null;
+  const hash = window.location.hash.replace("#", "");
+  return EDITOR_SECTIONS.includes(hash as Exclude<EditorSection, null>)
+    ? (hash as EditorSection)
+    : null;
+}
 
 type AdminContentLists = {
   attractions?: RelatedOption[];
@@ -202,16 +223,13 @@ export function AttractionVisualEditor({
   allContent,
   relatedContent
 }: AttractionVisualEditorProps) {
-  const [activeSection, setActiveSection] = useState<EditorSection>(null);
+  const [activeSection, setActiveSection] = useState<EditorSection>(getInitialEditorSection);
 
   useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    const validSections: EditorSection[] = ["header", "content", "location", "settings", "gallery", "related_attractions", "related_accommodations", "related_restaurants", "related_stories"];
-    if (validSections.includes(hash as EditorSection)) {
-      setActiveSection(hash as EditorSection);
+    if (window.location.hash && activeSection) {
       window.history.replaceState(null, "", window.location.pathname);
     }
-  }, []);
+  }, [activeSection]);
 
   // Derive display data to match frontend components
   const provinceName = provinces.find((p) => p.id === attraction.province_id)?.label ?? "ไม่ระบุจังหวัด";
@@ -223,11 +241,8 @@ export function AttractionVisualEditor({
   const sortedMedia = [...media].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
   const images = sortedMedia
     .filter(m => m.media_type === "image" || m.media_type === "panorama" || m.media_type === "external_url")
-    .map(m => {
-      if (m.storage_path.startsWith("http")) return m.storage_path;
-      if (m.storage_path.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(m.storage_path)}`;
-      return `/site-media/${m.storage_path}`;
-    });
+    .map(m => siteMediaImageUrl(m.storage_path) ?? "")
+    .filter(Boolean);
   const hasGalleryImages = images.length > 0;
   const relatedAttractionCount = relatedContent?.attractions?.length ?? 0;
   const relatedAccommodationCount = relatedContent?.accommodations?.length ?? 0;

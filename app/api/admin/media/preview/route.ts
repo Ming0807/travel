@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPrivateFileSignedUrl, type PrivateBucketName } from "@/lib/storage/private-files";
 import { requireAdmin } from "@/lib/auth/guards";
+import { normalizeSiteMediaStoragePath, siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 export const runtime = "nodejs";
 
@@ -16,11 +17,26 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Missing bucket or path", { status: 400 });
     }
 
+    if (path.startsWith("cloudinary:")) {
+      return NextResponse.redirect(
+        new URL(`/api/media/image?path=${encodeURIComponent(path)}`, req.url),
+      );
+    }
+
+    try {
+      const mediaUrl = siteMediaImageUrl(normalizeSiteMediaStoragePath(path));
+      if (mediaUrl) {
+        return NextResponse.redirect(new URL(mediaUrl, req.url));
+      }
+    } catch {
+      // Not a public site-media path; try private storage below.
+    }
+
     try {
       const signedUrl = await createPrivateFileSignedUrl(bucket, path, 60 * 60); // 1 hour TTL
       return NextResponse.redirect(signedUrl);
-    } catch (e: any) {
-      if (e.message === "SIGNED_URL_CREATE_FAILED") {
+    } catch (e: unknown) {
+      if (e instanceof Error && e.message === "SIGNED_URL_CREATE_FAILED") {
         // Fallback for public buckets or old non-private files
         const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
         return NextResponse.redirect(publicUrl);

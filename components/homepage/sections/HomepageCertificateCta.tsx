@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 export function HomepageCertificateCta({
   title = "รับแรงบันดาลใจการเดินทาง",
@@ -12,11 +13,7 @@ export function HomepageCertificateCta({
   bgImage?: string;
 }) {
   const getImageUrl = (path?: string | null) => {
-    const value = path?.trim();
-    if (!value) return "";
-    if (value.startsWith("http")) return value;
-    if (value.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(value)}`;
-    return `/site-media/${value}`;
+    return siteMediaImageUrl(path) ?? "";
   };
 
   const imgSrc = getImageUrl(bgImage);

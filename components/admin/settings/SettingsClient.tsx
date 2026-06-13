@@ -28,6 +28,7 @@ import {
   SITE_SETTING_KEYS,
   type SiteSettingKey,
 } from "@/lib/config/site-settings";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 type SiteSettingRow = {
   setting_key: string;
@@ -125,8 +126,9 @@ function createInitialSettings(rows: SiteSettingRow[]) {
 }
 
 function imagePreviewUrl(path: string) {
+  const siteMediaUrl = siteMediaImageUrl(path);
+  if (siteMediaUrl) return siteMediaUrl;
   if (!path) return "";
-  if (/^https?:\/\//i.test(path)) return path;
   return `/api/admin/media/preview?bucket=southern-border-tourism&path=${encodeURIComponent(path)}`;
 }
 

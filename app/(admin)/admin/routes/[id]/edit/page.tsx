@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/auth/guards";
 import { getAdminRouteById, getRouteStops } from "@/lib/repositories/admin-route.repository";
 import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
 import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -37,7 +38,7 @@ export default async function EditAdminRoutePage({
     <RouteVisualEditor
       route={route}
       coverMediaId={coverMedia?.media_id ?? null}
-      coverMediaUrl={coverMedia?.storage_path ? (coverMedia.storage_path.startsWith('cloudinary:') ? `/api/media/image?path=${encodeURIComponent(coverMedia.storage_path)}` : `/site-media/${coverMedia.storage_path}`) : null}
+      coverMediaUrl={siteMediaImageUrl(coverMedia?.storage_path)}
       stops={stops}
       attractions={attractions}
     />

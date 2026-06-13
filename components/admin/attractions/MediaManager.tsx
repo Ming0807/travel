@@ -17,6 +17,7 @@ import { createMediaAction, deleteMediaAction, updateMediaAction } from "@/app/a
 import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 import type { AdminMediaEntityType } from "@/lib/validation/media";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 type MediaType = "image" | "panorama" | "video360" | "embed" | "external_url";
 
@@ -83,10 +84,7 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 function mediaPreviewUrl(storagePath: string) {
-  if (!storagePath) return "";
-  if (/^https?:\/\//i.test(storagePath)) return storagePath;
-  if (storagePath.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(storagePath)}`;
-  return `/site-media/${storagePath}`;
+  return siteMediaImageUrl(storagePath) ?? "";
 }
 
 function getMediaTypeOption(value: string) {

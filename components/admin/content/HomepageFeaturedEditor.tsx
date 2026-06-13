@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { searchAttractionsAction, getAttractionsBySlugsAction } from "@/app/actions/admin-content-actions";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import { 
   DotsSixVertical, 
   Trash, 
@@ -131,10 +132,7 @@ export function HomepageFeaturedEditor({
   }
 
   function imageUrl(path: string | null) {
-    if (!path) return "";
-    if (/^https?:\/\//i.test(path)) return path;
-    if (path.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(path)}`;
-    return `/site-media/${path}`;
+    return siteMediaImageUrl(path) ?? "";
   }
 
   const filteredSearchResults = searchResults;

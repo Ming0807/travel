@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Play, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 export function HomepageHero({
   title = "ค้นพบ ความมหัศจรรย์ ที่ซ่อนเร้น",
@@ -18,11 +19,7 @@ export function HomepageHero({
   images?: string[];
 }) {
   const getImageUrl = (path: string | undefined) => {
-    const value = path?.trim();
-    if (!value) return "";
-    if (value.startsWith("http")) return value;
-    if (value.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(value)}`;
-    return `/site-media/${value}`;
+    return siteMediaImageUrl(path) ?? "";
   };
 
   const img0 = getImageUrl(images?.[0]);

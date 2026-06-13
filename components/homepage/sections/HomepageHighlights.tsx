@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Star, PlayCircle } from "@phosphor-icons/react/dist/ssr";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 export function HomepageHighlights({
   title = "ประสบการณ์จากนักเดินทาง",
@@ -20,11 +21,7 @@ export function HomepageHighlights({
   imageTitle?: string;
 }) {
   const getImageUrl = (path?: string | null) => {
-    const value = path?.trim();
-    if (!value) return "";
-    if (value.startsWith("http")) return value;
-    if (value.startsWith("cloudinary:")) return `/api/media/image?path=${encodeURIComponent(value)}`;
-    return `/site-media/${value}`;
+    return siteMediaImageUrl(path) ?? "";
   };
 
   const videoSrc = getImageUrl(videoCover);
