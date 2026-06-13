@@ -190,9 +190,10 @@ describe("SettingsClient", () => {
     expect(screen.getByText(/บันทึก \d รายการ/)).toBeInTheDocument();
   });
 
-  it("renders featured routes section with route picker", () => {
+  it("renders featured routes section with mocked route picker", () => {
     render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
     expect(screen.getByText("เส้นทางแนะนำ")).toBeInTheDocument();
+    // Route picker is mocked — see homepage-route-picker.test.tsx for real component tests
     expect(screen.getByTestId("route-picker")).toBeInTheDocument();
     expect(screen.getByText(/routes selected/)).toBeInTheDocument();
   });

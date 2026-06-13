@@ -29,6 +29,7 @@ export function HomepageRoutePicker({
   const [loadError, setLoadError] = useState<string | null>(null);
   const latestQueryRef = useRef("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const requestIdRef = useRef(0);
   const slugsKey = slugs.join("|");
 
   useEffect(() => {
@@ -50,17 +51,27 @@ export function HomepageRoutePicker({
     return () => { cancelled = true; };
   }, [slugsKey]);
 
+  function clearSearch() {
+    setSearchQuery("");
+    setSearchResults([]);
+    setSearchError(null);
+    setIsSearching(false);
+    latestQueryRef.current = "";
+    requestIdRef.current += 1;
+  }
+
   async function handleSearch(q: string) {
     setSearchQuery(q);
     setSearchError(null);
     if (!q.trim()) {
-      setSearchResults([]);
+      clearSearch();
       return;
     }
     setIsSearching(true);
-    latestQueryRef.current = q;
+    requestIdRef.current += 1;
+    const requestId = requestIdRef.current;
     const res = await searchRoutesAction(q);
-    if (latestQueryRef.current !== q) return; // stale — ignore
+    if (requestIdRef.current !== requestId) return; // stale — ignore
     if (res.success && res.data) {
       setSearchResults(res.data as RouteData[]);
     } else {
@@ -75,9 +86,7 @@ export function HomepageRoutePicker({
     const newItems = [...items, item];
     setItems(newItems);
     onChange(newItems.map((i) => i.slug));
-    setSearchQuery("");
-    setSearchResults([]);
-    setSearchError(null);
+    clearSearch();
     searchInputRef.current?.focus();
   }
 
@@ -137,7 +146,7 @@ export function HomepageRoutePicker({
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Escape") { setSearchQuery(""); setSearchResults([]); setSearchError(null); (e.target as HTMLInputElement).blur(); } }}
+            onKeyDown={(e) => { if (e.key === "Escape") { clearSearch(); (e.target as HTMLInputElement).blur(); } }}
             placeholder="พิมพ์ชื่อเส้นทางหรือ slug..."
             role="combobox"
             aria-expanded={isExpanded}
