@@ -212,7 +212,7 @@ export function MessageListClient({
                       <button
                         onClick={() => handleDelete(msg.id)}
                         disabled={isPending}
-                        className="p-1.5 text-slate-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50"
+                        className="p-1.5 text-red-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50"
                         title="Delete"
                       >
                         <Trash size={18} />
@@ -283,7 +283,7 @@ export function MessageListClient({
                     handleDelete(msg.id);
                   }}
                   disabled={isPending}
-                  className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                  className="p-1.5 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
                   title="Delete"
                 >
                   <Trash size={16} />

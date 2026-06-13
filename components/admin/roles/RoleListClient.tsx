@@ -195,7 +195,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                             <button
                               onClick={() => handleDelete(role.role_id, role.role_name)}
                               disabled={isPending}
-                              className="inline-flex items-center justify-center rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+                              className="inline-flex items-center justify-center rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
                               title="Delete role"
                             >
                               <Trash size={20} />
