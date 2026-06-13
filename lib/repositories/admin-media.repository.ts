@@ -283,6 +283,25 @@ export async function linkMediaToEntity(
   }
 }
 
+export async function clearCoverMediaForEntity(
+  entityType: AdminMediaEntityType,
+  entityId: number
+): Promise<void> {
+  const supabase = createSupabaseServiceRoleClient();
+  const column = entityIdColumnByType[entityType];
+
+  const { error } = await supabase
+    .from("content_media")
+    .update({ is_cover: false })
+    .eq(column, entityId)
+    .eq("is_cover", true);
+
+  if (error) {
+    console.error("CLEAR_COVER_MEDIA_FAILED", { entityType, entityId, errorMessage: error.message });
+    throw new Error(`CLEAR_COVER_MEDIA_FAILED: ${error.message}`);
+  }
+}
+
 export async function linkMediaToEntityByStoragePath(
   storagePath: string,
   entityType: AdminMediaEntityType,

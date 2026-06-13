@@ -14,6 +14,11 @@ type SectionFormProps = {
   onCoverChange?: (mediaId: number | null, mediaUrl: string | null) => void;
 };
 
+function toFiniteMediaId(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 export function HeaderForm({ route, onClose }: SectionFormProps) {
   const action = updateRouteAction.bind(null, route.route_id);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,8 +31,8 @@ export function HeaderForm({ route, onClose }: SectionFormProps) {
   }, [state?.success, onClose]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
 
         {/* Hidden fields to preserve other data */}
@@ -68,7 +73,7 @@ export function HeaderForm({ route, onClose }: SectionFormProps) {
           </label>
         </div>
       </div>
-      <div className="border-t border-slate-200 bg-slate-50 p-4">
+      <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-4">
         <AdminSaveBar
           cancelHref="#"
           isPending={isPending}
@@ -92,8 +97,8 @@ export function ContentForm({ route, onClose }: SectionFormProps) {
   }, [state?.success, onClose]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
 
         {/* Hidden fields */}
@@ -124,7 +129,7 @@ export function ContentForm({ route, onClose }: SectionFormProps) {
           </label>
         </div>
       </div>
-      <div className="border-t border-slate-200 bg-slate-50 p-4">
+      <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-4">
         <AdminSaveBar
           cancelHref="#"
           isPending={isPending}
@@ -148,8 +153,8 @@ export function SettingsForm({ route, onClose }: SectionFormProps) {
   }, [state?.success, onClose]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
 
         {/* Hidden fields */}
@@ -205,7 +210,7 @@ export function SettingsForm({ route, onClose }: SectionFormProps) {
           </div>
         </div>
       </div>
-      <div className="border-t border-slate-200 bg-slate-50 p-4">
+      <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-4">
         <AdminSaveBar
           cancelHref="#"
           isPending={isPending}
@@ -224,16 +229,20 @@ export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: c
     success: false,
   });
   const [imagePreviewUrl, setImagePreviewUrl] = useState(cmUrl ?? "");
-  const [currentMediaId, setCurrentMediaId] = useState<number | null>(cmId ?? null);
+  const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
+  const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
-    if (state?.success) onClose();
-  }, [state?.success, onClose]);
+    if (state?.success) {
+      if (onCoverChange) onCoverChange(currentMediaId, imagePreviewUrl || null);
+      onClose();
+    }
+  }, [currentMediaId, imagePreviewUrl, onClose, onCoverChange, state?.success]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
 
         {/* Hidden fields */}
@@ -273,10 +282,10 @@ export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: c
                 <button
                   type="button"
                   onClick={() => {
-                    setImagePreviewUrl("");
-                    setCurrentMediaId(null);
-                    if (onCoverChange) onCoverChange(null, null);
-                  }}
+                     setImagePreviewUrl("");
+                     setCurrentMediaId(null);
+                     setCoverMediaAction("clear");
+                   }}
                   className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
                 >
                   เอาออก
@@ -289,7 +298,7 @@ export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: c
           </div>
         </div>
       </div>
-      <div className="border-t border-slate-200 bg-slate-50 p-4">
+      <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-4">
         <AdminSaveBar
           cancelHref="#"
           isPending={isPending}
@@ -298,18 +307,20 @@ export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: c
         />
       </div>
 
-      <input type="hidden" name="coverMediaId" value={currentMediaId ?? ""} />
+      <input type="hidden" name="coverMediaId" value={currentMediaId ? String(currentMediaId) : ""} />
+      <input type="hidden" name="coverMediaAction" value={coverMediaAction} />
 
       <MediaPickerModal
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelectAsset={(asset) => {
-          const mediaId = Number(asset.id);
+          const mediaId = toFiniteMediaId(asset.id);
+          if (!mediaId) return;
           setCurrentMediaId(mediaId);
           setImagePreviewUrl(asset.url);
-          if (onCoverChange) onCoverChange(mediaId, asset.url);
+          setCoverMediaAction("set");
         }}
-        onSelect={(url) => setImagePreviewUrl(url)}
+        onSelect={() => {}}
         title="เลือกภาพปกเส้นทาง"
       />
     </form>

@@ -167,8 +167,13 @@ describe("CoverForm", () => {
     // Should show the remove button since we have a cover URL
     await userEvent.click(screen.getByText("เอาออก"));
 
-    // Should call onCoverChange with nulls
-    expect(onCoverChange).toHaveBeenCalledWith(null, null);
+    // The public preview should not update until the server save succeeds.
+    expect(onCoverChange).not.toHaveBeenCalled();
+    const actionInput = document.querySelector(
+      'input[name="coverMediaAction"]',
+    ) as HTMLInputElement;
+    expect(actionInput).not.toBeNull();
+    expect(actionInput.value).toBe("clear");
     // Preview should show empty state
     expect(screen.getByText("ยังไม่ได้เลือกรูปภาพ")).toBeInTheDocument();
   });

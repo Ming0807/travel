@@ -68,7 +68,7 @@ export function Drawer({ isOpen, onClose, title, children, size = "md", bodyClas
             <X size={20} weight="bold" aria-hidden="true" />
           </button>
         </div>
-        <div className={bodyClassName ?? "flex-1 overflow-y-auto p-6"}>
+        <div className={bodyClassName ? `min-h-0 flex-1 overflow-y-auto ${bodyClassName}` : "min-h-0 flex-1 overflow-y-auto p-6"}>
           {children}
         </div>
       </div>

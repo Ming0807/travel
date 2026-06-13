@@ -16,6 +16,11 @@ type SectionFormProps = {
   onCoverChange?: (mediaId: number | null, mediaUrl: string | null) => void;
 };
 
+function toFiniteMediaId(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 export function HeaderForm({ restaurant, onClose }: SectionFormProps) {
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,8 +33,8 @@ export function HeaderForm({ restaurant, onClose }: SectionFormProps) {
   }, [state?.success, onClose]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* We must pass hidden fields for ALL other required data so it doesn't get erased by the updateAction (since it expects a full schema or we use a partial update). 
@@ -66,7 +71,7 @@ export function HeaderForm({ restaurant, onClose }: SectionFormProps) {
           </label>
         </div>
       </div>
-      <div className="border-t border-slate-200 p-4 bg-slate-50">
+      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
         <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกข้อมูลหลัก" />
       </div>
     </form>
@@ -81,8 +86,8 @@ export function ContentForm({ restaurant, onClose }: SectionFormProps) {
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* Hidden required fields */}
@@ -111,7 +116,7 @@ export function ContentForm({ restaurant, onClose }: SectionFormProps) {
           </label>
         </div>
       </div>
-      <div className="border-t border-slate-200 p-4 bg-slate-50">
+      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
         <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกเนื้อหา" />
       </div>
     </form>
@@ -126,8 +131,8 @@ export function LocationForm({ restaurant, onClose }: SectionFormProps) {
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* Hidden fields */}
@@ -167,7 +172,7 @@ export function LocationForm({ restaurant, onClose }: SectionFormProps) {
           </label>
         </div>
       </div>
-      <div className="border-t border-slate-200 p-4 bg-slate-50">
+      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
         <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกพิกัด" />
       </div>
     </form>
@@ -179,14 +184,20 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
   const [coverPreviewUrl, setCoverPreviewUrl] = useState(cmUrl ?? "");
-  const [currentMediaId, setCurrentMediaId] = useState<number | null>(cmId ?? null);
+  const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
+  const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
-  useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
+  useEffect(() => {
+    if (state?.success) {
+      if (onCoverChange) onCoverChange(currentMediaId, coverPreviewUrl || null);
+      onClose();
+    }
+  }, [coverPreviewUrl, currentMediaId, onClose, onCoverChange, state?.success]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* Hidden fields */}
@@ -258,10 +269,10 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
                   <button
                     type="button"
                     onClick={() => {
-                      setCoverPreviewUrl("");
-                      setCurrentMediaId(null);
-                      if (onCoverChange) onCoverChange(null, null);
-                    }}
+                       setCoverPreviewUrl("");
+                       setCurrentMediaId(null);
+                       setCoverMediaAction("clear");
+                     }}
                     className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
                   >
                     เอาออก
@@ -274,10 +285,11 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
             </div>
           </label>
 
-          <input type="hidden" name="coverMediaId" value={currentMediaId ?? ""} />
+          <input type="hidden" name="coverMediaId" value={currentMediaId ? String(currentMediaId) : ""} />
+          <input type="hidden" name="coverMediaAction" value={coverMediaAction} />
         </div>
       </div>
-      <div className="border-t border-slate-200 p-4 bg-slate-50">
+      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
         <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกการตั้งค่า" />
       </div>
 
@@ -285,12 +297,13 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelectAsset={(asset) => {
-          const mediaId = Number(asset.id);
+          const mediaId = toFiniteMediaId(asset.id);
+          if (!mediaId) return;
           setCurrentMediaId(mediaId);
           setCoverPreviewUrl(asset.url);
-          if (onCoverChange) onCoverChange(mediaId, asset.url);
+          setCoverMediaAction("set");
         }}
-        onSelect={(url) => setCoverPreviewUrl(url)}
+        onSelect={() => {}}
         title="เลือกรูปภาพปก"
       />
     </form>

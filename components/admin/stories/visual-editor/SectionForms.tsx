@@ -29,8 +29,8 @@ export function HeaderForm({ story, onClose }: SectionFormProps) {
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* Hidden required fields */}
@@ -55,7 +55,7 @@ export function HeaderForm({ story, onClose }: SectionFormProps) {
           </label>
         </div>
       </div>
-      <div className="border-t border-slate-200 p-4 bg-slate-50">
+      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
         <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกข้อมูลหลัก" />
       </div>
     </form>
@@ -70,8 +70,8 @@ export function ContentForm({ story, onClose }: SectionFormProps) {
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* Hidden required fields */}
@@ -87,7 +87,7 @@ export function ContentForm({ story, onClose }: SectionFormProps) {
           <FormRichText label="เนื้อหาฉบับเต็ม" name="content" defaultValue={story.content ?? ""} minHeight={400} placeholder="เริ่มเขียนเนื้อหาบทความ..." />
         </div>
       </div>
-      <div className="border-t border-slate-200 p-4 bg-slate-50">
+      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
         <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกเนื้อหา" />
       </div>
     </form>
@@ -102,8 +102,8 @@ export function SettingsForm({ story, provinces = [], onClose }: SectionFormProp
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* Hidden fields */}
@@ -138,7 +138,7 @@ export function SettingsForm({ story, provinces = [], onClose }: SectionFormProp
           </label>
         </div>
       </div>
-      <div className="border-t border-slate-200 p-4 bg-slate-50">
+      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
         <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกการตั้งค่า" />
       </div>
     </form>
@@ -151,14 +151,20 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
   const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
   const [imagePreviewUrl, setImagePreviewUrl] = useState(cmUrl ?? "");
   const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
+  const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const isDirty = currentMediaId !== toFiniteMediaId(cmId) || imagePreviewUrl !== (cmUrl ?? "");
 
-  useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
+  useEffect(() => {
+    if (state?.success) {
+      if (onCoverChange) onCoverChange(currentMediaId, imagePreviewUrl || null);
+      onClose();
+    }
+  }, [currentMediaId, imagePreviewUrl, onClose, onCoverChange, state?.success]);
 
   return (
-    <form action={formAction} className="flex h-full flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+    <form action={formAction} className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {isDirty ? (
@@ -204,7 +210,7 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
                   onClick={() => {
                     setImagePreviewUrl("");
                     setCurrentMediaId(null);
-                    if (onCoverChange) onCoverChange(null, null);
+                    setCoverMediaAction("clear");
                   }}
                   className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
                 >
@@ -218,22 +224,24 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
           </div>
         </div>
       </div>
-      <div className="border-t border-slate-200 p-4 bg-slate-50">
+      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
         <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกรูปภาพ" />
       </div>
 
       <input type="hidden" name="coverMediaId" value={currentMediaId ? String(currentMediaId) : ""} />
+      <input type="hidden" name="coverMediaAction" value={coverMediaAction} />
 
       <MediaPickerModal
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelectAsset={(asset) => {
           const mediaId = toFiniteMediaId(asset.id);
+          if (!mediaId) return;
           setCurrentMediaId(mediaId);
           setImagePreviewUrl(asset.url);
-          if (onCoverChange) onCoverChange(mediaId, asset.url);
+          setCoverMediaAction("set");
         }}
-        onSelect={(url) => setImagePreviewUrl(url)}
+        onSelect={() => {}}
         title="เลือกรูปภาพปกเรื่องราว"
       />
     </form>

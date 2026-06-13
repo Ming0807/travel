@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { adminStoryMutationSchema } from "@/lib/validation/story";
-import { linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
+import { clearCoverMediaForEntity, linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminStory,
   updateAdminStory,
@@ -81,9 +81,13 @@ export async function updateStoryAction(storyId: number, _prevState: ActionResul
 
     const updated = await updateAdminStory(storyId, payload);
 
-    // Link cover media if provided
+    const coverMediaAction = formData.get("coverMediaAction");
+
+    // Link or clear cover media only when the cover editor explicitly asks for it.
     const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
-    if (coverMediaId && Number.isFinite(coverMediaId)) {
+    if (coverMediaAction === "clear") {
+      await clearCoverMediaForEntity("story", updated.story_id);
+    } else if (coverMediaId && Number.isFinite(coverMediaId)) {
       await linkMediaToEntity(coverMediaId, "story", updated.story_id);
     }
 
@@ -129,4 +133,3 @@ export async function changeStoryStatusAction(storyId: number, newStatus: string
     return { success: false, error: "ยังเปลี่ยนสถานะไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
-
