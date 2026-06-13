@@ -43,18 +43,15 @@ export async function GET(req: NextRequest) {
       throw error;
     }
 
-    // Construct public URLs
+    // Construct public URLs via /site-media/ proxy (resilient to missing files)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query returns untyped rows
-    const assets = data.map((asset: any) => {
-      const { data: urlData } = supabase.storage
-        .from("site-media")
-        .getPublicUrl(asset.storage_path);
-      
-      return {
-        ...asset,
-        url: urlData.publicUrl
-      };
-    });
+    const assets = data.map((asset: any) => ({
+      ...asset,
+      url: `/site-media/${asset.storage_path}`,
+      thumbnail_url: asset.thumbnail_storage_path
+        ? `/site-media/${asset.thumbnail_storage_path}`
+        : null,
+    }));
 
     return NextResponse.json(assets);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- catch clause
@@ -185,25 +182,14 @@ export async function POST(req: NextRequest) {
       throw dbError;
     }
 
-    // Get public URLs
-    const { data: urlData } = adminSupabase.storage
-      .from("site-media")
-      .getPublicUrl(asset.storage_path);
-
-    let thumbnailUrl: string | null = null;
-    if (asset.thumbnail_storage_path) {
-      const { data: thumbUrlData } = adminSupabase.storage
-        .from("site-media")
-        .getPublicUrl(asset.thumbnail_storage_path);
-      thumbnailUrl = thumbUrlData.publicUrl;
-    }
-
     return NextResponse.json({
       success: true,
       asset: {
         ...asset,
-        url: urlData.publicUrl,
-        thumbnail_url: thumbnailUrl,
+        url: `/site-media/${asset.storage_path}`,
+        thumbnail_url: asset.thumbnail_storage_path
+          ? `/site-media/${asset.thumbnail_storage_path}`
+          : null,
       }
     });
 

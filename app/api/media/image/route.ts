@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     // Proxy the image bytes so Next.js image optimizer receives a real image,
     // not a redirect (which it can't follow for signed URLs with query strings)
     const upstreamResp = await fetch(signedUrl, {
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(25000),
     });
 
     if (!upstreamResp.ok) {

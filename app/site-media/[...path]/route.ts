@@ -41,7 +41,7 @@ export async function GET(
   try {
     const supabaseResp = await fetch(
       `${SUPABASE_URL}/storage/v1/object/public/site-media/${storagePath}`,
-      { signal: AbortSignal.timeout(8000) },
+      { signal: AbortSignal.timeout(25000) },
     );
 
     if (!supabaseResp.ok) {
