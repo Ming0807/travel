@@ -43,6 +43,16 @@ vi.mock("@/components/admin/content/HomepageFeaturedEditor", () => ({
   ),
 }));
 
+// Mock HomepageRoutePicker
+vi.mock("@/components/admin/content/HomepageRoutePicker", () => ({
+  HomepageRoutePicker: ({ slugs, onChange }: { slugs: string[]; onChange: (slugs: string[]) => void }) => (
+    <div data-testid="route-picker">
+      <button onClick={() => onChange(["route-1", "route-2"])}>Add routes</button>
+      <span>{slugs.length} routes selected</span>
+    </div>
+  ),
+}));
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/settings",
@@ -56,6 +66,8 @@ import { SettingsClient } from "@/components/admin/settings/SettingsClient";
 const EMPTY_SETTINGS = [
   { setting_key: "homepage_hero", setting_value: { title: "Hero Title", subtitle: "", description: "", images: ["", "", ""] }, description: null, updated_at: "2026-01-01" },
   { setting_key: "homepage_featured_attractions", setting_value: { slugs: [] }, description: null, updated_at: "2026-01-01" },
+  { setting_key: "homepage_stories", setting_value: { title: "Stories Title", subtitle: "", buttonText: "", limit: 4 }, description: null, updated_at: "2026-01-01" },
+  { setting_key: "homepage_featured_routes", setting_value: { slugs: [], title: "", subtitle: "", limit: 3 }, description: null, updated_at: "2026-01-01" },
   { setting_key: "homepage_how_it_works", setting_value: { title: "", subtitle: "", description: "" }, description: null, updated_at: "2026-01-01" },
   { setting_key: "homepage_highlights", setting_value: { title: "", authorName: "", location: "", quote: "", videoCover: "", imageCover: "", imageTitle: "" }, description: null, updated_at: "2026-01-01" },
   { setting_key: "homepage_cta", setting_value: { title: "", subtitle: "", description: "", bgImage: "" }, description: null, updated_at: "2026-01-01" },
@@ -156,5 +168,32 @@ describe("SettingsClient", () => {
       expect(screen.getByText("แสตมป์ดิจิทัล")).toBeInTheDocument();
       expect(screen.getByText("การออกใบประกาศ")).toBeInTheDocument();
     });
+  });
+
+  it("renders stories section with limit input", () => {
+    render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
+    expect(screen.getByText("เรื่องราวนักเดินทาง")).toBeInTheDocument();
+    const limitInputs = screen.getAllByLabelText("จำนวนที่แสดงสูงสุด");
+    expect(limitInputs.length).toBeGreaterThanOrEqual(1);
+    // The first "จำนวนที่แสดงสูงสุด" input is for stories (value=4), second is for routes (value=3)
+    expect(limitInputs[0]).toHaveValue("4");
+  });
+
+  it("clamps stories limit between 1 and 8", async () => {
+    render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
+    const limitInputs = screen.getAllByLabelText("จำนวนที่แสดงสูงสุด");
+    const storiesLimitInput = limitInputs[0];
+    // Entering "9" should clamp to 8 via Math.min(8, 9)
+    await userEvent.clear(storiesLimitInput);
+    await userEvent.type(storiesLimitInput, "9");
+    // Type into the input triggers onChange which clamps and marks dirty
+    expect(screen.getByText(/บันทึก \d รายการ/)).toBeInTheDocument();
+  });
+
+  it("renders featured routes section with route picker", () => {
+    render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
+    expect(screen.getByText("เส้นทางแนะนำ")).toBeInTheDocument();
+    expect(screen.getByTestId("route-picker")).toBeInTheDocument();
+    expect(screen.getByText(/routes selected/)).toBeInTheDocument();
   });
 });

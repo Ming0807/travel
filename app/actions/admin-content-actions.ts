@@ -227,15 +227,17 @@ export async function getAttractionsBySlugsAction(slugs: string[]) {
 
 export async function searchRoutesAction(query: string) {
   try {
-    await requirePermission("attraction.read");
+    await requirePermission("route.read");
     const supabase = await createSupabaseServerClient();
     const trimmed = query.trim();
     if (!trimmed) return { success: true, data: [] };
 
+    const escaped = trimmed.replace(/%/g, "\\%").replace(/_/g, "\\_");
+
     const { data, error } = await supabase
       .from("suggested_routes")
       .select("route_id, name_th, name_en, slug, is_published, is_active")
-      .or(`name_th.ilike.%${trimmed}%,name_en.ilike.%${trimmed}%,slug.ilike.%${trimmed}%`)
+      .or(`name_th.ilike.%${escaped}%,name_en.ilike.%${escaped}%,slug.ilike.%${escaped}%`)
       .order("name_th", { ascending: true })
       .limit(20);
 
@@ -250,7 +252,7 @@ export async function searchRoutesAction(query: string) {
 export async function getRoutesBySlugsAction(slugs: string[]) {
   if (!slugs?.length) return { success: true, data: [] };
   try {
-    await requirePermission("attraction.read");
+    await requirePermission("route.read");
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("suggested_routes").select("route_id, name_th, name_en, slug, is_published, is_active")

@@ -22,6 +22,7 @@ import {
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import { HomepageFeaturedEditor } from "@/components/admin/content/HomepageFeaturedEditor";
+import { HomepageRoutePicker } from "@/components/admin/content/HomepageRoutePicker";
 import {
   SITE_SETTING_DEFAULTS,
   SITE_SETTING_KEYS,
@@ -35,7 +36,10 @@ type SiteSettingRow = {
   updated_at: string;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- DB-merged dynamic shape; deriving from as-const defaults breaks spread intersection (TS mapped-type limitation)
 type SettingsState = Record<SiteSettingKey, any>;
+
+type TeamMember = { name: string; role: string; imageUrl: string };
 
 type SettingsGroupId = "homepage" | "publicPages" | "contact" | "seo" | "system" | "about";
 
@@ -99,7 +103,7 @@ const GROUP_KEYS: Record<SettingsGroupId, SiteSettingKey[]> = {
 };
 
 function createInitialSettings(rows: SiteSettingRow[]) {
-  const settings = structuredClone(SITE_SETTING_DEFAULTS) as SettingsState;
+  const settings = structuredClone(SITE_SETTING_DEFAULTS) as unknown as SettingsState;
 
   for (const row of rows) {
     if (!SITE_SETTING_KEYS.includes(row.setting_key as SiteSettingKey)) continue;
@@ -573,18 +577,23 @@ function HomepageSettings({
         <TextInput label="หัวข้อ" value={settings.homepage_stories.title} onChange={(value) => updateSettingObject("homepage_stories", { title: value })} />
         <TextInput label="หัวข้อย่อย" value={settings.homepage_stories.subtitle} onChange={(value) => updateSettingObject("homepage_stories", { subtitle: value })} />
         <TextInput label="ข้อความปุ่ม" value={settings.homepage_stories.buttonText} onChange={(value) => updateSettingObject("homepage_stories", { buttonText: value })} />
+        <TextInput label="จำนวนที่แสดงสูงสุด" value={String(settings.homepage_stories.limit ?? 4)} onChange={(value) => updateSettingObject("homepage_stories", { limit: Math.max(1, Math.min(8, parseInt(value) || 4)) })} />
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
           บทความจะดึงจากตาราง travel_stories โดยอัตโนมัติ ใช้ฟิลเตอร์ status=published
         </div>
       </SettingsSection>
 
-      <SettingsSection title="เส้นทางแนะนำ" description="เลือกเส้นทางที่ต้องการแสดงบนหน้าแรก (ลากวางเพื่อสลับตำแหน่ง)">
+      <SettingsSection title="เส้นทางแนะนำ" description="เลือกเส้นทางที่ต้องการแสดงบนหน้าแรก (เรียงลำดับด้วยลูกศรขึ้นลง)">
         <TextInput label="หัวข้อ" value={settings.homepage_featured_routes.title} onChange={(value) => updateSettingObject("homepage_featured_routes", { title: value })} />
         <TextInput label="หัวข้อย่อย" value={settings.homepage_featured_routes.subtitle} onChange={(value) => updateSettingObject("homepage_featured_routes", { subtitle: value })} />
-        <div className="rounded-lg border border-[#0A6B62]/20 bg-[#E6F4EF] p-4 text-sm leading-6 text-[#073F37]">
-          <p className="font-bold">เลือกเส้นทางที่เผยแพร่แล้ว</p>
+        <HomepageRoutePicker
+          slugs={settings.homepage_featured_routes.slugs ?? []}
+          onChange={(slugs) => updateSettingObject("homepage_featured_routes", { slugs })}
+        />
+        <div className="mt-4 rounded-lg border border-[#0A6B62]/20 bg-[#E6F4EF] p-4 text-sm leading-6 text-[#073F37]">
+          <p className="font-bold">เนื้อหาเส้นทางจัดการที่ไหน?</p>
           <p className="mt-1">
-            พิมพ์ชื่อเส้นทางเพื่อค้นหา เพิ่มเข้าลิสต์ และจัดลำดับด้วยการลาก เนื้อหาเส้นทางจัดการได้ที่{" "}
+            ชื่อ คำอธิบาย และรูปภาพของเส้นทาง ดึงจากระบบจัดการเส้นทางโดยตรง{" "}
             <Link href="/admin/routes" className="font-black text-[#0A6B62] underline hover:text-[#075049]">จัดการเส้นทาง</Link>
           </p>
         </div>
@@ -777,7 +786,7 @@ function AboutSettings({
           <strong>หมายเหตุ:</strong> ในเวอร์ชันปัจจุบัน ข้อมูลทีมงานยังจัดการผ่าน Settings อยู่ ในอนาคตจะย้ายไปยังระบบจัดการเนื้อหา (Content Hub) เพื่อให้สามารถนำไปใช้ซ้ำในหน้าอื่นๆ ได้
         </div>
         <div className="space-y-4">
-          {team.map((member: any, i: number) => (
+          {team.map((member: TeamMember, i: number) => (
             <div key={i} className="relative border-b border-slate-100 pb-5 last:border-b-0 last:pb-0">
               <button
                 type="button"

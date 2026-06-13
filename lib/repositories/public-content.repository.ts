@@ -785,16 +785,6 @@ export type PublicRouteCard = {
   imageUrl: string | null;
 };
 
-function mapRouteCard(row: DbRecord): PublicRouteCard {
-  return {
-    slug: text(row.slug),
-    name: text(row.name_th, text(row.name_en)),
-    description: text(row.description_th, text(row.description_en)),
-    days: numberValue(row.days, 1),
-    imageUrl: publicImage(row),
-  };
-}
-
 export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Promise<PublicRouteCard[]> {
   try {
 
@@ -809,8 +799,18 @@ export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Pr
         .eq("is_active", true)
         .limit(featuredSlugs.length);
       if (!fe && fd && fd.length > 0) {
-        const results = (fd as DbRecord[]).map(mapRouteCard).filter(r => r.slug);
-        return featuredSlugs.map(s => results.find(r => r.slug === s)).filter(r => Boolean(r)).slice(0, limit);
+        const results = (fd as DbRecord[]).map(row => {
+          const stops = Array.isArray(row.suggested_route_stops) ? row.suggested_route_stops as { day_number: number }[] : [];
+          const days = stops.length > 0 ? Math.max(...stops.map(s => (s.day_number || 1))) : 1;
+          return {
+            slug: text(row.slug),
+            name: text(row.name_th, text(row.name_en)),
+            description: text(row.description_th, text(row.description_en)),
+            days,
+            imageUrl: publicImage(row as DbRecord),
+          };
+        }).filter(r => r.slug);
+        return featuredSlugs.map(s => results.find(r => r.slug === s)).filter((r): r is PublicRouteCard => Boolean(r)).slice(0, limit);
       }
       return [];
     }
