@@ -10,9 +10,10 @@ interface DrawerProps {
   title: string;
   children: React.ReactNode;
   size?: "md" | "lg" | "xl" | "full";
+  bodyClassName?: string;
 }
 
-export function Drawer({ isOpen, onClose, title, children, size = "md" }: DrawerProps) {
+export function Drawer({ isOpen, onClose, title, children, size = "md", bodyClassName }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
 
   // Handle escape key
@@ -67,7 +68,7 @@ export function Drawer({ isOpen, onClose, title, children, size = "md" }: Drawer
             <X size={20} weight="bold" aria-hidden="true" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className={bodyClassName ?? "flex-1 overflow-y-auto p-6"}>
           {children}
         </div>
       </div>

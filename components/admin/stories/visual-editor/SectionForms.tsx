@@ -152,6 +152,7 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
   const [imagePreviewUrl, setImagePreviewUrl] = useState(cmUrl ?? "");
   const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const isDirty = currentMediaId !== toFiniteMediaId(cmId) || imagePreviewUrl !== (cmUrl ?? "");
 
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
@@ -160,6 +161,13 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
       <div className="flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
+        {isDirty ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-800 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+            มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก
+          </div>
+        ) : null}
+
         {/* Hidden fields */}
         <input type="hidden" name="title" value={story.title ?? ""} />
         <input type="hidden" name="slug" value={story.slug ?? ""} />
@@ -205,19 +213,9 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
               ) : null}
             </div>
           </div>
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">หรือป้อน URL โดยตรง</span>
-            <input
-              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-              value={imagePreviewUrl}
-              onChange={(e) => {
-                setImagePreviewUrl(e.target.value);
-                setCurrentMediaId(null);
-                if (onCoverChange) onCoverChange(null, e.target.value);
-              }}
-              placeholder="https://..."
-            />
-          </label>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+            ใช้ปุ่ม &ldquo;เลือกจาก Media Library&rdquo; ด้านบนเพื่อเลือกรูปภาพที่อัปโหลดไว้แล้ว หรืออัปโหลดรูปใหม่ผ่าน Media Library โดยตรง การวาง URL ด้วยตนเองไม่รองรับในระบบปัจจุบัน
+          </div>
         </div>
       </div>
       <div className="border-t border-slate-200 p-4 bg-slate-50">

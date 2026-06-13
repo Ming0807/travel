@@ -212,10 +212,10 @@ export function StoryVisualEditor({
       </div>
 
       {/* Drawers */}
-      <Drawer isOpen={activeSection === "header"} onClose={() => setActiveSection(null)} title="แก้ไขข้อมูลหลัก (Header)">
+      <Drawer isOpen={activeSection === "header"} onClose={() => setActiveSection(null)} title="แก้ไขข้อมูลหลัก (Header)" bodyClassName="p-0">
         <HeaderForm story={story} onClose={() => setActiveSection(null)} />
       </Drawer>
-      <Drawer isOpen={activeSection === "cover"} onClose={() => setActiveSection(null)} title="รูปภาพปก (Cover Image)">
+      <Drawer isOpen={activeSection === "cover"} onClose={() => setActiveSection(null)} title="รูปภาพปก (Cover Image)" bodyClassName="p-0">
         <CoverForm
           story={story}
           onClose={() => setActiveSection(null)}
@@ -227,10 +227,10 @@ export function StoryVisualEditor({
           }}
         />
       </Drawer>
-      <Drawer isOpen={activeSection === "content"} onClose={() => setActiveSection(null)} title="เนื้อหาบทความ (Content)" size="lg">
+      <Drawer isOpen={activeSection === "content"} onClose={() => setActiveSection(null)} title="เนื้อหาบทความ (Content)" size="lg" bodyClassName="p-0">
         <ContentForm story={story} onClose={() => setActiveSection(null)} />
       </Drawer>
-      <Drawer isOpen={activeSection === "settings"} onClose={() => setActiveSection(null)} title="ตั้งค่าหมวดหมู่และสถานะ">
+      <Drawer isOpen={activeSection === "settings"} onClose={() => setActiveSection(null)} title="ตั้งค่าหมวดหมู่และสถานะ" bodyClassName="p-0">
         <SettingsForm story={story} provinces={provinces} onClose={() => setActiveSection(null)} />
       </Drawer>
 
