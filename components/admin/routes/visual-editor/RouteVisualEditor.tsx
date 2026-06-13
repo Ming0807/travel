@@ -412,7 +412,7 @@ export function RouteVisualEditor({
       <Drawer
         isOpen={activeSection === "header"}
         onClose={() => setActiveSection(null)}
-        title="แก้ไขข้อมูลเส้นทาง (Route Info)"
+        title="แก้ไขข้อมูลเส้นทาง (Route Info)" bodyClassName="p-0"
       >
         <HeaderForm route={route} onClose={() => setActiveSection(null)} />
       </Drawer>
@@ -420,7 +420,7 @@ export function RouteVisualEditor({
       <Drawer
         isOpen={activeSection === "cover"}
         onClose={() => setActiveSection(null)}
-        title="รูปภาพปก (Cover Image)"
+        title="รูปภาพปก (Cover Image)" bodyClassName="p-0"
       >
         <CoverForm
           route={route}
@@ -446,7 +446,7 @@ export function RouteVisualEditor({
       <Drawer
         isOpen={activeSection === "settings"}
         onClose={() => setActiveSection(null)}
-        title="ตั้งค่าและการเผยแพร่"
+        title="ตั้งค่าและการเผยแพร่" bodyClassName="p-0"
       >
         <SettingsForm route={route} onClose={() => setActiveSection(null)} />
       </Drawer>

@@ -711,7 +711,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "header"}
         onClose={() => setActiveSection(null)}
-        title="แก้ไขข้อมูลหลัก (Header)"
+        title="แก้ไขข้อมูลหลัก (Header)" bodyClassName="p-0"
       >
         <HeaderForm attraction={attraction} onClose={() => setActiveSection(null)} />
       </Drawer>
@@ -737,7 +737,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "settings"}
         onClose={() => setActiveSection(null)}
-        title="ตั้งค่าหมวดหมู่และสถานะ"
+        title="ตั้งค่าหมวดหมู่และสถานะ" bodyClassName="p-0"
       >
         <SettingsForm attraction={attraction} provinces={provinces} districts={districts} attractionTypes={attractionTypes} onClose={() => setActiveSection(null)} />
       </Drawer>
@@ -757,7 +757,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "related_attractions"}
         onClose={() => setActiveSection(null)}
-        title="เลือกสถานที่ท่องเที่ยวใกล้เคียง"
+        title="เลือกสถานที่ท่องเที่ยวใกล้เคียง" bodyClassName="p-0"
       >
         <RelatedContentForm
           attractionId={attraction.attraction_id}
@@ -773,7 +773,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "related_accommodations"}
         onClose={() => setActiveSection(null)}
-        title="เลือกที่พักใกล้เคียง"
+        title="เลือกที่พักใกล้เคียง" bodyClassName="p-0"
       >
         <RelatedContentForm
           attractionId={attraction.attraction_id}
@@ -789,7 +789,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "related_restaurants"}
         onClose={() => setActiveSection(null)}
-        title="เลือกร้านอาหารใกล้เคียง"
+        title="เลือกร้านอาหารใกล้เคียง" bodyClassName="p-0"
       >
         <RelatedContentForm
           attractionId={attraction.attraction_id}
@@ -805,7 +805,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "related_stories"}
         onClose={() => setActiveSection(null)}
-        title="เลือกบทความที่เกี่ยวข้อง"
+        title="เลือกบทความที่เกี่ยวข้อง" bodyClassName="p-0"
       >
         <RelatedContentForm
           attractionId={attraction.attraction_id}

@@ -269,11 +269,9 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
                 ) : null}
               </div>
             </div>
-            <label className="mt-2 block">
-              <span className="text-sm font-bold text-slate-700">หรือป้อน URL โดยตรง</span>
-              <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" value={coverPreviewUrl} onChange={(e) => { setCoverPreviewUrl(e.target.value); if (onCoverChange) onCoverChange(null, e.target.value); }} name="coverMediaId" />
-              <p className="mt-1 text-xs text-slate-500">สำหรับรูปภาพหน้าปก (หากมี Media Gallery ไม่จำเป็นต้องใช้ส่วนนี้)</p>
-            </label>
+            <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+              ใช้ปุ่ม &ldquo;เลือกจาก Media Library&rdquo; ด้านบนเพื่อเลือกรูปภาพ การวาง URL ด้วยตนเองไม่รองรับในระบบปัจจุบัน
+            </div>
           </label>
 
           <input type="hidden" name="coverMediaId" value={currentMediaId ?? ""} />

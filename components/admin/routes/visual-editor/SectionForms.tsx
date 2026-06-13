@@ -284,19 +284,9 @@ export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: c
               ) : null}
             </div>
           </div>
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">หรือป้อน URL โดยตรง</span>
-            <input
-              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-              value={imagePreviewUrl}
-              onChange={(e) => {
-                setImagePreviewUrl(e.target.value);
-                if (onCoverChange) onCoverChange(null, e.target.value);
-              }}
-              name="coverMediaId"
-              placeholder="https://..."
-            />
-          </label>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+            ใช้ปุ่ม &ldquo;เลือกจาก Media Library&rdquo; ด้านบนเพื่อเลือกรูปภาพ การวาง URL ด้วยตนเองไม่รองรับในระบบปัจจุบัน
+          </div>
         </div>
       </div>
       <div className="border-t border-slate-200 bg-slate-50 p-4">

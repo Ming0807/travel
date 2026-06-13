@@ -11,7 +11,7 @@ export const SITE_SETTING_DEFAULTS = {
     description: "นักท่องเที่ยวสแกน QR กรอกข้อมูลขั้นต่ำ รับใบประกาศและตราประทับ แล้วเลือกตอบแบบสอบถามเพิ่มเติมได้ภายหลัง",
   },
   homepage_highlights: {
-    title: "ประสบการณ์จากนักเดินทาง",
+    title: "เรื่องราวและประสบการณ์",
     authorName: "Traveler",
     location: "Southern Border",
     quote: "ชายแดนใต้มีเรื่องราวและสถานที่ที่น่าค้นพบมากกว่าที่คิด",

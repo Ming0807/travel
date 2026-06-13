@@ -226,7 +226,7 @@ export function RestaurantVisualEditor({
       <Drawer
         isOpen={activeSection === "header"}
         onClose={() => setActiveSection(null)}
-        title="แก้ไขข้อมูลหลัก (Header)"
+        title="แก้ไขข้อมูลหลัก (Header)" bodyClassName="p-0"
       >
         <HeaderForm restaurant={restaurant} onClose={() => setActiveSection(null)} />
       </Drawer>
@@ -252,7 +252,7 @@ export function RestaurantVisualEditor({
       <Drawer
         isOpen={activeSection === "settings"}
         onClose={() => setActiveSection(null)}
-        title="ตั้งค่าหมวดหมู่และสถานะ"
+        title="ตั้งค่าหมวดหมู่และสถานะ" bodyClassName="p-0"
       >
         <SettingsForm
           restaurant={restaurant}
