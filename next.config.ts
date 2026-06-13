@@ -11,6 +11,17 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    localPatterns: [
+      {
+        pathname: "/api/media/image*",
+      },
+      {
+        pathname: "/site-media/**",
+      },
+      {
+        pathname: "/api/admin/media/preview*",
+      },
+    ],
     remotePatterns: [
       {
         protocol: "https",
