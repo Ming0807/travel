@@ -16,6 +16,11 @@ type SectionFormProps = {
   onCoverChange?: (mediaId: number | null, mediaUrl: string | null) => void;
 };
 
+function toFiniteMediaId(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 export function HeaderForm({ story, onClose }: SectionFormProps) {
   const action = updateStoryAction.bind(null, story.story_id);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -145,7 +150,7 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
   const [imagePreviewUrl, setImagePreviewUrl] = useState(cmUrl ?? "");
-  const [currentMediaId, setCurrentMediaId] = useState<number | null>(cmId ?? null);
+  const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
@@ -188,7 +193,11 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
               {imagePreviewUrl ? (
                 <button
                   type="button"
-                  onClick={() => setImagePreviewUrl("")}
+                  onClick={() => {
+                    setImagePreviewUrl("");
+                    setCurrentMediaId(null);
+                    if (onCoverChange) onCoverChange(null, null);
+                  }}
                   className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
                 >
                   เอาออก
@@ -203,9 +212,9 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
               value={imagePreviewUrl}
               onChange={(e) => {
                 setImagePreviewUrl(e.target.value);
+                setCurrentMediaId(null);
                 if (onCoverChange) onCoverChange(null, e.target.value);
               }}
-              name="coverMediaId"
               placeholder="https://..."
             />
           </label>
@@ -215,13 +224,13 @@ export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: c
         <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกรูปภาพ" />
       </div>
 
-      <input type="hidden" name="coverMediaId" value={currentMediaId ?? ""} />
+      <input type="hidden" name="coverMediaId" value={currentMediaId ? String(currentMediaId) : ""} />
 
       <MediaPickerModal
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelectAsset={(asset) => {
-          const mediaId = Number(asset.id);
+          const mediaId = toFiniteMediaId(asset.id);
           setCurrentMediaId(mediaId);
           setImagePreviewUrl(asset.url);
           if (onCoverChange) onCoverChange(mediaId, asset.url);

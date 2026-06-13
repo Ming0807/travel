@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react/no-unescaped-entities */
+
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -25,6 +27,11 @@ const FIELD_LABELS = {
 
 function hasText(value: string | null | undefined) {
   return !!value?.trim();
+}
+
+function toFiniteMediaId(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 export function StoryForm({ initialData, provinces }: StoryFormProps) {
@@ -197,7 +204,7 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
                 ) : null}
               </div>
             </div>
-            <input type="hidden" name="coverMediaId" value={coverMediaId ?? ""} />
+            <input type="hidden" name="coverMediaId" value={coverMediaId ? String(coverMediaId) : ""} />
           </AdminFormSection>
         </div>
       </div>
@@ -212,7 +219,7 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelectAsset={(asset) => {
-          const id = Number(asset.id);
+          const id = toFiniteMediaId(asset.id);
           setCoverMediaId(id);
           setImagePreviewUrl(asset.url);
         }}
