@@ -16,6 +16,8 @@ type AttractionReviewsProps = {
 export function AttractionReviews({ rating, reviewsCount, stats, reviews, title = "Reviews", children }: AttractionReviewsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const hasRealData = stats && stats.totalReviews > 0;
+  const displayRating = hasRealData ? stats.averageRating : rating;
+  const displayReviewsCount = hasRealData ? stats.totalReviews : Number.parseInt(reviewsCount, 10) || 0;
 
   // Sort reviews: 5-stars first, then by date descending
   const sortedReviews = reviews ? [...reviews].sort((a, b) => {
@@ -35,16 +37,16 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
       <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-16">
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold text-ink">{hasRealData ? stats.averageRating : rating}</span>
+            <span className="text-5xl font-bold text-ink">{displayRating}</span>
             <span className="text-xl font-bold text-muted">/ 5</span>
           </div>
           <div className="flex text-amber-400">
             {[1, 2, 3, 4, 5].map((star) => (
-              <Star key={star} size={20} weight={star <= Math.round(hasRealData ? stats.averageRating : rating) ? "fill" : "regular"} />
+              <Star key={star} size={20} weight={star <= Math.round(displayRating) ? "fill" : "regular"} />
             ))}
           </div>
           <p className="text-sm font-semibold text-muted">
-            ({hasRealData ? stats.totalReviews : reviewsCount} review{hasRealData && stats.totalReviews !== 1 ? "s" : (typeof reviewsCount === "string" && !reviewsCount.endsWith("s") ? "" : "s")})
+            ({displayReviewsCount.toLocaleString("th-TH")} reviews)
           </p>
         </div>
 
@@ -53,7 +55,7 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
           {[5, 4, 3, 2, 1].map((star) => {
             const pct = hasRealData && stats.totalReviews > 0
               ? Math.round(((stats.distribution[star] ?? 0) / stats.totalReviews) * 100)
-              : star === 5 ? 70 : star === 4 ? 15 : star === 3 ? 10 : star === 2 ? 4 : 1;
+              : 0;
             return (
               <div key={star} className="flex items-center gap-4 text-sm font-bold text-ink">
                 <div className="w-4">{star}</div>
@@ -85,6 +87,14 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
           )}
         </div>
       )}
+
+      {!hasRealData ? (
+        <div className="mt-8 rounded-2xl border border-dashed border-ink/10 bg-slate-50 p-6 text-center">
+          <p className="text-sm font-bold text-muted">
+            ยังไม่มีรีวิวที่ผ่านการอนุมัติสำหรับสถานที่นี้
+          </p>
+        </div>
+      ) : null}
 
       {/* Review Submission Form */}
       {children}

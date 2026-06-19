@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type AttractionCTAProps = {
   name: string;
 };
@@ -18,9 +20,9 @@ export function AttractionCTA({ name }: AttractionCTAProps) {
         <p className="mb-8 text-base font-medium text-white/80 sm:text-lg">
           Plan your unforgettable journey today and experience the beauty of the Southern Border.
         </p>
-        <button className="rounded-full bg-white px-8 py-3.5 text-sm font-bold text-ink shadow-lg hover:bg-cream transition-colors">
+        <Link href="/routes" className="inline-flex rounded-full bg-white px-8 py-3.5 text-sm font-bold text-ink shadow-lg transition-colors hover:bg-cream">
           Plan your trip
-        </button>
+        </Link>
       </div>
     </div>
   );

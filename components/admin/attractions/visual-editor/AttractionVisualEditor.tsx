@@ -602,7 +602,7 @@ export function AttractionVisualEditor({
                   />
                 </div>
                 <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Link href="/admin/reviews" className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
+                  <Link href={`/admin/reviews?attractionId=${attraction.attraction_id}`} className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
                     <PencilSimple size={14} /> จัดการรีวิว
                   </Link>
                 </div>

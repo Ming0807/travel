@@ -19,15 +19,20 @@ type ActionResult = {
 
 export async function submitReviewAction(input: SubmitReviewInput): Promise<ActionResult> {
   try {
-    // Validate at least one target
-    if (!input.attractionId && !input.restaurantId) {
-      return { success: false, error: "Please specify an attraction or restaurant." };
+    const hasAttraction = Number.isInteger(input.attractionId) && Number(input.attractionId) > 0;
+    const hasRestaurant = Number.isInteger(input.restaurantId) && Number(input.restaurantId) > 0;
+
+    if (hasAttraction === hasRestaurant) {
+      return { success: false, error: "กรุณาเลือกสถานที่หรือร้านอาหารอย่างใดอย่างหนึ่ง" };
     }
 
-    // Validate rating
-    if (!input.rating || input.rating < 1 || input.rating > 5) {
-      return { success: false, error: "Rating must be between 1 and 5." };
+    const rating = Number(input.rating);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return { success: false, error: "คะแนนรีวิวต้องอยู่ระหว่าง 1 ถึง 5" };
     }
+
+    const title = input.title?.trim().slice(0, 255) || null;
+    const comment = input.comment?.trim().slice(0, 5000) || null;
 
     // Resolve tourist identity (supports OAuth + guest)
     let touristId: string;
@@ -45,43 +50,43 @@ export async function submitReviewAction(input: SubmitReviewInput): Promise<Acti
       .eq("tourist_id", touristId)
       .is("deleted_at", null);
 
-    if (input.attractionId) {
+    if (hasAttraction) {
       dupQuery = dupQuery.eq("attraction_id", input.attractionId);
-    } else if (input.restaurantId) {
+    } else {
       dupQuery = dupQuery.eq("restaurant_id", input.restaurantId);
     }
 
     const { data: existing } = await dupQuery.maybeSingle();
     if (existing) {
-      return { success: false, error: "You have already reviewed this place." };
+      return { success: false, error: "คุณเคยรีวิวสถานที่นี้แล้ว" };
     }
 
     // Insert review
     const { error } = await supabase.from("reviews").insert({
       tourist_id: touristId,
-      attraction_id: input.attractionId ?? null,
-      restaurant_id: input.restaurantId ?? null,
-      rating: input.rating,
-      title: input.title?.trim() ?? null,
-      comment: input.comment?.trim() ?? null,
+      attraction_id: hasAttraction ? input.attractionId : null,
+      restaurant_id: hasRestaurant ? input.restaurantId : null,
+      rating,
+      title,
+      comment,
       is_approved: false,
       is_published: false,
     });
 
     if (error) {
-      return { success: false, error: "Failed to submit review. Please try again." };
+      return { success: false, error: "ส่งรีวิวไม่สำเร็จ กรุณาลองอีกครั้ง" };
     }
 
     // Revalidate
-    if (input.attractionId) {
+    if (hasAttraction) {
       revalidatePath(`/attractions/[slug]`);
     }
-    if (input.restaurantId) {
+    if (hasRestaurant) {
       revalidatePath(`/restaurants/[slug]`);
     }
 
     return { success: true };
   } catch {
-    return { success: false, error: "An unexpected error occurred. Please try again." };
+    return { success: false, error: "เกิดข้อผิดพลาด กรุณาลองอีกครั้ง" };
   }
 }

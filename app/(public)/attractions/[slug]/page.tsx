@@ -40,6 +40,8 @@ export default async function AttractionDetailPage({ params }: { params: Promise
   const attractionId = attractionRow?.attraction_id ? Number(attractionRow.attraction_id) : undefined;
   const reviewStats = attractionId ? await getReviewStatsByAttraction(attractionId) : null;
   const publicReviews = attractionId ? await listPublicReviewsByAttraction(attractionId) : [];
+  const displayRating = reviewStats && reviewStats.totalReviews > 0 ? reviewStats.averageRating : data.rating;
+  const displayReviewsCount = reviewStats && reviewStats.totalReviews > 0 ? String(reviewStats.totalReviews) : data.reviewsCount;
   const locale = "th";
   const sections = buildAttractionSectionNavigation(data, { locale, includeReviews: true });
   const sectionLabel = (key: Parameters<typeof getAttractionSectionLabel>[0]) =>
@@ -60,8 +62,8 @@ export default async function AttractionDetailPage({ params }: { params: Promise
         <AttractionHeader
           name={data.name}
           province={data.province}
-          rating={data.rating}
-          reviewsCount={data.reviewsCount}
+          rating={displayRating}
+          reviewsCount={displayReviewsCount}
           bestTimeToVisit={data.bestTimeToVisit}
         />
 
@@ -173,8 +175,8 @@ export default async function AttractionDetailPage({ params }: { params: Promise
 
               {/* Reviews */}
               <AttractionReviews
-                rating={data.rating}
-                reviewsCount={data.reviewsCount}
+                rating={displayRating}
+                reviewsCount={displayReviewsCount}
                 stats={reviewStats ?? undefined}
                 reviews={publicReviews.length > 0 ? publicReviews : undefined}
                 title={sectionLabel("reviews")}

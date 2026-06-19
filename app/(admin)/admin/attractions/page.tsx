@@ -7,7 +7,7 @@ import { SearchInput } from "@/components/admin/SearchInput";
 import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
 import { ListPageShell } from "@/components/admin/ListPageShell";
 import { requirePermission } from "@/lib/auth/guards";
-import { listAdminAttractions } from "@/lib/repositories/admin-attraction.repository";
+import { getAdminAttractionTypes, getAdminProvinces, listAdminAttractions } from "@/lib/repositories/admin-attraction.repository";
 import { adminAttractionFiltersSchema } from "@/lib/validation/admin-attraction";
 import { AttractionStatusActions } from "@/components/admin/attractions/AttractionStatusActions";
 import { ExportButton } from "@/components/admin/ExportButton";
@@ -40,7 +40,12 @@ export default async function AdminAttractionsPage({
   const raw = await searchParams;
   const parsed = adminAttractionFiltersSchema.safeParse(raw);
   const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
-  const { items, total, page, pageSize } = await listAdminAttractions(filters);
+  const [attractionsResult, provinces, attractionTypes] = await Promise.all([
+    listAdminAttractions(filters),
+    getAdminProvinces(),
+    getAdminAttractionTypes(),
+  ]);
+  const { items, total, page, pageSize } = attractionsResult;
 
   return (
     <ListPageShell
@@ -64,6 +69,22 @@ export default async function AdminAttractionsPage({
             label="สถานะ"
             paramKey="isPublished"
             options={statusOptions}
+          />
+          <FilterSelect
+            label="จังหวัด"
+            paramKey="provinceId"
+            options={provinces.map((province) => ({
+              value: String(province.province_id),
+              label: province.province_name_th,
+            }))}
+          />
+          <FilterSelect
+            label="ประเภท"
+            paramKey="attractionTypeId"
+            options={attractionTypes.map((type) => ({
+              value: String(type.attraction_type_id),
+              label: type.type_name_th,
+            }))}
           />
         </FilterBar>
       }

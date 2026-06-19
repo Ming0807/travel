@@ -1,405 +1,451 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
-  MagnifyingGlass,
+  ArrowRight,
+  CalendarCheck,
+  Compass,
   MapPin,
-  Star,
-  CaretDown,
-  PaperPlaneRight,
+  MagnifyingGlass,
   MapTrifold,
   ShieldCheck,
+  Sparkle,
+  Star,
   Users,
-  CalendarCheck,
-  ArrowRight,
-  Heart
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { listPublicAttractionCards } from "@/lib/repositories/public-content.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { AttractionCard } from "@/types/tourism";
 
 export const dynamic = "force-dynamic";
+
+type SearchParams = { [key: string]: string | string[] | undefined };
+
+type ProvinceOption = {
+  value: string;
+  label: string;
+};
+
+type TypeOption = {
+  value: string;
+  label: string;
+};
+
+function getParam(params: SearchParams, key: string) {
+  const value = params[key];
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function formatReviewSummary(attraction: AttractionCard) {
+  if (!attraction.reviewCount || !attraction.rating) return "ยังไม่มีรีวิว";
+  return `${attraction.rating.toFixed(1)} (${attraction.reviewCount.toLocaleString("th-TH")} รีวิว)`;
+}
 
 export default async function AttractionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const resolvedParams = await searchParams;
-  const search = typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined;
-  const province = typeof resolvedParams.province === 'string' ? resolvedParams.province : undefined;
+  const search = getParam(resolvedParams, "q");
+  const province = getParam(resolvedParams, "province");
+  const type = getParam(resolvedParams, "type");
 
   const settingsService = new SettingsService();
-  const [attractions, heroSettings, bannerSettings] = await Promise.all([
-    listPublicAttractionCards(16, { search, province }),
+  const supabase = await createSupabaseServerClient();
+
+  const [attractions, heroSettings, bannerSettings, provincesRes, typesRes] = await Promise.all([
+    listPublicAttractionCards(24, { search, province, type }),
     settingsService.getSetting("attractions_page_hero", {
       title: "สำรวจ <span class=\"text-coral\">สถานที่ท่องเที่ยว</span><br/>ใน 3 จังหวัดชายแดนใต้",
-      description: "จากเมืองท่องเที่ยวสุดฮิตสู่สถานที่ลึกลับที่รอการค้นพบ ค้นหาสถานที่สร้างแรงบันดาลใจและทริปต่อไปของคุณ"
+      description:
+        "ค้นหาสถานที่จริงจากฐานข้อมูล เลือกจังหวัดและประเภทที่เหมาะกับแผนเดินทางของคุณ",
     }),
     settingsService.getSetting("attractions_page_banner", {
-      title: "Sea of Mist Aiyerweng",
-      subtitle: "Discover the breathtaking views above the clouds.",
-      linkText: "Learn more",
-      linkUrl: "/attractions/aiyerweng",
-      image: ""
-    })
+      title: "สถานที่แนะนำ",
+      subtitle: "เลือกจากข้อมูลที่เผยแพร่แล้วในระบบ",
+      linkText: "ดูเพิ่มเติม",
+      linkUrl: "/attractions",
+      image: "",
+    }),
+    supabase
+      .from("provinces")
+      .select("province_name_en, province_name_th")
+      .eq("is_active", true)
+      .eq("is_target_area", true)
+      .order("province_name_th"),
+    supabase
+      .from("attraction_types")
+      .select("type_name_en, type_name_th")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true, nullsFirst: false })
+      .order("type_name_th", { ascending: true }),
   ]);
 
-  const featured = attractions[0] || null;
-  const topDestinations = attractions.slice(1, 7);
-  const trending = attractions.slice(7, 9).length > 0 ? attractions.slice(7, 9) : attractions.slice(0, 2);
-  const emptyMessage = search || province
-    ? "ไม่พบสถานที่ท่องเที่ยวที่ตรงกับเงื่อนไขที่ค้นหา"
+  const provinceOptions: ProvinceOption[] =
+    provincesRes.data?.map((item) => ({
+      value: item.province_name_en,
+      label: item.province_name_th,
+    })) ?? [
+      { value: "Yala", label: "ยะลา" },
+      { value: "Pattani", label: "ปัตตานี" },
+      { value: "Narathiwat", label: "นราธิวาส" },
+    ];
+
+  const typeOptions: TypeOption[] =
+    typesRes.data?.map((item) => ({
+      value: item.type_name_en,
+      label: item.type_name_th,
+    })) ?? [];
+
+  const buildAttractionsHref = (updates: Partial<{ q: string; province: string; type: string }>) => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (province) params.set("province", province);
+    if (type) params.set("type", type);
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    });
+
+    const query = params.toString();
+    return query ? `/attractions?${query}` : "/attractions";
+  };
+
+  const featured = attractions[0] ?? null;
+  const hasFilters = Boolean(search || province || type);
+  const emptyMessage = hasFilters
+    ? "ไม่พบสถานที่ท่องเที่ยวที่ตรงกับเงื่อนไข ลองเปลี่ยนคำค้น จังหวัด หรือประเภท"
     : "ยังไม่มีสถานที่ท่องเที่ยวที่เผยแพร่ในขณะนี้";
 
-  const supabase = await createSupabaseServerClient();
-  const { data: provincesData } = await supabase.from('provinces').select('province_name_en, province_name_th').eq('is_active', true).eq('is_target_area', true).order('province_name_th');
-  
-  const provinces = provincesData?.map(p => ({
-    name: p.province_name_en,
-    label: p.province_name_th,
-    places: p.province_name_en
-  })) || [
-    { name: "Yala", label: "ยะลา", places: "Yala" },
-    { name: "Pattani", label: "ปัตตานี", places: "Pattani" },
-    { name: "Narathiwat", label: "นราธิวาส", places: "Narathiwat" },
-  ];
-
   return (
-    <div className="bg-background min-h-screen text-ink pb-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
-
-        {/* Breadcrumb */}
-        <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <span>หน้าแรก</span>
-          <span>›</span>
+    <div className="min-h-screen bg-background text-ink">
+      <div className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8 lg:pt-16">
+        <nav className="mb-6 flex gap-2 text-xs font-bold uppercase tracking-widest text-muted">
+          <Link href="/" className="transition hover:text-ink">หน้าแรก</Link>
+          <span>/</span>
           <span className="text-ink">สถานที่ท่องเที่ยว</span>
-        </div>
+        </nav>
 
-        {/* HERO SECTION */}
-        <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-20">
-          <div className="lg:w-1/2 pt-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight" dangerouslySetInnerHTML={{ __html: heroSettings.title }}>
-            </h1>
-            <p className="text-muted leading-relaxed text-base md:text-lg max-w-md mb-8">
+        <section className="mb-14 grid gap-10 lg:grid-cols-[minmax(0,1fr)_520px] lg:items-center">
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-coral/20 bg-white px-4 py-2 text-xs font-black text-coral shadow-sm">
+              <Sparkle size={14} weight="fill" />
+              ข้อมูลจาก CMS ที่เผยแพร่แล้ว
+            </div>
+
+            <h1
+              className="mb-5 text-4xl font-black leading-tight tracking-tight text-ink md:text-5xl lg:text-6xl"
+              dangerouslySetInnerHTML={{ __html: heroSettings.title }}
+            />
+            <p className="max-w-2xl text-base leading-8 text-muted md:text-lg">
               {heroSettings.description}
             </p>
 
-            {/* Search & Filters */}
-            <form action="/attractions" method="GET" className="bg-white p-2 rounded-full border border-ink/5 flex items-center mb-6 max-w-xl">
-              <MagnifyingGlass size={20} className="text-muted ml-3" weight="bold" />
-              <input
-                type="text"
-                name="q"
-                defaultValue={search || ""}
-                placeholder="ค้นหาสถานที่ท่องเที่ยว จังหวัด หรือคำค้นหา..."
-                className="w-full bg-transparent px-3 py-2 text-sm text-ink outline-none"
-              />
-              <button type="submit" className="bg-coral text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-coral/90 transition-colors whitespace-nowrap">
+            <form
+              action="/attractions"
+              method="GET"
+              className="mt-8 grid gap-3 rounded-3xl border border-ink/10 bg-white p-3 shadow-sm lg:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.8fr)_minmax(160px,0.8fr)_auto]"
+            >
+              <label className="relative block">
+                <span className="sr-only">ค้นหาสถานที่</span>
+                <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={18} weight="bold" />
+                <input
+                  type="search"
+                  name="q"
+                  defaultValue={search ?? ""}
+                  placeholder="ค้นหาชื่อสถานที่หรือ slug"
+                  className="h-12 w-full rounded-2xl border border-ink/10 bg-cream/40 pl-11 pr-4 text-sm font-semibold text-ink outline-none transition focus:border-coral focus:bg-white focus:ring-2 focus:ring-coral/15"
+                />
+              </label>
+
+              <label className="block">
+                <span className="sr-only">จังหวัด</span>
+                <select
+                  name="province"
+                  defaultValue={province ?? ""}
+                  className="h-12 w-full rounded-2xl border border-ink/10 bg-cream/40 px-4 text-sm font-bold text-ink outline-none transition focus:border-coral focus:bg-white focus:ring-2 focus:ring-coral/15"
+                >
+                  <option value="">ทุกจังหวัด</option>
+                  {provinceOptions.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="sr-only">ประเภทสถานที่</span>
+                <select
+                  name="type"
+                  defaultValue={type ?? ""}
+                  className="h-12 w-full rounded-2xl border border-ink/10 bg-cream/40 px-4 text-sm font-bold text-ink outline-none transition focus:border-coral focus:bg-white focus:ring-2 focus:ring-coral/15"
+                >
+                  <option value="">ทุกประเภท</option>
+                  {typeOptions.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
+              </label>
+
+              <button
+                type="submit"
+                className="inline-flex h-12 items-center justify-center rounded-2xl bg-coral px-6 text-sm font-black text-white shadow-sm transition hover:bg-coral/90"
+              >
                 ค้นหา
               </button>
             </form>
 
-            <div className="flex flex-wrap gap-3">
-              <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
-                จังหวัด <CaretDown weight="bold" />
-              </button>
-              <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
-                สไตล์การท่องเที่ยว <CaretDown weight="bold" />
-              </button>
-              <button className="flex items-center gap-2 bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink hover:bg-cream transition-colors">
-                ช่วงเวลาแนะนำ <CaretDown weight="bold" />
-              </button>
-              {(search || province) && (
-                <Link href="/attractions" className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-coral hover:underline transition-colors">
+            {hasFilters ? (
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-bold">
+                <span className="text-muted">กำลังกรองผลลัพธ์</span>
+                {search ? <span className="rounded-full bg-white px-3 py-1 text-ink">คำค้น: {search}</span> : null}
+                {province ? <span className="rounded-full bg-white px-3 py-1 text-ink">จังหวัด: {provinceOptions.find((item) => item.value === province)?.label ?? province}</span> : null}
+                {type ? <span className="rounded-full bg-white px-3 py-1 text-ink">ประเภท: {typeOptions.find((item) => item.value === type)?.label ?? type}</span> : null}
+                <Link href="/attractions" className="rounded-full px-3 py-1 text-coral transition hover:bg-white">
                   ล้างตัวกรอง
                 </Link>
-              )}
-            </div>
+              </div>
+            ) : null}
           </div>
 
-          {/* Featured Destination Card */}
-          <div className="lg:w-1/2 w-full">
+          <div className="w-full">
             {featured ? (
-              <div className="relative w-full h-[350px] rounded-2xl overflow-hidden shadow-md border border-ink/5 group">
+              <Link
+                href={`/attractions/${featured.slug}`}
+                className="group relative block h-[340px] overflow-hidden rounded-3xl border border-ink/5 bg-cream shadow-md sm:h-[420px]"
+              >
                 {featured.imageUrl ? (
                   <Image
                     src={featured.imageUrl}
                     alt={featured.imageAlt}
                     fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    unoptimized
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 520px"
+                    className="object-cover transition duration-700 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-cream px-6 text-center text-sm font-semibold text-muted">
-                    Image not added
+                  <div className="flex h-full items-center justify-center px-6 text-center text-sm font-bold text-muted">
+                    ยังไม่มีรูปภาพหน้าปก
                   </div>
                 )}
-
-                {/* Gradient Overlay for Text Readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent"></div>
-
-                <div className="absolute top-6 left-6">
-                  <span className="inline-flex items-center rounded-full bg-coral text-white px-3 py-1 text-[10px] font-black tracking-wider shadow-sm uppercase">
-                    สถานที่แนะนำ
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 text-white">
+                  <span className="mb-3 inline-flex rounded-full bg-coral px-3 py-1 text-xs font-black">
+                    ผลลัพธ์แนะนำ
+                  </span>
+                  <h2 className="text-2xl font-black leading-tight md:text-3xl">{featured.name}</h2>
+                  <p className="mt-2 line-clamp-2 text-sm text-white/80">{featured.description}</p>
+                  <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-black text-ink">
+                    เปิดหน้าสถานที่ <ArrowRight size={14} weight="bold" />
                   </span>
                 </div>
-
-                <div className="absolute bottom-8 left-8 right-8 text-white">
-                  <h2 className="text-3xl font-black mb-2 leading-tight">
-                    {featured.name}, {featured.province}
-                  </h2>
-                  <p className="text-sm text-white/80 line-clamp-2">{featured.description}</p>
-                  <Link href={`/attractions/${featured.slug}`} className="bg-white text-ink px-5 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2 mt-4">
-                    อ่านเพิ่มเติม <ArrowRight size={14} weight="bold" />
-                  </Link>
-                </div>
-              </div>
+              </Link>
             ) : (
-              <div className="w-full h-[350px] rounded-2xl bg-cream flex items-center justify-center text-muted">
+              <div className="flex h-[340px] items-center justify-center rounded-3xl border border-dashed border-ink/10 bg-white px-6 text-center text-sm font-bold text-muted sm:h-[420px]">
                 {emptyMessage}
               </div>
             )}
           </div>
         </section>
 
-        {/* POPULAR REGIONS */}
-        <section className="mb-20">
-          <h2 className="text-2xl font-black text-ink mb-6">จังหวัดยอดนิยม</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {provinces.map((prov, idx) => (
-              <Link href={`/attractions?province=${prov.name}`} key={idx} className="group relative h-40 md:h-48 rounded-xl overflow-hidden bg-white shadow-sm cursor-pointer border border-ink/5 block transition hover:border-coral/30 hover:shadow-md">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(243,112,76,0.16),transparent_42%),linear-gradient(135deg,rgba(10,107,98,0.08),rgba(255,255,255,0.8))]"></div>
-                <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
-                  <div>
-                    <h3 className="text-ink font-bold text-lg leading-tight mb-1">{prov.label}</h3>
-                    <p className="text-muted text-[10px] font-bold uppercase tracking-wider">{prov.places}</p>
-                  </div>
-                  <div className="w-6 h-6 rounded-full bg-coral/10 flex items-center justify-center text-coral">
-                    <span className="text-xs">›</span>
-                  </div>
-                </div>
+        <section className="mb-14">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black text-ink">เลือกตามจังหวัด</h2>
+              <p className="mt-1 text-sm text-muted">กดแล้วไปยังรายการสถานที่ของจังหวัดนั้นทันที</p>
+            </div>
+            {province ? (
+              <Link href={buildAttractionsHref({ province: "" })} className="text-sm font-black text-coral hover:underline">
+                ดูทุกจังหวัด
               </Link>
-            ))}
+            ) : null}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {provinceOptions.map((item) => {
+              const isActive = province === item.value;
+              return (
+                <Link
+                  href={buildAttractionsHref({ province: item.value })}
+                  key={item.value}
+                  className={`group relative overflow-hidden rounded-2xl border p-5 transition ${
+                    isActive ? "border-coral bg-coral text-white shadow-md" : "border-ink/10 bg-white hover:border-coral/30 hover:shadow-sm"
+                  }`}
+                >
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div>
+                      <p className="text-lg font-black">{item.label}</p>
+                      <p className={`mt-1 text-xs font-bold uppercase tracking-widest ${isActive ? "text-white/80" : "text-muted"}`}>{item.value}</p>
+                    </div>
+                    <MapPin size={24} weight="fill" />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
-        {/* MAIN GRID & SIDEBAR */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20">
-
-          {/* Main Content (Left) */}
-          <div className="lg:col-span-8 space-y-16">
-
-            {/* Top Destinations */}
-            <section>
-              <div className="flex justify-between items-end mb-6">
-                <h2 className="text-2xl font-black text-ink">สถานที่ยอดนิยม</h2>
-                <div>
-                  <Link href="/attractions" className="text-xs font-bold text-coral hover:underline">ดูสถานที่ทั้งหมด &rarr;</Link>
-                </div>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <section id="destinations" className="min-w-0">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-ink">สถานที่ทั้งหมด</h2>
+                <p className="mt-1 text-sm text-muted">
+                  พบ {attractions.length.toLocaleString("th-TH")} รายการที่พร้อมแสดงผล
+                </p>
               </div>
+              <Link href="/attractions" className="inline-flex items-center gap-2 text-sm font-black text-coral hover:underline">
+                ดูสถานที่ทั้งหมด <ArrowRight size={16} weight="bold" />
+              </Link>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {topDestinations.length > 0 ? topDestinations.map((dest) => (
-                  <Link href={`/attractions/${dest.slug}`} key={dest.slug} className="group block">
-                    <div className="relative h-56 w-full rounded-xl overflow-hidden mb-4 bg-cream border border-ink/5">
-                      {dest.imageUrl ? (
-                        <Image
-                          src={dest.imageUrl}
-                          alt={dest.imageAlt}
-                          fill
-                          className="object-cover transition-transform duration-700 group-hover:scale-105"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-semibold text-muted">
-                          ยังไม่มีรูปภาพ
-                        </div>
-                      )}
-                      <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-ink hover:text-coral hover:bg-white transition-colors">
-                        <Heart size={16} />
-                      </div>
-                    </div>
-
-                    <h3 className="text-lg font-black text-ink mb-1 group-hover:text-coral transition-colors">{dest.name}</h3>
-                    <p className="text-xs font-bold text-muted mb-3 flex items-center gap-1 uppercase tracking-wider">
-                      {dest.province}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {dest.tags.map((tag, i) => (
-                        <span key={i} className="bg-cream border border-ink/5 px-2 py-1 rounded text-[10px] font-bold text-ink">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-ink/5">
-                      <div>
-                        <p className="text-[10px] text-muted uppercase font-bold tracking-wider mb-0.5">ช่วงเวลาที่ดีที่สุด</p>
-                        <p className="text-xs font-bold text-ink flex items-center gap-1">
-                          <CalendarCheck size={14} className="text-coral" /> พ.ย. - เม.ย.
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-bold flex items-center gap-1 justify-end">
-                          <Star size={14} weight="fill" className="text-[#F5B041]" /> 4.8 <span className="text-muted font-normal">(2.3k)</span>
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                )) : (
-                  <div className="md:col-span-2 rounded-xl border border-dashed border-ink/10 bg-white p-8 text-center text-sm font-semibold text-muted">
-                    {emptyMessage}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Trending Now */}
-            {trending.length > 0 && (
-            <section>
-              <h2 className="text-2xl font-black text-ink mb-6">กำลังมาแรง</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {trending.map((trend) => (
-                  <Link href={`/attractions/${trend.slug}`} key={trend.slug} className="group bg-white p-3 rounded-xl border border-ink/5 flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-cream">
-                      {trend.imageUrl ? (
-                        <Image
-                          src={trend.imageUrl}
-                          alt={trend.imageAlt}
-                          fill
-                          className="object-cover transition-transform group-hover:scale-105"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-semibold text-muted">
-                          No image
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-black text-sm text-ink mb-1 group-hover:text-coral transition-colors leading-tight">{trend.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <p className="text-[10px] font-bold text-coral uppercase tracking-wider">{trend.province}</p>
-                      </div>
-                    </div>
-                  </Link>
+            {attractions.length > 0 ? (
+              <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
+                {attractions.map((attraction) => (
+                  <AttractionListCard key={attraction.slug} attraction={attraction} />
                 ))}
               </div>
-            </section>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-ink/10 bg-white p-10 text-center">
+                <p className="text-sm font-bold text-muted">{emptyMessage}</p>
+                {hasFilters ? (
+                  <Link href="/attractions" className="mt-4 inline-flex rounded-full bg-coral px-5 py-2 text-sm font-black text-white">
+                    ล้างตัวกรอง
+                  </Link>
+                ) : null}
+              </div>
             )}
-          </div>
+          </section>
 
-          {/* SIDEBAR (Right) */}
-          <div className="lg:col-span-4 space-y-8">
-
-            {/* Map Widget */}
-            <div className="bg-teal/5 rounded-2xl p-8 text-center border border-ink/5 relative overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(10,107,98,0.12),transparent_36%),radial-gradient(circle_at_80%_30%,rgba(243,112,76,0.12),transparent_32%)] pointer-events-none" />
-
-              <div className="relative z-10">
-                <h3 className="font-black text-ink text-xl mb-4">วางแผนการเดินทางวันนี้</h3>
-                <p className="text-sm text-ink/80 mb-6 leading-relaxed">
-                  สำรวจสถานที่ท่องเที่ยวตามภูมิภาคและวางแผนทริปที่สมบูรณ์แบบของคุณใน 3 จังหวัดชายแดนใต้
-                </p>
-                <button className="bg-white text-ink border border-ink/10 px-6 py-2.5 rounded-full text-xs font-bold shadow-sm hover:bg-cream transition-colors inline-flex items-center gap-2">
-                  ดูบนแผนที่ <MapTrifold weight="bold" />
-                </button>
+          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-3xl border border-ink/5 bg-teal/5 p-6">
+              <h3 className="text-lg font-black text-ink">วางแผนจากข้อมูลจริง</h3>
+              <p className="mt-2 text-sm leading-7 text-ink/75">
+                สถานที่ที่แสดงในหน้านี้มาจาก CMS และต้องเปิดใช้งานพร้อมเผยแพร่แล้วเท่านั้น
+              </p>
+              <div className="mt-5 grid gap-2">
+                <Link href="/routes" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-black text-ink shadow-sm transition hover:text-coral">
+                  ดูเส้นทางแนะนำ <MapTrifold weight="bold" />
+                </Link>
+                <Link href="/stories" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-white/70 px-4 py-3 text-sm font-black text-ink transition hover:bg-white hover:text-coral">
+                  อ่านเรื่องราวนักเดินทาง <Compass weight="bold" />
+                </Link>
               </div>
             </div>
 
-            {/* Travel With Confidence */}
-            <div className="bg-white rounded-2xl p-6 border border-ink/5">
-              <h3 className="font-black text-ink text-lg mb-6">เดินทางอย่างมั่นใจ</h3>
-
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="text-coral mt-1 shrink-0"><ShieldCheck size={24} weight="light" /></div>
-                  <div>
-                    <h4 className="font-bold text-sm text-ink mb-1">สถานที่ที่ได้รับการตรวจสอบแล้ว</h4>
-                    <p className="text-xs text-muted leading-relaxed">เราตรวจสอบจุดถ่ายภาพและสถานที่ท่องเที่ยวทั้งหมดเพื่อให้แน่ใจว่าปลอดภัยและเข้าถึงได้จริง</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="text-coral mt-1 shrink-0"><Users size={24} weight="light" /></div>
-                  <div>
-                    <h4 className="font-bold text-sm text-ink mb-1">ความเชี่ยวชาญในพื้นที่</h4>
-                    <p className="text-xs text-muted leading-relaxed">คัดสรรโดยผู้เชี่ยวชาญด้านการเดินทางในท้องถิ่นที่รู้แหล่งท่องเที่ยวลับที่ดีที่สุด</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="text-coral mt-1 shrink-0"><MapPin size={24} weight="light" /></div>
-                  <div>
-                    <h4 className="font-bold text-sm text-ink mb-1">ประสบการณ์ที่แท้จริง</h4>
-                    <p className="text-xs text-muted leading-relaxed">เชื่อมโยงอย่างลึกซึ้งกับวัฒนธรรม อาหาร และผู้คนในท้องถิ่นเพื่อความทรงจำที่ไม่มีวันลืม</p>
-                  </div>
-                </div>
+            <div className="rounded-3xl border border-ink/5 bg-white p-6">
+              <h3 className="text-lg font-black text-ink">ข้อมูลที่เชื่อมกับระบบ</h3>
+              <div className="mt-5 space-y-5">
+                <InfoItem icon={<ShieldCheck size={22} weight="duotone" />} title="เผยแพร่จาก CMS" text="แอดมินควบคุมสถานะ รูปภาพ เนื้อหา พิกัด และความสัมพันธ์ของเนื้อหาได้จาก Dashboard" />
+                <InfoItem icon={<Users size={22} weight="duotone" />} title="รีวิวจากฐานข้อมูล" text="คะแนนและความคิดเห็นจะแสดงเมื่อผ่านการอนุมัติในระบบรีวิวแล้วเท่านั้น" />
+                <InfoItem icon={<CalendarCheck size={22} weight="duotone" />} title="ต่อยอด Dashboard" text="การเช็กอินและแบบสอบถามจะเชื่อมกับรายงานด้านการวางแผนท่องเที่ยว" />
               </div>
             </div>
 
-            {/* Banner Image Ad */}
-            <Link href={bannerSettings.linkUrl} className="relative h-72 rounded-2xl overflow-hidden border border-ink/5 group cursor-pointer block">
+            <Link href={bannerSettings.linkUrl || "/attractions"} className="group relative block h-72 overflow-hidden rounded-3xl border border-ink/5 bg-ink">
               {bannerSettings.image ? (
                 <Image
                   src={bannerSettings.image}
                   alt={bannerSettings.title}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  unoptimized
+                  sizes="(max-width: 1024px) 100vw, 340px"
+                  className="object-cover transition duration-700 group-hover:scale-105"
                 />
-              ) : (
-                <div className="absolute inset-0 bg-ink" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <h4 className="text-white font-black text-xl leading-tight mb-2">{bannerSettings.title}</h4>
-                <p className="text-white/80 text-xs mb-4">{bannerSettings.subtitle}</p>
-                <span className="text-white text-xs font-bold border-b border-white pb-0.5">{bannerSettings.linkText}</span>
+              ) : null}
+              <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-ink/20" />
+              <div className="absolute bottom-6 left-6 right-6 text-white">
+                <h4 className="text-xl font-black leading-tight">{bannerSettings.title}</h4>
+                <p className="mt-2 text-sm text-white/80">{bannerSettings.subtitle}</p>
+                <span className="mt-4 inline-flex items-center gap-2 text-sm font-black">
+                  {bannerSettings.linkText} <ArrowRight size={14} weight="bold" />
+                </span>
               </div>
             </Link>
-
-          </div>
+          </aside>
         </div>
 
-        {/* BOTTOM CTA BANNER */}
-        <section className="mb-20">
-          <div className="relative w-full rounded-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-md bg-ink">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(243,112,76,0.2),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(10,107,98,0.28),transparent_42%)]" />
-            <div className="relative z-10 mb-6 md:mb-0 md:w-1/2">
-              <h2 className="text-2xl md:text-3xl font-black text-white mb-2 leading-tight">รับแรงบันดาลใจการเดินทางส่งตรงถึงอีเมลคุณ</h2>
-              <p className="text-white/80 text-sm">คู่มือการเดินทาง สถานที่ซ่อนเร้น และอัปเดตพิเศษส่งถึงคุณทุกสัปดาห์</p>
+        <section className="mt-16 rounded-3xl bg-ink p-8 text-white md:p-10">
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+            <div>
+              <h2 className="text-2xl font-black md:text-3xl">ต่อยอดจากสถานที่สู่ประสบการณ์จริง</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-white/75">
+                เลือกสถานที่ วางแผนเส้นทาง หรืออ่านเรื่องราวก่อนออกเดินทาง ข้อมูลทั้งหมดเชื่อมกับ CMS และระบบวิเคราะห์หลังบ้าน
+              </p>
             </div>
-
-            <div className="relative z-10 w-full md:w-auto">
-              <div className="flex flex-col sm:flex-row gap-3 bg-white/10 p-1.5 rounded-full backdrop-blur-sm border border-white/20">
-                <input
-                  type="email"
-                  placeholder="กรอกอีเมลของคุณ"
-                  className="w-full sm:w-64 bg-white rounded-full px-5 py-3 text-sm text-ink outline-none"
-                />
-                <button type="button" className="bg-coral text-white font-bold rounded-full px-6 py-3 text-sm hover:bg-coral/90 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-                  ติดตามข่าวสาร <PaperPlaneRight weight="fill" />
-                </button>
-              </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href="/routes" className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-black text-ink transition hover:bg-cream">
+                ดูเส้นทางแนะนำ
+              </Link>
+              <Link href="/contact" className="inline-flex items-center justify-center rounded-full border border-white/25 px-5 py-3 text-sm font-black text-white transition hover:bg-white/10">
+                ติดต่อทีมงาน
+              </Link>
             </div>
           </div>
         </section>
-
       </div>
 
-      {/* SITE FOOTER */}
       <SiteFooter />
     </div>
   );
 }
 
-function HeartIcon() {
+function AttractionListCard({ attraction }: { attraction: AttractionCard }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-    </svg>
+    <Link href={`/attractions/${attraction.slug}`} className="group block rounded-3xl border border-ink/5 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-cream">
+        {attraction.imageUrl ? (
+          <Image
+            src={attraction.imageUrl}
+            alt={attraction.imageAlt}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 520px"
+            className="object-cover transition duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center px-4 text-center text-sm font-bold text-muted">
+            ยังไม่มีรูปภาพ
+          </div>
+        )}
+        <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-ink shadow-sm">
+          {attraction.category}
+        </div>
+      </div>
+
+      <div className="p-3">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-coral">
+            <MapPin size={14} weight="fill" /> {attraction.province}
+          </p>
+          <p className="flex items-center gap-1 text-xs font-bold text-muted">
+            <Star size={14} weight="fill" className="text-amber-500" />
+            {formatReviewSummary(attraction)}
+          </p>
+        </div>
+        <h3 className="text-xl font-black leading-tight text-ink transition group-hover:text-coral">{attraction.name}</h3>
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{attraction.description || "ยังไม่มีคำอธิบายสั้น"}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {attraction.tags.slice(0, 2).map((tag) => (
+            <span key={tag} className="rounded-full bg-cream px-3 py-1 text-xs font-bold text-ink">
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function InfoItem({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="flex gap-3">
+      <div className="mt-1 shrink-0 text-coral">{icon}</div>
+      <div>
+        <h4 className="text-sm font-black text-ink">{title}</h4>
+        <p className="mt-1 text-xs leading-6 text-muted">{text}</p>
+      </div>
+    </div>
   );
 }

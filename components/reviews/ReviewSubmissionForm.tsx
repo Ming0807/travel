@@ -21,8 +21,12 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!attractionId && !restaurantId) {
+      setError("ยังไม่พบข้อมูลสถานที่สำหรับส่งรีวิว");
+      return;
+    }
     if (rating === 0) {
-      setError("Please select a rating.");
+      setError("กรุณาเลือกคะแนนรีวิว");
       return;
     }
 
@@ -46,7 +50,7 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
       setComment("");
       onSuccess?.();
     } else {
-      setError(result.error ?? "Failed to submit review. Please try again.");
+      setError(result.error ?? "ส่งรีวิวไม่สำเร็จ กรุณาลองอีกครั้ง");
     }
   }, [rating, title, comment, attractionId, restaurantId, onSuccess]);
 
@@ -56,9 +60,9 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
           <Star size={24} weight="fill" className="text-green-500" />
         </div>
-        <h3 className="text-lg font-black text-green-800 mb-1">Thank You!</h3>
+        <h3 className="text-lg font-black text-green-800 mb-1">ขอบคุณสำหรับรีวิว</h3>
         <p className="text-sm font-semibold text-green-600">
-          Your review has been submitted and is pending moderation.
+          ระบบได้รับรีวิวแล้ว และจะแสดงหลังผ่านการตรวจสอบ
         </p>
       </div>
     );
@@ -66,14 +70,14 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
 
   return (
     <form onSubmit={handleSubmit} className="rounded-3xl border border-ink/5 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-black text-ink mb-2">Share Your Experience</h3>
+      <h3 className="text-lg font-black text-ink mb-2">แบ่งปันประสบการณ์ของคุณ</h3>
       <p className="mb-6 text-sm font-semibold text-muted">
-        Help other travelers by leaving a review.
+        รีวิวจะถูกส่งเข้าระบบตรวจสอบก่อนแสดงบนหน้าเว็บ
       </p>
 
       {/* Star Rating */}
       <div className="mb-5">
-        <p className="mb-2 text-sm font-bold text-ink">Your Rating</p>
+        <p className="mb-2 text-sm font-bold text-ink">คะแนนของคุณ</p>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -101,14 +105,14 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
       {/* Title */}
       <div className="mb-4">
         <label htmlFor="review-title" className="mb-1 block text-sm font-bold text-ink">
-          Title <span className="text-muted">(optional)</span>
+          หัวข้อ <span className="text-muted">(ไม่บังคับ)</span>
         </label>
         <input
           id="review-title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Summarize your experience..."
+          placeholder="สรุปประสบการณ์สั้น ๆ"
           maxLength={255}
           className="w-full rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-sm font-semibold text-ink placeholder:text-muted/50 focus:border-coral/30 focus:outline-none focus:ring-2 focus:ring-coral/10"
         />
@@ -117,13 +121,13 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
       {/* Comment */}
       <div className="mb-5">
         <label htmlFor="review-comment" className="mb-1 block text-sm font-bold text-ink">
-          Comment <span className="text-muted">(optional)</span>
+          ความคิดเห็น <span className="text-muted">(ไม่บังคับ)</span>
         </label>
         <textarea
           id="review-comment"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Tell others about your experience..."
+          placeholder="เล่าประสบการณ์ที่อยากบอกนักเดินทางคนอื่น"
           rows={4}
           maxLength={5000}
           className="w-full resize-none rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-sm font-semibold text-ink placeholder:text-muted/50 focus:border-coral/30 focus:outline-none focus:ring-2 focus:ring-coral/10"
@@ -138,10 +142,10 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
       {/* Submit */}
       <button
         type="submit"
-        disabled={submitting || rating === 0}
+        disabled={submitting || rating === 0 || (!attractionId && !restaurantId)}
         className="w-full rounded-xl bg-coral py-3 text-sm font-black text-white transition-all hover:bg-coral/90 disabled:opacity-50"
       >
-        {submitting ? "Submitting..." : "Submit Review"}
+        {submitting ? "กำลังส่ง..." : "ส่งรีวิว"}
       </button>
     </form>
   );

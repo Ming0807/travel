@@ -148,7 +148,7 @@ export async function searchAttractionsAction(queryOrOptions: string | Attractio
         .limit(limit);
 
       if (trimmedQuery) {
-        const escaped = trimmedQuery.replace(/%/g, "\\%").replace(/_/g, "\\_");
+        const escaped = trimmedQuery.replace(/[\\%_]/g, "\\$&").replace(/,/g, " ");
         dbQuery = dbQuery.or(
           `name_th.ilike.%${escaped}%,name_en.ilike.%${escaped}%,slug.ilike.%${escaped}%`
         );
@@ -232,7 +232,7 @@ export async function searchRoutesAction(query: string) {
     const trimmed = query.trim();
     if (!trimmed) return { success: true, data: [] };
 
-    const escaped = trimmed.replace(/%/g, "\\%").replace(/_/g, "\\_");
+    const escaped = trimmed.replace(/[\\%_]/g, "\\$&").replace(/,/g, " ");
 
     const { data, error } = await supabase
       .from("suggested_routes")

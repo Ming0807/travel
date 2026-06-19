@@ -9,7 +9,7 @@ import { listPublicAttractionCards, listPublicStories, listPublicRoutes } from "
 
 const { mockSupabaseClient, mockFromChain } = vi.hoisted(() => {
   const chain: Record<string, ReturnType<typeof vi.fn>> = {};
-  const methods = ["select", "in", "eq", "order", "limit", "or", "maybeSingle"];
+  const methods = ["select", "in", "eq", "order", "limit", "or", "maybeSingle", "is"];
   for (const m of methods) {
     chain[m] = vi.fn();
   }
@@ -61,11 +61,76 @@ describe("Public Content DTOs (empty DB/error states)", () => {
 
 // ── Featured route day count & order tests ─────────────────────────────
 
+describe("listPublicAttractionCards", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    const methods = ["select", "in", "eq", "order", "limit", "or", "maybeSingle", "is"];
+    for (const m of methods) {
+      mockFromChain[m].mockReturnValue(mockFromChain);
+    }
+    mockSupabaseClient.from.mockReturnValue(mockFromChain);
+  });
+
+  it("attaches approved review summaries from the reviews table", async () => {
+    mockFromChain.limit.mockResolvedValueOnce({
+      data: [
+        {
+          attraction_id: 10,
+          slug: "pattani-old-town",
+          name_th: "เมืองเก่าปัตตานี",
+          name_en: "Pattani Old Town",
+          short_description_th: "ย่านเมืองเก่า",
+          short_description_en: null,
+          provinces: { province_name_th: "ปัตตานี", province_name_en: "Pattani" },
+          attraction_types: { type_name_th: "วัฒนธรรม", type_name_en: "Culture" },
+          content_media: [],
+        },
+      ],
+      error: null,
+    });
+    mockFromChain.is.mockResolvedValueOnce({
+      data: [
+        { attraction_id: 10, rating: 5 },
+        { attraction_id: 10, rating: 4 },
+      ],
+      error: null,
+    });
+
+    const attractions = await listPublicAttractionCards(4);
+
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith("reviews");
+    expect(attractions).toHaveLength(1);
+    expect(attractions[0]).toMatchObject({
+      slug: "pattani-old-town",
+      rating: 4.5,
+      reviewCount: 2,
+    });
+    expect("attractionId" in attractions[0]).toBe(false);
+  });
+
+  it("applies public province, type, and search filters", async () => {
+    mockFromChain.limit.mockResolvedValueOnce({ data: [], error: null });
+
+    await listPublicAttractionCards(4, {
+      search: "old,_town",
+      province: "Pattani",
+      type: "Culture",
+    });
+
+    expect(mockFromChain.eq).toHaveBeenCalledWith("is_published", true);
+    expect(mockFromChain.eq).toHaveBeenCalledWith("is_active", true);
+    expect(mockFromChain.eq).toHaveBeenCalledWith("provinces.province_name_en", "Pattani");
+    expect(mockFromChain.eq).toHaveBeenCalledWith("attraction_types.type_name_en", "Culture");
+    expect(mockFromChain.or).toHaveBeenCalledWith(expect.stringContaining("slug.ilike"));
+    expect(mockFromChain.or).toHaveBeenCalledWith(expect.not.stringContaining("old,_town"));
+  });
+});
+
 describe("listPublicRoutes — featured slugs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset chain to default builder pattern
-    const methods = ["select", "in", "eq", "order", "limit", "or", "maybeSingle"];
+    const methods = ["select", "in", "eq", "order", "limit", "or", "maybeSingle", "is"];
     for (const m of methods) {
       mockFromChain[m].mockReturnValue(mockFromChain);
     }

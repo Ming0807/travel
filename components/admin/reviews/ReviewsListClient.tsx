@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Star, CheckCircle, XCircle, Trash, Funnel, MagnifyingGlass, CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { approveReviewAction, rejectReviewAction, deleteReviewAction } from "@/app/actions/admin-review-actions";
 import type { AdminReviewRow } from "@/lib/repositories/admin-review.repository";
@@ -138,12 +138,23 @@ export function ReviewsListClient(props: Props) {
   const [page, setPage] = useState(props.initialPage);
   const [search, setSearch] = useState(props.initialSearch);
   const [ratingFilter, setRatingFilter] = useState(props.initialRating);
+  const [attractionIdFilter] = useState(props.initialAttractionId);
+  const [restaurantIdFilter] = useState(props.initialRestaurantId);
   const [isApprovedFilter, setIsApprovedFilter] = useState(props.initialIsApproved);
   const [isPublishedFilter, setIsPublishedFilter] = useState(props.initialIsPublished);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const fetchReviews = useCallback(async (p: number, s: string, r: string, appr: string, pub: string) => {
+  const fetchReviews = useCallback(async (
+    p: number,
+    s: string,
+    r: string,
+    appr: string,
+    pub: string,
+    attractionId: string,
+    restaurantId: string
+  ) => {
     setLoading(true);
     try {
       const fd = new FormData();
@@ -153,6 +164,8 @@ export function ReviewsListClient(props: Props) {
       if (r) fd.set("rating", r);
       if (appr) fd.set("isApproved", appr);
       if (pub) fd.set("isPublished", pub);
+      if (attractionId) fd.set("attractionId", attractionId);
+      if (restaurantId) fd.set("restaurantId", restaurantId);
 
       const res = await fetch("/api/admin/reviews", {
         method: "POST",
@@ -173,17 +186,29 @@ export function ReviewsListClient(props: Props) {
     }
   }, []);
 
-  // Initial fetch
-  if (!loaded && !loading) {
-    fetchReviews(props.initialPage, props.initialSearch, props.initialRating, props.initialIsApproved, props.initialIsPublished);
-  }
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      fetchReviews(
+        props.initialPage,
+        props.initialSearch,
+        props.initialRating,
+        props.initialIsApproved,
+        props.initialIsPublished,
+        props.initialAttractionId,
+        props.initialRestaurantId
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchReviews, props.initialAttractionId, props.initialIsApproved, props.initialIsPublished, props.initialPage, props.initialRating, props.initialRestaurantId, props.initialSearch]);
 
   const handleSearch = () => {
     setPage(1);
-    fetchReviews(1, search, ratingFilter, isApprovedFilter, isPublishedFilter);
+    fetchReviews(1, search, ratingFilter, isApprovedFilter, isPublishedFilter, attractionIdFilter, restaurantIdFilter);
   };
-
-  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleAction = async (reviewId: number, action: "approve" | "reject" | "delete") => {
     setActionError(null);
@@ -195,7 +220,7 @@ export function ReviewsListClient(props: Props) {
     if (!result.success) {
       setActionError(result.error ?? "Action failed.");
     }
-    fetchReviews(page, search, ratingFilter, isApprovedFilter, isPublishedFilter);
+    fetchReviews(page, search, ratingFilter, isApprovedFilter, isPublishedFilter, attractionIdFilter, restaurantIdFilter);
   };
 
   const totalPages = Math.max(1, Math.ceil(total / 20));
@@ -218,7 +243,7 @@ export function ReviewsListClient(props: Props) {
 
         <select
           value={ratingFilter}
-          onChange={(e) => { setRatingFilter(e.target.value); setPage(1); fetchReviews(1, search, e.target.value, isApprovedFilter, isPublishedFilter); }}
+          onChange={(e) => { setRatingFilter(e.target.value); setPage(1); fetchReviews(1, search, e.target.value, isApprovedFilter, isPublishedFilter, attractionIdFilter, restaurantIdFilter); }}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-100"
         >
           <option value="">All Ratings</option>
@@ -231,7 +256,7 @@ export function ReviewsListClient(props: Props) {
 
         <select
           value={isApprovedFilter}
-          onChange={(e) => { setIsApprovedFilter(e.target.value); setPage(1); fetchReviews(1, search, ratingFilter, e.target.value, isPublishedFilter); }}
+          onChange={(e) => { setIsApprovedFilter(e.target.value); setPage(1); fetchReviews(1, search, ratingFilter, e.target.value, isPublishedFilter, attractionIdFilter, restaurantIdFilter); }}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-100"
         >
           <option value="">All Status</option>
@@ -241,7 +266,7 @@ export function ReviewsListClient(props: Props) {
 
         <select
           value={isPublishedFilter}
-          onChange={(e) => { setIsPublishedFilter(e.target.value); setPage(1); fetchReviews(1, search, ratingFilter, isApprovedFilter, e.target.value); }}
+          onChange={(e) => { setIsPublishedFilter(e.target.value); setPage(1); fetchReviews(1, search, ratingFilter, isApprovedFilter, e.target.value, attractionIdFilter, restaurantIdFilter); }}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-100"
         >
           <option value="">All Publication</option>
@@ -292,7 +317,7 @@ export function ReviewsListClient(props: Props) {
           <div className="flex items-center gap-1">
             <button
               disabled={page <= 1}
-              onClick={() => { const np = page - 1; setPage(np); fetchReviews(np, search, ratingFilter, isApprovedFilter, isPublishedFilter); }}
+              onClick={() => { const np = page - 1; setPage(np); fetchReviews(np, search, ratingFilter, isApprovedFilter, isPublishedFilter, attractionIdFilter, restaurantIdFilter); }}
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Previous page"
             >
@@ -303,7 +328,7 @@ export function ReviewsListClient(props: Props) {
             </span>
             <button
               disabled={page >= totalPages}
-              onClick={() => { const np = page + 1; setPage(np); fetchReviews(np, search, ratingFilter, isApprovedFilter, isPublishedFilter); }}
+              onClick={() => { const np = page + 1; setPage(np); fetchReviews(np, search, ratingFilter, isApprovedFilter, isPublishedFilter, attractionIdFilter, restaurantIdFilter); }}
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Next page"
             >

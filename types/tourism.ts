@@ -11,6 +11,8 @@ export type AttractionCard = {
   imageUrl: string | null;
   imageAlt: string;
   tags: string[];
+  rating?: number;
+  reviewCount?: number;
 };
 
 export type RestaurantCard = {

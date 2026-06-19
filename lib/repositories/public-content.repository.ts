@@ -6,6 +6,17 @@ import type { AttractionCard } from "@/types/tourism";
 
 type DbRecord = Record<string, unknown>;
 
+type InternalAttractionCard = AttractionCard & {
+  attractionId: number;
+};
+
+type PublicAttractionListOptions = {
+  search?: string;
+  province?: string;
+  type?: string;
+  featuredSlugs?: string[];
+};
+
 export type PublicStoryCard = {
   id: string;
   title: string;
@@ -76,6 +87,10 @@ function numberValue(value: unknown, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function escapeIlikePattern(value: string) {
+  return value.replace(/[\\%_]/g, "\\$&").replace(/,/g, " ").trim();
+}
+
 function imageUrlFromStoragePath(value: unknown): string | null {
   const storagePath = text(value);
   return siteMediaImageUrl(storagePath);
@@ -97,7 +112,7 @@ function publicImage(row: DbRecord): string | null {
   return imageUrlFromStoragePath(publicAttractionMedia(row)?.storage_path);
 }
 
-function mapAttractionCard(row: DbRecord): AttractionCard {
+function mapAttractionCard(row: DbRecord): InternalAttractionCard {
   const province = one(row.provinces);
   const attractionType = one(row.attraction_types);
   const media = publicAttractionMedia(row);
@@ -106,6 +121,7 @@ function mapAttractionCard(row: DbRecord): AttractionCard {
   const provinceName = text(province?.province_name_th, text(province?.province_name_en));
 
   return {
+    attractionId: numberValue(row.attraction_id),
     slug: text(row.slug),
     name,
     province: provinceName,
@@ -115,6 +131,65 @@ function mapAttractionCard(row: DbRecord): AttractionCard {
     imageAlt: text(media?.alt_text_th, text(media?.alt_text_en, `${name} destination image`)),
     tags: [category, provinceName].filter(Boolean)
   };
+}
+
+function toPublicAttractionCard(card: InternalAttractionCard, summary?: { rating: number; reviewCount: number }): AttractionCard {
+  return {
+    slug: card.slug,
+    name: card.name,
+    province: card.province,
+    category: card.category,
+    description: card.description,
+    imageUrl: card.imageUrl,
+    imageAlt: card.imageAlt,
+    tags: card.tags,
+    ...(summary ? { rating: summary.rating, reviewCount: summary.reviewCount } : {}),
+  };
+}
+
+async function withReviewSummaries(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  cards: InternalAttractionCard[]
+): Promise<AttractionCard[]> {
+  const attractionIds = cards
+    .map((card) => card.attractionId)
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  if (attractionIds.length === 0) {
+    return cards.map((card) => toPublicAttractionCard(card));
+  }
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("attraction_id, rating")
+    .in("attraction_id", attractionIds)
+    .eq("is_approved", true)
+    .eq("is_published", true)
+    .is("deleted_at", null);
+
+  if (error) {
+    return cards.map((card) => toPublicAttractionCard(card));
+  }
+
+  const stats = new Map<number, { total: number; sum: number }>();
+  (data ?? []).forEach((row) => {
+    const attractionId = numberValue((row as DbRecord).attraction_id);
+    const rating = numberValue((row as DbRecord).rating);
+    if (!attractionId || rating < 1 || rating > 5) return;
+    const current = stats.get(attractionId) ?? { total: 0, sum: 0 };
+    current.total += 1;
+    current.sum += rating;
+    stats.set(attractionId, current);
+  });
+
+  return cards.map((card) => {
+    const itemStats = stats.get(card.attractionId);
+    if (!itemStats || itemStats.total === 0) return toPublicAttractionCard(card);
+    return toPublicAttractionCard(card, {
+      rating: Number((itemStats.sum / itemStats.total).toFixed(1)),
+      reviewCount: itemStats.total,
+    });
+  });
 }
 
 function formatStoryDate(value: unknown) {
@@ -146,37 +221,46 @@ function mapStoryDetail(row: DbRecord): PublicStoryDetail {
   };
 }
 
-export async function listPublicAttractionCards(limit = 16, options?: { search?: string; province?: string; featuredSlugs?: string[] }): Promise<AttractionCard[]> {
+export async function listPublicAttractionCards(limit = 16, options?: PublicAttractionListOptions): Promise<AttractionCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
     const buildBaseQuery = () => {
+      const attractionTypesRelation = options?.type ? "attraction_types!inner" : "attraction_types";
       let q = supabase
         .from("attractions")
         .select(`
+          attraction_id,
           slug,
           name_th,
           name_en,
           short_description_th,
           short_description_en,
           provinces!inner (province_name_th, province_name_en),
-          attraction_types (type_name_th, type_name_en),
+          ${attractionTypesRelation} (type_name_th, type_name_en),
           content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
         `)
         .eq("is_published", true)
         .eq("is_active", true);
 
       if (options?.search) {
-        q = q.or(`name_th.ilike.%${options.search}%,name_en.ilike.%${options.search}%`);
+        const search = escapeIlikePattern(options.search);
+        if (search) {
+          q = q.or(`name_th.ilike.%${search}%,name_en.ilike.%${search}%,slug.ilike.%${search}%`);
+        }
       }
 
       if (options?.province) {
         q = q.eq('provinces.province_name_en', options.province);
       }
 
+      if (options?.type) {
+        q = q.eq('attraction_types.type_name_en', options.type);
+      }
+
       return q;
     };
 
-    let finalResults: AttractionCard[] = [];
+    let finalResults: InternalAttractionCard[] = [];
     const usedSlugs = new Set<string>();
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
@@ -205,7 +289,7 @@ export async function listPublicAttractionCards(limit = 16, options?: { search?:
       }
     }
 
-    return finalResults;
+    return withReviewSummaries(supabase, finalResults);
   } catch {
     return [];
   }

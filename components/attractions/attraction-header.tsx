@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CaretRight, Star, Clock, Heart, ShareNetwork } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, Star, Clock } from "@phosphor-icons/react/dist/ssr";
 
 type AttractionHeaderProps = {
   name: string;
@@ -37,28 +37,15 @@ export function AttractionHeader({
       {/* Title */}
       <h1 className="mb-4 text-4xl font-bold tracking-tight text-ink md:text-5xl">{name}</h1>
 
-      {/* Meta Info & Actions */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
-          <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <Star size={18} weight="fill" className="text-gold" />
-            {rating} <span className="text-muted font-normal">({reviewsCount} reviews)</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted">
-            <Clock size={18} weight="regular" />
-            Best time to visit: {bestTimeToVisit}
-          </div>
+      {/* Meta Info */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+        <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <Star size={18} weight="fill" className="text-gold" />
+          {rating} <span className="text-muted font-normal">({reviewsCount} reviews)</span>
         </div>
-
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-cream transition-colors shadow-sm">
-            <Heart size={16} weight="bold" />
-            Save
-          </button>
-          <button className="flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-cream transition-colors shadow-sm">
-            <ShareNetwork size={16} weight="bold" />
-            Share
-          </button>
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <Clock size={18} weight="regular" />
+          Best time to visit: {bestTimeToVisit}
         </div>
       </div>
     </div>
