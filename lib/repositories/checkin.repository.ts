@@ -1,5 +1,30 @@
 import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+
+type JoinedRecord = Record<string, unknown>;
+
+function joinedOne(value: unknown): JoinedRecord | null {
+  if (Array.isArray(value)) return (value[0] as JoinedRecord | undefined) ?? null;
+  return value && typeof value === "object" ? (value as JoinedRecord) : null;
+}
+
+function joinedMany(value: unknown): JoinedRecord[] {
+  return Array.isArray(value) ? (value as JoinedRecord[]) : [];
+}
+
+function text(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function publicCoverUrl(mediaValue: unknown): string | null {
+  const media = joinedMany(mediaValue).filter((item) => {
+    const lifecycleStatus = text(item.lifecycle_status);
+    return item.is_active !== false && (!lifecycleStatus || lifecycleStatus === "active");
+  });
+  const cover = media.find((item) => item.is_cover === true) ?? media[0];
+  return siteMediaImageUrl(text(cover?.storage_path));
+}
 
 export interface CheckinCodeDetails {
   checkin_code_id: number;
@@ -14,6 +39,7 @@ export interface CheckinCodeDetails {
     short_description_th: string | null;
     is_active: boolean;
     is_published: boolean;
+    cover_image_url: string | null;
     province: {
       province_name_th: string;
     } | null;
@@ -22,6 +48,7 @@ export interface CheckinCodeDetails {
     photo_spot_id: number;
     spot_name_th: string;
     is_active: boolean;
+    sample_image_url: string | null;
   } | null;
 }
 
@@ -43,6 +70,13 @@ export async function getCheckinCodeByCode(code: string): Promise<CheckinCodeDet
         short_description_th,
         is_active,
         is_published,
+        content_media (
+          storage_path,
+          is_cover,
+          is_active,
+          lifecycle_status,
+          display_order
+        ),
         provinces (
           province_name_th
         )
@@ -50,7 +84,8 @@ export async function getCheckinCodeByCode(code: string): Promise<CheckinCodeDet
       photo_spots (
         photo_spot_id,
         spot_name_th,
-        is_active
+        is_active,
+        sample_image_path
       )
     `)
     .eq("code", code)
@@ -60,11 +95,9 @@ export async function getCheckinCodeByCode(code: string): Promise<CheckinCodeDet
     return null;
   }
 
-  // Map the nested join objects since PostgREST returns them as arrays or objects
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const attractionData = data.attractions as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const photoSpotData = data.photo_spots as any;
+  const attractionData = joinedOne(data.attractions);
+  const photoSpotData = joinedOne(data.photo_spots);
+  const provinceData = joinedOne(attractionData?.provinces);
   
   return {
     checkin_code_id: data.checkin_code_id,
@@ -73,20 +106,22 @@ export async function getCheckinCodeByCode(code: string): Promise<CheckinCodeDet
     starts_at: data.starts_at,
     ends_at: data.ends_at,
     attraction: attractionData ? {
-      attraction_id: attractionData.attraction_id,
-      name_th: attractionData.name_th,
-      name_en: attractionData.name_en,
-      short_description_th: attractionData.short_description_th,
-      is_active: attractionData.is_active,
-      is_published: attractionData.is_published,
-      province: attractionData.provinces ? {
-        province_name_th: attractionData.provinces.province_name_th
+      attraction_id: Number(attractionData.attraction_id),
+      name_th: String(attractionData.name_th ?? ""),
+      name_en: text(attractionData.name_en),
+      short_description_th: text(attractionData.short_description_th),
+      is_active: attractionData.is_active === true,
+      is_published: attractionData.is_published === true,
+      cover_image_url: publicCoverUrl(attractionData.content_media),
+      province: provinceData ? {
+        province_name_th: String(provinceData.province_name_th ?? "")
       } : null
     } : null,
     photo_spot: photoSpotData ? {
-      photo_spot_id: photoSpotData.photo_spot_id,
-      spot_name_th: photoSpotData.spot_name_th,
-      is_active: photoSpotData.is_active
+      photo_spot_id: Number(photoSpotData.photo_spot_id),
+      spot_name_th: String(photoSpotData.spot_name_th ?? ""),
+      is_active: photoSpotData.is_active === true,
+      sample_image_url: siteMediaImageUrl(text(photoSpotData.sample_image_path))
     } : null,
   };
 }

@@ -1,6 +1,58 @@
 import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
-import type { BadgeDefinition, TouristBadge, XPLevelInfo, LeaderboardEntry } from "@/types/tourism";
+import type { BadgeCategory, TouristBadge, XPLevelInfo, LeaderboardEntry } from "@/types/tourism";
+
+type BadgeIdRow = { badge_id: number };
+type ProvinceVisitRow = { attractions?: { province_id?: number } | { province_id?: number }[] | null };
+type BadgeDefinitionRow = {
+  badge_id: number;
+  badge_key: string;
+  name_th: string;
+  name_en: string | null;
+  description_th: string | null;
+  description_en: string | null;
+  icon_name: string | null;
+  icon_color: string | null;
+  category: string | null;
+  requirement_type: string;
+  requirement_value: number;
+  requirement_extra: string | Record<string, unknown> | null;
+  display_order: number;
+  is_active: boolean;
+};
+type TouristBadgeRow = {
+  badge_award_id: string;
+  earned_at: string;
+  badge_definitions: BadgeDefinitionRow | BadgeDefinitionRow[];
+};
+type LeaderboardSnapshotEntry = {
+  rank?: number;
+  tourist_id: string;
+  tourist_name: string;
+  total_xp: number;
+  badge_count: number;
+  stamp_count: number;
+  visit_count: number;
+};
+type XpEventRow = {
+  tourist_id: string;
+  xp_amount: number;
+  tourists?: { display_name?: string | null } | { display_name?: string | null }[] | null;
+};
+type TouristCountRow = { tourist_id: string };
+
+function toBadgeCategory(value: string | null): BadgeCategory {
+  if (value === "exploration" || value === "engagement" || value === "milestone" || value === "social") {
+    return value;
+  }
+  return "engagement";
+}
+
+function toRequirementExtra(value: string | Record<string, unknown> | null): string | null {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") return JSON.stringify(value);
+  return null;
+}
 
 // ==========================================
 // XP Constants
@@ -130,13 +182,20 @@ async function fetchTouristStats(touristId: string): Promise<TouristStats> {
   const [xpSummaryRes, earnedBadgesRes, visitCountRes, surveyCountRes, reviewCountRes, stampCountRes, restaurantVisitRes, provinceRes, culturalRes] = responses;
 
   const totalXp = xpSummaryRes.data?.total_xp ?? 0;
-  const earnedBadgeIds = new Set<number>((earnedBadgesRes.data ?? []).map((b: any) => b.badge_id));
+  const earnedBadgeIds = new Set<number>(((earnedBadgesRes.data ?? []) as BadgeIdRow[]).map((b) => b.badge_id));
   const visitCount = visitCountRes.count ?? 0;
   const surveyCount = surveyCountRes.count ?? 0;
   const reviewCount = reviewCountRes.count ?? 0;
   const stampCount = stampCountRes.count ?? 0;
   const restaurantVisitCount = restaurantVisitRes.count ?? 0;
-  const uniqueProvinces = new Set<number>((provinceRes.data ?? []).map((r: any) => r.attractions?.province_id).filter(Boolean));
+  const uniqueProvinces = new Set<number>(
+    ((provinceRes.data ?? []) as ProvinceVisitRow[])
+      .map((row) => {
+        const attraction = Array.isArray(row.attractions) ? row.attractions[0] : row.attractions;
+        return attraction?.province_id;
+      })
+      .filter((provinceId): provinceId is number => typeof provinceId === "number")
+  );
   const culturalCount = culturalRes.count ?? 0;
 
   return {
@@ -274,26 +333,34 @@ export async function getTouristBadges(touristId: string): Promise<TouristBadge[
 
   if (error) throw new Error(`Failed to fetch badges: ${error.message}`);
 
-  return (data ?? []).map((row: any) => ({
-    badgeAwardId: row.badge_award_id,
-    badge: {
-      badgeId: row.badge_definitions.badge_id,
-      badgeKey: row.badge_definitions.badge_key,
-      nameTh: row.badge_definitions.name_th,
-      nameEn: row.badge_definitions.name_en,
-      descriptionTh: row.badge_definitions.description_th,
-      descriptionEn: row.badge_definitions.description_en,
-      iconName: row.badge_definitions.icon_name,
-      iconColor: row.badge_definitions.icon_color ?? "#E18868",
-      category: row.badge_definitions.category,
-      requirementType: row.badge_definitions.requirement_type,
-      requirementValue: row.badge_definitions.requirement_value,
-      requirementExtra: row.badge_definitions.requirement_extra,
-      displayOrder: row.badge_definitions.display_order,
-      isActive: row.badge_definitions.is_active,
-    },
-    earnedAt: row.earned_at,
-  }));
+  return ((data ?? []) as unknown as TouristBadgeRow[]).flatMap((row) => {
+    const definition = Array.isArray(row.badge_definitions)
+      ? row.badge_definitions[0]
+      : row.badge_definitions;
+
+    if (!definition) return [];
+
+    return {
+      badgeAwardId: row.badge_award_id,
+      badge: {
+        badgeId: definition.badge_id,
+        badgeKey: definition.badge_key,
+        nameTh: definition.name_th,
+        nameEn: definition.name_en ?? definition.name_th,
+        descriptionTh: definition.description_th,
+        descriptionEn: definition.description_en,
+        iconName: definition.icon_name,
+        iconColor: definition.icon_color ?? "#E18868",
+        category: toBadgeCategory(definition.category),
+        requirementType: definition.requirement_type,
+        requirementValue: definition.requirement_value,
+        requirementExtra: toRequirementExtra(definition.requirement_extra),
+        displayOrder: definition.display_order,
+        isActive: definition.is_active,
+      },
+      earnedAt: row.earned_at,
+    };
+  });
 }
 
 export async function getLeaderboard(
@@ -311,8 +378,8 @@ export async function getLeaderboard(
       .eq("snapshot_date", today)
       .maybeSingle();
 
-    if (snapshot?.ranking) {
-      return (snapshot.ranking as any[]).slice(0, limit).map((entry, index) => ({
+    if (snapshot?.ranking && Array.isArray(snapshot.ranking)) {
+      return (snapshot.ranking as LeaderboardSnapshotEntry[]).slice(0, limit).map((entry, index) => ({
         rank: entry.rank ?? index + 1,
         touristId: entry.tourist_id,
         touristName: entry.tourist_name,
@@ -350,9 +417,9 @@ export async function getLeaderboard(
   const xpMap = new Map<string, number>();
   const nameMap = new Map<string, string>();
 
-  for (const row of data ?? []) {
-    const tid = row.tourist_id as string;
-    const tourists = row.tourists as any;
+  for (const row of (data ?? []) as XpEventRow[]) {
+    const tid = row.tourist_id;
+    const tourists = row.tourists;
     const name = Array.isArray(tourists) ? (tourists[0]?.display_name ?? "Unknown") : (tourists?.display_name ?? "Unknown");
     const amount = Number(row.xp_amount) || 0;
     xpMap.set(tid, (xpMap.get(tid) ?? 0) + amount);
@@ -376,7 +443,7 @@ export async function getLeaderboard(
   ]);
 
   // Count occurrences per tourist
-  function countByTourist(rows: any[]): Map<string, number> {
+  function countByTourist(rows: TouristCountRow[]): Map<string, number> {
     const map = new Map<string, number>();
     for (const row of rows) {
       const tid = row.tourist_id as string;
@@ -416,8 +483,8 @@ export async function findTouristByDeviceId(deviceId: string): Promise<string | 
   const { data, error } = await supabase
     .from("tourist_identities")
     .select("tourist_id")
-    .eq("identity_provider", "anonymous_device")
-    .eq("identity_id", deviceId)
+    .eq("provider", "anonymous_device")
+    .eq("provider_user_id", deviceId)
     .maybeSingle();
 
   if (error) return null;

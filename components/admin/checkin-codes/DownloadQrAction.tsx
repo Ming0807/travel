@@ -2,7 +2,7 @@
 
 import { DownloadSimple } from "@phosphor-icons/react";
 import { QRCodeCanvas } from "qrcode.react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useSyncExternalStore } from "react";
 
 type DownloadQrActionProps = {
   code: string;
@@ -15,20 +15,20 @@ type DownloadQrActionProps = {
 export function DownloadQrAction({
   code,
   label,
-  buttonLabel = "Download QR",
+  buttonLabel = "ดาวน์โหลด QR",
   showLabel = false,
   disabled = false,
 }: DownloadQrActionProps) {
   const qrRef = useRef<HTMLDivElement>(null);
-  const [origin, setOrigin] = useState("");
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
+  const origin = useSyncExternalStore(
+    () => () => undefined,
+    () => (typeof window === "undefined" ? "" : window.location.origin),
+    () => ""
+  );
 
   const safeCode = code.trim();
-  const isReady = !disabled && /^[a-z0-9_-]{3,100}$/.test(safeCode);
-  const url = `${origin}/c/${safeCode || "your-code"}`;
+  const isReady = !disabled && !!origin && /^[a-z0-9_-]{3,100}$/.test(safeCode);
+  const url = origin ? `${origin}/c/${safeCode || "your-code"}` : `/c/${safeCode || "your-code"}`;
   const filename = useMemo(() => {
     const filenameLabel = safeCode || label || "checkin-code";
     const safeLabel = filenameLabel

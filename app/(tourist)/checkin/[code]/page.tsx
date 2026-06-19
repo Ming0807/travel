@@ -18,8 +18,10 @@ export default async function CheckinLandingPage({ params }: { params: Promise<{
 
   const { attraction, photo_spot } = context.details;
 
-  // Use attraction hero or fallback
-  const heroImage = "https://images.unsplash.com/photo-1540202403-b7ca6c5c7865?q=80&w=2000&auto=format&fit=crop";
+  const heroImage =
+    photo_spot?.sample_image_url ||
+    attraction?.cover_image_url ||
+    "https://images.unsplash.com/photo-1540202403-b7ca6c5c7865?q=80&w=2000&auto=format&fit=crop";
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col relative pb-24 overflow-hidden">

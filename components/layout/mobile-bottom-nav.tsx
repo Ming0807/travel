@@ -21,16 +21,14 @@ const items = [
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const isAdminRoute = pathname.startsWith("/admin");
   const activeIndex = items.findIndex((item) => pathname === item.href);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: "0%", width: "20%" });
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
-  // Prevent rendering on admin routes
-  if (pathname.startsWith("/admin")) {
-    return null;
-  }
-
   useEffect(() => {
+    if (isAdminRoute) return;
+
     const el = itemRefs.current[activeIndex >= 0 ? activeIndex : 0];
     if (el) {
       const parent = el.parentElement;
@@ -42,7 +40,12 @@ export function MobileBottomNav() {
         setIndicatorStyle({ left: `${left}%`, width: `${width}%` });
       }
     }
-  }, [pathname, activeIndex]);
+  }, [pathname, activeIndex, isAdminRoute]);
+
+  // Prevent rendering on admin routes after all hooks have run.
+  if (isAdminRoute) {
+    return null;
+  }
 
   return (
     <nav

@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useMemo, useState, useSyncExternalStore } from "react";
 import { ArrowLeft, ArrowSquareOut, Copy, ImageSquare, List, Plus, QrCode } from "@phosphor-icons/react";
+import { QRCodeCanvas } from "qrcode.react";
 import { createCheckinCodeAction, updateCheckinCodeAction } from "@/app/actions/admin-checkin-code-actions";
 import type { AdminCheckinCodeRow } from "@/lib/repositories/admin-checkin-code.repository";
 import { DownloadQrAction } from "@/components/admin/checkin-codes/DownloadQrAction";
@@ -40,9 +41,24 @@ function normalizeCode(value: string) {
     .slice(0, 100);
 }
 
+function buildSuggestedCode(attractionId: number | "", photoSpotId: number | "") {
+  const scope = photoSpotId ? `spot-${photoSpotId}` : attractionId ? `attraction-${attractionId}` : "checkin";
+  const suffix = Math.random().toString(36).slice(2, 6);
+  return normalizeCode(`${scope}-${suffix}`);
+}
+
 function toLocalDateTimeInput(value?: string | null) {
   if (!value) return "";
   return new Date(value).toISOString().slice(0, 16);
+}
+
+function subscribeOrigin(_onStoreChange: () => void) {
+  void _onStoreChange;
+  return () => undefined;
+}
+
+function getBrowserOrigin() {
+  return typeof window === "undefined" ? "" : window.location.origin;
 }
 
 function getScheduleStatus(isActive: boolean, startsAt: string, endsAt: string) {
@@ -78,6 +94,8 @@ export function CheckinCodeForm({
   const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
   const [startsAt, setStartsAt] = useState(toLocalDateTimeInput(initialData?.starts_at));
   const [endsAt, setEndsAt] = useState(toLocalDateTimeInput(initialData?.ends_at));
+  const [copied, setCopied] = useState(false);
+  const origin = useSyncExternalStore(subscribeOrigin, getBrowserOrigin, () => "");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [state, formAction, isPending] = useActionState<any, FormData>(action, {
@@ -101,12 +119,6 @@ export function CheckinCodeForm({
     [photoSpots, selectedPhotoSpotId]
   );
 
-  useEffect(() => {
-    if (selectedPhotoSpotId && !filteredSpots.some((spot) => spot.photo_spot_id === Number(selectedPhotoSpotId))) {
-      setSelectedPhotoSpotId("");
-    }
-  }, [filteredSpots, selectedPhotoSpotId]);
-
   if (state?.success) {
     const newCode = state.data?.code || code;
     const attractionId = state.data?.attractionId ?? selectedAttractionId;
@@ -127,6 +139,8 @@ export function CheckinCodeForm({
   }
 
   const publicPath = code ? `/c/${code}` : "/c/your-code";
+  const publicUrl = origin && code ? `${origin}${publicPath}` : publicPath;
+  const codeIsValid = /^[a-z0-9_-]{3,100}$/.test(code);
   const scheduleStatus = getScheduleStatus(isActive, startsAt, endsAt);
   const photoSpotMatchesAttraction = !selectedPhotoSpot || selectedPhotoSpot.attraction_id === Number(selectedAttractionId);
   const hasAttractionStatus = typeof selectedAttraction?.is_active === "boolean" || typeof selectedAttraction?.is_published === "boolean";
@@ -180,17 +194,26 @@ export function CheckinCodeForm({
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block md:col-span-2">
                 <span className="text-sm font-black text-slate-700">QR / Check-in code *</span>
-                <input
-                  type="text"
-                  name="code"
-                  value={code}
-                  onChange={(event) => setCode(normalizeCode(event.target.value))}
-                  required
-                  title="URL-safe characters only"
-                  className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                  placeholder="aiyerweng-skywalk-01"
-                />
-                <p className="mt-1 text-xs font-bold text-slate-500">Public tourist URL: {publicPath}</p>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="text"
+                    name="code"
+                    value={code}
+                    onChange={(event) => setCode(normalizeCode(event.target.value))}
+                    required
+                    title="URL-safe characters only"
+                    className="min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                    placeholder="aiyerweng-skywalk-01"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCode(buildSuggestedCode(selectedAttractionId, selectedPhotoSpotId))}
+                    className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-[#0A6B62]/30 bg-white px-4 py-2 text-sm font-black text-[#073F37] transition hover:bg-[#E6F4EF]"
+                  >
+                    สร้างรหัสอัตโนมัติ
+                  </button>
+                </div>
+                <p className="mt-1 break-all text-xs font-bold text-slate-500">Public tourist URL: {publicUrl}</p>
               </label>
 
               <label className="block md:col-span-2">
@@ -215,7 +238,10 @@ export function CheckinCodeForm({
                 <select
                   name="attractionId"
                   value={selectedAttractionId}
-                  onChange={(event) => setSelectedAttractionId(event.target.value === "" ? "" : Number(event.target.value))}
+                  onChange={(event) => {
+                    setSelectedAttractionId(event.target.value === "" ? "" : Number(event.target.value));
+                    setSelectedPhotoSpotId("");
+                  }}
                   required
                   className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
                 >
@@ -260,15 +286,32 @@ export function CheckinCodeForm({
           <AdminReadinessPanel title="QR readiness" items={readiness} />
 
           <AdminHelpPanel title="Preview and test" tone="success">
-            <div className="rounded-lg bg-white/70 p-3 font-mono text-xs text-[#073F37]">{publicPath}</div>
+            <div className="rounded-lg bg-white/70 p-3 font-mono text-xs text-[#073F37]">{publicUrl}</div>
+            <div className="mt-3 rounded-lg border border-[#0A6B62]/15 bg-white p-4 text-center">
+              {codeIsValid ? (
+                <div className="inline-flex flex-col items-center gap-3">
+                  <QRCodeCanvas value={publicUrl} size={156} level="H" marginSize={2} />
+                  <p className="break-all font-mono text-[11px] font-bold text-slate-500">{publicPath}</p>
+                </div>
+              ) : (
+                <div className="flex min-h-[188px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-400">
+                  กรอกรหัสอย่างน้อย 3 ตัวเพื่อดู QR preview
+                </div>
+              )}
+            </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => navigator.clipboard?.writeText(publicPath)}
+                onClick={() => {
+                  navigator.clipboard?.writeText(publicUrl);
+                  setCopied(true);
+                  window.setTimeout(() => setCopied(false), 1600);
+                }}
+                disabled={!codeIsValid || !origin}
                 className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#073F37] px-3 py-2 text-xs font-black text-white transition hover:bg-[#0A6B62]"
               >
                 <Copy size={15} weight="bold" />
-                Copy URL
+                {copied ? "Copied" : "Copy URL"}
               </button>
               <a
                 href={publicPath}
@@ -284,7 +327,7 @@ export function CheckinCodeForm({
                 label={selectedPhotoSpot?.spot_name_th || selectedAttraction?.name_th || code}
                 showLabel
                 buttonLabel="Download QR"
-                disabled={!/^[a-z0-9_-]{3,100}$/.test(code)}
+                disabled={!codeIsValid}
               />
             </div>
           </AdminHelpPanel>

@@ -108,6 +108,20 @@ export async function findCheckinCodeByCode(code: string, excludeId?: number) {
   return data ? Number(data.checkin_code_id) : null;
 }
 
+export async function photoSpotBelongsToAttraction(photoSpotId: number | null, attractionId: number) {
+  if (!photoSpotId) return true;
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("photo_spots")
+    .select("attraction_id")
+    .eq("photo_spot_id", photoSpotId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return Number(data.attraction_id) === attractionId;
+}
+
 export async function createAdminCheckinCode(input: AdminCheckinCodeMutationInput): Promise<AdminCheckinCodeRow> {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase

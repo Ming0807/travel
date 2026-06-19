@@ -18,7 +18,7 @@ export async function initiateVisit(params: {
 
   // Track the funnel event for completing the minimal form
   await recordFunnelEvent({
-    eventName: "minimal_form_submitted",
+    eventName: "minimal_form_completed",
     checkinCodeId: params.checkinCodeId || undefined,
     attractionId: params.attractionId,
     touristId: params.touristId,

@@ -2,17 +2,18 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowSquareOut } from "@phosphor-icons/react/dist/ssr";
+import { ArrowSquareOut, CheckCircle, QrCode, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { SearchInput } from "@/components/admin/SearchInput";
-import { FilterBar } from "@/components/admin/FilterBar";
+import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
 import { ListPageShell } from "@/components/admin/ListPageShell";
 import { requirePermission } from "@/lib/auth/guards";
 import { listAdminCheckinCodes } from "@/lib/repositories/admin-checkin-code.repository";
 import { adminCheckinCodeFiltersSchema } from "@/lib/validation/checkin-code";
 import { CheckinCodeStatusAction } from "@/components/admin/checkin-codes/CheckinCodeStatusAction";
 import { DownloadQrAction } from "@/components/admin/checkin-codes/DownloadQrAction";
+import { CopyCheckinUrlAction } from "@/components/admin/checkin-codes/CopyCheckinUrlAction";
 import { ExportButton } from "@/components/admin/ExportButton";
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ const columns = [
   { key: "label", label: "Label", className: "hidden lg:table-cell" },
   { key: "period", label: "Schedule", className: "hidden xl:table-cell" },
   { key: "status", label: "Status" },
-  { key: "actions", label: "", className: "w-32" },
+  { key: "actions", label: "", className: "w-48" },
 ];
 
 function formatDate(dateStr: string | null) {
@@ -58,6 +59,7 @@ function AttractionStatusWarnings({
 function CheckinCodeActions({ code, label }: { code: string; label?: string | null }) {
   return (
     <div className="flex items-center justify-end gap-2">
+      <CopyCheckinUrlAction code={code} />
       <Link
         href={`/c/${code}`}
         target="_blank"
@@ -100,9 +102,42 @@ export default async function AdminCheckinCodesPage({
           <div className="min-w-[220px] flex-1">
             <SearchInput placeholder="ค้นหารหัส, label..." />
           </div>
+          <FilterSelect
+            label="สถานะ"
+            paramKey="isActive"
+            allLabel="ทุกสถานะ"
+            options={[
+              { value: "true", label: "เปิดใช้งาน" },
+              { value: "false", label: "ปิดใช้งาน" },
+            ]}
+          />
         </FilterBar>
       }
     >
+      <section className="grid gap-3 rounded-2xl border border-[#0A6B62]/15 bg-[#E6F4EF] p-4 text-sm text-[#073F37] shadow-sm md:grid-cols-3">
+        <div className="flex gap-3">
+          <QrCode className="mt-0.5 shrink-0" size={22} weight="duotone" />
+          <div>
+            <p className="font-black">1 QR ต่อ 1 จุดจริง</p>
+            <p className="mt-1 leading-6">ผูกกับสถานที่หลัก และเลือก photo spot เฉพาะเมื่อมีจุดถ่ายภาพจริง</p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <CheckCircle className="mt-0.5 shrink-0" size={22} weight="duotone" />
+          <div>
+            <p className="font-black">ทดสอบก่อนพิมพ์</p>
+            <p className="mt-1 leading-6">เปิดหน้า QR หรือ copy URL เพื่อตรวจหน้า scan ก่อนนำไปติดหน้างาน</p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <ShieldCheck className="mt-0.5 shrink-0" size={22} weight="duotone" />
+          <div>
+            <p className="font-black">ไม่แยก QR ตามตัวตน</p>
+            <p className="mt-1 leading-6">QR เดียวรองรับ guest, LINE, email และนักท่องเที่ยวต่างชาติ</p>
+          </div>
+        </div>
+      </section>
+
       {/* Desktop Table View */}
       <div className="hidden md:block">
         <DataTable columns={columns}>

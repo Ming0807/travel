@@ -31,6 +31,14 @@ const booleanFromForm = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+const booleanFromQuery = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  if (typeof value === "boolean") return value;
+  if (value === "true" || value === "1") return true;
+  if (value === "false" || value === "0") return false;
+  return value;
+}, z.boolean().optional());
+
 export const adminCheckinCodeFiltersSchema = adminPaginationSchema.extend({
   attractionId: optionalId.optional(),
   photoSpotId: optionalId.optional(),
@@ -38,10 +46,7 @@ export const adminCheckinCodeFiltersSchema = adminPaginationSchema.extend({
     (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
     z.string().max(120).optional()
   ),
-  isActive: z.preprocess(
-    (value) => (value === "" || value === null || value === undefined ? undefined : value),
-    z.coerce.boolean().optional()
-  )
+  isActive: booleanFromQuery
 });
 
 export const adminCheckinCodeMutationSchema = z
@@ -51,7 +56,8 @@ export const adminCheckinCodeMutationSchema = z
       .trim()
       .min(3, "Check-in code is required.")
       .max(100)
-      .regex(/^[a-zA-Z0-9_-]+$/, "Check-in code must be URL-safe."),
+      .regex(/^[a-zA-Z0-9_-]+$/, "Check-in code must be URL-safe.")
+      .transform((value) => value.toLowerCase()),
     attractionId: requiredId,
     photoSpotId: optionalId,
     label: optionalText,
