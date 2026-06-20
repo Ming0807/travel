@@ -731,8 +731,8 @@ Rules (current implementation):
 - ✅ validate file type and size — `app/api/admin/media/upload/route.ts` lines 40–56
 - ✅ allow cover selection — `is_cover` field in `content_media` table
 - ✅ provide alt text — required before publishing (readiness check in `MediaManager.tsx`)
-- ✅ avoid huge images in public list cards — attraction cards resolve `media_assets.thumbnail_storage_path` by matching the selected `content_media.storage_path`, then fall back to the original path.
-- ✅ use generated thumbnails when available — `content_media` intentionally does not store thumbnail paths; the card query loads thumbnails from `media_assets` as a separate lookup.
+- ✅ use generated thumbnails when available — attraction cards resolve `media_assets.thumbnail_storage_path` by matching the selected `content_media.storage_path`.
+- ⚠️ fallback can still use the original image — `content_media` intentionally does not store thumbnail paths; rows without a `media_assets` thumbnail fall back to the original media path until every legacy asset has a generated thumbnail.
 
 ---
 

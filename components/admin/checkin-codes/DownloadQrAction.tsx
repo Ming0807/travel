@@ -22,12 +22,7 @@ export function DownloadQrAction({
   const qrRef = useRef<HTMLDivElement>(null);
   const origin = useSyncExternalStore(
     () => () => undefined,
-    () => {
-      if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_APP_URL) {
-        return process.env.NEXT_PUBLIC_APP_URL;
-      }
-      return typeof window === "undefined" ? "" : window.location.origin;
-    },
+    () => (typeof window === "undefined" ? "" : window.location.origin),
     () => ""
   );
 

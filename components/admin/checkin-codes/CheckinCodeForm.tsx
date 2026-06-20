@@ -58,9 +58,6 @@ function subscribeOrigin(_onStoreChange: () => void) {
 }
 
 function getBrowserOrigin() {
-  if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL;
-  }
   return typeof window === "undefined" ? "" : window.location.origin;
 }
 
