@@ -582,7 +582,7 @@ Never use EXIF for hidden tracking.
 |---|---|---|
 | Resize (max 1920px) | ✅ Implemented | `app/actions/photo-actions.ts` line 81 (`sharp(…).resize(1920)`) |
 | WebP conversion | ✅ Implemented | `photo-actions.ts` line 82 (`.webp({ quality: 80 })`) |
-| Tourist story image upload | ✅ Implemented | `app/api/upload/route.ts` line 25 (`.resize(1200).webp({ quality: 80 })`) |
+| Tourist story image upload | ✅ Hardened | `app/api/upload/route.ts` requires a signed-in tourist identity, rate-limits requests, validates JPG/PNG/WebP + max size, strips metadata via WebP conversion, and stores a 1200px public story image under `/site-media/...` |
 | EXIF stripping | ✅ Implicit | sharp strips EXIF by default when converting to WebP |
 | `sharp` in dependencies | ✅ Confirmed | `package.json`: `"sharp": "^0.34.5"` |
 | Metadata stored | ✅ Implemented | `handlePhotoUploadMetadata()` in `lib/services/photo-upload.service.ts` |

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -13,7 +13,13 @@ interface TiptapEditorProps {
   onChange: (content: string) => void;
 }
 
-const MenuBar = ({ editor }: { editor: any }) => {
+type StoryImageUploadResponse = {
+  success?: boolean;
+  url?: string;
+  error?: string;
+};
+
+const MenuBar = ({ editor }: { editor: Editor }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -31,18 +37,20 @@ const MenuBar = ({ editor }: { editor: any }) => {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
+      const data = (await response.json().catch(() => null)) as StoryImageUploadResponse | null;
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error ?? "ไม่สามารถอัปโหลดรูปภาพได้ กรุณาลองอีกครั้ง");
+      }
       
-      if (data.url) {
+      if (data?.url) {
         editor.chain().focus().setImage({ src: data.url }).run();
+      } else {
+        throw new Error("ไม่พบลิงก์รูปภาพหลังอัปโหลด กรุณาลองอีกครั้ง");
       }
     } catch (error) {
       console.error("Error uploading image:", error);
-      alert("Failed to upload image. Please try again.");
+      alert(error instanceof Error ? error.message : "ไม่สามารถอัปโหลดรูปภาพได้ กรุณาลองอีกครั้ง");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -50,10 +58,6 @@ const MenuBar = ({ editor }: { editor: any }) => {
       }
     }
   }, [editor]);
-
-  if (!editor) {
-    return null;
-  }
 
   return (
     <div className="flex flex-wrap items-center gap-1 border-b border-ink/10 p-2 mb-4">
@@ -144,7 +148,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
         type="file"
         ref={fileInputRef}
         onChange={addImage}
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         className="hidden"
         disabled={isUploading}
       />
@@ -155,7 +159,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
         className={`p-2 rounded hover:bg-ink/5 transition-colors flex items-center gap-2 ${
           isUploading ? "text-ink/30 cursor-not-allowed" : "text-ink/60"
         }`}
-        title="Upload Image"
+        title="เพิ่มรูปภาพ"
       >
         {isUploading ? (
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-ink/20 border-t-ink" />
@@ -163,7 +167,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
           <ImageIcon size={20} />
         )}
         <span className="text-xs font-bold uppercase tracking-widest hidden sm:inline-block">
-          {isUploading ? "Uploading..." : "Add Image"}
+          {isUploading ? "กำลังอัปโหลด..." : "เพิ่มรูปภาพ"}
         </span>
       </button>
     </div>
@@ -184,7 +188,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
         },
       }),
       Placeholder.configure({
-        placeholder: "Tell us about your experience...",
+        placeholder: "เล่าเรื่องราวการเดินทางของคุณ...",
       }),
     ],
     content,
@@ -201,7 +205,7 @@ export function TiptapEditor({ content, onChange }: TiptapEditorProps) {
 
   return (
     <div className="border border-ink/20 rounded-xl overflow-hidden bg-white focus-within:border-ink transition-colors">
-      <MenuBar editor={editor} />
+      {editor ? <MenuBar editor={editor} /> : null}
       <div className="p-6">
         <EditorContent editor={editor} />
       </div>
