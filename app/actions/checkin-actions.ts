@@ -7,6 +7,8 @@ import { resolveAndValidateCheckinCode, trackCheckinFunnelEvent } from "@/lib/se
 import { initiateVisit } from "@/lib/services/visit.service";
 import { awardXP } from "@/lib/services/xp.service";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { resolveCountryId, resolveProvinceId } from "@/lib/repositories/geography.repository";
+import { createConsentRecord } from "@/lib/repositories/consent.repository";
 
 import { minimalFormSchema } from "@/lib/validation/checkin";
 
@@ -17,7 +19,7 @@ export type MinimalFormState = {
 
 /**
  * Server Action: initiateCheckin
- * 
+ *
  * Called after identity selection on the /checkin/[code]/start page.
  * Sets up tourist identity from guest cookie, creates visit record,
  * then redirects to the certificate preview.
@@ -65,32 +67,61 @@ export async function initiateCheckin(
     // 4. Find or create tourist
     let touristId: string;
 
+    // Lookup geography
+    let originCountryId: number | null = null;
+    let originProvinceId: number | null = null;
+    try {
+      originCountryId = await resolveCountryId(parsed.data.originCountry);
+    } catch (e) {
+      return { errors: { _form: ["เกิดข้อผิดพลาดในฐานข้อมูลประเทศ กรุณาลองใหม่"] } };
+    }
+
+    if (parsed.data.originCountry?.toLowerCase() === "thailand" || parsed.data.originCountry === "ไทย") {
+      try {
+        originProvinceId = await resolveProvinceId(parsed.data.originProvince ?? null);
+      } catch (e) {
+        return { errors: { _form: ["เกิดข้อผิดพลาดในฐานข้อมูลจังหวัด กรุณาลองใหม่"] } };
+      }
+    }
+
     // Check if guest already has a tourist profile
-    // Attempt to find existing tourist
     const { data: existingIdentity } = await supabase
       .from("tourist_identities")
-      .select("tourist_id")
+      .select("tourist_id, tourists!inner(origin_country_id, origin_province_id, age_group)")
       .eq("provider", "anonymous_device")
       .eq("provider_user_id", guestToken)
       .maybeSingle();
 
     if (existingIdentity) {
       touristId = existingIdentity.tourist_id;
-      // Update last_seen (fire-and-forget, non-critical)
+      // Update last_seen
       void supabase
         .from("tourist_identities")
         .update({ last_seen_at: new Date().toISOString() })
         .eq("provider", "anonymous_device")
         .eq("provider_user_id", guestToken);
+
+      // Backfill missing fields
+      const t = Array.isArray(existingIdentity.tourists) ? existingIdentity.tourists[0] : existingIdentity.tourists;
+      if (t) {
+        const updates: Record<string, any> = {};
+        if (!t.origin_country_id && originCountryId) updates.origin_country_id = originCountryId;
+        if (!t.origin_province_id && originProvinceId) updates.origin_province_id = originProvinceId;
+        if (!t.age_group && parsed.data.ageGroup) updates.age_group = parsed.data.ageGroup;
+
+        if (Object.keys(updates).length > 0) {
+          void supabase.from("tourists").update(updates).eq("tourist_id", touristId);
+        }
+      }
     } else {
       // Create new tourist
-      // Note: origin_country_id/origin_province_id require FK lookups from the
-      // reference tables. For now, store display_name and age_group only.
       const { data: newTourist, error: touristError } = await supabase
         .from("tourists")
         .insert({
           display_name: parsed.data.displayName,
           age_group: parsed.data.ageGroup || null,
+          origin_country_id: originCountryId,
+          origin_province_id: originProvinceId,
           profile_completed_at: new Date().toISOString(),
         })
         .select("tourist_id")
@@ -102,15 +133,6 @@ export async function initiateCheckin(
 
       touristId = newTourist.tourist_id;
 
-      // Create consent record
-      await supabase.from("consent_records").insert({
-        tourist_id: touristId,
-        consent_version: "1.0",
-        purpose: "Tourist data collection for sustainable tourism planning",
-        has_consented: true,
-        source: "checkin_form",
-      });
-
       // Link identity
       await supabase.from("tourist_identities").insert({
         tourist_id: touristId,
@@ -120,6 +142,39 @@ export async function initiateCheckin(
         linked_at: new Date().toISOString(),
         last_seen_at: new Date().toISOString(),
       });
+    }
+
+    // Handle Consent - create if they checked it and we don't already have one
+    if (parsed.data.hasConsented) {
+      const purposeKey = "checkin_profile_creation";
+      const { data: existingConsent, error: checkConsentError } = await supabase
+        .from("consent_records")
+        .select("consent_id")
+        .eq("tourist_id", touristId)
+        .eq("consent_version", "1.0")
+        .eq("purpose_key", purposeKey)
+        .maybeSingle();
+
+      if (checkConsentError) {
+        return { errors: { _form: ["เกิดข้อผิดพลาดในการตรวจสอบความยินยอม กรุณาลองใหม่"] } };
+      }
+
+      if (!existingConsent) {
+        try {
+          await createConsentRecord({
+            touristId,
+            consentVersion: "1.0",
+            purpose: "Tourist data collection for sustainable tourism planning",
+            consentType: "mandatory",
+            purposeKey,
+            hasConsented: true,
+            source: "checkin_form",
+            language: "th"
+          });
+        } catch (e) {
+          return { errors: { _form: ["ไม่สามารถบันทึกความยินยอมได้ กรุณาลองใหม่"] } };
+        }
+      }
     }
 
     // 5. Track funnel events
