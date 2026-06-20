@@ -96,6 +96,10 @@ function imageUrlFromStoragePath(value: unknown): string | null {
   return siteMediaImageUrl(storagePath);
 }
 
+function storagePathFromMedia(media: DbRecord | null): string {
+  return text(media?.storage_path);
+}
+
 function publicAttractionMedia(row: DbRecord): DbRecord | null {
   const media = Array.isArray(row.content_media)
     ? (row.content_media as DbRecord[])
@@ -108,16 +112,14 @@ function publicAttractionMedia(row: DbRecord): DbRecord | null {
   return publicReadyMedia.find((item) => item.is_cover === true) ?? publicReadyMedia[0] ?? null;
 }
 
-function publicImage(row: DbRecord, preferThumbnail = false): string | null {
+function publicImage(row: DbRecord, thumbnailByStoragePath?: Map<string, string>): string | null {
   const media = publicAttractionMedia(row);
   if (!media) return null;
-  const path = preferThumbnail && typeof media.thumbnail_storage_path === "string" && media.thumbnail_storage_path.trim()
-    ? media.thumbnail_storage_path
-    : media.storage_path;
-  return imageUrlFromStoragePath(path);
+  const storagePath = storagePathFromMedia(media);
+  return imageUrlFromStoragePath(thumbnailByStoragePath?.get(storagePath) ?? storagePath);
 }
 
-function mapAttractionCard(row: DbRecord): InternalAttractionCard {
+function mapAttractionCard(row: DbRecord, thumbnailByStoragePath?: Map<string, string>): InternalAttractionCard {
   const province = one(row.provinces);
   const attractionType = one(row.attraction_types);
   const media = publicAttractionMedia(row);
@@ -132,7 +134,7 @@ function mapAttractionCard(row: DbRecord): InternalAttractionCard {
     province: provinceName,
     category,
     description: text(row.short_description_th, text(row.short_description_en)),
-    imageUrl: publicImage(row, true),
+    imageUrl: publicImage(row, thumbnailByStoragePath),
     imageAlt: text(media?.alt_text_th, text(media?.alt_text_en, `${name} destination image`)),
     tags: [category, provinceName].filter(Boolean)
   };
@@ -195,6 +197,41 @@ async function withReviewSummaries(
       reviewCount: itemStats.total,
     });
   });
+}
+
+async function loadMediaAssetThumbnails(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  rows: DbRecord[]
+): Promise<Map<string, string>> {
+  const storagePaths = Array.from(
+    new Set(
+      rows
+        .map((row) => storagePathFromMedia(publicAttractionMedia(row)))
+        .filter(Boolean)
+    )
+  );
+
+  if (storagePaths.length === 0) return new Map();
+
+  try {
+    const { data, error } = await supabase
+      .from("media_assets")
+      .select("storage_path, thumbnail_storage_path")
+      .in("storage_path", storagePaths);
+
+    if (error || !Array.isArray(data)) return new Map();
+
+    const thumbnails = new Map<string, string>();
+    data.forEach((row) => {
+      const storagePath = text((row as DbRecord).storage_path);
+      const thumbnailPath = text((row as DbRecord).thumbnail_storage_path);
+      if (storagePath && thumbnailPath) thumbnails.set(storagePath, thumbnailPath);
+    });
+
+    return thumbnails;
+  } catch {
+    return new Map();
+  }
 }
 
 function formatStoryDate(value: unknown) {
@@ -265,34 +302,40 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
       return q;
     };
 
-    let finalResults: InternalAttractionCard[] = [];
+    let finalRows: DbRecord[] = [];
     const usedSlugs = new Set<string>();
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       const { data, error } = await buildBaseQuery().in('slug', options.featuredSlugs).limit(limit);
 
       if (!error && data && data.length > 0) {
-        const results = (data as DbRecord[]).map(mapAttractionCard).filter((item) => item.slug);
-        finalResults = results.sort((a, b) => options.featuredSlugs!.indexOf(a.slug) - options.featuredSlugs!.indexOf(b.slug));
-        finalResults.forEach(r => usedSlugs.add(r.slug));
+        finalRows = (data as DbRecord[])
+          .filter((row) => text(row.slug))
+          .sort((a, b) => options.featuredSlugs!.indexOf(text(a.slug)) - options.featuredSlugs!.indexOf(text(b.slug)));
+        finalRows.forEach((row) => usedSlugs.add(text(row.slug)));
       }
     }
 
-    if (finalResults.length < limit) {
-      const remaining = limit - finalResults.length;
+    if (finalRows.length < limit) {
+      const remaining = limit - finalRows.length;
       const { data, error } = await buildBaseQuery()
         .order("created_at", { ascending: false })
         .limit(remaining + usedSlugs.size); // Fetch extra in case of overlap
 
       if (!error && data && data.length > 0) {
-        const fallbackResults = (data as DbRecord[])
-          .map(mapAttractionCard)
-          .filter((item) => item.slug && !usedSlugs.has(item.slug))
+        const fallbackRows = (data as DbRecord[])
+          .filter((row) => {
+            const slug = text(row.slug);
+            return slug && !usedSlugs.has(slug);
+          })
           .slice(0, remaining);
 
-        finalResults = [...finalResults, ...fallbackResults];
+        finalRows = [...finalRows, ...fallbackRows];
       }
     }
+
+    const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, finalRows);
+    const finalResults = finalRows.map((row) => mapAttractionCard(row, thumbnailByStoragePath));
 
     return withReviewSummaries(supabase, finalResults);
   } catch {

@@ -15,6 +15,7 @@ import { CheckinCodeStatusAction } from "@/components/admin/checkin-codes/Checki
 import { DownloadQrAction } from "@/components/admin/checkin-codes/DownloadQrAction";
 import { CopyCheckinUrlAction } from "@/components/admin/checkin-codes/CopyCheckinUrlAction";
 import { ExportButton } from "@/components/admin/ExportButton";
+import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
 
 export const metadata: Metadata = {
   title: "QR Check-in Codes | Admin",
@@ -82,7 +83,10 @@ export default async function AdminCheckinCodesPage({
   const raw = await searchParams;
   const parsed = adminCheckinCodeFiltersSchema.safeParse(raw);
   const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
-  const { items, total, page, pageSize } = await listAdminCheckinCodes(filters);
+  const [{ items, total, page, pageSize }, attractionsList] = await Promise.all([
+    listAdminCheckinCodes(filters),
+    getAdminAttractionsList()
+  ]);
 
   return (
     <ListPageShell
@@ -102,6 +106,15 @@ export default async function AdminCheckinCodesPage({
           <div className="min-w-[220px] flex-1">
             <SearchInput placeholder="ค้นหารหัส, label..." />
           </div>
+          <FilterSelect
+            label="สถานที่"
+            paramKey="attractionId"
+            allLabel="ทุกสถานที่"
+            options={attractionsList.map((a) => ({
+              value: a.attraction_id.toString(),
+              label: a.name_th,
+            }))}
+          />
           <FilterSelect
             label="สถานะ"
             paramKey="isActive"

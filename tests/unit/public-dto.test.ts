@@ -124,9 +124,66 @@ describe("listPublicAttractionCards", () => {
     expect(mockFromChain.or).toHaveBeenCalledWith(expect.stringContaining("slug.ilike"));
     expect(mockFromChain.or).toHaveBeenCalledWith(expect.not.stringContaining("old,_town"));
 
-    // Ensure we don't accidentally select thumbnail_storage_path from content_media (schema mismatch)
-    expect(mockFromChain.select).toHaveBeenCalledWith(
-      expect.not.stringContaining("thumbnail_storage_path")
+    const contentMediaSelects = mockFromChain.select.mock.calls
+      .map(([select]) => String(select))
+      .filter((select) => select.includes("content_media"));
+
+    expect(contentMediaSelects.length).toBeGreaterThan(0);
+    expect(
+      contentMediaSelects.every((select) => !select.includes("thumbnail_storage_path"))
+    ).toBe(true);
+  });
+
+  it("uses media_assets thumbnail paths for public attraction cards when available", async () => {
+    mockFromChain.limit.mockResolvedValueOnce({
+      data: [
+        {
+          attraction_id: 11,
+          slug: "thumbnail-ready-attraction",
+          name_th: "สถานที่พร้อมภาพย่อ",
+          name_en: "Thumbnail Ready Attraction",
+          short_description_th: "ภาพย่อจากคลังสื่อ",
+          short_description_en: null,
+          provinces: { province_name_th: "ยะลา", province_name_en: "Yala" },
+          attraction_types: { type_name_th: "ธรรมชาติ", type_name_en: "Nature" },
+          content_media: [
+            {
+              storage_path: "general/full-size.webp",
+              alt_text_th: "ภาพหลัก",
+              alt_text_en: null,
+              is_cover: true,
+              is_active: true,
+              lifecycle_status: "active",
+              display_order: 0,
+            },
+          ],
+        },
+      ],
+      error: null,
+    });
+    mockFromChain.in.mockResolvedValueOnce({
+      data: [
+        {
+          storage_path: "general/full-size.webp",
+          thumbnail_storage_path: "general/full-size_thumb.webp",
+        },
+      ],
+      error: null,
+    });
+    mockFromChain.is.mockResolvedValueOnce({ data: [], error: null });
+
+    const attractions = await listPublicAttractionCards(4);
+
+    expect(mockSupabaseClient.from).toHaveBeenCalledWith("media_assets");
+    expect(attractions).toHaveLength(1);
+    expect(attractions[0]).toMatchObject({
+      slug: "thumbnail-ready-attraction",
+      imageUrl: "/site-media/general/full-size_thumb.webp",
+      imageAlt: "ภาพหลัก",
+    });
+    expect(mockFromChain.in).toHaveBeenCalledWith(
+      "storage_path",
+      ["general/full-size.webp"]
     );
   });
 });

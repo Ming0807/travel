@@ -58,6 +58,9 @@ function subscribeOrigin(_onStoreChange: () => void) {
 }
 
 function getBrowserOrigin() {
+  if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
   return typeof window === "undefined" ? "" : window.location.origin;
 }
 
@@ -146,35 +149,35 @@ export function CheckinCodeForm({
   const hasAttractionStatus = typeof selectedAttraction?.is_active === "boolean" || typeof selectedAttraction?.is_published === "boolean";
   const attractionPublicReady = !!selectedAttraction && selectedAttraction.is_active !== false && selectedAttraction.is_published !== false;
   const attractionStatusHelp = !selectedAttraction
-    ? "Select the attraction that this QR should represent."
+    ? "เลือกสถานที่ท่องเที่ยวที่ต้องการผูกกับ QR นี้"
     : selectedAttraction.is_active === false
-      ? "This attraction is inactive. Activate it before printing this QR."
+      ? "สถานที่นี้ยังไม่เปิดใช้งาน กรุณาเปิดใช้งานสถานที่ก่อนนำ QR ไปใช้จริง"
       : selectedAttraction.is_published === false
-        ? "This attraction is still a draft. Publish it before printing this QR."
-        : "The linked attraction is active and published.";
+        ? "สถานที่นี้ยังเป็นแบบร่าง กรุณาเผยแพร่สถานที่ก่อนนำ QR ไปใช้จริง"
+        : "สถานที่ที่เลือกพร้อมใช้งานและเผยแพร่แล้ว";
   const readiness = [
     {
-      label: "URL-safe code",
+      label: "รหัส QR ปลอดภัย",
       complete: /^[a-z0-9_-]{3,100}$/.test(code),
-      help: "Use lowercase letters, numbers, hyphen, or underscore.",
+      help: "ใช้ตัวอักษรภาษาอังกฤษพิมพ์เล็ก ตัวเลข ยัติภังค์ (-) หรือขีดล่าง (_) เท่านั้น",
     },
     {
-      label: "Attraction selected",
+      label: "เลือกสถานที่แล้ว",
       complete: !!selectedAttractionId,
-      help: "The QR landing needs one attraction source of truth.",
+      help: "QR ต้องผูกกับสถานที่ท่องเที่ยวหลักหนึ่งแห่ง",
     },
     {
-      label: "Attraction is public-ready",
+      label: "สถานที่พร้อมเผยแพร่",
       complete: attractionPublicReady,
       help: attractionStatusHelp,
     },
     {
-      label: "Photo spot relationship valid",
+      label: "ความสัมพันธ์จุดถ่ายภาพถูกต้อง",
       complete: photoSpotMatchesAttraction,
-      help: "If a photo spot is selected, it must belong to the selected attraction.",
+      help: "ถ้าเลือกจุดถ่ายภาพ จุดถ่ายภาพนั้นต้องอยู่ภายใต้สถานที่ที่เลือก",
     },
     {
-      label: `Operational status: ${scheduleStatus.label}`,
+      label: `สถานะการทำงาน: ${scheduleStatus.label}`,
       complete: scheduleStatus.ready,
       help: scheduleStatus.help,
     },
@@ -217,12 +220,12 @@ export function CheckinCodeForm({
               </label>
 
               <label className="block md:col-span-2">
-                <span className="text-sm font-black text-slate-700">Internal label</span>
+                <span className="text-sm font-black text-slate-700">ชื่ออ้างอิงภายใน (Internal label)</span>
                 <input
                   type="text"
                   name="label"
                   defaultValue={initialData?.label ?? ""}
-                  placeholder="Front viewpoint, entrance, main photo zone"
+                  placeholder="เช่น จุดชมวิวสกายวอล์ค, ประตูทางเข้าหลัก"
                   className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
                 />
               </label>
@@ -246,7 +249,7 @@ export function CheckinCodeForm({
                   className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
                 >
                   <option value="" disabled>
-                    Select attraction
+                    เลือกสถานที่ท่องเที่ยว
                   </option>
                   {attractions.map((attraction) => (
                     <option key={attraction.attraction_id} value={attraction.attraction_id}>
@@ -265,7 +268,7 @@ export function CheckinCodeForm({
                   disabled={!selectedAttractionId || filteredSpots.length === 0}
                   className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15 disabled:bg-slate-50 disabled:text-slate-400"
                 >
-                  <option value="">No specific photo spot</option>
+                  <option value="">ไม่มีจุดถ่ายภาพเฉพาะ</option>
                   {filteredSpots.map((spot) => (
                     <option key={spot.photo_spot_id} value={spot.photo_spot_id}>
                       {spot.spot_name_th}
@@ -274,7 +277,7 @@ export function CheckinCodeForm({
                 </select>
                 {selectedAttractionId && filteredSpots.length === 0 ? (
                   <p className="mt-1 text-xs font-bold text-amber-700">
-                    This attraction has no photo spot yet. The QR can still work, but the certificate context will be broader.
+                    สถานที่นี้ยังไม่มีจุดถ่ายภาพ QR จะเชื่อมกับสถานที่หลักโดยตรง และใบประกาศจะแสดงรูปภาพหลักของสถานที่
                   </p>
                 ) : null}
               </label>
@@ -283,10 +286,10 @@ export function CheckinCodeForm({
         </div>
 
         <div className="space-y-5 lg:sticky lg:top-6 lg:col-span-4">
-          <AdminReadinessPanel title="QR readiness" items={readiness} />
+          <AdminReadinessPanel title="ความพร้อมใช้งาน" items={readiness} />
 
-          <AdminHelpPanel title="Preview and test" tone="success">
-            <div className="rounded-lg bg-white/70 p-3 font-mono text-xs text-[#073F37]">{publicUrl}</div>
+          <AdminHelpPanel title="ทดสอบและดูตัวอย่าง" tone="success">
+            <div className="rounded-lg bg-white/70 p-3 font-mono text-xs text-[#073F37] break-all">{publicUrl}</div>
             <div className="mt-3 rounded-lg border border-[#0A6B62]/15 bg-white p-4 text-center">
               {codeIsValid ? (
                 <div className="inline-flex flex-col items-center gap-3">
@@ -294,7 +297,7 @@ export function CheckinCodeForm({
                   <p className="break-all font-mono text-[11px] font-bold text-slate-500">{publicPath}</p>
                 </div>
               ) : (
-                <div className="flex min-h-[188px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-400">
+                <div className="flex min-h-[188px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-400 text-center">
                   กรอกรหัสอย่างน้อย 3 ตัวเพื่อดู QR preview
                 </div>
               )}
@@ -311,7 +314,7 @@ export function CheckinCodeForm({
                 className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#073F37] px-3 py-2 text-xs font-black text-white transition hover:bg-[#0A6B62]"
               >
                 <Copy size={15} weight="bold" />
-                {copied ? "Copied" : "Copy URL"}
+                {copied ? "คัดลอกแล้ว" : "คัดลอกลิงก์"}
               </button>
               <a
                 href={publicPath}
@@ -320,37 +323,39 @@ export function CheckinCodeForm({
                 className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#0A6B62]/30 bg-white px-3 py-2 text-xs font-black text-[#073F37] transition hover:bg-[#E6F4EF]"
               >
                 <ArrowSquareOut size={15} weight="bold" />
-                Open test page
+                เปิดหน้าทดสอบ
               </a>
               <DownloadQrAction
                 code={code}
                 label={selectedPhotoSpot?.spot_name_th || selectedAttraction?.name_th || code}
                 showLabel
-                buttonLabel="Download QR"
+                buttonLabel="โหลดรูป QR"
                 disabled={!codeIsValid}
               />
             </div>
           </AdminHelpPanel>
 
           {hasAttractionStatus && !attractionPublicReady ? (
-            <AdminHelpPanel title="Check before printing" tone="warning">
+            <AdminHelpPanel title="ตรวจสอบก่อนพิมพ์" tone="warning">
               <p>{attractionStatusHelp}</p>
             </AdminHelpPanel>
           ) : null}
 
-          <AdminHelpPanel title="Certificate context" tone="info">
-            <div className="space-y-2">
-              <p>Attraction: {selectedAttraction?.name_th || "Select an attraction"}</p>
-              <p>Photo spot: {selectedPhotoSpot?.spot_name_th || "No specific photo spot selected"}</p>
-              <p>This QR is for all tourists. Do not create separate QR codes for guest, LINE, foreign, or email users.</p>
+          <AdminHelpPanel title="ข้อมูลที่จะแสดงบนใบประกาศ" tone="info">
+            <div className="space-y-2 text-sm text-slate-600">
+              <p><span className="font-semibold">สถานที่:</span> {selectedAttraction?.name_th || "ยังไม่ได้เลือกสถานที่"}</p>
+              <p><span className="font-semibold">จุดถ่ายภาพ:</span> {selectedPhotoSpot?.spot_name_th || "ไม่ได้ระบุเฉพาะจุด"}</p>
+              <p className="mt-2 pt-2 border-t border-slate-200 text-xs leading-5">
+                QR นี้สามารถใช้งานร่วมกันได้ทั้งหมด ไม่ต้องแยก QR สำหรับนักท่องเที่ยวที่เข้าสู่ระบบแบบผู้เยี่ยมชม, LINE, หรืออีเมล
+              </p>
             </div>
           </AdminHelpPanel>
 
-          <AdminFormSection title="Status and schedule" description="Control when this QR should be used in the field.">
+          <AdminFormSection title="สถานะและระยะเวลา" description="กำหนดการเปิดใช้งาน QR สำหรับนักท่องเที่ยว">
             <div className="space-y-4">
               <input type="hidden" name="isActive" value="false" />
               <label className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-slate-700 has-[:checked]:border-[#0A6B62] has-[:checked]:bg-[#E6F4EF]">
-                Active
+                เปิดใช้งาน (Active)
                 <input
                   type="checkbox"
                   name="isActive"

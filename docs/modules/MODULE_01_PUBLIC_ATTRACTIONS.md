@@ -428,7 +428,7 @@ Rules:
 - Use optimized images.
 - Provide alt text where possible.
 - Avoid very large images on initial load.
-- Use `media_assets` thumbnails when available instead of selecting non-existent `thumbnail_storage_path` directly from `content_media`.
+- For list cards, resolve `media_assets.thumbnail_storage_path` by matching the selected `content_media.storage_path`; never select a thumbnail column from `content_media` unless a future migration explicitly adds it.
 - Use lazy loading.
 
 ---
