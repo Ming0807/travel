@@ -2,7 +2,7 @@
 
 Before any production deployment or major testing cycle, verify that the following Supabase schema objects and configurations are active and correctly deployed.
 
-**IMPORTANT WARNING:** Manual runs in the Supabase SQL Editor do **not** automatically repair or record entries in the `supabase_migrations.schema_migrations` table. If your local migration state diverges from the remote state, you must resolve the drift using `supabase db remote commit` or by manually aligning the `schema_migrations` table. Do not run production migrations manually via the Supabase Studio SQL editor unless strictly necessary for hotfixes (and even then, document the manual drift).
+**IMPORTANT WARNING:** Manual runs in the Supabase SQL Editor do **not** automatically repair or record entries in the `supabase_migrations.schema_migrations` table. If your local migration state diverges from the remote state, first verify the actual schema objects, then repair CLI migration history with `supabase migration repair --status applied <version>` when appropriate. Do not run production migrations manually via the Supabase Studio SQL editor unless strictly necessary for hotfixes, and always document the manual drift.
 
 ## Checklist
 
@@ -19,7 +19,7 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **`media_assets.thumbnail_storage_path`**: Verify that the `media_assets` table (or `content_media` if applicable) includes the `thumbnail_storage_path` column for optimized image delivery.
 
 ### 4. Indexes
-- [ ] **Public Listing Indexes**: Confirm that B-tree or GiST indexes exist for public listings to optimize read performance. Essential indexes include:
+- [ ] **Public Listing Indexes**: Confirm that the public listing and review indexes exist to optimize read performance. Essential indexes include:
   - `idx_attractions_published_active`
   - `idx_attractions_name_th_trgm`
   - `idx_attractions_name_en_trgm`
