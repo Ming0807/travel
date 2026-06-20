@@ -213,14 +213,7 @@ describe("QR Check-in Flow Hardening", () => {
       // so we know it actually executed the redirect call.
       vi.mocked(redirect).mockImplementationOnce(() => { throw new Error("NEXT_REDIRECT"); });
 
-      try {
-        await initiateCheckin("test", {}, formData);
-      } catch (e: unknown) {
-        if (e instanceof Error) {
-          expect(e.message).toBe("NEXT_REDIRECT");
-        }
-      }
-
+      await expect(initiateCheckin("test", {}, formData)).rejects.toThrow("NEXT_REDIRECT");
 
       expect(revalidatePath).toHaveBeenCalledWith("/checkin/test");
       expect(redirect).toHaveBeenCalledWith("/visit/mock-visit-id/photo");
