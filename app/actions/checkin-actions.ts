@@ -1,6 +1,5 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getOrCreateGuestIdentity } from "@/lib/auth/guest";
@@ -9,13 +8,7 @@ import { initiateVisit } from "@/lib/services/visit.service";
 import { awardXP } from "@/lib/services/xp.service";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
-const minimalFormSchema = z.object({
-  displayName: z.string().min(1, "กรุณากรอกชื่อของคุณ").max(100),
-  originCountry: z.string().min(1).max(100).default("Thailand"),
-  originProvince: z.string().max(100).nullable().optional(),
-  ageGroup: z.enum(["0-15", "16-24", "25-34", "35-44", "45-54", "55-64", "65+"]).nullable().optional(),
-  hasConsented: z.boolean().refine((v) => v === true, { message: "กรุณายอมรับข้อตกลง" }),
-});
+import { minimalFormSchema } from "@/lib/validation/checkin";
 
 export type MinimalFormState = {
   errors?: Record<string, string[]>;
