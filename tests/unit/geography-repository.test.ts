@@ -64,21 +64,32 @@ describe("Geography Repository", () => {
       expect(id).toBe(2);
     });
 
-    it("resolves by ISO code if name fails", async () => {
+        it("resolves by ISO code if name fails and input is strictly formatted", async () => {
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null }); // English
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null }); // Thai
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: { country_id: 3 }, error: null }); // ISO
 
-      const id = await resolveCountryId("TH");
+      const id = await resolveCountryId("thA");
 
-      expect(mockSupabaseQuery.or).toHaveBeenCalledWith("iso2_code.ilike.TH,iso3_code.ilike.TH");
+      expect(mockSupabaseQuery.or).toHaveBeenCalledWith("iso2_code.eq.THA,iso3_code.eq.THA");
       expect(id).toBe(3);
+    });
+
+    it("skips ISO lookup if input is not 2-3 letters", async () => {
+      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null }); // English
+      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null }); // Thai
+      // ISO should be skipped
+      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: { country_id: 999 }, error: null }); // Other
+
+      const id = await resolveCountryId("Thailand!");
+
+      expect(mockSupabaseQuery.or).not.toHaveBeenCalled();
+      expect(id).toBe(999);
     });
 
     it("falls back to Other if no match", async () => {
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null }); // English
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null }); // Thai
-      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null }); // ISO
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: { country_id: 999 }, error: null }); // Other
 
       const id = await resolveCountryId("UnknownCountry");

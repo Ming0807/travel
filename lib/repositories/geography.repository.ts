@@ -13,7 +13,7 @@ export async function resolveCountryId(countryName: string | null): Promise<numb
   const supabase = createSupabaseServiceRoleClient();
 
   // Try English first
-  let { data, error } = await supabase
+  const { data, error } = await supabase
     .from("countries")
     .select("country_id")
     .ilike("country_name_en", cleanName)
@@ -23,7 +23,7 @@ export async function resolveCountryId(countryName: string | null): Promise<numb
   if (data) return data.country_id;
 
   // Try Thai
-  let { data: thData, error: thError } = await supabase
+  const { data: thData, error: thError } = await supabase
     .from("countries")
     .select("country_id")
     .eq("country_name_th", cleanName)
@@ -32,18 +32,21 @@ export async function resolveCountryId(countryName: string | null): Promise<numb
   if (thError) throw new Error(`Database error resolving country: ${thError.message}`);
   if (thData) return thData.country_id;
 
-  // Try ISO code
-  let { data: isoData, error: isoError } = await supabase
-    .from("countries")
-    .select("country_id")
-    .or(`iso2_code.ilike.${cleanName},iso3_code.ilike.${cleanName}`)
-    .maybeSingle();
+  // Try ISO code strictly
+  if (/^[A-Za-z]{2,3}$/.test(cleanName)) {
+    const upperCode = cleanName.toUpperCase();
+    const { data: isoData, error: isoError } = await supabase
+      .from("countries")
+      .select("country_id")
+      .or(`iso2_code.eq.${upperCode},iso3_code.eq.${upperCode}`)
+      .maybeSingle();
 
-  if (isoError) throw new Error(`Database error resolving country ISO: ${isoError.message}`);
-  if (isoData) return isoData.country_id;
+    if (isoError) throw new Error(`Database error resolving country ISO: ${isoError.message}`);
+    if (isoData) return isoData.country_id;
+  }
 
   // Fallback to "Other"
-  let { data: fallbackData, error: fallbackError } = await supabase
+  const { data: fallbackData, error: fallbackError } = await supabase
     .from("countries")
     .select("country_id")
     .ilike("country_name_en", "Other")
@@ -64,7 +67,7 @@ export async function resolveProvinceId(provinceName: string | null): Promise<nu
   const supabase = createSupabaseServiceRoleClient();
 
   // Try Thai first (exact match preferred)
-  let { data, error } = await supabase
+  const { data, error } = await supabase
     .from("provinces")
     .select("province_id")
     .ilike("province_name_th", cleanName)
@@ -74,7 +77,7 @@ export async function resolveProvinceId(provinceName: string | null): Promise<nu
   if (data) return data.province_id;
 
   // Try English
-  let { data: enData, error: enError } = await supabase
+  const { data: enData, error: enError } = await supabase
     .from("provinces")
     .select("province_id")
     .ilike("province_name_en", cleanName)
@@ -84,7 +87,7 @@ export async function resolveProvinceId(provinceName: string | null): Promise<nu
   if (enData) return enData.province_id;
 
   // Fallback to "Prefer not to answer"
-  let { data: fallbackData, error: fallbackError } = await supabase
+  const { data: fallbackData, error: fallbackError } = await supabase
     .from("provinces")
     .select("province_id")
     .ilike("province_name_en", "Prefer not to answer")

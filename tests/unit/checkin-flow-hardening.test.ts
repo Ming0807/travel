@@ -30,6 +30,7 @@ const mockSupabaseQuery = vi.hoisted(() => {
   const q = {
     insert: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
     eq: vi.fn(),
     select: vi.fn(),
     maybeSingle: vi.fn(),
@@ -37,6 +38,7 @@ const mockSupabaseQuery = vi.hoisted(() => {
     reset: () => {
       q.insert.mockClear();
       q.update.mockClear();
+      q.delete.mockClear();
       q.eq.mockClear();
       q.select.mockClear();
       q.maybeSingle.mockClear();
@@ -45,6 +47,7 @@ const mockSupabaseQuery = vi.hoisted(() => {
       q.single.mockResolvedValue({ data: { tourist_id: "mock-tourist-id" }, error: null });
       q.insert.mockReturnThis();
       q.update.mockReturnThis();
+      q.delete.mockReturnThis();
       q.eq.mockReturnThis();
       q.select.mockReturnThis();
     }
@@ -87,6 +90,7 @@ vi.mock("@/lib/repositories/geography.repository", () => ({
   resolveProvinceId: vi.fn(),
 }));
 
+import { initiateVisit } from "@/lib/services/visit.service";
 import { getCheckinCodeByCode, type CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
 import { resolveCountryId, resolveProvinceId } from "@/lib/repositories/geography.repository";
 import { createConsentRecord } from "@/lib/repositories/consent.repository";
@@ -294,7 +298,51 @@ describe("QR Check-in Flow Hardening", () => {
       }));
     });
 
-    it("consent insert failure returns an error and does not initiate visit", async () => {
+        it("existing tourist backfill failure returns an error and does not initiate visit", async () => {
+      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
+        checkin_code_id: 1,
+        code: "test",
+        is_active: true,
+        attraction_id: 1,
+        starts_at: null,
+        ends_at: null,
+        attraction: { is_active: true, is_published: true, attraction_id: 1 },
+        photo_spot: null,
+      } as unknown as CheckinCodeDetails);
+
+      vi.mocked(resolveCountryId).mockResolvedValue(1);
+      vi.mocked(resolveProvinceId).mockResolvedValue(10);
+
+      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({
+        data: {
+          tourist_id: "mock-tourist-id",
+          tourists: { origin_country_id: null, origin_province_id: null, age_group: null }
+        },
+        error: null
+      });
+
+      // Mock update to fail
+      mockSupabaseQuery.update.mockImplementation((payload) => {
+         if (payload.origin_country_id !== undefined) {
+             return { eq: vi.fn().mockResolvedValue({ error: new Error("DB_UPDATE_ERROR") }) };
+         }
+         return mockSupabaseQuery;
+      });
+
+      const formData = new FormData();
+      formData.set("displayName", "John");
+      formData.set("originCountry", "Thailand");
+      formData.set("originProvince", "Pattani");
+      formData.set("ageGroup", "25-34");
+      formData.set("hasConsented", "true");
+
+      const result = await initiateCheckin("test", {}, formData);
+
+      expect(result.errors?._form?.[0]).toContain("เกิดข้อผิดพลาดในการปรับปรุงข้อมูล");
+      expect(initiateVisit).not.toHaveBeenCalled();
+    });
+
+it("consent insert failure returns an error and does not initiate visit", async () => {
       vi.mocked(getCheckinCodeByCode).mockResolvedValue({
         checkin_code_id: 1,
         code: "test",
@@ -317,7 +365,46 @@ describe("QR Check-in Flow Hardening", () => {
       expect(result.errors?._form?.[0]).toContain("ไม่สามารถบันทึกความยินยอมได้");
     });
 
-    it("valid Thai tourist stores country/province/age and redirects", async () => {
+        it("identity insert failure returns an error and does not initiate visit", async () => {
+      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
+        checkin_code_id: 1,
+        code: "test",
+        is_active: true,
+        attraction_id: 1,
+        starts_at: null,
+        ends_at: null,
+        attraction: { is_active: true, is_published: true, attraction_id: 1 },
+        photo_spot: null,
+      } as unknown as CheckinCodeDetails);
+
+      // New tourist scenario
+      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+      mockSupabaseQuery.single.mockResolvedValueOnce({ data: { tourist_id: "new-tourist-id" }, error: null });
+
+      // Consent (none existing, insert success)
+      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+      vi.mocked(createConsentRecord).mockResolvedValueOnce(undefined);
+
+      // Identity insert failure
+      mockSupabaseQuery.insert.mockImplementation((payload) => {
+         if (payload.provider) {
+             return { error: new Error("IDENTITY_INSERT_ERROR") };
+         }
+         return mockSupabaseQuery;
+      });
+
+      const formData = new FormData();
+      formData.set("displayName", "John");
+      formData.set("hasConsented", "true");
+
+      const result = await initiateCheckin("test", {}, formData);
+
+      expect(result.errors?._form?.[0]).toContain("เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี");
+      expect(initiateVisit).not.toHaveBeenCalled();
+      expect(mockSupabaseQuery.delete).toHaveBeenCalled();
+    });
+
+it("valid Thai tourist stores country/province/age and redirects", async () => {
       vi.mocked(getCheckinCodeByCode).mockResolvedValue({
         checkin_code_id: 1,
         code: "test",

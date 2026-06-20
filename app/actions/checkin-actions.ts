@@ -64,22 +64,19 @@ export async function initiateCheckin(
 
     const supabase = createSupabaseServiceRoleClient();
 
-    // 4. Find or create tourist
-    let touristId: string;
-
     // Lookup geography
     let originCountryId: number | null = null;
     let originProvinceId: number | null = null;
     try {
       originCountryId = await resolveCountryId(parsed.data.originCountry);
-    } catch (e) {
+    } catch {
       return { errors: { _form: ["เกิดข้อผิดพลาดในฐานข้อมูลประเทศ กรุณาลองใหม่"] } };
     }
 
     if (parsed.data.originCountry?.toLowerCase() === "thailand" || parsed.data.originCountry === "ไทย") {
       try {
         originProvinceId = await resolveProvinceId(parsed.data.originProvince ?? null);
-      } catch (e) {
+      } catch {
         return { errors: { _form: ["เกิดข้อผิดพลาดในฐานข้อมูลจังหวัด กรุณาลองใหม่"] } };
       }
     }
@@ -91,6 +88,9 @@ export async function initiateCheckin(
       .eq("provider", "anonymous_device")
       .eq("provider_user_id", guestToken)
       .maybeSingle();
+
+    let touristId: string;
+    let isNewTourist = false;
 
     if (existingIdentity) {
       touristId = existingIdentity.tourist_id;
@@ -104,16 +104,20 @@ export async function initiateCheckin(
       // Backfill missing fields
       const t = Array.isArray(existingIdentity.tourists) ? existingIdentity.tourists[0] : existingIdentity.tourists;
       if (t) {
-        const updates: Record<string, any> = {};
+        const updates: Partial<{ origin_country_id: number; origin_province_id: number; age_group: string }> = {};
         if (!t.origin_country_id && originCountryId) updates.origin_country_id = originCountryId;
         if (!t.origin_province_id && originProvinceId) updates.origin_province_id = originProvinceId;
         if (!t.age_group && parsed.data.ageGroup) updates.age_group = parsed.data.ageGroup;
 
         if (Object.keys(updates).length > 0) {
-          void supabase.from("tourists").update(updates).eq("tourist_id", touristId);
+          const { error: updateError } = await supabase.from("tourists").update(updates).eq("tourist_id", touristId);
+          if (updateError) {
+            return { errors: { _form: ["เกิดข้อผิดพลาดในการปรับปรุงข้อมูล กรุณาลองใหม่"] } };
+          }
         }
       }
     } else {
+      isNewTourist = true;
       // Create new tourist
       const { data: newTourist, error: touristError } = await supabase
         .from("tourists")
@@ -132,16 +136,6 @@ export async function initiateCheckin(
       }
 
       touristId = newTourist.tourist_id;
-
-      // Link identity
-      await supabase.from("tourist_identities").insert({
-        tourist_id: touristId,
-        provider: "anonymous_device",
-        provider_user_id: guestToken,
-        is_primary: true,
-        linked_at: new Date().toISOString(),
-        last_seen_at: new Date().toISOString(),
-      });
     }
 
     // Handle Consent - create if they checked it and we don't already have one
@@ -156,6 +150,7 @@ export async function initiateCheckin(
         .maybeSingle();
 
       if (checkConsentError) {
+        if (isNewTourist) void supabase.from("tourists").delete().eq("tourist_id", touristId);
         return { errors: { _form: ["เกิดข้อผิดพลาดในการตรวจสอบความยินยอม กรุณาลองใหม่"] } };
       }
 
@@ -171,9 +166,27 @@ export async function initiateCheckin(
             source: "checkin_form",
             language: "th"
           });
-        } catch (e) {
+        } catch {
+          if (isNewTourist) void supabase.from("tourists").delete().eq("tourist_id", touristId);
           return { errors: { _form: ["ไม่สามารถบันทึกความยินยอมได้ กรุณาลองใหม่"] } };
         }
+      }
+    }
+
+    // Link identity if new tourist
+    if (isNewTourist) {
+      const { error: identityError } = await supabase.from("tourist_identities").insert({
+        tourist_id: touristId,
+        provider: "anonymous_device",
+        provider_user_id: guestToken,
+        is_primary: true,
+        linked_at: new Date().toISOString(),
+        last_seen_at: new Date().toISOString(),
+      });
+
+      if (identityError) {
+        void supabase.from("tourists").delete().eq("tourist_id", touristId);
+        return { errors: { _form: ["เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี กรุณาลองใหม่"] } };
       }
     }
 
