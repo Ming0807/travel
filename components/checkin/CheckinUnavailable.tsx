@@ -40,21 +40,21 @@ export function CheckinUnavailable({ status }: { status: Props["status"] }) {
 
           <h1 className="mt-8 text-2xl font-black text-ink mb-2 tracking-tight">{title}</h1>
           <p className="text-[15px] text-muted mb-8 font-medium leading-relaxed">{message}</p>
-          
+
           <div className="space-y-3">
             {isNotFound && (
-              <button 
+              <button
                 onClick={() => window.location.reload()}
                 className="w-full flex items-center justify-center py-4 bg-ink text-white rounded-2xl font-bold hover:bg-ink/90 transition-all hover:-translate-y-1 hover:shadow-md active:scale-[0.98]"
               >
                 ลองใหม่อีกครั้ง
               </button>
             )}
-            <Link 
+            <Link
               href="/"
               className={`w-full flex items-center justify-center py-4 ${
-                isNotFound 
-                  ? "bg-slate-100 text-ink/80 hover:bg-slate-200" 
+                isNotFound
+                  ? "bg-slate-100 text-ink/80 hover:bg-slate-200"
                   : "bg-ink text-white hover:bg-ink/90 shadow-sm"
               } rounded-2xl font-bold transition-all hover:-translate-y-1 active:scale-[0.98]`}
             >

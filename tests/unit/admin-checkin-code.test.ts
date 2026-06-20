@@ -12,7 +12,7 @@ describe("Admin Check-in Code Validation", () => {
       startsAt: new Date().toISOString(),
       endsAt: new Date(Date.now() + 100000).toISOString(),
     };
-    
+
     const result = adminCheckinCodeMutationSchema.safeParse(payload);
     expect(result.success).toBe(true);
   });
@@ -23,7 +23,7 @@ describe("Admin Check-in Code Validation", () => {
       attractionId: 1,
       isActive: true,
     };
-    
+
     const result = adminCheckinCodeMutationSchema.safeParse(payload);
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -39,7 +39,7 @@ describe("Admin Check-in Code Validation", () => {
       startsAt: new Date(Date.now() + 100000).toISOString(),
       endsAt: new Date().toISOString(),
     };
-    
+
     const result = adminCheckinCodeMutationSchema.safeParse(payload);
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -53,7 +53,7 @@ describe("Admin Check-in Code Validation", () => {
       attractionId: 1,
       isActive: "true",
     };
-    
+
     const result = adminCheckinCodeMutationSchema.safeParse(payload);
     expect(result.success).toBe(true);
     if (result.success) {
