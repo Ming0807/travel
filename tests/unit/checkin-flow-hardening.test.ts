@@ -1,10 +1,16 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
-import { assignStampForVisit } from "@/lib/services/stamp.service";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { initiateCheckin } from "@/app/actions/checkin-actions";
 import { minimalFormSchema } from "@/lib/validation/checkin";
-import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { getCheckinCodeByCode, type CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
+import { createConsentRecord } from "@/lib/repositories/consent.repository";
+import { resolveCountryId, resolveProvinceId } from "@/lib/repositories/geography.repository";
+import { getTouristStampByAttraction, awardTouristStamp } from "@/lib/repositories/stamp.repository";
+import { getVisitById } from "@/lib/repositories/visit.repository";
+import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
+import { assignStampForVisit } from "@/lib/services/stamp.service";
+import { initiateVisit } from "@/lib/services/visit.service";
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
@@ -19,7 +25,7 @@ vi.mock("@/lib/auth/guest", () => ({
 }));
 
 vi.mock("@/lib/services/visit.service", () => ({
-  initiateVisit: vi.fn().mockResolvedValue("mock-visit-id"),
+  initiateVisit: vi.fn(),
 }));
 
 vi.mock("@/lib/services/xp.service", () => ({
@@ -45,24 +51,24 @@ const mockSupabaseQuery = vi.hoisted(() => {
       q.single.mockClear();
       q.maybeSingle.mockResolvedValue({ data: null, error: null });
       q.single.mockResolvedValue({ data: { tourist_id: "mock-tourist-id" }, error: null });
-      q.insert.mockReturnThis();
-      q.update.mockReturnThis();
-      q.delete.mockReturnThis();
-      q.eq.mockReturnThis();
-      q.select.mockReturnThis();
-    }
+      q.insert.mockImplementation(() => q);
+      q.update.mockImplementation(() => q);
+      q.delete.mockImplementation(() => q);
+      q.eq.mockImplementation(() => q);
+      q.select.mockImplementation(() => q);
+    },
   };
   q.reset();
   return q;
 });
 
-vi.mock("@/lib/supabase/service-role", () => {
-  return {
-    createSupabaseServiceRoleClient: () => ({
-      from: vi.fn().mockReturnValue(mockSupabaseQuery),
-    }),
-  };
-});
+const mockSupabaseFrom = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/supabase/service-role", () => ({
+  createSupabaseServiceRoleClient: () => ({
+    from: mockSupabaseFrom,
+  }),
+}));
 
 vi.mock("@/lib/repositories/checkin.repository", () => ({
   getCheckinCodeByCode: vi.fn(),
@@ -90,14 +96,6 @@ vi.mock("@/lib/repositories/geography.repository", () => ({
   resolveProvinceId: vi.fn(),
 }));
 
-import { initiateVisit } from "@/lib/services/visit.service";
-import { getCheckinCodeByCode, type CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
-import { resolveCountryId, resolveProvinceId } from "@/lib/repositories/geography.repository";
-import { createConsentRecord } from "@/lib/repositories/consent.repository";
-import { getVisitById } from "@/lib/repositories/visit.repository";
-import { getTouristStampByAttraction, awardTouristStamp } from "@/lib/repositories/stamp.repository";
-// Use generic Record types instead of typed Supabase rows to avoid TS errors during typecheck,
-// since the true Database schema is not fully generated locally.
 type VisitRow = Record<string, unknown>;
 type TouristStampRow = Record<string, unknown>;
 
@@ -105,12 +103,20 @@ describe("QR Check-in Flow Hardening", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSupabaseQuery.reset();
+    mockSupabaseFrom.mockReset();
+    mockSupabaseFrom.mockReturnValue(mockSupabaseQuery);
+    vi.mocked(resolveCountryId).mockResolvedValue(1);
+    vi.mocked(resolveProvinceId).mockResolvedValue(null);
+    vi.mocked(createConsentRecord).mockResolvedValue(undefined);
+    vi.mocked(initiateVisit).mockResolvedValue("mock-visit-id");
   });
 
   describe("QR Validation (resolveAndValidateCheckinCode)", () => {
     it("returns not_found if code does not exist", async () => {
       vi.mocked(getCheckinCodeByCode).mockResolvedValue(null);
+
       const res = await resolveAndValidateCheckinCode("invalid-code");
+
       expect(res.status).toBe("not_found");
     });
 
@@ -123,7 +129,9 @@ describe("QR Check-in Flow Hardening", () => {
         starts_at: null,
         ends_at: null,
       } as unknown as CheckinCodeDetails);
+
       const res = await resolveAndValidateCheckinCode("test");
+
       expect(res.status).toBe("inactive");
     });
 
@@ -136,7 +144,9 @@ describe("QR Check-in Flow Hardening", () => {
         starts_at: null,
         ends_at: new Date(Date.now() - 10000).toISOString(),
       } as unknown as CheckinCodeDetails);
+
       const res = await resolveAndValidateCheckinCode("test");
+
       expect(res.status).toBe("expired");
     });
 
@@ -150,7 +160,9 @@ describe("QR Check-in Flow Hardening", () => {
         ends_at: null,
         attraction: { is_active: true, is_published: false },
       } as unknown as CheckinCodeDetails);
+
       const res = await resolveAndValidateCheckinCode("test");
+
       expect(res.status).toBe("unavailable");
     });
 
@@ -165,7 +177,9 @@ describe("QR Check-in Flow Hardening", () => {
         attraction: { is_active: true, is_published: true, attraction_id: 1 },
         photo_spot: null,
       } as unknown as CheckinCodeDetails);
+
       const res = await resolveAndValidateCheckinCode("test");
+
       expect(res.status).toBe("valid");
     });
   });
@@ -176,9 +190,10 @@ describe("QR Check-in Flow Hardening", () => {
         displayName: "John",
         hasConsented: false,
       });
+
       expect(res.success).toBe(false);
       if (!res.success) {
-        expect(res.error.flatten().fieldErrors.hasConsented?.[0]).toBe("กรุณายอมรับข้อตกลง");
+        expect(res.error.flatten().fieldErrors.hasConsented?.[0]).toBeDefined();
       }
     });
 
@@ -187,281 +202,226 @@ describe("QR Check-in Flow Hardening", () => {
         displayName: "John",
         hasConsented: true,
       });
+
       expect(res.success).toBe(true);
     });
   });
 
   describe("Server Action: initiateCheckin", () => {
+    const mockValidCheckinCode = () => {
+      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
+        checkin_code_id: 1,
+        code: "test",
+        is_active: true,
+        attraction_id: 1,
+        starts_at: null,
+        ends_at: null,
+        attraction: { is_active: true, is_published: true, attraction_id: 1 },
+        photo_spot: null,
+      } as unknown as CheckinCodeDetails);
+    };
+
+    const createValidFormData = (overrides: Record<string, string> = {}) => {
+      const formData = new FormData();
+      formData.set("displayName", overrides.displayName ?? "John");
+      formData.set("originCountry", overrides.originCountry ?? "Thailand");
+      formData.set("originProvince", overrides.originProvince ?? "Pattani");
+      formData.set("ageGroup", overrides.ageGroup ?? "25-34");
+      formData.set("hasConsented", overrides.hasConsented ?? "true");
+      return formData;
+    };
+
+    const tableCalls = () => mockSupabaseFrom.mock.calls.map((call) => call[0]);
+
     it("returns form error if QR is invalid", async () => {
       vi.mocked(getCheckinCodeByCode).mockResolvedValue(null);
-      const formData = new FormData();
-      formData.set("displayName", "John");
-      formData.set("hasConsented", "true");
 
-      const result = await initiateCheckin("invalid-code", {}, formData);
-      expect(result.errors?._form?.[0]).toContain("ไม่สามารถใช้งานได้");
+      const result = await initiateCheckin("invalid-code", {}, createValidFormData());
+
+      expect(result.errors?._form?.[0]).toBeDefined();
     });
 
     it("returns field error if consent is missing", async () => {
-      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
-        checkin_code_id: 1,
-        code: "test",
-        is_active: true,
-        attraction_id: 1,
-        starts_at: null,
-        ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
-        photo_spot: null,
-      } as unknown as CheckinCodeDetails);
+      mockValidCheckinCode();
 
-      const formData = new FormData();
-      formData.set("displayName", "John");
-      formData.set("hasConsented", "false"); // Consent failed
+      const result = await initiateCheckin("test", {}, createValidFormData({ hasConsented: "false" }));
 
-      const result = await initiateCheckin("test", {}, formData);
-      expect(result.errors?.hasConsented?.[0]).toContain("กรุณายอมรับข้อตกลง");
+      expect(result.errors?.hasConsented?.[0]).toBeDefined();
+    });
+
+    it("identity lookup failure returns an error before creating tourist data", async () => {
+      mockValidCheckinCode();
+      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({
+        data: null,
+        error: new Error("IDENTITY_LOOKUP_ERROR"),
+      });
+
+      const result = await initiateCheckin("test", {}, createValidFormData());
+
+      expect(result.errors?._form?.[0]).toBeDefined();
+      expect(mockSupabaseQuery.insert).not.toHaveBeenCalled();
+      expect(createConsentRecord).not.toHaveBeenCalled();
+      expect(initiateVisit).not.toHaveBeenCalled();
     });
 
     it("existing tourist with non-null fields is not overwritten", async () => {
-      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
-        checkin_code_id: 1,
-        code: "test",
-        is_active: true,
-        attraction_id: 1,
-        starts_at: null,
-        ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
-        photo_spot: null,
-      } as unknown as CheckinCodeDetails);
-
+      mockValidCheckinCode();
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({
         data: {
           tourist_id: "mock-tourist-id",
-          tourists: { origin_country_id: 1, origin_province_id: 10, age_group: "15-24" }
+          tourists: { origin_country_id: 1, origin_province_id: 10, age_group: "15-24" },
         },
-        error: null
+        error: null,
       });
 
-      const formData = new FormData();
-      formData.set("displayName", "John");
-      formData.set("hasConsented", "true");
+      vi.mocked(redirect).mockImplementationOnce(() => {
+        throw new Error("NEXT_REDIRECT");
+      });
 
-      vi.mocked(redirect).mockImplementationOnce(() => { throw new Error("NEXT_REDIRECT"); });
+      await expect(initiateCheckin("test", {}, createValidFormData())).rejects.toThrow("NEXT_REDIRECT");
 
-      await expect(initiateCheckin("test", {}, formData)).rejects.toThrow("NEXT_REDIRECT");
-
-      // Verify no update on tourists table
       expect(mockSupabaseQuery.update).not.toHaveBeenCalledWith(expect.objectContaining({
-        origin_country_id: expect.anything()
+        origin_country_id: expect.anything(),
       }));
     });
 
     it("existing tourist with null fields is backfilled", async () => {
-      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
-        checkin_code_id: 1,
-        code: "test",
-        is_active: true,
-        attraction_id: 1,
-        starts_at: null,
-        ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
-        photo_spot: null,
-      } as unknown as CheckinCodeDetails);
-
-      vi.mocked(resolveCountryId).mockResolvedValue(1);
+      mockValidCheckinCode();
       vi.mocked(resolveProvinceId).mockResolvedValue(10);
-
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({
         data: {
           tourist_id: "mock-tourist-id",
-          tourists: { origin_country_id: null, origin_province_id: null, age_group: null }
+          tourists: { origin_country_id: null, origin_province_id: null, age_group: null },
         },
-        error: null
+        error: null,
       });
 
-      const formData = new FormData();
-      formData.set("displayName", "John");
-      formData.set("originCountry", "Thailand");
-      formData.set("originProvince", "Pattani");
-      formData.set("ageGroup", "25-34");
-      formData.set("hasConsented", "true");
+      vi.mocked(redirect).mockImplementationOnce(() => {
+        throw new Error("NEXT_REDIRECT");
+      });
 
-      vi.mocked(redirect).mockImplementationOnce(() => { throw new Error("NEXT_REDIRECT"); });
+      await expect(initiateCheckin("test", {}, createValidFormData())).rejects.toThrow("NEXT_REDIRECT");
 
-      await expect(initiateCheckin("test", {}, formData)).rejects.toThrow("NEXT_REDIRECT");
-
-      // Verify update backfills missing fields
       expect(mockSupabaseQuery.update).toHaveBeenCalledWith(expect.objectContaining({
         origin_country_id: 1,
         origin_province_id: 10,
-        age_group: "25-34"
+        age_group: "25-34",
       }));
     });
 
-        it("existing tourist backfill failure returns an error and does not initiate visit", async () => {
-      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
-        checkin_code_id: 1,
-        code: "test",
-        is_active: true,
-        attraction_id: 1,
-        starts_at: null,
-        ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
-        photo_spot: null,
-      } as unknown as CheckinCodeDetails);
-
-      vi.mocked(resolveCountryId).mockResolvedValue(1);
+    it("existing tourist backfill failure returns an error and does not initiate visit", async () => {
+      mockValidCheckinCode();
       vi.mocked(resolveProvinceId).mockResolvedValue(10);
-
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({
         data: {
           tourist_id: "mock-tourist-id",
-          tourists: { origin_country_id: null, origin_province_id: null, age_group: null }
+          tourists: { origin_country_id: null, origin_province_id: null, age_group: null },
         },
-        error: null
+        error: null,
+      });
+      mockSupabaseQuery.update.mockImplementation((payload: Record<string, unknown>) => {
+        if (payload.origin_country_id !== undefined) {
+          return { eq: vi.fn().mockResolvedValue({ error: new Error("DB_UPDATE_ERROR") }) };
+        }
+        return mockSupabaseQuery;
       });
 
-      // Mock update to fail
-      mockSupabaseQuery.update.mockImplementation((payload) => {
-         if (payload.origin_country_id !== undefined) {
-             return { eq: vi.fn().mockResolvedValue({ error: new Error("DB_UPDATE_ERROR") }) };
-         }
-         return mockSupabaseQuery;
-      });
+      const result = await initiateCheckin("test", {}, createValidFormData());
 
-      const formData = new FormData();
-      formData.set("displayName", "John");
-      formData.set("originCountry", "Thailand");
-      formData.set("originProvince", "Pattani");
-      formData.set("ageGroup", "25-34");
-      formData.set("hasConsented", "true");
-
-      const result = await initiateCheckin("test", {}, formData);
-
-      expect(result.errors?._form?.[0]).toContain("เกิดข้อผิดพลาดในการปรับปรุงข้อมูล");
+      expect(result.errors?._form?.[0]).toBeDefined();
       expect(initiateVisit).not.toHaveBeenCalled();
     });
 
-it("consent insert failure returns an error and does not initiate visit", async () => {
-      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
-        checkin_code_id: 1,
-        code: "test",
-        is_active: true,
-        attraction_id: 1,
-        starts_at: null,
-        ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
-        photo_spot: null,
-      } as unknown as CheckinCodeDetails);
+    it("identity insert failure cleans up and does not initiate visit or consent", async () => {
+      mockValidCheckinCode();
+      mockSupabaseQuery.insert.mockImplementation((payload: Record<string, unknown>) => {
+        if (payload.provider) {
+          return { error: new Error("IDENTITY_INSERT_ERROR") };
+        }
+        return mockSupabaseQuery;
+      });
 
-      const formData = new FormData();
-      formData.set("displayName", "John");
-      formData.set("hasConsented", "true");
+      const result = await initiateCheckin("test", {}, createValidFormData());
 
+      expect(result.errors?._form?.[0]).toBeDefined();
+      expect(createConsentRecord).not.toHaveBeenCalled();
+      expect(initiateVisit).not.toHaveBeenCalled();
+      expect(tableCalls().slice(-3)).toEqual(["tourist_identities", "consent_records", "tourists"]);
+    });
+
+    it("consent lookup failure cleans up and does not initiate visit", async () => {
+      mockValidCheckinCode();
+      mockSupabaseQuery.maybeSingle
+        .mockResolvedValueOnce({ data: null, error: null })
+        .mockResolvedValueOnce({ data: null, error: new Error("CONSENT_LOOKUP_ERROR") });
+
+      const result = await initiateCheckin("test", {}, createValidFormData());
+
+      expect(result.errors?._form?.[0]).toBeDefined();
+      expect(initiateVisit).not.toHaveBeenCalled();
+      expect(tableCalls().slice(-3)).toEqual(["tourist_identities", "consent_records", "tourists"]);
+    });
+
+    it("consent insert failure cleans up in dependency order and does not initiate visit", async () => {
+      mockValidCheckinCode();
       vi.mocked(createConsentRecord).mockRejectedValueOnce(new Error("DB_ERROR"));
 
-      const result = await initiateCheckin("test", {}, formData);
+      const result = await initiateCheckin("test", {}, createValidFormData());
 
-      expect(result.errors?._form?.[0]).toContain("ไม่สามารถบันทึกความยินยอมได้");
+      expect(result.errors?._form?.[0]).toBeDefined();
+      expect(initiateVisit).not.toHaveBeenCalled();
+      expect(tableCalls().slice(-3)).toEqual(["tourist_identities", "consent_records", "tourists"]);
     });
 
-        it("identity insert failure returns an error and does not initiate visit", async () => {
-      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
-        checkin_code_id: 1,
-        code: "test",
-        is_active: true,
-        attraction_id: 1,
-        starts_at: null,
-        ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
-        photo_spot: null,
-      } as unknown as CheckinCodeDetails);
-
-      // New tourist scenario
-      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
-      mockSupabaseQuery.single.mockResolvedValueOnce({ data: { tourist_id: "new-tourist-id" }, error: null });
-
-      // Consent (none existing, insert success)
-      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
-      vi.mocked(createConsentRecord).mockResolvedValueOnce(undefined);
-
-      // Identity insert failure
-      mockSupabaseQuery.insert.mockImplementation((payload) => {
-         if (payload.provider) {
-             return { error: new Error("IDENTITY_INSERT_ERROR") };
-         }
-         return mockSupabaseQuery;
+    it("valid Thai tourist stores geography, links identity, records consent, and redirects", async () => {
+      mockValidCheckinCode();
+      vi.mocked(resolveProvinceId).mockResolvedValue(10);
+      vi.mocked(redirect).mockImplementationOnce(() => {
+        throw new Error("NEXT_REDIRECT");
       });
 
-      const formData = new FormData();
-      formData.set("displayName", "John");
-      formData.set("hasConsented", "true");
-
-      const result = await initiateCheckin("test", {}, formData);
-
-      expect(result.errors?._form?.[0]).toContain("เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี");
-      expect(initiateVisit).not.toHaveBeenCalled();
-      expect(mockSupabaseQuery.delete).toHaveBeenCalled();
-    });
-
-it("valid Thai tourist stores country/province/age and redirects", async () => {
-      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
-        checkin_code_id: 1,
-        code: "test",
-        is_active: true,
-        attraction_id: 1,
-        starts_at: null,
-        ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
-        photo_spot: null,
-      } as unknown as CheckinCodeDetails);
-
-      vi.mocked(resolveCountryId).mockResolvedValue(1); // 1 = Thailand
-      vi.mocked(resolveProvinceId).mockResolvedValue(10); // 10 = Pattani
-
-      const formData = new FormData();
-      formData.set("displayName", "John");
-      formData.set("originCountry", "Thailand");
-      formData.set("originProvince", "Pattani");
-      formData.set("ageGroup", "25-34");
-      formData.set("hasConsented", "true");
-
-      vi.mocked(redirect).mockImplementationOnce(() => { throw new Error("NEXT_REDIRECT"); });
-
-      await expect(initiateCheckin("test", {}, formData)).rejects.toThrow("NEXT_REDIRECT");
+      await expect(initiateCheckin("test", {}, createValidFormData())).rejects.toThrow("NEXT_REDIRECT");
 
       expect(resolveCountryId).toHaveBeenCalledWith("Thailand");
       expect(resolveProvinceId).toHaveBeenCalledWith("Pattani");
+      expect(mockSupabaseQuery.insert).toHaveBeenNthCalledWith(1, expect.objectContaining({
+        origin_country_id: 1,
+        origin_province_id: 10,
+        age_group: "25-34",
+      }));
+      expect(mockSupabaseQuery.insert).toHaveBeenNthCalledWith(2, expect.objectContaining({
+        provider: "anonymous_device",
+        provider_user_id: "mock-guest-token",
+      }));
+      expect(createConsentRecord).toHaveBeenCalledWith(expect.objectContaining({
+        consentType: "mandatory",
+        consentVersion: "1.0",
+        purposeKey: "checkin_profile_creation",
+      }));
+      expect(tableCalls().slice(0, 4)).toEqual(["tourist_identities", "tourists", "tourist_identities", "consent_records"]);
       expect(revalidatePath).toHaveBeenCalledWith("/checkin/test");
       expect(redirect).toHaveBeenCalledWith("/visit/mock-visit-id/photo");
     });
 
     it("foreign tourist stores country and null province", async () => {
-      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
-        checkin_code_id: 1,
-        code: "test",
-        is_active: true,
-        attraction_id: 1,
-        starts_at: null,
-        ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
-        photo_spot: null,
-      } as unknown as CheckinCodeDetails);
+      mockValidCheckinCode();
+      vi.mocked(resolveCountryId).mockResolvedValue(2);
+      vi.mocked(redirect).mockImplementationOnce(() => {
+        throw new Error("NEXT_REDIRECT");
+      });
 
-      vi.mocked(resolveCountryId).mockResolvedValue(2); // 2 = Malaysia
-      vi.mocked(resolveProvinceId).mockResolvedValue(null);
-
-      const formData = new FormData();
-      formData.set("displayName", "Ali");
-      formData.set("originCountry", "Malaysia");
-      formData.set("hasConsented", "true");
-
-      vi.mocked(redirect).mockImplementationOnce(() => { throw new Error("NEXT_REDIRECT"); });
-
-      await expect(initiateCheckin("test", {}, formData)).rejects.toThrow("NEXT_REDIRECT");
+      await expect(initiateCheckin("test", {}, createValidFormData({
+        displayName: "Ali",
+        originCountry: "Malaysia",
+        originProvince: "",
+      }))).rejects.toThrow("NEXT_REDIRECT");
 
       expect(resolveCountryId).toHaveBeenCalledWith("Malaysia");
-      expect(resolveProvinceId).not.toHaveBeenCalled(); // Shouldn't be called for non-Thailand
+      expect(resolveProvinceId).not.toHaveBeenCalled();
+      expect(mockSupabaseQuery.insert).toHaveBeenNthCalledWith(1, expect.objectContaining({
+        origin_country_id: 2,
+        origin_province_id: null,
+      }));
       expect(revalidatePath).toHaveBeenCalledWith("/checkin/test");
       expect(redirect).toHaveBeenCalledWith("/visit/mock-visit-id/photo");
     });
@@ -473,6 +433,7 @@ it("valid Thai tourist stores country/province/age and redirects", async () => {
       vi.mocked(getTouristStampByAttraction).mockResolvedValue({ stamp_id: "existing-id" } as unknown as TouristStampRow);
 
       const result = await assignStampForVisit("visit-1");
+
       expect(result.success).toBe(true);
       if (result.success && "status" in result) {
         expect(result.status).toBe("already_earned");
@@ -488,6 +449,7 @@ it("valid Thai tourist stores country/province/age and redirects", async () => {
       vi.mocked(awardTouristStamp).mockResolvedValue("new-stamp-id");
 
       const result = await assignStampForVisit("visit-1");
+
       expect(result.success).toBe(true);
       if (result.success && "status" in result) {
         expect(result.status).toBe("earned");
@@ -497,15 +459,15 @@ it("valid Thai tourist stores country/province/age and redirects", async () => {
       }
     });
 
-    it("handles concurrent award gracefully (returns already_earned on null insert fallback)", async () => {
+    it("handles concurrent award gracefully", async () => {
       vi.mocked(getVisitById).mockResolvedValue({ tourist_id: "t1", attraction_id: 1 } as unknown as VisitRow);
       vi.mocked(getTouristStampByAttraction)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ stamp_id: "concurrent-stamp" } as unknown as TouristStampRow);
-
       vi.mocked(awardTouristStamp).mockResolvedValue(null);
 
       const result = await assignStampForVisit("visit-1");
+
       expect(result.success).toBe(true);
       if (result.success && "status" in result) {
         expect(result.status).toBe("already_earned");

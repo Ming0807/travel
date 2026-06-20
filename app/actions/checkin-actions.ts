@@ -12,10 +12,32 @@ import { createConsentRecord } from "@/lib/repositories/consent.repository";
 
 import { minimalFormSchema } from "@/lib/validation/checkin";
 
+const CHECKIN_CONSENT_VERSION = "1.0";
+const CHECKIN_CONSENT_PURPOSE_KEY = "checkin_profile_creation";
+
 export type MinimalFormState = {
   errors?: Record<string, string[]>;
   message?: string;
 };
+
+async function cleanupNewTourist(
+  supabase: ReturnType<typeof createSupabaseServiceRoleClient>,
+  touristId: string
+) {
+  await supabase
+    .from("tourist_identities")
+    .delete()
+    .eq("tourist_id", touristId)
+    .eq("provider", "anonymous_device");
+
+  await supabase
+    .from("consent_records")
+    .delete()
+    .eq("tourist_id", touristId)
+    .eq("purpose_key", CHECKIN_CONSENT_PURPOSE_KEY);
+
+  await supabase.from("tourists").delete().eq("tourist_id", touristId);
+}
 
 /**
  * Server Action: initiateCheckin
@@ -82,12 +104,16 @@ export async function initiateCheckin(
     }
 
     // Check if guest already has a tourist profile
-    const { data: existingIdentity } = await supabase
+    const { data: existingIdentity, error: identityLookupError } = await supabase
       .from("tourist_identities")
       .select("tourist_id, tourists!inner(origin_country_id, origin_province_id, age_group)")
       .eq("provider", "anonymous_device")
       .eq("provider_user_id", guestToken)
       .maybeSingle();
+
+    if (identityLookupError) {
+      return { errors: { _form: ["เกิดข้อผิดพลาดในการตรวจสอบบัญชีผู้เดินทาง กรุณาลองใหม่"] } };
+    }
 
     let touristId: string;
     let isNewTourist = false;
@@ -138,42 +164,8 @@ export async function initiateCheckin(
       touristId = newTourist.tourist_id;
     }
 
-    // Handle Consent - create if they checked it and we don't already have one
-    if (parsed.data.hasConsented) {
-      const purposeKey = "checkin_profile_creation";
-      const { data: existingConsent, error: checkConsentError } = await supabase
-        .from("consent_records")
-        .select("consent_id")
-        .eq("tourist_id", touristId)
-        .eq("consent_version", "1.0")
-        .eq("purpose_key", purposeKey)
-        .maybeSingle();
-
-      if (checkConsentError) {
-        if (isNewTourist) void supabase.from("tourists").delete().eq("tourist_id", touristId);
-        return { errors: { _form: ["เกิดข้อผิดพลาดในการตรวจสอบความยินยอม กรุณาลองใหม่"] } };
-      }
-
-      if (!existingConsent) {
-        try {
-          await createConsentRecord({
-            touristId,
-            consentVersion: "1.0",
-            purpose: "Tourist data collection for sustainable tourism planning",
-            consentType: "mandatory",
-            purposeKey,
-            hasConsented: true,
-            source: "checkin_form",
-            language: "th"
-          });
-        } catch {
-          if (isNewTourist) void supabase.from("tourists").delete().eq("tourist_id", touristId);
-          return { errors: { _form: ["ไม่สามารถบันทึกความยินยอมได้ กรุณาลองใหม่"] } };
-        }
-      }
-    }
-
-    // Link identity if new tourist
+    // Link identity before consent so cleanup can remove dependent rows in a
+    // predictable order if a later required step fails.
     if (isNewTourist) {
       const { error: identityError } = await supabase.from("tourist_identities").insert({
         tourist_id: touristId,
@@ -185,8 +177,42 @@ export async function initiateCheckin(
       });
 
       if (identityError) {
-        void supabase.from("tourists").delete().eq("tourist_id", touristId);
+        await cleanupNewTourist(supabase, touristId);
         return { errors: { _form: ["เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี กรุณาลองใหม่"] } };
+      }
+    }
+
+    // Handle Consent - create if they checked it and we don't already have one
+    if (parsed.data.hasConsented) {
+      const { data: existingConsent, error: checkConsentError } = await supabase
+        .from("consent_records")
+        .select("consent_id")
+        .eq("tourist_id", touristId)
+        .eq("consent_version", CHECKIN_CONSENT_VERSION)
+        .eq("purpose_key", CHECKIN_CONSENT_PURPOSE_KEY)
+        .maybeSingle();
+
+      if (checkConsentError) {
+        if (isNewTourist) await cleanupNewTourist(supabase, touristId);
+        return { errors: { _form: ["เกิดข้อผิดพลาดในการตรวจสอบความยินยอม กรุณาลองใหม่"] } };
+      }
+
+      if (!existingConsent) {
+        try {
+          await createConsentRecord({
+            touristId,
+            consentVersion: CHECKIN_CONSENT_VERSION,
+            purpose: "Tourist data collection for sustainable tourism planning",
+            consentType: "mandatory",
+            purposeKey: CHECKIN_CONSENT_PURPOSE_KEY,
+            hasConsented: true,
+            source: "checkin_form",
+            language: "th"
+          });
+        } catch {
+          if (isNewTourist) await cleanupNewTourist(supabase, touristId);
+          return { errors: { _form: ["ไม่สามารถบันทึกความยินยอมได้ กรุณาลองใหม่"] } };
+        }
       }
     }
 
