@@ -20,9 +20,9 @@ export function AttractionHeader({
     <div className="mb-8">
       {/* Breadcrumbs */}
       <nav className="mb-6 flex items-center gap-2 text-[13px] font-medium text-muted">
-        <Link href="/" className="hover:text-ink transition-colors">Home</Link>
+        <Link href="/" className="hover:text-ink transition-colors">หน้าแรก</Link>
         <CaretRight size={12} weight="bold" />
-        <Link href="/attractions" className="hover:text-ink transition-colors">Destinations</Link>
+        <Link href="/attractions" className="hover:text-ink transition-colors">สถานที่ท่องเที่ยว</Link>
         <CaretRight size={12} weight="bold" />
         <span className="text-ink">{province}</span>
         <CaretRight size={12} weight="bold" />
@@ -41,11 +41,11 @@ export function AttractionHeader({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-ink">
           <Star size={18} weight="fill" className="text-gold" />
-          {rating} <span className="text-muted font-normal">({reviewsCount} reviews)</span>
+          {rating} <span className="text-muted font-normal">({reviewsCount} รีวิว)</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted">
           <Clock size={18} weight="regular" />
-          Best time to visit: {bestTimeToVisit}
+          ช่วงเวลาที่ดีที่สุด: {bestTimeToVisit === "Not specified" ? "ไม่ระบุ" : bestTimeToVisit}
         </div>
       </div>
     </div>

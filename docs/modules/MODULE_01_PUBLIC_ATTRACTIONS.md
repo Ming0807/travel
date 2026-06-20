@@ -243,15 +243,15 @@ is_active = true
 ## 9.5 Acceptance Criteria
 
 ```text
-[ ] User can open attraction list page.
-[ ] Published attractions are visible.
-[ ] Unpublished attractions are hidden.
-[ ] Inactive attractions are hidden.
-[ ] User can filter by province.
-[ ] User can filter by attraction type.
-[ ] User can search by attraction name.
-[ ] Page works on mobile.
-[ ] Empty state is clear.
+[x] User can open attraction list page.
+[x] Published attractions are visible.
+[x] Unpublished attractions are hidden.
+[x] Inactive attractions are hidden.
+[x] User can filter by province.
+[x] User can filter by attraction type.
+[x] User can search by attraction name.
+[x] Page works on mobile.
+[x] Empty state is clear.
 ```
 
 ---
@@ -428,6 +428,7 @@ Rules:
 - Use optimized images.
 - Provide alt text where possible.
 - Avoid very large images on initial load.
+- Use `media_assets` thumbnails when available instead of selecting non-existent `thumbnail_storage_path` directly from `content_media`.
 - Use lazy loading.
 
 ---

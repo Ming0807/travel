@@ -123,6 +123,11 @@ describe("listPublicAttractionCards", () => {
     expect(mockFromChain.eq).toHaveBeenCalledWith("attraction_types.type_name_en", "Culture");
     expect(mockFromChain.or).toHaveBeenCalledWith(expect.stringContaining("slug.ilike"));
     expect(mockFromChain.or).toHaveBeenCalledWith(expect.not.stringContaining("old,_town"));
+
+    // Ensure we don't accidentally select thumbnail_storage_path from content_media (schema mismatch)
+    expect(mockFromChain.select).toHaveBeenCalledWith(
+      expect.not.stringContaining("thumbnail_storage_path")
+    );
   });
 });
 

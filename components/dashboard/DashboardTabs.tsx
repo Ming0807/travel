@@ -11,12 +11,14 @@ import {
   Smiley,
   FunnelSimple,
   TreeEvergreen,
+  Star,
 } from "@phosphor-icons/react/dist/ssr";
 
 const tabs = [
   { name: "Executive", href: "/admin/dashboard", exact: true, icon: ChartLineUp },
   { name: "Tourists", href: "/admin/dashboard/tourists", icon: Users },
   { name: "Visits & Behavior", href: "/admin/dashboard/visits", icon: MapPinLine },
+  { name: "Attractions", href: "/admin/dashboard/attractions", icon: Star },
   { name: "Expenses", href: "/admin/dashboard/expenses", icon: Wallet },
   { name: "Satisfaction", href: "/admin/dashboard/satisfaction", icon: Smiley },
   { name: "Funnel", href: "/admin/dashboard/funnel", icon: FunnelSimple },

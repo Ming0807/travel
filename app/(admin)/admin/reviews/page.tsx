@@ -23,6 +23,18 @@ export default async function AdminReviewsPage({
   await requirePermission("review.read");
   const params = await searchParams;
 
+  let attractionName = "";
+  if (params.attractionId) {
+    const { createSupabaseServerClient } = await import("@/lib/supabase/server");
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase
+      .from("attractions")
+      .select("name_th")
+      .eq("attraction_id", params.attractionId)
+      .single();
+    if (data) attractionName = data.name_th;
+  }
+
   return (
     <AdminShell>
       <div className="space-y-6">
@@ -42,6 +54,7 @@ export default async function AdminReviewsPage({
             initialRestaurantId={params.restaurantId || ""}
             initialIsApproved={params.isApproved || ""}
             initialIsPublished={params.isPublished || ""}
+            attractionName={attractionName}
           />
         </Suspense>
       </div>

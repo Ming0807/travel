@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Star, CheckCircle, XCircle, Trash, Funnel, MagnifyingGlass, CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { approveReviewAction, rejectReviewAction, deleteReviewAction } from "@/app/actions/admin-review-actions";
 import type { AdminReviewRow } from "@/lib/repositories/admin-review.repository";
+import Link from "next/link";
 
 type Props = {
   initialPage: number;
@@ -13,6 +14,7 @@ type Props = {
   initialRestaurantId: string;
   initialIsApproved: string;
   initialIsPublished: string;
+  attractionName?: string;
 };
 
 function mapReview(r: AdminReviewRow) {
@@ -227,6 +229,24 @@ export function ReviewsListClient(props: Props) {
 
   return (
     <div>
+      {/* Scoped Banner */}
+      {props.attractionName && (
+        <div className="mb-6 flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm font-bold text-blue-800">
+            <span className="rounded-md bg-blue-100 px-2 py-1 text-xs font-semibold tracking-wider text-blue-600">
+              รีวิวสำหรับสถานที่:
+            </span>
+            {props.attractionName}
+          </div>
+          <Link
+            href="/admin/reviews"
+            className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded-sm"
+          >
+            ดูรีวิวทั้งหมด
+          </Link>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] flex-1">

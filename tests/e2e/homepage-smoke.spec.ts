@@ -50,4 +50,16 @@ test.describe("Homepage Smoke Test", () => {
       fullPage: true,
     });
   });
+  test("homepage 'ดูสถานที่ทั้งหมด' link navigates to /attractions", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const allAttractionsLink = page.locator("a:has-text('ดูสถานที่ทั้งหมด')").first();
+    await expect(allAttractionsLink).toBeVisible();
+    await allAttractionsLink.click();
+
+    await expect(page).toHaveURL(/\/attractions/);
+    const attractionsHeading = page.locator("h1:has-text('สถานที่ท่องเที่ยว')").first();
+    await expect(attractionsHeading).toBeVisible({ timeout: 10_000 });
+  });
 });

@@ -15,13 +15,13 @@ export function AttractionCTA({ name }: AttractionCTAProps) {
       
       <div className="relative z-10 mx-auto max-w-2xl">
         <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-          Ready to Explore {name}?
+          พร้อมจะไปเที่ยว {name} หรือยัง?
         </h2>
         <p className="mb-8 text-base font-medium text-white/80 sm:text-lg">
-          Plan your unforgettable journey today and experience the beauty of the Southern Border.
+          วางแผนการเดินทางของคุณวันนี้ และสัมผัสความงามของชายแดนใต้
         </p>
         <Link href="/routes" className="inline-flex rounded-full bg-white px-8 py-3.5 text-sm font-bold text-ink shadow-lg transition-colors hover:bg-cream">
-          Plan your trip
+          วางแผนการเดินทาง
         </Link>
       </div>
     </div>

@@ -108,8 +108,13 @@ function publicAttractionMedia(row: DbRecord): DbRecord | null {
   return publicReadyMedia.find((item) => item.is_cover === true) ?? publicReadyMedia[0] ?? null;
 }
 
-function publicImage(row: DbRecord): string | null {
-  return imageUrlFromStoragePath(publicAttractionMedia(row)?.storage_path);
+function publicImage(row: DbRecord, preferThumbnail = false): string | null {
+  const media = publicAttractionMedia(row);
+  if (!media) return null;
+  const path = preferThumbnail && typeof media.thumbnail_storage_path === "string" && media.thumbnail_storage_path.trim()
+    ? media.thumbnail_storage_path
+    : media.storage_path;
+  return imageUrlFromStoragePath(path);
 }
 
 function mapAttractionCard(row: DbRecord): InternalAttractionCard {
@@ -127,7 +132,7 @@ function mapAttractionCard(row: DbRecord): InternalAttractionCard {
     province: provinceName,
     category,
     description: text(row.short_description_th, text(row.short_description_en)),
-    imageUrl: publicImage(row),
+    imageUrl: publicImage(row, true),
     imageAlt: text(media?.alt_text_th, text(media?.alt_text_en, `${name} destination image`)),
     tags: [category, provinceName].filter(Boolean)
   };
@@ -295,10 +300,10 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
   }
 }
 
-export async function getPublicAttractionDetail(slug: string): Promise<PublicAttractionDetail | null> {
+export async function getPublicAttractionDetail(slug: string, options?: { previewMode?: boolean }): Promise<PublicAttractionDetail | null> {
   try {
     const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
+    let query = supabase
       .from("attractions")
       .select(`
         attraction_id,
@@ -319,10 +324,13 @@ export async function getPublicAttractionDetail(slug: string): Promise<PublicAtt
         attraction_types (type_name_th, type_name_en),
         content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
       `)
-      .eq("slug", slug)
-      .eq("is_published", true)
-      .eq("is_active", true)
-      .maybeSingle();
+      .eq("slug", slug);
+
+    if (!options?.previewMode) {
+      query = query.eq("is_published", true).eq("is_active", true);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error || !data) return null;
 

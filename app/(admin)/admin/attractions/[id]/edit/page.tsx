@@ -1,6 +1,4 @@
 import { Metadata } from "next";
-import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AttractionVisualEditor } from "@/components/admin/attractions/visual-editor/AttractionVisualEditor";
 import { requirePermission } from "@/lib/auth/guards";
 import { getAdminAttractionById, getAdminProvinces, getAdminAttractionTypes, getAdminDistricts, getAdminAllContentList, getAdminAttractionRelatedContent } from "@/lib/repositories/admin-attraction.repository";
@@ -40,7 +38,7 @@ export default async function EditAdminAttractionPage({
 
   // Fetch contextual public data for the Visual Editor preview
   const [publicDetail, reviewStats, publicReviews, allContent, relatedContent] = await Promise.all([
-    getPublicAttractionDetail(attraction.slug),
+    getPublicAttractionDetail(attraction.slug, { previewMode: true }),
     getReviewStatsByAttraction(attractionId),
     listPublicReviewsByAttraction(attractionId),
     getAdminAllContentList(),

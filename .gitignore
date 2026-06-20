@@ -33,3 +33,7 @@ pnpm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
+
+.codex/
+.reasonix/
+Require
