@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowSquareOut, CheckCircle, QrCode, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+import { ArrowSquareOut, CheckCircle, QrCode, ShieldCheck, PencilSimple } from "@phosphor-icons/react/dist/ssr";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { SearchInput } from "@/components/admin/SearchInput";
@@ -57,10 +57,17 @@ function AttractionStatusWarnings({
   );
 }
 
-function CheckinCodeActions({ code, label }: { code: string; label?: string | null }) {
+function CheckinCodeActions({ code, label, id }: { code: string; label?: string | null; id: number }) {
   return (
     <div className="flex items-center justify-end gap-2">
       <CopyCheckinUrlAction code={code} />
+      <Link
+        href={`/admin/checkin-codes/${id}/edit`}
+        aria-label={`Edit ${code}`}
+        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-500 transition hover:bg-slate-50 hover:text-[#0A6B62]"
+      >
+        <PencilSimple size={18} weight="bold" />
+      </Link>
       <Link
         href={`/c/${code}`}
         target="_blank"
@@ -193,7 +200,7 @@ export default async function AdminCheckinCodesPage({
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-2">
-                  <CheckinCodeActions code={code.code} label={code.label} />
+                  <CheckinCodeActions code={code.code} label={code.label} id={code.checkin_code_id} />
                   <CheckinCodeStatusAction
                     checkinCodeId={code.checkin_code_id}
                     isActive={code.is_active}
@@ -256,7 +263,7 @@ export default async function AdminCheckinCodesPage({
             </div>
 
             <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-              <CheckinCodeActions code={code.code} label={code.label} />
+              <CheckinCodeActions code={code.code} label={code.label} id={code.checkin_code_id} />
               <CheckinCodeStatusAction
                 checkinCodeId={code.checkin_code_id}
                 isActive={code.is_active}

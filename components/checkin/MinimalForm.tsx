@@ -1,23 +1,13 @@
 "use client";
+import { useActionState } from "react";
 
-import { useActionState, useState, useRef } from "react";
 import { initiateCheckin, type MinimalFormState } from "@/app/actions/checkin-actions";
-import { Spinner, Camera, CheckCircle } from "@phosphor-icons/react/dist/ssr";
+import { Spinner, CheckCircle } from "@phosphor-icons/react/dist/ssr";
 
 const initialFormState: MinimalFormState = {};
 
 export function MinimalForm({ checkinCode }: { checkinCode: string }) {
   const [state, formAction, isPending] = useActionState(initiateCheckin.bind(null, checkinCode), initialFormState);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    }
-  };
 
   return (
     <form action={formAction} className="w-full space-y-6 animate-fade-in-up delay-200">
@@ -28,53 +18,7 @@ export function MinimalForm({ checkinCode }: { checkinCode: string }) {
         </div>
       )}
 
-      {/* Photo Upload */}
-      <div className="bg-white rounded-2xl border border-ink/5 p-6 shadow-sm">
-        <label className="text-sm font-bold text-ink mb-3 block">รูปถ่ายของคุณ <span className="text-muted font-normal">(ไม่บังคับ)</span></label>
-        
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-ink/10 bg-ink/[0.02] p-8 transition-colors hover:border-coral/40 hover:bg-coral/[0.02]"
-        >
-          {previewUrl ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="max-h-48 rounded-lg object-cover"
-              />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPreviewUrl(null);
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                }}
-                className="mt-3 text-xs font-bold text-red-500 hover:underline"
-              >
-                ลบรูป
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-cream text-coral">
-                <Camera size={28} weight="fill" />
-              </div>
-              <p className="text-sm font-bold text-ink">แตะเพื่ออัปโหลดรูป</p>
-              <p className="mt-1 text-xs text-muted">รูป JPEG หรือ PNG ขนาดไม่เกิน 10MB</p>
-            </>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            name="photo"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </div>
-      </div>
+
 
       {/* Name */}
       <div className="space-y-2">
