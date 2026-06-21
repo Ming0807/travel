@@ -23,7 +23,7 @@ export default async function StoriesPage(props: { searchParams: Promise<{ [key:
   let touristId: string | undefined;
   try {
     touristId = await resolveCurrentTouristId();
-  } catch (e) {
+  } catch {
     // Not logged in or no identity
   }
 

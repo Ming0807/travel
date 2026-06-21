@@ -6,7 +6,7 @@ import { test, expect, type Page } from "@playwright/test";
  */
 
 /** Admin login page mock */
-function loginPageHtml(): string {
+function _loginPageHtml(): string {
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Admin Login</title></head>

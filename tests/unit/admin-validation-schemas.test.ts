@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { adminAttractionMutationSchema, adminAttractionFiltersSchema } from "@/lib/validation/admin-attraction";
 import { adminCheckinCodeMutationSchema, adminCheckinCodeFiltersSchema } from "@/lib/validation/checkin-code";
-import { adminPhotoSpotMutationSchema, adminPhotoSpotFiltersSchema } from "@/lib/validation/photo-spot";
-import { adminRouteMutationSchema, adminRouteFiltersSchema, adminRouteStopsBatchSchema, adminRouteStopMutationSchema } from "@/lib/validation/route";
+import { adminPhotoSpotMutationSchema } from "@/lib/validation/photo-spot";
+import { adminRouteMutationSchema, adminRouteStopsBatchSchema, adminRouteStopMutationSchema } from "@/lib/validation/route";
 import { adminStoryMutationSchema, adminStoryFiltersSchema } from "@/lib/validation/story";
 import { adminAccommodationMutationSchema, adminAccommodationFiltersSchema } from "@/lib/validation/admin-accommodation";
 import { adminRestaurantMutationSchema, adminRestaurantFiltersSchema } from "@/lib/validation/admin-restaurant";
-import { adminMediaFiltersSchema, adminMediaMutationSchema, adminMediaEntityTypeSchema, adminMediaLifecycleStatusSchema } from "@/lib/validation/media";
+import { adminMediaFiltersSchema, adminMediaEntityTypeSchema, adminMediaLifecycleStatusSchema } from "@/lib/validation/media";
 import { adminPaginationSchema } from "@/lib/validation/admin-attraction";
 import { adminBadgeFiltersSchema, badgeDefinitionSchema } from "@/lib/validation/admin-badge";
 import { adminReviewFiltersSchema } from "@/lib/validation/admin-review";

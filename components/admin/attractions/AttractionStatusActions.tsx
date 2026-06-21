@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Eye, EyeSlash, Power, Image, PencilSimple } from "@phosphor-icons/react";
+import { Eye, EyeSlash, Power, Image as ImageIcon, PencilSimple } from "@phosphor-icons/react";
 import Link from "next/link";
 import {
   toggleAttractionPublishAction,
@@ -49,7 +49,7 @@ export function AttractionStatusActions({
         aria-label="จัดการรูปภาพ"
         className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0A6B62] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62]"
       >
-        <Image size={16} weight="bold" aria-hidden="true" />
+        <ImageIcon size={16} weight="bold" aria-hidden="true" />
       </Link>
       <Link
         href={`/admin/photo-spots?attractionId=${attractionId}`}

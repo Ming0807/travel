@@ -28,7 +28,7 @@ export function MessageDetailClient({ message }: { message: any }) {
         } else {
           router.refresh();
         }
-      } catch (e) {
+      } catch {
         alert("Failed to update status");
       }
     });
@@ -41,7 +41,7 @@ export function MessageDetailClient({ message }: { message: any }) {
         await removeAdminMessage(message.id);
         router.push("/admin/messages");
         router.refresh();
-      } catch (e) {
+      } catch {
         alert("Failed to delete message");
       }
     });
@@ -52,7 +52,7 @@ export function MessageDetailClient({ message }: { message: any }) {
       try {
         await toggleAdminMessageReplied(message.id, !message.is_replied);
         router.refresh();
-      } catch (e) {
+      } catch {
         alert("Failed to update replied status");
       }
     });

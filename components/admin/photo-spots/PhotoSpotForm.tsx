@@ -12,7 +12,7 @@ import {
   AdminReadinessPanel,
   AdminSaveBar,
 } from "@/components/admin/forms/AdminFormUX";
-import { FormInput, FormTextarea, FormSelect, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
+import { FormInput, FormTextarea, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 
 interface PhotoSpotFormProps {

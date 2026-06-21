@@ -401,7 +401,7 @@ describe("postCertificateSurveySchema", () => {
   it("does not crash when both overnightStatus and nightsCount are null", () => {
     // This fails because with only overnight and nights, nothing else is filled
     // The refine forces at least one optional field
-    const result = postCertificateSurveySchema.safeParse({
+    const _result = postCertificateSurveySchema.safeParse({
       visitId: validVisitId,
       overnightStatus: null,
       nightsCount: null,

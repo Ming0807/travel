@@ -3,7 +3,6 @@ import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
 import { getServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAuditAction } from "@/lib/services/audit-log.service";
-import { generateCsv } from "@/lib/utils/csv";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 
 export const dynamic = "force-dynamic";

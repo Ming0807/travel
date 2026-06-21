@@ -16,6 +16,7 @@ import {
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { projectVision as defaultVision, teamMembers as defaultTeam } from "@/lib/data/about";
 import { SettingsService } from "@/lib/services/settings.service";
+import Image from "next/image";
 import Link from "next/link";
 
 export default async function AboutPage() {
@@ -222,7 +223,14 @@ export default async function AboutPage() {
               <div key={idx} className="bg-white rounded-xl p-5 border border-ink/5 flex flex-col items-center text-center hover:shadow-md transition-shadow">
                 <div className="w-full h-48 relative rounded-xl overflow-hidden mb-4 bg-cream">
                   {member.imageUrl ? (
-                    <img src={member.imageUrl} alt={member.name} className="absolute inset-0 w-full h-full object-cover" />
+                    <Image
+                      src={member.imageUrl}
+                      alt={member.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="object-cover"
+                      unoptimized
+                    />
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center bg-[#F4F1EA] text-center">
                       <Users size={42} weight="light" className="text-coral" />

@@ -581,7 +581,7 @@ export async function getAdminAllContentList() {
   try {
     const { data } = await supabase.from("accommodations").select("accommodation_id, name_th, province_id, provinces(province_name_th)").eq("is_published", true);
     accommodationsList = data || [];
-  } catch (e) {
+  } catch {
     // Ignore if table missing
   }
 

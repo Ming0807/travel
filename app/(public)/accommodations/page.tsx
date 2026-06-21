@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   MagnifyingGlass,
   MapPin,
-  Star,
   Bed,
   PaperPlaneRight
 } from "@phosphor-icons/react/dist/ssr";

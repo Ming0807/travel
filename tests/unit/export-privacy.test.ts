@@ -27,13 +27,6 @@ import type {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the keys of a type as a Set for easy comparison.
- */
-function keysOf<T extends Record<string, unknown>>(obj: T): Set<string> {
-  return new Set(Object.keys(obj));
-}
-
-/**
  * Asserts that a safe-export row has NO keys that are in the forbidden set.
  */
 function expectNoKeys(

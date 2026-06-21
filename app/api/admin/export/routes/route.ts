@@ -3,7 +3,6 @@ import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
 import { getServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAuditAction } from "@/lib/services/audit-log.service";
-import { generateCsv } from "@/lib/utils/csv";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 
 export const dynamic = "force-dynamic";
@@ -51,7 +50,7 @@ export async function GET(request: NextRequest) {
       "Updated At": row.updated_at || "",
     }));
 
-    const csvData = rows.length === 0 ? generateCsv([{ Message: "No data available" }]) : generateCsv(rows);
+    const exportRows = rows.length === 0 ? [{ Message: "No data available" }] : rows;
 
     await logAuditAction({
       actor: guard.actor,
@@ -64,7 +63,7 @@ export async function GET(request: NextRequest) {
     const date = new Date().toISOString().split("T")[0];
     const baseFilename = `routes_export_${date}`;
 
-    return await createExportResponse(rows, baseFilename, format);
+    return await createExportResponse(exportRows, baseFilename, format);
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });

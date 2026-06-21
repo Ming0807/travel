@@ -37,7 +37,7 @@ export function ShareStoryForm({
       } else {
         setError(result.error || "เกิดข้อผิดพลาดบางอย่าง กรุณาลองใหม่อีกครั้ง");
       }
-    } catch (err: any) {
+    } catch {
       setError("เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง");
     } finally {
       setIsSubmitting(false);

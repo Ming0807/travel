@@ -17,7 +17,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: any
     startTransition(async () => {
       try {
         await toggleTemplateStatus(templateId, !currentStatus);
-      } catch (err) {
+      } catch {
         alert("ไม่สามารถเปลี่ยนสถานะได้");
       }
     });
@@ -28,7 +28,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: any
     startTransition(async () => {
       try {
         await setTemplateAsDefault(templateId);
-      } catch (err) {
+      } catch {
         alert("ไม่สามารถตั้งค่าเริ่มต้นได้");
       }
     });
@@ -39,8 +39,8 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: any
     startTransition(async () => {
       try {
         await deleteTemplate(templateId);
-      } catch (err: any) {
-        alert(err.message || "ไม่สามารถลบเทมเพลตได้");
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : "ไม่สามารถลบเทมเพลตได้");
       }
     });
   };

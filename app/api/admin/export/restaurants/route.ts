@@ -2,7 +2,7 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
-import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
+import { requirePermission } from "@/lib/auth/guards";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 import { getServerEnv } from "@/lib/config/server-env";
 

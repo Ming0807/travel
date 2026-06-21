@@ -36,7 +36,7 @@ export function FunnelChart({ stages }: { stages: FunnelStage[] }) {
       const b = Math.round(55 + t * (98 - 55));      // 55 → 98
       return `rgb(${r},${g},${b})`;
     });
-  }, [stages.length]);
+  }, [stages]);
 
   /* positions */
   const stageLayout = stages.map((stage, i) => {

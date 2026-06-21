@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { badgeDefinitionSchema } from "@/lib/validation/admin-badge";
-import type { BadgeDefinitionInput } from "@/lib/validation/admin-badge";
 import {
   createAdminBadge,
   updateAdminBadge,

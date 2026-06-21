@@ -18,17 +18,6 @@ type ActionResult = {
   fieldErrors?: Record<string, string[] | undefined>;
 };
 
-function adminMediaEntityPath(entityType: string, entityId: number) {
-  const segmentByEntity: Record<string, string> = {
-    attraction: "attractions",
-    restaurant: "restaurants",
-    story: "stories",
-    route: "routes",
-  };
-
-  return `/admin/${segmentByEntity[entityType] ?? `${entityType}s`}/${entityId}/media`;
-}
-
 export async function createMediaAction(prevState: any, formData: FormData): Promise<ActionResult> {
   try {
     const parsed = adminMediaMutationSchema.safeParse(Object.fromEntries(formData.entries()));

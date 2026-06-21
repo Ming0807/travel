@@ -13,8 +13,7 @@ export function RelatedContentForm({
   availableItems,
   initialSelectedIds,
   attractionProvince,
-  onClose,
-  title
+  onClose
 }: {
   attractionId: number;
   type: "attractions" | "restaurants" | "accommodations" | "stories";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Eye, EyeSlash, PencilSimple, MapPinLine, Power, Image } from "@phosphor-icons/react";
+import { Eye, EyeSlash, PencilSimple, MapPinLine, Power, Image as ImageIcon } from "@phosphor-icons/react";
 import { toggleRoutePublishAction, toggleRouteActiveAction } from "@/app/actions/admin-route-actions";
 import Link from "next/link";
 
@@ -44,7 +44,7 @@ export function RouteStatusActions({
         className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0A6B62]"
         title="Manage Media"
       >
-        <Image size={16} weight="bold" />
+        <ImageIcon size={16} weight="bold" />
       </Link>
       <Link
         href={`/admin/routes/${routeId}/edit`}

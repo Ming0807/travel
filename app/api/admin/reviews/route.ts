@@ -5,7 +5,7 @@ import { listAdminReviews } from "@/lib/repositories/admin-review.repository";
 
 export async function POST(request: NextRequest) {
   try {
-    const guard = await requirePermission("review.read");
+    await requirePermission("review.read");
     const formData = await request.formData();
     const parsed = adminReviewFiltersSchema.safeParse(Object.fromEntries(formData));
 

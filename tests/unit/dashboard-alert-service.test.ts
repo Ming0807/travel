@@ -4,8 +4,6 @@ import type {
   DashboardAlertSeverity,
   DashboardViewModel,
   FunnelStage,
-  DistributionItem,
-  RankedAttraction,
 } from "@/types/dashboard";
 import { buildDashboardAlerts } from "@/lib/services/dashboard-alert.service";
 
@@ -122,7 +120,7 @@ function bySource(alerts: DashboardAlert[], source: DashboardAlert["source"]) {
   return alerts.filter((a) => a.source === source);
 }
 
-function bySeverity(alerts: DashboardAlert[], severity: DashboardAlertSeverity) {
+function _bySeverity(alerts: DashboardAlert[], severity: DashboardAlertSeverity) {
   return alerts.filter((a) => a.severity === severity);
 }
 
@@ -433,7 +431,7 @@ describe("buildDashboardAlerts — funnel", () => {
   // ── Critical drop-off (>= 70%) ──
 
   it("produces critical alert when largest drop-off is >= 70%", () => {
-    const stages = healthyFunnelStages().map((s, i) => {
+    const stages = healthyFunnelStages().map((s, _i) => {
       if (s.key === "minimal_form_completed") {
         return { ...s, count: 30, conversionFromPrevious: 30 / 160, dropOffFromPrevious: 1 - 30 / 160 };
       }
@@ -452,7 +450,7 @@ describe("buildDashboardAlerts — funnel", () => {
   });
 
   it("critical drop-off message includes previous and current stage labels and counts", () => {
-    const stages = healthyFunnelStages().map((s, i) => {
+    const stages = healthyFunnelStages().map((s, _i) => {
       if (s.key === "photo_uploaded") {
         return { ...s, count: 20, conversionFromPrevious: 20 / 150, dropOffFromPrevious: 1 - 20 / 150 };
       }
@@ -473,7 +471,7 @@ describe("buildDashboardAlerts — funnel", () => {
   // ── Warning drop-off (>= 50%, < 70%) ──
 
   it("produces warning alert when largest drop-off is >= 50% but < 70%", () => {
-    const stages = healthyFunnelStages().map((s, i) => {
+    const stages = healthyFunnelStages().map((s, _i) => {
       if (s.key === "survey_completed") {
         return { ...s, count: 50, conversionFromPrevious: 50 / 100, dropOffFromPrevious: 1 - 50 / 100 };
       }
@@ -494,7 +492,7 @@ describe("buildDashboardAlerts — funnel", () => {
   // ── Boundary: exactly 70% and exactly 50% ──
 
   it("produces critical alert when drop-off is exactly 70%", () => {
-    const stages = healthyFunnelStages().map((s, i) => {
+    const stages = healthyFunnelStages().map((s, _i) => {
       if (s.key === "certificate_started") {
         // landing_viewed=180, certificate_started=54 → drop = 126/180 = 70%
         return { ...s, count: 54, conversionFromPrevious: 54 / 180, dropOffFromPrevious: 1 - 54 / 180 };
@@ -511,7 +509,7 @@ describe("buildDashboardAlerts — funnel", () => {
   });
 
   it("produces warning alert when drop-off is exactly 50%", () => {
-    const stages = healthyFunnelStages().map((s, i) => {
+    const stages = healthyFunnelStages().map((s, _i) => {
       if (s.key === "certificate_started") {
         return { ...s, count: 90, conversionFromPrevious: 90 / 180, dropOffFromPrevious: 1 - 90 / 180 };
       }
@@ -711,7 +709,7 @@ describe("buildDashboardAlerts — expense", () => {
 describe("buildDashboardAlerts — sorting", () => {
   it("sorts alerts critical first, then warning, then info", () => {
     // Build a scenario that triggers all severity levels
-    const stages = healthyFunnelStages().map((s, i) => {
+    const stages = healthyFunnelStages().map((s, _i) => {
       if (s.key === "minimal_form_completed") {
         return { ...s, count: 30, conversionFromPrevious: 30 / 160, dropOffFromPrevious: 1 - 30 / 160 };
       }
@@ -803,7 +801,7 @@ describe("buildDashboardAlerts — integration scenarios", () => {
 
   it("triggers multiple alert sources simultaneously", () => {
     // Low satisfaction + high funnel drop-off + low survey + low expense
-    const stages = healthyFunnelStages().map((s, i) => {
+    const stages = healthyFunnelStages().map((s, _i) => {
       if (s.key === "certificate_started") {
         return { ...s, count: 30, conversionFromPrevious: 30 / 180, dropOffFromPrevious: 1 - 30 / 180 };
       }
@@ -842,7 +840,7 @@ describe("buildDashboardAlerts — integration scenarios", () => {
   });
 
   it("produces actionable alerts with correct action links", () => {
-    const stages = healthyFunnelStages().map((s, i) => {
+    const stages = healthyFunnelStages().map((s, _i) => {
       if (s.key === "minimal_form_completed") {
         return { ...s, count: 40, conversionFromPrevious: 40 / 160, dropOffFromPrevious: 1 - 40 / 160 };
       }

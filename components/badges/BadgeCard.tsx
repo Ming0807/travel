@@ -1,4 +1,4 @@
-import type { BadgeDefinition, TouristBadge } from "@/types/tourism";
+import type { BadgeDefinition } from "@/types/tourism";
 import {
   Trophy,
   Star,

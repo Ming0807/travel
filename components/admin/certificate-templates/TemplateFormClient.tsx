@@ -30,14 +30,14 @@ export function TemplateFormClient() {
         throw new Error(errData.error || "Failed to upload template");
       }
 
-      const result = await response.json();
+      await response.json();
       
       // Need a server action to save the template record
       // Currently simulating success:
       router.push("/admin/certificate-templates");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to upload template");
       setIsUploading(false);
     }
   };

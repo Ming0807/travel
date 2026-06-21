@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { UserCircle, SignOut, CaretDown, User } from "@phosphor-icons/react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -68,7 +69,14 @@ export function UserNavMenu({ mobile = false }: { mobile?: boolean }) {
       <div className="mt-4 border-t border-ink/5 pt-4">
         <div className="flex items-center gap-3 px-4 mb-4">
           {avatarUrl ? (
-            <img src={avatarUrl} alt={displayName} className="h-10 w-10 shrink-0 rounded-full border border-ink/10 object-cover" />
+            <Image
+              src={avatarUrl}
+              alt={displayName}
+              width={40}
+              height={40}
+              className="h-10 w-10 shrink-0 rounded-full border border-ink/10 object-cover"
+              unoptimized
+            />
           ) : (
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ink/5 text-ink">
               <User weight="fill" size={20} />
@@ -110,7 +118,14 @@ export function UserNavMenu({ mobile = false }: { mobile?: boolean }) {
         className="flex shrink-0 items-center gap-2 rounded-full border border-ink/10 bg-white pl-2 pr-4 py-1.5 transition-all hover:bg-slate-50 hover:border-ink/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
       >
         {avatarUrl ? (
-          <img src={avatarUrl} alt={displayName} className="h-6 w-6 shrink-0 rounded-full object-cover" />
+          <Image
+            src={avatarUrl}
+            alt={displayName}
+            width={24}
+            height={24}
+            className="h-6 w-6 shrink-0 rounded-full object-cover"
+            unoptimized
+          />
         ) : (
           <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ink/10 text-ink">
             <User weight="fill" size={14} />

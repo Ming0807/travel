@@ -49,7 +49,6 @@ const ADMIN_COOKIE_NAME = __ENV.ADMIN_COOKIE_NAME || "sb-localhost-auth-token";
 const DISABLE_AUTH_CHECK = __ENV.DISABLE_AUTH_CHECK === "1";
 const RAW_MEDIA_IDS    = __ENV.MEDIA_ASSET_IDS || "1,2,3,4,5";
 const MEDIA_ASSET_IDS  = RAW_MEDIA_IDS.split(",").map((c) => c.trim()).filter(Boolean);
-const MEDIA_ENTITY_ID  = __ENV.MEDIA_ENTITY_ID || "1";
 
 // ---------------------------------------------------------------------------
 // Test data pools

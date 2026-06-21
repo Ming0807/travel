@@ -47,7 +47,7 @@ export function LineRecoveryPanel({ className = "" }: { className?: string }) {
           message: data?.error?.message || "เกิดข้อผิดพลาดในการกู้คืนบัญชี กรุณาลองใหม่",
         });
       }
-    } catch (err) {
+    } catch {
       setUiState({ kind: "error", message: "LINE ชั่วคราวไม่สามารถใช้งานได้" });
     }
   };

@@ -4,7 +4,6 @@ import { getServerEnv } from "@/lib/config/server-env";
 import { exportAdminVisits, toSafeVisitExportRows } from "@/lib/repositories/admin-visit.repository";
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import { adminVisitFiltersSchema } from "@/lib/validation/admin-visit";
-import { generateCsv } from "@/lib/utils/csv";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +43,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const csvData = generateCsv(toSafeVisitExportRows(data));
+    const rows = toSafeVisitExportRows(data);
     await logAuditAction({
       actor: guard.actor,
       action: `export.visits.${format}`,
@@ -56,7 +55,7 @@ export async function GET(request: NextRequest) {
     const date = new Date().toISOString().split("T")[0];
     const baseFilename = `visit_records_export_${date}`;
 
-    return await createExportResponse(toSafeVisitExportRows(data), baseFilename, format);
+    return await createExportResponse(rows, baseFilename, format);
   } catch (error) {
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });

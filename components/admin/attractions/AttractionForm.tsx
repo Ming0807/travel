@@ -1,13 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
 import { createAttractionAction, updateAttractionAction } from "@/app/actions/admin-attraction-actions";
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
-import { ImageSquare, QrCode, ArrowLeft, Info, MapPinLine, FileText, CheckCircle, WarningCircle, List, MagnifyingGlass } from "@phosphor-icons/react";
+import { ImageSquare, QrCode, ArrowLeft, MapPinLine, FileText, CheckCircle, WarningCircle, List } from "@phosphor-icons/react";
 import { useState } from "react";
 
 export type AdminSelectOption = {
@@ -39,7 +38,6 @@ export function AttractionForm({
   attractionTypes,
   submitLabel = "บันทึกข้อมูล"
 }: AttractionFormProps) {
-  const router = useRouter();
   const isEditing = !!attraction;
   const action = isEditing ? updateAttractionAction.bind(null, attraction.attraction_id) : createAttractionAction;
 

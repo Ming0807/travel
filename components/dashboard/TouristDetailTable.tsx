@@ -50,7 +50,7 @@ function DetailSection({
             </tr>
           </thead>
           <tbody>
-            {items.slice(0, 15).map((item, i) => {
+            {items.slice(0, 15).map((item) => {
               const barWidth = maxCount > 0 ? (item.value / maxCount) * 100 : 0;
               return (
                 <tr

@@ -1,4 +1,4 @@
-import { ArrowLeft, PenNib } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SiteFooter } from "@/components/layout/SiteFooter";

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createBadgeAction, updateBadgeAction } from "@/app/actions/admin-badge-actions";
 import type { BadgeDefinition } from "@/types/tourism";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
-import { Medal, List, Plus } from "@phosphor-icons/react";
+import { List, Plus } from "@phosphor-icons/react";
 
 type BadgeFormProps = {
   badge?: BadgeDefinition | null;

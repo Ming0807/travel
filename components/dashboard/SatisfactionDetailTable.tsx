@@ -83,7 +83,7 @@ export function SatisfactionDetailTable({
                 { key: "safety", label: "Safety", value: dimensionScores.safetyAverage },
                 { key: "cleanliness", label: "Cleanliness", value: dimensionScores.cleanlinessAverage },
                 { key: "facility", label: "Facility", value: dimensionScores.facilityAverage },
-              ].map((dim, i) => (
+              ].map((dim) => (
                 <tr
                   key={dim.key}
                   className="border-b border-slate-50 last:border-0 transition-colors hover:bg-slate-50/80"
@@ -154,7 +154,7 @@ export function SatisfactionDetailTable({
                 </tr>
               </thead>
               <tbody>
-                {byAttraction.map((attr, i) => (
+                {byAttraction.map((attr) => (
                   <tr
                     key={attr.attractionName}
                     className="border-b border-slate-50 last:border-0 transition-colors hover:bg-slate-50/80"

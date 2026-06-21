@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   Compass,
   GlobeHemisphereEast,
-  IdentificationCard,
   MapPin,
   Stamp,
   Certificate,

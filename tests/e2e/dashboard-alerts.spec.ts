@@ -302,7 +302,7 @@ function satisfactionAlertWarning(): AlertMock {
   };
 }
 
-function satisfactionOverallLow(): AlertMock {
+function _satisfactionOverallLow(): AlertMock {
   return {
     id: "overall_satisfaction_low",
     severity: "warning",

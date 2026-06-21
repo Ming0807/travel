@@ -147,13 +147,13 @@ describe("minimalProfileFormSchema", () => {
   // ── Missing required fields ──
 
   it("rejects missing displayName", () => {
-    const { displayName, ...rest } = validPayload;
+    const { displayName: _displayName, ...rest } = validPayload;
     const result = minimalProfileFormSchema.safeParse(rest);
     expect(result.success).toBe(false);
   });
 
   it("rejects missing ageGroup", () => {
-    const { ageGroup, ...rest } = validPayload;
+    const { ageGroup: _ageGroup, ...rest } = validPayload;
     const result = minimalProfileFormSchema.safeParse(rest);
     expect(result.success).toBe(false);
   });

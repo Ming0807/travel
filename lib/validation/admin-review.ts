@@ -1,15 +1,5 @@
 import { z } from "zod";
 
-const optionalText = z.preprocess(
-  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
-  z.string().trim().max(5000).nullable()
-);
-
-const optionalShortText = z.preprocess(
-  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
-  z.string().trim().max(255).nullable()
-);
-
 const optionalId = z.preprocess(
   (value) => (value === "" || value === null || value === undefined ? null : value),
   z.coerce.number().int().positive().nullable()

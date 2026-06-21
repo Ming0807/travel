@@ -9,7 +9,6 @@ import {
   Info,
   CaretDown,
   CaretUp,
-  X,
 } from "@phosphor-icons/react/dist/ssr";
 
 /* ─── severity counters ─── */

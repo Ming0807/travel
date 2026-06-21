@@ -5,7 +5,6 @@ import { ZodError } from "zod";
 
 import { verifyLineIdToken } from "@/lib/line/verify";
 import { lineLinkRequestSchema } from "@/lib/validation/line";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const dynamic = "force-dynamic";

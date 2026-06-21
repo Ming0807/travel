@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeSlash, CheckCircle, XCircle, Image, PencilSimple } from "@phosphor-icons/react/dist/ssr";
+import { Eye, EyeSlash, CheckCircle, XCircle, Image as ImageIcon, PencilSimple } from "@phosphor-icons/react/dist/ssr";
 
 import {
   toggleRestaurantPublishAction,
@@ -44,7 +44,7 @@ export function RestaurantStatusActions({ restaurantId, isPublished, isActive }:
         title="จัดการรูปภาพ"
         aria-label="จัดการรูปภาพ"
       >
-        <Image size={16} weight="bold" aria-hidden="true" />
+        <ImageIcon size={16} weight="bold" aria-hidden="true" />
       </Link>
       <Link
         href={`/admin/restaurants/${restaurantId}/edit`}

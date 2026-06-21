@@ -432,7 +432,7 @@ export async function getDashboardSummaryTopAttractions(filters: DashboardFilter
   }
 
   return Array.from(attractionMap.entries())
-    .map(([key, entry]) => ({
+    .map(([, entry]) => ({
       rank: 0, // assigned below
       attractionName: entry.name_th,
       provinceName: entry.provinceName,

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadPrivateFile } from "@/lib/storage/private-files";
-import { getServerEnv } from "@/lib/config/server-env";
 import { requirePermission } from "@/lib/auth/guards";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAdminAction } from "@/lib/repositories/admin-audit.repository";

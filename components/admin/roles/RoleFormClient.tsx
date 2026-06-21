@@ -22,7 +22,6 @@ export function RoleFormClient({ permissions, initialData }: RoleFormProps) {
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState("");
   
-  const isEditing = !!initialData?.role_id;
   const isSuperAdmin = initialData?.role_name === "super_admin";
   const isProtectedRole = initialData ? ["super_admin", "admin", "province_admin", "attraction_manager", "viewer"].includes(initialData.role_name) : false;
 

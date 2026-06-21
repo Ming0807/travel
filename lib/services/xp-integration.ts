@@ -1,6 +1,5 @@
 import "server-only";
 import { awardXP, evaluateBadges } from "./xp.service";
-import type { XPSource } from "./xp.service";
 
 /**
  * Award XP for a QR check-in and evaluate badges.

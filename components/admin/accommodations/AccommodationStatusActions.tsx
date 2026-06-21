@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeSlash, CheckCircle, XCircle, PencilSimple, Image } from "@phosphor-icons/react/dist/ssr";
+import { Eye, EyeSlash, CheckCircle, XCircle, PencilSimple, Image as ImageIcon } from "@phosphor-icons/react/dist/ssr";
 import {
   toggleAccommodationPublishAction,
   toggleAccommodationActiveAction,
@@ -43,7 +43,7 @@ export function AccommodationStatusActions({ accommodationId, isPublished, isAct
         title="จัดการรูปภาพ"
         aria-label="จัดการรูปภาพ"
       >
-        <Image size={16} weight="bold" aria-hidden="true" />
+        <ImageIcon size={16} weight="bold" aria-hidden="true" />
       </Link>
       <Link
         href={`/admin/accommodations/${accommodationId}/edit`}

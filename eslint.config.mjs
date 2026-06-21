@@ -11,7 +11,12 @@ export default defineConfig([
       // `any` casts. Keep them visible in lint output while the codebase is
       // moved to typed DTOs incrementally, but do not block the production gate
       // on broad mechanical rewrites.
-      "@typescript-eslint/no-explicit-any": "warn"
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }]
     }
   },
   globalIgnores([

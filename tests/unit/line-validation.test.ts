@@ -30,7 +30,7 @@ describe("lineLinkRequestSchema", () => {
   });
 
   it("defaults language to 'th' when omitted", () => {
-    const { language, ...rest } = validPayload;
+    const { language: _language, ...rest } = validPayload;
     const result = lineLinkRequestSchema.parse(rest);
     expect(result.language).toBe("th");
   });
@@ -63,7 +63,7 @@ describe("lineLinkRequestSchema", () => {
   });
 
   it("rejects hasConsented = undefined", () => {
-    const { hasConsented, ...rest } = validPayload;
+    const { hasConsented: _hasConsented, ...rest } = validPayload;
     expect(() => lineLinkRequestSchema.parse(rest)).toThrow();
   });
 

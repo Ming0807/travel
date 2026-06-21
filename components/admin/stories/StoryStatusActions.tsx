@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Eye, EyeSlash, PencilSimple, Image, CheckCircle, XCircle } from "@phosphor-icons/react";
+import { Eye, EyeSlash, PencilSimple, Image as ImageIcon } from "@phosphor-icons/react";
 import { changeStoryStatusAction } from "@/app/actions/admin-story-actions";
 import Link from "next/link";
 
@@ -29,7 +29,7 @@ export function StoryStatusActions({
         className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0A6B62]"
         title="Manage Media"
       >
-        <Image size={16} weight="bold" />
+        <ImageIcon size={16} weight="bold" />
       </Link>
       <Link
         href={`/admin/stories/${storyId}/edit`}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Compass, FacebookLogo, TwitterLogo, InstagramLogo, YoutubeLogo } from "@phosphor-icons/react/dist/ssr";
+import { Compass, FacebookLogo, InstagramLogo } from "@phosphor-icons/react/dist/ssr";
 import { SettingsService } from "@/lib/services/settings.service";
 
 export async function SiteFooter() {
