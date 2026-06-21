@@ -1,4 +1,5 @@
 import { SettingsRepository, SiteSetting } from "../repositories/settings.repository";
+import type { Json } from "@/types/database";
 
 export class SettingsService {
   private repository: SettingsRepository;
@@ -7,16 +8,16 @@ export class SettingsService {
     this.repository = new SettingsRepository();
   }
 
-  async getSetting(key: string, defaultValue: any = null): Promise<any> {
+  async getSetting<T = Json | null>(key: string, defaultValue: T = null as T): Promise<T> {
     const setting = await this.repository.getSetting(key);
-    return setting ? setting.setting_value : defaultValue;
+    return setting ? (setting.setting_value as T) : defaultValue;
   }
 
   async getAllSettings(): Promise<SiteSetting[]> {
     return this.repository.getAllSettings();
   }
 
-  async updateSetting(key: string, value: any): Promise<boolean> {
+  async updateSetting(key: string, value: Json): Promise<boolean> {
     return this.repository.updateSetting(key, value);
   }
 }

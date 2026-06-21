@@ -17,7 +17,15 @@ const mockAuthResult = vi.hoisted(() => ({
   result: { displayName: "Test Admin", email: "admin@test.com", permissions: ["dashboard.read"] },
 }));
 
-const mockFilterResult = vi.hoisted(() => ({
+type MockDashboardFilterError = Error & {
+  flatten: () => { fieldErrors: Record<string, string[]> };
+};
+
+const mockFilterResult = vi.hoisted<{
+  success: boolean;
+  data: { dateFrom: string; dateTo: string } | undefined;
+  error?: MockDashboardFilterError;
+}>(() => ({
   success: true,
   data: {
     dateFrom: "2026-05-01",
@@ -939,10 +947,11 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
 
   it("throws DashboardServiceError with VALIDATION_ERROR code for invalid filters", async () => {
     mockFilterResult.success = false;
-    mockFilterResult.data = undefined as unknown as { dateFrom: string; dateTo: string };
-    const zodError = new Error("Validation failed");
-    (zodError as any).flatten = () => ({ fieldErrors: { dateFrom: ["Invalid date"] } });
-    (mockFilterResult as any).error = zodError;
+    mockFilterResult.data = undefined;
+    const zodError: MockDashboardFilterError = Object.assign(new Error("Validation failed"), {
+      flatten: () => ({ fieldErrors: { dateFrom: ["Invalid date"] } }),
+    });
+    mockFilterResult.error = zodError;
 
     await expect(getDashboardAnalytics({ date_from: "invalid" })).rejects.toThrow(DashboardServiceError);
     await expect(getDashboardAnalytics({ date_from: "invalid" })).rejects.toThrow(

@@ -1,9 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "@/types/database";
+import type { Json } from "@/types/database";
 
 export type SiteSetting = {
   setting_key: string;
-  setting_value: any;
+  setting_value: Json;
   description: string | null;
   updated_at: string;
 };
@@ -13,13 +13,13 @@ export class SettingsRepository {
   private supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
   private getClient() {
-    return createClient<Database>(this.supabaseUrl, this.supabaseServiceKey);
+    return createClient(this.supabaseUrl, this.supabaseServiceKey);
   }
 
   async getSetting(key: string): Promise<SiteSetting | null> {
     const supabase = this.getClient();
     const { data, error } = await supabase
-      .from("site_settings" as any)
+      .from("site_settings")
       .select("*")
       .eq("setting_key", key)
       .single();
@@ -34,7 +34,7 @@ export class SettingsRepository {
   async getAllSettings(): Promise<SiteSetting[]> {
     const supabase = this.getClient();
     const { data, error } = await supabase
-      .from("site_settings" as any)
+      .from("site_settings")
       .select("*")
       .order("setting_key");
 
@@ -45,10 +45,10 @@ export class SettingsRepository {
     return data as SiteSetting[];
   }
 
-  async updateSetting(key: string, value: any): Promise<boolean> {
+  async updateSetting(key: string, value: Json): Promise<boolean> {
     const supabase = this.getClient();
-    const query: any = supabase.from("site_settings" as any);
-    const { error } = await query
+    const { error } = await supabase
+      .from("site_settings")
       .upsert({ 
         setting_key: key, 
         setting_value: value, 

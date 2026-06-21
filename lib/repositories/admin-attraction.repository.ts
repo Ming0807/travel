@@ -2,6 +2,8 @@ import "server-only";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminAttractionFilters, AdminAttractionMutationInput } from "@/lib/validation/admin-attraction";
+import type { Json } from "@/types/database";
+import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 
 export type AdminAttractionRow = {
   attraction_id: number;
@@ -26,7 +28,7 @@ export type AdminAttractionRow = {
   travel_tips_en: string | null;
   how_to_get_there_th: string | null;
   how_to_get_there_en: string | null;
-  custom_sections_json: any | null;
+  custom_sections_json: Json | null;
   sustainability_category: string | null;
   estimated_capacity_per_day: number | null;
   is_published: boolean;
@@ -47,11 +49,25 @@ export type PaginatedResult<T> = {
   pageSize: number;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapAttraction(row: any, photoSpotCounts = new Map<number, number>(), checkinCodeCounts = new Map<number, number>()): AdminAttractionRow {
-  const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
-  const district = Array.isArray(row.districts) ? row.districts[0] : row.districts;
-  const attractionType = Array.isArray(row.attraction_types) ? row.attraction_types[0] : row.attraction_types;
+type AdminAttractionQueryRow = Omit<
+  AdminAttractionRow,
+  "province_name_th" | "district_name_th" | "attraction_type_name_th" | "photo_spot_count" | "checkin_code_count"
+> & {
+  provinces?: SupabaseJoin<{ province_name_th: string | null }>;
+  districts?: SupabaseJoin<{ district_name_th: string | null }>;
+  attraction_types?: SupabaseJoin<{ type_name_th: string | null }>;
+};
+
+type ContentListProvince = { province_name_th: string | null };
+type ContentListAttraction = { attraction_id: number; name_th: string; provinces?: SupabaseJoin<ContentListProvince> };
+type ContentListRestaurant = { restaurant_id: number; name_th: string; provinces?: SupabaseJoin<ContentListProvince> };
+type ContentListAccommodation = { accommodation_id: number; name_th: string; provinces?: SupabaseJoin<ContentListProvince> };
+type ContentListStory = { story_id: number; title: string };
+
+function mapAttraction(row: AdminAttractionQueryRow, photoSpotCounts = new Map<number, number>(), checkinCodeCounts = new Map<number, number>()): AdminAttractionRow {
+  const province = firstJoin(row.provinces);
+  const district = firstJoin(row.districts);
+  const attractionType = firstJoin(row.attraction_types);
 
   return {
     attraction_id: Number(row.attraction_id),
@@ -577,20 +593,20 @@ export async function getAdminAllContentList() {
   // Actually, we'll skip accommodations for now to prevent 500 errors in this function if the table is missing,
   // or we can use maybeSingle/error catching. Let's just catch it.
 
-  let accommodationsList: any[] = [];
+  let accommodationsList: ContentListAccommodation[] = [];
   try {
     const { data } = await supabase.from("accommodations").select("accommodation_id, name_th, province_id, provinces(province_name_th)").eq("is_published", true);
-    accommodationsList = data || [];
+    accommodationsList = (data || []) as ContentListAccommodation[];
   } catch {
     // Ignore if table missing
   }
 
-  const getProvinceName = (p: any) => Array.isArray(p) ? p[0]?.province_name_th : p?.province_name_th;
+  const getProvinceName = (p: SupabaseJoin<ContentListProvince>) => firstJoin(p)?.province_name_th ?? undefined;
 
   return {
-    attractions: (attractions.data || []).map(a => ({ id: a.attraction_id, name: a.name_th, province: getProvinceName(a.provinces) })),
-    restaurants: (restaurants.data || []).map(r => ({ id: r.restaurant_id, name: r.name_th, province: getProvinceName(r.provinces) })),
+    attractions: ((attractions.data || []) as ContentListAttraction[]).map(a => ({ id: a.attraction_id, name: a.name_th, province: getProvinceName(a.provinces) })),
+    restaurants: ((restaurants.data || []) as ContentListRestaurant[]).map(r => ({ id: r.restaurant_id, name: r.name_th, province: getProvinceName(r.provinces) })),
     accommodations: accommodationsList.map(a => ({ id: a.accommodation_id, name: a.name_th, province: getProvinceName(a.provinces) })),
-    stories: (stories.data || []).map(s => ({ id: s.story_id, name: s.title }))
+    stories: ((stories.data || []) as ContentListStory[]).map(s => ({ id: s.story_id, name: s.title }))
   };
 }

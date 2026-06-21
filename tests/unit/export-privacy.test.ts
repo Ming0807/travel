@@ -445,7 +445,7 @@ describe("Dashboard export row mappers (privacy)", () => {
       },
     ];
 
-    const rows = mockUniqueTourists.map((t: any) => {
+    const rows = mockUniqueTourists.map((t) => {
       const country = t.countries;
       const province = t.provinces;
       return {
@@ -493,7 +493,7 @@ describe("Dashboard export row mappers (privacy)", () => {
       },
     ];
 
-    const rows = mockVisits.map((v: any) => {
+    const rows = mockVisits.map((v) => {
       const t = v.tourists;
       const country = t?.countries;
       const originProvince = t?.provinces;
@@ -553,7 +553,7 @@ describe("Dashboard export row mappers (privacy)", () => {
       },
     ];
 
-    const rows = mockSurveys.map((s: any) => {
+    const rows = mockSurveys.map((s) => {
       const v = s.visits;
       const attr = v?.attractions;
       const province = attr?.provinces;

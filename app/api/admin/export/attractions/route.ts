@@ -4,8 +4,11 @@ import { getServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
+import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 
 export const dynamic = "force-dynamic";
+
+type ExportRecord = Record<string, unknown>;
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,10 +45,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = (data || []).map((row: any) => {
-      const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
-      const district = Array.isArray(row.districts) ? row.districts[0] : row.districts;
-      const type = Array.isArray(row.attraction_types) ? row.attraction_types[0] : row.attraction_types;
+    const rows = ((data || []) as ExportRecord[]).map((row) => {
+      const province = firstJoin(row.provinces as SupabaseJoin<ExportRecord>);
+      const district = firstJoin(row.districts as SupabaseJoin<ExportRecord>);
+      const type = firstJoin(row.attraction_types as SupabaseJoin<ExportRecord>);
 
       return {
         "ID": String(row.attraction_id),

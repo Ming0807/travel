@@ -4,8 +4,11 @@ import { getServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
+import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 
 export const dynamic = "force-dynamic";
+
+type ExportRecord = Record<string, unknown>;
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,10 +46,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = (data || []).map((row: any) => {
-      const tourist = Array.isArray(row.tourists) ? row.tourists[0] : row.tourists;
-      const attraction = Array.isArray(row.attractions) ? row.attractions[0] : row.attractions;
-      const restaurant = Array.isArray(row.restaurants) ? row.restaurants[0] : row.restaurants;
+    const rows = ((data || []) as ExportRecord[]).map((row) => {
+      const tourist = firstJoin(row.tourists as SupabaseJoin<ExportRecord>);
+      const attraction = firstJoin(row.attractions as SupabaseJoin<ExportRecord>);
+      const restaurant = firstJoin(row.restaurants as SupabaseJoin<ExportRecord>);
 
       return {
         "ID": String(row.review_id),

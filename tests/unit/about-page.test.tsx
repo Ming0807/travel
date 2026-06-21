@@ -5,7 +5,7 @@ import AboutPage from "@/app/(public)/about/page";
 vi.mock("@/lib/services/settings.service", () => {
   return {
     SettingsService: class {
-      async getSetting(key: string, defaultValue: any) {
+      async getSetting(key: string, defaultValue: unknown) {
         if (key === "about_vision") {
           return { content: "Mocked Vision Content" };
         }

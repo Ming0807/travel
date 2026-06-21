@@ -1,4 +1,31 @@
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
+
+type AdminTouristCountry = {
+  country_name_en: string | null;
+};
+
+type AdminTouristProvince = {
+  province_name_en: string | null;
+};
+
+type AdminTouristIdentity = {
+  provider: string | null;
+};
+
+type AdminTouristVisit = {
+  certificates?: { certificate_id: number }[] | null;
+};
+
+type AdminTouristQueryRow = {
+  tourist_id: number;
+  display_name: string | null;
+  countries?: SupabaseJoin<AdminTouristCountry>;
+  provinces?: SupabaseJoin<AdminTouristProvince>;
+  created_at: string | null;
+  tourist_identities?: AdminTouristIdentity[] | null;
+  visits?: AdminTouristVisit[] | null;
+};
 
 export async function getAdminTourists(limit = 100) {
   const supabase = createSupabaseServiceRoleClient();
@@ -35,19 +62,21 @@ export async function getAdminTourists(limit = 100) {
 
   // Hide PII if there were any, though this schema is already privacy-focused.
   // Aggregate stats
-  return data.map(tourist => {
+  return (data as AdminTouristQueryRow[]).map(tourist => {
     const certificateCount = tourist.visits?.reduce(
-      (count: number, visit: any) => count + (visit.certificates?.length || 0), 0
+      (count, visit) => count + (visit.certificates?.length || 0), 0
     ) || 0;
+    const province = firstJoin(tourist.provinces);
+    const country = firstJoin(tourist.countries);
 
     return {
-      id: tourist.tourist_id,
-      name: tourist.display_name,
-      location: ((tourist.provinces as any)?.[0]?.province_name_en || (tourist.provinces as any)?.province_name_en) ||
-                ((tourist.countries as any)?.[0]?.country_name_en || (tourist.countries as any)?.country_name_en) ||
+      id: String(tourist.tourist_id),
+      name: tourist.display_name || "Anonymous Guest",
+      location: province?.province_name_en ||
+                country?.country_name_en ||
                 "Unknown",
-      joinedAt: tourist.created_at,
-      providers: tourist.tourist_identities.map((i: any) => i.provider),
+      joinedAt: tourist.created_at || new Date(0).toISOString(),
+      providers: (tourist.tourist_identities ?? []).map((i) => i.provider).filter((provider): provider is string => Boolean(provider)),
       certificateCount
     };
   });

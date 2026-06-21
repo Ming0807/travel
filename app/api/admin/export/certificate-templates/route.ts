@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = (data || []).map((row: any) => ({
+    const rows = ((data || []) as Array<Record<string, unknown>>).map((row) => ({
       "ID": String(row.template_id),
       "Name": row.name || "",
       "Language": row.language || "",

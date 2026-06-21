@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 
 // ---------------------------------------------------------------------------
 // Type helpers
@@ -20,6 +21,8 @@ import { describe, it, expect } from "vitest";
 function keysOf<T extends Record<string, unknown>>(obj: T): string[] {
   return Object.keys(obj);
 }
+
+type ExportRecord = Record<string, unknown>;
 
 // ---------------------------------------------------------------------------
 // Mock data factories
@@ -195,10 +198,10 @@ function mockAuditLogRow(overrides: Record<string, unknown> = {}) {
 // Row mapping functions (mirroring the inline logic from each route)
 // ---------------------------------------------------------------------------
 
-function mapAttractionRow(row: any): Record<string, unknown> {
-  const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
-  const district = Array.isArray(row.districts) ? row.districts[0] : row.districts;
-  const type = Array.isArray(row.attraction_types) ? row.attraction_types[0] : row.attraction_types;
+function mapAttractionRow(row: ExportRecord): Record<string, unknown> {
+  const province = firstJoin(row.provinces as SupabaseJoin<ExportRecord>);
+  const district = firstJoin(row.districts as SupabaseJoin<ExportRecord>);
+  const type = firstJoin(row.attraction_types as SupabaseJoin<ExportRecord>);
   return {
     "ID": String(row.attraction_id),
     "Name (TH)": row.name_th || "",
@@ -218,8 +221,8 @@ function mapAttractionRow(row: any): Record<string, unknown> {
   };
 }
 
-function mapStoryRow(row: any): Record<string, unknown> {
-  const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
+function mapStoryRow(row: ExportRecord): Record<string, unknown> {
+  const province = firstJoin(row.provinces as SupabaseJoin<ExportRecord>);
   return {
     "ID": String(row.story_id),
     "Title": row.title || "",
@@ -235,7 +238,7 @@ function mapStoryRow(row: any): Record<string, unknown> {
   };
 }
 
-function mapRouteRow(row: any): Record<string, unknown> {
+function mapRouteRow(row: ExportRecord): Record<string, unknown> {
   return {
     "ID": String(row.route_id),
     "Name (TH)": row.name_th || "",
@@ -250,8 +253,8 @@ function mapRouteRow(row: any): Record<string, unknown> {
   };
 }
 
-function mapPhotoSpotRow(row: any): Record<string, unknown> {
-  const attraction = Array.isArray(row.attractions) ? row.attractions[0] : row.attractions;
+function mapPhotoSpotRow(row: ExportRecord): Record<string, unknown> {
+  const attraction = firstJoin(row.attractions as SupabaseJoin<ExportRecord>);
   return {
     "ID": String(row.photo_spot_id),
     "Name (TH)": row.spot_name_th || "",
@@ -268,9 +271,9 @@ function mapPhotoSpotRow(row: any): Record<string, unknown> {
   };
 }
 
-function mapCheckinCodeRow(row: any): Record<string, unknown> {
-  const attraction = Array.isArray(row.attractions) ? row.attractions[0] : row.attractions;
-  const photoSpot = Array.isArray(row.photo_spots) ? row.photo_spots[0] : row.photo_spots;
+function mapCheckinCodeRow(row: ExportRecord): Record<string, unknown> {
+  const attraction = firstJoin(row.attractions as SupabaseJoin<ExportRecord>);
+  const photoSpot = firstJoin(row.photo_spots as SupabaseJoin<ExportRecord>);
   return {
     "ID": String(row.checkin_code_id),
     "Code": row.code || "",
@@ -285,7 +288,7 @@ function mapCheckinCodeRow(row: any): Record<string, unknown> {
   };
 }
 
-function mapMediaRow(row: any): Record<string, unknown> {
+function mapMediaRow(row: ExportRecord): Record<string, unknown> {
   const entityTypeMap: Record<string, string> = {
     attraction_id: "attraction",
     restaurant_id: "restaurant",
@@ -321,7 +324,7 @@ function mapMediaRow(row: any): Record<string, unknown> {
   };
 }
 
-function mapBadgeRow(row: any): Record<string, unknown> {
+function mapBadgeRow(row: ExportRecord): Record<string, unknown> {
   return {
     "ID": String(row.badge_id),
     "Badge Key": row.badge_key || "",
@@ -341,8 +344,8 @@ function mapBadgeRow(row: any): Record<string, unknown> {
   };
 }
 
-function mapRestaurantRow(row: any): Record<string, unknown> {
-  const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
+function mapRestaurantRow(row: ExportRecord): Record<string, unknown> {
+  const province = firstJoin(row.provinces as SupabaseJoin<ExportRecord>);
   return {
     "ID": String(row.restaurant_id),
     "Slug": row.slug ?? "",
@@ -364,11 +367,17 @@ function mapRestaurantRow(row: any): Record<string, unknown> {
   };
 }
 
-function mapAuditLogRow(log: any): Record<string, unknown> {
+function mapAuditLogRow(log: ExportRecord): Record<string, unknown> {
+  const adminUser = firstJoin(log.admin_users as SupabaseJoin<ExportRecord>);
+  const createdAt = log.created_at;
+  const timestamp =
+    createdAt instanceof Date || typeof createdAt === "string" || typeof createdAt === "number"
+      ? new Date(createdAt).toISOString().replace("T", " ").slice(0, 19)
+      : "";
   return {
-    "Timestamp": log.created_at ? new Date(log.created_at).toISOString().replace("T", " ").slice(0, 19) : "",
-    "Admin Name": log.admin_users?.display_name || "System",
-    "Admin Email": log.admin_users?.email || "system@local",
+    "Timestamp": timestamp,
+    "Admin Name": adminUser?.display_name || "System",
+    "Admin Email": adminUser?.email || "system@local",
     "Action": log.action,
     "Entity Type": log.entity_type,
     "Entity ID": log.entity_id || "",
@@ -850,13 +859,13 @@ describe("Content-entity export consistency", () => {
   });
 
   it("empty data produces zero rows", () => {
-    const emptyAttractions: any[] = [];
+    const emptyAttractions: ExportRecord[] = [];
     expect(emptyAttractions.map(mapAttractionRow)).toEqual([]);
 
-    const emptyStories: any[] = [];
+    const emptyStories: ExportRecord[] = [];
     expect(emptyStories.map(mapStoryRow)).toEqual([]);
 
-    const emptyRoutes: any[] = [];
+    const emptyRoutes: ExportRecord[] = [];
     expect(emptyRoutes.map(mapRouteRow)).toEqual([]);
   });
 

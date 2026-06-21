@@ -1,5 +1,6 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { MouseEventHandler, ReactNode } from "react";
 import { UserNavMenu } from "@/components/account/UserNavMenu";
 import { TouristAuthGate } from "@/components/auth/TouristAuthGate";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -10,15 +11,24 @@ vi.mock("@/lib/supabase/browser", () => ({
 
 // Mock Link component from next/link
 vi.mock("next/link", () => ({
-  default: ({ children, href, className, onClick }: any) => (
+  default: ({ children, href, className, onClick }: { children: ReactNode; href: string; className?: string; onClick?: MouseEventHandler<HTMLAnchorElement> }) => (
     <a href={href} className={className} onClick={onClick}>
       {children}
     </a>
   ),
 }));
 
+type MockSupabaseClient = {
+  auth: {
+    getUser?: ReturnType<typeof vi.fn>;
+    onAuthStateChange?: ReturnType<typeof vi.fn>;
+    signOut?: ReturnType<typeof vi.fn>;
+    signInWithOAuth?: ReturnType<typeof vi.fn>;
+  };
+};
+
 describe("UserNavMenu Component", () => {
-  let mockSupabase: any;
+  let mockSupabase: MockSupabaseClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -31,7 +41,7 @@ describe("UserNavMenu Component", () => {
         signOut: vi.fn().mockResolvedValue({}),
       },
     };
-    (createSupabaseBrowserClient as any).mockReturnValue(mockSupabase);
+    vi.mocked(createSupabaseBrowserClient).mockReturnValue(mockSupabase as never);
 
     // Mock window.location.reload
     Object.defineProperty(window, "location", {
@@ -55,7 +65,7 @@ describe("UserNavMenu Component", () => {
   });
 
   it("renders user info when logged in", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
+    mockSupabase.auth.getUser!.mockResolvedValue({
       data: { user: { email: "test@example.com", user_metadata: { full_name: "Test User" } } },
     });
 
@@ -66,7 +76,7 @@ describe("UserNavMenu Component", () => {
   });
 
   it("handles sign out", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
+    mockSupabase.auth.getUser!.mockResolvedValue({
       data: { user: { email: "test@example.com", user_metadata: { full_name: "Test User" } } },
     });
 
@@ -94,7 +104,7 @@ describe("UserNavMenu Component", () => {
 });
 
 describe("TouristAuthGate Component", () => {
-  let mockSupabase: any;
+  let mockSupabase: MockSupabaseClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,7 +113,7 @@ describe("TouristAuthGate Component", () => {
         signInWithOAuth: vi.fn().mockResolvedValue({}),
       },
     };
-    (createSupabaseBrowserClient as any).mockReturnValue(mockSupabase);
+    vi.mocked(createSupabaseBrowserClient).mockReturnValue(mockSupabase as never);
 
     Object.defineProperty(window, "location", {
       configurable: true,

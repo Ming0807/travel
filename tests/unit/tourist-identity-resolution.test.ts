@@ -42,7 +42,7 @@ describe("resolveTouristId — identity resolution", () => {
         auth: {
           getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
         },
-      } as any);
+      } as never);
 
       // Guest cookie exists
       mockGetGuestIdentity.mockResolvedValue("guest-token-abc");
@@ -66,7 +66,7 @@ describe("resolveTouristId — identity resolution", () => {
         auth: {
           getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
         },
-      } as any);
+      } as never);
       mockGetGuestIdentity.mockResolvedValue(null);
 
       const { resolveTouristId } = await importGuards();
@@ -86,7 +86,7 @@ describe("resolveTouristId — identity resolution", () => {
         auth: {
           getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
         },
-      } as any);
+      } as never);
       mockGetGuestIdentity.mockResolvedValue("guest-token-xyz");
       mockFindTouristByIdentity.mockResolvedValue(null);
 
@@ -116,7 +116,7 @@ describe("resolveTouristId — identity resolution", () => {
             error: null,
           }),
         },
-      } as any);
+      } as never);
       mockGetGuestIdentity.mockResolvedValue(null); // No guest cookie
       mockFindTouristByIdentity.mockResolvedValue("tourist-uuid-002");
 
@@ -146,7 +146,7 @@ describe("resolveTouristId — identity resolution", () => {
             error: null,
           }),
         },
-      } as any);
+      } as never);
       vi.mocked(getGuestIdentity).mockResolvedValue(null);
       mockFindTouristByIdentity.mockResolvedValue("tourist-uuid-003");
 
@@ -177,7 +177,7 @@ describe("resolveTouristId — identity resolution", () => {
             error: null,
           }),
         },
-      } as any);
+      } as never);
       mockGetGuestIdentity.mockResolvedValue("guest-token-existing");
       mockFindTouristByIdentity
         .mockResolvedValueOnce(null) // OAuth lookup returns null
@@ -199,7 +199,7 @@ describe("resolveTouristId — identity resolution", () => {
         auth: {
           getUser: vi.fn().mockRejectedValue(new Error("Network error")),
         },
-      } as any);
+      } as never);
       mockGetGuestIdentity.mockResolvedValue("guest-token-fallback");
       mockFindTouristByIdentity.mockResolvedValue("tourist-uuid-fallback");
 
@@ -219,7 +219,7 @@ describe("resolveTouristId — identity resolution", () => {
         auth: {
           getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
         },
-      } as any);
+      } as never);
       mockGetGuestIdentity.mockResolvedValue("guest-token-legacy");
       mockFindTouristByIdentity.mockResolvedValue("tourist-uuid-legacy");
 

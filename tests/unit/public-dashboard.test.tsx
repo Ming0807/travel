@@ -1,11 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import PublicDashboardPage from "@/app/(public)/dashboard/page";
 import * as dashboardService from "@/lib/services/dashboard.service";
 
 // Mock the PageShell component to just render its children
 vi.mock("@/components/layout/page-shell", () => ({
-  PageShell: ({ children, title }: { children: any; title: string }) => (
+  PageShell: ({ children, title }: { children: ReactNode; title: string }) => (
     <div data-testid="page-shell" data-title={title}>
       {children}
     </div>
@@ -37,7 +38,7 @@ describe("Public Dashboard Page", () => {
           { province: "Narathiwat", visits: 25 },
         ],
       },
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof dashboardService.getPublicDashboardAnalytics>>);
 
     const jsx = await PublicDashboardPage();
     render(jsx);

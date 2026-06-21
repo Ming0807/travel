@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page, type Route } from "@playwright/test";
 
 /**
  * Mock HTML generators for admin CRUD pages.
@@ -387,7 +387,7 @@ function photoSpotListHtml(): string {
 function setupAdminRoutes(page: Page) {
   // Intercept admin page GET requests
   // Register both patterns: **/admin for exact /admin, **/admin/** for all sub-pages
-  const handler = async (route: any) => {
+  const handler = async (route: Route) => {
     const url = route.request().url();
     const method = route.request().method();
     if (method !== "GET") return route.continue();

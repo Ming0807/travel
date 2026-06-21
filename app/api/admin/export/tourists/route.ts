@@ -4,8 +4,11 @@ import { getServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
+import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 
 export const dynamic = "force-dynamic";
+
+type ExportRecord = Record<string, unknown>;
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,15 +51,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = (data || []).map((row: any) => {
-      const country = Array.isArray(row.countries) ? row.countries[0] : row.countries;
-      const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
-      const identities = row.tourist_identities || [];
-      const providers = identities.map((i: any) => i.provider).join(", ");
-      const visitCount = (row.visits || []).length;
-      const certificateCount = (row.visits || []).reduce(
-        (sum: number, v: any) => sum + ((v.certificates || []).length), 0
-      );
+    const rows = ((data || []) as ExportRecord[]).map((row) => {
+      const country = firstJoin(row.countries as SupabaseJoin<ExportRecord>);
+      const province = firstJoin(row.provinces as SupabaseJoin<ExportRecord>);
+      const identities = (row.tourist_identities ?? []) as ExportRecord[];
+      const providers = identities.map((i) => i.provider).join(", ");
+      const visits = (row.visits ?? []) as ExportRecord[];
+      const visitCount = visits.length;
+      const certificateCount = visits.reduce((sum, v) => {
+        const certificates = (v.certificates ?? []) as ExportRecord[];
+        return sum + certificates.length;
+      }, 0);
 
       return {
         "ID": String(row.tourist_id),

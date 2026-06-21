@@ -6,6 +6,9 @@ import { parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 import type { DashboardFilters } from "@/types/dashboard";
 import { generateCsv } from "@/lib/utils/csv";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
+import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
+
+type DashboardExportRecord = Record<string, unknown>;
 
 function mapAdminError(error: AdminAuthError): DashboardServiceError {
   if (error.code === "UNAUTHORIZED") {
@@ -80,16 +83,17 @@ export async function GET(request: Request) {
       const payload = await getDashboardRepositoryPayload(parsed.data as DashboardFilters, exportType);
 
       if (exportType === "tourists") {
-        const uniqueTourists = new Map<string, any>();
+        const uniqueTourists = new Map<string, DashboardExportRecord>();
         payload.visits.forEach(v => {
-          if (v.tourists && v.tourist_id) {
-            uniqueTourists.set(String(v.tourist_id), v.tourists);
+          const tourist = firstJoin(v.tourists as SupabaseJoin<DashboardExportRecord>);
+          if (tourist && v.tourist_id) {
+            uniqueTourists.set(String(v.tourist_id), tourist);
           }
         });
 
         const rows = Array.from(uniqueTourists.values()).map(t => {
-          const country = t.countries as any;
-          const province = t.provinces as any;
+          const country = firstJoin(t.countries as SupabaseJoin<DashboardExportRecord>);
+          const province = firstJoin(t.provinces as SupabaseJoin<DashboardExportRecord>);
           return {
             "Age Group": safeString(t.age_group),
             "Preferred Language": safeString(t.preferred_language),
@@ -107,14 +111,14 @@ export async function GET(request: Request) {
         }
       } else if (exportType === "visits") {
         const rows = payload.visits.map(v => {
-          const t = v.tourists as any;
-          const country = t?.countries as any;
-          const originProvince = t?.provinces as any;
-          const attr = v.attractions as any;
-          const destProvince = attr?.provinces as any;
-          const companion = v.travel_companions as any;
-          const transport = v.transport_modes as any;
-          const purpose = v.travel_purposes as any;
+          const t = firstJoin(v.tourists as SupabaseJoin<DashboardExportRecord>);
+          const country = firstJoin(t?.countries as SupabaseJoin<DashboardExportRecord>);
+          const originProvince = firstJoin(t?.provinces as SupabaseJoin<DashboardExportRecord>);
+          const attr = firstJoin(v.attractions as SupabaseJoin<DashboardExportRecord>);
+          const destProvince = firstJoin(attr?.provinces as SupabaseJoin<DashboardExportRecord>);
+          const companion = firstJoin(v.travel_companions as SupabaseJoin<DashboardExportRecord>);
+          const transport = firstJoin(v.transport_modes as SupabaseJoin<DashboardExportRecord>);
+          const purpose = firstJoin(v.travel_purposes as SupabaseJoin<DashboardExportRecord>);
           return {
             "Visit Date": safeString(v.visit_date),
             "Attraction": safeString(attr?.name_en || attr?.name_th),
@@ -140,9 +144,9 @@ export async function GET(request: Request) {
         }
       } else if (exportType === "surveys") {
         const rows = payload.surveys.map(s => {
-          const v = s.visits as any;
-          const attr = v?.attractions as any;
-          const province = attr?.provinces as any;
+          const v = firstJoin(s.visits as SupabaseJoin<DashboardExportRecord>);
+          const attr = firstJoin(v?.attractions as SupabaseJoin<DashboardExportRecord>);
+          const province = firstJoin(attr?.provinces as SupabaseJoin<DashboardExportRecord>);
           return {
             "Submitted At": safeString(s.submitted_at),
             "Visit Date": safeString(v?.visit_date),

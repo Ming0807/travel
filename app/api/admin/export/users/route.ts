@@ -4,8 +4,11 @@ import { getServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
+import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 
 export const dynamic = "force-dynamic";
+
+type ExportRecord = Record<string, unknown>;
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,10 +50,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = (data || []).map((row: any) => {
-      const roles = (row.admin_user_roles || [])
-        .map((ur: any) => {
-          const role = Array.isArray(ur.roles) ? ur.roles[0] : ur.roles;
+    const rows = ((data || []) as ExportRecord[]).map((row) => {
+      const adminUserRoles = (row.admin_user_roles ?? []) as ExportRecord[];
+      const roles = adminUserRoles
+        .map((ur) => {
+          const role = firstJoin(ur.roles as SupabaseJoin<ExportRecord>);
           return role?.role_name || "";
         })
         .filter(Boolean)

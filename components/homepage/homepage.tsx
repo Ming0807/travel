@@ -11,6 +11,13 @@ import { listPublicAttractionCards, listPublicStories, listPublicRoutes } from "
 import { RevealOnScroll } from "@/components/ui/reveal-on-scroll";
 import { SettingsService } from "@/lib/services/settings.service";
 
+type HomepageStoriesSetting = {
+  title?: string;
+  subtitle?: string;
+  buttonText?: string;
+  limit?: number;
+};
+
 export async function Homepage() {
   const settingsService = new SettingsService();
 
@@ -19,7 +26,7 @@ export async function Homepage() {
   const featuredSlugs = featuredAttractionsSetting?.slugs || [];
 
   // Fetch the homepage_stories setting first to get the limit
-  const rawStoriesSettings = await settingsService.getSetting("homepage_stories", { limit: 4 });
+  const rawStoriesSettings = await settingsService.getSetting<HomepageStoriesSetting>("homepage_stories", { limit: 4 });
   const storiesLimit = Math.max(1, Math.min(8, rawStoriesSettings.limit ?? 4));
 
   const [attractions, stories, routes, heroSettings, routesSettings, howItWorksSettings, highlightsSettings, ctaSettings] = await Promise.all([

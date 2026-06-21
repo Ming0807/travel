@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       route_id: "route",
     };
 
-    const rows = (data || []).map((row: any) => {
+    const rows = ((data || []) as Array<Record<string, unknown>>).map((row) => {
       // Determine entity type from which FK column is set
       let entityType = "";
       let entityId = "";

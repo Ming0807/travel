@@ -293,7 +293,7 @@ describe("updateRouteStopsAction (server action)", () => {
       { attractionId: 2, dayNumber: 1, displayOrder: 2 },
     ]));
 
-    const result = await updateRouteStopsAction(5, { success: true } as any, formData);
+    const result = await updateRouteStopsAction(5, { success: true }, formData);
     expect(result.success).toBe(true);
     expect(result.error).toBeUndefined();
   });
@@ -302,7 +302,7 @@ describe("updateRouteStopsAction (server action)", () => {
     const { updateRouteStopsAction } = await import("@/app/actions/admin-route-actions");
     const formData = new FormData();
 
-    const result = await updateRouteStopsAction(5, { success: true } as any, formData);
+    const result = await updateRouteStopsAction(5, { success: true }, formData);
     expect(result.success).toBe(false);
     expect(result.error).toBe("ยังไม่มีข้อมูลจุดแวะ กรุณาเพิ่มจุดแวะอย่างน้อย 1 จุด");
   });
@@ -314,7 +314,7 @@ describe("updateRouteStopsAction (server action)", () => {
       { attractionId: "not-a-number", dayNumber: "abc", displayOrder: "xyz" },
     ]));
 
-    const result = await updateRouteStopsAction(5, { success: true } as any, formData);
+    const result = await updateRouteStopsAction(5, { success: true }, formData);
     expect(result.success).toBe(false);
     expect(result.error).toBe("กรุณาตรวจจุดแวะของเส้นทางอีกครั้ง");
   });
@@ -326,7 +326,7 @@ describe("updateRouteStopsAction (server action)", () => {
       { attractionId: 1 }, // missing dayNumber and displayOrder
     ]));
 
-    const result = await updateRouteStopsAction(5, { success: true } as any, formData);
+    const result = await updateRouteStopsAction(5, { success: true }, formData);
     expect(result.success).toBe(false);
     expect(result.error).toBe("กรุณาตรวจจุดแวะของเส้นทางอีกครั้ง");
   });
@@ -338,7 +338,7 @@ describe("updateRouteStopsAction (server action)", () => {
       { attractionId: 1, dayNumber: 0, displayOrder: 1 },
     ]));
 
-    const result = await updateRouteStopsAction(5, { success: true } as any, formData);
+    const result = await updateRouteStopsAction(5, { success: true }, formData);
     expect(result.success).toBe(false);
     expect(result.error).toBe("กรุณาตรวจจุดแวะของเส้นทางอีกครั้ง");
   });
@@ -350,7 +350,7 @@ describe("updateRouteStopsAction (server action)", () => {
       { attractionId: 1, dayNumber: 1, displayOrder: 0 },
     ]));
 
-    const result = await updateRouteStopsAction(5, { success: true } as any, formData);
+    const result = await updateRouteStopsAction(5, { success: true }, formData);
     expect(result.success).toBe(false);
     expect(result.error).toBe("กรุณาตรวจจุดแวะของเส้นทางอีกครั้ง");
   });
@@ -364,7 +364,7 @@ describe("updateRouteStopsAction (server action)", () => {
       { attractionId: 1, dayNumber: 1, displayOrder: 1 },
     ]));
 
-    const result = await updateRouteStopsAction(5, { success: true } as any, formData);
+    const result = await updateRouteStopsAction(5, { success: true }, formData);
     expect(result.success).toBe(false);
     expect(result.error).toBe("ADMIN_AUTH_DENIED");
   });
@@ -379,7 +379,7 @@ describe("updateRouteStopsAction (server action)", () => {
       { attractionId: 1, dayNumber: 1, displayOrder: 1 },
     ]));
 
-    const result = await updateRouteStopsAction(5, { success: true } as any, formData);
+    const result = await updateRouteStopsAction(5, { success: true }, formData);
     expect(result.success).toBe(false);
     expect(result.error).toBe("ยังบันทึกจุดแวะของเส้นทางไม่ได้ กรุณาลองอีกครั้ง");
   });

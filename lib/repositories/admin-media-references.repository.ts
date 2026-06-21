@@ -90,16 +90,18 @@ export async function findAdminMediaReferences(storagePath: string): Promise<Adm
       if (config.entityId === null || config.entityId === undefined) continue;
 
       const { data: entity } = await supabase
-        .from(config.tableName as any)
+        .from(config.tableName)
         .select(`${config.idColumn}, ${config.nameColumn}`)
         .eq(config.idColumn, config.entityId)
         .maybeSingle();
 
       if (entity) {
+        const entityRecord = entity as unknown as Record<string, unknown>;
+        const entityName = entityRecord[config.nameColumn];
         references.push({
           entityType: config.entityType,
           entityId: config.entityId,
-          name: (entity as any)[config.nameColumn] ?? `${config.entityType} #${config.entityId}`,
+          name: typeof entityName === "string" ? entityName : `${config.entityType} #${config.entityId}`,
         });
       }
     }
