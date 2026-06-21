@@ -97,7 +97,7 @@ export function PhotoUploadForm({ visitId }: { visitId: string }) {
       }
 
       // Proceed to preview page
-      router.push(`/visit/${visitId}/certificate/preview?photoId=${data.photoId}&previewUrl=${encodeURIComponent(data.previewUrl)}`);
+      router.push(`/visit/${visitId}/certificate/preview?photoId=${data.photoId}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "อัปโหลดไม่สำเร็จ กรุณาลองใหม่";
       setError(msg);

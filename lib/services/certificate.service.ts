@@ -1,7 +1,15 @@
 import "server-only";
-import { getVisitById, updateVisitStatus } from "@/lib/repositories/visit.repository";
+import { requireTouristVisitAccess } from "@/lib/auth/guards";
+import { updateVisitStatus } from "@/lib/repositories/visit.repository";
 import { createCertificate, getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
 import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
+import { getPhotoById } from "@/lib/repositories/visit-photo.repository";
+
+type VisitForCertificate = {
+  checkin_code_id?: number | null;
+  attraction_id?: number | null;
+  tourist_id?: string | null;
+};
 
 export async function processCertificateGeneration(params: {
   visitId: string;
@@ -9,9 +17,13 @@ export async function processCertificateGeneration(params: {
   photoId?: string;
   certificatePath: string;
 }) {
-  const visit = await getVisitById(params.visitId);
-  if (!visit) {
-    throw new Error("Visit not found");
+  const { visit } = await requireTouristVisitAccess(params.visitId);
+
+  if (params.photoId) {
+    const photo = await getPhotoById(params.photoId);
+    if (!photo || photo.visit_id !== params.visitId) {
+      throw new Error("PHOTO_NOT_FOUND_FOR_VISIT");
+    }
   }
 
   // 1. Idempotency Check
@@ -33,13 +45,12 @@ export async function processCertificateGeneration(params: {
   await updateVisitStatus(params.visitId, "certificate_generated");
 
   // 4. Record event
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const v = visit as any;
+  const v = visit as VisitForCertificate;
   await recordFunnelEvent({
     eventName: "certificate_generated",
-    checkinCodeId: v.checkin_code_id,
-    attractionId: v.attraction_id,
-    touristId: v.tourist_id,
+    checkinCodeId: v.checkin_code_id ?? undefined,
+    attractionId: v.attraction_id ?? undefined,
+    touristId: v.tourist_id ?? undefined,
     visitId: String(params.visitId)
   });
 

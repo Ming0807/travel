@@ -60,8 +60,8 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
     const file = e.target.files?.[0];
     if (file) {
       // Validate type
-      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
-      if (!allowedTypes.includes(file.type) && !file.name.toLowerCase().match(/\.(jpg|jpeg|png|webp|heic|heif)$/)) {
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowedTypes.includes(file.type) && !file.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/)) {
         alert("รองรับเฉพาะไฟล์รูปภาพ (JPEG, PNG, WebP) เท่านั้น");
         return;
       }
@@ -166,7 +166,7 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
           ref={fileInputRef}
           type="file"
           name="photo"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           capture="environment"
           onChange={handleFileChange}
           className="hidden"

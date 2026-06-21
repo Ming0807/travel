@@ -73,8 +73,7 @@ export function CertificatePreview({
       }
 
       // 3. Navigate to success page
-      const certUrl = data.certificateUrl ? `&certUrl=${encodeURIComponent(data.certificateUrl)}` : '';
-      router.push(`/visit/${visitId}/certificate/success?certId=${data.certificateId}&stamp=${data.stamp?.status || "none"}${certUrl}`);
+      router.push(`/visit/${visitId}/certificate/success?certId=${data.certificateId}&stamp=${data.stamp?.status || "none"}`);
     } catch (err: unknown) {
       console.error(err);
       const msg = err instanceof Error ? err.message : "สร้างใบประกาศไม่สำเร็จ กรุณาลองใหม่";

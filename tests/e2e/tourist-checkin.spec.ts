@@ -1,6 +1,4 @@
 import { test, expect } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
 
 test.describe('Tourist Check-in Flow', () => {
   // Use a known demo checkin code that was seeded
@@ -43,22 +41,19 @@ test.describe('Tourist Check-in Flow', () => {
     expect(visitId).toBeDefined();
 
     // 3. Photo Upload (We will mock the file upload or just skip it if it's too complex to mock in E2E without an actual file, but Playwright can upload files)
-    // We create a dummy image to upload
-    const buffer = Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-      'base64'
-    );
     // Bypass flaky UI file upload in headless mode by calling the API directly
     await page.evaluate(async () => {
       const visitId = window.location.pathname.split('/')[2];
+      const base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
       const form = new FormData();
-      form.append('file', new Blob(['fake image data'], { type: 'image/png' }), 'test-image.png');
+      form.append('file', new Blob([bytes], { type: 'image/png' }), 'test-image.png');
       form.append('visitId', visitId);
       
       const res = await fetch('/api/upload/photo', { method: 'POST', body: form });
       const data = await res.json();
       
-      window.location.href = `/visit/${visitId}/certificate/preview?photoId=${data.photoId}&previewUrl=${encodeURIComponent(data.previewUrl)}`;
+      window.location.href = `/visit/${visitId}/certificate/preview?photoId=${data.photoId}`;
     });
     
     // 4. Certificate Preview

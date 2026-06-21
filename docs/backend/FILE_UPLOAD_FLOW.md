@@ -16,6 +16,7 @@ PhotoUploadForm
     -> Zod/common visit id validation
     -> server-side MIME/size validation
     -> tourist visit ownership guard
+    -> server-side image decode + WebP conversion
     -> uploadPrivateFile(logical bucket: visit-photos)
     -> visit_photos metadata insert
     -> visit status update + photo_uploaded funnel event
@@ -28,7 +29,9 @@ Rules:
 - LINE/Google/email/phone must not be required.
 - The client must not provide a storage path.
 - The original filename must not be used as the final object key.
+- User-provided filenames are not stored for tourist photos; metadata uses a generic privacy-safe filename.
 - Tourist photo URLs/storage references must not appear in dashboards or default exports.
+- Private photo preview routes must derive signed URLs from a photo row that belongs to the current tourist visit.
 
 ---
 
@@ -48,6 +51,9 @@ CertificatePreview
 ```
 
 Certificate download must not be blocked by survey, sharing, LINE, Google, email, or phone number.
+
+Certificate image URLs must go through `/api/media/image?bucket=certificate-files&path=...`.
+That proxy must verify the certificate row and visit ownership before creating a signed URL.
 
 ---
 

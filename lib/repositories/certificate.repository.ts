@@ -44,6 +44,21 @@ export async function getCertificateByVisitId(visitId: string) {
   return data || null;
 }
 
+export async function getCertificateByPath(certificatePath: string) {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("certificates")
+    .select("certificate_id, visit_id, certificate_path")
+    .eq("certificate_path", certificatePath)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to fetch certificate by path: ${error.message}`);
+  }
+
+  return data || null;
+}
+
 export async function incrementCertificateDownload(certificateId: string) {
   const supabase = createSupabaseServiceRoleClient();
   

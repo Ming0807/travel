@@ -1,11 +1,25 @@
 import type { Metadata } from "next";
-import { getVisitById } from "@/lib/repositories/visit.repository";
+import { requireTouristVisitAccess } from "@/lib/auth/guards";
 import { getPhotoById } from "@/lib/repositories/visit-photo.repository";
 import { CertificatePreview } from "@/components/certificate/CertificatePreview";
+import { createPrivateFileSignedUrl } from "@/lib/storage/private-files";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "ใบประกาศดิจิทัล | Southern Border Tourism",
+};
+
+type CertificateVisitRow = {
+  visit_date?: string | null;
+  tourists?: {
+    display_name?: string | null;
+  } | null;
+  attractions?: {
+    name_th?: string | null;
+    provinces?: {
+      province_name_th?: string | null;
+    } | null;
+  } | null;
 };
 
 export default async function CertificatePreviewPage({
@@ -20,17 +34,15 @@ export default async function CertificatePreviewPage({
   const rawPhotoId = Array.isArray(resolvedSearchParams?.photoId)
     ? resolvedSearchParams?.photoId[0]
     : resolvedSearchParams?.photoId;
-  const rawPreviewUrl = Array.isArray(resolvedSearchParams?.previewUrl)
-    ? resolvedSearchParams?.previewUrl[0]
-    : resolvedSearchParams?.previewUrl;
 
-  const visit = await getVisitById(visitId);
-  if (!visit) {
+  let access: Awaited<ReturnType<typeof requireTouristVisitAccess>>;
+  try {
+    access = await requireTouristVisitAccess(visitId);
+  } catch {
     notFound();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const v = visit as any;
+  const v = access.visit as CertificateVisitRow;
   const touristName = v.tourists?.display_name || "ผู้เยี่ยมชม";
   const attractionName = v.attractions?.name_th || "สถานที่ท่องเที่ยว";
   const provinceName = v.attractions?.provinces?.province_name_th || "";
@@ -48,20 +60,14 @@ export default async function CertificatePreviewPage({
 
   // Get photo info
   let photoId = rawPhotoId || "";
-  let previewUrl = rawPreviewUrl || "";
+  let previewUrl = "";
 
-  // If previewUrl is missing OR if it's an old broken public URL, we generate a fresh signed URL
-  if (rawPhotoId && (!rawPreviewUrl || rawPreviewUrl.includes("/object/public/visit-photos/"))) {
+  if (rawPhotoId) {
     const photo = await getPhotoById(rawPhotoId as string);
-    if (photo && photo.storage_path) {
-      // The bucket is private, so we need a signed URL
-      const { createSupabaseServiceRoleClient } = await import("@/lib/supabase/service-role");
-      const supabase = createSupabaseServiceRoleClient();
-      const { data } = await supabase.storage
-        .from("visit-photos")
-        .createSignedUrl(photo.storage_path, 60 * 60);
-      
-      previewUrl = data?.signedUrl || "";
+    if (photo?.storage_path && photo.visit_id === visitId) {
+      previewUrl = await createPrivateFileSignedUrl("visit-photos", photo.storage_path, 60 * 60);
+    } else {
+      photoId = "";
     }
   }
 

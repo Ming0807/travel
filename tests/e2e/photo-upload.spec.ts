@@ -63,12 +63,13 @@ test.describe('Tourist Photo Upload Flow', () => {
     // Click submit
     await submitBtn.click();
 
-    // 5. Verify redirect to certificate preview with photoId and previewUrl query params
-    await page.waitForURL(/\/visit\/[^/]+\/certificate\/preview\?photoId=[^&]+&previewUrl=[^&]+/);
+    // 5. Verify redirect to certificate preview with photoId only.
+    // The signed preview URL is derived server-side after ownership verification.
+    await page.waitForURL(/\/visit\/[^/]+\/certificate\/preview\?photoId=[^&]+/);
     
     const url = new URL(page.url());
     expect(url.searchParams.get('photoId')).toBeTruthy();
-    expect(url.searchParams.get('previewUrl')).toBeTruthy();
+    expect(url.searchParams.get('previewUrl')).toBeNull();
 
     await expect(page.locator('text=ใบประกาศของคุณพร้อมแล้ว')).toBeVisible();
   });

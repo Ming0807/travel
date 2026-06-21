@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CertificateSuccessActions } from "@/components/certificate/CertificateSuccessActions";
+import { requireTouristVisitAccess } from "@/lib/auth/guards";
 import { getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
-import { getVisitById } from "@/lib/repositories/visit.repository";
 import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
 import { notFound } from "next/navigation";
 import { CheckCircle, Sparkle } from "@phosphor-icons/react/dist/ssr";
@@ -19,40 +19,37 @@ export default async function CertificateSuccessPage({
 }) {
   const { visitId } = await params;
   const resolvedSearchParams = await searchParams;
+  let access: Awaited<ReturnType<typeof requireTouristVisitAccess>>;
+  try {
+    access = await requireTouristVisitAccess(visitId);
+  } catch {
+    notFound();
+  }
 
   // Track passport_saved funnel event (fire-and-forget)
   try {
-    const visit = await getVisitById(visitId);
-    if (visit) {
-      const v = visit as any;
-      await recordFunnelEvent({
-        eventName: "passport_saved",
-        checkinCodeId: v.checkin_code_id || undefined,
-        attractionId: v.attraction_id,
-        touristId: v.tourist_id,
-        visitId,
-      });
-    }
+    const v = access.visit as {
+      checkin_code_id?: number | null;
+      attraction_id?: number | null;
+      tourist_id?: string | null;
+    };
+    await recordFunnelEvent({
+      eventName: "passport_saved",
+      checkinCodeId: v.checkin_code_id || undefined,
+      attractionId: v.attraction_id || undefined,
+      touristId: v.tourist_id || undefined,
+      visitId,
+    });
   } catch {
     // Funnel tracking is non-critical
   }
-  const rawCertId = Array.isArray(resolvedSearchParams?.certId)
-    ? resolvedSearchParams?.certId[0]
-    : resolvedSearchParams?.certId;
   const rawStamp = Array.isArray(resolvedSearchParams?.stamp)
     ? resolvedSearchParams?.stamp[0]
     : resolvedSearchParams?.stamp;
-  const rawCertUrl = Array.isArray(resolvedSearchParams?.certUrl)
-    ? resolvedSearchParams.certUrl[0]
-    : (resolvedSearchParams?.certUrl as string | undefined) ?? null;
-
-  // Get certificate URL: prefer from searchParams, fallback to DB lookup
-  let certUrl = rawCertUrl || "";
-  if (!certUrl) {
-    const cert = await getCertificateByVisitId(visitId);
-    if (cert) {
-      certUrl = `/api/media/image?path=${encodeURIComponent(cert.certificate_path)}`;
-    }
+  let certUrl = "";
+  const cert = await getCertificateByVisitId(visitId);
+  if (cert) {
+    certUrl = `/api/media/image?bucket=certificate-files&path=${encodeURIComponent(cert.certificate_path)}`;
   }
 
   const stampStatus = (rawStamp as "earned" | "already_earned" | "no_active_stamp_definition" | "none" | undefined) || "earned";

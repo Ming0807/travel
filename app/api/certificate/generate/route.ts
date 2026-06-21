@@ -1,95 +1,136 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { requireTouristVisitAccess, TouristAccessError } from "@/lib/auth/guards";
+import { getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
+import { getPhotoById } from "@/lib/repositories/visit-photo.repository";
 import { processCertificateGeneration } from "@/lib/services/certificate.service";
 import { assignStampForVisit } from "@/lib/services/stamp.service";
-import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
-import { getVisitById } from "@/lib/repositories/visit.repository";
+import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/private-files";
+import { uuidSchema } from "@/lib/validation/common";
+
+export const runtime = "nodejs";
+
+const MAX_CERTIFICATE_IMAGE_BYTES = 8 * 1024 * 1024;
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+function errorResponse(code: string, message: string, status: number) {
+  return NextResponse.json({ success: false, code, error: message }, { status });
+}
+
+function certificateUrl(path: string) {
+  return `/api/media/image?bucket=certificate-files&path=${encodeURIComponent(path)}`;
+}
+
+function generateCertificatePath(visitId: string) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `certificates/${year}/${month}/${visitId}/${crypto.randomUUID()}.png`;
+}
+
+function parseCertificateImage(raw: unknown) {
+  if (typeof raw !== "string" || !raw.startsWith("data:image/png;base64,")) {
+    return null;
+  }
+
+  const base64Data = raw.replace(/^data:image\/png;base64,/, "");
+  const buffer = Buffer.from(base64Data, "base64");
+
+  if (
+    buffer.byteLength <= PNG_SIGNATURE.byteLength ||
+    buffer.byteLength > MAX_CERTIFICATE_IMAGE_BYTES ||
+    !buffer.subarray(0, PNG_SIGNATURE.byteLength).equals(PNG_SIGNATURE)
+  ) {
+    return null;
+  }
+
+  return buffer;
+}
 
 export async function POST(request: NextRequest) {
+  let certificatePath: string | null = null;
+
   try {
-    const body = await request.json();
-    const { visitId, photoId, base64Image } = body;
+    const body = (await request.json()) as Record<string, unknown>;
+    const visitIdResult = uuidSchema.safeParse(body.visitId);
 
-    if (!visitId || !base64Image) {
-      return NextResponse.json(
-        { error: "Missing required fields: visitId, base64Image" },
-        { status: 400 }
-      );
+    if (!visitIdResult.success) {
+      return errorResponse("VISIT_NOT_FOUND", "ไม่พบข้อมูลการเข้าชมนี้", 404);
     }
 
-    // 1. Verify visit exists
-    const visit = await getVisitById(visitId);
-    if (!visit) {
-      return NextResponse.json(
-        { error: "Visit not found" },
-        { status: 404 }
-      );
-    }
+    const visitId = visitIdResult.data;
+    await requireTouristVisitAccess(visitId);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const v = visit as any;
-
-    // 2. Decode and upload certificate image to storage
-    const supabase = createSupabaseServiceRoleClient();
-    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64Data, "base64");
-
-    const fileName = `certificates/${visitId}/certificate-${Date.now()}.png`;
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("certificate-files")
-      .upload(fileName, buffer, {
-        contentType: "image/png",
-        upsert: false,
+    const existingCertificate = await getCertificateByVisitId(visitId);
+    if (existingCertificate) {
+      const stampResult = await assignStampForVisit(visitId);
+      return NextResponse.json({
+        success: true,
+        certificateId: existingCertificate.certificate_id,
+        stamp: stampResult.success ? { status: stampResult.status } : { status: "failed" as const },
+        certificateUrl: certificateUrl(existingCertificate.certificate_path),
       });
-
-    if (uploadError || !uploadData) {
-      console.error("Certificate storage upload error:", uploadError);
-      return NextResponse.json(
-        { error: "Failed to store certificate image" },
-        { status: 500 }
-      );
     }
 
-    // 3. Create certificate record
+    const rawPhotoId = typeof body.photoId === "string" && body.photoId.trim() ? body.photoId : null;
+    if (rawPhotoId) {
+      const photoIdResult = uuidSchema.safeParse(rawPhotoId);
+      if (!photoIdResult.success) {
+        return errorResponse("PHOTO_NOT_FOUND_FOR_VISIT", "ไม่พบรูปภาพสำหรับการเข้าชมนี้", 400);
+      }
+
+      const photo = await getPhotoById(photoIdResult.data);
+      if (!photo || photo.visit_id !== visitId) {
+        return errorResponse("PHOTO_NOT_FOUND_FOR_VISIT", "ไม่พบรูปภาพสำหรับการเข้าชมนี้", 400);
+      }
+    }
+
+    const buffer = parseCertificateImage(body.base64Image);
+    if (!buffer) {
+      return errorResponse("CERTIFICATE_IMAGE_INVALID", "ไม่สามารถสร้างภาพใบประกาศได้ กรุณาลองอีกครั้ง", 400);
+    }
+
+    const logicalPath = generateCertificatePath(visitId);
+    const uploaded = await uploadPrivateFile({
+      bucket: "certificate-files",
+      path: logicalPath,
+      data: buffer,
+      contentType: "image/png",
+    });
+    certificatePath = uploaded.storagePath;
+
     const certificateId = await processCertificateGeneration({
       visitId,
-      templateId: 1, // Default template
-      photoId: photoId || undefined,
-      certificatePath: fileName,
+      templateId: 1,
+      photoId: rawPhotoId || undefined,
+      certificatePath,
     });
 
-    // 4. Award stamp
     const stampResult = await assignStampForVisit(visitId);
-
-    // 5. Track funnel event
-    await recordFunnelEvent({
-      eventName: "certificate_generated",
-      checkinCodeId: v.checkin_code_id || undefined,
-      attractionId: v.attraction_id,
-      touristId: v.tourist_id,
-      visitId,
-    });
-
-    // 6. Return internal media proxy URL instead of public URL since bucket is private
-    const internalCertUrl = `/api/media/image?path=${encodeURIComponent(fileName)}`;
-
-    // Build stamp response safely
-    const stampResponse = stampResult.success
-      ? { status: stampResult.status, ...("stampId" in stampResult ? { stampId: stampResult.stampId } : {}) }
-      : { status: "failed" as const };
 
     return NextResponse.json({
       success: true,
       certificateId,
-      stamp: stampResponse,
-      certificateUrl: internalCertUrl,
+      stamp: stampResult.success ? { status: stampResult.status } : { status: "failed" as const },
+      certificateUrl: certificateUrl(certificatePath),
     });
   } catch (error) {
-    console.error("Certificate generation error:", error);
-    return NextResponse.json(
-      { error: "Failed to generate certificate" },
-      { status: 500 }
-    );
+    if (certificatePath) {
+      try {
+        await deletePrivateFile({ bucket: "certificate-files", path: certificatePath });
+      } catch (cleanupError) {
+        console.error(
+          "Certificate storage cleanup failed:",
+          cleanupError instanceof Error ? cleanupError.message : "unknown error",
+        );
+      }
+    }
+
+    if (error instanceof TouristAccessError) {
+      return errorResponse(error.code, error.message, error.code === "VISIT_ACCESS_DENIED" ? 403 : 404);
+    }
+
+    console.error("Certificate generation failed:", error instanceof Error ? error.message : "unknown error");
+    return errorResponse("CERTIFICATE_GENERATION_FAILED", "สร้างใบประกาศไม่สำเร็จ กรุณาลองอีกครั้ง", 500);
   }
 }

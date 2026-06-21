@@ -1,7 +1,16 @@
-import { getVisitById } from "@/lib/repositories/visit.repository";
+import { requireTouristVisitAccess } from "@/lib/auth/guards";
 import { PhotoUploadClient } from "@/components/checkin/PhotoUploadClient";
-import { Camera, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { MapPin } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
+
+type VisitPhotoPageRow = {
+  attractions?: {
+    name_th?: string | null;
+  } | null;
+  photo_spots?: {
+    spot_name_th?: string | null;
+  } | null;
+};
 
 export default async function VisitPhotoPage({
   params,
@@ -9,14 +18,14 @@ export default async function VisitPhotoPage({
   params: Promise<{ visitId: string }>;
 }) {
   const { visitId } = await params;
-  const visit = await getVisitById(visitId);
-
-  if (!visit) {
+  let access: Awaited<ReturnType<typeof requireTouristVisitAccess>>;
+  try {
+    access = await requireTouristVisitAccess(visitId);
+  } catch {
     notFound();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const v = visit as any;
+  const v = access.visit as VisitPhotoPageRow;
   const attractionName = v.attractions?.name_th || "สถานที่ท่องเที่ยว";
   const photoSpotName = v.photo_spots?.spot_name_th || null;
 

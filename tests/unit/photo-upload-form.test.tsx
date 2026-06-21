@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach, type Mock } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PhotoUploadForm } from "@/components/visit/PhotoUploadForm";
@@ -31,8 +31,8 @@ describe("PhotoUploadForm", () => {
     createdUrls.length = 0;
     urlIndex = 0;
     mockFetch.mockReset();
-    (globalThis.URL.createObjectURL as any).mockClear();
-    (globalThis.URL.revokeObjectURL as any).mockClear();
+    (globalThis.URL.createObjectURL as Mock).mockClear();
+    (globalThis.URL.revokeObjectURL as Mock).mockClear();
   });
 
   afterEach(() => {
@@ -180,7 +180,7 @@ describe("PhotoUploadForm", () => {
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith(
-        `/visit/${visitId}/certificate/preview?photoId=photo-123&previewUrl=${encodeURIComponent("https://example.com/preview.jpg")}`
+        `/visit/${visitId}/certificate/preview?photoId=photo-123`
       );
     });
   });

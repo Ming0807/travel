@@ -64,3 +64,18 @@ export async function getPhotoById(photoId: string) {
 
   return data || null;
 }
+
+export async function getPhotoByStoragePath(storagePath: string) {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("visit_photos")
+    .select("photo_id, visit_id, storage_path")
+    .eq("storage_path", storagePath)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to fetch visit photo by storage path: ${error.message}`);
+  }
+
+  return data || null;
+}
