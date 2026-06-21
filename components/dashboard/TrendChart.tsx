@@ -53,6 +53,18 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
     return { max };
   }, [points]);
 
+  const yTicks = useMemo(() => {
+    if (chartData.max <= 0) return [0];
+    const niceMax = Math.ceil(chartData.max / 10) * 10 || 10;
+    const step = Math.max(1, Math.round(niceMax / 4));
+    const ticks: number[] = [];
+    for (let v = 0; v <= niceMax; v += step) {
+      ticks.push(v);
+    }
+    if (ticks[ticks.length - 1]! < niceMax) ticks.push(niceMax);
+    return ticks;
+  }, [chartData.max]);
+
   if (points.length === 0) {
     return (
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
@@ -87,19 +99,6 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
 
   const areaPath = buildSmoothPath(mapped);
   const linePath = areaPath;
-
-  // Y-axis ticks
-  const yTicks = useMemo(() => {
-    if (max <= 0) return [0];
-    const niceMax = Math.ceil(max / 10) * 10 || 10;
-    const step = Math.max(1, Math.round(niceMax / 4));
-    const ticks: number[] = [];
-    for (let v = 0; v <= niceMax; v += step) {
-      ticks.push(v);
-    }
-    if (ticks[ticks.length - 1]! < niceMax) ticks.push(niceMax);
-    return ticks;
-  }, [max]);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">

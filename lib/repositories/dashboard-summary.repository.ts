@@ -140,7 +140,7 @@ async function filterRowsByAttractionDimensions<T extends { attraction_id: numbe
 export async function getDashboardSummaryKpis(filters: DashboardFilters): Promise<DashboardSummaryKpis | null> {
   const supabase = createSupabaseServiceRoleClient();
 
-  let query = buildSummaryQuery(supabase, filters);
+  const query = buildSummaryQuery(supabase, filters);
 
   const { data, error } = await query;
   if (error || !data || data.length === 0) {

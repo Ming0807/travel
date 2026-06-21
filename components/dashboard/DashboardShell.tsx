@@ -25,7 +25,7 @@ export function DashboardShell({ data, children }: { data: DashboardViewModel; c
         <div className="rounded-2xl border border-[#0A6B62]/15 bg-[#E6F4EF] p-4 text-sm leading-6 text-[#073F37]">
           <strong>Data source:</strong> live database. <strong>Last updated:</strong>{" "}
           {new Date(data.generatedAt).toLocaleString("th-TH")}.{" "}
-          <strong>Important:</strong> QR scans are tracked separately from visits. Tourist profiles are system profiles, not verified unique people. Estimated spending is self-reported range data, not revenue. Missing values are shown as "No data" — not zero.
+          <strong>Important:</strong> QR scans are tracked separately from visits. Tourist profiles are system profiles, not verified unique people. Estimated spending is self-reported range data, not revenue. Missing values are shown as &ldquo;No data&rdquo; — not zero.
         </div>
 
         {/* Dashboard alerts — integrated into all dashboard pages */}

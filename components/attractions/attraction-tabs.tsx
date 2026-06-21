@@ -10,12 +10,10 @@ type AttractionTabsProps = {
 
 export function AttractionTabs({ sections, mobileLabel = "ไปยังส่วน" }: AttractionTabsProps) {
   const [activeTab, setActiveTab] = useState(sections[0]?.id ?? "");
-
-  useEffect(() => {
-    if (!sections.some((section) => section.id === activeTab)) {
-      setActiveTab(sections[0]?.id ?? "");
-    }
-  }, [activeTab, sections]);
+  const fallbackTab = sections[0]?.id ?? "";
+  const selectedTab = sections.some((section) => section.id === activeTab)
+    ? activeTab
+    : fallbackTab;
 
   useEffect(() => {
     if (sections.length === 0) return;
@@ -63,7 +61,7 @@ export function AttractionTabs({ sections, mobileLabel = "ไปยังส่�
               key={tab.id}
               onClick={() => scrollToSection(tab.id)}
               className={`min-h-10 rounded-full border px-3 py-2 text-sm font-bold transition-colors ${
-                activeTab === tab.id
+                selectedTab === tab.id
                   ? "border-coral bg-coral text-white"
                   : "border-ink/10 bg-white text-ink hover:border-coral/30 hover:bg-cream"
               }`}
@@ -82,7 +80,7 @@ export function AttractionTabs({ sections, mobileLabel = "ไปยังส่�
         <div className="relative">
           <select
             id="attraction-section-jump"
-            value={activeTab}
+            value={selectedTab}
             onChange={(event) => scrollToSection(event.target.value)}
             className="min-h-12 w-full rounded-xl border border-ink/10 bg-cream px-4 py-3 text-sm font-bold text-ink outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/20"
           >

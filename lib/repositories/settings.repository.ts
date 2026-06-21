@@ -48,7 +48,6 @@ export class SettingsRepository {
   async updateSetting(key: string, value: any): Promise<boolean> {
     const supabase = this.getClient();
     const query: any = supabase.from("site_settings" as any);
-    // @ts-ignore
     const { error } = await query
       .upsert({ 
         setting_key: key, 

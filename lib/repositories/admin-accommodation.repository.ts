@@ -111,7 +111,7 @@ export async function listAdminAccommodations(filters: AdminAccommodationFilters
 
   // Get attraction counts for each accommodation
   const accommodationIds = (data ?? []).map((row) => Number(row.accommodation_id));
-  let attractionCounts = new Map<number, number>();
+  const attractionCounts = new Map<number, number>();
 
   if (accommodationIds.length > 0) {
     const { data: links, error: linkError } = await supabase

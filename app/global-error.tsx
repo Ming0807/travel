@@ -1,7 +1,5 @@
 "use client";
 
-import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
-
 export default function GlobalError({
   error,
   reset,
@@ -78,8 +76,11 @@ export default function GlobalError({
               >
                 ลองอีกครั้ง
               </button>
-              <a
-                href="/"
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = "/";
+                }}
                 style={{
                   display: "inline-flex",
                   borderRadius: "9999px",
@@ -88,11 +89,12 @@ export default function GlobalError({
                   fontSize: "0.875rem",
                   fontWeight: 700,
                   color: "#334155",
-                  textDecoration: "none",
+                  background: "white",
+                  cursor: "pointer",
                 }}
               >
                 กลับหน้าแรก
-              </a>
+              </button>
             </div>
           </div>
         </div>

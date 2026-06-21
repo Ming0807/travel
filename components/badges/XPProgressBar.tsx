@@ -13,12 +13,16 @@ export function XPProgressBar({ xp, compact = false }: XPProgressBarProps) {
   const [animWidth, setAnimWidth] = useState(0);
 
   useEffect(() => {
-    // Reset to 0 then animate to target width
-    setAnimWidth(0);
+    const resetTimer = setTimeout(() => {
+      setAnimWidth(0);
+    }, 0);
     const timer = setTimeout(() => {
       setAnimWidth(progressPercent);
     }, 200);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(resetTimer);
+      clearTimeout(timer);
+    };
   }, [progressPercent]);
 
   return (

@@ -268,7 +268,7 @@ export default async function ContentHubPage() {
         </div>
         <p className="mt-4 text-[11px] leading-5 text-slate-400">
           Readiness compares published-with-cover/stops/hero against total published. 
-          "Needs attention" means fewer than 50% of published items have the required asset. 
+          &ldquo;Needs attention&rdquo; means fewer than 50% of published items have the required asset.
           Media alt-text readiness: active files with Thai alt text set.
         </p>
       </section>

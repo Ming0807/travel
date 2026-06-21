@@ -66,17 +66,18 @@ export function DashboardAlertBanner({
 }) {
   const sig = filtersSig ?? "";
   const storageKey = dismissKey(alertData.id, sig);
-  const [dismissed, setDismissed] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored === "true") setDismissed(true);
-    } catch {
-      // localStorage unavailable
-    }
+    const frame = requestAnimationFrame(() => {
+      try {
+        const stored = localStorage.getItem(storageKey);
+        setDismissed(stored === "true");
+      } catch {
+        setDismissed(false);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
   }, [storageKey]);
 
   const handleDismiss = () => {
@@ -88,7 +89,7 @@ export function DashboardAlertBanner({
     }
   };
 
-  if (!mounted || dismissed) return null;
+  if (dismissed !== false) return null;
 
   const cfg = SEVERITY_CONFIG[alertData.severity];
   const Icon = cfg.icon;

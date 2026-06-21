@@ -111,7 +111,7 @@ export async function listAdminRestaurants(filters: AdminRestaurantFilters): Pro
 
   // Get attraction counts for each restaurant
   const restaurantIds = (data ?? []).map((row) => Number(row.restaurant_id));
-  let attractionCounts = new Map<number, number>();
+  const attractionCounts = new Map<number, number>();
 
   if (restaurantIds.length > 0) {
     const { data: links, error: linkError } = await supabase

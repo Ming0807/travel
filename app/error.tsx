@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
 
 export default function GlobalError({
@@ -33,12 +34,12 @@ export default function GlobalError({
           >
             ลองอีกครั้ง
           </button>
-          <a
+          <Link
             href="/"
             className="inline-flex rounded-full border-2 border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
           >
             กลับหน้าแรก
-          </a>
+          </Link>
         </div>
       </div>
     </section>

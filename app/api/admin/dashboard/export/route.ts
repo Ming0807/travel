@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     const datePrefix = new Date().toISOString().split('T')[0];
     let csv = "";
     // Inline CSV types (expenses, summary) remain CSV-only; structured types (tourists, visits, surveys) get xlsx support
-    let filename = `dashboard_export_${exportType}_${datePrefix}.csv`;
+    const filename = `dashboard_export_${exportType}_${datePrefix}.csv`;
 
     if (exportType === "expenses") {
       const data = await getDashboardAnalytics(params, "expenses");

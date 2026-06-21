@@ -96,14 +96,15 @@ function useCountUp(target: number | null, duration = 900) {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
+    let rafId: number;
+
     if (target === null) {
-      setCurrent(0);
-      return;
+      rafId = requestAnimationFrame(() => setCurrent(0));
+      return () => cancelAnimationFrame(rafId);
     }
 
     const finalTarget = target;
     const startTime = performance.now();
-    let rafId: number;
 
     function tick(now: number) {
       const elapsed = now - startTime;

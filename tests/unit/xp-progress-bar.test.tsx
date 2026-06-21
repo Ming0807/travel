@@ -106,7 +106,11 @@ describe("XPProgressBar", () => {
       rerender(<XPProgressBar xp={updatedXp} />);
     });
 
-    // Should reset to 0% immediately after act flushes state
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    // Should reset to 0% on the scheduled reset tick
     expect(bar).toHaveStyle({ width: "0%" });
 
     // Then animate to 50%

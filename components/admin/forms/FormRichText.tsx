@@ -325,7 +325,8 @@ export function FormRichText({
   const hiddenRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setMounted(true);
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const editor = useEditor({

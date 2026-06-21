@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
 
 export default function TouristError({
@@ -40,12 +41,12 @@ export default function TouristError({
           >
             ลองอีกครั้ง
           </button>
-          <a
+          <Link
             href="/"
             className="inline-flex rounded-full border-2 border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
           >
             กลับหน้าหลัก
-          </a>
+          </Link>
         </div>
       </div>
     </main>
