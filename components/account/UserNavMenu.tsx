@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { UserCircle, SignOut, CaretDown, User } from "@phosphor-icons/react";
+import { UserCircle, SignOut, CaretDown, User as UserIcon } from "@phosphor-icons/react";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export function UserNavMenu({ mobile = false }: { mobile?: boolean }) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const supabase = createSupabaseBrowserClient();
@@ -79,7 +80,7 @@ export function UserNavMenu({ mobile = false }: { mobile?: boolean }) {
             />
           ) : (
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ink/5 text-ink">
-              <User weight="fill" size={20} />
+              <UserIcon weight="fill" size={20} />
             </div>
           )}
           <div className="flex-1 overflow-hidden">
@@ -128,7 +129,7 @@ export function UserNavMenu({ mobile = false }: { mobile?: boolean }) {
           />
         ) : (
           <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ink/10 text-ink">
-            <User weight="fill" size={14} />
+            <UserIcon weight="fill" size={14} />
           </div>
         )}
         <span className="max-w-[100px] truncate text-sm font-bold text-ink">{displayName}</span>

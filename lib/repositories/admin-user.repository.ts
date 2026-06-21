@@ -1,5 +1,19 @@
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
+type AdminUserRoleJoin = {
+  role_id: number;
+  roles: { role_name: string } | { role_name: string }[];
+};
+
+type AdminUserRoleIdJoin = {
+  role_id: number;
+};
+
+function getJoinedRoleName(join: AdminUserRoleJoin): string | null {
+  const role = Array.isArray(join.roles) ? join.roles[0] : join.roles;
+  return role?.role_name ?? null;
+}
+
 export async function getAdminUsers() {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
@@ -27,7 +41,9 @@ export async function getAdminUsers() {
 
   return data.map(user => ({
     ...user,
-    roles: user.admin_user_roles.map((r: any) => r.roles.role_name)
+    roles: (user.admin_user_roles as unknown as AdminUserRoleJoin[])
+      .map(getJoinedRoleName)
+      .filter((roleName): roleName is string => Boolean(roleName))
   }));
 }
 
@@ -65,7 +81,7 @@ export async function getAdminUserById(adminId: string) {
 
   return {
     ...data,
-    roleIds: data.admin_user_roles.map((r: any) => r.role_id)
+    roleIds: (data.admin_user_roles as unknown as AdminUserRoleIdJoin[]).map((r) => r.role_id)
   };
 }
 

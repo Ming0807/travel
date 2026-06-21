@@ -26,7 +26,7 @@ export async function GET(
     // If no storagePath query param, look up by media_assets.id
     if (!storagePath) {
       const { data: asset, error: fetchError } = await adminSupabase
-        .from("media_assets" as any)
+        .from("media_assets")
         .select("storage_path")
         .eq("id", id)
         .single();
@@ -43,12 +43,12 @@ export async function GET(
 
     const references = await findAdminMediaReferences(storagePath);
     return NextResponse.json({ references });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Media references fetch error:", error);
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not load media references." }, { status: 500 });
   }
 }
 
@@ -64,7 +64,7 @@ export async function DELETE(
 
     // Fetch the asset first to get the storage path
     const { data: asset, error: fetchError } = await adminSupabase
-      .from("media_assets" as any)
+      .from("media_assets")
       .select("*")
       .eq("id", id)
       .single();
@@ -78,7 +78,7 @@ export async function DELETE(
 
     // Archive instead of hard delete — set lifecycle_status to 'archived'
     const { error: updateError } = await adminSupabase
-      .from("media_assets" as any)
+      .from("media_assets")
       .update({
         lifecycle_status: "archived",
         archived_at: new Date().toISOString(),
@@ -92,7 +92,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, references });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Media archive error:", error);
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
@@ -120,7 +120,7 @@ export async function PATCH(
 
     if (action === "unarchive") {
       const { error: updateError } = await adminSupabase
-        .from("media_assets" as any)
+        .from("media_assets")
         .update({
           lifecycle_status: "active",
           archived_at: null,
@@ -135,7 +135,7 @@ export async function PATCH(
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Media update error:", error);
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });

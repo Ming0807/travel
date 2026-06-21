@@ -21,6 +21,13 @@ type RestaurantFormProps = {
   submitLabel?: string;
 };
 
+type RestaurantFormState = {
+  success: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+  data?: { id: number };
+};
+
 const FIELD_LABELS = {
   nameTh: "ชื่อภาษาไทย",
   slug: "Slug",
@@ -42,8 +49,7 @@ export function RestaurantForm({
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const action = isEditing ? updateRestaurantAction.bind(null, restaurant.restaurant_id) : createRestaurantAction;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<RestaurantFormState, FormData>(action, {
     success: false,
     error: undefined,
     fieldErrors: undefined,

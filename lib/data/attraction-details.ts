@@ -119,5 +119,5 @@ export const attractionDetailsMock = {
     "บริเวณจุดชมวิวมีสัญญาณโทรศัพท์ครบทุกเครือข่าย",
   ],
   howToGetThere: "เดินทางจากตัวเมืองยะลา โดยใช้เส้นทางสาย 410...",
-  articles: [] as any[],
+  articles: [],
 };

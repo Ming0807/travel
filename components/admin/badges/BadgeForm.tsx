@@ -13,6 +13,12 @@ type BadgeFormProps = {
   submitLabel?: string;
 };
 
+type BadgeFormState = {
+  success: boolean;
+  error?: string;
+  data?: { id: number };
+};
+
 const CATEGORY_OPTIONS = [
   { value: "exploration", label: "Exploration / การสำรวจ" },
   { value: "engagement", label: "Engagement / การมีส่วนร่วม" },
@@ -37,8 +43,7 @@ export function BadgeForm({ badge, submitLabel = "บันทึกข้อม
   const isEditing = !!badge;
   const action = isEditing ? updateBadgeAction.bind(null, badge!.badgeId) : createBadgeAction;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<BadgeFormState, FormData>(action, {
     success: false,
     error: undefined,
   });

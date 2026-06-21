@@ -66,7 +66,11 @@ export async function getContactMessageById(id: string) {
 
 export async function updateMessageStatus(id: string, status: "unread" | "read" | "archived", adminId: string) {
   const supabase = createSupabaseServiceRoleClient();
-  const updates: any = { status };
+  const updates: {
+    status: "unread" | "read" | "archived";
+    read_at?: string;
+    read_by?: string;
+  } = { status };
 
   if (status === "read") {
     updates.read_at = new Date().toISOString();

@@ -98,10 +98,10 @@ export async function POST(req: NextRequest) {
       success: true,
       templateId: data.template_id
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Admin template upload error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Upload failed. Please try again." },
+      { success: false, error: error instanceof Error ? error.message : "Upload failed. Please try again." },
       { status: 500 }
     );
   }

@@ -7,6 +7,19 @@ export interface Role {
   is_active: boolean;
 }
 
+type RolePermissionNameJoin = {
+  permissions: { permission_name: string } | { permission_name: string }[];
+};
+
+type RolePermissionIdJoin = {
+  permission_id: number;
+};
+
+function getPermissionName(join: RolePermissionNameJoin): string | null {
+  const permission = Array.isArray(join.permissions) ? join.permissions[0] : join.permissions;
+  return permission?.permission_name ?? null;
+}
+
 export async function getActiveRoles(): Promise<Role[]> {
   const supabase = createSupabaseServiceRoleClient();
   
@@ -42,7 +55,9 @@ export async function getAllRolesWithPermissions() {
 
   return data.map(role => ({
     ...role,
-    permissions: role.role_permissions.map((rp: any) => rp.permissions.permission_name)
+    permissions: (role.role_permissions as unknown as RolePermissionNameJoin[])
+      .map(getPermissionName)
+      .filter((permissionName): permissionName is string => Boolean(permissionName))
   }));
 }
 
@@ -66,7 +81,7 @@ export async function getRoleById(roleId: number) {
 
   return {
     ...data,
-    permissionIds: data.role_permissions.map((rp: any) => rp.permission_id)
+    permissionIds: (data.role_permissions as unknown as RolePermissionIdJoin[]).map((rp) => rp.permission_id)
   };
 }
 

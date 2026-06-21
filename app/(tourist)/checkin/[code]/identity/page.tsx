@@ -8,8 +8,7 @@ export default async function IdentitySelectionPage({ params }: { params: Promis
   const context = await resolveAndValidateCheckinCode(code);
 
   if (context.status !== "valid" || !context.details) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return <CheckinUnavailable status={context.status as any} />;
+    return <CheckinUnavailable status={context.status === "valid" ? "unavailable" : context.status} />;
   }
 
   return (

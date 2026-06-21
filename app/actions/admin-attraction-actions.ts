@@ -15,14 +15,14 @@ import {
   updateAdminAttractionRelatedContent,
 } from "@/lib/repositories/admin-attraction.repository";
 
-type ActionResult = {
+type ActionResult<TData = unknown> = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
-  data?: any;
+  data?: TData;
 };
 
-export async function createAttractionAction(prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function createAttractionAction(_prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("attraction.create");
     const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData.entries()));
@@ -46,14 +46,14 @@ export async function createAttractionAction(prevState: ActionResult, formData: 
 
     revalidatePath('/', 'layout');
     return { success: true, data: { id: created.attraction_id } };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to create attraction:", error);
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังสร้างสถานที่ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
-export async function updateAttractionAction(attractionId: number, prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function updateAttractionAction(attractionId: number, _prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("attraction.update");
     const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData.entries()));

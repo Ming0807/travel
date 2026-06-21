@@ -14,8 +14,9 @@ import {
   removeAdminMessage, 
   toggleAdminMessageReplied 
 } from "@/app/actions/admin-messages";
+import type { AdminMessageRow } from "@/components/admin/messages/MessageListClient";
 
-export function MessageDetailClient({ message }: { message: any }) {
+export function MessageDetailClient({ message }: { message: AdminMessageRow }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 

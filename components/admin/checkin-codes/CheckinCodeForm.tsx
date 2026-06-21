@@ -32,6 +32,17 @@ const FIELD_LABELS = {
   endsAt: "End date",
 };
 
+type CheckinCodeFormState = {
+  success: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+  data?: {
+    id?: number;
+    code?: string;
+    attractionId?: number;
+  };
+};
+
 function normalizeCode(value: string) {
   return value
     .trim()
@@ -97,8 +108,7 @@ export function CheckinCodeForm({
   const [copied, setCopied] = useState(false);
   const origin = useSyncExternalStore(subscribeOrigin, getBrowserOrigin, () => "");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<CheckinCodeFormState, FormData>(action, {
     success: false,
     error: undefined,
     fieldErrors: undefined,

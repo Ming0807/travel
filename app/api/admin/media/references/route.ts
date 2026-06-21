@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
     const references = await findAdminMediaReferences(storagePath);
     return NextResponse.json({ references });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Media references fetch error:", error);
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });

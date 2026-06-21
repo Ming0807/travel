@@ -9,15 +9,16 @@ import {
 import { 
   adminPhotoSpotMutationSchema 
 } from "@/lib/validation/photo-spot";
+import type { AdminPhotoSpotRow } from "@/lib/repositories/photo-spot.repository";
 
-type ActionResult = {
+type ActionResult<TData = unknown> = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
-  data?: any;
+  data?: TData;
 };
 
-export async function createPhotoSpotAction(prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function createPhotoSpotAction(_prevState: ActionResult<AdminPhotoSpotRow>, formData: FormData): Promise<ActionResult<AdminPhotoSpotRow>> {
   try {
     await requirePermission("photo_spot.create");
     
@@ -33,13 +34,13 @@ export async function createPhotoSpotAction(prevState: ActionResult, formData: F
     const created = await createAdminPhotoSpot(parsed.data);
     revalidatePath("/admin/photo-spots");
     return { success: true, data: created };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Create photo spot action error:", error);
     return { success: false, error: "ยังสร้างจุดถ่ายภาพไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
-export async function updatePhotoSpotAction(photoSpotId: number, prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function updatePhotoSpotAction(photoSpotId: number, _prevState: ActionResult<AdminPhotoSpotRow>, formData: FormData): Promise<ActionResult<AdminPhotoSpotRow>> {
   try {
     await requirePermission("photo_spot.update");
     
@@ -56,7 +57,7 @@ export async function updatePhotoSpotAction(photoSpotId: number, prevState: Acti
     revalidatePath("/admin/photo-spots");
     revalidatePath(`/admin/photo-spots/${photoSpotId}/edit`);
     return { success: true, data: updated };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Update photo spot action error:", error);
     return { success: false, error: "ยังบันทึกการแก้ไขจุดถ่ายภาพไม่ได้ กรุณาลองอีกครั้ง" };
   }

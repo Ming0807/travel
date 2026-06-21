@@ -22,6 +22,13 @@ type AccommodationFormProps = {
   coverPreviewUrl?: string | null;
 };
 
+type AdminFormState = {
+  success: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+  data?: { id: number };
+};
+
 const FIELD_LABELS = {
   nameTh: "ชื่อภาษาไทย",
   slug: "Slug",
@@ -47,8 +54,7 @@ export function AccommodationForm({
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const action = isEditing ? updateAccommodationAction.bind(null, accommodation.accommodation_id) : createAccommodationAction;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<AdminFormState, FormData>(action, {
     success: false,
     error: undefined,
     fieldErrors: undefined,

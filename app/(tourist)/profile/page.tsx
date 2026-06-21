@@ -23,6 +23,23 @@ type ProfileSummary = Awaited<ReturnType<typeof getCurrentTouristProfileSummary>
 
 type AllBadgeDef = Awaited<ReturnType<typeof getAllBadges>>;
 
+type BadgeDefinitionRow = {
+  badge_id: number | string;
+  badge_key: string;
+  name_th: string;
+  name_en: string;
+  description_th: string | null;
+  description_en: string | null;
+  icon_name: string | null;
+  icon_color: string | null;
+  category: "exploration" | "engagement" | "milestone" | "social";
+  requirement_type: string;
+  requirement_value: number | string;
+  requirement_extra: string | null;
+  display_order: number | string;
+  is_active: boolean;
+};
+
 type ProfileResult =
   | { kind: "ready"; profile: ProfileSummary; xp: Awaited<ReturnType<typeof getTouristXP>>; badges: Awaited<ReturnType<typeof getTouristBadges>>; allBadges: AllBadgeDef }
   | { kind: "no_identity" }
@@ -36,7 +53,7 @@ async function getAllBadges() {
     .eq("is_active", true)
     .order("display_order", { ascending: true });
 
-  return (data ?? []).map((row: any) => ({
+  return ((data ?? []) as BadgeDefinitionRow[]).map((row) => ({
     badgeId: Number(row.badge_id),
     badgeKey: row.badge_key,
     nameTh: row.name_th,

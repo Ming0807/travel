@@ -3,7 +3,24 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { BadgeDefinitionInput, AdminBadgeFilters } from "@/lib/validation/admin-badge";
 import type { BadgeDefinition } from "@/types/tourism";
 
-function mapBadgeDefinition(row: any): BadgeDefinition {
+type BadgeDefinitionRow = {
+  badge_id: number | string;
+  badge_key: string;
+  name_th: string;
+  name_en: string;
+  description_th: string | null;
+  description_en: string | null;
+  icon_name: string | null;
+  icon_color: string | null;
+  category: BadgeDefinition["category"];
+  requirement_type: string;
+  requirement_value: number | string;
+  requirement_extra: string | null;
+  display_order: number | string;
+  is_active: boolean;
+};
+
+function mapBadgeDefinition(row: BadgeDefinitionRow): BadgeDefinition {
   return {
     badgeId: Number(row.badge_id),
     badgeKey: row.badge_key,

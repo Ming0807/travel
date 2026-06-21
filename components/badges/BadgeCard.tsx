@@ -12,7 +12,9 @@ import {
   Building,
 } from "@phosphor-icons/react/dist/ssr";
 
-const ICON_MAP: Record<string, any> = {
+type BadgeIconComponent = typeof Trophy;
+
+const ICON_MAP: Record<string, BadgeIconComponent> = {
   Trophy,
   Star,
   MapPin,

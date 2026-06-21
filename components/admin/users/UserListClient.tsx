@@ -7,9 +7,16 @@ import { toggleAdminUserAction } from "@/app/actions/admin-users";
 import Link from "next/link";
 import { useState } from "react";
 
+type AdminUserListItem = {
+  admin_id: string;
+  display_name: string | null;
+  email: string | null;
+  is_active: boolean;
+  last_login_at: string | null;
+  roles: string[];
+};
 
-export function UserListClient({ initialUsers }: { // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialUsers: any[] }) {
+export function UserListClient({ initialUsers }: { initialUsers: AdminUserListItem[] }) {
   const [isPending, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("");
 

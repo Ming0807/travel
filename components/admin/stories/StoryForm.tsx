@@ -19,6 +19,13 @@ interface StoryFormProps {
   provinces: { province_id: number; province_name_th: string }[];
 }
 
+type StoryFormState = {
+  success: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+  data?: { id: number; slug: string };
+};
+
 const FIELD_LABELS = {
   title: "ชื่อบทความ",
   slug: "Slug",
@@ -54,8 +61,7 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
     { label: "สถานะเผยแพร่", complete: !!initialData?.is_published, help: initialData?.is_published ? "ปัจจุบันแสดงบนหน้า public" : "บันทึกเป็นร่างจนกว่าจะเผยแพร่" },
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<StoryFormState, FormData>(action, {
     success: false,
     error: undefined,
     fieldErrors: undefined,

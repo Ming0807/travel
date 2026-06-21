@@ -3,11 +3,9 @@
 import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
-interface Props {
-  status: "not_found" | "inactive" | "expired" | "unavailable";
-}
+export type CheckinUnavailableStatus = "not_found" | "inactive" | "expired" | "unavailable";
 
-export function CheckinUnavailable({ status }: { status: Props["status"] }) {
+export function CheckinUnavailable({ status }: { status: CheckinUnavailableStatus }) {
   let title = "เกิดข้อผิดพลาด";
   let message = "ไม่สามารถดำเนินการได้ในขณะนี้";
 

@@ -30,6 +30,13 @@ const FIELD_LABELS = {
   displayOrder: "ลำดับการแสดงผล",
 };
 
+type PhotoSpotFormState = {
+  success: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+  data?: AdminPhotoSpotRow;
+};
+
 function getInitialAttractionId(attractions: AdminSelectOption[], defaultAttractionId?: number | null) {
   if (defaultAttractionId && attractions.some((attraction) => attraction.id === defaultAttractionId)) {
     return defaultAttractionId;
@@ -50,7 +57,7 @@ export function PhotoSpotForm({
   const [spotNameTh, setSpotNameTh] = useState(photoSpot?.spot_name_th ?? "");
   const [isActive, setIsActive] = useState(photoSpot?.is_active ?? true);
 
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<PhotoSpotFormState, FormData>(action, {
     success: false,
     error: undefined,
     fieldErrors: undefined,

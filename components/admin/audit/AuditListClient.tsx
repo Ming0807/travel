@@ -51,15 +51,35 @@ const ACTION_PREFIX_OPTIONS = [
   { value: "login", label: "Login" },
 ];
 
+type JsonObject = Record<string, unknown>;
+type AuditResult = "success" | "failed" | "denied";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractResult(newData: any): "success" | "failed" | "denied" | null {
-  const result = newData?._audit?.result;
+type AuditLogRow = {
+  log_id: string;
+  created_at: string;
+  admin_users: { display_name: string; email: string } | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  old_data: JsonObject | null;
+  new_data: JsonObject | null;
+};
+
+type AuditAdminUserOption = {
+  admin_id: string;
+  display_name: string;
+  email: string;
+};
+
+function extractResult(newData: JsonObject | null | undefined): AuditResult | null {
+  const audit = newData?._audit;
+  if (!audit || typeof audit !== "object" || !("result" in audit)) return null;
+  const result = (audit as { result?: unknown }).result;
   if (result === "success" || result === "failed" || result === "denied") return result;
   return null;
 }
 
-function ResultBadge({ result }: { result: "success" | "failed" | "denied" | null }) {
+function ResultBadge({ result }: { result: AuditResult | null }) {
   if (!result) return null;
   const styles = {
     success: { bg: "bg-emerald-50", text: "text-emerald-700", icon: CheckCircle },
@@ -82,15 +102,13 @@ function activeFilterCount(filters: Record<string, string | undefined>): number 
 
 type AuditListClientProps = {
   initialData: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any[];
+    data: AuditLogRow[];
     total: number;
     page: number;
     limit: number;
     totalPages: number;
   };
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adminUsers: any[];
+  adminUsers: AuditAdminUserOption[];
   initialFilters: {
     adminId?: string;
     action?: string;
@@ -149,7 +167,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
 
   // Render JSON beautifully
 
-  const renderDetails = (json: Record<string, unknown>) => {
+  const renderDetails = (json: JsonObject | null | undefined) => {
     if (!json) return null;
     return (
       <div className="bg-slate-900 rounded-lg p-4 text-emerald-400 font-mono text-xs overflow-auto max-h-[60vh]">

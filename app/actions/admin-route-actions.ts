@@ -14,15 +14,14 @@ import {
   findRouteBySlug,
 } from "@/lib/repositories/admin-route.repository";
 
-type ActionResult = {
+type ActionResult<TData = unknown> = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: any;
+  data?: TData;
 };
 
-export async function createRouteAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function createRouteAction(_prevState: ActionResult<{ id: number; slug: string }>, formData: FormData): Promise<ActionResult<{ id: number; slug: string }>> {
   try {
     const guard = await requirePermission("route.create");
     const parsed = adminRouteMutationSchema.safeParse(Object.fromEntries(formData));
@@ -59,7 +58,7 @@ export async function createRouteAction(_prevState: ActionResult, formData: Form
   }
 }
 
-export async function updateRouteAction(routeId: number, _prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function updateRouteAction(routeId: number, _prevState: ActionResult<{ id: number; slug: string }>, formData: FormData): Promise<ActionResult<{ id: number; slug: string }>> {
   try {
     const guard = await requirePermission("route.update");
     const parsed = adminRouteMutationSchema.safeParse(Object.fromEntries(formData));

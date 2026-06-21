@@ -11,7 +11,7 @@ export async function logAdminAction({
   action: string;
   entityType: string;
   entityId?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }) {
   const supabase = createSupabaseServiceRoleClient();
   const { error } = await supabase.from("audit_logs").insert({

@@ -30,9 +30,9 @@ export async function toggleAdminUserAction(adminId: string, isActive: boolean) 
 
     revalidatePath("/admin/users");
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("toggleAdminUserAction error:", error);
-    return { error: error.message || "ไม่สามารถเปลี่ยนสถานะผู้ใช้ได้ กรุณาลองอีกครั้ง" };
+    return { error: error instanceof Error ? error.message : "ไม่สามารถเปลี่ยนสถานะผู้ใช้ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
@@ -107,8 +107,8 @@ export async function saveAdminUserAction(formData: FormData) {
     }
 
     return { success: true, id: newId };
-  } catch (error: any) {
+  } catch (error) {
     console.error("saveAdminUserAction error:", error);
-    return { error: error.message || "ไม่สามารถบันทึกผู้ใช้ได้ กรุณาลองอีกครั้ง" };
+    return { error: error instanceof Error ? error.message : "ไม่สามารถบันทึกผู้ใช้ได้ กรุณาลองอีกครั้ง" };
   }
 }

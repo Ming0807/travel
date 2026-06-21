@@ -8,8 +8,7 @@ export default async function CheckinLandingPage({ params }: { params: Promise<{
   const context = await resolveAndValidateCheckinCode(code);
 
   if (context.status !== "valid" || !context.details) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return <CheckinUnavailable status={context.status as any} />;
+    return <CheckinUnavailable status={context.status === "valid" ? "unavailable" : context.status} />;
   }
 
   // Track QR scan + landing view in order

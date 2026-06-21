@@ -14,6 +14,19 @@ import {
 import { Pagination } from "@/components/admin/Pagination";
 import { removeAdminMessage } from "@/app/actions/admin-messages";
 
+type MessageStatus = "unread" | "read" | "archived";
+
+export type AdminMessageRow = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string | null;
+  message: string;
+  status: MessageStatus;
+  is_replied: boolean;
+  created_at: string;
+};
+
 export function MessageListClient({
   initialMessages,
   totalPages,
@@ -21,8 +34,7 @@ export function MessageListClient({
   total,
   pageSize,
 }: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialMessages: any[];
+  initialMessages: AdminMessageRow[];
   totalPages: number;
   currentPage: number;
   total?: number;

@@ -10,7 +10,17 @@ function getStorageUrl(path: string) {
   return `/api/admin/media/preview?bucket=southern-border-tourism&path=${encodeURIComponent(path)}`;
 }
 
-export function TemplateListClient({ initialTemplates }: { initialTemplates: any[] }) {
+type CertificateTemplateListItem = {
+  template_id: number;
+  template_name: string;
+  background_path: string | null;
+  language: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+};
+
+export function TemplateListClient({ initialTemplates }: { initialTemplates: CertificateTemplateListItem[] }) {
   const [isPending, startTransition] = useTransition();
 
   const handleToggleStatus = (templateId: number, currentStatus: boolean) => {

@@ -18,7 +18,7 @@ type ActionResult = {
   fieldErrors?: Record<string, string[] | undefined>;
 };
 
-export async function createMediaAction(prevState: any, formData: FormData): Promise<ActionResult> {
+export async function createMediaAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const parsed = adminMediaMutationSchema.safeParse(Object.fromEntries(formData.entries()));
     if (!parsed.success) {
@@ -45,7 +45,7 @@ export async function createMediaAction(prevState: any, formData: FormData): Pro
   }
 }
 
-export async function updateMediaAction(mediaId: number, prevState: any, formData: FormData): Promise<ActionResult> {
+export async function updateMediaAction(mediaId: number, _prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const parsed = adminMediaMutationSchema.safeParse(Object.fromEntries(formData.entries()));
     if (!parsed.success) {

@@ -15,6 +15,13 @@ interface RouteFormProps {
   initialData?: AdminRouteRow | null;
 }
 
+type RouteFormState = {
+  success: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+  data?: { id: number; slug: string };
+};
+
 const FIELD_LABELS = {
   nameTh: "ชื่อเส้นทางภาษาไทย",
   slug: "Slug",
@@ -44,8 +51,7 @@ export function RouteForm({ initialData }: RouteFormProps) {
     { label: "จุดแวะพัก", complete: (initialData?.stop_count ?? 0) > 0, help: `${initialData?.stop_count ?? 0} จุดแวะพักที่เชื่อมโยงกับสถานที่ท่องเที่ยว` },
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<RouteFormState, FormData>(action, {
     success: false,
     error: undefined,
     fieldErrors: undefined,

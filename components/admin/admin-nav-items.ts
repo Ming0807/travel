@@ -21,10 +21,12 @@ import {
   Gear,
 } from "@phosphor-icons/react/dist/ssr";
 
+type AdminNavIcon = typeof SquaresFour;
+
 export type NavItem = {
   href: string;
   label: string;
-  icon: any;
+  icon: AdminNavIcon;
   badge?: number | string;
 };
 

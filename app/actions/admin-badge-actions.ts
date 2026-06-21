@@ -11,7 +11,11 @@ import {
   deleteAdminBadge,
 } from "@/lib/repositories/admin-badge.repository";
 
-export type ActionResult = { success: true; data?: { id: number } } | { success: false; error: string };
+export type ActionResult = {
+  success: boolean;
+  data?: { id: number };
+  error?: string;
+};
 
 export async function createBadgeAction(
   prevState: ActionResult,

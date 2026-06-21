@@ -12,14 +12,20 @@ type AttractionQuickCreateProps = {
   attractionTypes: AdminSelectOption[];
 };
 
+type QuickCreateState = {
+  success: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+  data?: { id: number };
+};
+
 export function AttractionQuickCreate({
   provinces,
   attractionTypes,
 }: AttractionQuickCreateProps) {
   const router = useRouter();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(createAttractionAction, {
+  const [state, formAction, isPending] = useActionState<QuickCreateState, FormData>(createAttractionAction, {
     success: false,
     error: undefined,
     fieldErrors: undefined,

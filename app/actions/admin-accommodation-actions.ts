@@ -13,14 +13,14 @@ import {
   getAdminAccommodationById,
 } from "@/lib/repositories/admin-accommodation.repository";
 
-type ActionResult = {
+type ActionResult<TData = unknown> = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
-  data?: any;
+  data?: TData;
 };
 
-export async function createAccommodationAction(prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function createAccommodationAction(_prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("attraction.create"); // Uses attraction.create permission for accommodations by default
     const parsed = adminAccommodationMutationSchema.safeParse(Object.fromEntries(formData.entries()));
@@ -61,14 +61,14 @@ export async function createAccommodationAction(prevState: ActionResult, formDat
 
     revalidatePath('/', 'layout');
     return { success: true, data: { id: created.accommodation_id } };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to create accommodation:", error);
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังสร้างที่พักไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
-export async function updateAccommodationAction(accommodationId: number, prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function updateAccommodationAction(accommodationId: number, _prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("attraction.update");
     const parsed = adminAccommodationMutationSchema.safeParse(Object.fromEntries(formData.entries()));

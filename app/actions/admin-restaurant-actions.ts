@@ -13,15 +13,14 @@ import {
   getAdminRestaurantById,
 } from "@/lib/repositories/admin-restaurant.repository";
 
-type ActionResult = {
+type ActionResult<TData = unknown> = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: any;
+  data?: TData;
 };
 
-export async function createRestaurantAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function createRestaurantAction(_prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("restaurant.create");
     const parsed = adminRestaurantMutationSchema.safeParse(Object.fromEntries(formData));
@@ -58,7 +57,7 @@ export async function createRestaurantAction(_prevState: ActionResult, formData:
   }
 }
 
-export async function updateRestaurantAction(restaurantId: number, _prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function updateRestaurantAction(restaurantId: number, _prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("restaurant.update");
     const parsed = adminRestaurantMutationSchema.safeParse(Object.fromEntries(formData));

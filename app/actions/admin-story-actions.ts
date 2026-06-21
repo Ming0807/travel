@@ -13,15 +13,14 @@ import {
   getAdminStoryById,
 } from "@/lib/repositories/admin-story.repository";
 
-type ActionResult = {
+type ActionResult<TData = unknown> = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: any;
+  data?: TData;
 };
 
-export async function createStoryAction(_prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function createStoryAction(_prevState: ActionResult<{ id: number; slug: string }>, formData: FormData): Promise<ActionResult<{ id: number; slug: string }>> {
   try {
     const guard = await requirePermission("story.create");
     const parsed = adminStoryMutationSchema.safeParse(Object.fromEntries(formData));
@@ -58,7 +57,7 @@ export async function createStoryAction(_prevState: ActionResult, formData: Form
   }
 }
 
-export async function updateStoryAction(storyId: number, _prevState: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function updateStoryAction(storyId: number, _prevState: ActionResult<{ id: number; slug: string }>, formData: FormData): Promise<ActionResult<{ id: number; slug: string }>> {
   try {
     const guard = await requirePermission("story.update");
     const parsed = adminStoryMutationSchema.safeParse(Object.fromEntries(formData));

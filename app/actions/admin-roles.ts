@@ -14,6 +14,10 @@ const roleSchema = z.object({
   permissionIds: z.array(z.number()),
 });
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 export async function saveRoleAction(formData: FormData) {
   try {
     const guard = await requireAdmin();
@@ -80,9 +84,9 @@ export async function saveRoleAction(formData: FormData) {
 
     revalidatePath("/admin/roles");
     return { success: true, id: newId };
-  } catch (error: any) {
+  } catch (error) {
     console.error("saveRoleAction error:", error);
-    return { error: error.message || "ไม่สามารถบันทึกบทบาทได้ กรุณาลองอีกครั้ง" };
+    return { error: getErrorMessage(error, "ไม่สามารถบันทึกบทบาทได้ กรุณาลองอีกครั้ง") };
   }
 }
 
@@ -111,8 +115,8 @@ export async function deleteRoleAction(formData: FormData) {
 
     revalidatePath("/admin/roles");
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("deleteRoleAction error:", error);
-    return { error: error.message || "ไม่สามารถลบบทบาทได้ กรุณาลองอีกครั้ง" };
+    return { error: getErrorMessage(error, "ไม่สามารถลบบทบาทได้ กรุณาลองอีกครั้ง") };
   }
 }

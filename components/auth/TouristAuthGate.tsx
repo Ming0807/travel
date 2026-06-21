@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GoogleLogo, ChatCircleDots, ShieldCheck, Spinner } from "@phosphor-icons/react";
+import type { Provider as SupabaseProvider } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Provider = "google" | "line";
@@ -14,7 +15,7 @@ export function TouristAuthGate({ title = "กรุณาเข้าสู่�
     const supabase = createSupabaseBrowserClient();
 
     await supabase.auth.signInWithOAuth({
-      provider: provider as any,
+      provider: provider as SupabaseProvider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(window.location.pathname)}`,
       },

@@ -14,24 +14,26 @@ export async function assignStampForVisit(visitId: string): Promise<StampAwardRe
     return { success: false, reason: "visit_not_found" };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const v = visit as any;
+  const visitContext = {
+    touristId: String(visit.tourist_id),
+    attractionId: Number(visit.attraction_id),
+  };
 
   // Check if tourist already has a stamp for this attraction
-  const existing = await getTouristStampByAttraction(v.tourist_id, v.attraction_id);
+  const existing = await getTouristStampByAttraction(visitContext.touristId, visitContext.attractionId);
   if (existing) {
     return { success: true, status: "already_earned", stampId: existing.stamp_id };
   }
 
   try {
     const stampId = await awardTouristStamp({
-      touristId: v.tourist_id,
-      attractionId: v.attraction_id,
+      touristId: visitContext.touristId,
+      attractionId: visitContext.attractionId,
       visitId,
     });
 
     if (!stampId) {
-      const afterConflict = await getTouristStampByAttraction(v.tourist_id, v.attraction_id);
+      const afterConflict = await getTouristStampByAttraction(visitContext.touristId, visitContext.attractionId);
       if (afterConflict) {
         return { success: true, status: "already_earned", stampId: afterConflict.stamp_id };
       }
