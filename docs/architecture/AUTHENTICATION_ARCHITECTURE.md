@@ -127,7 +127,7 @@ After linking LINE:
 ### 4.3 Route Protection
 
 ```text
-middleware.ts:
+proxy.ts:
     For /admin/* routes:
         1. Check for valid Supabase session
         2. If no session → redirect to /admin/login
@@ -138,7 +138,7 @@ middleware.ts:
 ### 4.4 Role-Based Authorization
 
 ```text
-After auth middleware passes:
+After auth proxy passes:
     1. Load user_roles for authenticated user
     2. Check if user has required role for the page/action
     3. If insufficient role → show 403 page

@@ -6,15 +6,15 @@ import {
   SUPABASE_ACCESS_TOKEN_COOKIE,
 } from "@/lib/auth/session-config";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect admin routes — skip everything else
+  // Only protect admin routes; skip everything else.
   if (!pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
 
-  // Allow login, forgot-password, and reset-password pages
+  // Allow login, forgot-password, and reset-password pages.
   if (
     pathname === "/admin/login" ||
     pathname === "/admin/forgot-password" ||
@@ -23,8 +23,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Quick session expiry check from cookie (no API call)
-  // This catches sessions older than 24h before making an API request
+  // Quick session expiry check from cookie. This catches sessions older than
+  // 24 hours before making an API request.
   const accessTokenCookie = request.cookies.get(SUPABASE_ACCESS_TOKEN_COOKIE);
   if (accessTokenCookie?.value) {
     try {
@@ -41,11 +41,11 @@ export async function middleware(request: NextRequest) {
         }
       }
     } catch {
-      // Malformed token — fall through to getUser() check
+      // Malformed token; fall through to getUser() check.
     }
   }
 
-  // Create a mutable response for cookie handling (required by Supabase SSR)
+  // Create a mutable response for cookie handling, as required by Supabase SSR.
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -69,21 +69,19 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Validate the session — getUser() makes an API call to verify JWT is still valid
+  // getUser() makes an API call to verify the JWT is still valid.
   try {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // No valid session — redirect to login
     if (!user) {
       const loginUrl = new URL("/admin/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
   } catch {
-    // If the Supabase Auth API call fails (network error, timeout), redirect to login
-    // instead of showing a 500 error page
+    // If Supabase Auth fails, redirect instead of showing a 500 error page.
     const loginUrl = new URL("/admin/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     loginUrl.searchParams.set("unavailable", "true");

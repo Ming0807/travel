@@ -16,7 +16,7 @@ The route structure must support:
 - report/export
 - future LINE LIFF integration
 
-This document should be used before implementing pages, layouts, navigation, middleware, or route protection.
+This document should be used before implementing pages, layouts, navigation, proxy-based route protection, or route guards.
 
 ---
 
@@ -1118,9 +1118,9 @@ Can be part of Admin Layout.
 
 ---
 
-## 24. Middleware Requirements
+## 24. Proxy Route Protection Requirements
 
-Middleware can be used for:
+The root `proxy.ts` file can be used for:
 
 ```text
 admin route protection
@@ -1131,7 +1131,7 @@ redirects
 
 Rules:
 
-- do not do heavy database logic in middleware.
+- do not do heavy database logic in proxy route protection.
 - do not expose secrets.
 - keep redirects predictable.
 
