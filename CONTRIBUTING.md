@@ -598,18 +598,18 @@ Do not use production data.
 Run where applicable:
 
 ```bash
-npm run typecheck
-npm run lint
-npm run test
-npm run build
+pnpm run typecheck
+pnpm run lint
+pnpm run test
+pnpm run build
 ```
 
 If configured:
 
 ```bash
-npm run test:unit
-npm run test:integration
-npm run test:e2e
+pnpm run test:unit
+pnpm run test:integration
+pnpm run test:e2e
 ```
 
 If a command is not available or not run, document it in the PR.

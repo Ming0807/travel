@@ -227,13 +227,13 @@ Complete if this PR changes upload/storage behavior.
 Commands run:
 
 ```text
-[ ] npm run typecheck
-[ ] npm run lint
-[ ] npm run test
-[ ] npm run test:unit
-[ ] npm run test:integration
-[ ] npm run test:e2e
-[ ] npm run build
+[ ] pnpm run typecheck
+[ ] pnpm run lint
+[ ] pnpm run test
+[ ] pnpm run test:unit
+[ ] pnpm run test:integration
+[ ] pnpm run test:e2e
+[ ] pnpm run build
 [ ] Other:
 ```
 

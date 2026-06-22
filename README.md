@@ -488,18 +488,19 @@ Codex and other AI coding agents must read `AGENTS.md` before making any code ch
 Phase 01 establishes the Next.js MVP foundation only. It does not implement the full database schema, QR flow, upload flow, certificate generation, LINE LIFF, exports, or real dashboards yet.
 
 ```bash
-npm install
+# Use Node 22.x and pnpm 10.x.
+pnpm install --frozen-lockfile
 cp .env.example .env.local
-npm run dev
+pnpm run dev
 ```
 
 Recommended verification commands:
 
 ```bash
-npm run typecheck
-npm run lint
-npm run test
-npm run build
+pnpm run typecheck
+pnpm run lint
+pnpm run test
+pnpm run build
 ```
 
 Environment variables are documented in `ENVIRONMENT.md` and stubbed in `.env.example`. Never commit `.env.local` or real Supabase/LINE secrets.

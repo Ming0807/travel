@@ -252,19 +252,19 @@ testing scripts available
 Recommended commands before deployment:
 
 ```bash
-npm run typecheck
-npm run lint
-npm run test
-npm run build
+pnpm run typecheck
+pnpm run lint
+pnpm run test
+pnpm run build
 ```
 
 If configured:
 
 ```bash
-npm run test:unit
-npm run test:integration
-npm run test:e2e
-npm run test:security
+pnpm run test:unit
+pnpm run test:integration
+pnpm run test:e2e
+pnpm run test:security
 ```
 
 Supabase commands if using Supabase CLI:
@@ -604,10 +604,11 @@ Recommended Vercel setup:
 
 ```text
 Framework Preset: Next.js
-Build Command: npm run build
-Install Command: npm install
+Build Command: pnpm run build
+Install Command: pnpm install --frozen-lockfile
 Output Directory: default Next.js
-Node Version: project default or current LTS
+Node Version: 22.x, from package.json engines
+Package Manager: pnpm 10.x, from packageManager
 ```
 
 ### 19.2 Environment Variables
@@ -713,10 +714,10 @@ LINE must not be required for certificate generation.
 Before staging deployment:
 
 ```text
-[ ] npm run typecheck passes.
-[ ] npm run lint passes.
-[ ] npm run test passes or reason documented.
-[ ] npm run build passes.
+[ ] pnpm run typecheck passes.
+[ ] pnpm run lint passes.
+[ ] pnpm run test passes or reason documented.
+[ ] pnpm run build passes.
 [ ] Environment variables configured.
 [ ] Supabase migrations applied to staging.
 [ ] Supabase seed data applied to staging.
