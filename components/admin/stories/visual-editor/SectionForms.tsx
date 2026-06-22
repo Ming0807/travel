@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { updateStoryAction } from "@/app/actions/admin-story-actions";
-import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import type { AdminStoryRow } from "@/lib/repositories/admin-story.repository";
@@ -23,8 +23,7 @@ function toFiniteMediaId(value: unknown): number | null {
 
 export function HeaderForm({ story, onClose }: SectionFormProps) {
   const action = updateStoryAction.bind(null, story.story_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, { success: false });
 
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
@@ -64,8 +63,7 @@ export function HeaderForm({ story, onClose }: SectionFormProps) {
 
 export function ContentForm({ story, onClose }: SectionFormProps) {
   const action = updateStoryAction.bind(null, story.story_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, { success: false });
 
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
@@ -96,8 +94,7 @@ export function ContentForm({ story, onClose }: SectionFormProps) {
 
 export function SettingsForm({ story, provinces = [], onClose }: SectionFormProps) {
   const action = updateStoryAction.bind(null, story.story_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, { success: false });
 
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
@@ -147,8 +144,7 @@ export function SettingsForm({ story, provinces = [], onClose }: SectionFormProp
 
 export function CoverForm({ story, onClose, coverMediaId: cmId, coverMediaUrl: cmUrl, onCoverChange }: SectionFormProps) {
   const action = updateStoryAction.bind(null, story.story_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, { success: false });
   const [imagePreviewUrl, setImagePreviewUrl] = useState(cmUrl ?? "");
   const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
   const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");

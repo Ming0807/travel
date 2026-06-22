@@ -2,6 +2,8 @@ import "server-only";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminStoryFilters, AdminStoryMutationInput } from "@/lib/validation/story";
+import { firstJoin } from "@/lib/utils/supabase-joins";
+import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
 
 export type AdminStoryRow = {
   story_id: number;
@@ -29,28 +31,28 @@ export type PaginatedResult<T> = {
   pageSize: number;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapStory(row: any): AdminStoryRow {
-  const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
-  const tourist = Array.isArray(row.tourists) ? row.tourists[0] : row.tourists;
+function mapStory(rawRow: unknown): AdminStoryRow {
+  const row = asRecord(rawRow);
+  const province = asRecord(firstJoin(row.provinces as { province_name_th?: unknown } | { province_name_th?: unknown }[] | null));
+  const tourist = asRecord(firstJoin(row.tourists as { display_name?: unknown } | { display_name?: unknown }[] | null));
 
   return {
-    story_id: Number(row.story_id),
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    province_id: row.province_id === null ? null : Number(row.province_id),
-    category: row.category,
-    is_published: row.is_published,
-    published_at: row.published_at,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    province_name_th: province?.province_name_th ?? null,
-    author_type: row.author_type,
-    tourist_id: row.tourist_id,
-    status: row.status,
-    tourist_name: tourist?.display_name ?? null
+    story_id: numberValue(row.story_id),
+    slug: stringValue(row.slug),
+    title: stringValue(row.title),
+    excerpt: nullableString(row.excerpt),
+    content: nullableString(row.content),
+    province_id: nullableNumber(row.province_id),
+    category: nullableString(row.category),
+    is_published: booleanValue(row.is_published),
+    published_at: nullableString(row.published_at),
+    created_at: stringValue(row.created_at),
+    updated_at: nullableString(row.updated_at),
+    province_name_th: nullableString(province.province_name_th),
+    author_type: stringValue(row.author_type),
+    tourist_id: nullableString(row.tourist_id),
+    status: stringValue(row.status),
+    tourist_name: nullableString(tourist.display_name)
   };
 }
 

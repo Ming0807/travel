@@ -2,6 +2,8 @@ import "server-only";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminRestaurantFilters, AdminRestaurantMutationInput } from "@/lib/validation/admin-restaurant";
+import { firstJoin } from "@/lib/utils/supabase-joins";
+import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
 
 export type AdminRestaurantRow = {
   restaurant_id: number;
@@ -32,30 +34,30 @@ export type PaginatedResult<T> = {
   pageSize: number;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapRestaurant(row: any): AdminRestaurantRow {
-  const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
+function mapRestaurant(rawRow: unknown): AdminRestaurantRow {
+  const row = asRecord(rawRow);
+  const province = asRecord(firstJoin(row.provinces as { province_name_th?: unknown } | { province_name_th?: unknown }[] | null));
 
   return {
-    restaurant_id: Number(row.restaurant_id),
-    province_id: Number(row.province_id),
-    slug: row.slug,
-    name_th: row.name_th,
-    name_en: row.name_en,
-    description_th: row.description_th,
-    description_en: row.description_en,
-    food_type: row.food_type,
-    latitude: row.latitude === null ? null : Number(row.latitude),
-    longitude: row.longitude === null ? null : Number(row.longitude),
-    address_text: row.address_text,
-    opening_hours: row.opening_hours,
-    contact_info: row.contact_info,
-    is_published: row.is_published,
-    is_active: row.is_active,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    province_name_th: province?.province_name_th ?? null,
-    attraction_count: row.attraction_count ?? 0
+    restaurant_id: numberValue(row.restaurant_id),
+    province_id: numberValue(row.province_id),
+    slug: stringValue(row.slug),
+    name_th: stringValue(row.name_th),
+    name_en: nullableString(row.name_en),
+    description_th: nullableString(row.description_th),
+    description_en: nullableString(row.description_en),
+    food_type: nullableString(row.food_type),
+    latitude: nullableNumber(row.latitude),
+    longitude: nullableNumber(row.longitude),
+    address_text: nullableString(row.address_text),
+    opening_hours: nullableString(row.opening_hours),
+    contact_info: nullableString(row.contact_info),
+    is_published: booleanValue(row.is_published),
+    is_active: booleanValue(row.is_active),
+    created_at: stringValue(row.created_at),
+    updated_at: nullableString(row.updated_at),
+    province_name_th: nullableString(province.province_name_th),
+    attraction_count: numberValue(row.attraction_count)
   };
 }
 

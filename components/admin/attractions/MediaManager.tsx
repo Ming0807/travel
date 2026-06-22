@@ -16,6 +16,7 @@ import {
 import { createMediaAction, deleteMediaAction, updateMediaAction } from "@/app/actions/admin-media-actions";
 import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 import type { AdminMediaEntityType } from "@/lib/validation/media";
+import type { AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
@@ -470,8 +471,7 @@ function MediaForm({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<AdminFormActionState, FormData>(action, {
     success: false,
     error: undefined,
     fieldErrors: undefined,

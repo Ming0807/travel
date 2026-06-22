@@ -19,6 +19,7 @@ import type { AdminRouteStopRow } from "@/lib/repositories/admin-route.repositor
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
 import {
   AdminFormErrorSummary,
+  type AdminFormActionState,
   AdminFormSection,
   AdminHelpPanel,
   AdminReadinessPanel,
@@ -81,8 +82,7 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
   );
 
   const action = updateRouteStopsAction.bind(null, routeId);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<AdminFormActionState, FormData>(action, {
     success: false,
     error: undefined,
     fieldErrors: undefined,

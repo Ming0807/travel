@@ -2,6 +2,7 @@ import "server-only";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminRouteFilters, AdminRouteMutationInput, AdminRouteStopMutationInput } from "@/lib/validation/route";
+import { asRecord, booleanValue, nullableString, numberValue, stringValue } from "@/lib/utils/record";
 
 export type AdminRouteRow = {
   route_id: number;
@@ -35,20 +36,21 @@ export type PaginatedResult<T> = {
   pageSize: number;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapRoute(row: any, stopCounts = new Map<number, number>()): AdminRouteRow {
+function mapRoute(rawRow: unknown, stopCounts = new Map<number, number>()): AdminRouteRow {
+  const row = asRecord(rawRow);
+
   return {
-    route_id: Number(row.route_id),
-    slug: row.slug,
-    name_th: row.name_th,
-    name_en: row.name_en,
-    description_th: row.description_th,
-    description_en: row.description_en,
-    is_published: row.is_published,
-    is_active: row.is_active,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    stop_count: stopCounts.get(Number(row.route_id)) ?? 0
+    route_id: numberValue(row.route_id),
+    slug: stringValue(row.slug),
+    name_th: stringValue(row.name_th),
+    name_en: nullableString(row.name_en),
+    description_th: nullableString(row.description_th),
+    description_en: nullableString(row.description_en),
+    is_published: booleanValue(row.is_published),
+    is_active: booleanValue(row.is_active),
+    created_at: stringValue(row.created_at),
+    updated_at: nullableString(row.updated_at),
+    stop_count: stopCounts.get(numberValue(row.route_id)) ?? 0
   };
 }
 
@@ -206,17 +208,21 @@ export async function getRouteStops(routeId: number): Promise<AdminRouteStopRow[
     throw new Error("ADMIN_ROUTE_STOPS_READ_FAILED");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((row: any) => ({
-    stop_id: Number(row.stop_id),
-    route_id: Number(row.route_id),
-    attraction_id: Number(row.attraction_id),
-    day_number: Number(row.day_number),
-    display_order: Number(row.display_order),
-    stop_note_th: row.stop_note_th,
-    stop_note_en: row.stop_note_en,
-    attraction_name_th: row.attractions?.name_th ?? null
-  }));
+  return (data ?? []).map((rawRow) => {
+    const row = asRecord(rawRow);
+    const attraction = asRecord(row.attractions);
+
+    return {
+      stop_id: numberValue(row.stop_id),
+      route_id: numberValue(row.route_id),
+      attraction_id: numberValue(row.attraction_id),
+      day_number: numberValue(row.day_number),
+      display_order: numberValue(row.display_order),
+      stop_note_th: nullableString(row.stop_note_th),
+      stop_note_en: nullableString(row.stop_note_en),
+      attraction_name_th: nullableString(attraction.name_th)
+    };
+  });
 }
 
 export async function updateRouteStopsBatch(routeId: number, stops: AdminRouteStopMutationInput[]): Promise<void> {

@@ -1,4 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
+import "server-only";
+
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { Json } from "@/types/database";
 
 export type SiteSetting = {
@@ -9,11 +11,8 @@ export type SiteSetting = {
 };
 
 export class SettingsRepository {
-  private supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  private supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
   private getClient() {
-    return createClient(this.supabaseUrl, this.supabaseServiceKey);
+    return createSupabaseServiceRoleClient();
   }
 
   async getSetting(key: string): Promise<SiteSetting | null> {

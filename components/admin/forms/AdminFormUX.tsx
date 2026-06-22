@@ -4,6 +4,13 @@ import { CheckCircle, Info, WarningCircle } from "@phosphor-icons/react";
 
 export type AdminFieldErrors = Record<string, string[] | undefined>;
 
+export type AdminFormActionState<TData = unknown> = {
+  success: boolean;
+  error?: string;
+  fieldErrors?: AdminFieldErrors;
+  data?: TData;
+};
+
 type AdminFormSectionProps = {
   title: string;
   description?: string;

@@ -3,6 +3,8 @@ import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { PaginatedResult } from "@/lib/repositories/admin-attraction.repository";
 import type { AdminSurveyFilters } from "@/lib/validation/admin-survey";
+import { firstJoin } from "@/lib/utils/supabase-joins";
+import { asRecord, nullableNumber, nullableString, stringValue } from "@/lib/utils/record";
 
 export type AdminSurveyRow = {
   survey_id: string;
@@ -33,32 +35,28 @@ export type AdminSurveyExportRow = {
   recommend_intention: string | null;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapSurvey(row: any): AdminSurveyRow {
-  const visit = Array.isArray(row.visits) ? row.visits[0] : row.visits;
-  const tourist = Array.isArray(row.tourists) ? row.tourists[0] : row.tourists;
-  const attraction = visit
-    ? Array.isArray(visit.attractions) ? visit.attractions[0] : visit.attractions
-    : null;
-  const province = attraction
-    ? Array.isArray(attraction.provinces) ? attraction.provinces[0] : attraction.provinces
-    : null;
+function mapSurvey(rawRow: unknown): AdminSurveyRow {
+  const row = asRecord(rawRow);
+  const visit = asRecord(firstJoin(row.visits as { attractions?: unknown } | { attractions?: unknown }[] | null));
+  const tourist = asRecord(firstJoin(row.tourists as { display_name?: unknown } | { display_name?: unknown }[] | null));
+  const attraction = asRecord(firstJoin(visit.attractions as { name_th?: unknown; provinces?: unknown } | { name_th?: unknown; provinces?: unknown }[] | null));
+  const province = asRecord(firstJoin(attraction.provinces as { province_name_th?: unknown } | { province_name_th?: unknown }[] | null));
 
   return {
-    survey_id: row.survey_id,
-    visit_id: row.visit_id,
-    tourist_id: row.tourist_id,
-    overall_score: row.overall_score,
-    facility_score: row.facility_score,
-    cleanliness_score: row.cleanliness_score,
-    safety_score: row.safety_score,
-    revisit_intention: row.revisit_intention,
-    recommend_intention: row.recommend_intention,
-    comments: row.comments,
-    submitted_at: row.submitted_at,
-    tourist_display_name: tourist?.display_name ?? null,
-    attraction_name_th: attraction?.name_th ?? null,
-    province_name_th: province?.province_name_th ?? null,
+    survey_id: stringValue(row.survey_id),
+    visit_id: stringValue(row.visit_id),
+    tourist_id: stringValue(row.tourist_id),
+    overall_score: nullableNumber(row.overall_score),
+    facility_score: nullableNumber(row.facility_score),
+    cleanliness_score: nullableNumber(row.cleanliness_score),
+    safety_score: nullableNumber(row.safety_score),
+    revisit_intention: nullableString(row.revisit_intention),
+    recommend_intention: nullableString(row.recommend_intention),
+    comments: nullableString(row.comments),
+    submitted_at: stringValue(row.submitted_at),
+    tourist_display_name: nullableString(tourist.display_name),
+    attraction_name_th: nullableString(attraction.name_th),
+    province_name_th: nullableString(province.province_name_th),
   };
 }
 

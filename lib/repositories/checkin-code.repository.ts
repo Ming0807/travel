@@ -3,6 +3,8 @@ import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { PaginatedResult } from "@/lib/repositories/admin-attraction.repository";
 import type { AdminCheckinCodeFilters, AdminCheckinCodeMutationInput } from "@/lib/validation/checkin-code";
+import { firstJoin } from "@/lib/utils/supabase-joins";
+import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
 
 export type AdminCheckinCodeRow = {
   checkin_code_id: number;
@@ -19,23 +21,24 @@ export type AdminCheckinCodeRow = {
   photo_spot_name_th: string | null;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapCheckinCode(row: any): AdminCheckinCodeRow {
-  const attraction = Array.isArray(row.attractions) ? row.attractions[0] : row.attractions;
-  const photoSpot = Array.isArray(row.photo_spots) ? row.photo_spots[0] : row.photo_spots;
+function mapCheckinCode(rawRow: unknown): AdminCheckinCodeRow {
+  const row = asRecord(rawRow);
+  const attraction = asRecord(firstJoin(row.attractions as { name_th?: unknown } | { name_th?: unknown }[] | null));
+  const photoSpot = asRecord(firstJoin(row.photo_spots as { spot_name_th?: unknown } | { spot_name_th?: unknown }[] | null));
+
   return {
-    checkin_code_id: Number(row.checkin_code_id),
-    code: row.code,
-    attraction_id: Number(row.attraction_id),
-    photo_spot_id: row.photo_spot_id === null ? null : Number(row.photo_spot_id),
-    label: row.label,
-    is_active: row.is_active,
-    starts_at: row.starts_at,
-    ends_at: row.ends_at,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    attraction_name_th: attraction?.name_th ?? null,
-    photo_spot_name_th: photoSpot?.spot_name_th ?? null
+    checkin_code_id: numberValue(row.checkin_code_id),
+    code: stringValue(row.code),
+    attraction_id: numberValue(row.attraction_id),
+    photo_spot_id: nullableNumber(row.photo_spot_id),
+    label: nullableString(row.label),
+    is_active: booleanValue(row.is_active),
+    starts_at: nullableString(row.starts_at),
+    ends_at: nullableString(row.ends_at),
+    created_at: stringValue(row.created_at),
+    updated_at: nullableString(row.updated_at),
+    attraction_name_th: nullableString(attraction.name_th),
+    photo_spot_name_th: nullableString(photoSpot.spot_name_th)
   };
 }
 

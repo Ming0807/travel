@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { updateAttractionAction } from "@/app/actions/admin-attraction-actions";
-import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { HiddenAttractionFields } from "./HiddenAttractionFields";
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
@@ -23,8 +23,7 @@ const helpClass = "mt-1 text-xs leading-5 text-slate-500";
 
 function useAttractionSectionAction(attraction: AdminAttractionRow, onClose: () => void) {
   const action = updateAttractionAction.bind(null, attraction.attraction_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
 
   useEffect(() => {
     if (state?.success) onClose();

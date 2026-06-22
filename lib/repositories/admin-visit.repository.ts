@@ -3,6 +3,8 @@ import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { PaginatedResult } from "@/lib/repositories/admin-attraction.repository";
 import type { AdminVisitFilters } from "@/lib/validation/admin-visit";
+import { firstJoin } from "@/lib/utils/supabase-joins";
+import { asRecord, nullableString, numberValue, stringValue } from "@/lib/utils/record";
 
 export type AdminVisitRow = {
   visit_id: string;
@@ -27,26 +29,25 @@ export type AdminVisitExportRow = {
   has_stamp: boolean;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapVisit(row: any, certSet: Set<string>, stampSet: Set<string>): AdminVisitRow {
-  const tourist = Array.isArray(row.tourists) ? row.tourists[0] : row.tourists;
-  const attraction = Array.isArray(row.attractions) ? row.attractions[0] : row.attractions;
-  const province = attraction
-    ? Array.isArray(attraction.provinces) ? attraction.provinces[0] : attraction.provinces
-    : null;
+function mapVisit(rawRow: unknown, certSet: Set<string>, stampSet: Set<string>): AdminVisitRow {
+  const row = asRecord(rawRow);
+  const tourist = asRecord(firstJoin(row.tourists as { display_name?: unknown } | { display_name?: unknown }[] | null));
+  const attraction = asRecord(firstJoin(row.attractions as { name_th?: unknown; provinces?: unknown } | { name_th?: unknown; provinces?: unknown }[] | null));
+  const province = asRecord(firstJoin(attraction.provinces as { province_name_th?: unknown } | { province_name_th?: unknown }[] | null));
+  const visitId = stringValue(row.visit_id);
 
   return {
-    visit_id: row.visit_id,
-    tourist_id: row.tourist_id,
-    attraction_id: Number(row.attraction_id),
-    visit_date: row.visit_date,
-    completion_status: row.completion_status,
-    created_at: row.created_at,
-    tourist_display_name: tourist?.display_name ?? null,
-    attraction_name_th: attraction?.name_th ?? null,
-    province_name_th: province?.province_name_th ?? null,
-    has_certificate: certSet.has(row.visit_id),
-    has_stamp: stampSet.has(row.visit_id),
+    visit_id: visitId,
+    tourist_id: stringValue(row.tourist_id),
+    attraction_id: numberValue(row.attraction_id),
+    visit_date: stringValue(row.visit_date),
+    completion_status: stringValue(row.completion_status),
+    created_at: stringValue(row.created_at),
+    tourist_display_name: nullableString(tourist.display_name),
+    attraction_name_th: nullableString(attraction.name_th),
+    province_name_th: nullableString(province.province_name_th),
+    has_certificate: certSet.has(visitId),
+    has_stamp: stampSet.has(visitId),
   };
 }
 

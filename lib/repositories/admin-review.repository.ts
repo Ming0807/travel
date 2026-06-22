@@ -2,6 +2,8 @@ import "server-only";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminReviewFilters } from "@/lib/validation/admin-review";
+import { firstJoin } from "@/lib/utils/supabase-joins";
+import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
 
 export type AdminReviewRow = {
   review_id: number;
@@ -31,31 +33,31 @@ export type PaginatedResult<T> = {
   pageSize: number;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapReview(row: any): AdminReviewRow {
-  const tourist = Array.isArray(row.tourists) ? row.tourists[0] : row.tourists;
-  const attraction = Array.isArray(row.attractions) ? row.attractions[0] : row.attractions;
-  const restaurant = Array.isArray(row.restaurants) ? row.restaurants[0] : row.restaurants;
+function mapReview(rawRow: unknown): AdminReviewRow {
+  const row = asRecord(rawRow);
+  const tourist = asRecord(firstJoin(row.tourists as { display_name?: unknown } | { display_name?: unknown }[] | null));
+  const attraction = asRecord(firstJoin(row.attractions as { name_th?: unknown } | { name_th?: unknown }[] | null));
+  const restaurant = asRecord(firstJoin(row.restaurants as { name_th?: unknown } | { name_th?: unknown }[] | null));
 
   return {
-    review_id: Number(row.review_id),
-    tourist_id: row.tourist_id,
-    visit_id: row.visit_id,
-    attraction_id: row.attraction_id === null ? null : Number(row.attraction_id),
-    restaurant_id: row.restaurant_id === null ? null : Number(row.restaurant_id),
-    rating: Number(row.rating),
-    title: row.title,
-    comment: row.comment,
-    is_approved: row.is_approved,
-    is_published: row.is_published,
-    moderated_by: row.moderated_by,
-    moderated_at: row.moderated_at,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    deleted_at: row.deleted_at,
-    tourist_name: tourist?.display_name ?? null,
-    attraction_name: attraction?.name_th ?? null,
-    restaurant_name: restaurant?.name_th ?? null
+    review_id: numberValue(row.review_id),
+    tourist_id: stringValue(row.tourist_id),
+    visit_id: nullableString(row.visit_id),
+    attraction_id: nullableNumber(row.attraction_id),
+    restaurant_id: nullableNumber(row.restaurant_id),
+    rating: numberValue(row.rating),
+    title: nullableString(row.title),
+    comment: nullableString(row.comment),
+    is_approved: booleanValue(row.is_approved),
+    is_published: booleanValue(row.is_published),
+    moderated_by: nullableString(row.moderated_by),
+    moderated_at: nullableString(row.moderated_at),
+    created_at: stringValue(row.created_at),
+    updated_at: nullableString(row.updated_at),
+    deleted_at: nullableString(row.deleted_at),
+    tourist_name: nullableString(tourist.display_name),
+    attraction_name: nullableString(attraction.name_th),
+    restaurant_name: nullableString(restaurant.name_th)
   };
 }
 

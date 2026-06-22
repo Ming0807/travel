@@ -18,6 +18,7 @@ import { MapPinLine, ArrowLeft, PencilSimple, Image as ImageIcon, Eye, QrCode, C
 import Link from "next/link";
 import { AttractionCardsRow } from "@/components/attractions/attraction-cards-row";
 import { AttractionReviews } from "@/components/attractions/attraction-reviews";
+import type { ReviewCard, ReviewStats } from "@/types/tourism";
 import type { PublicAttractionDetail } from "@/lib/repositories/public-content.repository";
 import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
@@ -71,10 +72,8 @@ interface AttractionVisualEditorProps {
   districts: (AdminSelectOption & { provinceId: number })[];
   attractionTypes: AdminSelectOption[];
   publicDetail?: PublicAttractionDetail | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  reviewStats?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  publicReviews?: any[];
+  reviewStats?: ReviewStats | null;
+  publicReviews?: ReviewCard[] | null;
   allContent?: AdminContentLists;
   relatedContent?: AttractionRelatedContent;
 }
@@ -596,8 +595,8 @@ export function AttractionVisualEditor({
                   <AttractionReviews
                     rating={reviewStats?.averageRating || 0}
                     reviewsCount={reviewStats?.totalReviews?.toString() || "0"}
-                    stats={reviewStats}
-                    reviews={publicReviews}
+                    stats={reviewStats ?? undefined}
+                    reviews={publicReviews ?? undefined}
                     title={sectionLabel("reviews")}
                   />
                 </div>

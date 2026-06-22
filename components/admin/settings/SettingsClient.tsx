@@ -37,8 +37,17 @@ type SiteSettingRow = {
   updated_at: string;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- DB-merged dynamic shape; deriving from as-const defaults breaks spread intersection (TS mapped-type limitation)
-type SettingsState = Record<SiteSettingKey, any>;
+type MutableSettingValue<T> =
+  T extends string ? string :
+  T extends number ? number :
+  T extends boolean ? boolean :
+  T extends readonly (infer U)[] ? MutableSettingValue<U>[] :
+  T extends object ? { -readonly [K in keyof T]: MutableSettingValue<T[K]> } :
+  T;
+
+type SettingsState = {
+  [K in SiteSettingKey]: MutableSettingValue<(typeof SITE_SETTING_DEFAULTS)[K]>;
+};
 
 type TeamMember = { name: string; role: string; imageUrl: string };
 
@@ -103,6 +112,10 @@ const GROUP_KEYS: Record<SettingsGroupId, SiteSettingKey[]> = {
   about: ["about_vision", "about_team"],
 };
 
+function setSettingValue<K extends SiteSettingKey>(settings: SettingsState, key: K, value: SettingsState[K]) {
+  settings[key] = value;
+}
+
 function createInitialSettings(rows: SiteSettingRow[]) {
   const settings = structuredClone(SITE_SETTING_DEFAULTS) as unknown as SettingsState;
 
@@ -110,12 +123,13 @@ function createInitialSettings(rows: SiteSettingRow[]) {
     if (!SITE_SETTING_KEYS.includes(row.setting_key as SiteSettingKey)) continue;
     const key = row.setting_key as SiteSettingKey;
     if (row.setting_value && typeof row.setting_value === "object" && !Array.isArray(row.setting_value)) {
-      settings[key] = {
+      const mergedValue = {
         ...settings[key],
         ...(row.setting_value as Record<string, unknown>),
-      };
+      } as SettingsState[typeof key];
+      setSettingValue(settings, key, mergedValue);
     } else if (row.setting_value !== null && row.setting_value !== undefined) {
-      settings[key] = row.setting_value;
+      setSettingValue(settings, key, row.setting_value as SettingsState[typeof key]);
     }
   }
 
@@ -217,7 +231,7 @@ export function SettingsClient({
     setSettings((current) => {
       const updated = { ...current };
       for (const key of keys) {
-        updated[key] = structuredClone(defaults[key]);
+        setSettingValue(updated, key, structuredClone(defaults[key]) as SettingsState[typeof key]);
       }
       return updated;
     });
@@ -248,7 +262,7 @@ export function SettingsClient({
     markDirty(key);
   }
 
-  function updateSettingFull(key: SiteSettingKey, value: unknown) {
+  function updateSettingFull(key: SiteSettingKey, value: SettingsState[SiteSettingKey]) {
     setSettings((current) => ({
       ...current,
       [key]: value,
@@ -774,7 +788,7 @@ function AboutSettings({
 }: {
   settings: SettingsState;
   updateSettingObject: (key: SiteSettingKey, patch: Record<string, unknown>) => void;
-  updateSettingFull: (key: SiteSettingKey, value: unknown) => void;
+  updateSettingFull: (key: SiteSettingKey, value: SettingsState[SiteSettingKey]) => void;
   openPicker: (target: PickerTarget) => void;
 }) {
   const team = settings.about_team || [];

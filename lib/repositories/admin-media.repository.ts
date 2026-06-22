@@ -3,6 +3,7 @@ import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminMediaEntityType, AdminMediaFilters, AdminMediaMutationInput } from "@/lib/validation/media";
 import type { PaginatedResult } from "./admin-route.repository";
+import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
 
 export type AdminMediaRow = {
   media_id: number;
@@ -30,32 +31,36 @@ export type AdminMediaRow = {
   updated_at: string | null;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapMedia(row: any): AdminMediaRow {
+function mapMedia(rawRow: unknown): AdminMediaRow {
+  const row = asRecord(rawRow);
+  const lifecycleStatus = stringValue(row.lifecycle_status, booleanValue(row.is_active) ? "active" : "draft");
+
   return {
-    media_id: Number(row.media_id),
-    attraction_id: row.attraction_id ? Number(row.attraction_id) : null,
-    restaurant_id: row.restaurant_id ? Number(row.restaurant_id) : null,
-    accommodation_id: row.accommodation_id ? Number(row.accommodation_id) : null,
-    story_id: row.story_id ? Number(row.story_id) : null,
-    route_id: row.route_id ? Number(row.route_id) : null,
-    media_type: row.media_type,
-    storage_path: row.storage_path,
-    alt_text_th: row.alt_text_th,
-    alt_text_en: row.alt_text_en,
-    caption_th: row.caption_th,
-    caption_en: row.caption_en,
-    credit_text: row.credit_text ?? null,
-    source_url: row.source_url ?? null,
-    license_type: row.license_type ?? null,
-    usage_notes: row.usage_notes ?? null,
-    lifecycle_status: row.lifecycle_status ?? (row.is_active ? "active" : "draft"),
-    archived_at: row.archived_at ?? null,
-    display_order: row.display_order === null || row.display_order === undefined ? null : Number(row.display_order),
-    is_cover: row.is_cover,
-    is_active: row.is_active,
-    created_at: row.created_at,
-    updated_at: row.updated_at
+    media_id: numberValue(row.media_id),
+    attraction_id: nullableNumber(row.attraction_id),
+    restaurant_id: nullableNumber(row.restaurant_id),
+    accommodation_id: nullableNumber(row.accommodation_id),
+    story_id: nullableNumber(row.story_id),
+    route_id: nullableNumber(row.route_id),
+    media_type: stringValue(row.media_type),
+    storage_path: stringValue(row.storage_path),
+    alt_text_th: nullableString(row.alt_text_th),
+    alt_text_en: nullableString(row.alt_text_en),
+    caption_th: nullableString(row.caption_th),
+    caption_en: nullableString(row.caption_en),
+    credit_text: nullableString(row.credit_text),
+    source_url: nullableString(row.source_url),
+    license_type: nullableString(row.license_type),
+    usage_notes: nullableString(row.usage_notes),
+    lifecycle_status: lifecycleStatus === "archived" || lifecycleStatus === "active" || lifecycleStatus === "draft"
+      ? lifecycleStatus
+      : "draft",
+    archived_at: nullableString(row.archived_at),
+    display_order: nullableNumber(row.display_order),
+    is_cover: booleanValue(row.is_cover),
+    is_active: booleanValue(row.is_active),
+    created_at: stringValue(row.created_at),
+    updated_at: nullableString(row.updated_at)
   };
 }
 

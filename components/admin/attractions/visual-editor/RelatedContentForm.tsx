@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { updateAttractionRelatedContentAction } from "@/app/actions/admin-attraction-actions";
-import { AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { X, Plus, DotsSixVertical } from "@phosphor-icons/react";
 
 type ContentItem = { id: number; name: string; province?: string };
@@ -27,8 +27,7 @@ export function RelatedContentForm({
   const [search, setSearch] = useState("");
 
   const action = updateAttractionRelatedContentAction.bind(null, attractionId, type, selectedIds);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<AdminFormActionState, FormData>(action, { success: false });
 
   useEffect(() => {
     if (state?.success) onClose();

@@ -5,6 +5,8 @@ import { findTouristByIdentity } from "@/lib/repositories/tourist.repository";
 import { getVisitById } from "@/lib/repositories/visit.repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { firstJoin } from "@/lib/utils/supabase-joins";
+import { asRecord } from "@/lib/utils/record";
 import { redirect } from "next/navigation";
 
 export type PermissionKey =
@@ -543,23 +545,25 @@ function toGuardResult(actor: AdminActor): GuardResult {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractRolesAndPermissions(adminRow: any) {
+function extractRolesAndPermissions(adminRow: unknown) {
+  const row = asRecord(adminRow);
   const roleNames = new Set<string>();
   const rawPermissionNames = new Set<string>();
+  const adminUserRoles = Array.isArray(row.admin_user_roles) ? row.admin_user_roles : [];
 
-  for (const adminUserRole of adminRow.admin_user_roles ?? []) {
-    const role = Array.isArray(adminUserRole.roles) ? adminUserRole.roles[0] : adminUserRole.roles;
+  for (const rawAdminUserRole of adminUserRoles) {
+    const adminUserRole = asRecord(rawAdminUserRole);
+    const role = asRecord(firstJoin(adminUserRole.roles as { role_name?: unknown; is_active?: unknown; role_permissions?: unknown } | { role_name?: unknown; is_active?: unknown; role_permissions?: unknown }[] | null));
     if (!role || role.is_active === false) continue;
 
     if (typeof role.role_name === "string") {
       roleNames.add(role.role_name);
     }
 
-    for (const rolePermission of role.role_permissions ?? []) {
-      const permission = Array.isArray(rolePermission.permissions)
-        ? rolePermission.permissions[0]
-        : rolePermission.permissions;
+    const rolePermissions = Array.isArray(role.role_permissions) ? role.role_permissions : [];
+    for (const rawRolePermission of rolePermissions) {
+      const rolePermission = asRecord(rawRolePermission);
+      const permission = asRecord(firstJoin(rolePermission.permissions as { permission_name?: unknown } | { permission_name?: unknown }[] | null));
       if (typeof permission?.permission_name === "string") {
         rawPermissionNames.add(permission.permission_name);
       }

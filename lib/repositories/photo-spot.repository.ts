@@ -3,6 +3,8 @@ import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { PaginatedResult } from "@/lib/repositories/admin-attraction.repository";
 import type { AdminPhotoSpotFilters, AdminPhotoSpotMutationInput } from "@/lib/validation/photo-spot";
+import { firstJoin } from "@/lib/utils/supabase-joins";
+import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
 
 export type AdminPhotoSpotRow = {
   photo_spot_id: number;
@@ -21,24 +23,25 @@ export type AdminPhotoSpotRow = {
   attraction_name_th: string | null;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapPhotoSpot(row: any): AdminPhotoSpotRow {
-  const attraction = Array.isArray(row.attractions) ? row.attractions[0] : row.attractions;
+function mapPhotoSpot(rawRow: unknown): AdminPhotoSpotRow {
+  const row = asRecord(rawRow);
+  const attraction = asRecord(firstJoin(row.attractions as { name_th?: unknown } | { name_th?: unknown }[] | null));
+
   return {
-    photo_spot_id: Number(row.photo_spot_id),
-    attraction_id: Number(row.attraction_id),
-    spot_name_th: row.spot_name_th,
-    spot_name_en: row.spot_name_en,
-    description_th: row.description_th,
-    description_en: row.description_en,
-    sample_image_path: row.sample_image_path,
-    latitude: row.latitude === null ? null : Number(row.latitude),
-    longitude: row.longitude === null ? null : Number(row.longitude),
-    display_order: row.display_order,
-    is_active: row.is_active,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-    attraction_name_th: attraction?.name_th ?? null
+    photo_spot_id: numberValue(row.photo_spot_id),
+    attraction_id: numberValue(row.attraction_id),
+    spot_name_th: stringValue(row.spot_name_th),
+    spot_name_en: nullableString(row.spot_name_en),
+    description_th: nullableString(row.description_th),
+    description_en: nullableString(row.description_en),
+    sample_image_path: nullableString(row.sample_image_path),
+    latitude: nullableNumber(row.latitude),
+    longitude: nullableNumber(row.longitude),
+    display_order: nullableNumber(row.display_order),
+    is_active: booleanValue(row.is_active),
+    created_at: stringValue(row.created_at),
+    updated_at: nullableString(row.updated_at),
+    attraction_name_th: nullableString(attraction.name_th)
   };
 }
 

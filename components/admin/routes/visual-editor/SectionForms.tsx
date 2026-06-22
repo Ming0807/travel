@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { updateRouteAction } from "@/app/actions/admin-route-actions";
-import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import type { AdminRouteRow } from "@/lib/repositories/admin-route.repository";
 
@@ -21,8 +21,7 @@ function toFiniteMediaId(value: unknown): number | null {
 
 export function HeaderForm({ route, onClose }: SectionFormProps) {
   const action = updateRouteAction.bind(null, route.route_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, {
     success: false,
   });
 
@@ -87,8 +86,7 @@ export function HeaderForm({ route, onClose }: SectionFormProps) {
 
 export function ContentForm({ route, onClose }: SectionFormProps) {
   const action = updateRouteAction.bind(null, route.route_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, {
     success: false,
   });
 
@@ -143,8 +141,7 @@ export function ContentForm({ route, onClose }: SectionFormProps) {
 
 export function SettingsForm({ route, onClose }: SectionFormProps) {
   const action = updateRouteAction.bind(null, route.route_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, {
     success: false,
   });
 
@@ -224,8 +221,7 @@ export function SettingsForm({ route, onClose }: SectionFormProps) {
 
 export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: cmUrl, onCoverChange }: SectionFormProps) {
   const action = updateRouteAction.bind(null, route.route_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, {
     success: false,
   });
   const [imagePreviewUrl, setImagePreviewUrl] = useState(cmUrl ?? "");

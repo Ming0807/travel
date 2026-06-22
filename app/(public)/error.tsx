@@ -39,13 +39,13 @@ export default function PublicError({
         <div className="mt-6 flex items-center justify-center gap-3">
           <button
             onClick={reset}
-            className="inline-flex rounded-full bg-[#0F766E] px-5 py-3 text-sm font-bold text-white hover:bg-[#0d6157] transition-colors"
+            className="inline-flex rounded-full bg-[#0F766E] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#0d6157]"
           >
             ลองอีกครั้ง
           </button>
           <Link
             href="/"
-            className="inline-flex rounded-full border-2 border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+            className="inline-flex rounded-full border-2 border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
           >
             กลับหน้าแรก
           </Link>

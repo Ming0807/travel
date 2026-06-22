@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { updateRestaurantAction } from "@/app/actions/admin-restaurant-actions";
-import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
+import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import type { AdminSelectOption } from "@/components/admin/restaurants/RestaurantForm";
@@ -23,8 +23,7 @@ function toFiniteMediaId(value: unknown): number | null {
 
 export function HeaderForm({ restaurant, onClose }: SectionFormProps) {
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, {
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, {
     success: false,
   });
 
@@ -80,8 +79,7 @@ export function HeaderForm({ restaurant, onClose }: SectionFormProps) {
 
 export function ContentForm({ restaurant, onClose }: SectionFormProps) {
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
 
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
@@ -125,8 +123,7 @@ export function ContentForm({ restaurant, onClose }: SectionFormProps) {
 
 export function LocationForm({ restaurant, onClose }: SectionFormProps) {
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
 
   useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
 
@@ -181,8 +178,7 @@ export function LocationForm({ restaurant, onClose }: SectionFormProps) {
 
 export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId: cmId, coverMediaUrl: cmUrl, onCoverChange }: SectionFormProps) {
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction, isPending] = useActionState<any, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
   const [coverPreviewUrl, setCoverPreviewUrl] = useState(cmUrl ?? "");
   const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
   const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");

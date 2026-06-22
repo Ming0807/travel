@@ -15,6 +15,20 @@ type MediaAssetRow = Record<string, unknown> & {
   thumbnail_storage_path?: string | null;
 };
 
+function toMediaAssetRow(asset: unknown): MediaAssetRow {
+  const record = asset && typeof asset === "object" ? asset as Record<string, unknown> : {};
+  return {
+    ...record,
+    storage_path: typeof record.storage_path === "string" ? record.storage_path : "",
+    thumbnail_storage_path:
+      typeof record.thumbnail_storage_path === "string" ? record.thumbnail_storage_path : null,
+  };
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unexpected error";
+}
+
 function withMediaUrls(asset: MediaAssetRow) {
   return {
     ...asset,
@@ -45,8 +59,7 @@ export async function GET(req: NextRequest) {
     const lifecycleStatus = searchParams.get("lifecycle_status");
 
     const query = supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase table type not in generated types
-      .from("media_assets" as any)
+      .from("media_assets")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -70,17 +83,15 @@ export async function GET(req: NextRequest) {
     }
 
     // Construct public URLs via /site-media/ proxy (resilient to missing files)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase query returns untyped rows
-    const assets = data.map((asset: any) => withMediaUrls(asset));
+    const assets = (data ?? []).map((asset) => withMediaUrls(toMediaAssetRow(asset)));
 
     return NextResponse.json(assets);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- catch clause
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching media assets:", error);
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -194,8 +205,7 @@ export async function POST(req: NextRequest) {
 
     // Insert to Database
     let { data: asset, error: dbError } = await adminSupabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase table type not in generated types
-      .from("media_assets" as any)
+      .from("media_assets")
       .insert(insertPayloadWithThumbnail)
       .select()
       .single();
@@ -207,8 +217,7 @@ export async function POST(req: NextRequest) {
       }
 
       const fallbackInsert = await adminSupabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase table type not in generated types
-        .from("media_assets" as any)
+        .from("media_assets")
         .insert(insertPayload)
         .select()
         .single();
@@ -228,12 +237,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       asset: {
-        ...withMediaUrls(asset),
+        ...withMediaUrls(toMediaAssetRow(asset)),
       }
     });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- catch clause
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Media upload error:", error);
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
