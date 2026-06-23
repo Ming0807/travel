@@ -61,7 +61,7 @@ export async function listAdminVisits(filters: AdminVisitFilters): Promise<Pagin
     .select(
       `visit_id, tourist_id, attraction_id, visit_date, completion_status, created_at,
        tourists (display_name),
-       attractions (name_th, provinces (province_name_th))`,
+       attractions!inner (name_th, province_id, provinces (province_name_th))`,
       { count: "exact" }
     )
     .order("created_at", { ascending: false })
@@ -72,6 +72,7 @@ export async function listAdminVisits(filters: AdminVisitFilters): Promise<Pagin
     query = query.or(`tourist_id.ilike.%${filters.search}%`);
   }
   if (filters.attractionId) query = query.eq("attraction_id", filters.attractionId);
+  if (filters.provinceId) query = query.eq("attractions.province_id", filters.provinceId);
   if (filters.completionStatus) query = query.eq("completion_status", filters.completionStatus);
   if (filters.dateFrom) query = query.gte("visit_date", filters.dateFrom);
   if (filters.dateTo) query = query.lte("visit_date", filters.dateTo);
@@ -113,7 +114,7 @@ export async function exportAdminVisits(
     .select(
       `visit_id, tourist_id, attraction_id, visit_date, completion_status, created_at,
        tourists (display_name),
-       attractions (name_th, provinces (province_name_th))`
+       attractions!inner (name_th, province_id, provinces (province_name_th))`
     )
     .order("created_at", { ascending: false });
 
@@ -121,6 +122,7 @@ export async function exportAdminVisits(
     query = query.or(`tourist_id.ilike.%${filters.search}%`);
   }
   if (filters.attractionId) query = query.eq("attraction_id", filters.attractionId);
+  if (filters.provinceId) query = query.eq("attractions.province_id", filters.provinceId);
   if (filters.completionStatus) query = query.eq("completion_status", filters.completionStatus);
   if (filters.dateFrom) query = query.gte("visit_date", filters.dateFrom);
   if (filters.dateTo) query = query.lte("visit_date", filters.dateTo);

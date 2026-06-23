@@ -104,6 +104,44 @@ export async function listAdminReviews(filters: AdminReviewFilters): Promise<Pag
   };
 }
 
+export async function exportAdminReviews(
+  filters: Omit<AdminReviewFilters, "page" | "pageSize">,
+  limit?: number
+): Promise<AdminReviewRow[]> {
+  const supabase = createSupabaseServiceRoleClient();
+
+  let query = supabase
+    .from("reviews")
+    .select(
+      `
+        *,
+        tourists (display_name),
+        attractions (name_th),
+        restaurants (name_th)
+      `
+    )
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  if (filters.search) {
+    query = query.or(`comment.ilike.%${filters.search}%,title.ilike.%${filters.search}%`);
+  }
+  if (filters.attractionId) query = query.eq("attraction_id", filters.attractionId);
+  if (filters.restaurantId) query = query.eq("restaurant_id", filters.restaurantId);
+  if (filters.rating) query = query.eq("rating", filters.rating);
+  if (filters.isApproved !== undefined) query = query.eq("is_approved", filters.isApproved);
+  if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
+  if (limit) query = query.limit(limit);
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error("ADMIN_REVIEW_EXPORT_FAILED");
+  }
+
+  return (data ?? []).map(mapReview);
+}
+
 export async function getAdminReviewById(reviewId: number): Promise<AdminReviewRow | null> {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase

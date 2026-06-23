@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { adminPaginationSchema } from "./admin-attraction";
+import { optionalBooleanQuery } from "@/lib/validation/query-params";
 
 const optionalText = z.preprocess(
   (value) => (value === undefined || value === null || (typeof value === "string" && value.trim() === "") ? null : value),
@@ -47,10 +48,7 @@ export const adminMediaFiltersSchema = adminPaginationSchema.extend({
     (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
     z.string().optional()
   ),
-  isActive: z.preprocess(
-    (value) => (value === "" || value === null || value === undefined ? undefined : value),
-    z.coerce.boolean().optional()
-  ),
+  isActive: optionalBooleanQuery,
   lifecycleStatus: z.preprocess(
     (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
     adminMediaLifecycleStatusSchema.optional()

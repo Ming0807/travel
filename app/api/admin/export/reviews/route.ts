@@ -1,44 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
 import { getServerEnv } from "@/lib/config/server-env";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
-import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
+import { adminReviewFiltersSchema } from "@/lib/validation/admin-review";
+import { exportAdminReviews } from "@/lib/repositories/admin-review.repository";
 
 export const dynamic = "force-dynamic";
-
-type ExportRecord = Record<string, unknown>;
 
 export async function GET(request: NextRequest) {
   try {
     const guard = await requirePermission("export.comments");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
-
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
 
-    const supabase = createSupabaseServiceRoleClient();
-
-    const { data, error } = await supabase
-      .from("reviews")
-      .select(`
-        review_id,
-        rating,
-        title,
-        is_approved,
-        is_published,
-        moderated_at,
-        created_at,
-        attractions (name_th),
-        restaurants (name_th)
-      `)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(maxRows + 1);
-
-    if (error) {
-      throw new Error("EXPORT_REVIEWS_FAILED");
+    const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+    const parsed = adminReviewFiltersSchema.safeParse(rawParams);
+    if (!parsed.success) {
+      await logAuditAction({
+        actor: guard.actor,
+        action: "export.review_comments.invalid_filters",
+        entityType: "review_export",
+        result: "failed",
+        metadata: { reason: "invalid_filters" }
+      });
+      return NextResponse.json({ error: "Invalid export filters." }, { status: 400 });
     }
+
+    const { page: _page, pageSize: _pageSize, ...filters } = parsed.data;
+    void _page;
+    void _pageSize;
+
+    const data = await exportAdminReviews(filters, maxRows + 1);
 
     if (data.length > maxRows) {
       await logAuditAction({
@@ -51,22 +44,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = ((data || []) as ExportRecord[]).map((row, index) => {
-      const attraction = firstJoin(row.attractions as SupabaseJoin<ExportRecord>);
-      const restaurant = firstJoin(row.restaurants as SupabaseJoin<ExportRecord>);
-
-      return {
-        "Review Ref": `R-${String(index + 1).padStart(6, "0")}`,
-        "Attraction": attraction?.name_th || "",
-        "Restaurant": restaurant?.name_th || "",
-        "Rating": String(row.rating),
-        "Title": row.title || "",
-        "Is Approved": row.is_approved ? "Yes" : "No",
-        "Is Published": row.is_published ? "Yes" : "No",
-        "Moderated At": row.moderated_at || "",
-        "Created At": row.created_at || "",
-      };
-    });
+    const rows = data.map((row, index) => ({
+      "Review Ref": `R-${String(index + 1).padStart(6, "0")}`,
+      "Attraction": row.attraction_name || "",
+      "Restaurant": row.restaurant_name || "",
+      "Rating": String(row.rating),
+      "Is Approved": row.is_approved ? "Yes" : "No",
+      "Is Published": row.is_published ? "Yes" : "No",
+      "Moderated At": row.moderated_at || "",
+      "Created At": row.created_at || "",
+    }));
 
     await logAuditAction({
       actor: guard.actor,

@@ -8,6 +8,7 @@ import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
 import { ListPageShell } from "@/components/admin/ListPageShell";
 import { requirePermission } from "@/lib/auth/guards";
 import { listAdminVisits } from "@/lib/repositories/admin-visit.repository";
+import { getAdminAttractionsList, getAdminProvinces } from "@/lib/repositories/admin-attraction.repository";
 import { adminVisitFiltersSchema } from "@/lib/validation/admin-visit";
 import { Certificate, Stamp } from "@phosphor-icons/react/dist/ssr";
 import { ExportButton } from "@/components/admin/ExportButton";
@@ -61,7 +62,21 @@ export default async function AdminVisitsPage({
   const raw = await searchParams;
   const parsed = adminVisitFiltersSchema.safeParse(raw);
   const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
-  const { items, total, page, pageSize } = await listAdminVisits(filters);
+  const [{ items, total, page, pageSize }, provinces, attractions] = await Promise.all([
+    listAdminVisits(filters),
+    getAdminProvinces(),
+    getAdminAttractionsList(),
+  ]);
+
+  const provinceOptions = provinces.map((province) => ({
+    value: String(province.province_id),
+    label: province.province_name_th ?? `Province ${province.province_id}`,
+  }));
+
+  const attractionOptions = attractions.map((attraction) => ({
+    value: String(attraction.attraction_id),
+    label: `${attraction.name_th ?? `Attraction ${attraction.attraction_id}`}${attraction.is_published ? "" : " (Draft)"}`,
+  }));
 
   return (
     <ListPageShell
@@ -78,12 +93,24 @@ export default async function AdminVisitsPage({
       filters={
         <FilterBar>
           <div className="min-w-[220px] flex-1">
-            <SearchInput placeholder="ค้นหา..." />
+            <SearchInput placeholder="ค้นหา Tourist ID..." />
           </div>
           <FilterSelect
             label="สถานะ"
             paramKey="completionStatus"
             options={statusOptions}
+          />
+          <FilterSelect
+            label="จังหวัด"
+            paramKey="provinceId"
+            options={provinceOptions}
+            allLabel="ทุกจังหวัด"
+          />
+          <FilterSelect
+            label="สถานที่"
+            paramKey="attractionId"
+            options={attractionOptions}
+            allLabel="ทุกสถานที่"
           />
         </FilterBar>
       }

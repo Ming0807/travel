@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalBooleanQuery } from "@/lib/validation/query-params";
 
 const optionalText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
@@ -48,14 +49,8 @@ export const adminAttractionFiltersSchema = adminPaginationSchema.extend({
   provinceId: optionalId.optional(),
   districtId: optionalId.optional(),
   attractionTypeId: optionalId.optional(),
-  isPublished: z.preprocess(
-    (value) => (value === "" || value === null || value === undefined ? undefined : value),
-    z.coerce.boolean().optional()
-  ),
-  isActive: z.preprocess(
-    (value) => (value === "" || value === null || value === undefined ? undefined : value),
-    z.coerce.boolean().optional()
-  )
+  isPublished: optionalBooleanQuery,
+  isActive: optionalBooleanQuery
 });
 
 export const adminAttractionMutationSchema = z.object({

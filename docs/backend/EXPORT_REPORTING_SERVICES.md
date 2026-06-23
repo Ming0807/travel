@@ -247,6 +247,16 @@ or MVP:
 export.create
 ```
 
+Visit exports must reuse the same validated filters as the admin visit list:
+
+```text
+search
+attraction
+province
+completion status
+date range
+```
+
 ## 10.3 Survey/Satisfaction Export
 
 Permission:
@@ -747,6 +757,8 @@ Reason:
 Comments may contain personal data.
 
 MVP may exclude comments from normal export.
+
+Review exports should also exclude other free-text review fields, such as title, unless a restricted export explicitly requests them.
 
 ---
 

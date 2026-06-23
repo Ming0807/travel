@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { adminAttractionMutationSchema, adminAttractionFiltersSchema } from "@/lib/validation/admin-attraction";
 import { adminCheckinCodeMutationSchema, adminCheckinCodeFiltersSchema } from "@/lib/validation/checkin-code";
-import { adminPhotoSpotMutationSchema } from "@/lib/validation/photo-spot";
-import { adminRouteMutationSchema, adminRouteStopsBatchSchema, adminRouteStopMutationSchema } from "@/lib/validation/route";
+import { adminPhotoSpotFiltersSchema, adminPhotoSpotMutationSchema } from "@/lib/validation/photo-spot";
+import { adminRouteFiltersSchema, adminRouteMutationSchema, adminRouteStopsBatchSchema, adminRouteStopMutationSchema } from "@/lib/validation/route";
 import { adminStoryMutationSchema, adminStoryFiltersSchema } from "@/lib/validation/story";
 import { adminAccommodationMutationSchema, adminAccommodationFiltersSchema } from "@/lib/validation/admin-accommodation";
 import { adminRestaurantMutationSchema, adminRestaurantFiltersSchema } from "@/lib/validation/admin-restaurant";
@@ -33,6 +33,28 @@ describe("adminPaginationSchema", () => {
 
   it("rejects page < 1", () => {
     expect(() => adminPaginationSchema.parse({ page: "0" })).toThrow();
+  });
+});
+
+describe("admin query boolean filters", () => {
+  it("parses false query strings as false, not truthy strings", () => {
+    expect(adminAttractionFiltersSchema.parse({ isPublished: "false" }).isPublished).toBe(false);
+    expect(adminAttractionFiltersSchema.parse({ isActive: "false" }).isActive).toBe(false);
+    expect(adminRestaurantFiltersSchema.parse({ isPublished: "false" }).isPublished).toBe(false);
+    expect(adminAccommodationFiltersSchema.parse({ isPublished: "false" }).isPublished).toBe(false);
+    expect(adminRouteFiltersSchema.parse({ isPublished: "false" }).isPublished).toBe(false);
+    expect(adminRouteFiltersSchema.parse({ isActive: "false" }).isActive).toBe(false);
+    expect(adminStoryFiltersSchema.parse({ isPublished: "false" }).isPublished).toBe(false);
+    expect(adminPhotoSpotFiltersSchema.parse({ isActive: "false" }).isActive).toBe(false);
+    expect(adminMediaFiltersSchema.parse({ isActive: "false" }).isActive).toBe(false);
+    expect(adminReviewFiltersSchema.parse({ isApproved: "false" }).isApproved).toBe(false);
+    expect(adminReviewFiltersSchema.parse({ isPublished: "false" }).isPublished).toBe(false);
+    expect(adminCheckinCodeFiltersSchema.parse({ isActive: "false" }).isActive).toBe(false);
+  });
+
+  it("omits empty boolean query values", () => {
+    expect(adminAttractionFiltersSchema.parse({ isPublished: "" }).isPublished).toBeUndefined();
+    expect(adminReviewFiltersSchema.parse({ isApproved: "" }).isApproved).toBeUndefined();
   });
 });
 

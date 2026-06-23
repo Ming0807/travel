@@ -4,7 +4,13 @@ import { DownloadSimple, CaretDown } from "@phosphor-icons/react/dist/ssr";
 import { useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 
-export function ExportButton({ endpoint, label = "Export" }: { endpoint: string; label?: string }) {
+type ExportButtonProps = {
+  endpoint: string;
+  label?: string;
+  params?: Record<string, string | number | boolean | null | undefined>;
+};
+
+export function ExportButton({ endpoint, label = "Export", params }: ExportButtonProps) {
   const searchParams = useSearchParams();
   const [format, setFormat] = useState<"csv" | "xlsx">("csv");
   const [isOpen, setIsOpen] = useState(false);
@@ -21,11 +27,15 @@ export function ExportButton({ endpoint, label = "Export" }: { endpoint: string;
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Merge existing search params with the selected format
-  const url = `${endpoint}?${new URLSearchParams({
-    ...Object.fromEntries(searchParams.entries()),
-    format,
-  }).toString()}`;
+  const mergedParams = new URLSearchParams(params ? undefined : searchParams.toString());
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      if (value === null || value === undefined || value === "") continue;
+      mergedParams.set(key, String(value));
+    }
+  }
+  mergedParams.set("format", format);
+  const url = `${endpoint}?${mergedParams.toString()}`;
 
   const formatLabel = format === "csv" ? "CSV" : "Excel";
 
@@ -35,7 +45,7 @@ export function ExportButton({ endpoint, label = "Export" }: { endpoint: string;
         <a
           href={url}
           download
-          className="inline-flex items-center gap-2 rounded-l-xl px-4 py-2.5 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0A6B62]/50 active:bg-slate-100"
+          className="export-btn inline-flex items-center gap-2 rounded-l-xl px-4 py-2.5 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0A6B62]/50 active:bg-slate-100"
         >
           <DownloadSimple size={18} weight="bold" />
           {label} ({formatLabel})

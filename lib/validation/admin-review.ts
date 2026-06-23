@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalBooleanQuery } from "@/lib/validation/query-params";
 
 const optionalId = z.preprocess(
   (value) => (value === "" || value === null || value === undefined ? null : value),
@@ -21,14 +22,8 @@ export const adminReviewFiltersSchema = adminPaginationSchema.extend({
     (value) => (value === "" || value === null || value === undefined ? undefined : value),
     z.coerce.number().int().min(1).max(5).optional()
   ),
-  isApproved: z.preprocess(
-    (value) => (value === "" || value === null || value === undefined ? undefined : value),
-    z.coerce.boolean().optional()
-  ),
-  isPublished: z.preprocess(
-    (value) => (value === "" || value === null || value === undefined ? undefined : value),
-    z.coerce.boolean().optional()
-  )
+  isApproved: optionalBooleanQuery,
+  isPublished: optionalBooleanQuery
 });
 
 export type AdminReviewFilters = z.infer<typeof adminReviewFiltersSchema>;

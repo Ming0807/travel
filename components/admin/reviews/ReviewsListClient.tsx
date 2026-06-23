@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Star, CheckCircle, XCircle, Trash, Funnel, MagnifyingGlass, CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { approveReviewAction, rejectReviewAction, deleteReviewAction } from "@/app/actions/admin-review-actions";
 import type { AdminReviewRow } from "@/lib/repositories/admin-review.repository";
+import { ExportButton } from "@/components/admin/ExportButton";
 import Link from "next/link";
 
 type Props = {
@@ -92,10 +93,10 @@ function ReviewRow({
                   : "bg-amber-50 text-amber-600"
               }`}
             >
-              {review.isApproved ? "Approved" : "Pending"}
+              {review.isApproved ? "อนุมัติแล้ว" : "รอตรวจ"}
             </span>
             {review.isPublished && (
-              <span className="rounded-full bg-purple-50 text-purple-600">Published</span>
+              <span className="rounded-full bg-purple-50 text-purple-600">เผยแพร่แล้ว</span>
             )}
           </div>
         </div>
@@ -105,7 +106,7 @@ function ReviewRow({
             <button
               onClick={() => onAction(review.reviewId, "approve")}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-green-500 hover:bg-green-50 transition-colors"
-              title="Approve"
+              title="อนุมัติรีวิว"
             >
               <CheckCircle size={18} weight="fill" />
             </button>
@@ -114,7 +115,7 @@ function ReviewRow({
             <button
               onClick={() => onAction(review.reviewId, "reject")}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-amber-500 hover:bg-amber-50 transition-colors"
-              title="Reject"
+              title="ไม่อนุมัติรีวิว"
             >
               <XCircle size={18} weight="fill" />
             </button>
@@ -122,7 +123,7 @@ function ReviewRow({
           <button
             onClick={() => onAction(review.reviewId, "delete")}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-            title="Delete"
+            title="ลบรีวิว"
           >
             <Trash size={16} />
           </button>
@@ -220,7 +221,7 @@ export function ReviewsListClient(props: Props) {
     else result = await deleteReviewAction(reviewId);
 
     if (!result.success) {
-      setActionError(result.error ?? "Action failed.");
+      setActionError(result.error ?? "ดำเนินการไม่สำเร็จ");
     }
     fetchReviews(page, search, ratingFilter, isApprovedFilter, isPublishedFilter, attractionIdFilter, restaurantIdFilter);
   };
@@ -256,7 +257,7 @@ export function ReviewsListClient(props: Props) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Search reviews..."
+            placeholder="ค้นหารีวิวหรือหัวข้อ..."
             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-100"
           />
         </div>
@@ -266,12 +267,12 @@ export function ReviewsListClient(props: Props) {
           onChange={(e) => { setRatingFilter(e.target.value); setPage(1); fetchReviews(1, search, e.target.value, isApprovedFilter, isPublishedFilter, attractionIdFilter, restaurantIdFilter); }}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-100"
         >
-          <option value="">All Ratings</option>
-          <option value="5">5 Stars</option>
-          <option value="4">4 Stars</option>
-          <option value="3">3 Stars</option>
-          <option value="2">2 Stars</option>
-          <option value="1">1 Star</option>
+          <option value="">ทุกคะแนน</option>
+          <option value="5">5 ดาว</option>
+          <option value="4">4 ดาว</option>
+          <option value="3">3 ดาว</option>
+          <option value="2">2 ดาว</option>
+          <option value="1">1 ดาว</option>
         </select>
 
         <select
@@ -279,9 +280,9 @@ export function ReviewsListClient(props: Props) {
           onChange={(e) => { setIsApprovedFilter(e.target.value); setPage(1); fetchReviews(1, search, ratingFilter, e.target.value, isPublishedFilter, attractionIdFilter, restaurantIdFilter); }}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-100"
         >
-          <option value="">All Status</option>
-          <option value="true">Approved</option>
-          <option value="false">Pending</option>
+          <option value="">ทุกสถานะ</option>
+          <option value="true">อนุมัติแล้ว</option>
+          <option value="false">รอตรวจ</option>
         </select>
 
         <select
@@ -289,15 +290,27 @@ export function ReviewsListClient(props: Props) {
           onChange={(e) => { setIsPublishedFilter(e.target.value); setPage(1); fetchReviews(1, search, ratingFilter, isApprovedFilter, e.target.value, attractionIdFilter, restaurantIdFilter); }}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-100"
         >
-          <option value="">All Publication</option>
-          <option value="true">Published</option>
-          <option value="false">Unpublished</option>
+          <option value="">ทุกการเผยแพร่</option>
+          <option value="true">เผยแพร่แล้ว</option>
+          <option value="false">ยังไม่เผยแพร่</option>
         </select>
+        <ExportButton
+          endpoint="/api/admin/export/reviews"
+          label="Export ตามตัวกรอง"
+          params={{
+            search,
+            rating: ratingFilter,
+            attractionId: attractionIdFilter,
+            restaurantId: restaurantIdFilter,
+            isApproved: isApprovedFilter,
+            isPublished: isPublishedFilter,
+          }}
+        />
       </div>
 
       {/* Summary */}
       <div className="mb-4 text-sm font-semibold text-slate-500">
-        {loaded ? `${total} review${total !== 1 ? "s" : ""} found` : "Loading..."}
+        {loaded ? `พบ ${total} รีวิว` : "กำลังโหลด..."}
       </div>
 
       {/* Reviews List */}
@@ -317,8 +330,8 @@ export function ReviewsListClient(props: Props) {
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 py-16 text-center">
           <Funnel size={40} className="text-slate-300 mb-3" />
-          <p className="text-sm font-bold text-slate-400">No reviews found</p>
-          <p className="text-xs text-slate-400 mt-1">Try adjusting your filters</p>
+          <p className="text-sm font-bold text-slate-400">ไม่พบรีวิว</p>
+          <p className="text-xs text-slate-400 mt-1">ลองปรับตัวกรองอีกครั้ง</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -332,7 +345,7 @@ export function ReviewsListClient(props: Props) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-1 py-3">
           <p className="text-xs font-semibold text-slate-500">
-            Showing {total} review{total !== 1 ? "s" : ""}
+            แสดงจากทั้งหมด {total} รีวิว
           </p>
           <div className="flex items-center gap-1">
             <button
