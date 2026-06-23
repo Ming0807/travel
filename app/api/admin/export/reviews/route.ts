@@ -12,7 +12,7 @@ type ExportRecord = Record<string, unknown>;
 
 export async function GET(request: NextRequest) {
   try {
-    const guard = await requirePermission("export.reviews");
+    const guard = await requirePermission("export.comments");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
 
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
@@ -22,8 +22,13 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("reviews")
       .select(`
-        *,
-        tourists (display_name),
+        review_id,
+        rating,
+        title,
+        is_approved,
+        is_published,
+        moderated_at,
+        created_at,
         attractions (name_th),
         restaurants (name_th)
       `)
@@ -38,7 +43,7 @@ export async function GET(request: NextRequest) {
     if (data.length > maxRows) {
       await logAuditAction({
         actor: guard.actor,
-        action: "export.reviews.too_large",
+        action: "export.review_comments.too_large",
         entityType: "review_export",
         result: "failed",
         metadata: { maxRows }
@@ -46,14 +51,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = ((data || []) as ExportRecord[]).map((row) => {
-      const tourist = firstJoin(row.tourists as SupabaseJoin<ExportRecord>);
+    const rows = ((data || []) as ExportRecord[]).map((row, index) => {
       const attraction = firstJoin(row.attractions as SupabaseJoin<ExportRecord>);
       const restaurant = firstJoin(row.restaurants as SupabaseJoin<ExportRecord>);
 
       return {
-        "ID": String(row.review_id),
-        "Tourist Name": tourist?.display_name || "",
+        "Review Ref": `R-${String(index + 1).padStart(6, "0")}`,
         "Attraction": attraction?.name_th || "",
         "Restaurant": restaurant?.name_th || "",
         "Rating": String(row.rating),
@@ -67,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     await logAuditAction({
       actor: guard.actor,
-      action: `export.reviews.${format}`,
+      action: `export.review_comments.${format}`,
       entityType: "review_export",
       result: "success",
       metadata: { rowCount: rows.length, maxRows }

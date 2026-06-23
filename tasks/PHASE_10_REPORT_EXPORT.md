@@ -4,6 +4,18 @@
 
 Phase 10 provides CSV and XLSX data export for all admin CRUD modules, a shared CSV utility with formula-injection protection, an Excel (.xlsx) generator with styled headers, and privacy regression tests that verify PII stripping.
 
+## 2026-06 Privacy Hardening Update
+
+- XLSX export now applies the same spreadsheet formula neutralization as CSV for text and JSON-string cells.
+- Dashboard exports require both `dashboard.read` and an export-specific permission (`export.summary`, `export.expense_data`, `export.tourist_summary`, `export.visit_records`, or `export.survey_data`) and use the shared CSV/XLSX response helper for every type.
+- Tourist export is now a privacy-safe tourist summary (`export.tourist_summary`) with anonymized profile references; it no longer exports `tourist_id`, display name, visit IDs, certificate IDs, or exact registration timestamp.
+- Audit export no longer exports admin email or raw `old_data` / `new_data` JSON values; it exports field-name summaries and writes an audit log for the export itself.
+- Media export no longer exports raw storage paths. It exports a storage reference category and whether a storage reference exists.
+- Review export is treated as comment-sensitive and requires `export.comments`; it no longer exports tourist names or raw review IDs.
+- Contact message and admin-user exports are restricted under `export.personal_data`; admin-user export also requires `user.manage`.
+- Restaurant export now requires `export.restaurants`, enforces `EXPORT_MAX_ROWS + 1` overflow detection, escapes search wildcard characters, and writes audit logs through the shared audit service.
+- Content-admin fallback permissions no longer grant detailed export capabilities such as visit, survey, expense, funnel, user, message, review, tourist, role, personal-data, or generic export-job permissions.
+
 ---
 
 ## Features Built

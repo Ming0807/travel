@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const guard = await requirePermission("export.messages");
+    const guard = await requirePermission("export.personal_data");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
 
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
@@ -29,16 +29,15 @@ export async function GET(request: NextRequest) {
     if (data.length > maxRows) {
       await logAuditAction({
         actor: guard.actor,
-        action: "export.messages.too_large",
+        action: "export.contact_messages.too_large",
         entityType: "message_export",
         result: "failed",
-        metadata: { maxRows }
+        metadata: { maxRows, privacyLevel: "restricted" }
       });
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
     const rows = ((data || []) as Array<Record<string, unknown>>).map((row) => ({
-      "ID": row.id || "",
       "Name": row.name || "",
       "Email": row.email || "",
       "Phone": row.phone || "",
@@ -46,17 +45,16 @@ export async function GET(request: NextRequest) {
       "Message": row.message || "",
       "Status": row.status || "",
       "Is Replied": row.is_replied ? "Yes" : "No",
-      "Read By": row.read_by || "",
       "Read At": row.read_at || "",
       "Created At": row.created_at || "",
     }));
 
     await logAuditAction({
       actor: guard.actor,
-      action: `export.messages.${format}`,
+      action: `export.contact_messages.${format}`,
       entityType: "message_export",
       result: "success",
-      metadata: { rowCount: rows.length, maxRows }
+      metadata: { rowCount: rows.length, maxRows, privacyLevel: "restricted" }
     });
 
     const date = new Date().toISOString().split("T")[0];

@@ -61,7 +61,8 @@ export async function GET(request: NextRequest) {
       return {
         "ID": String(row.media_id),
         "Media Type": row.media_type || "",
-        "Storage Path": row.storage_path || "",
+        "Storage Reference": storageReferenceType(row.storage_path),
+        "Has Storage Reference": row.storage_path ? "Yes" : "No",
         "Entity Type": entityType,
         "Entity ID": entityId,
         "Alt Text (TH)": row.alt_text_th || "",
@@ -98,4 +99,12 @@ export async function GET(request: NextRequest) {
     console.error("Export Media Error:", error);
     return NextResponse.json({ error: "Failed to export data." }, { status: 500 });
   }
+}
+
+function storageReferenceType(value: unknown): string {
+  if (typeof value !== "string" || !value) return "";
+  if (/^https?:\/\//i.test(value)) return "external_url";
+  if (value.startsWith("cloudinary:")) return "cloudinary_reference";
+  if (value.startsWith("site-media/")) return "site_media";
+  return "storage_reference";
 }

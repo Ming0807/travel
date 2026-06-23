@@ -1,5 +1,6 @@
 import "server-only";
 import ExcelJS from "exceljs";
+import { neutralizeFormulaValue } from "./csv";
 
 /**
  * Converts an array of flat row objects into an XLSX workbook Buffer.
@@ -56,7 +57,10 @@ export async function generateXlsx(
     headers.map((h) => {
       const val = row[h];
       if (val === null || val === undefined) return "";
-      if (typeof val === "object") return JSON.stringify(val);
+      if (typeof val === "string") return neutralizeFormulaValue(val);
+      if (typeof val === "object") {
+        return neutralizeFormulaValue(JSON.stringify(val));
+      }
       return String(val);
     })
   );

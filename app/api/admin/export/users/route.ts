@@ -12,7 +12,8 @@ type ExportRecord = Record<string, unknown>;
 
 export async function GET(request: NextRequest) {
   try {
-    const guard = await requirePermission("export.users");
+    await requirePermission("user.manage");
+    const guard = await requirePermission("export.personal_data");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
 
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
@@ -42,15 +43,15 @@ export async function GET(request: NextRequest) {
     if (data.length > maxRows) {
       await logAuditAction({
         actor: guard.actor,
-        action: "export.users.too_large",
+        action: "export.admin_users.too_large",
         entityType: "user_export",
         result: "failed",
-        metadata: { maxRows }
+        metadata: { maxRows, privacyLevel: "restricted" }
       });
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = ((data || []) as ExportRecord[]).map((row) => {
+    const rows = ((data || []) as ExportRecord[]).map((row, index) => {
       const adminUserRoles = (row.admin_user_roles ?? []) as ExportRecord[];
       const roles = adminUserRoles
         .map((ur) => {
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
         .join(", ");
 
       return {
-        "ID": String(row.admin_id),
+        "Admin Ref": `A-${String(index + 1).padStart(6, "0")}`,
         "Email": row.email || "",
         "Display Name": row.display_name || "",
         "Roles": roles,
@@ -73,10 +74,10 @@ export async function GET(request: NextRequest) {
 
     await logAuditAction({
       actor: guard.actor,
-      action: `export.users.${format}`,
+      action: `export.admin_users.${format}`,
       entityType: "user_export",
       result: "success",
-      metadata: { rowCount: rows.length, maxRows }
+      metadata: { rowCount: rows.length, maxRows, privacyLevel: "restricted" }
     });
 
     const date = new Date().toISOString().split("T")[0];

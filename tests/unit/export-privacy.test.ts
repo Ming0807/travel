@@ -699,7 +699,8 @@ describe("Content-entity export row contracts (no PII fields)", () => {
       keys: [
         "ID",
         "Media Type",
-        "Storage Path",
+        "Storage Reference",
+        "Has Storage Reference",
         "Entity Type",
         "Entity ID",
         "Alt Text (TH)",

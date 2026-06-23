@@ -363,18 +363,8 @@ const CONTENT_ADMIN_PERMISSIONS: PermissionKey[] = [
   "export.routes",
   "export.restaurants",
   "export.accommodations",
-  "export.reviews",
-  "export.messages",
-  "export.tourists",
-  "export.users",
-  "export.roles",
   "export.certificate_templates",
-  "export.summary",
-  "export.create",
-  "export.visit_records",
-  "export.expense_data",
-  "export.survey_data",
-  "export.funnel_data"
+  "export.summary"
 ];
 
 const VIEWER_PERMISSIONS: PermissionKey[] = [

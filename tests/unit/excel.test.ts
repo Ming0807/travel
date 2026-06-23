@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import ExcelJS from "exceljs";
 import { generateXlsx } from "@/lib/utils/excel";
 
 describe("generateXlsx", () => {
@@ -122,5 +123,22 @@ describe("generateXlsx", () => {
     const buf = await generateXlsx(undefined as unknown as Array<Record<string, unknown>>);
     expect(buf).toBeInstanceOf(Buffer);
     expect(buf.length).toBeGreaterThan(100);
+  });
+
+  it("neutralizes spreadsheet formulas in text cells", async () => {
+    const buf = await generateXlsx([
+      {
+        name: "=HYPERLINK(\"https://example.test\")",
+        note: "+SUM(1,1)",
+        numeric: -5,
+      },
+    ]);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buf as unknown as Parameters<typeof workbook.xlsx.load>[0]);
+    const worksheet = workbook.getWorksheet("Export");
+
+    expect(worksheet?.getCell("A2").value).toBe("'=HYPERLINK(\"https://example.test\")");
+    expect(worksheet?.getCell("B2").value).toBe("'+SUM(1,1)");
+    expect(worksheet?.getCell("C2").value).toBe("-5");
   });
 });
