@@ -1399,6 +1399,7 @@ Then attractions with low average scores can be identified
 [ ] survey_completed event is recorded.
 [ ] Visit status updates to survey_completed.
 [ ] Dashboard can use submitted data.
+[ ] Admin survey list and export can filter by province, attraction, and satisfaction score.
 ```
 
 ---

@@ -151,7 +151,6 @@ describe("adminSurveyFiltersSchema", () => {
   it("accepts minimal valid input (page only)", () => {
     const result = adminSurveyFiltersSchema.parse({ page: 1 });
     expect(result.page).toBe(1);
-    expect(result.search).toBeUndefined();
     expect(result.minScore).toBeUndefined();
   });
 
@@ -172,6 +171,15 @@ describe("adminSurveyFiltersSchema", () => {
     });
     expect(result.minScore).toBe(2);
     expect(result.maxScore).toBe(4);
+  });
+
+  it("rejects minScore greater than maxScore", () => {
+    expect(() =>
+      adminSurveyFiltersSchema.parse({
+        minScore: "5",
+        maxScore: "2",
+      })
+    ).toThrow();
   });
 
   it("rejects minScore less than 1", () => {
@@ -214,10 +222,5 @@ describe("adminSurveyFiltersSchema", () => {
   it("accepts valid provinceId", () => {
     const result = adminSurveyFiltersSchema.parse({ provinceId: "5" });
     expect(result.provinceId).toBe(5);
-  });
-
-  it("accepts search text", () => {
-    const result = adminSurveyFiltersSchema.parse({ search: "ทดสอบ" });
-    expect(result.search).toBe("ทดสอบ");
   });
 });

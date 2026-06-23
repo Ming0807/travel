@@ -84,7 +84,7 @@ export async function listAdminSurveys(filters: AdminSurveyFilters): Promise<Pag
        accessibility_score, information_score, value_score,
        revisit_intention, recommend_intention, comments, submitted_at, completed_at,
        tourists (display_name),
-       visits (attractions (name_th, provinces (province_name_th)))`,
+       visits!inner (attraction_id, attractions!inner (name_th, province_id, provinces (province_name_th)))`,
       { count: "exact" }
     )
     .order("submitted_at", { ascending: false })
@@ -92,6 +92,8 @@ export async function listAdminSurveys(filters: AdminSurveyFilters): Promise<Pag
 
   if (filters.minScore) query = query.gte("overall_score", filters.minScore);
   if (filters.maxScore) query = query.lte("overall_score", filters.maxScore);
+  if (filters.attractionId) query = query.eq("visits.attraction_id", filters.attractionId);
+  if (filters.provinceId) query = query.eq("visits.attractions.province_id", filters.provinceId);
 
   const { data, error, count } = await query;
   if (error) throw new Error("ADMIN_SURVEY_LIST_FAILED");
@@ -117,12 +119,14 @@ export async function exportAdminSurveys(
        accessibility_score, information_score, value_score,
        revisit_intention, recommend_intention, comments, submitted_at, completed_at,
        tourists (display_name),
-       visits (attractions (name_th, provinces (province_name_th)))`
+       visits!inner (attraction_id, attractions!inner (name_th, province_id, provinces (province_name_th)))`
     )
     .order("submitted_at", { ascending: false });
 
   if (filters.minScore) query = query.gte("overall_score", filters.minScore);
   if (filters.maxScore) query = query.lte("overall_score", filters.maxScore);
+  if (filters.attractionId) query = query.eq("visits.attraction_id", filters.attractionId);
+  if (filters.provinceId) query = query.eq("visits.attractions.province_id", filters.provinceId);
   if (limit) query = query.limit(limit);
 
   const { data, error } = await query;

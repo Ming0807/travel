@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { SearchInput } from "@/components/admin/SearchInput";
 import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
 import { ListPageShell } from "@/components/admin/ListPageShell";
 import { hasPermission, requirePermission } from "@/lib/auth/guards";
@@ -11,6 +10,7 @@ import { listAdminSurveys } from "@/lib/repositories/admin-survey.repository";
 import { adminSurveyFiltersSchema } from "@/lib/validation/admin-survey";
 import { Star, ThumbsUp, ThumbsDown } from "@phosphor-icons/react/dist/ssr";
 import { ExportButton } from "@/components/admin/ExportButton";
+import { getAdminAttractionsList, getAdminProvinces } from "@/lib/repositories/admin-attraction.repository";
 
 export const metadata: Metadata = {
   title: "Survey Responses | Admin",
@@ -55,7 +55,21 @@ export default async function AdminSurveysPage({
   const raw = await searchParams;
   const parsed = adminSurveyFiltersSchema.safeParse(raw);
   const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
-  const { items, total, page, pageSize } = await listAdminSurveys(filters);
+  const [{ items, total, page, pageSize }, provinces, attractions] = await Promise.all([
+    listAdminSurveys(filters),
+    getAdminProvinces(),
+    getAdminAttractionsList(),
+  ]);
+
+  const provinceOptions = provinces.map((province) => ({
+    value: String(province.province_id),
+    label: province.province_name_th ?? `Province ${province.province_id}`,
+  }));
+
+  const attractionOptions = attractions.map((attraction) => ({
+    value: String(attraction.attraction_id),
+    label: `${attraction.name_th ?? `Attraction ${attraction.attraction_id}`}${attraction.is_published ? "" : " (Draft)"}`,
+  }));
 
   return (
     <ListPageShell
@@ -71,12 +85,27 @@ export default async function AdminSurveysPage({
       emptyDescription="ยังไม่มีนักท่องเที่ยวตอบแบบสอบถาม หรือลองเปลี่ยนตัวกรอง"
       filters={
         <FilterBar>
-          <div className="min-w-[220px] flex-1">
-            <SearchInput placeholder="ค้นหา..." />
-          </div>
+          <FilterSelect
+            label="จังหวัด"
+            paramKey="provinceId"
+            options={provinceOptions}
+            allLabel="ทุกจังหวัด"
+          />
+          <FilterSelect
+            label="สถานที่"
+            paramKey="attractionId"
+            options={attractionOptions}
+            allLabel="ทุกสถานที่"
+          />
           <FilterSelect
             label="คะแนนขั้นต่ำ"
             paramKey="minScore"
+            options={scoreOptions}
+            allLabel="ทุกคะแนน"
+          />
+          <FilterSelect
+            label="คะแนนสูงสุด"
+            paramKey="maxScore"
             options={scoreOptions}
             allLabel="ทุกคะแนน"
           />
