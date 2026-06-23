@@ -12,11 +12,17 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
   const hasDimensionData =
     data.satisfaction.safetyAverage !== null ||
     data.satisfaction.cleanlinessAverage !== null ||
+    data.satisfaction.accessibilityAverage !== null ||
+    data.satisfaction.informationAverage !== null ||
+    data.satisfaction.valueAverage !== null ||
     data.satisfaction.facilityAverage !== null;
 
   const needsAttention =
     (data.satisfaction.safetyAverage !== null && data.satisfaction.safetyAverage < 3) ||
     (data.satisfaction.cleanlinessAverage !== null && data.satisfaction.cleanlinessAverage < 3) ||
+    (data.satisfaction.accessibilityAverage !== null && data.satisfaction.accessibilityAverage < 3) ||
+    (data.satisfaction.informationAverage !== null && data.satisfaction.informationAverage < 3) ||
+    (data.satisfaction.valueAverage !== null && data.satisfaction.valueAverage < 3) ||
     (data.satisfaction.facilityAverage !== null && data.satisfaction.facilityAverage < 3);
 
   const hasByAttraction = data.satisfaction.byAttraction.length > 0;
@@ -29,8 +35,8 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
           <h2 className="text-2xl font-black text-[#073F37]">Satisfaction</h2>
           <p className="mt-1 text-sm text-slate-500">
             Optional survey responses only. Missing scores are excluded from
-            averages. Dimension scores (safety, cleanliness, facility) provide
-            granular insight.
+            averages. Dimension scores (safety, cleanliness, accessibility,
+            information, and value) provide granular insight.
           </p>
         </div>
         <ExportCsvButton />
@@ -101,7 +107,7 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
           <h3 className="mb-3 text-sm font-bold text-slate-600 uppercase tracking-wider">
             Dimension scores
           </h3>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <KpiCard
               metric={{
                 key: "safety_score",
@@ -153,21 +159,21 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
             />
             <KpiCard
               metric={{
-                key: "facility_score",
-                label: "Facility",
+                key: "accessibility_score",
+                label: "Accessibility",
                 value:
-                  data.satisfaction.facilityAverage === null
+                  data.satisfaction.accessibilityAverage === null
                     ? "No data"
-                    : `${data.satisfaction.facilityAverage.toFixed(1)} / 5`,
-                rawValue: data.satisfaction.facilityAverage,
+                    : `${data.satisfaction.accessibilityAverage.toFixed(1)} / 5`,
+                rawValue: data.satisfaction.accessibilityAverage,
                 valueType: "rating",
                 definition:
-                  "Average facility score from optional survey responses.",
+                  "Average accessibility score from optional survey responses.",
                 note:
-                  data.satisfaction.facilityAverage !== null
-                    ? data.satisfaction.facilityAverage >= 4
+                  data.satisfaction.accessibilityAverage !== null
+                    ? data.satisfaction.accessibilityAverage >= 4
                       ? "Good"
-                      : data.satisfaction.facilityAverage >= 3
+                      : data.satisfaction.accessibilityAverage >= 3
                         ? "Average"
                         : "Needs attention"
                     : undefined,
@@ -176,6 +182,78 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
               sampleCount={data.satisfaction.responseCount}
               sampleLabel="satisfaction responses"
             />
+            <KpiCard
+              metric={{
+                key: "information_score",
+                label: "Information",
+                value:
+                  data.satisfaction.informationAverage === null
+                    ? "No data"
+                    : `${data.satisfaction.informationAverage.toFixed(1)} / 5`,
+                rawValue: data.satisfaction.informationAverage,
+                valueType: "rating",
+                definition:
+                  "Average information and signage score from optional survey responses.",
+                note:
+                  data.satisfaction.informationAverage !== null
+                    ? data.satisfaction.informationAverage >= 4
+                      ? "Good"
+                      : data.satisfaction.informationAverage >= 3
+                        ? "Average"
+                        : "Needs attention"
+                    : undefined,
+              }}
+              index={6}
+              sampleCount={data.satisfaction.responseCount}
+              sampleLabel="satisfaction responses"
+            />
+            <KpiCard
+              metric={{
+                key: "value_score",
+                label: "Value",
+                value:
+                  data.satisfaction.valueAverage === null
+                    ? "No data"
+                    : `${data.satisfaction.valueAverage.toFixed(1)} / 5`,
+                rawValue: data.satisfaction.valueAverage,
+                valueType: "rating",
+                definition:
+                  "Average value-for-money score from optional survey responses.",
+                note:
+                  data.satisfaction.valueAverage !== null
+                    ? data.satisfaction.valueAverage >= 4
+                      ? "Good"
+                      : data.satisfaction.valueAverage >= 3
+                        ? "Average"
+                        : "Needs attention"
+                    : undefined,
+              }}
+              index={7}
+              sampleCount={data.satisfaction.responseCount}
+              sampleLabel="satisfaction responses"
+            />
+            {data.satisfaction.facilityAverage !== null && (
+              <KpiCard
+                metric={{
+                  key: "facility_score_legacy",
+                  label: "Facility (legacy)",
+                  value: `${data.satisfaction.facilityAverage.toFixed(1)} / 5`,
+                  rawValue: data.satisfaction.facilityAverage,
+                  valueType: "rating",
+                  definition:
+                    "Legacy facility score from early survey rows before accessibility/information/value dimensions were introduced.",
+                  note:
+                    data.satisfaction.facilityAverage >= 4
+                      ? "Good"
+                      : data.satisfaction.facilityAverage >= 3
+                        ? "Average"
+                        : "Needs attention",
+                }}
+                index={8}
+                sampleCount={data.satisfaction.responseCount}
+                sampleLabel="legacy satisfaction responses"
+              />
+            )}
           </div>
         </div>
       )}
@@ -198,6 +276,9 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
           dimensionScores={{
             safetyAverage: data.satisfaction.safetyAverage,
             cleanlinessAverage: data.satisfaction.cleanlinessAverage,
+            accessibilityAverage: data.satisfaction.accessibilityAverage,
+            informationAverage: data.satisfaction.informationAverage,
+            valueAverage: data.satisfaction.valueAverage,
             facilityAverage: data.satisfaction.facilityAverage,
           }}
         />

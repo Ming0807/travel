@@ -48,7 +48,10 @@ function buildSatisfactionAlerts(data: DashboardViewModel): DashboardAlert[] {
   const dimensions: { key: string; label: string; value: number | null }[] = [
     { key: "safety", label: "Safety", value: s.safetyAverage },
     { key: "cleanliness", label: "Cleanliness", value: s.cleanlinessAverage },
-    { key: "facility", label: "Facility", value: s.facilityAverage },
+    { key: "accessibility", label: "Accessibility", value: s.accessibilityAverage },
+    { key: "information", label: "Information", value: s.informationAverage },
+    { key: "value", label: "Value", value: s.valueAverage },
+    { key: "facility", label: "Facility (legacy)", value: s.facilityAverage },
   ];
 
   for (const dim of dimensions) {

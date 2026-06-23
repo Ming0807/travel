@@ -146,6 +146,13 @@ export type DashboardViewModel = {
     byAttraction: RankedAttraction[];
     safetyAverage: number | null;
     cleanlinessAverage: number | null;
+    accessibilityAverage: number | null;
+    informationAverage: number | null;
+    valueAverage: number | null;
+    /**
+     * Legacy score from the first schema. Kept so old survey rows remain readable,
+     * but new survey UX writes accessibility/information/value instead.
+     */
     facilityAverage: number | null;
     revisitIntentionRate: number | null;
     recommendIntentionRate: number | null;

@@ -14,10 +14,14 @@ export type AdminSurveyRow = {
   facility_score: number | null;
   cleanliness_score: number | null;
   safety_score: number | null;
+  accessibility_score: number | null;
+  information_score: number | null;
+  value_score: number | null;
   revisit_intention: string | null;
   recommend_intention: string | null;
   comments: string | null;
   submitted_at: string;
+  completed_at: string | null;
   tourist_display_name: string | null;
   attraction_name_th: string | null;
   province_name_th: string | null;
@@ -31,8 +35,12 @@ export type AdminSurveyExportRow = {
   facility_score: number | null;
   cleanliness_score: number | null;
   safety_score: number | null;
+  accessibility_score: number | null;
+  information_score: number | null;
+  value_score: number | null;
   revisit_intention: string | null;
   recommend_intention: string | null;
+  completed_at: string | null;
 };
 
 function mapSurvey(rawRow: unknown): AdminSurveyRow {
@@ -50,10 +58,14 @@ function mapSurvey(rawRow: unknown): AdminSurveyRow {
     facility_score: nullableNumber(row.facility_score),
     cleanliness_score: nullableNumber(row.cleanliness_score),
     safety_score: nullableNumber(row.safety_score),
+    accessibility_score: nullableNumber(row.accessibility_score),
+    information_score: nullableNumber(row.information_score),
+    value_score: nullableNumber(row.value_score),
     revisit_intention: nullableString(row.revisit_intention),
     recommend_intention: nullableString(row.recommend_intention),
     comments: nullableString(row.comments),
     submitted_at: stringValue(row.submitted_at),
+    completed_at: nullableString(row.completed_at),
     tourist_display_name: nullableString(tourist.display_name),
     attraction_name_th: nullableString(attraction.name_th),
     province_name_th: nullableString(province.province_name_th),
@@ -69,7 +81,8 @@ export async function listAdminSurveys(filters: AdminSurveyFilters): Promise<Pag
     .from("satisfaction_surveys")
     .select(
       `survey_id, visit_id, tourist_id, overall_score, facility_score, cleanliness_score, safety_score,
-       revisit_intention, recommend_intention, comments, submitted_at,
+       accessibility_score, information_score, value_score,
+       revisit_intention, recommend_intention, comments, submitted_at, completed_at,
        tourists (display_name),
        visits (attractions (name_th, provinces (province_name_th)))`,
       { count: "exact" }
@@ -101,7 +114,8 @@ export async function exportAdminSurveys(
     .from("satisfaction_surveys")
     .select(
       `survey_id, visit_id, tourist_id, overall_score, facility_score, cleanliness_score, safety_score,
-       revisit_intention, recommend_intention, comments, submitted_at,
+       accessibility_score, information_score, value_score,
+       revisit_intention, recommend_intention, comments, submitted_at, completed_at,
        tourists (display_name),
        visits (attractions (name_th, provinces (province_name_th)))`
     )
@@ -126,7 +140,11 @@ export function toSafeSurveyExportRows(rows: AdminSurveyRow[]): AdminSurveyExpor
     facility_score: row.facility_score,
     cleanliness_score: row.cleanliness_score,
     safety_score: row.safety_score,
+    accessibility_score: row.accessibility_score,
+    information_score: row.information_score,
+    value_score: row.value_score,
     revisit_intention: row.revisit_intention,
-    recommend_intention: row.recommend_intention
+    recommend_intention: row.recommend_intention,
+    completed_at: row.completed_at
   }));
 }

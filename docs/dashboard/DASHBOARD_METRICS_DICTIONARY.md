@@ -201,7 +201,8 @@ Response shape: aggregated privacy-safe DTO
 Schema alignment:
 
 - `funnel_events.event_type` is the implemented event column, even where older docs use `event_name`.
-- `satisfaction_surveys.submitted_at` is the current timestamp column in the initial schema.
+- `satisfaction_surveys.submitted_at` remains the initial-schema/default timestamp, while `completed_at` is the preferred survey completion timestamp added by the schema hardening migration.
+- Current satisfaction dimension fields are `safety_score`, `cleanliness_score`, `accessibility_score`, `information_score`, and `value_score`; `facility_score` is retained only for legacy rows.
 - Spending estimates use `visit_expenses.spending_range_id -> spending_ranges.min_value/max_value` when range data exists.
 - The dashboard does not expose `tourist_id`, `visit_id`, provider identifiers, guest tokens, private photo paths, certificate paths, or raw comments.
 

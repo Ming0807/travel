@@ -12,7 +12,8 @@ Before any production deployment or major testing cycle, verify that the followi
 
 ### 2. Dashboard & Analytics
 - [ ] **`dashboard_daily_summary` Table**: Ensure this standard table is created and tracking daily visits and unique tourists.
-- [ ] **Refresh Function/Trigger**: Ensure the Postgres function (e.g., `refresh_dashboard_daily_summary()`) is present and either invoked via a pg_cron job or a webhook/trigger.
+- [ ] **Refresh Function/Trigger**: Ensure the Postgres function `refresh_dashboard_summary()` is present and either invoked manually after data changes or scheduled through a controlled job.
+- [ ] **Satisfaction Dimension Columns**: Ensure `dashboard_daily_summary` includes `avg_accessibility_score`, `avg_information_score`, and `avg_value_score` from migration `20260623000000_add_dashboard_satisfaction_dimensions.sql`.
 
 ### 3. Core Tables
 - [ ] **`travel_stories` Table**: Ensure the `travel_stories` table exists and includes columns like `story_id`, `tourist_id`, `title`, `content`, `status`, and `published_at`.

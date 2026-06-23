@@ -1053,7 +1053,7 @@ Stores structured satisfaction data.
 | tourist_id | uuid | yes | Foreign key to tourists |
 | attraction_id | bigint | no | Denormalized attraction for dashboard filtering |
 | overall_score | integer | no | Overall satisfaction score 1-5 |
-| facility_score | integer | no | Facility score 1-5 |
+| facility_score | integer | no | Legacy facility score 1-5 |
 | safety_score | integer | no | Safety score 1-5 |
 | cleanliness_score | integer | no | Cleanliness score 1-5 |
 | accessibility_score | integer | no | Accessibility score 1-5 |
@@ -1063,7 +1063,7 @@ Stores structured satisfaction data.
 | recommend_intention | varchar(50) | no | yes, no, maybe |
 | comments | text | no | Optional comment |
 | submitted_at | timestamptz | yes | Submitted timestamp |
-| completed_at | timestamptz | no | Completion timestamp |
+| completed_at | timestamptz | no | Preferred survey completion timestamp |
 
 ## 27.3 Constraints
 

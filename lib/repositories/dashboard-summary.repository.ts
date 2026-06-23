@@ -15,6 +15,9 @@ export type DashboardSummaryKpis = {
   avgSatisfaction: number | null;
   avgSafetyScore: number | null;
   avgCleanlinessScore: number | null;
+  avgAccessibilityScore: number | null;
+  avgInformationScore: number | null;
+  avgValueScore: number | null;
   avgFacilityScore: number | null;
   revisitYesCount: number;
   recommendYesCount: number;
@@ -45,6 +48,9 @@ type SummaryRow = {
   avg_satisfaction: number | null;
   avg_safety_score: number | null;
   avg_cleanliness_score: number | null;
+  avg_accessibility_score?: number | null;
+  avg_information_score?: number | null;
+  avg_value_score?: number | null;
   avg_facility_score: number | null;
   revisit_yes_count: number;
   recommend_yes_count: number;
@@ -166,6 +172,9 @@ function emptyKpis(): DashboardSummaryKpis {
     avgSatisfaction: null,
     avgSafetyScore: null,
     avgCleanlinessScore: null,
+    avgAccessibilityScore: null,
+    avgInformationScore: null,
+    avgValueScore: null,
     avgFacilityScore: null,
     revisitYesCount: 0,
     recommendYesCount: 0,
@@ -186,6 +195,10 @@ function emptyKpis(): DashboardSummaryKpis {
   };
 }
 
+function scoreValue(value: number | null | undefined) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
 function aggregateRows(rows: SummaryRow[]): DashboardSummaryKpis {
   if (rows.length === 0) return emptyKpis();
 
@@ -200,6 +213,12 @@ function aggregateRows(rows: SummaryRow[]): DashboardSummaryKpis {
   let countSafety = 0;
   let sumCleanlinessScore = 0;
   let countCleanliness = 0;
+  let sumAccessibilityScore = 0;
+  let countAccessibility = 0;
+  let sumInformationScore = 0;
+  let countInformation = 0;
+  let sumValueScore = 0;
+  let countValue = 0;
   let sumFacilityScore = 0;
   let countFacility = 0;
   let sumRevisitYes = 0;
@@ -226,20 +245,40 @@ function aggregateRows(rows: SummaryRow[]): DashboardSummaryKpis {
     sumStamps += row.stamp_count;
     sumSurveys += row.survey_count;
 
-    if (row.avg_satisfaction !== null) {
-      sumSatisfactionScore += row.avg_satisfaction;
+    const satisfactionScore = scoreValue(row.avg_satisfaction);
+    const safetyScore = scoreValue(row.avg_safety_score);
+    const cleanlinessScore = scoreValue(row.avg_cleanliness_score);
+    const accessibilityScore = scoreValue(row.avg_accessibility_score);
+    const informationScore = scoreValue(row.avg_information_score);
+    const valueScore = scoreValue(row.avg_value_score);
+    const facilityScore = scoreValue(row.avg_facility_score);
+
+    if (satisfactionScore !== null) {
+      sumSatisfactionScore += satisfactionScore;
       countSatisfaction++;
     }
-    if (row.avg_safety_score !== null) {
-      sumSafetyScore += row.avg_safety_score;
+    if (safetyScore !== null) {
+      sumSafetyScore += safetyScore;
       countSafety++;
     }
-    if (row.avg_cleanliness_score !== null) {
-      sumCleanlinessScore += row.avg_cleanliness_score;
+    if (cleanlinessScore !== null) {
+      sumCleanlinessScore += cleanlinessScore;
       countCleanliness++;
     }
-    if (row.avg_facility_score !== null) {
-      sumFacilityScore += row.avg_facility_score;
+    if (accessibilityScore !== null) {
+      sumAccessibilityScore += accessibilityScore;
+      countAccessibility++;
+    }
+    if (informationScore !== null) {
+      sumInformationScore += informationScore;
+      countInformation++;
+    }
+    if (valueScore !== null) {
+      sumValueScore += valueScore;
+      countValue++;
+    }
+    if (facilityScore !== null) {
+      sumFacilityScore += facilityScore;
       countFacility++;
     }
 
@@ -272,6 +311,9 @@ function aggregateRows(rows: SummaryRow[]): DashboardSummaryKpis {
     avgSatisfaction: countSatisfaction > 0 ? parseFloat((sumSatisfactionScore / countSatisfaction).toFixed(2)) : null,
     avgSafetyScore: countSafety > 0 ? parseFloat((sumSafetyScore / countSafety).toFixed(2)) : null,
     avgCleanlinessScore: countCleanliness > 0 ? parseFloat((sumCleanlinessScore / countCleanliness).toFixed(2)) : null,
+    avgAccessibilityScore: countAccessibility > 0 ? parseFloat((sumAccessibilityScore / countAccessibility).toFixed(2)) : null,
+    avgInformationScore: countInformation > 0 ? parseFloat((sumInformationScore / countInformation).toFixed(2)) : null,
+    avgValueScore: countValue > 0 ? parseFloat((sumValueScore / countValue).toFixed(2)) : null,
     avgFacilityScore: countFacility > 0 ? parseFloat((sumFacilityScore / countFacility).toFixed(2)) : null,
     revisitYesCount: sumRevisitYes,
     recommendYesCount: sumRecommendYes,

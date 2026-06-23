@@ -217,6 +217,9 @@ function surveyRow(overrides: Record<string, unknown> = {}) {
     facility_score: 3,
     cleanliness_score: 4,
     safety_score: 5,
+    accessibility_score: 3,
+    information_score: 4,
+    value_score: 5,
     revisit_intention: "yes",
     recommend_intention: "yes",
     submitted_at: "2026-05-01T10:30:00Z",
@@ -678,6 +681,9 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
           facility_score: 4,
           cleanliness_score: 5,
           safety_score: 5,
+          accessibility_score: 4,
+          information_score: 5,
+          value_score: 5,
           revisit_intention: "yes",
           recommend_intention: "yes",
         }),
@@ -687,6 +693,9 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
           facility_score: 3,
           cleanliness_score: 3,
           safety_score: 4,
+          accessibility_score: 3,
+          information_score: 4,
+          value_score: 3,
           revisit_intention: "no",
           recommend_intention: "yes",
         }),
@@ -696,6 +705,9 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
           facility_score: 4,
           cleanliness_score: 4,
           safety_score: 4,
+          accessibility_score: 5,
+          information_score: 3,
+          value_score: 4,
           revisit_intention: null, // skipped in yesRate
           recommend_intention: "no",
         }),
@@ -712,6 +724,9 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     // Sub-scores
     expect(result.satisfaction.safetyAverage).toBeCloseTo(4.33, 1);
     expect(result.satisfaction.cleanlinessAverage).toBe(4);
+    expect(result.satisfaction.accessibilityAverage).toBe(4);
+    expect(result.satisfaction.informationAverage).toBe(4);
+    expect(result.satisfaction.valueAverage).toBe(4);
     expect(result.satisfaction.facilityAverage).toBeCloseTo(3.67, 1);
 
     // Revisit intention: 1 yes out of 2 answered (null excluded)
@@ -893,7 +908,15 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
   it("handles null satisfaction scores without crashing", async () => {
     mockPayload.current = makePayload({
       surveys: [
-        surveyRow({ overall_score: null, facility_score: null, cleanliness_score: null, safety_score: null }),
+        surveyRow({
+          overall_score: null,
+          facility_score: null,
+          cleanliness_score: null,
+          safety_score: null,
+          accessibility_score: null,
+          information_score: null,
+          value_score: null,
+        }),
       ],
       visits: [visitRow()],
     });
@@ -903,6 +926,9 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     expect(result.satisfaction.averageOverall).toBeNull();
     expect(result.satisfaction.safetyAverage).toBeNull();
     expect(result.satisfaction.cleanlinessAverage).toBeNull();
+    expect(result.satisfaction.accessibilityAverage).toBeNull();
+    expect(result.satisfaction.informationAverage).toBeNull();
+    expect(result.satisfaction.valueAverage).toBeNull();
     expect(result.satisfaction.facilityAverage).toBeNull();
   });
 

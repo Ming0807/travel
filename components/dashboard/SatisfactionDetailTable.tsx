@@ -15,6 +15,9 @@ type SatisfactionDetailTableProps = {
   dimensionScores: {
     safetyAverage: number | null;
     cleanlinessAverage: number | null;
+    accessibilityAverage: number | null;
+    informationAverage: number | null;
+    valueAverage: number | null;
     facilityAverage: number | null;
   };
 };
@@ -82,7 +85,10 @@ export function SatisfactionDetailTable({
               {[
                 { key: "safety", label: "Safety", value: dimensionScores.safetyAverage },
                 { key: "cleanliness", label: "Cleanliness", value: dimensionScores.cleanlinessAverage },
-                { key: "facility", label: "Facility", value: dimensionScores.facilityAverage },
+                { key: "accessibility", label: "Accessibility", value: dimensionScores.accessibilityAverage },
+                { key: "information", label: "Information", value: dimensionScores.informationAverage },
+                { key: "value", label: "Value", value: dimensionScores.valueAverage },
+                { key: "facility", label: "Facility (legacy)", value: dimensionScores.facilityAverage },
               ].map((dim) => (
                 <tr
                   key={dim.key}

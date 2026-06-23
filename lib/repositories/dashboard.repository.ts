@@ -264,9 +264,13 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
         facility_score,
         cleanliness_score,
         safety_score,
+        accessibility_score,
+        information_score,
+        value_score,
         revisit_intention,
         recommend_intention,
         submitted_at,
+        completed_at,
         visits!inner (
           visit_date,
           attraction_id,

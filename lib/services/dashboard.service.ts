@@ -318,6 +318,9 @@ function buildSatisfactionSection(surveys: Row[], topAttractions: RankedAttracti
     byAttraction: topAttractions.filter((attraction) => attraction.surveyResponseCount > 0),
     safetyAverage: averageNullable(surveys.map((survey) => numberValue(survey.safety_score))),
     cleanlinessAverage: averageNullable(surveys.map((survey) => numberValue(survey.cleanliness_score))),
+    accessibilityAverage: averageNullable(surveys.map((survey) => numberValue(survey.accessibility_score))),
+    informationAverage: averageNullable(surveys.map((survey) => numberValue(survey.information_score))),
+    valueAverage: averageNullable(surveys.map((survey) => numberValue(survey.value_score))),
     facilityAverage: averageNullable(surveys.map((survey) => numberValue(survey.facility_score))),
     revisitIntentionRate: yesRate(surveys, "revisit_intention"),
     recommendIntentionRate: yesRate(surveys, "recommend_intention")

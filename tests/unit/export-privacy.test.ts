@@ -94,12 +94,16 @@ const SURVEY_PII_FIELDS = new Set<string>([
 /** Fields that SHOULD be present in the safe export for surveys. */
 const SURVEY_SAFE_FIELDS = new Set<string>([
   "submitted_at",
+  "completed_at",
   "attraction_name_th",
   "province_name_th",
   "overall_score",
   "facility_score",
   "cleanliness_score",
   "safety_score",
+  "accessibility_score",
+  "information_score",
+  "value_score",
   "revisit_intention",
   "recommend_intention",
 ]);
@@ -134,10 +138,14 @@ function createMockSurveyRow(overrides: Partial<AdminSurveyRow> = {}): AdminSurv
     facility_score: 4,
     cleanliness_score: 5,
     safety_score: 4,
+    accessibility_score: 4,
+    information_score: 5,
+    value_score: 4,
     revisit_intention: "yes",
     recommend_intention: "yes",
     comments: "สถานที่สวยงามมาก ดูแลดี",
     submitted_at: "2026-05-15T11:00:00Z",
+    completed_at: "2026-05-15T11:05:00Z",
     tourist_display_name: "สมชาย ใจดี",
     attraction_name_th: "อุทยานแห่งชาติ",
     province_name_th: "ยะลา",
@@ -297,6 +305,9 @@ describe("toSafeSurveyExportRows", () => {
         facility_score: 4,
         cleanliness_score: 5,
         safety_score: 3,
+        accessibility_score: 4,
+        information_score: 5,
+        value_score: 4,
         revisit_intention: "yes",
         recommend_intention: "yes",
       }),
@@ -307,6 +318,9 @@ describe("toSafeSurveyExportRows", () => {
     expect(safe[0].facility_score).toBe(4);
     expect(safe[0].cleanliness_score).toBe(5);
     expect(safe[0].safety_score).toBe(3);
+    expect(safe[0].accessibility_score).toBe(4);
+    expect(safe[0].information_score).toBe(5);
+    expect(safe[0].value_score).toBe(4);
     expect(safe[0].revisit_intention).toBe("yes");
     expect(safe[0].recommend_intention).toBe("yes");
   });
@@ -356,12 +370,16 @@ describe("Export type contracts", () => {
   it("AdminSurveyExportRow has exactly the expected safe fields", () => {
     const mock: AdminSurveyExportRow = {
       submitted_at: "2026-01-01T00:00:00Z",
+      completed_at: "2026-01-01T00:05:00Z",
       attraction_name_th: "Test",
       province_name_th: "Yala",
       overall_score: 5,
       facility_score: null,
       cleanliness_score: null,
       safety_score: null,
+      accessibility_score: null,
+      information_score: null,
+      value_score: null,
       revisit_intention: "yes",
       recommend_intention: "yes",
     };
@@ -530,8 +548,9 @@ describe("Dashboard export row mappers (privacy)", () => {
   /**
    * The dashboard `surveys` export type maps these fields:
    * - "Submitted At", "Visit Date", "Attraction", "Province",
-   *   "Overall Score", "Cleanliness Score", "Facility Score",
-   *   "Safety Score", "Revisit Intention", "Recommend Intention"
+   *   "Overall Score", "Safety Score", "Cleanliness Score",
+   *   "Accessibility Score", "Information Score", "Value Score",
+   *   "Facility Score (Legacy)", "Revisit Intention", "Recommend Intention"
    */
   it("surveys export type excludes identifiers and comments", () => {
     const mockSurveys = [
@@ -545,9 +564,12 @@ describe("Dashboard export row mappers (privacy)", () => {
           },
         },
         overall_score: 5,
-        cleanliness_score: 5,
-        facility_score: 4,
         safety_score: 4,
+        cleanliness_score: 5,
+        accessibility_score: 4,
+        information_score: 5,
+        value_score: 4,
+        facility_score: 4,
         revisit_intention: "yes",
         recommend_intention: "yes",
       },
@@ -563,9 +585,12 @@ describe("Dashboard export row mappers (privacy)", () => {
         Attraction: String(attr?.name_en),
         Province: String(province?.province_name_en),
         "Overall Score": String(s.overall_score),
-        "Cleanliness Score": String(s.cleanliness_score),
-        "Facility Score": String(s.facility_score),
         "Safety Score": String(s.safety_score),
+        "Cleanliness Score": String(s.cleanliness_score),
+        "Accessibility Score": String(s.accessibility_score),
+        "Information Score": String(s.information_score),
+        "Value Score": String(s.value_score),
+        "Facility Score (Legacy)": String(s.facility_score),
         "Revisit Intention": String(s.revisit_intention),
         "Recommend Intention": String(s.recommend_intention),
       };

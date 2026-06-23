@@ -255,13 +255,17 @@ export async function GET(request: Request) {
       const province = firstJoin(attr?.provinces as SupabaseJoin<DashboardExportRecord>);
       return {
         "Submitted At": safeString(s.submitted_at),
+        "Completed At": safeString(s.completed_at),
         "Visit Date": safeString(v?.visit_date),
         Attraction: safeString(attr?.name_en || attr?.name_th),
         Province: safeString(province?.province_name_en),
         "Overall Score": safeString(s.overall_score),
-        "Cleanliness Score": safeString(s.cleanliness_score),
-        "Facility Score": safeString(s.facility_score),
         "Safety Score": safeString(s.safety_score),
+        "Cleanliness Score": safeString(s.cleanliness_score),
+        "Accessibility Score": safeString(s.accessibility_score),
+        "Information Score": safeString(s.information_score),
+        "Value Score": safeString(s.value_score),
+        "Facility Score (Legacy)": safeString(s.facility_score),
         "Revisit Intention": safeString(s.revisit_intention),
         "Recommend Intention": safeString(s.recommend_intention),
       };
