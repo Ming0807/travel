@@ -1,25 +1,32 @@
 import { z } from "zod";
 import { uuidSchema } from "@/lib/validation/common";
 
-const optionalPositiveIntFromForm = z.preprocess((value) => {
+function optionalStrictInteger(value: unknown) {
   if (value === "" || value === null || value === undefined) return null;
+  if (typeof value === "number") return value;
+  if (typeof value !== "string" || !/^\d+$/.test(value)) return Number.NaN;
   return Number(value);
-}, z.number().int().min(1).max(100).nullable());
+}
 
-const optionalNonNegativeIntFromForm = z.preprocess((value) => {
-  if (value === "" || value === null || value === undefined) return null;
-  return Number(value);
-}, z.number().int().min(0).max(60).nullable());
+const optionalPositiveIntFromForm = z.preprocess(
+  optionalStrictInteger,
+  z.number().int().min(1).max(100).nullable()
+);
 
-const optionalIdFromForm = z.preprocess((value) => {
-  if (value === "" || value === null || value === undefined) return null;
-  return Number(value);
-}, z.number().int().positive().nullable());
+const optionalNonNegativeIntFromForm = z.preprocess(
+  optionalStrictInteger,
+  z.number().int().min(0).max(60).nullable()
+);
 
-const optionalScoreFromForm = z.preprocess((value) => {
-  if (value === "" || value === null || value === undefined) return null;
-  return Number(value);
-}, z.number().int().min(1).max(5).nullable());
+const optionalIdFromForm = z.preprocess(
+  optionalStrictInteger,
+  z.number().int().positive().nullable()
+);
+
+const optionalScoreFromForm = z.preprocess(
+  optionalStrictInteger,
+  z.number().int().min(1).max(5).nullable()
+);
 
 const intentionSchema = z.enum(["yes", "maybe", "no"]).nullable();
 

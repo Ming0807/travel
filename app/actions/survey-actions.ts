@@ -1,8 +1,26 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { skipPostCertificateSurvey, submitPostCertificateSurvey } from "@/lib/services/survey.service";
+import { skipPostCertificateSurvey, submitPostCertificateSurvey, SurveyFlowError } from "@/lib/services/survey.service";
 import { postCertificateSurveySchema, surveyActionVisitSchema } from "@/lib/validation/survey";
+
+function safeSurveyErrorRedirect(rawVisitId: FormDataEntryValue | null, errorCode: string): never {
+  const parsedVisit = surveyActionVisitSchema.safeParse({ visitId: rawVisitId });
+
+  if (!parsedVisit.success) {
+    redirect("/passport");
+  }
+
+  redirect(`/visit/${parsedVisit.data.visitId}/survey?error=${encodeURIComponent(errorCode)}`);
+}
+
+function redirectForSurveyFlowError(visitId: string, error: SurveyFlowError): never {
+  if (error.code === "VISIT_NOT_FOUND" || error.code === "VISIT_ACCESS_DENIED") {
+    redirect("/passport");
+  }
+
+  redirect(`/visit/${visitId}/survey?error=${encodeURIComponent(error.code.toLowerCase())}`);
+}
 
 export async function submitPostCertificateSurveyAction(formData: FormData) {
   const parsed = postCertificateSurveySchema.safeParse({
@@ -27,11 +45,20 @@ export async function submitPostCertificateSurveyAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    const visitId = String(formData.get("visitId") || "");
-    redirect(`/visit/${visitId}/survey?error=invalid`);
+    safeSurveyErrorRedirect(formData.get("visitId"), "invalid");
   }
 
-  await submitPostCertificateSurvey(parsed.data);
+  try {
+    await submitPostCertificateSurvey(parsed.data);
+  } catch (error) {
+    if (error instanceof SurveyFlowError) {
+      redirectForSurveyFlowError(parsed.data.visitId, error);
+    }
+
+    console.error("Survey action failed:", error instanceof Error ? error.message : "unknown error");
+    redirect(`/visit/${parsed.data.visitId}/survey?error=save_failed`);
+  }
+
   redirect(`/visit/${parsed.data.visitId}/survey/success`);
 }
 
@@ -44,6 +71,16 @@ export async function skipPostCertificateSurveyAction(formData: FormData) {
     redirect("/passport");
   }
 
-  await skipPostCertificateSurvey(parsed.data.visitId);
+  try {
+    await skipPostCertificateSurvey(parsed.data.visitId);
+  } catch (error) {
+    if (error instanceof SurveyFlowError) {
+      redirectForSurveyFlowError(parsed.data.visitId, error);
+    }
+
+    console.error("Survey skip failed:", error instanceof Error ? error.message : "unknown error");
+    redirect(`/visit/${parsed.data.visitId}/survey?error=save_failed`);
+  }
+
   redirect(`/visit/${parsed.data.visitId}/survey/success?skipped=1`);
 }

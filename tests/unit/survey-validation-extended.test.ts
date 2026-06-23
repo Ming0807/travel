@@ -350,6 +350,26 @@ describe("postCertificateSurveySchema", () => {
     expect(result.travelCompanionId).toBe(1);
   });
 
+  it("rejects scientific notation, hex, floats, and whitespace-padded numeric strings", () => {
+    for (const value of ["1e2", "0x10", "3.5", " 1 "]) {
+      const result = postCertificateSurveySchema.safeParse({
+        visitId: validVisitId,
+        travelCompanionId: value,
+      });
+      expect(result.success).toBe(false);
+    }
+  });
+
+  it("rejects malformed numeric score strings before coercion", () => {
+    for (const value of ["1e0", "05.0", " 5"]) {
+      const result = postCertificateSurveySchema.safeParse({
+        visitId: validVisitId,
+        overallSatisfaction: value,
+      });
+      expect(result.success).toBe(false);
+    }
+  });
+
   it("treats empty string fields as null", () => {
     // Must also fill at least one other optional field to satisfy the refine
     const result = postCertificateSurveySchema.parse({

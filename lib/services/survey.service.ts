@@ -3,7 +3,13 @@ import { TouristAccessError, requireTouristVisitAccess } from "@/lib/auth/guards
 import { getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
 import { upsertVisitExpense } from "@/lib/repositories/expense.repository";
 import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
-import { getSurveyOptions, getSatisfactionSurveyByVisitId, upsertSatisfactionSurvey } from "@/lib/repositories/survey.repository";
+import {
+  SurveyReferenceError,
+  assertActiveSurveyReferences,
+  getSurveyOptions,
+  getSatisfactionSurveyByVisitId,
+  upsertSatisfactionSurvey
+} from "@/lib/repositories/survey.repository";
 import { updateVisitStatus, updateVisitSurveyFields } from "@/lib/repositories/visit.repository";
 import type { PostCertificateSurveyInput } from "@/lib/validation/survey";
 
@@ -13,6 +19,7 @@ export class SurveyFlowError extends Error {
       | "VISIT_NOT_FOUND"
       | "VISIT_ACCESS_DENIED"
       | "CERTIFICATE_REQUIRED"
+      | "SURVEY_REFERENCE_INVALID"
       | "SURVEY_SAVE_FAILED",
     message: string
   ) {
@@ -73,6 +80,14 @@ export async function submitPostCertificateSurvey(input: PostCertificateSurveyIn
   const access = await requireSurveyEligibleVisit(input.visitId);
 
   try {
+    await assertActiveSurveyReferences({
+      travelCompanionId: input.travelCompanionId,
+      transportModeId: input.transportModeId,
+      travelPurposeId: input.travelPurposeId,
+      expenseCategoryId: input.expenseCategoryId,
+      spendingRangeId: input.spendingRangeId
+    });
+
     await updateVisitSurveyFields(input.visitId, {
       travelCompanionId: input.travelCompanionId,
       groupSize: input.groupSize,
@@ -112,6 +127,10 @@ export async function submitPostCertificateSurvey(input: PostCertificateSurveyIn
       visitId: input.visitId
     });
   } catch (error) {
+    if (error instanceof SurveyReferenceError) {
+      throw new SurveyFlowError("SURVEY_REFERENCE_INVALID", "ตัวเลือกแบบสอบถามไม่ถูกต้องหรือไม่ได้เปิดใช้งาน");
+    }
+
     console.error("Survey submit failed:", error);
     throw new SurveyFlowError("SURVEY_SAVE_FAILED", "เกิดข้อผิดพลาด กรุณาลองใหม่");
   }

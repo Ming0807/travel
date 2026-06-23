@@ -844,6 +844,7 @@ Rules:
 - must be from master data if submitted.
 - optional.
 - inactive options should not be selectable.
+- server-side submit must reject inactive or missing master-data IDs.
 
 ## 19.2 Group Size
 
@@ -855,12 +856,16 @@ integer
 <= 100 for normal tourist form
 ```
 
+Form numeric input must be strict decimal digits only. Reject scientific notation,
+hex notation, floats, and whitespace-padded numeric strings.
+
 ## 19.3 Transport Mode
 
 Rules:
 
 - must be from master data if submitted.
 - optional.
+- server-side submit must reject inactive or missing master-data IDs.
 
 ## 19.4 Travel Purpose
 
@@ -868,6 +873,7 @@ Rules:
 
 - must be from master data if submitted.
 - optional.
+- server-side submit must reject inactive or missing master-data IDs.
 
 ## 19.5 Overnight Status
 
@@ -889,6 +895,8 @@ integer
 >= 0
 ```
 
+Form numeric input must be strict decimal digits only.
+
 If overnight_status = same_day:
 
 ```text
@@ -902,6 +910,7 @@ Rules:
 - must be allowed value.
 - optional or prefer_not_to_answer.
 - amount_min and amount_max must match range if used.
+- server-side submit must reject inactive or missing spending_range IDs.
 
 ## 19.8 Satisfaction Scores
 
@@ -913,6 +922,7 @@ between 1 and 5
 ```
 
 Null allowed for optional score.
+Form score input must be strict decimal digits only.
 
 ## 19.9 Comment
 

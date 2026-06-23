@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   title: "แบบสอบถาม | Southern Border Tourism",
 };
 
+const surveyErrorMessages: Record<string, string> = {
+  invalid: "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง หรือเลือกข้ามแบบสอบถาม",
+  survey_reference_invalid: "ตัวเลือกบางรายการไม่พร้อมใช้งานแล้ว กรุณาเลือกคำตอบใหม่อีกครั้ง",
+  certificate_required: "กรุณาสร้างใบประกาศก่อนตอบแบบสอบถาม",
+  survey_save_failed: "ยังบันทึกคำตอบไม่ได้ กรุณาลองใหม่อีกครั้ง",
+  save_failed: "ยังบันทึกคำตอบไม่ได้ กรุณาลองใหม่อีกครั้ง"
+};
+
 export default async function SurveyPage({
   params,
   searchParams,
@@ -21,6 +29,7 @@ export default async function SurveyPage({
   const rawError = Array.isArray(resolvedSearchParams?.error)
     ? resolvedSearchParams?.error[0]
     : resolvedSearchParams?.error;
+  const formError = rawError ? surveyErrorMessages[rawError] ?? surveyErrorMessages.save_failed : undefined;
 
   let pageData;
   try {
@@ -99,7 +108,7 @@ export default async function SurveyPage({
                 expenseCategories: options.expenseCategories,
                 spendingRanges: options.spendingRanges,
               }}
-              error={rawError === "invalid" ? "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง" : undefined}
+              error={formError}
             />
 
             <div className="mt-4">

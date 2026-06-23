@@ -84,7 +84,7 @@ export function MicroSurveyForm({
 
       {error ? (
         <div className="rounded-2xl border border-coral/30 bg-coral/10 p-4 text-sm font-medium text-coral">
-          ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง หรือเลือกข้ามแบบสอบถาม
+          {error}
         </div>
       ) : null}
 
