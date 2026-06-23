@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import crypto from "crypto";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
-import crypto from "crypto";
+import { logAdminAction } from "@/lib/repositories/admin-audit.repository";
+import {
+  AdminImageUploadError,
+  ADMIN_IMAGE_UPLOAD_ALLOWED_TYPES,
+  ADMIN_IMAGE_UPLOAD_MAX_SIZE_MB,
+  readAndValidateAdminImageFile,
+  renderAdminImageWebpVariant,
+} from "@/lib/services/admin-image-processing.service";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { rateLimit } from "@/lib/utils/rate-limit";
 
 export const runtime = "nodejs";
 
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_SIZE_MB = 10;
+const MEDIA_ASSET_MAX_WIDTH = 1920;
+const MEDIA_ASSET_QUALITY = 80;
+const MEDIA_ASSET_THUMBNAIL_WIDTH = 400;
+const MEDIA_ASSET_THUMBNAIL_QUALITY = 70;
 
 type MediaAssetRow = Record<string, unknown> & {
   storage_path: string;
@@ -49,6 +60,29 @@ function isMissingThumbnailColumnError(error: unknown) {
   );
 }
 
+function adminMediaUploadMessage(error: AdminImageUploadError) {
+  switch (error.code) {
+    case "IMAGE_EMPTY":
+      return "กรุณาเลือกไฟล์รูปภาพที่ไม่ว่างเปล่า";
+    case "IMAGE_INVALID_TYPE":
+      return "ไฟล์นี้ไม่รองรับ กรุณาใช้ JPG, PNG หรือ WebP";
+    case "IMAGE_TOO_LARGE":
+      return `ไฟล์ใหญ่เกินไป กรุณาใช้ไฟล์ไม่เกิน ${ADMIN_IMAGE_UPLOAD_MAX_SIZE_MB}MB`;
+    case "IMAGE_TOO_MANY_PIXELS":
+      return "รูปภาพละเอียดเกินไป กรุณาลดขนาดรูปก่อนอัปโหลด";
+    default:
+      return "ไม่สามารถประมวลผลรูปภาพได้ กรุณาใช้ไฟล์ JPG, PNG หรือ WebP อื่น";
+  }
+}
+
+function safeCategorySegment(category: string) {
+  return category.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/^-+|-+$/g, "") || "general";
+}
+
+function getClientIp(req: NextRequest) {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+}
+
 export async function GET(req: NextRequest) {
   try {
     await requirePermission("media.read");
@@ -67,9 +101,8 @@ export async function GET(req: NextRequest) {
       query.eq("category", category);
     }
 
-    // Filter by lifecycle: default to active; "all" shows everything
     if (lifecycleStatus === "all") {
-      // No filter — show all including archived
+      // No filter; show active, archived, and historical records.
     } else if (lifecycleStatus === "archived") {
       query.eq("lifecycle_status", "archived");
     } else {
@@ -82,7 +115,6 @@ export async function GET(req: NextRequest) {
       throw error;
     }
 
-    // Construct public URLs via /site-media/ proxy (resilient to missing files)
     const assets = (data ?? []).map((asset) => withMediaUrls(toMediaAssetRow(asset)));
 
     return NextResponse.json(assets);
@@ -96,85 +128,63 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  let uploadedStoragePath: string | null = null;
+  let uploadedThumbnailPath: string | null = null;
+
   try {
     const guard = await requirePermission("media.upload");
+    const limit = rateLimit(`media-library:${getClientIp(req)}`, 20, 60 * 1000);
+    if (!limit.success) {
+      return NextResponse.json({ error: "อัปโหลดบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่" }, { status: 429 });
+    }
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const category = formData.get("category") as string || "General";
+    const category = (formData.get("category") as string | null) || "General";
 
     if (!file) {
-      return NextResponse.json({ error: "Missing file" }, { status: 400 });
+      return NextResponse.json({ error: "กรุณาเลือกไฟล์ก่อนอัปโหลด" }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json(
-        { error: "ไฟล์นี้ไม่รองรับ กรุณาใช้ JPG, PNG หรือ WebP" },
-        { status: 400 }
-      );
+    const decoded = await readAndValidateAdminImageFile(file, {
+      allowedMimeTypes: ADMIN_IMAGE_UPLOAD_ALLOWED_TYPES,
+      maxSizeMb: ADMIN_IMAGE_UPLOAD_MAX_SIZE_MB,
+    });
+
+    const mainImage = await renderAdminImageWebpVariant(decoded.inputBuffer, {
+      maxWidth: MEDIA_ASSET_MAX_WIDTH,
+      quality: MEDIA_ASSET_QUALITY,
+    });
+
+    let thumbnailBuffer: Buffer | null = null;
+    try {
+      const thumbnail = await renderAdminImageWebpVariant(decoded.inputBuffer, {
+        maxWidth: MEDIA_ASSET_THUMBNAIL_WIDTH,
+        quality: MEDIA_ASSET_THUMBNAIL_QUALITY,
+      });
+      thumbnailBuffer = thumbnail.buffer;
+    } catch (error) {
+      console.warn("Thumbnail generation failed, skipping:", error);
     }
 
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      return NextResponse.json(
-        { error: `File size exceeds ${MAX_SIZE_MB}MB limit.` },
-        { status: 400 }
-      );
-    }
-
-    const originalName = file.name || "upload";
     const uuid = crypto.randomUUID();
-    const safeCategory = category.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const safeCategory = safeCategorySegment(category);
     const storagePath = `${safeCategory}/${uuid}.webp`;
     const thumbnailStoragePath = `${safeCategory}/${uuid}_thumb.webp`;
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // --- Image processing: WebP conversion + thumbnail generation ---
-    let webpBuffer: Buffer;
-    let thumbnailBuffer: Buffer | null = null;
-
-    try {
-      const sharp = (await import("sharp")).default;
-      webpBuffer = await sharp(buffer)
-        .resize(1920, 1920, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toBuffer();
-
-      try {
-        thumbnailBuffer = await sharp(buffer)
-          .resize(400, 400, { fit: "inside", withoutEnlargement: true })
-          .webp({ quality: 70 })
-          .toBuffer();
-      } catch (thumbErr) {
-        console.warn("Thumbnail generation failed, skipping:", thumbErr);
-        thumbnailBuffer = null;
-      }
-    } catch (sharpErr) {
-      console.error("Sharp processing failed:", sharpErr);
-      return NextResponse.json(
-        { error: "ไม่สามารถประมวลผลภาพได้ กรุณาลองอีกครั้งหรือใช้ไฟล์อื่น" },
-        { status: 500 },
-      );
-    }
-    // --- End image processing ---
-
-    // Use Service Role to upload and bypass RLS if needed, though Admin should have access
     const adminSupabase = createSupabaseServiceRoleClient();
-    
-    // Upload main WebP to Storage
+
     const { error: uploadError } = await adminSupabase.storage
       .from("site-media")
-      .upload(storagePath, webpBuffer, {
-        contentType: "image/webp",
+      .upload(storagePath, mainImage.buffer, {
+        contentType: mainImage.contentType,
         upsert: false,
       });
 
     if (uploadError) {
       throw uploadError;
     }
+    uploadedStoragePath = storagePath;
 
-    // Upload thumbnail if generated
     if (thumbnailBuffer) {
       const { error: thumbUploadError } = await adminSupabase.storage
         .from("site-media")
@@ -186,15 +196,17 @@ export async function POST(req: NextRequest) {
       if (thumbUploadError) {
         console.warn("Thumbnail upload failed, continuing without it:", thumbUploadError);
         thumbnailBuffer = null;
+      } else {
+        uploadedThumbnailPath = thumbnailStoragePath;
       }
     }
 
     const insertPayload = {
-      file_name: originalName,
+      file_name: file.name || "upload.webp",
       storage_path: storagePath,
-      mime_type: "image/webp",
-      size_bytes: webpBuffer.length,
-      category: category,
+      mime_type: mainImage.contentType,
+      size_bytes: mainImage.sizeBytes,
+      category,
       uploaded_by: guard.authUserId,
     };
 
@@ -203,7 +215,6 @@ export async function POST(req: NextRequest) {
       thumbnail_storage_path: thumbnailBuffer ? thumbnailStoragePath : null,
     };
 
-    // Insert to Database
     let { data: asset, error: dbError } = await adminSupabase
       .from("media_assets")
       .insert(insertPayloadWithThumbnail)
@@ -211,8 +222,9 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (isMissingThumbnailColumnError(dbError)) {
-      if (thumbnailBuffer) {
-        await adminSupabase.storage.from("site-media").remove([thumbnailStoragePath]);
+      if (uploadedThumbnailPath) {
+        await adminSupabase.storage.from("site-media").remove([uploadedThumbnailPath]);
+        uploadedThumbnailPath = null;
         thumbnailBuffer = null;
       }
 
@@ -227,29 +239,46 @@ export async function POST(req: NextRequest) {
     }
 
     if (dbError) {
-      // Rollback storage if DB fails
-      const pathsToRemove = [storagePath];
-      if (thumbnailBuffer) pathsToRemove.push(thumbnailStoragePath);
-      await adminSupabase.storage.from("site-media").remove(pathsToRemove);
+      const pathsToRemove = [uploadedStoragePath, uploadedThumbnailPath].filter((path): path is string => Boolean(path));
+      if (pathsToRemove.length) {
+        await adminSupabase.storage.from("site-media").remove(pathsToRemove);
+      }
       throw dbError;
     }
+
+    await logAdminAction({
+      adminId: guard.adminId,
+      action: "media.library_upload",
+      entityType: "media_asset",
+      entityId: asset && typeof asset === "object" && "id" in asset ? String(asset.id) : storagePath,
+      details: {
+        category,
+        contentType: mainImage.contentType,
+        sizeBytes: mainImage.sizeBytes,
+        width: mainImage.width,
+        height: mainImage.height,
+        thumbnail: Boolean(thumbnailBuffer),
+      },
+    });
 
     return NextResponse.json({
       success: true,
       asset: {
         ...withMediaUrls(toMediaAssetRow(asset)),
-      }
+      },
     });
-
   } catch (error: unknown) {
     console.error("Media upload error:", error);
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
     }
+    if (error instanceof AdminImageUploadError) {
+      return NextResponse.json({ error: adminMediaUploadMessage(error) }, { status: error.status });
+    }
 
     return NextResponse.json(
-      { error: "Upload failed. Please try again." },
-      { status: 500 }
+      { error: "อัปโหลดไม่สำเร็จ กรุณาลองอีกครั้ง" },
+      { status: 500 },
     );
   }
 }

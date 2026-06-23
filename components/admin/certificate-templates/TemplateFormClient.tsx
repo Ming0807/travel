@@ -118,7 +118,7 @@ export function TemplateFormClient() {
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Background Image (A4 Landscape, High-Res PNG)
+              Background Image (A4 Landscape, High-Res)
             </label>
             <div className="relative flex justify-center rounded-xl border-2 border-dashed border-slate-300 px-6 py-10 hover:border-indigo-400 transition-colors bg-slate-50">
               <div className="text-center">
@@ -139,7 +139,7 @@ export function TemplateFormClient() {
                       id="file-upload"
                       name="file"
                       type="file"
-                      accept="image/png,image/jpeg"
+                      accept="image/png,image/jpeg,image/webp"
                       className="sr-only"
                       required
                       onChange={handleFileChange}
@@ -147,7 +147,7 @@ export function TemplateFormClient() {
                   </label>
                   <p className="pl-1 py-1">or drag and drop</p>
                 </div>
-                <p className="text-xs leading-5 text-slate-500">PNG or JPG up to 10MB</p>
+                <p className="text-xs leading-5 text-slate-500">PNG, JPG, or WebP up to 10MB. The system optimizes it before saving.</p>
               </div>
             </div>
           </div>

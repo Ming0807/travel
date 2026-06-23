@@ -12,7 +12,7 @@ generated certificate images
 attraction media
 stamp assets
 360 media thumbnails/references
-future admin media uploads
+admin media uploads
 ```
 
 Image uploads are high-risk because files can contain personal data, malicious content, large payloads, metadata, or unexpected formats.
@@ -693,11 +693,30 @@ permission media.upload or attraction.update
 related attraction exists
 file type allowed
 file size allowed
+decoded image format allowed
+pixel count within limit
+server-generated storage path
+WebP conversion before storage
 ```
 
 Admin upload should still validate strictly.
 
 Admins can make mistakes or accounts can be compromised.
+
+Current admin image upload implementation:
+
+```text
+shared helper: lib/services/admin-image-processing.service.ts
+allowed input: JPEG, PNG, WebP
+disallowed decoded formats: SVG, GIF, PDF, HTML, JavaScript
+max size: 10 MB
+max decoded pixels: 64 megapixels
+content media output: WebP, max 1920px, quality 80
+media library thumbnail: WebP, max 400px, quality 70
+certificate template output: WebP, max 2400px, quality 90
+```
+
+Sharp conversion strips metadata by default because the pipeline does not call `withMetadata()`.
 
 ---
 

@@ -106,3 +106,45 @@ signed URLs
 guest token
 provider_user_id
 ```
+
+---
+
+## 6. Admin Image Upload Flow
+
+Admin content-media, Media Library, and certificate template uploads share the same server-side image processing helper:
+
+```text
+lib/services/admin-image-processing.service.ts
+```
+
+Common rules:
+
+- Require the relevant admin permission before reading or storing the file.
+- Accept only JPEG, PNG, or WebP input.
+- Reject empty files, files over 10MB, invalid image bytes, SVG/GIF/PDF/HTML files spoofed as image MIME types, and images over 64 megapixels.
+- Decode with Sharp before storage.
+- Convert output to WebP, which strips metadata by default.
+- Generate storage paths server-side with UUIDs.
+- Do not trust original filenames for storage keys.
+- Write audit entries for admin media/template uploads.
+
+Current variants:
+
+```text
+/api/admin/media/upload
+    -> content_media editor upload
+    -> max 1920px WebP q80
+    -> uploadPrivateFile(logical bucket: visit-photos)
+
+/api/admin/media
+    -> Media Library upload
+    -> max 1920px WebP q80
+    -> 400px WebP thumbnail q70
+    -> public site-media bucket
+
+/api/admin/templates/upload
+    -> certificate template background
+    -> max 2400px WebP q90
+    -> uploadPrivateFile(logical bucket: southern-border-tourism)
+    -> cleanup uploaded file if database insert fails
+```

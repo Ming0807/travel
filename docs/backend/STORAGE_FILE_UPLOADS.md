@@ -588,33 +588,34 @@ Never use EXIF for hidden tracking.
 | Metadata stored | ✅ Implemented | `handlePhotoUploadMetadata()` in `lib/services/photo-upload.service.ts` |
 | Signed URL for private view | ✅ Implemented | `photo-actions.ts` line 95 — 1-hour signed URL |
 
-### 12.2 Admin Media Upload Path — Raw File Storage Only (No Processing)
+### 12.2 Admin Media Upload Path — Hardened WebP Processing
 
 | Step | Status | Detail |
 |---|---|---|
-| File validation (MIME, size) | ✅ Implemented | `app/api/admin/media/upload/route.ts` lines 40–56 |
-| Path generation | ✅ Implemented | Route handler constructs `content-media/{type}/{year}/{month}/{id}/{uuid}.{ext}` |
-| Upload to storage | ✅ Implemented | Raw `buffer` uploaded via `uploadPrivateFile` — no transform |
-| sharp / WebP conversion | ❌ Not implemented | Admin upload stores original file format as-is. No resize, no format conversion. |
-| Thumbnail generation | ❌ Not implemented | No thumbnail variant created for admin uploads |
-| Width/height extraction | ❌ Not implemented | `content_media` metadata does not store dimensions |
-| Responsive variants | ❌ Not implemented | See §12.3 below |
+| File validation (MIME, size) | ✅ Implemented | `lib/services/admin-image-processing.service.ts` validates JPG/PNG/WebP and max 10MB. |
+| Decode validation | ✅ Implemented | Sharp reads image metadata and rejects invalid bytes or SVG/GIF files spoofed as raster MIME types. |
+| Pixel guard | ✅ Implemented | Uploads over 64 megapixels are rejected before rendering variants. |
+| Path generation | ✅ Implemented | Route handler constructs `content-media/{type}/{year}/{month}/{id}/{uuid}.webp`. |
+| Upload to storage | ✅ Implemented | Processed WebP bytes are uploaded via `uploadPrivateFile`. |
+| sharp / WebP conversion | ✅ Implemented | Admin content-media uploads are resized to max 1920px and stored as WebP q80. |
+| Thumbnail generation | ⚠️ Partial | Media Library uploads create 400px WebP thumbnails in `media_assets.thumbnail_storage_path`; `content_media` rows store only the main media path. |
+| Width/height extraction | ⚠️ Partial | Processing returns width/height and records them in audit details; `content_media` has no dedicated dimensions columns yet. |
+| Responsive variants | ⚠️ Planned | See §12.3 below. |
 
-### 12.3 Planned: Admin Media Optimization (Migration Pending)
+### 12.3 Planned: Admin Media Optimization Follow-up
 
-> **Status: Planned — not yet scheduled**
+> **Status: Partially implemented; schema and responsive variants remain future work**
 
-The following processing will be added to the admin upload path in a future migration:
+The following work remains for a future migration:
 
 ```text
-- resize large images (max ~2000px)
-- convert to WebP (unify format for all admin media)
-- generate thumbnail variant (150x150 or similar for admin lists / pickers)
-- extract EXIF and strip GPS before storing
 - store width/height in content_media metadata
+- add dedicated thumbnail_storage_path or a media variants table for content_media
+- generate card/hero/gallery responsive variants
+- add optional malware scanning when infrastructure supports it
 ```
 
-No other variants (card, hero, gallery, og) are planned yet — see §39 Future Enhancements.
+Sharp conversion strips metadata by default because the upload pipeline does not call `withMetadata()`.
 
 ### 12.4 Production (Future)
 
@@ -728,7 +729,7 @@ is_active
 
 Rules (current implementation):
 
-- ✅ validate file type and size — `app/api/admin/media/upload/route.ts` lines 40–56
+- ✅ validate file type, size, decoded format, and pixel count — shared by `lib/services/admin-image-processing.service.ts`
 - ✅ allow cover selection — `is_cover` field in `content_media` table
 - ✅ provide alt text — required before publishing (readiness check in `MediaManager.tsx`)
 - ✅ use generated thumbnails when available — attraction cards resolve `media_assets.thumbnail_storage_path` by matching the selected `content_media.storage_path`.

@@ -1,67 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
-import { uploadPrivateFile } from "@/lib/storage/private-files";
-import { requirePermission } from "@/lib/auth/guards";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
-import { logAdminAction } from "@/lib/repositories/admin-audit.repository";
 import crypto from "crypto";
+import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
+import { logAdminAction } from "@/lib/repositories/admin-audit.repository";
+import {
+  AdminImageUploadError,
+  ADMIN_IMAGE_UPLOAD_MAX_SIZE_MB,
+  CERTIFICATE_TEMPLATE_ALLOWED_TYPES,
+  processAdminImageToWebp,
+} from "@/lib/services/admin-image-processing.service";
+import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/private-files";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
 export const runtime = "nodejs";
 
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png"]);
-const MAX_SIZE_MB = 10;
+const TEMPLATE_MAX_WIDTH = 2400;
+const TEMPLATE_QUALITY = 90;
+
+function templateUploadMessage(error: AdminImageUploadError) {
+  switch (error.code) {
+    case "IMAGE_EMPTY":
+      return "กรุณาเลือกไฟล์ภาพเทมเพลตที่ไม่ว่างเปล่า";
+    case "IMAGE_INVALID_TYPE":
+      return "ไฟล์นี้ไม่รองรับ กรุณาใช้ JPG, PNG หรือ WebP";
+    case "IMAGE_TOO_LARGE":
+      return `ไฟล์ใหญ่เกินไป กรุณาใช้ไฟล์ไม่เกิน ${ADMIN_IMAGE_UPLOAD_MAX_SIZE_MB}MB`;
+    case "IMAGE_TOO_MANY_PIXELS":
+      return "ภาพเทมเพลตละเอียดเกินไป กรุณาลดขนาดรูปก่อนอัปโหลด";
+    default:
+      return "ไม่สามารถประมวลผลภาพเทมเพลตได้ กรุณาใช้ไฟล์ JPG, PNG หรือ WebP อื่น";
+  }
+}
 
 export async function POST(req: NextRequest) {
+  let uploadedPath: string | null = null;
+
   try {
     const guard = await requirePermission("certificate.template_manage");
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const templateName = formData.get("template_name") as string;
-    const language = formData.get("language") as string;
-    const theme = formData.get("theme") as string;
+    const templateName = String(formData.get("template_name") || "").trim();
+    const language = String(formData.get("language") || "").trim();
+    const theme = String(formData.get("theme") || "").trim();
 
     if (!file || !templateName || !language || !theme) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
+        { success: false, error: "กรุณากรอกข้อมูลเทมเพลตและเลือกไฟล์ภาพให้ครบ" },
+        { status: 400 },
       );
     }
 
-    if (!ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json(
-        { success: false, error: `File type ${file.type} is not allowed. Use JPEG or PNG.` },
-        { status: 400 }
-      );
-    }
-
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      return NextResponse.json(
-        { success: false, error: `File size exceeds ${MAX_SIZE_MB}MB limit.` },
-        { status: 400 }
-      );
-    }
-
-    const extensionMap: Record<string, string> = {
-      "image/jpeg": "jpg",
-      "image/png": "png",
-    };
-    const ext = extensionMap[file.type] || "jpg";
-
-    const uuid = crypto.randomUUID();
-    const logicalPath = `certificate-templates/${uuid}.${ext}`;
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const uploaded = await uploadPrivateFile({
-      bucket: "southern-border-tourism", // use standard bucket for templates
-      path: logicalPath,
-      data: buffer,
-      contentType: file.type,
+    const processed = await processAdminImageToWebp(file, {
+      allowedMimeTypes: CERTIFICATE_TEMPLATE_ALLOWED_TYPES,
+      maxSizeMb: ADMIN_IMAGE_UPLOAD_MAX_SIZE_MB,
+      maxWidth: TEMPLATE_MAX_WIDTH,
+      quality: TEMPLATE_QUALITY,
     });
 
+    const logicalPath = `certificate-templates/${crypto.randomUUID()}.webp`;
+    const uploaded = await uploadPrivateFile({
+      bucket: "southern-border-tourism",
+      path: logicalPath,
+      data: processed.buffer,
+      contentType: processed.contentType,
+    });
+    uploadedPath = uploaded.storagePath;
+
     const supabase = createSupabaseServiceRoleClient();
-    
     const layoutConfig = {
       theme,
       photo: "center",
@@ -76,13 +81,14 @@ export async function POST(req: NextRequest) {
         layout_config_json: layoutConfig,
         language,
         is_default: false,
-        is_active: true
+        is_active: true,
       })
       .select()
       .single();
 
     if (error) {
-      console.error("Database insert error:", error);
+      await deletePrivateFile({ bucket: "southern-border-tourism", path: uploaded.storagePath });
+      uploadedPath = null;
       throw new Error("Failed to save template record");
     }
 
@@ -91,18 +97,48 @@ export async function POST(req: NextRequest) {
       action: "certificate.template_created",
       entityType: "certificate_template",
       entityId: String(data.template_id),
-      details: { name: templateName, path: uploaded.storagePath }
+      details: {
+        name: templateName,
+        contentType: processed.contentType,
+        sizeBytes: uploaded.sizeBytes,
+        width: processed.width,
+        height: processed.height,
+        language,
+        theme,
+      },
     });
 
     return NextResponse.json({
       success: true,
-      templateId: data.template_id
+      templateId: data.template_id,
     });
   } catch (error) {
     console.error("Admin template upload error:", error);
+
+    if (uploadedPath) {
+      try {
+        await deletePrivateFile({ bucket: "southern-border-tourism", path: uploadedPath });
+      } catch (cleanupError) {
+        console.error("Template upload cleanup failed:", cleanupError);
+      }
+    }
+
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.code === "UNAUTHORIZED" ? 401 : 403 },
+      );
+    }
+    if (error instanceof AdminImageUploadError) {
+      return NextResponse.json(
+        { success: false, error: templateUploadMessage(error) },
+        { status: error.status },
+      );
+    }
+
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Upload failed. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,170 +1,142 @@
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
+import {
+  AdminImageUploadError,
+  ADMIN_IMAGE_UPLOAD_ALLOWED_TYPES,
+  ADMIN_IMAGE_UPLOAD_MAX_SIZE_MB,
+  processAdminImageToWebp,
+  readAndValidateAdminImageFile,
+  renderAdminImageWebpVariant,
+  validateAdminImageUploadFile,
+} from "@/lib/services/admin-image-processing.service";
 
-// ── Admin media route POST handler import ──────────────────────────────────
+type TestFile = {
+  type: string;
+  size: number;
+  arrayBuffer: () => Promise<ArrayBuffer>;
+};
 
-// We test validation logic directly by examining the route's ALLOWED_TYPES and MAX_SIZE_MB
-// The route file is server-only; we test the validation boundaries via unit-logic
-
-// Validation rules from app/api/admin/media/route.ts:
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_SIZE_MB = 10;
-
-describe("Admin media upload — validation rules", () => {
-  describe("ALLOWED_TYPES", () => {
-    it("accepts JPEG", () => {
-      expect(ALLOWED_TYPES.has("image/jpeg")).toBe(true);
-    });
-
-    it("accepts PNG", () => {
-      expect(ALLOWED_TYPES.has("image/png")).toBe(true);
-    });
-
-    it("accepts WebP", () => {
-      expect(ALLOWED_TYPES.has("image/webp")).toBe(true);
-    });
-
-    it("rejects GIF", () => {
-      expect(ALLOWED_TYPES.has("image/gif")).toBe(false);
-    });
-
-    it("rejects SVG", () => {
-      expect(ALLOWED_TYPES.has("image/svg+xml")).toBe(false);
-    });
-
-    it("rejects BMP", () => {
-      expect(ALLOWED_TYPES.has("image/bmp")).toBe(false);
-    });
-
-    it("rejects video/mp4", () => {
-      expect(ALLOWED_TYPES.has("video/mp4")).toBe(false);
-    });
-
-    it("rejects application/pdf", () => {
-      expect(ALLOWED_TYPES.has("application/pdf")).toBe(false);
-    });
+async function makeRasterBuffer(format: "jpeg" | "png" | "webp", width = 32, height = 24) {
+  const image = sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: "#0A6B62",
+    },
   });
 
-  describe("MAX_SIZE_MB", () => {
-    it("is 10 MB", () => {
-      expect(MAX_SIZE_MB).toBe(10);
-    });
+  if (format === "jpeg") return image.jpeg().toBuffer();
+  if (format === "webp") return image.webp().toBuffer();
+  return image.png().toBuffer();
+}
 
-    it("allows files <= 10 MB", () => {
-      const size = 10 * 1024 * 1024; // exactly 10 MB
-      expect(size <= MAX_SIZE_MB * 1024 * 1024).toBe(true);
-    });
+function makeFile(buffer: Buffer, type: string): TestFile {
+  return {
+    type,
+    size: buffer.byteLength,
+    arrayBuffer: async () => {
+      const arrayBuffer = new ArrayBuffer(buffer.byteLength);
+      new Uint8Array(arrayBuffer).set(buffer);
+      return arrayBuffer;
+    },
+  };
+}
 
-    it("rejects files > 10 MB", () => {
-      const size = 10 * 1024 * 1024 + 1; // 10 MB + 1 byte
-      expect(size <= MAX_SIZE_MB * 1024 * 1024).toBe(false);
-    });
-
-    it("allows 5 MB files", () => {
-      const size = 5 * 1024 * 1024;
-      expect(size <= MAX_SIZE_MB * 1024 * 1024).toBe(true);
-    });
-
-    it("allows 1 byte files", () => {
-      const size = 1;
-      expect(size <= MAX_SIZE_MB * 1024 * 1024).toBe(true);
-    });
-  });
-});
-
-// ── Sharp conversion logic simulation ──────────────────────────────────────
-// Tests that the fallback and processing logic is sound, without actually calling sharp
-
-describe("Admin media upload — sharp processing logic (simulated)", () => {
-  it("converts to WebP and generates thumbnail when sharp succeeds", async () => {
-    // Simulate: sharp succeeds → webpBuffer is the converted buffer
-    const originalBuffer = Buffer.from("fake-image-data");
-    let webpBuffer: Buffer;
-    let thumbnailBuffer: Buffer | null = null;
-    let usedOriginal = false;
-
-    try {
-      // In real code: sharp(buffer).resize(...).webp(...).toBuffer()
-      webpBuffer = Buffer.from("converted-webp"); // simulated
-      thumbnailBuffer = Buffer.from("thumbnail-webp"); // simulated
-    } catch {
-      webpBuffer = originalBuffer;
-      usedOriginal = true;
+describe("admin image upload processing", () => {
+  it("accepts the configured raster image MIME types", () => {
+    for (const mimeType of ADMIN_IMAGE_UPLOAD_ALLOWED_TYPES) {
+      expect(() => validateAdminImageUploadFile({
+        mimeType,
+        sizeBytes: 1024,
+      })).not.toThrow();
     }
-
-    expect(usedOriginal).toBe(false);
-    expect(webpBuffer).not.toBe(originalBuffer);
-    expect(thumbnailBuffer).not.toBeNull();
-    expect(thumbnailBuffer!.length).toBeGreaterThan(0);
   });
 
-  it("rejects the upload when sharp main conversion fails", async () => {
-    let shouldReturnError = false;
-    let uploadedBytes: Buffer | null = null;
-
-    try {
-      throw new Error("Sharp not available");
-    } catch {
-      shouldReturnError = true;
-      uploadedBytes = null;
-    }
-
-    expect(shouldReturnError).toBe(true);
-    expect(uploadedBytes).toBeNull();
+  it("rejects unsupported MIME types before decoding", () => {
+    expect(() => validateAdminImageUploadFile({
+      mimeType: "image/svg+xml",
+      sizeBytes: 1024,
+    })).toThrow(expect.objectContaining({ code: "IMAGE_INVALID_TYPE" }));
   });
 
-  it("stores no thumbnail path when thumbnail generation or upload fails", () => {
-    let thumbnailBuffer: Buffer | null = Buffer.from("thumbnail-webp");
-
-    thumbnailBuffer = null;
-    const thumbnailStoragePath = thumbnailBuffer ? "general/uuid_thumb.webp" : null;
-
-    expect(thumbnailStoragePath).toBeNull();
+  it("rejects empty images", () => {
+    expect(() => validateAdminImageUploadFile({
+      mimeType: "image/png",
+      sizeBytes: 0,
+    })).toThrow(expect.objectContaining({ code: "IMAGE_EMPTY" }));
   });
 
-  it("stores mime_type as image/webp after conversion", () => {
-    const mimeType = "image/webp";
-    expect(mimeType).toBe("image/webp");
-    // Not "image/jpeg", "image/png", or the original file.type
-    expect(mimeType).not.toBe("image/jpeg");
-    expect(mimeType).not.toBe("image/png");
+  it("rejects images over the configured max size", () => {
+    expect(() => validateAdminImageUploadFile({
+      mimeType: "image/jpeg",
+      sizeBytes: ADMIN_IMAGE_UPLOAD_MAX_SIZE_MB * 1024 * 1024 + 1,
+    })).toThrow(expect.objectContaining({ code: "IMAGE_TOO_LARGE" }));
   });
 
-  it("stores size_bytes from WebP buffer length, not original file.size", () => {
-    const webpBuffer = Buffer.from("compressed");
-    const originalFileSize = 5000000;
-    const sizeBytes = webpBuffer.length;
+  it("rejects invalid bytes even when the MIME type looks valid", async () => {
+    const file = makeFile(Buffer.from("not an image"), "image/png");
 
-    expect(sizeBytes).not.toBe(originalFileSize);
-    expect(sizeBytes).toBe(10); // "compressed" = 10 bytes
-  });
-});
-
-// ── Error message tests ────────────────────────────────────────────────────
-
-describe("Admin media upload — error messages", () => {
-  it("unsupported type message is in Thai", () => {
-    const errorMsg = "ไฟล์นี้ไม่รองรับ กรุณาใช้ JPG, PNG หรือ WebP";
-    expect(errorMsg).toContain("JPG");
-    expect(errorMsg).toContain("PNG");
-    expect(errorMsg).toContain("WebP");
+    await expect(readAndValidateAdminImageFile(file)).rejects.toMatchObject({
+      code: "IMAGE_INVALID",
+    });
   });
 
-  it("size exceeded message mentions the limit", () => {
-    const errorMsg = `File size exceeds ${MAX_SIZE_MB}MB limit.`;
-    expect(errorMsg).toContain("10MB");
+  it("rejects SVG bytes spoofed as PNG instead of rasterizing them", async () => {
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><script>alert(1)</script></svg>');
+    const file = makeFile(svg, "image/png");
+
+    await expect(readAndValidateAdminImageFile(file)).rejects.toMatchObject({
+      code: "IMAGE_INVALID",
+    });
   });
 
-  it("no secrets leaked in error messages", () => {
-    const messages = [
-      "ไฟล์นี้ไม่รองรับ กรุณาใช้ JPG, PNG หรือ WebP",
-      "File size exceeds 10MB limit.",
-      "Upload failed. Please try again.",
-    ];
-    for (const msg of messages) {
-      expect(msg).not.toMatch(/api.?key/i);
-      expect(msg).not.toMatch(/service.?role/i);
-      expect(msg).not.toMatch(/supabase/i);
-      expect(msg).not.toMatch(/zaahkhmnqcczswxrcuhw/);
-    }
+  it("rejects images whose decoded dimensions exceed the pixel limit", async () => {
+    const image = await makeRasterBuffer("png", 32, 32);
+    const file = makeFile(image, "image/png");
+
+    await expect(readAndValidateAdminImageFile(file, { maxPixels: 100 })).rejects.toMatchObject({
+      code: "IMAGE_TOO_MANY_PIXELS",
+    });
+  });
+
+  it("converts a valid PNG to a resized WebP variant", async () => {
+    const input = await makeRasterBuffer("png", 800, 600);
+    const file = makeFile(input, "image/png");
+
+    const processed = await processAdminImageToWebp(file, {
+      maxWidth: 200,
+      quality: 80,
+    });
+
+    expect(processed.contentType).toBe("image/webp");
+    expect(processed.extension).toBe("webp");
+    expect(processed.width).toBe(200);
+    expect(processed.height).toBe(150);
+    expect(processed.sizeBytes).toBeGreaterThan(0);
+
+    const outputMetadata = await sharp(processed.buffer).metadata();
+    expect(outputMetadata.format).toBe("webp");
+    expect(outputMetadata.width).toBe(200);
+  });
+
+  it("can create a separate thumbnail from a decoded source buffer", async () => {
+    const input = await makeRasterBuffer("jpeg", 600, 300);
+    const decoded = await readAndValidateAdminImageFile(makeFile(input, "image/jpeg"));
+
+    const thumbnail = await renderAdminImageWebpVariant(decoded.inputBuffer, {
+      maxWidth: 80,
+      quality: 70,
+    });
+
+    expect(thumbnail.contentType).toBe("image/webp");
+    expect(thumbnail.width).toBe(80);
+    expect(thumbnail.height).toBe(40);
+  });
+
+  it("uses typed upload errors", async () => {
+    const file = makeFile(Buffer.from("bad"), "image/png");
+
+    await expect(readAndValidateAdminImageFile(file)).rejects.toBeInstanceOf(AdminImageUploadError);
   });
 });
