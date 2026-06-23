@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   requireTouristVisitAccess: vi.fn(),
   getPhotoByStoragePath: vi.fn(),
   getCertificateByPath: vi.fn(),
+  getPublicContentMediaSource: vi.fn(),
   createPrivateFileSignedUrl: vi.fn(),
   fetch: vi.fn(),
 }));
@@ -19,6 +20,10 @@ vi.mock("@/lib/repositories/visit-photo.repository", () => ({
 
 vi.mock("@/lib/repositories/certificate.repository", () => ({
   getCertificateByPath: mocks.getCertificateByPath,
+}));
+
+vi.mock("@/lib/repositories/public-media.repository", () => ({
+  getPublicContentMediaSource: mocks.getPublicContentMediaSource,
 }));
 
 vi.mock("@/lib/storage/private-files", () => ({
@@ -41,6 +46,7 @@ describe("GET /api/media/image private access", () => {
     mocks.requireTouristVisitAccess.mockResolvedValue({ visit: { visit_id: "visit-1" } });
     mocks.getPhotoByStoragePath.mockResolvedValue({ photo_id: "photo-1", visit_id: "visit-1" });
     mocks.getCertificateByPath.mockResolvedValue({ certificate_id: "cert-1", visit_id: "visit-1" });
+    mocks.getPublicContentMediaSource.mockResolvedValue(null);
     mocks.createPrivateFileSignedUrl.mockResolvedValue("https://signed.example/file.png");
     mocks.fetch.mockResolvedValue(new Response(new Uint8Array([1, 2, 3]), {
       status: 200,
@@ -95,16 +101,54 @@ describe("GET /api/media/image private access", () => {
   });
 
   it("keeps public Cloudinary references compatible when no private bucket is provided", async () => {
-    const path = encodeURIComponent("cloudinary:image:authenticated:v1:webp:southern-border-tourism/content-media/public");
+    const cloudinaryPath = "cloudinary:image:authenticated:v1:webp:southern-border-tourism/content-media/public";
+    mocks.getPublicContentMediaSource.mockResolvedValueOnce({
+      bucket: "visit-photos",
+      storagePath: cloudinaryPath,
+    });
+    const path = encodeURIComponent(cloudinaryPath);
     const response = await GET(request(`http://localhost:3000/api/media/image?path=${path}`));
 
     expect(response.status).toBe(200);
     expect(mocks.getPhotoByStoragePath).not.toHaveBeenCalled();
     expect(mocks.getCertificateByPath).not.toHaveBeenCalled();
+    expect(mocks.getPublicContentMediaSource).toHaveBeenCalledWith(cloudinaryPath);
     expect(mocks.createPrivateFileSignedUrl).toHaveBeenCalledWith(
       "visit-photos",
-      "cloudinary:image:authenticated:v1:webp:southern-border-tourism/content-media/public",
+      cloudinaryPath,
       3600,
     );
+  });
+
+  it("serves public Supabase content-media references through the controlled media proxy", async () => {
+    mocks.getPublicContentMediaSource.mockResolvedValueOnce({
+      bucket: "visit-photos",
+      storagePath: "content-media/attraction/2026/06/12/photo.webp",
+    });
+
+    const response = await GET(request(
+      "http://localhost:3000/api/media/image?path=content-media%2Fattraction%2F2026%2F06%2F12%2Fphoto.webp",
+    ));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("public, max-age=31536000, immutable");
+    expect(mocks.requireTouristVisitAccess).not.toHaveBeenCalled();
+    expect(mocks.createPrivateFileSignedUrl).toHaveBeenCalledWith(
+      "visit-photos",
+      "content-media/attraction/2026/06/12/photo.webp",
+      3600,
+    );
+  });
+
+  it("does not proxy arbitrary private paths without a public content_media row", async () => {
+    mocks.getPublicContentMediaSource.mockResolvedValueOnce(null);
+
+    const response = await GET(request(
+      "http://localhost:3000/api/media/image?path=content-media%2Fattraction%2Funpublished.webp",
+    ));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/png");
+    expect(mocks.createPrivateFileSignedUrl).not.toHaveBeenCalled();
   });
 });

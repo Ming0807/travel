@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { normalizeSiteMediaStoragePath } from "@/lib/media/storage-paths";
+import {
+  encodeStoragePathSegments,
+  normalizeSiteMediaStoragePath,
+  resolveSafeImageContentType,
+} from "@/lib/media/storage-paths";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://zaahkhmnqcczswxrcuhw.supabase.co";
 
@@ -28,7 +32,7 @@ export async function GET(
 
   try {
     const supabaseResp = await fetch(
-      `${SUPABASE_URL}/storage/v1/object/public/site-media/${storagePath}`,
+      `${SUPABASE_URL}/storage/v1/object/public/site-media/${encodeStoragePathSegments(storagePath)}`,
       { signal: AbortSignal.timeout(5000) },
     );
 
@@ -42,11 +46,22 @@ export async function GET(
       });
     }
 
-    const blob = await supabaseResp.blob();
-    return new NextResponse(blob, {
+    const contentType = resolveSafeImageContentType(supabaseResp.headers.get("content-type"), storagePath);
+    if (!contentType) {
+      return new NextResponse(PLACEHOLDER_PNG, {
+        status: 200,
+        headers: {
+          "Content-Type": "image/png",
+          "Cache-Control": "public, max-age=60, s-maxage=300",
+        },
+      });
+    }
+
+    const bytes = Buffer.from(await supabaseResp.arrayBuffer());
+    return new NextResponse(bytes, {
       status: 200,
       headers: {
-        "Content-Type": supabaseResp.headers.get("content-type") || "image/jpeg",
+        "Content-Type": contentType,
         "Cache-Control": "public, max-age=31536000, immutable",
       },
     });

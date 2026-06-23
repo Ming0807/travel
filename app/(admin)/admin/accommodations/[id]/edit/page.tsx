@@ -6,7 +6,7 @@ import { AccommodationForm } from "@/components/admin/accommodations/Accommodati
 import { getAdminProvinces, getAdminAccommodationById } from "@/lib/repositories/admin-accommodation.repository";
 import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
 import { requirePermission } from "@/lib/auth/guards";
-import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
@@ -50,7 +50,7 @@ export default async function EditAccommodationPage({ params }: { params: Promis
           accommodation={accommodation}
           submitLabel="บันทึกการแก้ไข"
           coverMediaId={coverMedia?.media_id ?? null}
-          coverPreviewUrl={siteMediaImageUrl(coverMedia?.storage_path)}
+          coverPreviewUrl={adminMediaPreviewUrl(coverMedia?.storage_path)}
         />
       </div>
     </AdminShell>

@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/auth/guards";
 import { getAdminRouteById, getRouteStops } from "@/lib/repositories/admin-route.repository";
 import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
 import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
-import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export default async function EditAdminRoutePage({
     <RouteVisualEditor
       route={route}
       coverMediaId={coverMedia?.media_id ?? null}
-      coverMediaUrl={siteMediaImageUrl(coverMedia?.storage_path)}
+      coverMediaUrl={adminMediaPreviewUrl(coverMedia?.storage_path)}
       stops={stops}
       attractions={attractions}
     />

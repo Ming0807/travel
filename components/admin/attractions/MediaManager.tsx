@@ -18,7 +18,7 @@ import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 import type { AdminMediaEntityType } from "@/lib/validation/media";
 import type { AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
-import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 
 type MediaType = "image" | "panorama" | "video360" | "embed" | "external_url";
 
@@ -85,7 +85,7 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 function mediaPreviewUrl(storagePath: string) {
-  return siteMediaImageUrl(storagePath) ?? "";
+  return adminMediaPreviewUrl(storagePath) ?? "";
 }
 
 function getMediaTypeOption(value: string) {

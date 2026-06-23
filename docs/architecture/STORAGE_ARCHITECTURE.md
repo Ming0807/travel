@@ -96,7 +96,35 @@ certificates/2026/05/{visit_id}/{random_id}.png
 
 ---
 
-## 5. Tourist Photo Upload Flow
+## 5. Canonical Delivery Routes
+
+Rendering code must use storage helpers instead of concatenating routes by hand:
+
+```text
+lib/media/storage-paths.ts
+```
+
+| Reference type | Public/admin URL |
+|---|---|
+| Public `site-media` object | `/site-media/{path}` |
+| Published CMS `content_media` object | `/api/media/image?path={storagePath}` |
+| Admin CMS preview, including drafts | `/api/admin/media/preview?bucket=visit-photos&path={storagePath}` |
+| Tourist visit photo | `/api/media/image?bucket=visit-photos&path={storagePath}` |
+| Generated certificate | `/api/media/image?bucket=certificate-files&path={storagePath}` |
+
+The `/api/media/image` public CMS path is intentionally gated by database state:
+
+```text
+content_media.is_active = true
+content_media.lifecycle_status = active
+owner content is published/active
+```
+
+This prevents private storage references, draft CMS images, and arbitrary Cloudinary references from becoming public by accident.
+
+---
+
+## 6. Tourist Photo Upload Flow
 
 ```text
 Tourist selects photo
@@ -128,7 +156,7 @@ Tourist SVG/PDF/HTML/JavaScript uploads are not allowed.
 
 ---
 
-## 6. Certificate Storage Flow
+## 7. Certificate Storage Flow
 
 ```text
 Certificate preview rendered
@@ -152,7 +180,7 @@ Certificate download must not be blocked by survey, LINE, Google, email, or phon
 
 ---
 
-## 7. Access Strategy
+## 8. Access Strategy
 
 | File type | MVP access strategy |
 |---|---|
@@ -166,7 +194,7 @@ Cloudinary authenticated delivery should be used when available for tourist phot
 
 ---
 
-## 8. Future University Storage Adapter
+## 9. Future University Storage Adapter
 
 Future university-hosted storage should implement the same logical operations:
 
@@ -186,7 +214,7 @@ If the university server does not support native signed URLs, the application ca
 
 ---
 
-## 9. Release Checklist
+## 10. Release Checklist
 
 Before release:
 
@@ -204,7 +232,7 @@ Before release:
 
 ---
 
-## 10. Final Rule
+## 11. Final Rule
 
 Storage is part of the privacy boundary.
 

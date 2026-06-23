@@ -148,3 +148,30 @@ Current variants:
     -> uploadPrivateFile(logical bucket: southern-border-tourism)
     -> cleanup uploaded file if database insert fails
 ```
+
+---
+
+## 7. Canonical Image Delivery Routes
+
+Do not build public image URLs by string concatenation in UI components. Use the helpers in:
+
+```text
+lib/media/storage-paths.ts
+```
+
+Current delivery rules:
+
+| Source | Helper / Route | Access rule |
+|---|---|---|
+| Public `site-media` bucket object | `siteMediaImageUrl()` -> `/site-media/{path}` | Public file path only. The route strips duplicate `/site-media/` prefixes, encodes path segments, rejects unsafe paths, and falls back to a PNG placeholder for missing or invalid upstream images. |
+| Public CMS `content_media` record | `siteMediaImageUrl()` -> `/api/media/image?path=...` | The proxy requires an active `content_media` row and a published/active owner before signing the underlying private object. |
+| Admin preview for CMS media | `adminMediaPreviewUrl()` -> `/api/admin/media/preview?bucket=visit-photos&path=...` | Requires admin auth and can preview draft/unpublished owner media. |
+| Tourist visit photo | `/api/media/image?bucket=visit-photos&path=...` | Requires visit/photo ownership. |
+| Generated certificate | `/api/media/image?bucket=certificate-files&path=...` | Requires certificate/visit ownership. |
+
+Important boundaries:
+
+- `content-media/...` files uploaded through `/api/admin/media/upload` are stored through the private storage adapter, currently under the logical `visit-photos` bucket.
+- Public pages may show those files only after the `content_media` row is active and its owning attraction, restaurant, accommodation, route, or story is visible.
+- Admin editors must use `adminMediaPreviewUrl()` so draft content can be previewed without accidentally making draft media public.
+- Provider-qualified Cloudinary references are allowed for CMS content media only when they point to `content-media/...`; arbitrary Cloudinary references are not treated as public site media.

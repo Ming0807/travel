@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireTouristVisitAccess } from "@/lib/auth/guards";
+import { resolveSafeImageContentType } from "@/lib/media/storage-paths";
 import { getCertificateByPath } from "@/lib/repositories/certificate.repository";
+import { getPublicContentMediaSource } from "@/lib/repositories/public-media.repository";
 import { getPhotoByStoragePath } from "@/lib/repositories/visit-photo.repository";
 import { createPrivateFileSignedUrl } from "@/lib/storage/private-files";
 
@@ -60,14 +62,29 @@ export async function GET(req: NextRequest) {
       return placeholderResponse();
     }
 
-    const bucket = resolvePrivateBucket(req.nextUrl.searchParams.get("bucket"), path);
-    await requirePrivateMediaAccess(bucket, path);
+    const privateBucket = resolvePrivateBucket(req.nextUrl.searchParams.get("bucket"), path);
+    let bucket: PrivateMediaBucket | null = privateBucket;
+    let storagePath = path;
+    let cacheControl = "private, max-age=300";
 
-    if (!bucket && !path.startsWith("cloudinary:")) {
+    if (privateBucket) {
+      await requirePrivateMediaAccess(privateBucket, path);
+    } else {
+      const publicContentMedia = await getPublicContentMediaSource(path);
+      if (!publicContentMedia) {
+        return placeholderResponse();
+      }
+
+      bucket = publicContentMedia.bucket;
+      storagePath = publicContentMedia.storagePath;
+      cacheControl = "public, max-age=31536000, immutable";
+    }
+
+    if (!bucket) {
       return placeholderResponse();
     }
 
-    const signedUrl = await createPrivateFileSignedUrl(bucket ?? "visit-photos", path, 3600);
+    const signedUrl = await createPrivateFileSignedUrl(bucket, storagePath, 3600);
     const upstreamResp = await fetch(signedUrl, {
       signal: AbortSignal.timeout(8000),
     });
@@ -76,14 +93,18 @@ export async function GET(req: NextRequest) {
       return placeholderResponse();
     }
 
-    const contentType = upstreamResp.headers.get("content-type") || "image/jpeg";
+    const contentType = resolveSafeImageContentType(upstreamResp.headers.get("content-type"), storagePath);
+    if (!contentType) {
+      return placeholderResponse();
+    }
+
     const bytes = Buffer.from(await upstreamResp.arrayBuffer());
 
     return new NextResponse(bytes, {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": bucket ? "private, max-age=300" : "public, max-age=31536000, immutable",
+        "Cache-Control": cacheControl,
       },
     });
   } catch (error) {

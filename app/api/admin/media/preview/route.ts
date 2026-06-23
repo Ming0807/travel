@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPrivateFileSignedUrl, type PrivateBucketName } from "@/lib/storage/private-files";
 import { requireAdmin } from "@/lib/auth/guards";
-import { normalizeSiteMediaStoragePath, siteMediaImageUrl } from "@/lib/media/storage-paths";
+import {
+  isPublicContentMediaReference,
+  normalizePublicContentMediaReference,
+  normalizeSiteMediaStoragePath,
+  siteMediaImageUrl,
+} from "@/lib/media/storage-paths";
 
 export const runtime = "nodejs";
 
@@ -17,10 +22,10 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Missing bucket or path", { status: 400 });
     }
 
-    if (path.startsWith("cloudinary:")) {
-      return NextResponse.redirect(
-        new URL(`/api/media/image?path=${encodeURIComponent(path)}`, req.url),
-      );
+    if (isPublicContentMediaReference(path)) {
+      const storagePath = normalizePublicContentMediaReference(path);
+      const signedUrl = await createPrivateFileSignedUrl("visit-photos", storagePath, 60 * 60);
+      return NextResponse.redirect(signedUrl);
     }
 
     try {

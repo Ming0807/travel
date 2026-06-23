@@ -4,7 +4,7 @@ import { RestaurantVisualEditor } from "@/components/admin/restaurants/visual-ed
 import { requirePermission } from "@/lib/auth/guards";
 import { getAdminRestaurantById, getAdminProvinces } from "@/lib/repositories/admin-restaurant.repository";
 import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
-import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 
 export const metadata: Metadata = {
   title: "Edit Restaurant | Admin",
@@ -39,7 +39,7 @@ export default async function EditAdminRestaurantPage({
       restaurant={restaurant}
       provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}
       coverMediaId={coverMedia?.media_id ?? null}
-      coverMediaUrl={siteMediaImageUrl(coverMedia?.storage_path)}
+      coverMediaUrl={adminMediaPreviewUrl(coverMedia?.storage_path)}
     />
   );
 }

@@ -21,7 +21,7 @@ import { AttractionReviews } from "@/components/attractions/attraction-reviews";
 import type { ReviewCard, ReviewStats } from "@/types/tourism";
 import type { PublicAttractionDetail } from "@/lib/repositories/public-content.repository";
 import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
-import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 
 type EditorSection = "header" | "content" | "location" | "settings" | "gallery" | "related_attractions" | "related_accommodations" | "related_restaurants" | "related_stories" | null;
 
@@ -240,7 +240,7 @@ export function AttractionVisualEditor({
   const sortedMedia = [...media].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
   const images = sortedMedia
     .filter(m => m.media_type === "image" || m.media_type === "panorama" || m.media_type === "external_url")
-    .map(m => siteMediaImageUrl(m.storage_path) ?? "")
+    .map(m => adminMediaPreviewUrl(m.storage_path) ?? "")
     .filter(Boolean);
   const hasGalleryImages = images.length > 0;
   const relatedAttractionCount = relatedContent?.attractions?.length ?? 0;

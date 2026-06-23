@@ -4,7 +4,7 @@ import { requirePermission } from "@/lib/auth/guards";
 import { getAdminStoryById } from "@/lib/repositories/admin-story.repository";
 import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -43,7 +43,7 @@ export default async function EditAdminStoryPage({
       story={story}
       provinces={provinces ?? []}
       coverMediaId={coverMedia?.media_id ?? null}
-      coverMediaUrl={siteMediaImageUrl(coverMedia?.storage_path)}
+      coverMediaUrl={adminMediaPreviewUrl(coverMedia?.storage_path)}
     />
   );
 }

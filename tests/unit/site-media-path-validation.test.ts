@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { normalizeSiteMediaStoragePath, siteMediaImageUrl } from "@/lib/media/storage-paths";
+import {
+  inferImageContentTypeFromPath,
+  isPublicContentMediaReference,
+  mediaProxyImageUrl,
+  normalizePublicContentMediaReference,
+  normalizeSiteMediaStoragePath,
+  resolveSafeImageContentType,
+  siteMediaImageUrl,
+} from "@/lib/media/storage-paths";
 
 const PLACEHOLDER_PNG_BASE64 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAABJRU5ErkJggg==";
@@ -38,9 +46,27 @@ describe("site media storage path helpers", () => {
     ).toBe("/site-media/general/uuid.webp");
   });
 
-  it("maps Cloudinary storage references to the media proxy", () => {
+  it("maps public content-media paths to the controlled media proxy", () => {
+    expect(siteMediaImageUrl("content-media/attraction/2026/06/12/photo.webp")).toBe(
+      "/api/media/image?path=content-media%2Fattraction%2F2026%2F06%2F12%2Fphoto.webp",
+    );
+    expect(mediaProxyImageUrl("/site-media/content-media/attraction/photo.webp")).toBe(
+      "/api/media/image?path=content-media%2Fattraction%2Fphoto.webp",
+    );
+  });
+
+  it("maps public Cloudinary content-media references to the controlled media proxy", () => {
     const ref = "cloudinary:image:authenticated:v123:jpg:southern-border-tourism/content-media/test";
     expect(siteMediaImageUrl(ref)).toBe(`/api/media/image?path=${encodeURIComponent(ref)}`);
+    expect(isPublicContentMediaReference(ref)).toBe(true);
+    expect(normalizePublicContentMediaReference(ref)).toBe(ref);
+  });
+
+  it("does not treat non-content Cloudinary references as public site media", () => {
+    const ref = "cloudinary:image:authenticated:v123:png:southern-border-tourism/certificates/2026/cert";
+    expect(siteMediaImageUrl(ref)).toBeNull();
+    expect(mediaProxyImageUrl(ref)).toBeNull();
+    expect(isPublicContentMediaReference(ref)).toBe(false);
   });
 
   it("rejects empty paths", () => {
@@ -57,6 +83,12 @@ describe("site media storage path helpers", () => {
   it("rejects backslash path separators", () => {
     expect(() => normalizeSiteMediaStoragePath("general\\evil.exe")).toThrow("INVALID_STORAGE_PATH");
     expect(() => normalizeSiteMediaStoragePath("..\\..\\windows")).toThrow("INVALID_STORAGE_PATH");
+  });
+
+  it("rejects URI-like tokens in normal site-media paths", () => {
+    expect(() => normalizeSiteMediaStoragePath("cloudinary:image:authenticated:v1:webp:x")).toThrow("INVALID_STORAGE_PATH");
+    expect(() => normalizeSiteMediaStoragePath("general/photo.webp?download=1")).toThrow("INVALID_STORAGE_PATH");
+    expect(() => normalizeSiteMediaStoragePath("general/photo.webp#fragment")).toThrow("INVALID_STORAGE_PATH");
   });
 
   it("rejects non-site-media absolute URLs", () => {
@@ -84,6 +116,15 @@ describe("site media storage path helpers", () => {
 
   it("trims whitespace", () => {
     expect(normalizeSiteMediaStoragePath("  general/uuid.webp  ")).toBe("general/uuid.webp");
+  });
+
+  it("infers safe image content types from paths and headers", () => {
+    expect(inferImageContentTypeFromPath("general/photo.webp")).toBe("image/webp");
+    expect(inferImageContentTypeFromPath("general/photo.JPG")).toBe("image/jpeg");
+    expect(inferImageContentTypeFromPath("cloudinary:image:authenticated:v1:webp:folder/id")).toBe("image/webp");
+    expect(resolveSafeImageContentType("application/octet-stream", "general/photo.png")).toBe("image/png");
+    expect(resolveSafeImageContentType("image/svg+xml", "general/photo.svg")).toBeNull();
+    expect(resolveSafeImageContentType("image/webp; charset=utf-8", "general/photo.bin")).toBe("image/webp");
   });
 });
 

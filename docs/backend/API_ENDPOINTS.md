@@ -37,6 +37,18 @@ These endpoints support official CMS media management. They require admin authen
 | `PATCH` | `/api/admin/media/[id]` | Implemented | Restore an archived media asset with `{ "action": "unarchive" }`. | `media.activate` | Requires the `media.activate` seed/migration permission. |
 | `GET` | `/api/admin/media/references?storagePath=...` | Implemented | Load used-in references by storage path for content-media editors. | `media.read` | Preferred for attraction/story/route media managers that work with `content_media` records. |
 
+## Media Delivery Endpoints
+
+These endpoints render image bytes or redirects. UI components should use helpers from `lib/media/storage-paths.ts` instead of building these URLs manually.
+
+| Method | Path | Status | Purpose | Access model | Notes |
+|---|---|---|---|---|---|
+| `GET` | `/site-media/{path}` | Implemented | Serve public `site-media` bucket images through a safe local route. | Public | Rejects unsafe paths, encodes path segments, rejects SVG/unknown image content, and returns a PNG placeholder for missing files. |
+| `GET` | `/api/media/image?path=...` | Implemented | Serve published CMS `content_media` images from controlled private storage. | Public only when the `content_media` row is active and the owner content is published/active. | Used by `siteMediaImageUrl()` for `content-media/...` and Cloudinary content-media references. |
+| `GET` | `/api/media/image?bucket=visit-photos&path=...` | Implemented | Serve private tourist visit photos. | Tourist visit/photo ownership required. | Used by tourist photo and certificate flows, not public CMS cards. |
+| `GET` | `/api/media/image?bucket=certificate-files&path=...` | Implemented | Serve generated certificate images. | Certificate/visit ownership required. | Keeps certificate files behind short-lived signed URLs. |
+| `GET` | `/api/admin/media/preview?bucket=...&path=...` | Implemented | Preview CMS/admin media, including draft owner content. | Admin auth required. | Use `adminMediaPreviewUrl()` in admin editors. |
+
 ## Phase 11 LINE LIFF Endpoints
 
 These endpoints support optional LINE account linking after the tourist has already received the certificate/stamp reward. They must not be used as entry gates for QR check-in, photo upload, certificate download, passport guest mode, or survey access.
