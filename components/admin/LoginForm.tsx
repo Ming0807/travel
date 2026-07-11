@@ -36,13 +36,14 @@ export function LoginForm() {
       )}
 
       <div>
-        <label className="mb-1.5 block text-sm font-bold text-slate-700">Email Address</label>
+        <label className="mb-1.5 block text-sm font-bold text-slate-700">Username or Email</label>
         <input
-          type="email"
+          type="text"
           name="email"
           required
+          autoComplete="username"
           className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-teal focus:bg-white"
-          placeholder="admin@example.com"
+          placeholder="amornthep or admin@example.com"
         />
       </div>
 

@@ -2,16 +2,17 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { normalizeAdminLoginIdentifier } from "@/lib/auth/admin-login";
 import { rateLimit } from "@/lib/utils/rate-limit";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 export async function loginAdminAction(formData: FormData) {
-  const email = formData.get("email") as string;
+  const email = normalizeAdminLoginIdentifier(formData.get("email"));
   const password = formData.get("password") as string;
 
   if (!email || !password) {
-    return { success: false, error: "Please enter both email and password." };
+    return { success: false, error: "Please enter both username/email and password." };
   }
 
   // Rate limiting: max 5 attempts per IP per 15-minute window
