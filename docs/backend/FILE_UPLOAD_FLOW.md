@@ -11,7 +11,9 @@ The storage provider for development and Vercel deployment is Cloudinary through
 ## 2. Tourist Photo Upload Flow
 
 ```text
-PhotoUploadForm
+PhotoUploadClient
+    -> validate source image (JPG/PNG/WebP/HEIC, max 50MB)
+    -> client resize + WebP conversion (max 1920px, target <= 3.5MB)
     -> POST /api/upload/photo
     -> Zod/common visit id validation
     -> server-side MIME/size validation
@@ -32,6 +34,9 @@ Rules:
 - User-provided filenames are not stored for tourist photos; metadata uses a generic privacy-safe filename.
 - Tourist photo URLs/storage references must not appear in dashboards or default exports.
 - Private photo preview routes must derive signed URLs from a photo row that belongs to the current tourist visit.
+- Client preprocessing must fail closed. If the browser cannot decode or compress the image, it must show a recoverable error and must not send the original large file.
+- The 3.5MB client target leaves multipart overhead below Vercel's 4.5MB Function request limit. The server still validates the prepared file independently and reprocesses it with Sharp.
+- HEIC/HEIF is accepted only as a client-side source on browsers that can decode it. The server receives and stores the converted WebP, not the original HEIC file.
 
 ---
 

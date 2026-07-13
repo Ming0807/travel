@@ -61,7 +61,7 @@ Never commit real secrets to the repository.
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `MAX_UPLOAD_IMAGE_SIZE_MB` | No | `5` | Maximum file size for tourist photo uploads (in MB) |
+| `MAX_UPLOAD_IMAGE_SIZE_MB` | No | `5` | Server-side maximum for the client-prepared tourist photo (the UI accepts source photos up to 50MB and targets <=3.5MB before upload) |
 | `ALLOWED_TOURIST_IMAGE_MIME_TYPES` | No | `image/jpeg,image/png,image/webp` | Allowed MIME types for tourist uploads |
 | `CERTIFICATE_SIGNED_URL_TTL_SECONDS` | No | `600` | Signed URL expiration for certificate downloads (in seconds) |
 
