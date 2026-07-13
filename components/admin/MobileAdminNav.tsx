@@ -1,66 +1,126 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { List, X, MapPin, CaretDown } from "@phosphor-icons/react";
+import { createPortal } from "react-dom";
 import { getVisibleNavGroups, navGroups, type NavGroup as NavGroupType, type NavItem } from "./admin-nav-items";
 import { useAdminAccess } from "./AdminAccessContext";
 
 export function MobileAdminNav() {
   const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const access = useAdminAccess();
   const visibleGroups = getVisibleNavGroups(navGroups, access.permissions, access.resolved);
 
+  const closeDrawer = useCallback(() => {
+    triggerRef.current?.focus({ preventScroll: true });
+    setIsOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus({ preventScroll: true });
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closeDrawer();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeDrawer, isOpen]);
+
+  function handleFocusTrap(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Tab") return;
+
+    const focusable = Array.from(
+      event.currentTarget.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], summary, [tabindex]:not([tabindex="-1"])'
+      )
+    );
+    if (!focusable.length) return;
+
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  }
+
+  const drawer = isOpen && typeof document !== "undefined"
+    ? createPortal(
+        <div className="fixed inset-0 z-[70] lg:hidden">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            onClick={closeDrawer}
+          />
+          <div
+            id="mobile-admin-drawer"
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="เมนูผู้ดูแลระบบ"
+            onKeyDown={handleFocusTrap}
+            className="relative h-dvh w-[min(18rem,calc(100vw-1.5rem))] overflow-y-auto bg-slate-50 shadow-2xl"
+          >
+            <div className="flex min-h-16 items-center gap-2 border-b border-slate-200/60 px-3 py-3">
+              <Link className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1" href="/admin" onClick={closeDrawer}>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+                  <MapPin aria-hidden="true" size={20} weight="fill" />
+                </span>
+                <span className="truncate text-base font-black tracking-tight text-slate-800">ระบบจัดการท่องเที่ยว</span>
+              </Link>
+              <button
+                ref={closeRef}
+                type="button"
+                onClick={closeDrawer}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62]"
+                aria-label="ปิดเมนูผู้ดูแลระบบ"
+              >
+                <X aria-hidden="true" size={24} weight="bold" />
+              </button>
+            </div>
+
+            <nav className="space-y-6 p-4 pb-20" aria-label="เมนูผู้ดูแลระบบบนมือถือ">
+              {visibleGroups.map((group) => (
+                <MobileNavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} closeDrawer={closeDrawer} />
+              ))}
+            </nav>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
   return (
     <>
       <button
+        ref={triggerRef}
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="p-2 -ml-2 text-slate-500 hover:text-slate-800 lg:hidden"
+        className="relative z-10 -ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62] lg:hidden"
         aria-label="เปิดเมนูผู้ดูแลระบบ"
+        aria-expanded={isOpen}
+        aria-controls="mobile-admin-drawer"
       >
-        <List size={24} weight="bold" />
+        <List aria-hidden="true" size={24} weight="bold" />
       </button>
-
-      {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Drawer */}
-      <div
-        aria-hidden={!isOpen}
-        inert={!isOpen}
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-50 shadow-2xl transition-transform duration-300 ease-in-out lg:hidden overflow-y-auto ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex items-center justify-between px-4 py-6 border-b border-slate-200/60">
-          <Link className="flex items-center gap-2 px-2" href="/admin" onClick={() => setIsOpen(false)}>
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
-              <MapPin size={20} weight="fill" />
-            </div>
-            <span className="text-lg font-black tracking-tight text-slate-800">ระบบจัดการท่องเที่ยว</span>
-          </Link>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 text-slate-400 hover:text-slate-800 rounded-full hover:bg-slate-100 transition-colors"
-            aria-label="ปิดเมนูผู้ดูแลระบบ"
-          >
-            <X size={24} weight="bold" />
-          </button>
-        </div>
-
-        <nav className="p-4 pb-20 space-y-6" aria-label="เมนูผู้ดูแลระบบบนมือถือ">
-          {visibleGroups.map((group) => (
-            <MobileNavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} closeDrawer={() => setIsOpen(false)} />
-          ))}
-        </nav>
-      </div>
+      {drawer}
     </>
   );
 }

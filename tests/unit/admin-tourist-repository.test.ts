@@ -161,7 +161,7 @@ describe("admin tourist repository", () => {
           photo_spots: { spot_name_th: "จุดชมวิว" },
           checkin_codes: { label: "ประตูหลัก" },
           certificates: [{ generated_at: "2026-07-02T01:00:00.000Z", download_count: 1, certificate_path: "private/path" }],
-          satisfaction_surveys: [{ overall_score: 5, submitted_at: "2026-07-02T02:00:00.000Z", comments: "private comment" }],
+          satisfaction_surveys: [{ survey_id: "44444444-4444-4444-8444-444444444444", overall_score: 5, submitted_at: "2026-07-02T02:00:00.000Z", comments: "private comment" }],
         },
       ]),
       result([], 1)
@@ -180,6 +180,7 @@ describe("admin tourist repository", () => {
     expect(detail?.totals).toEqual({ visits: 1, certificates: 1, stamps: 1, surveys: 1 });
     expect(detail?.identityProviders).toEqual(["anonymous_device"]);
     expect(detail?.recentVisits[0]?.survey?.overallScore).toBe(5);
+    expect(detail?.recentVisits[0]?.survey?.surveyId).toBe("44444444-4444-4444-8444-444444444444");
     expect(serialized).not.toContain("guest-secret");
     expect(serialized).not.toContain("private/path");
     expect(serialized).not.toContain("private comment");

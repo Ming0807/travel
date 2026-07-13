@@ -1267,12 +1267,15 @@ or restrict and deactivate categories.
 ### Relationship
 
 ```text
-visits.visit_id 1 -> many visit_expenses.visit_id
+visits.visit_id 1 -> 0..1 visit_expenses.visit_id
 ```
 
 ### Purpose
 
 Links spending information to a visit.
+
+The current optional post-certificate survey records one spending category/range
+answer per visit. `unique(visit_id)` makes retries and edits idempotent.
 
 ### Foreign Key
 

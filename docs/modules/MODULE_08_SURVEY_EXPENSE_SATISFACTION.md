@@ -1281,6 +1281,11 @@ Recommended MVP:
 save full survey on submit
 ```
 
+The production implementation submits visit behavior, the optional expense
+answer, satisfaction, visit completion status, and the deduplicated funnel event
+through `submit_post_certificate_survey`. The PostgreSQL RPC is one transaction:
+any write failure rolls back the complete survey submission.
+
 Phase 2 can save section progress.
 
 ## 30.3 Tourist Answers Prefer Not to Answer
@@ -1307,6 +1312,7 @@ Recommended:
 
 ```text
 one satisfaction_surveys row per visit
+one visit_expenses row per visit when an expense answer exists
 ```
 
 Use:

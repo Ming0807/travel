@@ -27,16 +27,17 @@ const mocks = vi.hoisted(() => {
     SurveyReferenceError: MockSurveyReferenceError,
     requireTouristVisitAccess: vi.fn(),
     getCertificateByVisitId: vi.fn(),
-    updateVisitSurveyFields: vi.fn(),
-    updateVisitStatus: vi.fn(),
-    upsertVisitExpense: vi.fn(),
-    assertActiveSurveyReferences: vi.fn(),
+    savePostCertificateSurveyTransaction: vi.fn(),
     getSurveyOptions: vi.fn(),
     getSatisfactionSurveyByVisitId: vi.fn(),
-    upsertSatisfactionSurvey: vi.fn(),
     recordFunnelEvent: vi.fn(),
+    getCheckinSessionId: vi.fn(),
   };
 });
+
+vi.mock("@/lib/auth/checkin-session", () => ({
+  getCheckinSessionId: mocks.getCheckinSessionId,
+}));
 
 vi.mock("@/lib/auth/guards", () => ({
   TouristAccessError: mocks.TouristAccessError,
@@ -47,28 +48,19 @@ vi.mock("@/lib/repositories/certificate.repository", () => ({
   getCertificateByVisitId: mocks.getCertificateByVisitId,
 }));
 
-vi.mock("@/lib/repositories/expense.repository", () => ({
-  upsertVisitExpense: mocks.upsertVisitExpense,
-}));
-
 vi.mock("@/lib/repositories/funnel.repository", () => ({
   recordFunnelEvent: mocks.recordFunnelEvent,
 }));
 
 vi.mock("@/lib/repositories/survey.repository", () => ({
   SurveyReferenceError: mocks.SurveyReferenceError,
-  assertActiveSurveyReferences: mocks.assertActiveSurveyReferences,
   getSurveyOptions: mocks.getSurveyOptions,
   getSatisfactionSurveyByVisitId: mocks.getSatisfactionSurveyByVisitId,
-  upsertSatisfactionSurvey: mocks.upsertSatisfactionSurvey,
-}));
-
-vi.mock("@/lib/repositories/visit.repository", () => ({
-  updateVisitStatus: mocks.updateVisitStatus,
-  updateVisitSurveyFields: mocks.updateVisitSurveyFields,
+  savePostCertificateSurveyTransaction: mocks.savePostCertificateSurveyTransaction,
 }));
 
 import {
+  getPostCertificateSurveyPageData,
   skipPostCertificateSurvey,
   submitPostCertificateSurvey,
 } from "@/lib/services/survey.service";
@@ -113,67 +105,59 @@ describe("survey flow hardening", () => {
       certificate_id: "certificate-1",
       certificate_path: "certificates/test.png",
     });
-    mocks.assertActiveSurveyReferences.mockResolvedValue(undefined);
-    mocks.updateVisitSurveyFields.mockResolvedValue(undefined);
-    mocks.upsertVisitExpense.mockResolvedValue(undefined);
-    mocks.upsertSatisfactionSurvey.mockResolvedValue(undefined);
-    mocks.updateVisitStatus.mockResolvedValue(undefined);
+    mocks.savePostCertificateSurveyTransaction.mockResolvedValue(undefined);
     mocks.recordFunnelEvent.mockResolvedValue(undefined);
+    mocks.getCheckinSessionId.mockResolvedValue("survey-session-1");
+    mocks.getSurveyOptions.mockResolvedValue({
+      travelCompanions: [],
+      transportModes: [],
+      travelPurposes: [],
+      expenseCategories: [],
+      spendingRanges: [],
+    });
+    mocks.getSatisfactionSurveyByVisitId.mockResolvedValue(null);
   });
 
-  it("validates active reference IDs before writing survey data", async () => {
+  it("deduplicates survey starts with the current check-in session", async () => {
+    await getPostCertificateSurveyPageData(visitId);
+
+    expect(mocks.recordFunnelEvent).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "survey_started",
+      sessionId: "survey-session-1",
+      visitId,
+    }));
+  });
+
+  it("does not record another survey start after this visit already has a response", async () => {
+    mocks.getSatisfactionSurveyByVisitId.mockResolvedValueOnce({ survey_id: "survey-1" });
+
+    await getPostCertificateSurveyPageData(visitId);
+
+    expect(mocks.recordFunnelEvent).not.toHaveBeenCalled();
+  });
+
+  it("saves all survey data through one atomic database transaction", async () => {
     await submitPostCertificateSurvey(validSurveyInput);
 
-    expect(mocks.assertActiveSurveyReferences).toHaveBeenCalledWith({
-      travelCompanionId: 1,
-      transportModeId: 3,
-      travelPurposeId: 4,
-      expenseCategoryId: 6,
-      spendingRangeId: 5,
-    });
-    expect(mocks.updateVisitSurveyFields).toHaveBeenCalledWith(visitId, expect.objectContaining({
-      travelCompanionId: 1,
-      groupSize: 2,
-      transportModeId: 3,
-    }));
-    expect(mocks.upsertVisitExpense).toHaveBeenCalledWith({
-      visitId,
-      expenseCategoryId: 6,
-      spendingRangeId: 5,
-    });
-    expect(mocks.upsertSatisfactionSurvey).toHaveBeenCalledWith(expect.objectContaining({
-      visitId,
+    expect(mocks.savePostCertificateSurveyTransaction).toHaveBeenCalledTimes(1);
+    expect(mocks.savePostCertificateSurveyTransaction).toHaveBeenCalledWith({
       touristId: "tourist-1",
-      attractionId: 12,
-      overallScore: 5,
-      comment: "Nice trip",
-    }));
-    expect(mocks.updateVisitStatus).toHaveBeenCalledWith(visitId, "survey_completed");
-    expect(mocks.recordFunnelEvent).toHaveBeenCalledWith(expect.objectContaining({
-      eventName: "survey_completed",
-      touristId: "tourist-1",
-      attractionId: 12,
-      checkinCodeId: 34,
-      visitId,
-    }));
-
-    const referenceOrder = mocks.assertActiveSurveyReferences.mock.invocationCallOrder[0];
-    const writeOrder = mocks.updateVisitSurveyFields.mock.invocationCallOrder[0];
-    expect(referenceOrder).toBeLessThan(writeOrder);
+      input: validSurveyInput,
+    });
+    expect(mocks.recordFunnelEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ eventName: "survey_completed" })
+    );
   });
 
   it("blocks inactive or missing option IDs before any write", async () => {
-    mocks.assertActiveSurveyReferences.mockRejectedValueOnce(
+    mocks.savePostCertificateSurveyTransaction.mockRejectedValueOnce(
       new mocks.SurveyReferenceError("transportModeId", "transport_modes")
     );
 
     await expect(submitPostCertificateSurvey(validSurveyInput)).rejects.toMatchObject({
       code: "SURVEY_REFERENCE_INVALID",
     });
-    expect(mocks.updateVisitSurveyFields).not.toHaveBeenCalled();
-    expect(mocks.upsertVisitExpense).not.toHaveBeenCalled();
-    expect(mocks.upsertSatisfactionSurvey).not.toHaveBeenCalled();
-    expect(mocks.updateVisitStatus).not.toHaveBeenCalled();
+    expect(mocks.savePostCertificateSurveyTransaction).toHaveBeenCalledTimes(1);
   });
 
   it("requires a generated certificate before accepting survey data", async () => {
@@ -191,8 +175,7 @@ describe("survey flow hardening", () => {
     await expect(submitPostCertificateSurvey(validSurveyInput)).rejects.toMatchObject({
       code: "CERTIFICATE_REQUIRED",
     });
-    expect(mocks.assertActiveSurveyReferences).not.toHaveBeenCalled();
-    expect(mocks.updateVisitSurveyFields).not.toHaveBeenCalled();
+    expect(mocks.savePostCertificateSurveyTransaction).not.toHaveBeenCalled();
   });
 
   it("maps visit ownership failures to a survey flow error", async () => {
@@ -203,7 +186,6 @@ describe("survey flow hardening", () => {
     await expect(submitPostCertificateSurvey(validSurveyInput)).rejects.toMatchObject({
       code: "VISIT_ACCESS_DENIED",
     });
-    expect(mocks.assertActiveSurveyReferences).not.toHaveBeenCalled();
   });
 
   it("records survey skip without changing visit status", async () => {
@@ -216,6 +198,6 @@ describe("survey flow hardening", () => {
       checkinCodeId: 34,
       visitId,
     }));
-    expect(mocks.updateVisitStatus).not.toHaveBeenCalled();
+    expect(mocks.savePostCertificateSurveyTransaction).not.toHaveBeenCalled();
   });
 });

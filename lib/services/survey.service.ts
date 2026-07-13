@@ -1,16 +1,14 @@
 import "server-only";
+import { getCheckinSessionId } from "@/lib/auth/checkin-session";
 import { TouristAccessError, requireTouristVisitAccess } from "@/lib/auth/guards";
 import { getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
-import { upsertVisitExpense } from "@/lib/repositories/expense.repository";
 import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
 import {
   SurveyReferenceError,
-  assertActiveSurveyReferences,
   getSurveyOptions,
   getSatisfactionSurveyByVisitId,
-  upsertSatisfactionSurvey
+  savePostCertificateSurveyTransaction
 } from "@/lib/repositories/survey.repository";
-import { updateVisitStatus, updateVisitSurveyFields } from "@/lib/repositories/visit.repository";
 import type { PostCertificateSurveyInput } from "@/lib/validation/survey";
 
 export class SurveyFlowError extends Error {
@@ -61,13 +59,17 @@ export async function getPostCertificateSurveyPageData(visitId: string) {
     getSatisfactionSurveyByVisitId(visitId)
   ]);
 
-  await recordFunnelEvent({
-    eventName: "survey_started",
-    checkinCodeId: access.visit.checkin_code_id || undefined,
-    attractionId: access.visit.attraction_id,
-    touristId: access.touristId,
-    visitId
-  });
+  if (!existingSurvey) {
+    const sessionId = await getCheckinSessionId();
+    await recordFunnelEvent({
+      eventName: "survey_started",
+      checkinCodeId: access.visit.checkin_code_id || undefined,
+      attractionId: access.visit.attraction_id,
+      touristId: access.touristId,
+      visitId,
+      sessionId,
+    });
+  }
 
   return {
     visit: access.visit,
@@ -80,51 +82,9 @@ export async function submitPostCertificateSurvey(input: PostCertificateSurveyIn
   const access = await requireSurveyEligibleVisit(input.visitId);
 
   try {
-    await assertActiveSurveyReferences({
-      travelCompanionId: input.travelCompanionId,
-      transportModeId: input.transportModeId,
-      travelPurposeId: input.travelPurposeId,
-      expenseCategoryId: input.expenseCategoryId,
-      spendingRangeId: input.spendingRangeId
-    });
-
-    await updateVisitSurveyFields(input.visitId, {
-      travelCompanionId: input.travelCompanionId,
-      groupSize: input.groupSize,
-      transportModeId: input.transportModeId,
-      travelPurposeId: input.travelPurposeId,
-      overnightStatus: input.overnightStatus,
-      nightsCount: input.nightsCount
-    });
-
-    await upsertVisitExpense({
-      visitId: input.visitId,
-      expenseCategoryId: input.expenseCategoryId,
-      spendingRangeId: input.spendingRangeId
-    });
-
-    await upsertSatisfactionSurvey({
-      visitId: input.visitId,
+    await savePostCertificateSurveyTransaction({
       touristId: access.touristId,
-      attractionId: access.visit.attraction_id,
-      overallScore: input.overallSatisfaction,
-      safetyScore: input.safetyScore,
-      cleanlinessScore: input.cleanlinessScore,
-      accessibilityScore: input.accessibilityScore,
-      informationScore: input.informationScore,
-      valueScore: input.valueScore,
-      revisitIntention: input.revisitIntention,
-      recommendIntention: input.recommendIntention,
-      comment: input.optionalComment
-    });
-
-    await updateVisitStatus(input.visitId, "survey_completed");
-    await recordFunnelEvent({
-      eventName: "survey_completed",
-      checkinCodeId: access.visit.checkin_code_id || undefined,
-      attractionId: access.visit.attraction_id,
-      touristId: access.touristId,
-      visitId: input.visitId
+      input,
     });
   } catch (error) {
     if (error instanceof SurveyReferenceError) {

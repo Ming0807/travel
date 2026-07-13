@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import type { PostCertificateSurveyInput } from "@/lib/validation/survey";
 
 export class SurveyReferenceError extends Error {
   constructor(
@@ -10,39 +11,6 @@ export class SurveyReferenceError extends Error {
     this.name = "SurveyReferenceError";
   }
 }
-
-type SurveyReferenceInput = {
-  travelCompanionId: number | null;
-  transportModeId: number | null;
-  travelPurposeId: number | null;
-  expenseCategoryId: number | null;
-  spendingRangeId: number | null;
-};
-
-type SurveyReferenceCheck = {
-  field: keyof SurveyReferenceInput;
-  table:
-    | "travel_companions"
-    | "transport_modes"
-    | "travel_purposes"
-    | "expense_categories"
-    | "spending_ranges";
-  idColumn:
-    | "travel_companion_id"
-    | "transport_mode_id"
-    | "travel_purpose_id"
-    | "expense_category_id"
-    | "spending_range_id";
-  value: number | null;
-};
-
-const SURVEY_REFERENCE_CHECKS: Omit<SurveyReferenceCheck, "value">[] = [
-  { field: "travelCompanionId", table: "travel_companions", idColumn: "travel_companion_id" },
-  { field: "transportModeId", table: "transport_modes", idColumn: "transport_mode_id" },
-  { field: "travelPurposeId", table: "travel_purposes", idColumn: "travel_purpose_id" },
-  { field: "expenseCategoryId", table: "expense_categories", idColumn: "expense_category_id" },
-  { field: "spendingRangeId", table: "spending_ranges", idColumn: "spending_range_id" }
-];
 
 export async function getSurveyOptions() {
   const supabase = createSupabaseServiceRoleClient();
@@ -69,30 +37,58 @@ export async function getSurveyOptions() {
   };
 }
 
-export async function assertActiveSurveyReferences(input: SurveyReferenceInput) {
+type SurveyTransactionResult = {
+  success: boolean;
+  error_code?: string;
+  field?: string;
+  table?: string;
+};
+
+function asSurveyTransactionResult(value: unknown): SurveyTransactionResult | null {
+  if (!value || typeof value !== "object" || !("success" in value)) return null;
+  return value as SurveyTransactionResult;
+}
+
+export async function savePostCertificateSurveyTransaction(params: {
+  touristId: string;
+  input: PostCertificateSurveyInput;
+}) {
+  const { input } = params;
   const supabase = createSupabaseServiceRoleClient();
-  const checks = SURVEY_REFERENCE_CHECKS
-    .map((check) => ({ ...check, value: input[check.field] }))
-    .filter((check): check is SurveyReferenceCheck => check.value !== null);
+  const { data, error } = await supabase.rpc("submit_post_certificate_survey", {
+    p_visit_id: input.visitId,
+    p_tourist_id: params.touristId,
+    p_travel_companion_id: input.travelCompanionId,
+    p_group_size: input.groupSize,
+    p_transport_mode_id: input.transportModeId,
+    p_travel_purpose_id: input.travelPurposeId,
+    p_overnight_status: input.overnightStatus,
+    p_nights_count: input.nightsCount,
+    p_expense_category_id: input.expenseCategoryId,
+    p_spending_range_id: input.spendingRangeId,
+    p_overall_score: input.overallSatisfaction,
+    p_safety_score: input.safetyScore,
+    p_cleanliness_score: input.cleanlinessScore,
+    p_accessibility_score: input.accessibilityScore,
+    p_information_score: input.informationScore,
+    p_value_score: input.valueScore,
+    p_revisit_intention: input.revisitIntention,
+    p_recommend_intention: input.recommendIntention,
+    p_comment: input.optionalComment,
+  });
 
-  await Promise.all(
-    checks.map(async (check) => {
-      const { data, error } = await supabase
-        .from(check.table)
-        .select(check.idColumn)
-        .eq(check.idColumn, check.value)
-        .eq("is_active", true)
-        .maybeSingle();
+  if (error) {
+    throw new Error("SURVEY_TRANSACTION_FAILED");
+  }
 
-      if (error) {
-        throw new Error(`Failed to validate survey reference ${check.field}: ${error.message}`);
-      }
+  const result = asSurveyTransactionResult(data);
+  if (result?.success) return;
 
-      if (!data) {
-        throw new SurveyReferenceError(check.field, check.table);
-      }
-    })
-  );
+  if (result?.error_code === "SURVEY_REFERENCE_INVALID") {
+    throw new SurveyReferenceError(result.field ?? "unknown", result.table ?? "unknown");
+  }
+
+  throw new Error(result?.error_code ?? "SURVEY_TRANSACTION_FAILED");
 }
 
 export async function getSatisfactionSurveyByVisitId(visitId: string) {
@@ -108,44 +104,4 @@ export async function getSatisfactionSurveyByVisitId(visitId: string) {
   }
 
   return data || null;
-}
-
-export async function upsertSatisfactionSurvey(params: {
-  visitId: string;
-  touristId: string;
-  attractionId: number;
-  overallScore: number | null;
-  safetyScore: number | null;
-  cleanlinessScore: number | null;
-  accessibilityScore: number | null;
-  informationScore: number | null;
-  valueScore: number | null;
-  revisitIntention: "yes" | "maybe" | "no" | null;
-  recommendIntention: "yes" | "maybe" | "no" | null;
-  comment: string | null;
-}) {
-  const supabase = createSupabaseServiceRoleClient();
-  const payload = {
-    visit_id: params.visitId,
-    tourist_id: params.touristId,
-    attraction_id: params.attractionId,
-    overall_score: params.overallScore,
-    safety_score: params.safetyScore,
-    cleanliness_score: params.cleanlinessScore,
-    accessibility_score: params.accessibilityScore,
-    information_score: params.informationScore,
-    value_score: params.valueScore,
-    revisit_intention: params.revisitIntention,
-    recommend_intention: params.recommendIntention,
-    comments: params.comment,
-    completed_at: new Date().toISOString()
-  };
-
-  const { error } = await supabase
-    .from("satisfaction_surveys")
-    .upsert(payload, { onConflict: "visit_id" });
-
-  if (error) {
-    throw new Error(`Failed to save survey: ${error.message}`);
-  }
 }

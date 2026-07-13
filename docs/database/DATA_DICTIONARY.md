@@ -1029,12 +1029,15 @@ primary key(expense_id)
 foreign key(visit_id) references visits(visit_id)
 foreign key(expense_category_id) references expense_categories(expense_category_id)
 foreign key(spending_range_id) references spending_ranges(spending_range_id)
+unique(visit_id)
 check(estimated_amount is null or estimated_amount >= 0)
 ```
 
 ## 26.4 Notes
 
-MVP should collect spending range rather than exact amount.
+MVP should collect spending range rather than exact amount. The optional survey
+stores at most one current expense answer per visit. Re-submission updates that
+row, and clearing both expense fields removes it.
 
 ---
 

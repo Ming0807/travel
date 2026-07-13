@@ -27,6 +27,12 @@ Before any production deployment or major testing cycle, verify that the followi
   - `idx_reviews_public_attraction`
   - `idx_reviews_public_restaurant`
 
+### 5. Atomic Survey Submission
+- [ ] **Migration `20260713000000_atomic_survey_submission.sql`**: Apply after the existing dashboard migrations.
+- [ ] **Expense uniqueness**: Confirm `uq_visit_expenses_visit` exists and duplicate historical rows were reduced to the latest answer per visit.
+- [ ] **Survey RPC**: Confirm `submit_post_certificate_survey(...)` exists and execute permission is limited to `service_role`.
+- [ ] **Funnel idempotency**: Confirm `uq_funnel_events_survey_completed_visit` prevents repeated survey submissions from inflating completion counts.
+
 ## Resolving Drift
 If you find that a schema object exists but `supabase db push` or `supabase status` complains about migration drift:
 1. Identify the missing migration version in `supabase_migrations.schema_migrations`.

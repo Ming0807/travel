@@ -624,7 +624,7 @@ For MVP, spending range is better than exact amount.
 ## 10.4 Main Relationships
 
 ```text
-visits 1 -> many visit_expenses
+visits 1 -> 0..1 visit_expenses
 expense_categories 1 -> many visit_expenses
 ```
 

@@ -903,6 +903,11 @@ WITH expense_seed(expense_id, visit_id, category_en, range_en, estimated_amount)
     ('60000000-0000-4000-8000-000000000018', '20000000-0000-4000-8000-000000000023', 'Transportation', '3,001 - 5,000 THB', 3300),
     ('60000000-0000-4000-8000-000000000019', '20000000-0000-4000-8000-000000000023', 'Souvenirs', '1,001 - 3,000 THB', 1800),
     ('60000000-0000-4000-8000-000000000020', '20000000-0000-4000-8000-000000000024', 'Transportation', '1,001 - 3,000 THB', 2100)
+),
+latest_expense_seed AS (
+  SELECT DISTINCT ON (visit_id) *
+  FROM expense_seed
+  ORDER BY visit_id, expense_id DESC
 )
 INSERT INTO public.visit_expenses (expense_id, visit_id, expense_category_id, spending_range_id, estimated_amount)
 SELECT
@@ -911,10 +916,10 @@ SELECT
   ec.expense_category_id,
   sr.spending_range_id,
   e.estimated_amount
-FROM expense_seed e
+FROM latest_expense_seed e
 JOIN public.expense_categories ec ON ec.name_en = e.category_en
 JOIN public.spending_ranges sr ON sr.range_label_en = e.range_en
-ON CONFLICT (expense_id) DO UPDATE
+ON CONFLICT (visit_id) DO UPDATE
 SET expense_category_id = EXCLUDED.expense_category_id,
     spending_range_id = EXCLUDED.spending_range_id,
     estimated_amount = EXCLUDED.estimated_amount;

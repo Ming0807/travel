@@ -32,6 +32,7 @@ Phase 08 does not claim that full dashboard analytics, report export jobs, LINE 
 | `/admin/checkin-codes` | QR/check-in code management | Manage public QR entry codes |
 | `/admin/visits` | Visit records | Read-only operational table |
 | `/admin/surveys` | Survey records | Read-only operational table with privacy controls |
+| `/admin/surveys/[surveyId]` | Restricted survey detail | Voluntary travel behavior, expense range, satisfaction, and permission-gated comment linked to one visit |
 | `/admin/tourists` | Tourist profile summaries | Server-side search, filters, sort, and pagination |
 | `/admin/tourists/[touristId]` | Restricted tourist detail | Visit, certificate, stamp, and survey history without private identity values or storage paths |
 | `/admin/audit-logs` | Audit history | Restricted; may be planned if UI is not implemented |
@@ -156,15 +157,28 @@ Visit lists should show planning-safe fields by default:
 - Survey status.
 - Created timestamp.
 
-Survey lists should show:
+Survey list route `/admin/surveys` should answer who submitted, when, where, and which optional sections contain answers. It includes:
 
-- Visit reference.
-- Attraction and province.
-- Satisfaction score where available.
-- Spending range/category where available.
-- Completion timestamp.
+- Server-side pagination and search by respondent display name.
+- Submitted-date, province, attraction, and score filters.
+- Respondent display name only when `survey.read` is present; the profile link additionally requires `tourist.detail`.
+- Section coverage badges for travel behavior, expense, satisfaction, and optional comment.
+- An answered-field count so a behavior-only response is not presented as empty.
+- A detail action only when `survey.detail` is present.
+- Export only when `export.survey_data` is present. The export remains planning-safe and excludes respondent identity and free-text comments.
 
-Raw comments and direct identifiers should be hidden by default and require explicit permission if exposed later.
+Survey detail route `/admin/surveys/[surveyId]` is read-only and groups the response into:
+
+- Privacy-safe respondent summary with a masked reference and optional profile link.
+- Visit context: attraction, province, visit time, photo spot, and check-in point.
+- Travel behavior: companion, group size, transport, purpose, overnight status, and nights.
+- Self-reported expense range/category, clearly labelled as an estimate rather than verified revenue.
+- Satisfaction scores and revisit/recommend intentions; unanswered values remain `ไม่ได้ตอบ`, never numeric zero.
+- Optional comment visible only with `survey.comment_read`.
+
+Dashboard sections remain aggregate analysis surfaces. Travel behavior, expense, and satisfaction tabs link to `/admin/surveys` for permitted staff who need the supporting records.
+
+Raw device tokens, provider identities, private storage paths, and unrestricted direct identifiers must never appear on these pages.
 
 ## Tourist Records
 
@@ -193,6 +207,8 @@ The admin area may link to dashboard and reporting pages, but Phase 08 should no
 - Admin routes require server-side authentication and permission checks.
 - Attraction, photo spot, and check-in CMS pages are documented as the Phase 08 core.
 - Visit and survey pages are read-only by default.
+- Survey list and detail pages separate aggregate analysis from restricted row-level review.
+- Optional comments require `survey.comment_read`; safe survey export requires `export.survey_data`.
 - Lists require pagination and filters.
 - Sensitive identifiers are hidden by default.
 - Important admin changes are audit logged or explicitly planned for audit logging.

@@ -33,6 +33,7 @@ export type AdminTouristVisitHistory = {
   checkinLabel: string | null;
   certificates: Array<{ generatedAt: string; downloadCount: number }>;
   survey: {
+    surveyId: string;
     overallScore: number | null;
     facilityScore: number | null;
     cleanlinessScore: number | null;
@@ -226,6 +227,7 @@ function mapSurvey(rawValue: unknown): AdminTouristVisitHistory["survey"] {
   if (!raw) return null;
   const row = asRecord(raw);
   return {
+    surveyId: stringValue(row.survey_id),
     overallScore: nullableNumber(row.overall_score),
     facilityScore: nullableNumber(row.facility_score),
     cleanlinessScore: nullableNumber(row.cleanliness_score),
@@ -291,7 +293,7 @@ export async function getAdminTouristDetail(touristId: string): Promise<AdminTou
          photo_spots (spot_name_th),
          checkin_codes (label),
          certificates (generated_at, download_count),
-         satisfaction_surveys (overall_score, facility_score, cleanliness_score, safety_score,
+         satisfaction_surveys (survey_id, overall_score, facility_score, cleanliness_score, safety_score,
            accessibility_score, information_score, value_score, submitted_at)`
       )
       .eq("tourist_id", touristId)

@@ -22,11 +22,20 @@ export async function upsertVisitExpense(params: {
   expenseCategoryId: number | null;
   spendingRangeId: number | null;
 }) {
+  const supabase = createSupabaseServiceRoleClient();
+
   if (!params.expenseCategoryId && !params.spendingRangeId) {
+    const { error } = await supabase
+      .from("visit_expenses")
+      .delete()
+      .eq("visit_id", params.visitId);
+
+    if (error) {
+      throw new Error(`Failed to clear visit expense: ${error.message}`);
+    }
     return;
   }
 
-  const supabase = createSupabaseServiceRoleClient();
   const payload = {
     visit_id: params.visitId,
     expense_category_id: params.expenseCategoryId,
@@ -34,12 +43,9 @@ export async function upsertVisitExpense(params: {
     estimated_amount: null
   };
 
-  const existing = await getVisitExpenseByVisitId(params.visitId);
-  const query = existing
-    ? supabase.from("visit_expenses").update(payload).eq("expense_id", existing.expense_id)
-    : supabase.from("visit_expenses").insert(payload);
-
-  const { error } = await query;
+  const { error } = await supabase
+    .from("visit_expenses")
+    .upsert(payload, { onConflict: "visit_id" });
 
   if (error) {
     throw new Error(`Failed to save visit expense: ${error.message}`);

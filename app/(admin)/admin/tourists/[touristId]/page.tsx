@@ -13,7 +13,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { requirePermission } from "@/lib/auth/guards";
+import { hasPermission, requirePermission } from "@/lib/auth/guards";
 import { getAdminTouristDetail } from "@/lib/repositories/admin-tourist.repository";
 import { adminTouristIdSchema } from "@/lib/validation/admin-tourist";
 
@@ -60,7 +60,8 @@ export default async function AdminTouristDetailPage({
 }: {
   params: Promise<{ touristId: string }>;
 }) {
-  await requirePermission("tourist.detail");
+  const guard = await requirePermission("tourist.detail");
+  const canReadSurveyDetail = hasPermission(guard.actor, "survey.detail");
   const { touristId: rawTouristId } = await params;
   const parsedId = adminTouristIdSchema.safeParse(rawTouristId);
   if (!parsedId.success) notFound();
@@ -183,19 +184,29 @@ export default async function AdminTouristDetailPage({
                   </div>
 
                   {visit.survey ? (
-                    <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4 lg:grid-cols-7">
-                      {[
-                        ["โดยรวม", visit.survey.overallScore],
-                        ["สิ่งอำนวยความสะดวก", visit.survey.facilityScore],
-                        ["ความสะอาด", visit.survey.cleanlinessScore],
-                        ["ความปลอดภัย", visit.survey.safetyScore],
-                        ["การเข้าถึง", visit.survey.accessibilityScore],
-                        ["ข้อมูล", visit.survey.informationScore],
-                        ["ความคุ้มค่า", visit.survey.valueScore],
-                      ].map(([label, value]) => (
-                        <div key={String(label)}><dt className="text-slate-500">{label}</dt><dd className="mt-0.5 font-semibold text-slate-800">{scoreText(value as number | null)}</dd></div>
-                      ))}
-                    </dl>
+                    <div className="mt-3">
+                      <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4 lg:grid-cols-7">
+                        {[
+                          ["โดยรวม", visit.survey.overallScore],
+                          ["สิ่งอำนวยความสะดวก", visit.survey.facilityScore],
+                          ["ความสะอาด", visit.survey.cleanlinessScore],
+                          ["ความปลอดภัย", visit.survey.safetyScore],
+                          ["การเข้าถึง", visit.survey.accessibilityScore],
+                          ["ข้อมูล", visit.survey.informationScore],
+                          ["ความคุ้มค่า", visit.survey.valueScore],
+                        ].map(([label, value]) => (
+                          <div key={String(label)}><dt className="text-slate-500">{label}</dt><dd className="mt-0.5 font-semibold text-slate-800">{scoreText(value as number | null)}</dd></div>
+                        ))}
+                      </dl>
+                      {canReadSurveyDetail && visit.survey ? (
+                        <Link
+                          href={`/admin/surveys/${visit.survey.surveyId}`}
+                          className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-[#075049] underline-offset-4 hover:underline"
+                        >
+                          ดูคำตอบเพิ่มเติมของการเข้าชมครั้งนี้
+                        </Link>
+                      ) : null}
+                    </div>
                   ) : null}
                 </li>
               ))}

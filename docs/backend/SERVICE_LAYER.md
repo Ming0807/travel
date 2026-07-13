@@ -292,7 +292,11 @@ idempotent operations
 database constraints
 ```
 
-MVP can use sequential operations if failure states are handled carefully.
+Post-certificate survey submission uses the
+`submit_post_certificate_survey` PostgreSQL RPC. Visit behavior, expense,
+satisfaction, completion status, and the completion funnel event commit or roll
+back together. `visit_expenses.visit_id` is unique and the RPC uses
+`ON CONFLICT (visit_id) DO UPDATE` for retry-safe edits.
 
 ---
 

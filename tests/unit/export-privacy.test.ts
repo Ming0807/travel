@@ -149,6 +149,11 @@ function createMockSurveyRow(overrides: Partial<AdminSurveyRow> = {}): AdminSurv
     tourist_display_name: "สมชาย ใจดี",
     attraction_name_th: "อุทยานแห่งชาติ",
     province_name_th: "ยะลา",
+    has_travel_behavior: true,
+    has_expense: true,
+    has_satisfaction: true,
+    has_comment: true,
+    answered_field_count: 17,
     ...overrides,
   };
 }

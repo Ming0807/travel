@@ -223,4 +223,28 @@ describe("adminSurveyFiltersSchema", () => {
     const result = adminSurveyFiltersSchema.parse({ provinceId: "5" });
     expect(result.provinceId).toBe(5);
   });
+
+  it("normalizes a respondent search term", () => {
+    const result = adminSurveyFiltersSchema.parse({ search: "  สมชาย  " });
+    expect(result.search).toBe("สมชาย");
+  });
+
+  it("accepts a submitted date range", () => {
+    const result = adminSurveyFiltersSchema.parse({
+      dateFrom: "2026-07-01",
+      dateTo: "2026-07-31",
+    });
+
+    expect(result.dateFrom).toBe("2026-07-01");
+    expect(result.dateTo).toBe("2026-07-31");
+  });
+
+  it("rejects a submitted date range in reverse order", () => {
+    expect(() =>
+      adminSurveyFiltersSchema.parse({
+        dateFrom: "2026-07-31",
+        dateTo: "2026-07-01",
+      })
+    ).toThrow();
+  });
 });

@@ -2277,3 +2277,30 @@ What are its limitations?
 ```
 
 If those questions cannot be answered, the metric should not be shown.
+
+---
+
+## 42. Optional Survey Operational Drill-down
+
+Dashboard travel behavior, expense, and satisfaction sections provide aggregate planning views. They may link authorized staff to `/admin/surveys`, but must not embed unrestricted respondent records inside charts.
+
+Operational drill-down rules:
+
+```text
+Dashboard aggregate view          requires dashboard.read
+Survey response list              requires survey.read
+Single response detail            requires survey.detail
+Free-text optional comment        requires survey.comment_read
+Planning-safe survey export       requires export.survey_data
+Tourist profile link              requires tourist.detail
+```
+
+The response list shows section coverage and answered-field counts. The detail page connects one response to one visit and groups answers into travel behavior, self-reported expense, satisfaction, and optional comment.
+
+Interpretation rules:
+
+- Unanswered optional fields are missing data, not zero.
+- Expense ranges are self-reported estimates, not verified transactions or revenue.
+- Revisit and recommend rates use only respondents who answered the respective question as denominators.
+- Row-level review supports data-quality and service follow-up; policy conclusions should use aggregate dashboard metrics with sample counts.
+- Public or shared dashboard views must not expose respondent names, masked references, comments, tourist IDs, or visit IDs.

@@ -4,6 +4,7 @@ import { MicroSurveyForm } from "@/components/survey/MicroSurveyForm";
 import { SurveySkipCard } from "@/components/survey/SurveySkipCard";
 import { notFound } from "next/navigation";
 import { ClipboardText, ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import { SURVEY_PRIVACY_NOTICE } from "@/lib/content/survey-copy";
 
 export const metadata: Metadata = {
   title: "แบบสอบถาม | Southern Border Tourism",
@@ -75,8 +76,7 @@ export default async function SurveyPage({
         {/* Privacy Notice */}
         <div className="mb-6 rounded-xl bg-white/80 backdrop-blur border border-ink/5 p-4 text-xs leading-5 text-muted shadow-sm animate-fade-in-up delay-100">
           <p className="font-medium">
-            <strong className="text-ink">ข้อมูลของคุณปลอดภัย:</strong> คำตอบทั้งหมดถูกเก็บเป็นข้อมูลรวมเพื่อการวางแผนเท่านั้น
-            ไม่มีการระบุตัวตน และคุณสามารถข้ามข้อใดก็ได้
+            <strong className="text-ink">เราใช้ข้อมูลอย่างรับผิดชอบ:</strong> {SURVEY_PRIVACY_NOTICE}
           </p>
         </div>
 

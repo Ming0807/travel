@@ -1,47 +1,72 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight, ChartBar, Eye, Star } from "@phosphor-icons/react/dist/ssr";
 import { DataTable } from "@/components/admin/DataTable";
-import { StatusBadge } from "@/components/admin/StatusBadge";
+import { ExportButton } from "@/components/admin/ExportButton";
 import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
 import { ListPageShell } from "@/components/admin/ListPageShell";
+import { SearchInput } from "@/components/admin/SearchInput";
+import { StatusBadge } from "@/components/admin/StatusBadge";
+import { SurveyDateFilters } from "@/components/admin/surveys/SurveyDateFilters";
 import { hasPermission, requirePermission } from "@/lib/auth/guards";
-import { listAdminSurveys } from "@/lib/repositories/admin-survey.repository";
-import { adminSurveyFiltersSchema } from "@/lib/validation/admin-survey";
-import { Star, ThumbsUp, ThumbsDown } from "@phosphor-icons/react/dist/ssr";
-import { ExportButton } from "@/components/admin/ExportButton";
 import { getAdminAttractionsList, getAdminProvinces } from "@/lib/repositories/admin-attraction.repository";
+import { listAdminSurveys, type AdminSurveyRow } from "@/lib/repositories/admin-survey.repository";
+import { adminSurveyFiltersSchema } from "@/lib/validation/admin-survey";
 
 export const metadata: Metadata = {
-  title: "Survey Responses | Admin",
+  title: "คำตอบแบบสำรวจ | ระบบผู้ดูแล",
 };
 
 const baseColumns = [
-  { key: "date", label: "วันที่" },
-  { key: "tourist", label: "นักท่องเที่ยว" },
-  { key: "attraction", label: "แหล่งท่องเที่ยว", className: "hidden md:table-cell" },
-  { key: "score", label: "คะแนน" },
-  { key: "intention", label: "กลับมาอีก", className: "hidden lg:table-cell" },
-  { key: "comments", label: "ความคิดเห็น", className: "hidden xl:table-cell" },
+  { key: "date", label: "วันที่ตอบ" },
+  { key: "tourist", label: "ผู้ตอบ" },
+  { key: "attraction", label: "สถานที่", className: "hidden md:table-cell" },
+  { key: "coverage", label: "ข้อมูลที่กรอก", className: "hidden lg:table-cell" },
+  { key: "score", label: "โดยรวม" },
+  { key: "action", label: "" },
 ];
 
 const scoreOptions = [
-  { value: "5", label: "⭐ 5 (ดีมาก)" },
-  { value: "4", label: "⭐ 4 (ดี)" },
-  { value: "3", label: "⭐ 3 (ปานกลาง)" },
-  { value: "2", label: "⭐ 2 (ต้องปรับปรุง)" },
-  { value: "1", label: "⭐ 1 (แย่)" },
+  { value: "5", label: "5 - ดีมาก" },
+  { value: "4", label: "4 - ดี" },
+  { value: "3", label: "3 - ปานกลาง" },
+  { value: "2", label: "2 - ควรปรับปรุง" },
+  { value: "1", label: "1 - ไม่พึงพอใจ" },
 ];
 
-function ScoreStars({ score }: { score: number | null }) {
-  if (score === null) return <span className="text-xs text-slate-400">—</span>;
+function Score({ score }: { score: number | null }) {
+  if (score === null) return <span className="text-xs font-medium text-slate-500">ไม่ได้ตอบ</span>;
   return (
-    <div className="flex items-center gap-1">
-      <Star size={14} weight="fill" className="text-amber-500" />
-      <span className="text-sm font-black text-[#073F37]">{score}</span>
-      <span className="text-[10px] text-slate-400">/5</span>
+    <span className="inline-flex items-center gap-1 font-bold text-[#075049]">
+      <Star aria-hidden="true" size={15} weight="fill" className="text-amber-500" />
+      {score}/5
+    </span>
+  );
+}
+
+function Coverage({ survey }: { survey: AdminSurveyRow }) {
+  const sections = [
+    ["พฤติกรรม", survey.has_travel_behavior],
+    ["ค่าใช้จ่าย", survey.has_expense],
+    ["ความพึงพอใจ", survey.has_satisfaction],
+    ["ความคิดเห็น", survey.has_comment],
+  ] as const;
+  return (
+    <div className="flex max-w-[300px] flex-wrap gap-1.5">
+      {sections.filter(([, answered]) => answered).map(([label]) => (
+        <StatusBadge key={label} label={label} tone="teal" />
+      ))}
+      {!sections.some(([, answered]) => answered) ? <StatusBadge label="ไม่มีข้อมูล" tone="gray" /> : null}
     </div>
   );
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "ไม่ระบุ";
+  return date.toLocaleString("th-TH", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 export default async function AdminSurveysPage({
@@ -50,10 +75,10 @@ export default async function AdminSurveysPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const guard = await requirePermission("survey.read");
-  const canReadComments = hasPermission(guard.actor, "survey.comment_read");
-  const columns = canReadComments ? baseColumns : baseColumns.filter((column) => column.key !== "comments");
-  const raw = await searchParams;
-  const parsed = adminSurveyFiltersSchema.safeParse(raw);
+  const canReadDetail = hasPermission(guard.actor, "survey.detail");
+  const canReadTourist = hasPermission(guard.actor, "tourist.detail");
+  const canExport = hasPermission(guard.actor, "export.survey_data");
+  const parsed = adminSurveyFiltersSchema.safeParse(await searchParams);
   const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
   const [{ items, total, page, pageSize }, provinces, attractions] = await Promise.all([
     listAdminSurveys(filters),
@@ -63,187 +88,88 @@ export default async function AdminSurveysPage({
 
   const provinceOptions = provinces.map((province) => ({
     value: String(province.province_id),
-    label: province.province_name_th ?? `Province ${province.province_id}`,
+    label: province.province_name_th ?? `จังหวัด ${province.province_id}`,
   }));
-
   const attractionOptions = attractions.map((attraction) => ({
     value: String(attraction.attraction_id),
-    label: `${attraction.name_th ?? `Attraction ${attraction.attraction_id}`}${attraction.is_published ? "" : " (Draft)"}`,
+    label: `${attraction.name_th ?? `สถานที่ ${attraction.attraction_id}`}${attraction.is_published ? "" : " (ฉบับร่าง)"}`,
   }));
 
   return (
     <ListPageShell
-      eyebrow="Data Records"
-      title="Survey Responses"
-      description="ข้อมูลจากแบบสอบถามความพึงพอใจหลังสร้างใบประกาศ"
+      eyebrow="ข้อมูลการท่องเที่ยว"
+      title="คำตอบแบบสำรวจ"
+      description="ตรวจคำตอบเพิ่มเติมที่นักท่องเที่ยวสมัครใจกรอก แยกตามผู้ตอบ การเข้าชม สถานที่ และหมวดข้อมูล"
       hideCreateButton
-      headerActions={<ExportButton endpoint="/api/admin/export/surveys" label="Export CSV" />}
+      headerActions={(
+        <>
+          <Link href="/admin/dashboard/satisfaction" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            <ChartBar aria-hidden="true" size={18} /> ดูข้อมูลวิเคราะห์
+          </Link>
+          {canExport ? <ExportButton endpoint="/api/admin/export/surveys" label="ส่งออกข้อมูล" /> : null}
+        </>
+      )}
       total={total}
       page={page}
       pageSize={pageSize}
-      emptyTitle="ไม่พบแบบสอบถาม"
-      emptyDescription="ยังไม่มีนักท่องเที่ยวตอบแบบสอบถาม หรือลองเปลี่ยนตัวกรอง"
-      filters={
+      emptyTitle="ไม่พบคำตอบแบบสำรวจ"
+      emptyDescription="ยังไม่มีคำตอบในเงื่อนไขนี้ ลองเปลี่ยนคำค้นหา ช่วงวันที่ หรือตัวกรอง"
+      filters={(
         <FilterBar>
-          <FilterSelect
-            label="จังหวัด"
-            paramKey="provinceId"
-            options={provinceOptions}
-            allLabel="ทุกจังหวัด"
-          />
-          <FilterSelect
-            label="สถานที่"
-            paramKey="attractionId"
-            options={attractionOptions}
-            allLabel="ทุกสถานที่"
-          />
-          <FilterSelect
-            label="คะแนนขั้นต่ำ"
-            paramKey="minScore"
-            options={scoreOptions}
-            allLabel="ทุกคะแนน"
-          />
-          <FilterSelect
-            label="คะแนนสูงสุด"
-            paramKey="maxScore"
-            options={scoreOptions}
-            allLabel="ทุกคะแนน"
-          />
+          <div className="min-w-[220px] flex-1"><SearchInput placeholder="ค้นหาชื่อผู้ตอบ..." /></div>
+          <SurveyDateFilters />
+          <FilterSelect label="จังหวัด" paramKey="provinceId" options={provinceOptions} allLabel="ทุกจังหวัด" />
+          <FilterSelect label="สถานที่" paramKey="attractionId" options={attractionOptions} allLabel="ทุกสถานที่" />
+          <FilterSelect label="คะแนนขั้นต่ำ" paramKey="minScore" options={scoreOptions} allLabel="ไม่จำกัด" />
+          <FilterSelect label="คะแนนสูงสุด" paramKey="maxScore" options={scoreOptions} allLabel="ไม่จำกัด" />
         </FilterBar>
-      }
+      )}
     >
-      {/* Desktop Table View */}
       <div className="hidden md:block">
-        <DataTable columns={columns}>
+        <DataTable columns={baseColumns}>
           {items.map((survey) => (
-            <tr key={survey.survey_id} className="hover:bg-slate-50/50">
+            <tr key={survey.survey_id} className="hover:bg-slate-50/70">
+              <td className="px-4 py-3 text-xs font-medium text-slate-600">{formatDate(survey.submitted_at)}</td>
               <td className="px-4 py-3">
-                <p className="text-sm font-semibold text-[#073F37]">
-                  {new Date(survey.submitted_at).toLocaleDateString("th-TH", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
+                {canReadTourist ? (
+                  <Link href={`/admin/tourists/${survey.tourist_id}`} className="font-semibold text-[#075049] underline-offset-4 hover:underline">
+                    {survey.tourist_display_name ?? "ผู้ใช้งานแบบผู้เยี่ยมชม"}
+                  </Link>
+                ) : <span className="font-semibold text-slate-800">{survey.tourist_display_name ?? "ผู้ใช้งานแบบผู้เยี่ยมชม"}</span>}
               </td>
-              <td className="px-4 py-3">
-                <p className="text-sm font-semibold text-slate-700">
-                  {survey.tourist_display_name ?? "Guest"}
-                </p>
+              <td className="hidden px-4 py-3 md:table-cell"><p className="font-semibold text-slate-800">{survey.attraction_name_th ?? "ไม่ระบุ"}</p><p className="mt-0.5 text-xs text-slate-500">{survey.province_name_th ?? ""}</p></td>
+              <td className="hidden px-4 py-3 lg:table-cell"><Coverage survey={survey} /></td>
+              <td className="px-4 py-3"><Score score={survey.overall_score} /></td>
+              <td className="px-4 py-3 text-right">
+                {canReadDetail ? (
+                  <Link href={`/admin/surveys/${survey.survey_id}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-[#075049] hover:bg-[#E6F4EF]" aria-label={`ดูคำตอบของ ${survey.tourist_display_name ?? "ผู้ใช้งาน"}`}>
+                    <Eye aria-hidden="true" size={17} /> ดูคำตอบ
+                  </Link>
+                ) : null}
               </td>
-              <td className="hidden px-4 py-3 md:table-cell">
-                <div>
-                  <span className="text-xs font-semibold text-slate-600">
-                    {survey.attraction_name_th ?? "—"}
-                  </span>
-                  {survey.province_name_th && (
-                    <span className="ml-1 text-[10px] text-slate-400">
-                      ({survey.province_name_th})
-                    </span>
-                  )}
-                </div>
-              </td>
-              <td className="px-4 py-3">
-                <ScoreStars score={survey.overall_score} />
-              </td>
-              <td className="hidden px-4 py-3 lg:table-cell">
-                <div className="flex items-center gap-2">
-                  {survey.revisit_intention === "yes" ? (
-                    <StatusBadge label="กลับมาอีก" tone="green" />
-                  ) : survey.revisit_intention === "no" ? (
-                    <StatusBadge label="ไม่กลับ" tone="red" />
-                  ) : (
-                    <span className="text-xs text-slate-400">—</span>
-                  )}
-                  {survey.recommend_intention === "yes" ? (
-                    <ThumbsUp size={14} weight="fill" className="text-emerald-600" />
-                  ) : survey.recommend_intention === "no" ? (
-                    <ThumbsDown size={14} weight="fill" className="text-rose-500" />
-                  ) : null}
-                </div>
-              </td>
-              {canReadComments && (
-                <td className="hidden px-4 py-3 xl:table-cell">
-                  {survey.comments ? (
-                    <p className="max-w-[200px] truncate text-xs text-slate-500" title={survey.comments}>
-                      {survey.comments}
-                    </p>
-                  ) : (
-                    <span className="text-xs text-slate-400">—</span>
-                  )}
-                </td>
-              )}
             </tr>
           ))}
         </DataTable>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="grid gap-4 md:hidden">
+      <div className="grid gap-3 md:hidden">
         {items.map((survey) => (
-          <div
-            key={survey.survey_id}
-            className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[#073F37]">
-                  {new Date(survey.submitted_at).toLocaleDateString("th-TH", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-slate-700">
-                  {survey.tourist_display_name ?? "Guest"}
-                </p>
+          <article key={survey.survey_id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-500">{formatDate(survey.submitted_at)}</p>
+                <p className="mt-1 truncate font-bold text-slate-900">{survey.tourist_display_name ?? "ผู้ใช้งานแบบผู้เยี่ยมชม"}</p>
+                <p className="mt-1 text-sm text-slate-600">{survey.attraction_name_th ?? "ไม่ระบุสถานที่"}</p>
               </div>
-              <ScoreStars score={survey.overall_score} />
+              <Score score={survey.overall_score} />
             </div>
-
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="col-span-2">
-                <p className="text-xs text-slate-400">แหล่งท่องเที่ยว</p>
-                <p className="font-semibold text-slate-700">
-                  {survey.attraction_name_th ?? "—"}
-                  {survey.province_name_th && (
-                    <span className="ml-1 text-xs text-slate-400">({survey.province_name_th})</span>
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">กลับมาอีก</p>
-                <div className="mt-0.5">
-                  {survey.revisit_intention === "yes" ? (
-                    <StatusBadge label="กลับมาอีก" tone="green" />
-                  ) : survey.revisit_intention === "no" ? (
-                    <StatusBadge label="ไม่กลับ" tone="red" />
-                  ) : (
-                    <span className="text-xs text-slate-400">—</span>
-                  )}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">แนะนำ</p>
-                <div className="mt-0.5">
-                  {survey.recommend_intention === "yes" ? (
-                    <ThumbsUp size={16} weight="fill" className="text-emerald-600" />
-                  ) : survey.recommend_intention === "no" ? (
-                    <ThumbsDown size={16} weight="fill" className="text-rose-500" />
-                  ) : (
-                    <span className="text-xs text-slate-400">—</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {canReadComments && survey.comments && (
-              <div className="border-t border-slate-100 pt-3">
-                <p className="mb-1 text-xs text-slate-400">ความคิดเห็น</p>
-                <p className="line-clamp-2 text-sm text-slate-600">{survey.comments}</p>
-              </div>
-            )}
-          </div>
+            <div className="mt-4 border-t border-slate-100 pt-3"><p className="mb-2 text-xs font-semibold text-slate-500">ข้อมูลที่กรอก {survey.answered_field_count} ช่อง</p><Coverage survey={survey} /></div>
+            {canReadDetail ? (
+              <Link href={`/admin/surveys/${survey.survey_id}`} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#075049] px-4 text-sm font-semibold text-white">
+                ดูรายละเอียด <ArrowRight aria-hidden="true" size={17} />
+              </Link>
+            ) : null}
+          </article>
         ))}
       </div>
     </ListPageShell>

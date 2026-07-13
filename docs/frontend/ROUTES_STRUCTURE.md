@@ -551,7 +551,9 @@ Optional or restricted.
 
 Purpose:
 
-- review survey responses
+- review paginated optional responses by respondent, visit, place, date, and answered section
+- open a read-only grouped response detail for travel behavior, expense, satisfaction, and permission-gated comments
+- keep aggregate analytics in `/admin/dashboard/*` and link to supporting records only for authorized staff
 - filter satisfaction and comments
 
 ## 9.8 Media

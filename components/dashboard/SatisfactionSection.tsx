@@ -2,10 +2,11 @@ import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { StackedDistributionCard } from "@/components/dashboard/StackedDistributionCard";
+import { SurveyRecordsLink } from "@/components/dashboard/SurveyRecordsLink";
 import type { DashboardViewModel, DistributionItem } from "@/types/dashboard";
 
 function percent(value: number | null): string {
-  return value === null ? "No data" : `${Math.round(value * 100)}%`;
+  return value === null ? "ยังไม่มีข้อมูล" : `${Math.round(value * 100)}%`;
 }
 
 export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
@@ -25,13 +26,13 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
           <h2 id="satisfaction-heading" className="text-lg font-bold text-slate-900">ความพึงพอใจของนักท่องเที่ยว</h2>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">คำนวณจากแบบสำรวจที่สมัครใจเท่านั้น คะแนนที่เว้นว่างจะไม่ถูกแทนด้วยศูนย์</p>
         </div>
-        <ExportCsvButton />
+        <div className="flex flex-wrap gap-2"><SurveyRecordsLink data={data} /><ExportCsvButton /></div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <KpiCard metric={{ key: "satisfaction_avg", label: "คะแนนเฉลี่ยโดยรวม", value: data.satisfaction.averageOverall === null ? "No data" : `${data.satisfaction.averageOverall.toFixed(1)} / 5`, rawValue: data.satisfaction.averageOverall, valueType: "rating", definition: "คะแนนความพึงพอใจโดยรวมเฉลี่ยจากคำตอบที่มีข้อมูล", note: `จากผู้ตอบ ${data.satisfaction.responseCount.toLocaleString("th-TH")} รายการ` }} sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" />
-        <KpiCard metric={{ key: "revisit_rate", label: "ตั้งใจกลับมาเที่ยวซ้ำ", value: percent(data.satisfaction.revisitIntentionRate), rawValue: data.satisfaction.revisitIntentionRate, valueType: "percentage", definition: "สัดส่วนผู้ตอบที่ระบุว่าตั้งใจกลับมาเที่ยวซ้ำ" }} sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" />
-        <KpiCard metric={{ key: "recommend_rate", label: "ตั้งใจแนะนำต่อ", value: percent(data.satisfaction.recommendIntentionRate), rawValue: data.satisfaction.recommendIntentionRate, valueType: "percentage", definition: "สัดส่วนผู้ตอบที่ระบุว่าจะแนะนำสถานที่ให้ผู้อื่น" }} sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" />
+        <KpiCard metric={{ key: "satisfaction_avg", label: "คะแนนเฉลี่ยโดยรวม", value: data.satisfaction.averageOverall === null ? "ยังไม่มีข้อมูล" : `${data.satisfaction.averageOverall.toFixed(1)} / 5`, rawValue: data.satisfaction.averageOverall, valueType: "rating", definition: "คะแนนความพึงพอใจโดยรวมเฉลี่ยจากคำตอบที่มีข้อมูล", note: `จากผู้ตอบ ${data.satisfaction.responseCount.toLocaleString("th-TH")} รายการ` }} sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" />
+        <KpiCard metric={{ key: "revisit_rate", label: "ตั้งใจกลับมาเที่ยวซ้ำ", value: percent(data.satisfaction.revisitIntentionRate), rawValue: data.satisfaction.revisitIntentionRate, valueType: "percentage", definition: "สัดส่วนผู้ตอบที่ระบุว่าตั้งใจกลับมาเที่ยวซ้ำ" }} sampleCount={data.satisfaction.revisitAnsweredCount} sampleLabel="คำตอบความตั้งใจกลับมา" />
+        <KpiCard metric={{ key: "recommend_rate", label: "ตั้งใจแนะนำต่อ", value: percent(data.satisfaction.recommendIntentionRate), rawValue: data.satisfaction.recommendIntentionRate, valueType: "percentage", definition: "สัดส่วนผู้ตอบที่ระบุว่าจะแนะนำสถานที่ให้ผู้อื่น" }} sampleCount={data.satisfaction.recommendAnsweredCount} sampleLabel="คำตอบความตั้งใจแนะนำ" />
       </div>
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-2">

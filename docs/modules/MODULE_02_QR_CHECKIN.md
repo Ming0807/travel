@@ -1001,6 +1001,12 @@ Attraction Performance Dashboard
 Executive Dashboard
 ```
 
+The optional post-certificate survey is stored against the completed visit. Authorized admins review aggregate trends in the travel behavior, expense, and satisfaction dashboard sections. Row-level responses are available at `/admin/surveys` and `/admin/surveys/[surveyId]` under separate permissions; optional comments require an additional permission.
+
+The tourist-facing privacy notice must state that answers are linked to the current visit to prevent duplicates and are used for authorized operational review and aggregate planning. Do not describe these linked responses as anonymous.
+
+`survey_started` uses the active check-in session for funnel-event deduplication and is not recorded again after a response already exists for that visit.
+
 ---
 
 ## 29. MVP Acceptance Checklist
