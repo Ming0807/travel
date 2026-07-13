@@ -7,6 +7,7 @@ import {
   MapPin,
   Stamp,
   Certificate,
+  LockKey,
   Warning,
   Trophy,
 } from "@phosphor-icons/react/dist/ssr";
@@ -187,9 +188,23 @@ export default async function ProfilePage() {
               <div className="p-8 pb-10">
                 <p className="text-sm font-medium text-ink/60 mb-6">
                   {profile.isGuest
-                    ? "บัญชีผู้เยี่ยมชม (Guest Account)"
+                    ? "ใช้งานแบบผู้เยี่ยมชมบนอุปกรณ์นี้"
                     : `เชื่อมต่อบัญชี: ${profile.linkedProviders.join(", ")}`}
                 </p>
+
+                <div className="mb-7 flex items-start gap-3 border-b border-slate-200 pb-6">
+                  <LockKey aria-hidden="true" className="mt-0.5 shrink-0 text-teal" size={20} weight="fill" />
+                  <div>
+                    <p className="text-sm font-bold text-ink">
+                      {profile.isGuest ? "บัญชีนี้ไม่มีรหัสผ่าน" : "รหัสผ่านถูกจัดการโดยผู้ให้บริการบัญชี"}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {profile.isGuest
+                        ? "ประวัติถูกจดจำด้วยอุปกรณ์นี้ คุณสามารถเชื่อมบัญชีภายหลังเพื่อใช้งานข้ามอุปกรณ์ได้"
+                        : "ระบบจะไม่แสดงรหัสผ่านเดิม เพื่อปกป้องความปลอดภัยของบัญชีคุณ"}
+                    </p>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div>

@@ -6,21 +6,21 @@ import { UserFormClient } from "@/components/admin/users/UserFormClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Invite User | Admin | Southern Border Tourism",
+  title: "เพิ่มผู้ดูแลระบบ | Southern Border Tourism",
 };
 
 export default async function NewAdminUserPage() {
-  await requirePermission("user.create");
+  const guard = await requirePermission("user.manage");
   
   const roles = await getActiveRoles();
 
   return (
-    <AdminShell>
+    <AdminShell admin={guard.actor}>
       <div className="mx-auto max-w-2xl">
         <AdminPageHeader
-          eyebrow="Admin Users"
-          title="Invite New User"
-          description="Send an invitation link to a new administrator and assign their initial roles."
+          eyebrow="ผู้ดูแลระบบ"
+          title="เพิ่มผู้ดูแลระบบ"
+          description="เพิ่มบัญชีผู้ดูแลและกำหนดบทบาทเริ่มต้น โปรดให้สิทธิ์เท่าที่จำเป็นต่อหน้าที่"
         />
 
         <div className="mt-8">

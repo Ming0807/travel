@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   DASHBOARD_METRIC_DEFINITIONS,
+  DASHBOARD_MIN_SAMPLE_SIZE,
   DASHBOARD_ROW_LIMIT,
   DASHBOARD_TOP_ATTRACTION_LIMIT
 } from "@/constants/dashboard-metrics";
@@ -49,10 +50,6 @@ export class DashboardServiceError extends Error {
 }
 
 /* ─── helper: get data source description ─── */
-
-function dataSourceLabel(refreshTimestamp: string | null): "live_database" | "pre_aggregated" {
-  return refreshTimestamp ? "pre_aggregated" : "live_database";
-}
 
 function isRecord(value: unknown): value is Row {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -298,14 +295,25 @@ function buildExpenseSection(expenses: Row[]) {
   };
 }
 
-function yesRate(rows: Row[], key: string) {
+function yesMetric(rows: Row[], key: string) {
   const answered = rows.filter((row) => stringValue(row[key]) !== null);
   const yesCount = answered.filter((row) => stringValue(row[key]) === "yes").length;
-  return safeRate(yesCount, answered.length);
+  return {
+    rate: safeRate(yesCount, answered.length),
+    answeredCount: answered.length
+  };
 }
 
 function buildSatisfactionSection(surveys: Row[], topAttractions: RankedAttraction[]) {
   const overallScores = surveys.map((survey) => numberValue(survey.overall_score));
+  const safetyScores = surveys.map((survey) => numberValue(survey.safety_score));
+  const cleanlinessScores = surveys.map((survey) => numberValue(survey.cleanliness_score));
+  const accessibilityScores = surveys.map((survey) => numberValue(survey.accessibility_score));
+  const informationScores = surveys.map((survey) => numberValue(survey.information_score));
+  const valueScores = surveys.map((survey) => numberValue(survey.value_score));
+  const facilityScores = surveys.map((survey) => numberValue(survey.facility_score));
+  const revisit = yesMetric(surveys, "revisit_intention");
+  const recommend = yesMetric(surveys, "recommend_intention");
   const scoreMap = new Map<string, number>();
   overallScores.forEach((score) => {
     if (score !== null) increment(scoreMap, `${score} / 5`);
@@ -316,14 +324,22 @@ function buildSatisfactionSection(surveys: Row[], topAttractions: RankedAttracti
     responseCount: overallScores.filter((score): score is number => score !== null).length,
     distribution: buildDistribution(scoreMap, overallScores.filter((score) => score !== null).length),
     byAttraction: topAttractions.filter((attraction) => attraction.surveyResponseCount > 0),
-    safetyAverage: averageNullable(surveys.map((survey) => numberValue(survey.safety_score))),
-    cleanlinessAverage: averageNullable(surveys.map((survey) => numberValue(survey.cleanliness_score))),
-    accessibilityAverage: averageNullable(surveys.map((survey) => numberValue(survey.accessibility_score))),
-    informationAverage: averageNullable(surveys.map((survey) => numberValue(survey.information_score))),
-    valueAverage: averageNullable(surveys.map((survey) => numberValue(survey.value_score))),
-    facilityAverage: averageNullable(surveys.map((survey) => numberValue(survey.facility_score))),
-    revisitIntentionRate: yesRate(surveys, "revisit_intention"),
-    recommendIntentionRate: yesRate(surveys, "recommend_intention")
+    safetyAverage: averageNullable(safetyScores),
+    safetyResponseCount: safetyScores.filter((score) => score !== null).length,
+    cleanlinessAverage: averageNullable(cleanlinessScores),
+    cleanlinessResponseCount: cleanlinessScores.filter((score) => score !== null).length,
+    accessibilityAverage: averageNullable(accessibilityScores),
+    accessibilityResponseCount: accessibilityScores.filter((score) => score !== null).length,
+    informationAverage: averageNullable(informationScores),
+    informationResponseCount: informationScores.filter((score) => score !== null).length,
+    valueAverage: averageNullable(valueScores),
+    valueResponseCount: valueScores.filter((score) => score !== null).length,
+    facilityAverage: averageNullable(facilityScores),
+    facilityResponseCount: facilityScores.filter((score) => score !== null).length,
+    revisitIntentionRate: revisit.rate,
+    revisitAnsweredCount: revisit.answeredCount,
+    recommendIntentionRate: recommend.rate,
+    recommendAnsweredCount: recommend.answeredCount
   };
 }
 
@@ -335,12 +351,28 @@ function buildInsights(
   visitsByProvince: DistributionItem[]
 ): InsightCardData[] {
   const insights: InsightCardData[] = [];
+  const visitCounts = topAttractions.map((row) => row.visitCount).sort((a, b) => a - b);
+  const medianVisitCount = visitCounts.length > 0
+    ? visitCounts[Math.floor(visitCounts.length / 2)]
+    : null;
   const lowSatisfactionHighVisit = topAttractions.find(
-    (row) => row.visitCount >= 3 && row.surveyResponseCount >= 2 && row.averageSatisfaction !== null && row.averageSatisfaction < 3.5
+    (row) =>
+      medianVisitCount !== null &&
+      row.visitCount >= medianVisitCount &&
+      row.surveyResponseCount >= DASHBOARD_MIN_SAMPLE_SIZE &&
+      row.averageSatisfaction !== null &&
+      row.averageSatisfaction < 3.5
   );
   const highSatisfactionLowVisit = [...topAttractions]
     .reverse()
-    .find((row) => row.visitCount <= 3 && row.surveyResponseCount >= 2 && row.averageSatisfaction !== null && row.averageSatisfaction >= 4);
+    .find(
+      (row) =>
+        medianVisitCount !== null &&
+        row.visitCount < medianVisitCount &&
+        row.surveyResponseCount >= DASHBOARD_MIN_SAMPLE_SIZE &&
+        row.averageSatisfaction !== null &&
+        row.averageSatisfaction >= 4
+    );
   const topProvince = visitsByProvince[0];
   const topAttraction = topAttractions[0];
 
@@ -351,7 +383,7 @@ function buildInsights(
       description: `${lowSatisfactionHighVisit.attractionName} has meaningful visit activity but lower satisfaction.`,
       evidence: `${lowSatisfactionHighVisit.visitCount} visits, ${lowSatisfactionHighVisit.averageSatisfaction?.toFixed(1)} / 5 satisfaction`,
       suggestedAction: "Review access, cleanliness, safety, information, and visitor flow before heavier promotion.",
-      confidence: lowSatisfactionHighVisit.surveyResponseCount >= 10 ? "high" : "medium"
+      confidence: lowSatisfactionHighVisit.surveyResponseCount >= DASHBOARD_MIN_SAMPLE_SIZE * 2 ? "high" : "medium"
     });
   }
 
@@ -362,33 +394,37 @@ function buildInsights(
       description: `${highSatisfactionLowVisit.attractionName} has high satisfaction with low recorded visits.`,
       evidence: `${highSatisfactionLowVisit.visitCount} visits, ${highSatisfactionLowVisit.averageSatisfaction?.toFixed(1)} / 5 satisfaction`,
       suggestedAction: "Consider featuring it in suggested routes or QR certificate campaign content.",
-      confidence: highSatisfactionLowVisit.surveyResponseCount >= 10 ? "high" : "medium"
+      confidence: highSatisfactionLowVisit.surveyResponseCount >= DASHBOARD_MIN_SAMPLE_SIZE * 2 ? "high" : "medium"
     });
   }
 
-  if (topProvince && visits.length > 0) {
+  if (topProvince && visits.length >= DASHBOARD_MIN_SAMPLE_SIZE) {
     insights.push({
       title: "Province concentration",
       category: "concentration",
       description: `${topProvince.label} currently holds the largest share of recorded visits.`,
       evidence: `${topProvince.value} of ${visits.length} visits (${topProvince.percent === null ? "No data" : `${Math.round(topProvince.percent * 100)}%`})`,
       suggestedAction: "Compare QR placement and promotion coverage across provinces before interpreting this as actual demand.",
-      confidence: visits.length >= 30 ? "medium" : "low"
+      confidence: visits.length >= DASHBOARD_MIN_SAMPLE_SIZE * 2 ? "high" : "medium"
     });
   }
 
-  if (topAttraction) {
+  if (topAttraction && topAttraction.visitCount >= DASHBOARD_MIN_SAMPLE_SIZE) {
     insights.push({
       title: "Top attraction signal",
       category: "opportunity",
       description: `${topAttraction.attractionName} leads the selected period by recorded visits.`,
       evidence: `${topAttraction.visitCount} visits and ${topAttraction.certificateCount} certificates`,
       suggestedAction: "Use as a benchmark for QR placement, certificate appeal, and suggested route design.",
-      confidence: topAttraction.visitCount >= 30 ? "high" : "medium"
+      confidence: topAttraction.visitCount >= DASHBOARD_MIN_SAMPLE_SIZE * 2 ? "high" : "medium"
     });
   }
 
-  if (satisfactionResponseCount === 0 || surveyCompletionRate === null || surveyCompletionRate < 0.2) {
+  if (
+    satisfactionResponseCount < DASHBOARD_MIN_SAMPLE_SIZE ||
+    surveyCompletionRate === null ||
+    surveyCompletionRate < 0.2
+  ) {
     insights.push({
       title: "Survey sample limitation",
       category: "data_quality",
@@ -396,13 +432,25 @@ function buildInsights(
       evidence:
         surveyCompletionRate === null
           ? "No certificate denominator for survey completion."
-          : `${Math.round(surveyCompletionRate * 100)}% survey completion rate`,
+          : `${Math.round(surveyCompletionRate * 100)}% survey completion rate from ${satisfactionResponseCount} responses`,
       suggestedAction: "Keep the survey short and continue offering it after certificate download.",
       confidence: "low"
     });
   }
 
   return insights.slice(0, 5);
+}
+
+function hasFunnelIncompatibleFilters(filters: DashboardFilters) {
+  return Boolean(
+    filters.originCountryId ||
+    filters.originProvinceId ||
+    filters.ageGroup ||
+    filters.transportModeId ||
+    filters.travelPurposeId ||
+    filters.satisfactionMin ||
+    filters.satisfactionMax
+  );
 }
 
 function buildKpis(params: {
@@ -562,87 +610,65 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
   }
 
   const visits = getVisitRows(payload);
-  const useSummary = payload.summary.kpis !== null;
-
-  // Use pre-aggregated summary data when available; fall back to live query computation
-  const summary = payload.summary;
-  const topAttractions = useSummary && summary.topAttractions.length > 0
-    ? summary.topAttractions
-    : buildTopAttractions(visits, payload.certificates, payload.surveys);
-  const visitsByProvince = useSummary && summary.visitsByProvince.length > 0
-    ? summary.visitsByProvince
-    : buildVisitsByProvince(visits);
+  const topAttractions = buildTopAttractions(visits, payload.certificates, payload.surveys);
+  const visitsByProvince = buildVisitsByProvince(visits);
   const expenseSection = buildExpenseSection(payload.expenses);
   const satisfactionSection = buildSatisfactionSection(payload.surveys, topAttractions);
 
-  // Build funnel stages from summary or live data
-  let funnelStages;
-  if (useSummary && summary.funnelEventCounts.size > 0) {
-    funnelStages = buildFunnelStages(summary.funnelEventCounts);
-  } else {
-    const eventCounts = new Map<string, number>();
+  // Funnel events before visit creation cannot be segmented by tourist profile or
+  // survey fields. Returning unfiltered counts would violate global filter semantics.
+  const funnelFiltersUnsupported = hasFunnelIncompatibleFilters(filters);
+  const eventCounts = new Map<string, number>();
+  if (!funnelFiltersUnsupported) {
     payload.funnelEvents.forEach((event) => increment(eventCounts, stringValue(event.event_type)));
-    funnelStages = buildFunnelStages(eventCounts);
   }
+  const funnelStages = buildFunnelStages(eventCounts);
   const largestDropOffStage =
     [...funnelStages]
       .filter((stage) => stage.dropOffFromPrevious !== null)
       .sort((a, b) => (b.dropOffFromPrevious ?? 0) - (a.dropOffFromPrevious ?? 0))[0] ?? null;
 
-  // Survey completion rate: use summary if available, otherwise live data
-  const summaryKpis = summary.kpis;
-  const surveyCompletionRate = useSummary
-    ? safeRate(summaryKpis!.surveyCount, summaryKpis!.certificateCount)
-    : safeRate(payload.surveys.length, payload.certificates.length);
+  const surveyCompletionRate = safeRate(payload.surveys.length, payload.certificates.length);
 
   const uniqueTouristKeys = new Set(visits.map((visit) => stringValue(visit.tourist_id)).filter(Boolean));
   const kpis = buildKpis({
-    touristProfileCount: useSummary ? summaryKpis!.uniqueTourists : uniqueTouristKeys.size,
-    visitCount: useSummary ? summaryKpis!.totalVisits : visits.length,
-    qrScanCount: useSummary ? summaryKpis!.qrScanCount : (() => {
-      const ec = new Map<string, number>();
-      payload.funnelEvents.forEach((e) => increment(ec, stringValue(e.event_type)));
-      return ec.get("qr_scanned") ?? 0;
-    })(),
-    landingViewCount: useSummary ? summaryKpis!.landingViewCount : (() => {
-      const ec = new Map<string, number>();
-      payload.funnelEvents.forEach((e) => increment(ec, stringValue(e.event_type)));
-      return ec.get("landing_viewed") ?? 0;
-    })(),
-    certificateCount: useSummary ? summaryKpis!.certificateCount : payload.certificates.length,
-    stampCount: useSummary ? summaryKpis!.stampCount : payload.stamps.length,
+    touristProfileCount: uniqueTouristKeys.size,
+    visitCount: visits.length,
+    qrScanCount: eventCounts.get("qr_scanned") ?? 0,
+    landingViewCount: eventCounts.get("landing_viewed") ?? 0,
+    certificateCount: payload.certificates.length,
+    stampCount: payload.stamps.length,
     surveyCompletionRate,
-    averageSatisfaction: useSummary ? summaryKpis!.avgSatisfaction : satisfactionSection.averageOverall,
-    estimatedMin: useSummary ? summaryKpis!.totalExpenseMin : expenseSection.estimatedMin,
-    estimatedMax: useSummary ? summaryKpis!.totalExpenseMax : expenseSection.estimatedMax,
-    hasOpenEndedRange: useSummary ? summaryKpis!.hasOpenEndedRange : expenseSection.hasOpenEndedRange,
+    averageSatisfaction: satisfactionSection.averageOverall,
+    estimatedMin: expenseSection.estimatedMin,
+    estimatedMax: expenseSection.estimatedMax,
+    hasOpenEndedRange: expenseSection.hasOpenEndedRange,
     topAttraction: topAttractions[0] ?? null
   });
 
-  // Build trend from summary or live data
-  const visitTrend = useSummary && summary.trend.length > 0
-    ? summary.trend
-    : buildVisitTrend(visits  );
+  const visitTrend = buildVisitTrend(visits);
 
   const dataQualityWarnings: string[] = [];
   if (payload.isTruncated) {
-    dataQualityWarnings.push(`Dashboard query reached the ${DASHBOARD_ROW_LIMIT.toLocaleString("th-TH")} row MVP limit. Narrow filters for more precise results.`);
+    dataQualityWarnings.push(`ข้อมูลถึงขีดจำกัด ${DASHBOARD_ROW_LIMIT.toLocaleString("th-TH")} รายการ กรุณาเลือกช่วงเวลาหรือตัวกรองให้แคบลงเพื่อให้ผลแม่นยำขึ้น`);
   }
-  if (useSummary) {
-    dataQualityWarnings.push(`Pre-aggregated summary data refreshed ${summary.refreshTimestamp ? new Date(summary.refreshTimestamp).toLocaleDateString("th-TH") : "N/A"}. Demographic distributions (origin, age, transport) still use live queries.`);
+  if (funnelFiltersUnsupported) {
+    dataQualityWarnings.push(
+      "ไม่สามารถแสดงเส้นทางผู้ใช้ร่วมกับตัวกรองโปรไฟล์ พฤติกรรม หรือความพึงพอใจได้ เนื่องจากเหตุการณ์ก่อนสร้างรายการเข้าชมยังเชื่อมโยงกับนักท่องเที่ยวอย่างปลอดภัยไม่ได้"
+    );
   }
   if (satisfactionSection.responseCount === 0) {
-    dataQualityWarnings.push("No satisfaction responses for the selected filters. Average satisfaction is No data, not 0.");
+    dataQualityWarnings.push("ยังไม่มีคำตอบด้านความพึงพอใจสำหรับตัวกรองนี้ จึงแสดงว่าไม่มีข้อมูลแทนการแสดงคะแนน 0");
   }
   if (expenseSection.responseCount === 0) {
-    dataQualityWarnings.push("No expense survey responses for the selected filters. Estimated spending is No data.");
+    dataQualityWarnings.push("ยังไม่มีคำตอบด้านค่าใช้จ่ายสำหรับตัวกรองนี้ จึงยังไม่สามารถประมาณค่าใช้จ่ายได้");
   }
 
   const viewModel: Omit<DashboardViewModel, 'dashboardAlerts'> = {
     filters,
     generatedAt: new Date().toISOString(),
-    dataSource: dataSourceLabel(payload.summary.refreshTimestamp),
-    summaryRefreshTimestamp: payload.summary.refreshTimestamp,
+    dataSource: "live_database",
+    summaryRefreshTimestamp: null,
     viewer,
     referenceOptions: payload.referenceOptions,
     kpis,

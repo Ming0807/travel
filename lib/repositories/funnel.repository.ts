@@ -7,11 +7,23 @@ export async function recordFunnelEvent(params: {
   attractionId?: number;
   touristId?: string;
   visitId?: string;
+  sessionId?: string | null;
 }) {
   const supabase = createSupabaseServiceRoleClient();
-  
-  // Note: we let this fail silently if needed, or just swallow errors in the service layer, 
-  // because funnel tracking should not block the main user flow.
+
+  if (params.sessionId && params.checkinCodeId) {
+    const { data: existing } = await supabase
+      .from("funnel_events")
+      .select("event_id")
+      .eq("event_type", params.eventName)
+      .eq("checkin_code_id", params.checkinCodeId)
+      .contains("metadata", { session_id: params.sessionId })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) return;
+  }
+
   const { error } = await supabase
     .from("funnel_events")
     .insert({
@@ -19,7 +31,10 @@ export async function recordFunnelEvent(params: {
       checkin_code_id: params.checkinCodeId || null,
       tourist_id: params.touristId || null,
       visit_id: params.visitId || null,
-      metadata: params.attractionId ? { attraction_id: params.attractionId } : {},
+      metadata: {
+        ...(params.attractionId ? { attraction_id: params.attractionId } : {}),
+        ...(params.sessionId ? { session_id: params.sessionId } : {}),
+      },
     });
 
   if (error) {

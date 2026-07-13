@@ -1,140 +1,36 @@
-import type { DashboardViewModel } from "@/types/dashboard";
+import { Info } from "@phosphor-icons/react/dist/ssr";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
-import { KpiCard } from "@/components/dashboard/KpiCard";
-import { ExpenseDetailTable } from "@/components/dashboard/ExpenseDetailTable";
-import { formatEstimatedSpending } from "@/lib/services/dashboard-math";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
-import { Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { formatEstimatedSpending } from "@/lib/services/dashboard-math";
+import type { DashboardViewModel } from "@/types/dashboard";
 
 export function ExpenseSection({ data }: { data: DashboardViewModel }) {
-  const hasSpendingData = data.expense.responseCount > 0;
-
   return (
-    <section className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+    <section className="space-y-5" aria-labelledby="expense-heading">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-[#073F37]">
-            Expense and estimated spending
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Self-reported range-based estimates only. This section must never be
-            read as revenue. Data comes from optional survey responses.
-          </p>
+          <h2 id="expense-heading" className="text-lg font-bold text-slate-900">ค่าใช้จ่ายโดยประมาณ</h2>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">ประมาณจากช่วงค่าใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง ไม่ใช่รายได้จริงหรือข้อมูลธุรกรรม</p>
         </div>
         <ExportCsvButton />
       </div>
 
-      {/* Methodology info banner */}
-      <div className="flex items-start gap-3 rounded-2xl border border-violet-200/70 bg-violet-50 p-4 text-sm leading-6 text-violet-800">
-        <Info size={20} weight="fill" className="mt-0.5 shrink-0 text-violet-500" />
-        <div>
-          <strong className="font-black">Data methodology:</strong>{" "}
-          {data.expense.methodologyNote}
-        </div>
+      <div className="flex items-start gap-3 rounded-md border border-sky-200 bg-sky-50 p-3 text-sm leading-6 text-sky-900">
+        <Info aria-hidden="true" className="mt-0.5 shrink-0" size={18} weight="fill" />
+        <p><strong>วิธีคำนวณ:</strong> รวมค่าต่ำสุดและสูงสุดของช่วงค่าใช้จ่ายที่ผู้ตอบเลือก ช่องที่ไม่ตอบจะไม่ถูกรวม และผลลัพธ์ไม่ใช่รายได้ที่ตรวจสอบแล้ว</p>
       </div>
 
-      {/* Low sample warning */}
-      {hasSpendingData && data.expense.responseCount < 10 && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
-          <WarningCircle size={20} weight="fill" className="mt-0.5 shrink-0 text-amber-500" />
-          <div>
-            <strong className="font-black">Small sample:</strong> Only{" "}
-            {data.expense.responseCount} expense responses recorded.
-            Estimates may not be representative.
-          </div>
-        </div>
-      )}
-
-      {/* KPI cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <KpiCard
-          metric={{
-            key: "expense_estimate",
-            label: "Estimated Spending",
-            value: formatEstimatedSpending(
-              data.expense.estimatedMin,
-              data.expense.estimatedMax,
-              data.expense.hasOpenEndedRange
-            ),
-            rawValue: data.expense.estimatedMin,
-            valueType: "currency_range",
-            definition:
-              "Estimated spending uses min/max values from selected spending ranges. It is not verified revenue.",
-            note: `${data.expense.responseCount} survey expense responses`,
-          }}
-          index={0}
-          sampleCount={data.expense.responseCount}
-          sampleLabel="expense responses"
-        />
-        <KpiCard
-          metric={{
-            key: "expense_min",
-            label: "Min estimate (sum of mins)",
-            value:
-              data.expense.estimatedMin === null
-                ? "No data"
-                : `${data.expense.estimatedMin.toLocaleString("th-TH")} THB`,
-            rawValue: data.expense.estimatedMin,
-            valueType: "currency_range",
-            definition:
-              "Sum of minimum values of all selected spending ranges. Lower bound of estimated spending.",
-          }}
-          index={1}
-          sampleCount={data.expense.responseCount}
-          sampleLabel="expense responses"
-        />
-        <KpiCard
-          metric={{
-            key: "expense_max",
-            label: "Max estimate (sum of maxs)",
-            value:
-              data.expense.estimatedMax === null
-                ? data.expense.hasOpenEndedRange
-                  ? "Open-ended range"
-                  : "No data"
-                : `${data.expense.estimatedMax.toLocaleString("th-TH")} THB`,
-            rawValue: data.expense.estimatedMax,
-            valueType: "currency_range",
-            definition:
-              "Sum of maximum values of selected spending ranges. May be open-ended if range has no upper limit.",
-          }}
-          index={2}
-          sampleCount={data.expense.responseCount}
-          sampleLabel="expense responses"
-        />
+      <div className="grid gap-3 md:grid-cols-3">
+        <KpiCard metric={{ key: "expense_estimate", label: "ช่วงค่าใช้จ่ายรวมโดยประมาณ", value: formatEstimatedSpending(data.expense.estimatedMin, data.expense.estimatedMax, data.expense.hasOpenEndedRange), rawValue: data.expense.estimatedMin, valueType: "currency_range", definition: "ผลรวมค่าต่ำสุดและสูงสุดจากช่วงค่าใช้จ่ายที่ผู้ตอบเลือก", note: `จากคำตอบ ${data.expense.responseCount.toLocaleString("th-TH")} รายการ` }} sampleCount={data.expense.responseCount} sampleLabel="คำตอบค่าใช้จ่าย" />
+        <KpiCard metric={{ key: "expense_min", label: "ค่าประมาณต่ำสุด", value: data.expense.estimatedMin === null ? "No data" : `${data.expense.estimatedMin.toLocaleString("th-TH")} บาท`, rawValue: data.expense.estimatedMin, valueType: "currency_range", definition: "ผลรวมค่าต่ำสุดของช่วงค่าใช้จ่ายที่เลือก" }} sampleCount={data.expense.responseCount} sampleLabel="คำตอบค่าใช้จ่าย" />
+        <KpiCard metric={{ key: "expense_max", label: "ค่าประมาณสูงสุด", value: data.expense.estimatedMax === null ? (data.expense.hasOpenEndedRange ? "ไม่กำหนดเพดาน" : "No data") : `${data.expense.estimatedMax.toLocaleString("th-TH")} บาท`, rawValue: data.expense.estimatedMax, valueType: "currency_range", definition: "ผลรวมค่าสูงสุดของช่วงค่าใช้จ่าย หากมีช่วงปลายเปิดจะไม่แสดงเพดานที่ทำให้เข้าใจผิด" }} sampleCount={data.expense.responseCount} sampleLabel="คำตอบค่าใช้จ่าย" />
       </div>
 
-      {/* Charts grid */}
-      <div className="grid gap-5 xl:grid-cols-2">
-        <BarChartCard
-          data={data.expense.spendingRanges}
-          definition={data.expense.methodologyNote}
-          emptyDescription="No spending range responses in selected filters."
-          title="Spending range distribution"
-          sampleCount={data.expense.responseCount}
-          sampleLabel="expense responses"
-        />
-        <BarChartCard
-          data={data.expense.expenseCategories}
-          definition="Expense category distribution if respondents selected a category."
-          emptyDescription="No expense category responses in selected filters."
-          title="Expense categories"
-          sampleCount={data.expense.responseCount}
-          sampleLabel="expense responses"
-        />
+      <div className="grid min-w-0 gap-4 xl:grid-cols-2">
+        <BarChartCard data={data.expense.spendingRanges} definition="การกระจายช่วงค่าใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง ไม่ใช่ยอดธุรกรรมจริง" emptyDescription="ยังไม่มีคำตอบช่วงค่าใช้จ่ายสำหรับตัวกรองที่เลือก" title="ช่วงค่าใช้จ่ายที่ผู้ใช้เลือก" sampleCount={data.expense.responseCount} sampleLabel="คำตอบค่าใช้จ่าย" />
+        <BarChartCard data={data.expense.expenseCategories} definition="จำนวนคำตอบแยกตามหมวดค่าใช้จ่ายที่ผู้ใช้เลือก" emptyDescription="ยังไม่มีข้อมูลหมวดค่าใช้จ่าย" title="หมวดค่าใช้จ่าย" sampleCount={data.expense.responseCount} sampleLabel="คำตอบค่าใช้จ่าย" />
       </div>
-
-      {/* Detail table */}
-      {hasSpendingData && (
-        <ExpenseDetailTable
-          spendingRanges={data.expense.spendingRanges}
-          expenseCategories={data.expense.expenseCategories}
-          estimatedMin={data.expense.estimatedMin}
-          estimatedMax={data.expense.estimatedMax}
-          responseCount={data.expense.responseCount}
-        />
-      )}
     </section>
   );
 }

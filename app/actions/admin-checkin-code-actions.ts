@@ -37,12 +37,18 @@ export async function createCheckinCodeAction(prevState: ActionResult, formData:
       return { success: false, error: "รหัสนี้ถูกใช้งานแล้ว", fieldErrors: { code: ["กรุณาใช้รหัสอื่นที่ยังไม่ซ้ำ"] } };
     }
 
-    const spotMatchesAttraction = await photoSpotBelongsToAttraction(parsed.data.photoSpotId, parsed.data.attractionId);
+    const spotMatchesAttraction = await photoSpotBelongsToAttraction(
+      parsed.data.photoSpotId,
+      parsed.data.attractionId,
+      parsed.data.isActive
+    );
     if (!spotMatchesAttraction) {
       return {
         success: false,
-        error: "จุดถ่ายภาพนี้ไม่ได้อยู่ในสถานที่ที่เลือก",
-        fieldErrors: { photoSpotId: ["เลือกจุดถ่ายภาพที่อยู่ภายใต้สถานที่เดียวกัน"] },
+        error: "จุดถ่ายภาพไม่พร้อมใช้กับ QR นี้",
+        fieldErrors: {
+          photoSpotId: ["เลือกจุดถ่ายภาพที่อยู่ในสถานที่เดียวกันและเปิดใช้งาน หรือปิดใช้งาน QR นี้ก่อน"],
+        },
       };
     }
 
@@ -80,12 +86,18 @@ export async function updateCheckinCodeAction(checkinCodeId: number, prevState: 
       return { success: false, error: "รหัสนี้ถูกใช้งานแล้ว", fieldErrors: { code: ["กรุณาใช้รหัสอื่นที่ยังไม่ซ้ำ"] } };
     }
 
-    const spotMatchesAttraction = await photoSpotBelongsToAttraction(parsed.data.photoSpotId, parsed.data.attractionId);
+    const spotMatchesAttraction = await photoSpotBelongsToAttraction(
+      parsed.data.photoSpotId,
+      parsed.data.attractionId,
+      parsed.data.isActive
+    );
     if (!spotMatchesAttraction) {
       return {
         success: false,
-        error: "จุดถ่ายภาพนี้ไม่ได้อยู่ในสถานที่ที่เลือก",
-        fieldErrors: { photoSpotId: ["เลือกจุดถ่ายภาพที่อยู่ภายใต้สถานที่เดียวกัน"] },
+        error: "จุดถ่ายภาพไม่พร้อมใช้กับ QR นี้",
+        fieldErrors: {
+          photoSpotId: ["เลือกจุดถ่ายภาพที่อยู่ในสถานที่เดียวกันและเปิดใช้งาน หรือปิดใช้งาน QR นี้ก่อน"],
+        },
       };
     }
 

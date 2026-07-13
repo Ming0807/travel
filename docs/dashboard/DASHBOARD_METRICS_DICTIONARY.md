@@ -99,6 +99,60 @@ A stamp is a collectible digital record usually unique per tourist per attractio
 
 A tourist can visit the same attraction multiple times but usually earns one stamp for that attraction.
 
+## 3.7 Request-Level Data Source Contract
+
+All populated metrics returned by one dashboard request must use one declared data source contract.
+
+Current production contract:
+
+```text
+source = live_database
+generated_at = server response time
+summary_refresh_timestamp = null
+```
+
+`dashboard_daily_summary` remains available for refresh and operational inspection, but it must not be mixed into a live response until it supports the same dimensions, filters, and metric formulas as the complete dashboard view model. A stale or partially populated summary must never replace individual widgets inside an otherwise live response.
+
+When pre-aggregated mode is enabled in the future, every populated metric in that response must come from the same refresh snapshot and `summary_refresh_timestamp` must be the actual refresh time used.
+
+## 3.8 Filter Contract
+
+Visit, certificate, stamp, survey, and expense metrics apply destination and tourist-profile filters through the associated `visits` record. Transport and travel-purpose filters use `visits.transport_mode_id` and `visits.travel_purpose_id` consistently.
+
+Funnel stages before visit creation cannot be attributed safely to origin, age, transport, travel purpose, or satisfaction. With any of those filters active:
+
+```text
+funnel counts = unavailable for that request
+QR scan and landing KPI counts = unavailable for that request
+```
+
+The service must not return unfiltered funnel counts beside filtered visit metrics.
+
+## 3.9 Minimum Sample Contract
+
+Default analytical threshold:
+
+```text
+minimum_sample_size = 30
+```
+
+The threshold applies before creating warning or critical classifications from:
+
+```text
+satisfaction averages and dimensions
+revisit and recommendation intention
+funnel drop-off
+survey completion
+expense patterns
+sustainable tourism insight classifications
+```
+
+Values below the threshold may still be displayed as descriptive data with the response count, but must be marked as limited evidence and must not generate warning or critical claims.
+
+## 3.10 Zero-Denominator Contract
+
+Rates use `null` when the denominator is zero. This applies to survey completion, intention rates, and funnel conversion/drop-off. The UI must display `No data`, not `0%`, when no denominator exists.
+
 ---
 
 ## 4. Metric Format Standards

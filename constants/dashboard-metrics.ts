@@ -1,6 +1,7 @@
 export const DASHBOARD_DATE_RANGE_MAX_DAYS = 366;
 export const DASHBOARD_ROW_LIMIT = 10000;
 export const DASHBOARD_TOP_ATTRACTION_LIMIT = 8;
+export const DASHBOARD_MIN_SAMPLE_SIZE = 30;
 
 export const DASHBOARD_METRIC_DEFINITIONS = {
   touristProfiles:

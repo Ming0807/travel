@@ -6,16 +6,15 @@ import { NoDataState } from "@/components/dashboard/NoDataState";
 import { ChartLineUp } from "@phosphor-icons/react/dist/ssr";
 
 function formatDateLabel(raw: string): string {
-  // Expects YYYY-MM-DD, shows "Jan 15" or "15 Jan" style
   const d = new Date(raw + "T00:00:00.000Z");
   if (isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return d.toLocaleDateString("th-TH", { month: "short", day: "numeric" });
 }
 
 function formatDateFull(raw: string): string {
   const d = new Date(raw + "T00:00:00.000Z");
   if (isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString("th-TH", {
     weekday: "short",
     year: "numeric",
     month: "short",
@@ -67,11 +66,11 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
 
   if (points.length === 0) {
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-        <h2 className="text-lg font-black text-slate-800">Visit Trend</h2>
-        <p className="mt-1 text-sm text-slate-500">Visits over time.</p>
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-base font-bold text-slate-900">แนวโน้มการเข้าชม</h2>
+        <p className="mt-1 text-sm text-slate-500">การเข้าชมที่บันทึกตามช่วงเวลา</p>
         <div className="mt-4">
-          <NoDataState description="No visits in the selected date range." />
+          <NoDataState description="ยังไม่มีรายการเข้าชมในช่วงวันที่ที่เลือก" />
         </div>
       </section>
     );
@@ -101,17 +100,17 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
   const linePath = areaPath;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-slate-800">Visit Trend</h2>
+          <h2 className="text-base font-bold text-slate-900">แนวโน้มการเข้าชม</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Visits are visit records only. QR scans are tracked separately.
+            นับเฉพาะรายการเข้าชมที่บันทึกสำเร็จ ไม่รวมการสแกน QR
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-lg bg-tealSoft px-3 py-1.5 text-sm font-bold text-teal">
           <ChartLineUp size={18} weight="bold" />
-          {points.reduce((s, p) => s + p.value, 0).toLocaleString("th-TH")} total
+          รวม {points.reduce((s, p) => s + p.value, 0).toLocaleString("th-TH")} ครั้ง
         </div>
       </div>
 
@@ -121,7 +120,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           className="w-full h-auto"
           preserveAspectRatio="xMidYMid meet"
           role="img"
-          aria-label="Visit trend chart"
+          aria-label="กราฟแนวโน้มการเข้าชม"
         >
           <defs>
             <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
@@ -154,7 +153,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
                   x={PADDING.left - 8}
                   y={y + 4}
                   textAnchor="end"
-                  className="fill-slate-400 text-[10px] font-bold"
+                  className="fill-slate-500 text-xs font-bold"
                 >
                   {tick.toLocaleString("th-TH")}
                 </text>
@@ -243,12 +242,12 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
                     width="150"
                     height="52"
                   >
-                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-card text-center">
-                      <p className="text-[10px] font-bold text-slate-500">
+                    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-center shadow-card">
+                      <p className="text-xs font-bold text-slate-500">
                         {formatDateFull(pt.label)}
                       </p>
                       <p className="text-sm font-black text-[#073F37]">
-                        {pt.value.toLocaleString("th-TH")} visits
+                        {pt.value.toLocaleString("th-TH")} ครั้ง
                       </p>
                     </div>
                   </foreignObject>
@@ -271,7 +270,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
                 x={pt.x}
                 y={HEIGHT - 8}
                 textAnchor="middle"
-                className="fill-slate-400 text-[10px] font-bold"
+                className="fill-slate-500 text-xs font-bold"
               >
                 {formatDateLabel(pt.label)}
               </text>

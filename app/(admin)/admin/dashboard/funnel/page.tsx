@@ -3,13 +3,12 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { FunnelSection } from "@/components/dashboard/FunnelSection";
-import { FunnelDetailTable } from "@/components/dashboard/FunnelDetailTable";
 import { RefreshSummaryButton } from "@/components/dashboard/RefreshSummaryButton";
 import { NoDataState } from "@/components/dashboard/NoDataState";
 import { DashboardServiceError, getDashboardAnalytics } from "@/lib/services/dashboard.service";
 
 export const metadata: Metadata = {
-  title: "Funnel Analytics | Admin Dashboard"
+  title: "เส้นทางการใช้งาน | Dashboard"
 };
 
 type DashboardPageProps = {
@@ -32,8 +31,8 @@ export default async function AdminDashboardFunnelPage({ searchParams = {} }: Da
     return (
       <AdminShell>
         <div className="space-y-6">
-          <AdminPageHeader eyebrow="Phase 09" title={isValidationError ? "Invalid filters" : "Dashboard unavailable"} description="Dashboard analytics are protected." />
-          <NoDataState title="Error" description={caughtError?.message ?? "Could not load data."} />
+          <AdminPageHeader eyebrow="ศูนย์วิเคราะห์ข้อมูล" title={isValidationError ? "ตัวกรองไม่ถูกต้อง" : "ไม่สามารถเปิด Dashboard ได้"} description="ข้อมูลวิเคราะห์ได้รับการป้องกันและแสดงเฉพาะข้อมูลแบบสรุป" />
+          <NoDataState title="เกิดข้อผิดพลาด" description={isValidationError ? "กรุณาตรวจสอบช่วงวันที่และตัวกรอง" : "ระบบยังโหลดข้อมูลไม่ได้ กรุณาลองใหม่อีกครั้ง"} />
         </div>
       </AdminShell>
     );
@@ -43,24 +42,21 @@ export default async function AdminDashboardFunnelPage({ searchParams = {} }: Da
 
   return (
     <DashboardShell data={data}>
-      <div className="mb-6 flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <div>
           <p className="text-sm font-semibold text-slate-700">
-            Summary data:{" "}
+            ข้อมูลสรุป:{" "}
             {refreshTime
-              ? `Last refreshed ${new Date(refreshTime).toLocaleString("th-TH")}`
-              : "Not yet refreshed (using live queries)"}
+              ? `ประมวลผลล่าสุด ${new Date(refreshTime).toLocaleString("th-TH")}`
+              : "ยังไม่ได้ประมวลผลล่วงหน้า ขณะนี้ใช้ข้อมูลปัจจุบัน"}
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
-            Pre-computed aggregates for faster dashboard loading. Click refresh to recompute from raw data.
+            ประมวลผลข้อมูลรวมล่วงหน้าเพื่อให้ Dashboard โหลดเร็วขึ้น
           </p>
         </div>
         <RefreshSummaryButton />
       </div>
       <FunnelSection data={data} />
-      <div className="mt-6">
-        <FunnelDetailTable stages={data.funnel.stages} />
-      </div>
     </DashboardShell>
   );
 }

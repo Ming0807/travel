@@ -1,4 +1,4 @@
-import { requirePermission } from "@/lib/auth/guards";
+import { hasPermission, requirePermission } from "@/lib/auth/guards";
 import { getAllRolesWithPermissions } from "@/lib/repositories/role.repository";
 import { ListPageShell } from "@/components/admin/ListPageShell";
 import { RoleListClient } from "@/components/admin/roles/RoleListClient";
@@ -6,26 +6,27 @@ import { ExportButton } from "@/components/admin/ExportButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Admin Roles | Southern Border Tourism",
+  title: "บทบาทและสิทธิ์ | Southern Border Tourism",
 };
 
 export default async function AdminRolesPage() {
-  await requirePermission("role.manage");
+  const guard = await requirePermission("role.manage");
   
   const roles = await getAllRolesWithPermissions();
 
   return (
     <ListPageShell
-      eyebrow="Access Control"
-      title="Roles & Permissions"
-      description="Manage system roles and assign fine-grained permissions to control access."
+      eyebrow="การเข้าถึงระบบ"
+      title="บทบาทและสิทธิ์"
+      description="กำหนดขอบเขตการทำงานของผู้ดูแลแต่ละกลุ่ม โดยไม่ลดทอนการตรวจสอบสิทธิ์ฝั่งเซิร์ฟเวอร์"
       createHref="/admin/roles/new"
-      createLabel="Create Role"
-      headerActions={<ExportButton endpoint="/api/admin/export/roles" label="Export CSV" />}
-      hideCreateButton
+      createLabel="สร้างบทบาท"
+      headerActions={<ExportButton endpoint="/api/admin/export/roles" label="ส่งออก CSV" />}
+      hideCreateButton={!hasPermission(guard.actor, "role.manage")}
       total={roles.length}
       page={1}
       pageSize={roles.length || 100}
+      admin={guard.actor}
     >
       <div className="mt-8">
         <RoleListClient initialRoles={roles} />

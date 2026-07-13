@@ -1,126 +1,42 @@
-import type { DashboardViewModel } from "@/types/dashboard";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
-import { DonutChartCard } from "@/components/dashboard/DonutChartCard";
-import { TouristDetailTable } from "@/components/dashboard/TouristDetailTable";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
-
-function getUniqueProfileCount(data: DashboardViewModel): number {
-  return data.touristProfile.originCountries.reduce((sum, item) => sum + item.value, 0);
-}
+import { StackedDistributionCard } from "@/components/dashboard/StackedDistributionCard";
+import type { DashboardViewModel } from "@/types/dashboard";
 
 export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
-  const profileCount = getUniqueProfileCount(data);
-  const hasIdentityData = data.touristProfile.identityProviders.length > 0 &&
-    data.touristProfile.identityProviders.some((item) => item.value > 0);
+  const profileCount = data.touristProfile.originCountries.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <section className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+    <section className="space-y-5" aria-labelledby="tourist-profile-heading">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-[#073F37]">Tourist profile summary</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Aggregated profile signals only. These are profiles, not verified
-            unique people. Identity provider data shows how tourists authenticate.
-          </p>
+          <h2 id="tourist-profile-heading" className="text-lg font-bold text-slate-900">ลักษณะนักท่องเที่ยว</h2>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">แสดงข้อมูลโปรไฟล์แบบสรุป ไม่ใช่จำนวนบุคคลจริงที่ผ่านการยืนยัน และไม่นำข้อมูลระบุตัวตนมาแสดง</p>
         </div>
         <ExportCsvButton />
       </div>
 
-      {/* Summary KPI row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            Total profiles
-          </p>
-          <p className="mt-1 text-2xl font-black text-[#073F37] tabular-nums">
-            {profileCount.toLocaleString("th-TH")}
-          </p>
-        </div>
-        <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            Countries represented
-          </p>
-          <p className="mt-1 text-2xl font-black text-[#073F37] tabular-nums">
-            {data.touristProfile.originCountries.length}
-          </p>
-        </div>
-        <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            Thai provinces
-          </p>
-          <p className="mt-1 text-2xl font-black text-[#073F37] tabular-nums">
-            {data.touristProfile.originProvinces.length}
-          </p>
-        </div>
-        <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            Age groups
-          </p>
-          <p className="mt-1 text-2xl font-black text-[#073F37] tabular-nums">
-            {data.touristProfile.ageGroups.length}
-          </p>
-        </div>
+      <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          ["โปรไฟล์ที่มีรายการเข้าชม", profileCount],
+          ["ประเทศต้นทางที่พบ", data.touristProfile.originCountries.length],
+          ["จังหวัดต้นทางในไทย", data.touristProfile.originProvinces.length],
+          ["ช่วงอายุที่มีข้อมูล", data.touristProfile.ageGroups.length],
+        ].map(([label, value]) => (
+          <div key={String(label)} className="rounded-lg border border-slate-200 bg-white p-4">
+            <dt className="text-xs font-semibold text-slate-600">{label}</dt>
+            <dd className="mt-1 text-2xl font-black tabular-nums text-[#073F37]">{Number(value).toLocaleString("th-TH")}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="grid min-w-0 gap-4 xl:grid-cols-2">
+        <BarChartCard data={data.touristProfile.originCountries} definition="จำนวนโปรไฟล์ที่มีรายการเข้าชม แยกตามประเทศต้นทางที่ผู้ใช้ระบุ" emptyDescription="ยังไม่มีข้อมูลประเทศต้นทางสำหรับตัวกรองที่เลือก" title="ประเทศต้นทาง" sampleCount={profileCount} sampleLabel="โปรไฟล์" />
+        <BarChartCard data={data.touristProfile.originProvinces} definition="จำนวนโปรไฟล์จากประเทศไทย แยกตามจังหวัดต้นทางที่ผู้ใช้ระบุ" emptyDescription="ยังไม่มีข้อมูลจังหวัดต้นทางในประเทศไทย" title="จังหวัดต้นทางในประเทศไทย" sampleCount={profileCount} sampleLabel="โปรไฟล์" />
+        <BarChartCard data={data.touristProfile.ageGroups} definition="การกระจายช่วงอายุที่ผู้ใช้เลือก ระบบไม่เก็บวันเกิดแบบละเอียด" emptyDescription="ยังไม่มีข้อมูลช่วงอายุ" title="ช่วงอายุ" sampleCount={profileCount} sampleLabel="โปรไฟล์" />
+        <BarChartCard data={data.touristProfile.preferredLanguages} definition="ภาษาที่ผู้ใช้เลือกใช้ในระบบเมื่อมีข้อมูล" emptyDescription="ยังไม่มีข้อมูลภาษาที่ต้องการ" title="ภาษาที่ต้องการ" sampleCount={profileCount} sampleLabel="โปรไฟล์" />
+        <StackedDistributionCard data={data.touristProfile.identityProviders} definition="สัดส่วนวิธีเข้าใช้งาน เช่น ผู้เยี่ยมชม Google LINE หรืออีเมล โดยหนึ่งโปรไฟล์อาจมีหลายวิธีเชื่อมบัญชี" emptyDescription="ยังไม่มีข้อมูลวิธีเข้าใช้งาน" title="วิธีเข้าใช้งาน" />
       </div>
-
-      {/* Charts grid */}
-      <div className="grid gap-5 xl:grid-cols-2">
-        <BarChartCard
-          data={data.touristProfile.originCountries}
-          definition="Counts distinct tourist profiles with visits, grouped by self-reported origin country."
-          emptyDescription="No origin country data in selected filters."
-          title="Origin country"
-          sampleCount={profileCount}
-          sampleLabel="profiles"
-        />
-        <BarChartCard
-          data={data.touristProfile.originProvinces}
-          definition="Counts distinct tourist profiles with visits, grouped by Thai origin province when provided."
-          emptyDescription="No Thai origin province data in selected filters."
-          title="Thai origin province"
-          sampleCount={profileCount}
-          sampleLabel="profiles"
-        />
-        <DonutChartCard
-          data={data.touristProfile.ageGroups}
-          definition="Self-reported age group distribution. Exact birthdate is not collected."
-          emptyDescription="No age group data in selected filters."
-          title="Age group"
-          sampleCount={profileCount}
-          sampleLabel="profiles"
-        />
-        <DonutChartCard
-          data={data.touristProfile.preferredLanguages}
-          definition="Preferred language distribution where available."
-          emptyDescription="No language data in selected filters."
-          title="Preferred language"
-          sampleCount={profileCount}
-          sampleLabel="profiles"
-        />
-      </div>
-
-      {/* Identity providers (full width) */}
-      {hasIdentityData && (
-        <div className="max-w-md">
-          <DonutChartCard
-            data={data.touristProfile.identityProviders}
-            definition="How tourists authenticated: anonymous device, LINE, email, or Google."
-            emptyDescription="No identity provider data."
-            title="Identity provider"
-            sampleCount={profileCount}
-            sampleLabel="profiles"
-          />
-        </div>
-      )}
-
-      {/* Detail table */}
-      <TouristDetailTable
-        originCountries={data.touristProfile.originCountries}
-        originProvinces={data.touristProfile.originProvinces}
-        ageGroups={data.touristProfile.ageGroups}
-        preferredLanguages={data.touristProfile.preferredLanguages}
-        identityProviders={data.touristProfile.identityProviders}
-      />
     </section>
   );
 }

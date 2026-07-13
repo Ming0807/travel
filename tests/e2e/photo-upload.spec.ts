@@ -10,19 +10,16 @@ test.describe('Tourist Photo Upload Flow', () => {
 
     // 1. Visit the QR Check-in Landing Page
     await page.goto(`/checkin/${checkinCode}`);
-    await expect(page.locator('text=เริ่มต้นเช็คอิน')).toBeVisible();
-    await page.click('text=เริ่มต้นเช็คอิน');
-    
-    // Identity selection
-    await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}/identity`));
-    await page.click('text=ดำเนินการต่อแบบ (Guest)');
+    await expect(page.getByRole('link', { name: 'สร้างใบประกาศของฉัน' })).toBeVisible();
+    await page.getByRole('link', { name: 'สร้างใบประกาศของฉัน' }).click();
 
     // 2. Minimal Profile Form
     await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}/start`));
     await page.fill('input[name="displayName"]', 'Test Photo Uploader');
-    await page.fill('input[name="originCountry"]', 'Thailand');
-    await page.fill('input[name="originProvince"]', 'Bangkok');
-    await page.check('input[type="radio"][name="ageGroup"][value="25-34"]', { force: true });
+    await page.selectOption('select[name="originCountryId"]', { label: 'ไทย' });
+    await page.getByRole('combobox', { name: 'จังหวัดที่เดินทางมา' }).click();
+    await page.getByRole('option', { name: /กรุงเทพมหานคร/ }).click();
+    await page.check('input[type="radio"][name="ageGroup"][value="25_34"]', { force: true });
     await page.check('input[name="hasConsented"]');
     await page.click('button[type="submit"]');
 
@@ -79,14 +76,14 @@ test.describe('Tourist Photo Upload Flow', () => {
 
     // To speed up, we can just hit the checkin flow again
     await page.goto(`/checkin/${checkinCode}`);
-    await page.click('text=เริ่มต้นเช็คอิน');
-    await page.click('text=ดำเนินการต่อแบบ (Guest)');
+    await page.getByRole('link', { name: 'สร้างใบประกาศของฉัน' }).click();
 
     await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}/start`));
     await page.fill('input[name="displayName"]', 'Test Error Uploader');
-    await page.fill('input[name="originCountry"]', 'Thailand');
-    await page.fill('input[name="originProvince"]', 'Bangkok');
-    await page.check('input[type="radio"][name="ageGroup"][value="25-34"]', { force: true });
+    await page.selectOption('select[name="originCountryId"]', { label: 'ไทย' });
+    await page.getByRole('combobox', { name: 'จังหวัดที่เดินทางมา' }).click();
+    await page.getByRole('option', { name: /กรุงเทพมหานคร/ }).click();
+    await page.check('input[type="radio"][name="ageGroup"][value="25_34"]', { force: true });
     await page.check('input[name="hasConsented"]');
     await page.click('button[type="submit"]');
 

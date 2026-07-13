@@ -1,8 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Power, PencilSimple } from "@phosphor-icons/react";
-import Link from "next/link";
+import { Power } from "@phosphor-icons/react";
 import { toggleCheckinCodeActiveAction } from "@/app/actions/admin-checkin-code-actions";
 
 interface CheckinCodeStatusActionProps {
@@ -14,30 +13,33 @@ export function CheckinCodeStatusAction({ checkinCodeId, isActive }: CheckinCode
   const [isPending, startTransition] = useTransition();
 
   const handleToggle = () => {
+    const confirmed = window.confirm(
+      isActive
+        ? "ปิดใช้งาน QR นี้หรือไม่? นักท่องเที่ยวจะไม่สามารถเช็กอินผ่านรหัสนี้ได้"
+        : "เปิดใช้งาน QR นี้หรือไม่?"
+    );
+    if (!confirmed) return;
+
     startTransition(async () => {
-      await toggleCheckinCodeActiveAction(checkinCodeId);
+      const result = await toggleCheckinCodeActiveAction(checkinCodeId);
+      if (!result.success) {
+        window.alert(result.error || "เปลี่ยนสถานะ QR ไม่สำเร็จ");
+      }
     });
   };
 
   return (
-    <div className="flex items-center justify-end gap-1">
-      <Link
-        href={`/admin/checkin-codes/${checkinCodeId}/edit`}
-        title="Edit Check-in Code"
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0A6B62]"
-      >
-        <PencilSimple size={16} weight="bold" />
-      </Link>
-      <button
-        onClick={handleToggle}
-        disabled={isPending}
-        title={isActive ? "Deactivate" : "Activate"}
-        className={`flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-slate-100 disabled:opacity-40 ${
-          isActive ? "text-emerald-600 hover:text-rose-600" : "text-slate-400 hover:text-emerald-600"
-        }`}
-      >
-        <Power size={16} weight="bold" />
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={handleToggle}
+      disabled={isPending}
+      aria-label={isActive ? "ปิดใช้งาน QR" : "เปิดใช้งาน QR"}
+      title={isActive ? "ปิดใช้งาน QR" : "เปิดใช้งาน QR"}
+      className={`flex h-11 w-11 items-center justify-center rounded-lg transition hover:bg-slate-100 disabled:opacity-40 ${
+        isActive ? "text-emerald-600 hover:text-rose-600" : "text-slate-500 hover:text-emerald-600"
+      }`}
+    >
+      <Power size={18} weight="bold" />
+    </button>
   );
 }

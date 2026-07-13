@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { DistributionItem } from "@/types/dashboard";
 import { NoDataState } from "@/components/dashboard/NoDataState";
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
+import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 
 const DONUT_COLORS = [
@@ -40,7 +41,7 @@ export function DonutChartCard({
   data,
   emptyDescription,
   sampleCount,
-  sampleLabel = "responses",
+  sampleLabel = "คำตอบ",
 }: DonutChartCardProps) {
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const total = data.reduce((sum, item) => sum + item.value, 0);
@@ -52,7 +53,7 @@ export function DonutChartCard({
           <h2 className="text-lg font-black text-slate-800">{title}</h2>
           <MetricTooltip definition={definition} />
         </div>
-        {sampleCount !== undefined && sampleCount < 10 ? (
+        {sampleCount !== undefined && sampleCount < DASHBOARD_MIN_SAMPLE_SIZE ? (
           <div className="mt-4">
             <SmallSampleWarning count={sampleCount} label={sampleLabel} />
           </div>
@@ -90,7 +91,7 @@ export function DonutChartCard({
         <MetricTooltip definition={definition} />
       </div>
 
-      {sampleCount !== undefined && sampleCount < 10 ? (
+      {sampleCount !== undefined && sampleCount < DASHBOARD_MIN_SAMPLE_SIZE ? (
         <div className="mt-4">
           <SmallSampleWarning count={sampleCount} label={sampleLabel} />
         </div>

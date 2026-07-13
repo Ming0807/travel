@@ -299,6 +299,52 @@ Future routes:
 /admin/dashboard/official-comparison
 ```
 
+## 7.1 Thai-First Dashboard UX Baseline
+
+The admin dashboard uses Thai as the primary interface language. Metric keys and
+database field names remain unchanged in the service layer, while visible titles,
+filters, tabs, alerts, chart labels, empty states, and export notices use Thai.
+
+The first viewport prioritizes decision-making context:
+
+```text
+page purpose
+selected date range
+data source and last refresh time
+sample size
+compact primary filters
+five primary KPIs at most
+```
+
+The five executive KPIs are:
+
+```text
+tourist profiles with visits
+recorded visits
+certificates generated
+survey completion rate
+average satisfaction
+```
+
+Other metrics remain available in their relevant analysis sections and exports.
+Alerts are collapsed by default and show no more than the three highest-priority
+items when expanded. A large alert set must not push the actual dashboard below
+the first viewport.
+
+Chart selection rules:
+
+```text
+time series -> line chart
+ranked categories -> horizontal bars
+small mutually exclusive distribution -> stacked distribution
+many categories -> bars, not donut charts
+funnel -> sequential stages with count, conversion, and drop-off
+```
+
+Every visual chart must provide an accessible table or equivalent structured text.
+Mobile layouts must not create page-level horizontal overflow. Wide data tables may
+scroll inside their own bounded container.
+
 ---
 
 ## 8. Global Filters

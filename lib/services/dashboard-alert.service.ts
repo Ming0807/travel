@@ -1,4 +1,5 @@
 import "server-only";
+import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import type { DashboardAlert, DashboardAlertSeverity, DashboardViewModel } from "@/types/dashboard";
 
 /* ─── severity thresholds ─── */
@@ -44,18 +45,31 @@ function buildSatisfactionAlerts(data: DashboardViewModel): DashboardAlert[] {
     return alerts;
   }
 
+  if (s.responseCount < DASHBOARD_MIN_SAMPLE_SIZE) {
+    alerts.push(
+      alert(
+        "satisfaction_low_sample",
+        "info",
+        "Satisfaction sample is still limited",
+        `There are ${s.responseCount.toLocaleString("th-TH")} responses. At least ${DASHBOARD_MIN_SAMPLE_SIZE.toLocaleString("th-TH")} are required before creating satisfaction warnings.`,
+        "satisfaction",
+      ),
+    );
+    return alerts;
+  }
+
   // Dimension score checks
-  const dimensions: { key: string; label: string; value: number | null }[] = [
-    { key: "safety", label: "Safety", value: s.safetyAverage },
-    { key: "cleanliness", label: "Cleanliness", value: s.cleanlinessAverage },
-    { key: "accessibility", label: "Accessibility", value: s.accessibilityAverage },
-    { key: "information", label: "Information", value: s.informationAverage },
-    { key: "value", label: "Value", value: s.valueAverage },
-    { key: "facility", label: "Facility (legacy)", value: s.facilityAverage },
+  const dimensions: { key: string; label: string; value: number | null; responseCount: number }[] = [
+    { key: "safety", label: "Safety", value: s.safetyAverage, responseCount: s.safetyResponseCount },
+    { key: "cleanliness", label: "Cleanliness", value: s.cleanlinessAverage, responseCount: s.cleanlinessResponseCount },
+    { key: "accessibility", label: "Accessibility", value: s.accessibilityAverage, responseCount: s.accessibilityResponseCount },
+    { key: "information", label: "Information", value: s.informationAverage, responseCount: s.informationResponseCount },
+    { key: "value", label: "Value", value: s.valueAverage, responseCount: s.valueResponseCount },
+    { key: "facility", label: "Facility (legacy)", value: s.facilityAverage, responseCount: s.facilityResponseCount },
   ];
 
   for (const dim of dimensions) {
-    if (dim.value === null) continue;
+    if (dim.value === null || dim.responseCount < DASHBOARD_MIN_SAMPLE_SIZE) continue;
 
     if (dim.value < DIMENSION_CRITICAL) {
       alerts.push(
@@ -87,7 +101,7 @@ function buildSatisfactionAlerts(data: DashboardViewModel): DashboardAlert[] {
   }
 
   // Overall satisfaction low warning
-  if (s.averageOverall !== null && s.averageOverall < DIMENSION_WARNING && s.responseCount >= 3) {
+  if (s.averageOverall !== null && s.averageOverall < DIMENSION_WARNING) {
     alerts.push(
       alert(
         "overall_satisfaction_low",
@@ -103,7 +117,11 @@ function buildSatisfactionAlerts(data: DashboardViewModel): DashboardAlert[] {
   }
 
   // Revisit intention low
-  if (s.revisitIntentionRate !== null && s.revisitIntentionRate < INTENTION_WARNING) {
+  if (
+    s.revisitAnsweredCount >= DASHBOARD_MIN_SAMPLE_SIZE &&
+    s.revisitIntentionRate !== null &&
+    s.revisitIntentionRate < INTENTION_WARNING
+  ) {
     alerts.push(
       alert(
         "revisit_intention_low",
@@ -116,7 +134,11 @@ function buildSatisfactionAlerts(data: DashboardViewModel): DashboardAlert[] {
   }
 
   // Recommend intention low
-  if (s.recommendIntentionRate !== null && s.recommendIntentionRate < INTENTION_WARNING) {
+  if (
+    s.recommendAnsweredCount >= DASHBOARD_MIN_SAMPLE_SIZE &&
+    s.recommendIntentionRate !== null &&
+    s.recommendIntentionRate < INTENTION_WARNING
+  ) {
     alerts.push(
       alert(
         "recommend_intention_low",
@@ -173,7 +195,17 @@ function buildFunnelAlerts(data: DashboardViewModel): DashboardAlert[] {
     const stageIndex = stages.findIndex((s) => s.key === largestDropOffStage.key);
     const prevStage = stageIndex > 0 ? stages[stageIndex - 1] : null;
 
-    if (dropPct >= FUNNEL_DROP_CRITICAL) {
+    if ((prevStage?.count ?? 0) < DASHBOARD_MIN_SAMPLE_SIZE) {
+      alerts.push(
+        alert(
+          "funnel_low_sample",
+          "info",
+          "Funnel sample is still limited",
+          `The largest drop-off is based on fewer than ${DASHBOARD_MIN_SAMPLE_SIZE.toLocaleString("th-TH")} events at the previous stage, so it is not classified as a warning.`,
+          "funnel",
+        ),
+      );
+    } else if (dropPct >= FUNNEL_DROP_CRITICAL) {
       alerts.push(
         alert(
           "funnel_drop_critical",
@@ -205,7 +237,12 @@ function buildFunnelAlerts(data: DashboardViewModel): DashboardAlert[] {
   // Check for sequential stage drops > 50% (not just the largest)
   for (let i = 1; i < stages.length; i++) {
     const stage = stages[i];
-    if (stage.dropOffFromPrevious !== null && stage.dropOffFromPrevious >= FUNNEL_DROP_WARNING) {
+    const previousCount = stages[i - 1]?.count ?? 0;
+    if (
+      previousCount >= DASHBOARD_MIN_SAMPLE_SIZE &&
+      stage.dropOffFromPrevious !== null &&
+      stage.dropOffFromPrevious >= FUNNEL_DROP_WARNING
+    ) {
       // Skip if this is the same as the largest drop-off (already reported)
       if (largestDropOffStage?.key === stage.key) continue;
       alerts.push(
@@ -229,9 +266,16 @@ function buildSurveyAlerts(data: DashboardViewModel): DashboardAlert[] {
   const alerts: DashboardAlert[] = [];
 
   const surveyCompletionKpi = data.kpis.find((k) => k.key === "survey_completion_rate");
+  const certificateKpi = data.kpis.find((k) => k.key === "certificates_generated");
   const surveyCompletionRaw = surveyCompletionKpi?.rawValue;
+  const certificateCount = certificateKpi?.rawValue ?? 0;
 
-  if (surveyCompletionRaw !== null && surveyCompletionRaw !== undefined && surveyCompletionRaw < SURVEY_COMPLETION_WARNING) {
+  if (
+    certificateCount >= DASHBOARD_MIN_SAMPLE_SIZE &&
+    surveyCompletionRaw !== null &&
+    surveyCompletionRaw !== undefined &&
+    surveyCompletionRaw < SURVEY_COMPLETION_WARNING
+  ) {
     alerts.push(
       alert(
         "survey_completion_low",
@@ -262,13 +306,13 @@ function buildExpenseAlerts(data: DashboardViewModel): DashboardAlert[] {
         "expense",
       ),
     );
-  } else if (e.responseCount < 5) {
+  } else if (e.responseCount < DASHBOARD_MIN_SAMPLE_SIZE) {
     alerts.push(
       alert(
         "expense_low_sample",
         "info",
         "Limited expense data",
-        `Only ${e.responseCount} expense responses available. Spending estimates may not be reliable.`,
+        `Only ${e.responseCount} expense responses are available. At least ${DASHBOARD_MIN_SAMPLE_SIZE} are required before treating spending patterns as decision-support evidence.`,
         "expense",
       ),
     );

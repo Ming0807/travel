@@ -4,18 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { List, X, MapPin, CaretDown } from "@phosphor-icons/react";
-import { navGroups, type NavGroup as NavGroupType, type NavItem } from "./admin-nav-items";
+import { getVisibleNavGroups, navGroups, type NavGroup as NavGroupType, type NavItem } from "./admin-nav-items";
+import { useAdminAccess } from "./AdminAccessContext";
 
 export function MobileAdminNav() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const access = useAdminAccess();
+  const visibleGroups = getVisibleNavGroups(navGroups, access.permissions, access.resolved);
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
         className="p-2 -ml-2 text-slate-500 hover:text-slate-800 lg:hidden"
-        aria-label="Open navigation menu"
+        aria-label="เปิดเมนูผู้ดูแลระบบ"
       >
         <List size={24} weight="bold" />
       </button>
@@ -30,6 +33,8 @@ export function MobileAdminNav() {
 
       {/* Drawer */}
       <div
+        aria-hidden={!isOpen}
+        inert={!isOpen}
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-50 shadow-2xl transition-transform duration-300 ease-in-out lg:hidden overflow-y-auto ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
@@ -39,18 +44,19 @@ export function MobileAdminNav() {
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
               <MapPin size={20} weight="fill" />
             </div>
-            <span className="text-lg font-black tracking-tight text-slate-800 uppercase">Globe Trekker</span>
+            <span className="text-lg font-black tracking-tight text-slate-800">ระบบจัดการท่องเที่ยว</span>
           </Link>
           <button
             onClick={() => setIsOpen(false)}
             className="p-2 text-slate-400 hover:text-slate-800 rounded-full hover:bg-slate-100 transition-colors"
+            aria-label="ปิดเมนูผู้ดูแลระบบ"
           >
             <X size={24} weight="bold" />
           </button>
         </div>
 
-        <nav className="p-4 pb-20 space-y-6" aria-label="Mobile admin navigation">
-          {navGroups.map((group) => (
+        <nav className="p-4 pb-20 space-y-6" aria-label="เมนูผู้ดูแลระบบบนมือถือ">
+          {visibleGroups.map((group) => (
             <MobileNavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} closeDrawer={() => setIsOpen(false)} />
           ))}
         </nav>

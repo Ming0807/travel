@@ -27,10 +27,16 @@ describe("FilterSelect", () => {
   it("renders correctly with default 'allLabel'", () => {
     render(<FilterSelect label="สถานะ" paramKey="status" options={options} />);
     expect(screen.getByText("สถานะ")).toBeInTheDocument();
-    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(screen.getByLabelText("สถานะ")).toBeInTheDocument();
     expect(screen.getByText("ทั้งหมด")).toBeInTheDocument();
     expect(screen.getByText("Published")).toBeInTheDocument();
     expect(screen.getByText("Draft")).toBeInTheDocument();
+  });
+
+  it("uses a mobile-friendly full-width 44px control", () => {
+    render(<FilterSelect label="สถานะ" paramKey="status" options={options} />);
+
+    expect(screen.getByLabelText("สถานะ")).toHaveClass("h-11", "w-full");
   });
 
   it("uses currentValue from searchParams", () => {

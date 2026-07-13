@@ -352,7 +352,7 @@ export async function getAdminPhotoSpotsList() {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("photo_spots")
-    .select("photo_spot_id, attraction_id, spot_name_th")
+    .select("photo_spot_id, attraction_id, spot_name_th, is_active")
     .order("spot_name_th");
   if (error) throw new Error("ADMIN_PHOTO_SPOTS_LIST_FAILED");
   return data || [];

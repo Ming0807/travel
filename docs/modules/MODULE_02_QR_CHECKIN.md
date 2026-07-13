@@ -312,6 +312,22 @@ System records certificate_started event
 Tourist continues to profile/photo/certificate flow
 ```
 
+The production flow is guest-first and reward-first:
+
+```text
+/c/[code]
+    -> creates a short-lived non-personal funnel session
+    -> /checkin/[code] benefit and trust landing
+    -> /checkin/[code]/start minimal or returning profile
+    -> /visit/[visitId]/photo
+    -> certificate preview and reward
+    -> optional survey and account linking
+```
+
+Do not show LINE or email buttons that do not perform real authentication. Account linking belongs after the reward unless a verified authentication flow is fully implemented.
+
+For a returning guest, reuse the same tourist profile and create a new visit. The tourist may continue with existing data or edit the prefilled profile. Do not create a new tourist on every scan.
+
 ---
 
 ## 11.2 Invalid Code Flow
@@ -527,6 +543,8 @@ event_name
 event_time
 metadata_json optional
 ```
+
+The canonical `/c/[code]` route creates a two-hour random session ID in an HttpOnly cookie. Funnel events store that ID inside metadata and deduplicate the same event type within one QR flow session. The session ID contains no personal data and is separate from the long-lived guest identity.
 
 ## 14.3 Early Event Rule
 

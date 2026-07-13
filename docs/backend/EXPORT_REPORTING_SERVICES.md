@@ -257,6 +257,15 @@ completion status
 date range
 ```
 
+QR/check-in code and photo spot exports must also reuse their admin-list filters:
+
+```text
+check-in codes: search, attraction, photo spot, active state, schedule state
+photo spots: search, attraction, active state
+```
+
+The export row limit is applied after these filters, not before them.
+
 ## 10.3 Survey/Satisfaction Export
 
 Permission:

@@ -1,4 +1,9 @@
-import type { DashboardFilters, DashboardReferenceOptions } from "@/types/dashboard";
+"use client";
+
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import { CaretDown, FunnelSimple, X } from "@phosphor-icons/react/dist/ssr";
+import type { DashboardFilters, DashboardReferenceOption, DashboardReferenceOptions } from "@/types/dashboard";
 
 type DashboardFiltersProps = {
   filters: DashboardFilters;
@@ -9,69 +14,131 @@ function FilterSelect({
   name,
   label,
   value,
-  options
+  options,
 }: {
   name: string;
   label: string;
   value?: number | string;
-  options: { value: string; label: string }[];
+  options: DashboardReferenceOption[];
 }) {
+  const currentAgeOptions = name === "age_group"
+    ? options.filter((option) => !option.label.endsWith("(ข้อมูลเดิม)"))
+    : [];
+  const legacyAgeOptions = name === "age_group"
+    ? options.filter((option) => option.label.endsWith("(ข้อมูลเดิม)"))
+    : [];
+
   return (
-    <label className="block">
-      <span className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</span>
+    <label className="block min-w-0">
+      <span className="text-xs font-semibold text-slate-600">{label}</span>
       <select
-        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-        defaultValue={value ? String(value) : ""}
+        className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+        defaultValue={value === undefined ? "" : String(value)}
         name={name}
       >
-        <option value="">All</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
+        <option value="">ทั้งหมด</option>
+        {name === "age_group" ? (
+          <>
+            <optgroup label="ช่วงอายุมาตรฐานปัจจุบัน">
+              {currentAgeOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </optgroup>
+            {legacyAgeOptions.length > 0 ? (
+              <optgroup label="ช่วงอายุจากข้อมูลเดิม">
+                {legacyAgeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </optgroup>
+            ) : null}
+          </>
+        ) : options.map((option) => (
+          <option key={option.value} value={option.value}>{option.label}</option>
         ))}
       </select>
     </label>
   );
 }
 
+function optionLabel(options: DashboardReferenceOption[], value: number | string | undefined): string | null {
+  if (value === undefined) return null;
+  return options.find((option) => option.value === String(value))?.label ?? String(value);
+}
+
 export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeFilters = [
+    ["province_id", "จังหวัด", optionLabel(options.provinces, filters.provinceId)],
+    ["attraction_id", "สถานที่", optionLabel(options.attractions, filters.attractionId)],
+    ["attraction_type_id", "ประเภท", optionLabel(options.attractionTypes, filters.attractionTypeId)],
+    ["origin_country_id", "ประเทศต้นทาง", optionLabel(options.originCountries, filters.originCountryId)],
+    ["origin_province_id", "จังหวัดต้นทาง", optionLabel(options.originProvinces, filters.originProvinceId)],
+    ["age_group", "ช่วงอายุ", optionLabel(options.ageGroups, filters.ageGroup)],
+    ["transport_mode_id", "พาหนะ", optionLabel(options.transportModes, filters.transportModeId)],
+    ["travel_purpose_id", "วัตถุประสงค์", optionLabel(options.travelPurposes, filters.travelPurposeId)],
+  ].filter((item): item is [string, string, string] => Boolean(item[2]));
+
+  function removeHref(key: string): string {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(key);
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }
+
   return (
-    <form action="/admin/dashboard" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <label className="block">
-          <span className="text-xs font-black uppercase tracking-wide text-slate-500">Date from</span>
-          <input
-            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-            defaultValue={filters.dateFrom}
-            name="date_from"
-            type="date"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-black uppercase tracking-wide text-slate-500">Date to</span>
-          <input
-            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-            defaultValue={filters.dateTo}
-            name="date_to"
-            type="date"
-          />
-        </label>
-        <FilterSelect label="Province" name="province_id" options={options.provinces} value={filters.provinceId} />
-        <FilterSelect label="Attraction" name="attraction_id" options={options.attractions} value={filters.attractionId} />
-        <FilterSelect label="Attraction type" name="attraction_type_id" options={options.attractionTypes} value={filters.attractionTypeId} />
-        <FilterSelect label="Origin country" name="origin_country_id" options={options.originCountries} value={filters.originCountryId} />
-        <FilterSelect label="Age group" name="age_group" options={options.ageGroups} value={filters.ageGroup} />
-        <FilterSelect label="Transport" name="transport_mode_id" options={options.transportModes} value={filters.transportModeId} />
+    <section aria-labelledby="dashboard-filters-heading" className="border-b border-slate-200 pb-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <FunnelSimple aria-hidden="true" className="text-[#0A6B62]" size={18} weight="bold" />
+          <h2 id="dashboard-filters-heading" className="text-sm font-bold text-slate-800">ตัวกรองข้อมูล</h2>
+        </div>
+        {activeFilters.length > 0 ? (
+          <Link className="text-xs font-semibold text-[#0A6B62] underline-offset-4 hover:underline" href={pathname}>ล้างตัวกรองทั้งหมด</Link>
+        ) : null}
       </div>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs leading-5 text-slate-500">
-          Filters are validated on the server. Date range is limited for live MVP queries.
-        </p>
-        <button className="rounded-full bg-[#073F37] px-5 py-2.5 text-sm font-black text-white hover:bg-[#0A6B62]" type="submit">
-          Apply filters
-        </button>
-      </div>
-    </form>
+
+      <form action={pathname} className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <label className="block">
+            <span className="text-xs font-semibold text-slate-600">ตั้งแต่วันที่</span>
+            <input className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-800 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={filters.dateFrom} name="date_from" type="date" />
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold text-slate-600">ถึงวันที่</span>
+            <input className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-800 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={filters.dateTo} name="date_to" type="date" />
+          </label>
+          <FilterSelect label="จังหวัดปลายทาง" name="province_id" options={options.provinces} value={filters.provinceId} />
+          <FilterSelect label="สถานที่ท่องเที่ยว" name="attraction_id" options={options.attractions} value={filters.attractionId} />
+          <button className="min-h-11 self-end rounded-md bg-[#073F37] px-5 text-sm font-bold text-white transition-colors hover:bg-[#0A6B62] focus:outline-none focus:ring-2 focus:ring-[#0A6B62] focus:ring-offset-2" type="submit">แสดงผล</button>
+        </div>
+
+        <details className="group">
+          <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#073F37] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A6B62]">
+            ตัวกรองเพิ่มเติม
+            <CaretDown aria-hidden="true" className="transition-transform group-open:rotate-180" size={16} weight="bold" />
+          </summary>
+          <div className="mt-2 grid gap-3 border-l-2 border-slate-200 pl-4 sm:grid-cols-2 xl:grid-cols-4">
+            <FilterSelect label="ประเภทสถานที่" name="attraction_type_id" options={options.attractionTypes} value={filters.attractionTypeId} />
+            <FilterSelect label="ประเทศต้นทาง" name="origin_country_id" options={options.originCountries} value={filters.originCountryId} />
+            <FilterSelect label="จังหวัดต้นทาง" name="origin_province_id" options={options.originProvinces} value={filters.originProvinceId} />
+            <FilterSelect label="ช่วงอายุ" name="age_group" options={options.ageGroups} value={filters.ageGroup} />
+            <FilterSelect label="พาหนะ" name="transport_mode_id" options={options.transportModes} value={filters.transportModeId} />
+            <FilterSelect label="วัตถุประสงค์การเดินทาง" name="travel_purpose_id" options={options.travelPurposes} value={filters.travelPurposeId} />
+          </div>
+        </details>
+      </form>
+
+      {activeFilters.length > 0 ? (
+        <div aria-label="ตัวกรองที่ใช้อยู่" className="mt-3 flex flex-wrap gap-2">
+          {activeFilters.map(([key, label, value]) => (
+            <Link key={key} href={removeHref(key)} className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[#0A6B62]/20 bg-[#E6F4EF] px-3 text-xs font-semibold text-[#073F37] hover:border-[#0A6B62]/40" aria-label={`ลบตัวกรอง ${label} ${value}`}>
+              {label}: {value}
+              <X aria-hidden="true" size={12} weight="bold" />
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </section>
   );
 }

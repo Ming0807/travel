@@ -32,6 +32,8 @@ Phase 08 does not claim that full dashboard analytics, report export jobs, LINE 
 | `/admin/checkin-codes` | QR/check-in code management | Manage public QR entry codes |
 | `/admin/visits` | Visit records | Read-only operational table |
 | `/admin/surveys` | Survey records | Read-only operational table with privacy controls |
+| `/admin/tourists` | Tourist profile summaries | Server-side search, filters, sort, and pagination |
+| `/admin/tourists/[touristId]` | Restricted tourist detail | Visit, certificate, stamp, and survey history without private identity values or storage paths |
 | `/admin/audit-logs` | Audit history | Restricted; may be planned if UI is not implemented |
 | `/admin/settings` | Admin settings | Restricted; user/role management may be deferred |
 
@@ -127,8 +129,18 @@ Check-in code pages should support:
 - Optional start and end validity dates.
 - Copyable public URL.
 - QR preview or download if implemented.
+- Filters for attraction, photo spot, stored active state, and effective schedule state.
+- Schedule editing in Bangkok local time while storing UTC timestamps.
+- Permission-aware create, edit, activate/deactivate, download, and export controls.
 
 Only authorized admins should create, update, or deactivate check-in codes.
+
+The list and export must apply the same validated filters. Stored active state and
+schedule state are separate: an active code can still be upcoming or expired.
+
+Photo spot pages support search, attraction, and active-state filters. Active QR
+codes cannot be saved against an inactive photo spot. Create and update actions
+must use the audited server-action path.
 
 ## Visits and Surveys
 
@@ -153,6 +165,18 @@ Survey lists should show:
 - Completion timestamp.
 
 Raw comments and direct identifiers should be hidden by default and require explicit permission if exposed later.
+
+## Tourist Records
+
+The tourist list is an operational, privacy-aware view of profiles created through the check-in flow.
+
+- The list requires `tourist.read` and performs pagination, search, origin filters, identity-provider filtering, and sorting on the server.
+- Search accepts a display name or an exact full tourist UUID. Partial UUID searching is intentionally unsupported.
+- List rows show only a masked profile reference, display name, origin summary, identity-provider category, and engagement counts.
+- Opening `/admin/tourists/[touristId]` requires the separate `tourist.detail` permission.
+- Detail history is read-only and shows at most the 50 latest visits and stamps, while retaining exact total counts.
+- Guest/device tokens, provider user IDs, passwords, raw survey comments, photo paths, certificate paths, and signed URLs are not selected or returned by the admin tourist repository.
+- The admin detail page must not be treated as an unrestricted customer profile editor. Any future correction workflow requires explicit permissions and audit logging.
 
 ## Dashboard and Export Boundaries
 

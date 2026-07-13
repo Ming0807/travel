@@ -43,4 +43,19 @@ describe("admin check-in code validation", () => {
       expect(parsed.error.flatten().fieldErrors.endsAt?.[0]).toContain("Start date");
     }
   });
+
+  it("interprets datetime-local schedules in Bangkok time", () => {
+    const parsed = adminCheckinCodeMutationSchema.parse({
+      code: "demo-code",
+      attractionId: "12",
+      photoSpotId: "",
+      label: "",
+      isActive: "true",
+      startsAt: "2026-06-20T10:30",
+      endsAt: "2026-06-20T11:30",
+    });
+
+    expect(parsed.startsAt).toBe("2026-06-20T03:30:00.000Z");
+    expect(parsed.endsAt).toBe("2026-06-20T04:30:00.000Z");
+  });
 });

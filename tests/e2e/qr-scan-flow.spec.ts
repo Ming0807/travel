@@ -16,7 +16,7 @@ test.describe("QR Scan Flow", () => {
           <main>
             <h1>จุดทดสอบ QR</h1>
             <p>สถานที่ทดสอบ</p>
-            <a href="/checkin/demo-valid-qr/identity">เริ่มต้นเช็กอิน</a>
+            <a href="/checkin/demo-valid-qr/start">สร้างใบประกาศของฉัน</a>
           </main>
         `,
       });
@@ -26,9 +26,9 @@ test.describe("QR Scan Flow", () => {
 
     await expect(page).toHaveURL(/\/checkin\/demo-valid-qr/);
     await expect(page.getByRole("heading", { name: "จุดทดสอบ QR" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "เริ่มต้นเช็กอิน" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "สร้างใบประกาศของฉัน" })).toHaveAttribute(
       "href",
-      "/checkin/demo-valid-qr/identity"
+      "/checkin/demo-valid-qr/start"
     );
   });
 

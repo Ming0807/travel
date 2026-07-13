@@ -1,91 +1,55 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ChartLineUp,
-  Users,
-  MapPinLine,
-  Wallet,
-  Smiley,
   FunnelSimple,
-  TreeEvergreen,
+  MapPinLine,
+  Smiley,
   Star,
+  TreeEvergreen,
+  Users,
+  Wallet,
 } from "@phosphor-icons/react/dist/ssr";
 
 const tabs = [
-  { name: "Executive", href: "/admin/dashboard", exact: true, icon: ChartLineUp },
-  { name: "Tourists", href: "/admin/dashboard/tourists", icon: Users },
-  { name: "Visits & Behavior", href: "/admin/dashboard/visits", icon: MapPinLine },
-  { name: "Attractions", href: "/admin/dashboard/attractions", icon: Star },
-  { name: "Expenses", href: "/admin/dashboard/expenses", icon: Wallet },
-  { name: "Satisfaction", href: "/admin/dashboard/satisfaction", icon: Smiley },
-  { name: "Funnel", href: "/admin/dashboard/funnel", icon: FunnelSimple },
-  { name: "Sustainability", href: "/admin/dashboard/sustainability", icon: TreeEvergreen },
+  { name: "ภาพรวม", href: "/admin/dashboard", exact: true, icon: ChartLineUp },
+  { name: "นักท่องเที่ยว", href: "/admin/dashboard/tourists", icon: Users },
+  { name: "การเดินทาง", href: "/admin/dashboard/visits", icon: MapPinLine },
+  { name: "สถานที่", href: "/admin/dashboard/attractions", icon: Star },
+  { name: "ค่าใช้จ่าย", href: "/admin/dashboard/expenses", icon: Wallet },
+  { name: "ความพึงพอใจ", href: "/admin/dashboard/satisfaction", icon: Smiley },
+  { name: "เส้นทางผู้ใช้", href: "/admin/dashboard/funnel", icon: FunnelSimple },
+  { name: "ความยั่งยืน", href: "/admin/dashboard/sustainability", icon: TreeEvergreen },
 ];
 
 export function DashboardTabs() {
   const pathname = usePathname();
-  const [activeStyle, setActiveStyle] = useState<{ left: number; width: number } | null>(null);
-  const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-
-  const activeIdx = tabs.findIndex((tab) =>
-    tab.exact ? pathname === tab.href : pathname.startsWith(tab.href)
-  );
-  const activeIndex = activeIdx === -1 ? 0 : activeIdx;
-
-  useEffect(() => {
-    const el = tabRefs.current[activeIndex];
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      const parentRect = el.parentElement?.getBoundingClientRect();
-      if (parentRect) {
-        setActiveStyle({
-          left: rect.left - parentRect.left,
-          width: rect.width,
-        });
-      }
-    }
-  }, [activeIndex, pathname]);
 
   return (
-    <div className="relative mb-6">
-      {/* scroll container */}
-      <div className="flex space-x-1 overflow-x-auto border-b border-slate-200 pb-0 dark:border-slate-700">
-        {/* animated indicator */}
-        {activeStyle && (
-          <div
-            className="absolute bottom-0 h-0.5 rounded-full bg-[#0A6B62] transition-all duration-300 ease-out"
-            style={{
-              left: activeStyle.left,
-              width: activeStyle.width,
-            }}
-          />
-        )}
-
-        {tabs.map((tab, i) => {
-          const isActive = i === activeIndex;
+    <nav aria-label="หมวดการวิเคราะห์" className="min-w-0 border-b border-slate-200">
+      <div className="hide-scrollbar flex max-w-full gap-1 overflow-x-auto">
+        {tabs.map((tab) => {
+          const isActive = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
+          const Icon = tab.icon;
           return (
             <Link
               key={tab.name}
               href={tab.href}
-              ref={(el) => { tabRefs.current[i] = el; }}
-              className={`relative flex shrink-0 items-center gap-1.5 rounded-t-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
+              aria-current={isActive ? "page" : undefined}
+              className={`relative flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
                 isActive
-                  ? "text-[#073F37] dark:text-teal-300"
-                  : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                  ? "border-[#0A6B62] text-[#073F37]"
+                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
               }`}
             >
-              <tab.icon
-                className="h-4 w-4"
-                weight={isActive ? "fill" : "regular"}
-              />
+              <Icon className="h-4 w-4" weight={isActive ? "fill" : "regular"} aria-hidden="true" />
               {tab.name}
             </Link>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

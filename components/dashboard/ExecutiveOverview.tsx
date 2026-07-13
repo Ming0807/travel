@@ -1,68 +1,71 @@
-import type { DashboardViewModel } from "@/types/dashboard";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
+import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { NoDataState } from "@/components/dashboard/NoDataState";
+import { StackedDistributionCard } from "@/components/dashboard/StackedDistributionCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
-import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
+import type { DashboardViewModel } from "@/types/dashboard";
+
+const PRIMARY_KPIS = [
+  "tourist_profiles",
+  "total_visits",
+  "certificates_generated",
+  "survey_completion_rate",
+  "average_satisfaction",
+];
 
 export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
-  const visitTrend = data.executive.visitTrend;
-
-  /* heuristic: which KPIs get a sparkline? */
-  const sparklineKeys = ["visit", "tourist", "checkin", "certificate"];
+  const primaryMetrics = PRIMARY_KPIS.map((key) => data.kpis.find((metric) => metric.key === key)).filter((metric): metric is DashboardViewModel["kpis"][number] => Boolean(metric));
+  const topAttractions = data.executive.topAttractions.map((attraction) => ({
+    label: attraction.attractionName,
+    value: attraction.visitCount,
+    percent: null,
+  }));
 
   return (
-    <section className="space-y-6">
-      <div className="flex justify-end">
+    <section className="space-y-5" aria-labelledby="executive-overview-heading">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 id="executive-overview-heading" className="text-lg font-bold text-slate-900">ตัวชี้วัดสำคัญ</h2>
+          <p className="mt-1 text-sm text-slate-500">ภาพรวมสำหรับติดตามการมีส่วนร่วม คุณภาพข้อมูล และประสบการณ์นักท่องเที่ยว</p>
+        </div>
         <ExportCsvButton />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        {data.kpis.map((metric, i) => {
-          const k = (metric.key + metric.label).toLowerCase();
-          const showSparkline =
-            sparklineKeys.some((s) => k.includes(s)) && visitTrend.length >= 2;
-          return (
-            <KpiCard
-              key={metric.key}
-              metric={metric}
-              index={i}
-              sparklineData={showSparkline ? visitTrend : undefined}
-            />
-          );
-        })}
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {primaryMetrics.map((metric) => (
+          <KpiCard key={metric.key} metric={metric} sparklineData={["tourist_profiles", "total_visits", "certificates_generated"].includes(metric.key) ? data.executive.visitTrend : undefined} />
+        ))}
       </div>
+
       {data.dataQualityWarnings.length > 0 ? (
-        <div className="grid gap-3 md:grid-cols-2">
-          {data.dataQualityWarnings.map((warning) => (
-            <NoDataState description={warning} key={warning} title="Data limitation" />
-          ))}
-        </div>
+        <details className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
+          <summary className="cursor-pointer text-sm font-bold text-amber-900">ข้อจำกัดของข้อมูล {data.dataQualityWarnings.length} รายการ</summary>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {data.dataQualityWarnings.map((warning) => <NoDataState key={warning} title="ข้อจำกัดของข้อมูล" description={warning} />)}
+          </div>
+        </details>
       ) : null}
-      <div className="grid gap-5 xl:grid-cols-2">
+
+      <div className="grid min-w-0 gap-4 xl:grid-cols-2">
         <TrendChart points={data.executive.visitTrend} />
         <BarChartCard
           data={data.executive.visitsByProvince}
-          definition="Visits by province counts visit records grouped by attraction province. It is platform participation, not official arrivals."
-          emptyDescription="No visits by province for selected filters."
-          title="Visits by province"
+          definition="จำนวนรายการเข้าชม แยกตามจังหวัดของสถานที่ท่องเที่ยว ไม่ใช่จำนวนผู้เดินทางเข้าจังหวัดอย่างเป็นทางการ"
+          emptyDescription="ยังไม่มีรายการเข้าชมในจังหวัดสำหรับช่วงและตัวกรองที่เลือก"
+          title="การเข้าชมแยกตามจังหวัด"
         />
         <BarChartCard
-          data={data.travelBehavior.transportModes}
-          definition="Distribution of self-reported transport modes from survey responses."
-          emptyDescription="No transport mode data for selected filters."
-          title="Transport modes"
+          data={topAttractions}
+          definition="จัดอันดับสถานที่ตามจำนวนรายการเข้าชมที่บันทึกสำเร็จในระบบ"
+          emptyDescription="ยังไม่มีข้อมูลสถานที่ท่องเที่ยวสำหรับช่วงและตัวกรองที่เลือก"
+          title="สถานที่ที่มีการเข้าชมสูงสุด"
         />
-        <BarChartCard
-          data={data.expense.spendingRanges}
-          definition="Distribution of self-reported spending ranges from survey responses."
-          emptyDescription="No spending range data for selected filters."
-          title="Spending ranges"
-        />
-        <BarChartCard
+        <StackedDistributionCard
           data={data.satisfaction.distribution}
-          definition="Distribution of overall satisfaction scores from survey responses."
-          emptyDescription="No satisfaction data for selected filters."
-          title="Overall Satisfaction"
+          definition="การกระจายคะแนนความพึงพอใจโดยรวมจากคำตอบแบบสำรวจที่มีข้อมูล"
+          emptyDescription="ยังไม่มีคำตอบความพึงพอใจสำหรับช่วงและตัวกรองที่เลือก"
+          title="การกระจายความพึงพอใจ"
         />
       </div>
     </section>

@@ -6,21 +6,21 @@ import { RoleFormClient } from "@/components/admin/roles/RoleFormClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Create Role | Admin | Southern Border Tourism",
+  title: "สร้างบทบาท | Southern Border Tourism",
 };
 
 export default async function NewAdminRolePage() {
-  await requirePermission("role.manage");
+  const guard = await requirePermission("role.manage");
   
   const permissions = await getAllPermissions();
 
   return (
-    <AdminShell>
+    <AdminShell admin={guard.actor}>
       <div className="mx-auto max-w-4xl">
         <AdminPageHeader
-          eyebrow="Admin Roles"
-          title="Create New Role"
-          description="Define a new custom role and assign specific permissions."
+          eyebrow="บทบาทและสิทธิ์"
+          title="สร้างบทบาทใหม่"
+          description="กำหนดบทบาทและเลือกเฉพาะสิทธิ์ที่จำเป็นต่อการทำงานของผู้ดูแลกลุ่มนี้"
         />
 
         <div className="mt-8">

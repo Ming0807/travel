@@ -23,7 +23,11 @@ type MockDashboardFilterError = Error & {
 
 const mockFilterResult = vi.hoisted<{
   success: boolean;
-  data: { dateFrom: string; dateTo: string } | undefined;
+  data: {
+    dateFrom: string;
+    dateTo: string;
+    ageGroup?: string;
+  } | undefined;
   error?: MockDashboardFilterError;
 }>(() => ({
   success: true,
@@ -359,8 +363,8 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     const result = await getDashboardAnalytics({});
 
     const warnings = result.dataQualityWarnings;
-    expect(warnings.some((w) => w.includes("satisfaction"))).toBe(true);
-    expect(warnings.some((w) => w.includes("expense"))).toBe(true);
+    expect(warnings.some((w) => w.includes("ความพึงพอใจ"))).toBe(true);
+    expect(warnings.some((w) => w.includes("ค่าใช้จ่าย"))).toBe(true);
   });
 
   // ── 6b. Single visit ────────────────────────
@@ -798,19 +802,21 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
 
   // ── 6j. Insights ────────────────────────────
 
-  it("generates improvement priority insight when a popular attraction has low satisfaction", async () => {
+  it("generates improvement priority insight only with at least 30 satisfaction responses", async () => {
     mockPayload.current = makePayload({
-      visits: [
-        visitRow({ visit_id: 1, tourist_id: "t1" }),
-        visitRow({ visit_id: 2, tourist_id: "t2" }),
-        visitRow({ visit_id: 3, tourist_id: "t3" }),
-        visitRow({ visit_id: 4, tourist_id: "t4" }),
-      ],
-      surveys: [
-        surveyRow({ overall_score: 2 }),
-        surveyRow({ survey_id: 2, overall_score: 3, visits: [{ ...surveyRow().visits[0], visit_date: "2026-05-02", tourist_id: "t2" }] }),
-      ],
-      certificates: [certificateRow(), certificateRow({ certificate_id: 2 })],
+      visits: Array.from({ length: 30 }, (_, index) =>
+        visitRow({ visit_id: index + 1, tourist_id: `t${index + 1}` })
+      ),
+      surveys: Array.from({ length: 30 }, (_, index) =>
+        surveyRow({
+          survey_id: index + 1,
+          overall_score: index % 2 === 0 ? 2 : 3,
+          visits: [{ ...surveyRow().visits[0], tourist_id: `t${index + 1}` }]
+        })
+      ),
+      certificates: Array.from({ length: 30 }, (_, index) =>
+        certificateRow({ certificate_id: index + 1 })
+      ),
     });
 
     const result = await getDashboardAnalytics({});
@@ -819,11 +825,10 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     expect(improvement).toBeDefined();
     expect(improvement?.title).toBe("Improvement priority");
     expect(improvement?.description).toContain("หาดทรายขาว");
-    expect(improvement?.evidence).toContain("4 visits");
+    expect(improvement?.evidence).toContain("30 visits");
   });
 
-  it("generates promotion opportunity insight when a low-visit attraction has high satisfaction", async () => {
-    // Requirement: visitCount <= 3 AND surveyResponseCount >= 2 AND avgSatisfaction >= 4
+  it("does not generate promotion opportunity from a two-response sample", async () => {
     mockPayload.current = makePayload({
       visits: [
         visitRow({ visit_id: 1, tourist_id: "t1" }),
@@ -838,13 +843,14 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     const result = await getDashboardAnalytics({});
 
     const promotion = result.insights.find((i) => i.category === "promotion");
-    expect(promotion).toBeDefined();
-    expect(promotion?.title).toBe("Promotion opportunity");
+    expect(promotion).toBeUndefined();
   });
 
-  it("generates province concentration insight when there is at least 1 visit", async () => {
+  it("generates province concentration insight when there are at least 30 visits", async () => {
     mockPayload.current = makePayload({
-      visits: [visitRow()],
+      visits: Array.from({ length: 30 }, (_, index) =>
+        visitRow({ visit_id: index + 1, tourist_id: `t${index + 1}` })
+      ),
     });
 
     const result = await getDashboardAnalytics({});
@@ -940,7 +946,7 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
 
     const result = await getDashboardAnalytics({});
 
-    const truncationWarning = result.dataQualityWarnings.find((w) => w.includes("MVP limit"));
+    const truncationWarning = result.dataQualityWarnings.find((w) => w.includes("ขีดจำกัด"));
     expect(truncationWarning).toBeDefined();
   });
 
@@ -953,6 +959,73 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
 
     expect(result.dataSource).toBe("live_database");
     expect(result.summaryRefreshTimestamp).toBeNull();
+  });
+
+  it("uses one live-data contract even when a stale summary payload is present", async () => {
+    mockPayload.current = makePayload({
+      visits: [visitRow()],
+      summary: {
+        ...emptySummary(),
+        kpis: {
+          totalVisits: 999,
+          uniqueTourists: 999,
+          certificateCount: 999,
+          stampCount: 999,
+          surveyCount: 999,
+          avgSatisfaction: 1,
+          avgSafetyScore: 1,
+          avgCleanlinessScore: 1,
+          avgAccessibilityScore: 1,
+          avgInformationScore: 1,
+          avgValueScore: 1,
+          avgFacilityScore: 1,
+          revisitYesCount: 0,
+          recommendYesCount: 0,
+          revisitAnsweredCount: 999,
+          recommendAnsweredCount: 999,
+          expenseResponseCount: 999,
+          totalExpenseMin: 999_000,
+          totalExpenseMax: 999_999,
+          hasOpenEndedRange: false,
+          qrScanCount: 999,
+          landingViewCount: 999,
+          certificateStartedCount: 999,
+          minimalFormCompletedCount: 999,
+          photoUploadedCount: 999,
+          certificateGeneratedCount: 999,
+          surveyStartedCount: 999,
+          surveyCompletedCount: 999,
+        },
+        trend: [{ label: "2026-05-01", value: 999 }],
+        refreshTimestamp: "2026-04-01T00:00:00.000Z",
+      },
+    });
+
+    const result = await getDashboardAnalytics({});
+
+    expect(result.kpis.find((k) => k.key === "total_visits")?.rawValue).toBe(1);
+    expect(result.executive.visitTrend).toEqual([{ label: "2026-05-01", value: 1 }]);
+    expect(result.dataSource).toBe("live_database");
+    expect(result.summaryRefreshTimestamp).toBeNull();
+    expect(result.dataQualityWarnings.some((warning) => warning.includes("Pre-aggregated"))).toBe(false);
+  });
+
+  it("does not return unfiltered funnel metrics for visitor-profile filters", async () => {
+    mockFilterResult.data = {
+      dateFrom: "2026-05-01",
+      dateTo: "2026-05-31",
+      ageGroup: "25-34",
+    };
+    mockPayload.current = makePayload({
+      visits: [visitRow()],
+      funnelEvents: [funnelEventRow("qr_scanned")],
+    });
+
+    const result = await getDashboardAnalytics({ age_group: "25-34" });
+
+    expect(result.kpis.find((k) => k.key === "qr_scans")?.rawValue).toBe(0);
+    expect(result.funnel.stages.every((stage) => stage.count === 0)).toBe(true);
+    expect(result.dataQualityWarnings.some((warning) => warning.includes("ไม่สามารถแสดงเส้นทางผู้ใช้"))).toBe(true);
   });
 
   // ── 6l. Reference options pass-through ───────

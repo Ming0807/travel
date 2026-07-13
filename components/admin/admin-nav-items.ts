@@ -28,6 +28,7 @@ export type NavItem = {
   label: string;
   icon: AdminNavIcon;
   badge?: number | string;
+  requiredAny?: string[];
 };
 
 export type NavGroup = {
@@ -37,52 +38,91 @@ export type NavGroup = {
 
 export const navGroups: NavGroup[] = [
   {
-    group: "Overview",
+    group: "ภาพรวม",
     items: [
-      { href: "/admin", label: "Home", icon: SquaresFour },
-      { href: "/admin/dashboard", label: "Analytics", icon: ChartLineUp },
+      { href: "/admin", label: "หน้าหลัก", icon: SquaresFour },
+      { href: "/admin/dashboard", label: "การวิเคราะห์", icon: ChartLineUp },
     ]
   },
   {
-    group: "CRM",
+    group: "นักท่องเที่ยว",
     items: [
-      { href: "/admin/tourists", label: "Tourists", icon: Users },
-      { href: "/admin/visits", label: "Bookings", icon: CalendarBlank },
-      { href: "/admin/reviews", label: "Reviews", icon: Star },
-      { href: "/admin/surveys", label: "Surveys", icon: ClipboardText },
+      { href: "/admin/tourists", label: "ข้อมูลนักท่องเที่ยว", icon: Users },
+      { href: "/admin/visits", label: "ประวัติการเข้าชม", icon: CalendarBlank },
+      { href: "/admin/reviews", label: "รีวิว", icon: Star },
+      { href: "/admin/surveys", label: "แบบสำรวจ", icon: ClipboardText },
     ]
   },
   {
-    group: "Content",
+    group: "เนื้อหา",
     items: [
-      { href: "/admin/content", label: "Content Hub", icon: SquaresFour },
-      { href: "/admin/content-health", label: "Content Health", icon: ChartLineUp },
-      { href: "/admin/attractions", label: "Destinations", icon: MapPin },
-      { href: "/admin/routes", label: "Travel Routes", icon: MapPinLine },
-      { href: "/admin/stories", label: "Articles", icon: Article },
-      { href: "/admin/restaurants", label: "Restaurants", icon: ForkKnife },
-      { href: "/admin/accommodations", label: "Accommodations", icon: MapPin },
-      { href: "/admin/media", label: "Media Library", icon: ImageIcon },
-      { href: "/admin/photo-spots", label: "Photo Spots", icon: ImageIcon },
+      { href: "/admin/content", label: "ศูนย์จัดการเนื้อหา", icon: SquaresFour },
+      { href: "/admin/content-health", label: "คุณภาพเนื้อหา", icon: ChartLineUp },
+      { href: "/admin/attractions", label: "สถานที่ท่องเที่ยว", icon: MapPin },
+      { href: "/admin/routes", label: "เส้นทางแนะนำ", icon: MapPinLine },
+      { href: "/admin/stories", label: "เรื่องราว", icon: Article },
+      { href: "/admin/restaurants", label: "ร้านอาหาร", icon: ForkKnife },
+      { href: "/admin/accommodations", label: "ที่พัก", icon: MapPin },
+      { href: "/admin/media", label: "คลังสื่อ", icon: ImageIcon },
+      { href: "/admin/photo-spots", label: "จุดถ่ายภาพ", icon: ImageIcon },
     ]
   },
   {
-    group: "Operations",
+    group: "การดำเนินงาน",
     items: [
-      { href: "/admin/certificate-templates", label: "Cert Templates", icon: Certificate },
-      { href: "/admin/checkin-codes", label: "Checkin Codes", icon: QrCode },
-      { href: "/admin/badges", label: "Badges", icon: Medal },
-      { href: "/admin/leaderboard", label: "Leaderboard", icon: Trophy },
+      { href: "/admin/certificate-templates", label: "แม่แบบใบประกาศ", icon: Certificate },
+      { href: "/admin/checkin-codes", label: "รหัส QR เช็กอิน", icon: QrCode },
+      { href: "/admin/badges", label: "เหรียญรางวัล", icon: Medal },
+      { href: "/admin/leaderboard", label: "ตารางอันดับ", icon: Trophy },
     ]
   },
   {
-    group: "System",
+    group: "ระบบและสิทธิ์",
     items: [
-      { href: "/admin/users", label: "Users", icon: UserCircle },
-      { href: "/admin/roles", label: "Roles", icon: Shield },
-      { href: "/admin/audit", label: "Audit Logs", icon: Scroll },
-      { href: "/admin/messages", label: "Messages", icon: EnvelopeSimple },
-      { href: "/admin/settings", label: "Settings", icon: Gear },
+      {
+        href: "/admin/users",
+        label: "ผู้ดูแลระบบ",
+        icon: UserCircle,
+        requiredAny: ["user.manage"],
+      },
+      {
+        href: "/admin/roles",
+        label: "บทบาทและสิทธิ์",
+        icon: Shield,
+        requiredAny: ["role.manage"],
+      },
+      {
+        href: "/admin/audit",
+        label: "บันทึกการใช้งาน",
+        icon: Scroll,
+        requiredAny: ["audit.read"],
+      },
+      { href: "/admin/messages", label: "ข้อความ", icon: EnvelopeSimple },
+      {
+        href: "/admin/settings",
+        label: "ตั้งค่าระบบ",
+        icon: Gear,
+        requiredAny: ["system.settings_read", "system.settings_update"],
+      },
     ]
   }
 ];
+
+export function getVisibleNavGroups(
+  groups: NavGroup[],
+  permissions: readonly string[],
+  permissionsResolved: boolean
+) {
+  const hasSystemAccess = permissions.includes("system.all");
+
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (!item.requiredAny?.length) return true;
+        if (!permissionsResolved) return false;
+        return hasSystemAccess || item.requiredAny.some((permission) => permissions.includes(permission));
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
+}

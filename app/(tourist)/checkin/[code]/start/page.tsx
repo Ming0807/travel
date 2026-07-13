@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
 import { CheckinUnavailable } from "@/components/checkin/CheckinUnavailable";
 import { MinimalForm } from "@/components/checkin/MinimalForm";
-import { MapPin, Compass } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, Compass, MapPin, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+import { getGuestIdentity } from "@/lib/auth/guest";
+import { listCheckinCountries, listCheckinProvinces } from "@/lib/repositories/geography.repository";
+import { getGuestCheckinProfile } from "@/lib/repositories/tourist.repository";
 
 export default async function StartCheckinPage({
   params,
@@ -16,45 +20,62 @@ export default async function StartCheckinPage({
   }
 
   const { attraction, photo_spot } = context.details;
+  const guestToken = await getGuestIdentity();
+
+  let countries;
+  let provinces;
+  let initialProfile = null;
+  try {
+    [countries, provinces, initialProfile] = await Promise.all([
+      listCheckinCountries(),
+      listCheckinProvinces(),
+      guestToken ? getGuestCheckinProfile(guestToken) : Promise.resolve(null),
+    ]);
+  } catch {
+    return <CheckinUnavailable status="unavailable" />;
+  }
 
   return (
-    <main className="min-h-screen bg-slate-50 relative pb-24 overflow-hidden">
-      {/* Premium Background Elements */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-coral/5 rounded-full blur-[120px] -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-teal/5 rounded-full blur-[150px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 w-full h-[400px] -translate-x-1/2 -translate-y-1/2 bg-[url('/noise.png')] opacity-20 mix-blend-overlay -z-10 pointer-events-none" />
-
-      <div className="relative z-10 mx-auto max-w-lg px-4 pt-8 md:pt-16">
-        {/* Back Link */}
-        <a
-          href={`/checkin/${code}/identity`}
-          className="inline-flex items-center gap-2 text-sm font-bold text-muted hover:text-coral transition-colors mb-6"
+    <main className="min-h-screen bg-slate-50 pb-24">
+      <div className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
+          <Link
+          href={`/checkin/${code}`}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg pr-3 text-sm font-bold text-slate-600 hover:text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5m7-7-7 7 7 7"/>
-          </svg>
-          เปลี่ยนวิธีการเข้าใช้งาน
-        </a>
+            <ArrowLeft aria-hidden="true" size={18} weight="bold" />
+          กลับไปหน้าสถานที่
+          </Link>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+            <ShieldCheck aria-hidden="true" size={17} weight="fill" />
+            ข้อมูลปลอดภัย
+          </span>
+        </div>
+      </div>
 
-        {/* Header */}
-        <div className="text-center mb-8 animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur shadow-sm text-coral px-4 py-1.5 rounded-full text-xs font-bold mb-4 border border-white">
+      <div className="mx-auto max-w-lg px-4 pt-7 md:pt-10">
+
+        <div className="mb-6 animate-fade-in-up text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-teal/20 bg-teal/5 px-4 py-2 text-xs font-bold text-teal">
             <MapPin weight="fill" size={14} />
             <span>{photo_spot ? photo_spot.spot_name_th : attraction?.name_th}</span>
           </div>
-          <h1 className="text-3xl font-black text-ink tracking-tight">ข้อมูลของคุณ</h1>
-          <p className="text-muted text-sm font-medium mt-2 max-w-xs mx-auto">
-            กรอกข้อมูลสั้น ๆ เพื่อสร้างใบประกาศดิจิทัลและสะสมตราประทับ
+          <h1 className="text-2xl font-black text-ink md:text-3xl">เตรียมความทรงจำของคุณ</h1>
+          <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-6 text-slate-600">
+            ใช้เวลาไม่ถึง 1 นาที แล้วไปเลือกรูปสำหรับใบประกาศดิจิทัล
           </p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/50 animate-scale-in">
-          <MinimalForm checkinCode={code} />
+        <div className="animate-scale-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+          <MinimalForm
+            checkinCode={code}
+            countries={countries}
+            provinces={provinces}
+            initialProfile={initialProfile}
+          />
         </div>
 
-        {/* Privacy Trust Cue */}
-        <div className="flex items-center justify-center gap-2 mt-6 text-[11px] text-muted font-bold tracking-wide uppercase">
+        <div className="mt-6 flex items-center justify-center gap-2 text-xs font-bold text-slate-500">
           <Compass size={14} weight="fill" className="text-coral" />
           <span>ท่องเที่ยวชายแดนใต้</span>
         </div>

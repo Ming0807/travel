@@ -46,7 +46,7 @@ export function CheckinLanding({ details }: { details: CheckinCodeDetails }) {
         {/* Primary CTA */}
         <div className="w-full space-y-4 pt-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-[1300ms] fill-mode-both">
           <Link 
-            href={`/checkin/${details.code}/identity`}
+            href={`/checkin/${details.code}/start`}
             className="w-full flex items-center justify-center py-4 bg-coral text-white rounded-full font-bold text-lg shadow-sm hover:bg-coral/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             สร้างใบประกาศของฉัน

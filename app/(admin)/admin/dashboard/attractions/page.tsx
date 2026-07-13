@@ -9,7 +9,7 @@ import { getDashboardAnalytics, DashboardServiceError } from "@/lib/services/das
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
-  title: "Attraction Performance | Dashboard | Admin",
+  title: "ผลงานสถานที่ท่องเที่ยว | Dashboard",
 };
 
 type DashboardPageProps = {
@@ -33,8 +33,8 @@ export default async function AttractionPerformanceDashboardPage({ searchParams 
     return (
       <AdminShell>
         <div className="space-y-6">
-          <AdminPageHeader eyebrow="Phase 09" title={isValidationError ? "Invalid filters" : "Dashboard unavailable"} description="Dashboard analytics are protected and return aggregated data only." />
-          <NoDataState title={isValidationError ? "Invalid filters" : "Error"} description={caughtError?.message ?? "Could not load dashboard data."} />
+          <AdminPageHeader eyebrow="ศูนย์วิเคราะห์ข้อมูล" title={isValidationError ? "ตัวกรองไม่ถูกต้อง" : "ไม่สามารถเปิด Dashboard ได้"} description="ข้อมูลวิเคราะห์แสดงในรูปแบบสรุปเพื่อปกป้องข้อมูลส่วนบุคคล" />
+          <NoDataState title={isValidationError ? "ตรวจสอบตัวกรอง" : "เกิดข้อผิดพลาด"} description={isValidationError ? "กรุณาตรวจสอบช่วงวันที่และตัวกรอง แล้วลองใหม่" : "ระบบยังโหลดข้อมูลไม่ได้ กรุณาลองใหม่อีกครั้ง"} />
         </div>
       </AdminShell>
     );
@@ -42,7 +42,7 @@ export default async function AttractionPerformanceDashboardPage({ searchParams 
 
   return (
     <DashboardShell data={data}>
-      <ErrorBoundary fallbackTitle="Attraction performance unavailable" fallbackDescription="The chart section encountered an error. Try refreshing the page.">
+      <ErrorBoundary fallbackTitle="ไม่สามารถแสดงผลงานสถานที่ได้" fallbackDescription="ส่วนแสดงผลพบข้อผิดพลาด กรุณารีเฟรชหน้าแล้วลองอีกครั้ง">
         <AttractionPerformanceSection data={data} />
       </ErrorBoundary>
     </DashboardShell>

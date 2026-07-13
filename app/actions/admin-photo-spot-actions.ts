@@ -5,6 +5,7 @@ import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { adminPhotoSpotMutationSchema } from "@/lib/validation/photo-spot";
 import {
+  type AdminPhotoSpotRow,
   createAdminPhotoSpot,
   updateAdminPhotoSpot,
   updateAdminPhotoSpotStatus,
@@ -15,9 +16,13 @@ type ActionResult = {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
+  data?: AdminPhotoSpotRow;
 };
 
-export async function createPhotoSpotAction(formData: FormData): Promise<ActionResult> {
+export async function createPhotoSpotAction(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   try {
     const guard = await requirePermission("photo_spot.create");
     const parsed = adminPhotoSpotMutationSchema.safeParse(Object.fromEntries(formData));
@@ -35,14 +40,18 @@ export async function createPhotoSpotAction(formData: FormData): Promise<ActionR
     });
 
     revalidatePath("/admin/photo-spots");
-    return { success: true };
+    return { success: true, data: created };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังสร้างจุดถ่ายภาพไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 
-export async function updatePhotoSpotAction(photoSpotId: number, formData: FormData): Promise<ActionResult> {
+export async function updatePhotoSpotAction(
+  photoSpotId: number,
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   try {
     const guard = await requirePermission("photo_spot.update");
     const parsed = adminPhotoSpotMutationSchema.safeParse(Object.fromEntries(formData));
@@ -62,7 +71,8 @@ export async function updatePhotoSpotAction(photoSpotId: number, formData: FormD
     });
 
     revalidatePath("/admin/photo-spots");
-    return { success: true };
+    revalidatePath(`/admin/photo-spots/${photoSpotId}/edit`);
+    return { success: true, data: updated };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังบันทึกการแก้ไขจุดถ่ายภาพไม่ได้ กรุณาลองอีกครั้ง" };

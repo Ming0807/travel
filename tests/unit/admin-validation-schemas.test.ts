@@ -222,6 +222,13 @@ describe("adminCheckinCodeFiltersSchema", () => {
     expect(result.attractionId).toBe(1);
     expect(result.isActive).toBe(true);
   });
+
+  it("accepts check-in availability filters", () => {
+    expect(adminCheckinCodeFiltersSchema.parse({ availability: "current" }).availability).toBe("current");
+    expect(adminCheckinCodeFiltersSchema.parse({ availability: "upcoming" }).availability).toBe("upcoming");
+    expect(adminCheckinCodeFiltersSchema.parse({ availability: "expired" }).availability).toBe("expired");
+    expect(() => adminCheckinCodeFiltersSchema.parse({ availability: "unknown" })).toThrow();
+  });
 });
 
 // =========================================

@@ -108,3 +108,14 @@ Form UX is acceptable when:
 - Consent is clear, specific enough, and not pre-checked.
 - Optional survey appears only after reward.
 - Error messages are friendly and do not expose technical details.
+
+## 7. Returning Tourist and Geography UX
+
+- A returning guest is resolved from the existing anonymous-device identity before the form is shown.
+- Show a compact profile summary with `ใช้ข้อมูลเดิมและดำเนินการต่อ` as the primary action.
+- `แก้ไขข้อมูล` expands the same form with existing values prefilled.
+- Profile edits affect future use only. Existing visits and certificates remain historical records.
+- Country and Thai province must come from active master data IDs, not free text.
+- The province field opens its option list on focus, supports Thai/English search, keyboard navigation, and touch targets of at least 44px.
+- Thai tourists must select a province. Foreign tourists do not receive an irrelevant Thai province field.
+- A guest account has no password. Explain same-device storage and optional account linking instead of showing an empty password field.

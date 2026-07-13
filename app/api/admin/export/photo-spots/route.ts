@@ -1,34 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
 import { getServerEnv } from "@/lib/config/server-env";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { exportAdminPhotoSpots } from "@/lib/repositories/photo-spot.repository";
 import { logAuditAction } from "@/lib/services/audit-log.service";
+import { adminPhotoSpotFiltersSchema } from "@/lib/validation/photo-spot";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
-import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 
 export const dynamic = "force-dynamic";
-
-type ExportRecord = Record<string, unknown>;
 
 export async function GET(request: NextRequest) {
   try {
     const guard = await requirePermission("export.photo_spots");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
-
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
 
-    const supabase = createSupabaseServiceRoleClient();
-
-    const { data, error } = await supabase
-      .from("photo_spots")
-      .select("*, attractions (name_th, name_en)")
-      .order("attraction_id", { ascending: true })
-      .order("display_order", { ascending: true, nullsFirst: false })
-      .limit(maxRows + 1);
-
-    if (error) {
-      throw new Error("EXPORT_PHOTO_SPOTS_FAILED");
+    const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+    const parsed = adminPhotoSpotFiltersSchema.safeParse(rawParams);
+    if (!parsed.success) {
+      await logAuditAction({
+        actor: guard.actor,
+        action: "export.photo_spots.invalid_filters",
+        entityType: "photo_spot_export",
+        result: "failed",
+        metadata: { reason: "invalid_filters" }
+      });
+      return NextResponse.json({ error: "Invalid export filters." }, { status: 400 });
     }
+
+    const { page: _page, pageSize: _pageSize, ...filters } = parsed.data;
+    void _page;
+    void _pageSize;
+    const data = await exportAdminPhotoSpots(filters, maxRows + 1);
 
     if (data.length > maxRows) {
       await logAuditAction({
@@ -41,23 +43,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = ((data || []) as ExportRecord[]).map((row) => {
-      const attraction = firstJoin(row.attractions as SupabaseJoin<ExportRecord>);
-      return {
-        "ID": String(row.photo_spot_id),
-        "Name (TH)": row.spot_name_th || "",
-        "Name (EN)": row.spot_name_en || "",
-        "Description (TH)": row.description_th || "",
-        "Description (EN)": row.description_en || "",
-        "Attraction": attraction?.name_th || "",
-        "Latitude": row.latitude !== null ? String(row.latitude) : "",
-        "Longitude": row.longitude !== null ? String(row.longitude) : "",
-        "Display Order": row.display_order !== null ? String(row.display_order) : "",
-        "Is Active": row.is_active ? "Yes" : "No",
-        "Created At": row.created_at || "",
-        "Updated At": row.updated_at || "",
-      };
-    });
+    const rows = data.map((row) => ({
+      "ID": String(row.photo_spot_id),
+      "Name (TH)": row.spot_name_th,
+      "Name (EN)": row.spot_name_en || "",
+      "Description (TH)": row.description_th || "",
+      "Description (EN)": row.description_en || "",
+      "Attraction": row.attraction_name_th || "",
+      "Latitude": row.latitude !== null ? String(row.latitude) : "",
+      "Longitude": row.longitude !== null ? String(row.longitude) : "",
+      "Display Order": row.display_order !== null ? String(row.display_order) : "",
+      "Is Active": row.is_active ? "Yes" : "No",
+      "Created At": row.created_at,
+      "Updated At": row.updated_at || "",
+    }));
 
     const exportRows = rows.length === 0 ? [{ Message: "No data available" }] : rows;
 
@@ -66,7 +65,7 @@ export async function GET(request: NextRequest) {
       action: `export.photo_spots.${format}`,
       entityType: "photo_spot_export",
       result: "success",
-      metadata: { rowCount: rows.length, maxRows }
+      metadata: { rowCount: rows.length, maxRows, filters }
     });
 
     const date = new Date().toISOString().split("T")[0];

@@ -60,7 +60,7 @@ export function SearchInput({ placeholder = "ค้นหา...", paramKey = "se
         value={value}
         onChange={handleChange}
         placeholder={placeholder}
-        className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/20"
+        className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-9 text-sm text-slate-700 outline-none transition placeholder:text-slate-500 focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/20"
       />
       {value && (
         <button

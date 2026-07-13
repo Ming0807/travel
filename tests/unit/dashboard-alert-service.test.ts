@@ -87,22 +87,30 @@ function healthyViewModel(overrides?: Partial<DashboardViewModel>): DashboardVie
       estimatedMin: null,
       estimatedMax: null,
       hasOpenEndedRange: false,
-      responseCount: 10,
+      responseCount: 40,
       methodologyNote: "Self-reported range data.",
     },
     satisfaction: {
       averageOverall: 4.2,
-      responseCount: 20,
+      responseCount: 40,
       distribution: [],
       byAttraction: [],
       safetyAverage: 4.5,
+      safetyResponseCount: 40,
       cleanlinessAverage: 4.3,
+      cleanlinessResponseCount: 40,
       accessibilityAverage: 4.2,
+      accessibilityResponseCount: 40,
       informationAverage: 4.4,
+      informationResponseCount: 40,
       valueAverage: 4.0,
+      valueResponseCount: 40,
       facilityAverage: 4.1,
+      facilityResponseCount: 40,
       revisitIntentionRate: 0.85,
+      revisitAnsweredCount: 40,
       recommendIntentionRate: 0.92,
+      recommendAnsweredCount: 40,
     },
     funnel: {
       stages,
@@ -309,9 +317,9 @@ describe("buildDashboardAlerts — satisfaction", () => {
 
   // ── Overall satisfaction ──
 
-  it("produces overall satisfaction warning when < 3.0 and responseCount >= 3", () => {
+  it("produces overall satisfaction warning when < 3.0 and responseCount >= 30", () => {
     const vm = healthyViewModel({
-      satisfaction: { ...healthyViewModel().satisfaction, averageOverall: 2.5, responseCount: 5 },
+      satisfaction: { ...healthyViewModel().satisfaction, averageOverall: 2.5, responseCount: 30 },
     });
     const result = buildDashboardAlerts(vm);
     const alert = bySource(result, "satisfaction").find((a) => a.id === "overall_satisfaction_low");
@@ -397,6 +405,68 @@ describe("buildDashboardAlerts — satisfaction", () => {
     const result = buildDashboardAlerts(vm);
     const alert = bySource(result, "satisfaction").find((a) => a.id === "recommend_intention_low");
     expect(alert).toBeUndefined();
+  });
+});
+
+describe("buildDashboardAlerts - minimum sample contract", () => {
+  it("does not classify low satisfaction as warning or critical below 30 responses", () => {
+    const vm = healthyViewModel({
+      satisfaction: {
+        ...healthyViewModel().satisfaction,
+        responseCount: 29,
+        averageOverall: 1.5,
+        safetyAverage: 1.2,
+      },
+    });
+
+    const alerts = bySource(buildDashboardAlerts(vm), "satisfaction");
+
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0].id).toBe("satisfaction_low_sample");
+    expect(alerts[0].severity).toBe("info");
+  });
+
+  it("does not classify a satisfaction dimension below 30 answered values", () => {
+    const vm = healthyViewModel({
+      satisfaction: {
+        ...healthyViewModel().satisfaction,
+        responseCount: 40,
+        safetyAverage: 1.2,
+        safetyResponseCount: 1,
+      },
+    });
+
+    const alerts = bySource(buildDashboardAlerts(vm), "satisfaction");
+
+    expect(alerts.some((item) => item.id === "dimension_critical_safety")).toBe(false);
+    expect(alerts.some((item) => item.id === "dimension_warning_safety")).toBe(false);
+  });
+
+  it("does not classify funnel drop-off below 30 previous-stage events", () => {
+    const stages = [
+      healthyStage("qr_scanned", "QR scanned", 29, null),
+      healthyStage("landing_viewed", "Landing viewed", 1, 29),
+    ];
+    const vm = healthyViewModel({
+      funnel: { stages, largestDropOffStage: stages[1] },
+    });
+
+    const alerts = bySource(buildDashboardAlerts(vm), "funnel");
+
+    expect(alerts.some((item) => item.severity === "critical" || item.severity === "warning")).toBe(false);
+    expect(alerts.some((item) => item.id === "funnel_low_sample")).toBe(true);
+  });
+
+  it("does not warn about survey completion below 30 generated certificates", () => {
+    const kpis = healthyKpis.map((kpi) => {
+      if (kpi.key === "survey_completion_rate") return { ...kpi, value: "10%", rawValue: 0.1 };
+      if (kpi.key === "certificates_generated") return { ...kpi, value: "29", rawValue: 29 };
+      return kpi;
+    });
+
+    const alerts = bySource(buildDashboardAlerts(healthyViewModel({ kpis })), "survey");
+
+    expect(alerts).toHaveLength(0);
   });
 });
 
@@ -652,7 +722,7 @@ describe("buildDashboardAlerts — survey", () => {
 // ────────────────────────────────────────────────────────
 
 describe("buildDashboardAlerts — expense", () => {
-  it("produces no expense alerts when responseCount >= 5", () => {
+  it("produces no expense alerts when responseCount >= 30", () => {
     const result = buildDashboardAlerts(healthyViewModel());
     const expenseAlerts = bySource(result, "expense");
     expect(expenseAlerts).toHaveLength(0);
@@ -702,9 +772,9 @@ describe("buildDashboardAlerts — expense", () => {
     expect(bySource(result, "expense")[0].id).toBe("expense_low_sample");
   });
 
-  it("does NOT produce info alert when responseCount is exactly 5", () => {
+  it("does NOT produce info alert when responseCount is exactly 30", () => {
     const vm = healthyViewModel({
-      expense: { ...healthyViewModel().expense, responseCount: 5 },
+      expense: { ...healthyViewModel().expense, responseCount: 30 },
     });
     const result = buildDashboardAlerts(vm);
     expect(bySource(result, "expense")).toHaveLength(0);

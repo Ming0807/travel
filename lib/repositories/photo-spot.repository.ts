@@ -60,6 +60,10 @@ function toPayload(input: AdminPhotoSpotMutationInput) {
   };
 }
 
+function escapeIlikePattern(value: string) {
+  return value.replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
 export async function listAdminPhotoSpots(filters: AdminPhotoSpotFilters): Promise<PaginatedResult<AdminPhotoSpotRow>> {
   const supabase = createSupabaseServiceRoleClient();
   const from = (filters.page - 1) * filters.pageSize;
@@ -69,14 +73,16 @@ export async function listAdminPhotoSpots(filters: AdminPhotoSpotFilters): Promi
     .from("photo_spots")
     .select("*, attractions (name_th)", { count: "exact" })
     .order("attraction_id", { ascending: true })
-    .order("display_order", { ascending: true, nullsFirst: false })
-    .range(from, to);
+    .order("display_order", { ascending: true, nullsFirst: false });
 
   if (filters.attractionId) query = query.eq("attraction_id", filters.attractionId);
   if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
   if (filters.search) {
-    query = query.or(`spot_name_th.ilike.%${filters.search}%,spot_name_en.ilike.%${filters.search}%`);
+    const search = escapeIlikePattern(filters.search);
+    query = query.or(`spot_name_th.ilike.%${search}%,spot_name_en.ilike.%${search}%`);
   }
+
+  query = query.range(from, to);
 
   const { data, error, count } = await query;
   if (error) {
@@ -89,6 +95,33 @@ export async function listAdminPhotoSpots(filters: AdminPhotoSpotFilters): Promi
     page: filters.page,
     pageSize: filters.pageSize
   };
+}
+
+export async function exportAdminPhotoSpots(
+  filters: Omit<AdminPhotoSpotFilters, "page" | "pageSize">,
+  limit?: number
+): Promise<AdminPhotoSpotRow[]> {
+  const supabase = createSupabaseServiceRoleClient();
+
+  let query = supabase
+    .from("photo_spots")
+    .select("*, attractions (name_th)")
+    .order("attraction_id", { ascending: true })
+    .order("display_order", { ascending: true, nullsFirst: false });
+
+  if (filters.attractionId) query = query.eq("attraction_id", filters.attractionId);
+  if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
+  if (filters.search) {
+    const search = escapeIlikePattern(filters.search);
+    query = query.or(`spot_name_th.ilike.%${search}%,spot_name_en.ilike.%${search}%`);
+  }
+
+  if (limit) query = query.limit(limit);
+
+  const { data, error } = await query;
+  if (error) throw new Error("ADMIN_PHOTO_SPOT_EXPORT_FAILED");
+
+  return (data ?? []).map(mapPhotoSpot);
 }
 
 export async function getAdminPhotoSpotById(photoSpotId: number): Promise<AdminPhotoSpotRow | null> {

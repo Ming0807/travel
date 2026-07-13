@@ -18,7 +18,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = async (roleId: number, roleName: string) => {
-    if (!confirm(`Are you sure you want to delete the role "${roleName}"? This action cannot be undone.`)) {
+    if (!confirm(`ยืนยันการลบบทบาท "${roleName}" หรือไม่ การดำเนินการนี้ย้อนกลับไม่ได้`)) {
       return;
     }
 
@@ -43,7 +43,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
     <div className="space-y-4">
       {roles.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
-          <p className="text-sm text-slate-500">No roles found.</p>
+          <p className="text-sm text-slate-500">ยังไม่มีบทบาทในระบบ</p>
         </div>
       ) : (
         <>
@@ -57,7 +57,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                       <h3 className="text-base font-bold text-slate-900">{role.role_name}</h3>
                       {isProtectedRole(role.role_name) && (
                         <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 uppercase tracking-wider">
-                          System
+                          บทบาทระบบ
                         </span>
                       )}
                     </div>
@@ -67,19 +67,19 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                     {role.is_active ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
                         <CheckCircle size={14} weight="fill" />
-                        Active
+                        ใช้งานอยู่
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/20">
                         <XCircle size={14} weight="fill" />
-                        Inactive
+                        ปิดใช้งาน
                       </span>
                     )}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Permissions ({role.permissions.length})</span>
+                  <span className="text-xs font-semibold text-slate-700">สิทธิ์ทั้งหมด ({role.permissions.length})</span>
                   <div className="flex flex-wrap gap-1.5">
                     {role.permissions.slice(0, 4).map((perm) => (
                       <span key={perm} className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-mono font-medium text-slate-600 border border-slate-200">
@@ -88,11 +88,11 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                     ))}
                     {role.permissions.length > 4 && (
                       <span className="inline-flex rounded-md bg-slate-50 px-2 py-1 text-xs font-mono font-medium text-slate-500 border border-slate-200">
-                        +{role.permissions.length - 4} more
+                        อีก {role.permissions.length - 4} สิทธิ์
                       </span>
                     )}
                     {role.permissions.length === 0 && (
-                      <span className="text-xs text-slate-400 italic">No permissions</span>
+                      <span className="text-xs text-slate-400">ยังไม่ได้กำหนดสิทธิ์</span>
                     )}
                   </div>
                 </div>
@@ -103,7 +103,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-100 transition-colors"
                   >
                     <PencilSimple size={16} />
-                    Edit
+                    แก้ไข
                   </Link>
                   {!isProtectedRole(role.role_name) && (
                     <button
@@ -112,7 +112,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                       className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-600 ring-1 ring-inset ring-red-300 hover:bg-red-50 disabled:opacity-50 transition-colors"
                     >
                       <Trash size={16} />
-                      Delete
+                      ลบ
                     </button>
                   )}
                 </div>
@@ -126,11 +126,11 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Role</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Permissions</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                    <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500 whitespace-nowrap">บทบาท</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500">คำอธิบาย</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500">สิทธิ์</th>
+                    <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-slate-500">สถานะ</th>
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-slate-500">จัดการ</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -142,7 +142,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                             <span className="text-sm font-bold text-slate-900">{role.role_name}</span>
                             {isProtectedRole(role.role_name) && (
                               <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-700/10 uppercase tracking-wider">
-                                System
+                                บทบาทระบบ
                               </span>
                             )}
                           </div>
@@ -160,11 +160,11 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                           ))}
                           {role.permissions.length > 5 && (
                             <span className="inline-flex rounded-md bg-slate-50 px-2 py-1 text-xs font-mono font-medium text-slate-500 border border-slate-200">
-                              +{role.permissions.length - 5} more
+                              อีก {role.permissions.length - 5} สิทธิ์
                             </span>
                           )}
                           {role.permissions.length === 0 && (
-                            <span className="text-xs text-slate-400 italic">No permissions assigned</span>
+                            <span className="text-xs text-slate-400">ยังไม่ได้กำหนดสิทธิ์</span>
                           )}
                         </div>
                       </td>
@@ -172,12 +172,12 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                         {role.is_active ? (
                           <div className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full ring-1 ring-inset ring-green-600/20">
                             <CheckCircle size={14} weight="fill" />
-                            Active
+                            ใช้งานอยู่
                           </div>
                         ) : (
                           <div className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-50 px-2.5 py-1 rounded-full ring-1 ring-inset ring-slate-500/20">
                             <XCircle size={14} weight="fill" />
-                            Inactive
+                            ปิดใช้งาน
                           </div>
                         )}
                       </td>
@@ -186,20 +186,20 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                           <Link
                             href={`/admin/roles/${role.role_id}/edit`}
                             className="inline-flex items-center justify-center rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-[#F3704C] transition-colors"
-                            title="Edit role"
+                            title="แก้ไขบทบาท"
                           >
                             <PencilSimple size={20} />
-                            <span className="sr-only">Edit</span>
+                            <span className="sr-only">แก้ไข</span>
                           </Link>
                           {!isProtectedRole(role.role_name) ? (
                             <button
                               onClick={() => handleDelete(role.role_id, role.role_name)}
                               disabled={isPending}
                               className="inline-flex items-center justify-center rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
-                              title="Delete role"
+                              title="ลบบทบาท"
                             >
                               <Trash size={20} />
-                              <span className="sr-only">Delete</span>
+                              <span className="sr-only">ลบ</span>
                             </button>
                           ) : (
                             <div className="w-9"></div>

@@ -4,15 +4,16 @@ import type { Metadata } from "next";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { SearchInput } from "@/components/admin/SearchInput";
-import { FilterBar } from "@/components/admin/FilterBar";
+import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
 import { ListPageShell } from "@/components/admin/ListPageShell";
-import { requirePermission } from "@/lib/auth/guards";
+import { hasPermission, requirePermission } from "@/lib/auth/guards";
 import { listAdminPhotoSpots } from "@/lib/repositories/photo-spot.repository";
 import { adminPhotoSpotFiltersSchema } from "@/lib/validation/photo-spot";
 import { PhotoSpotStatusAction } from "@/components/admin/photo-spots/PhotoSpotStatusAction";
 import { ExportButton } from "@/components/admin/ExportButton";
 import Link from "next/link";
 import { PencilSimple } from "@phosphor-icons/react/dist/ssr";
+import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
 
 export const metadata: Metadata = {
   title: "Photo Spots Management | Admin",
@@ -32,11 +33,18 @@ export default async function AdminPhotoSpotsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requirePermission("photo_spot.read");
+  const guard = await requirePermission("photo_spot.read");
   const raw = await searchParams;
   const parsed = adminPhotoSpotFiltersSchema.safeParse(raw);
   const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
-  const { items, total, page, pageSize } = await listAdminPhotoSpots(filters);
+  const [{ items, total, page, pageSize }, attractions] = await Promise.all([
+    listAdminPhotoSpots(filters),
+    getAdminAttractionsList(),
+  ]);
+  const canCreate = hasPermission(guard.actor, "photo_spot.create");
+  const canEdit = hasPermission(guard.actor, "photo_spot.update");
+  const canToggle = hasPermission(guard.actor, "photo_spot.deactivate");
+  const canExport = hasPermission(guard.actor, "export.photo_spots");
 
   return (
     <ListPageShell
@@ -45,7 +53,8 @@ export default async function AdminPhotoSpotsPage({
       description="จัดการจุดถ่ายภาพในแต่ละแหล่งท่องเที่ยว"
       createHref="/admin/photo-spots/new"
       createLabel="เพิ่มจุดถ่ายภาพ"
-      headerActions={<ExportButton endpoint="/api/admin/export/photo-spots" label="Export CSV" />}
+      hideCreateButton={!canCreate}
+      headerActions={canExport ? <ExportButton endpoint="/api/admin/export/photo-spots" label="ส่งออก" /> : null}
       total={total}
       page={page}
       pageSize={pageSize}
@@ -53,9 +62,27 @@ export default async function AdminPhotoSpotsPage({
       emptyDescription="ลองเปลี่ยนเงื่อนไขการค้นหา หรือเพิ่มจุดถ่ายภาพใหม่ก่อนเชื่อมกับรหัส Check-in"
       filters={
         <FilterBar>
-          <div className="min-w-[220px] flex-1">
+          <div className="w-full sm:min-w-[220px] sm:flex-1">
             <SearchInput placeholder="ค้นหาชื่อจุดถ่ายภาพ..." />
           </div>
+          <FilterSelect
+            label="สถานที่"
+            paramKey="attractionId"
+            allLabel="ทุกสถานที่"
+            options={attractions.map((attraction) => ({
+              value: attraction.attraction_id.toString(),
+              label: attraction.name_th,
+            }))}
+          />
+          <FilterSelect
+            label="สถานะ"
+            paramKey="isActive"
+            allLabel="ทุกสถานะ"
+            options={[
+              { value: "true", label: "เปิดใช้งาน" },
+              { value: "false", label: "ปิดใช้งาน" },
+            ]}
+          />
         </FilterBar>
       }
     >
@@ -89,23 +116,28 @@ export default async function AdminPhotoSpotsPage({
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge
-                        label={spot.is_active ? "Active" : "Inactive"}
+                        label={spot.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                         tone={spot.is_active ? "green" : "red"}
                       />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Link
-                          href={`/admin/photo-spots/${spot.photo_spot_id}/edit`}
-                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                          title="แก้ไข"
-                        >
-                          <PencilSimple size={20} />
-                        </Link>
-                        <PhotoSpotStatusAction
-                          photoSpotId={spot.photo_spot_id}
-                          isActive={spot.is_active}
-                        />
+                        {canEdit ? (
+                          <Link
+                            href={`/admin/photo-spots/${spot.photo_spot_id}/edit`}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                            aria-label={`แก้ไข ${spot.spot_name_th}`}
+                            title="แก้ไข"
+                          >
+                            <PencilSimple size={20} />
+                          </Link>
+                        ) : null}
+                        {canToggle ? (
+                          <PhotoSpotStatusAction
+                            photoSpotId={spot.photo_spot_id}
+                            isActive={spot.is_active}
+                          />
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -128,7 +160,7 @@ export default async function AdminPhotoSpotsPage({
                       )}
                     </div>
                     <StatusBadge
-                      label={spot.is_active ? "Active" : "Inactive"}
+                      label={spot.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                       tone={spot.is_active ? "green" : "red"}
                     />
                   </div>
@@ -153,16 +185,21 @@ export default async function AdminPhotoSpotsPage({
                   </div>
 
                   <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-                    <Link
-                      href={`/admin/photo-spots/${spot.photo_spot_id}/edit`}
-                      className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                    >
-                      <PencilSimple size={20} />
-                    </Link>
-                    <PhotoSpotStatusAction
-                      photoSpotId={spot.photo_spot_id}
-                      isActive={spot.is_active}
-                    />
+                    {canEdit ? (
+                      <Link
+                        href={`/admin/photo-spots/${spot.photo_spot_id}/edit`}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        aria-label={`แก้ไข ${spot.spot_name_th}`}
+                      >
+                        <PencilSimple size={20} />
+                      </Link>
+                    ) : null}
+                    {canToggle ? (
+                      <PhotoSpotStatusAction
+                        photoSpotId={spot.photo_spot_id}
+                        isActive={spot.is_active}
+                      />
+                    ) : null}
                   </div>
                 </div>
               ))}

@@ -24,37 +24,37 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/lib/auth/guards";
 
 export const metadata: Metadata = {
-  title: "Admin Overview | Southern Border Tourism",
+  title: "ภาพรวมระบบ | แอดมินท่องเที่ยวชายแดนใต้",
 };
 
 const moduleGroups = [
   {
-    title: "Overview & CRM",
+    title: "ภาพรวมและข้อมูลนักท่องเที่ยว",
     items: [
       {
         href: "/admin/dashboard",
-        label: "Analytics Dashboard",
+        label: "แดชบอร์ดวิเคราะห์",
         description: "ภาพรวมข้อมูลนักท่องเที่ยว เชิงวิเคราะห์",
         icon: ChartLineUp,
         tone: "bg-emerald-50 text-emerald-700",
       },
       {
         href: "/admin/tourists",
-        label: "Tourists (นักท่องเที่ยว)",
+        label: "นักท่องเที่ยว",
         description: "ข้อมูลและโปรไฟล์นักท่องเที่ยว",
         icon: UserCircle,
         tone: "bg-emerald-50 text-emerald-700",
       },
       {
         href: "/admin/visits",
-        label: "Visit Records",
+        label: "บันทึกการเข้าชม",
         description: "ดูบันทึกการเข้าชม การออกใบประกาศ",
         icon: ClipboardText,
         tone: "bg-rose-50 text-rose-700",
       },
       {
         href: "/admin/surveys",
-        label: "Survey Responses",
+        label: "คำตอบแบบสอบถาม",
         description: "ดูข้อมูลแบบสอบถามความพึงพอใจ",
         icon: ChatCircleText,
         tone: "bg-teal-50 text-teal-700",
@@ -62,12 +62,12 @@ const moduleGroups = [
     ]
   },
   {
-    title: "Content Management",
+    title: "จัดการเนื้อหา",
     items: [
       {
         href: "/admin/content-health",
-        label: "Content Health",
-        description: "ตรวจสอบ draft/published, ภาษา, รูปภาพของเนื้อหาทั้งหมด",
+        label: "สุขภาพเนื้อหา",
+        description: "ตรวจสอบสถานะเผยแพร่ ภาษา และรูปภาพของเนื้อหาทั้งหมด",
         icon: ChartLineUp,
         tone: "bg-teal-50 text-teal-700",
       },
@@ -80,28 +80,28 @@ const moduleGroups = [
       },
       {
         href: "/admin/routes",
-        label: "Travel Routes",
+        label: "เส้นทางท่องเที่ยว",
         description: "จัดการเส้นทางท่องเที่ยวแนะนำ",
         icon: Path,
         tone: "bg-cyan-50 text-cyan-700",
       },
       {
         href: "/admin/stories",
-        label: "Stories & Articles",
+        label: "เรื่องราวและบทความ",
         description: "จัดการบทความและเรื่องเล่า",
         icon: Article,
         tone: "bg-fuchsia-50 text-fuchsia-700",
       },
       {
         href: "/admin/restaurants",
-        label: "Restaurants",
+        label: "ร้านอาหารและของฝาก",
         description: "จัดการร้านอาหารและของฝาก",
         icon: ForkKnife,
         tone: "bg-orange-50 text-orange-700",
       },
       {
         href: "/admin/media",
-        label: "Media Library",
+        label: "คลังสื่อ",
         description: "จัดการรูปภาพ วิดีโอ รวมทั้งระบบ",
         icon: ImageIcon,
         tone: "bg-indigo-50 text-indigo-700",
@@ -116,25 +116,25 @@ const moduleGroups = [
     ]
   },
   {
-    title: "Operations & Incentives",
+    title: "การดำเนินงานและรางวัล",
     items: [
       {
         href: "/admin/certificate-templates",
-        label: "Certificate Templates",
+        label: "แม่แบบใบประกาศ",
         description: "จัดการเทมเพลตใบประกาศนียบัตร",
         icon: Certificate,
         tone: "bg-indigo-50 text-indigo-700",
       },
       {
         href: "/admin/checkin-codes",
-        label: "QR Check-in Codes",
+        label: "รหัส QR เช็กอิน",
         description: "สร้างและจัดการ QR Code",
         icon: QrCode,
         tone: "bg-violet-50 text-violet-700",
       },
       {
         href: "/admin/badges",
-        label: "Digital Badges",
+        label: "เหรียญรางวัลดิจิทัล",
         description: "จัดการเหรียญรางวัลและเงื่อนไข",
         icon: Medal,
         tone: "bg-yellow-50 text-yellow-700",
@@ -142,39 +142,39 @@ const moduleGroups = [
     ]
   },
   {
-    title: "System Administration",
+    title: "ระบบและสิทธิ์ผู้ดูแล",
     items: [
       {
         href: "/admin/users",
-        label: "Admin Users",
+        label: "บัญชีผู้ดูแลระบบ",
         description: "จัดการบัญชีผู้ดูแลระบบ",
         icon: UserCircle,
         tone: "bg-slate-100 text-slate-700",
       },
       {
         href: "/admin/roles",
-        label: "Roles & Permissions",
+        label: "บทบาทและสิทธิ์",
         description: "จัดการสิทธิ์การเข้าถึงเมนูต่างๆ",
         icon: Shield,
         tone: "bg-slate-100 text-slate-700",
       },
       {
         href: "/admin/audit",
-        label: "Audit Logs",
+        label: "ประวัติการใช้งานระบบ",
         description: "ดูประวัติการดำเนินการในระบบ",
         icon: Scroll,
         tone: "bg-slate-100 text-slate-700",
       },
       {
         href: "/admin/messages",
-        label: "Contact Messages",
+        label: "ข้อความติดต่อ",
         description: "กล่องข้อความติดต่อจากผู้ใช้",
         icon: EnvelopeSimple,
         tone: "bg-slate-100 text-slate-700",
       },
       {
         href: "/admin/settings",
-        label: "Site Settings",
+        label: "ตั้งค่าเว็บไซต์",
         description: "ตั้งค่าเว็บไซต์ ฟีเจอร์ และ SEO",
         icon: Gear,
         tone: "bg-slate-100 text-slate-700",
@@ -193,13 +193,13 @@ export default async function AdminPage() {
         {/* Header */}
         <header className="border-b border-slate-200 pb-6">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#D6A13D]">
-            Admin Backoffice
+            ระบบหลังบ้าน
           </p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-[#073F37]">
             ภาพรวมระบบ
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Southern Border Tourism Data & Intelligence Platform — ระบบจัดการข้อมูลและวิเคราะห์การท่องเที่ยว ยะลา ปัตตานี นราธิวาส
+            จัดการข้อมูลและวิเคราะห์การท่องเที่ยวสำหรับยะลา ปัตตานี และนราธิวาส
           </p>
         </header>
 
@@ -215,9 +215,9 @@ export default async function AdminPage() {
                     <Link
                       key={mod.href}
                       href={mod.href}
-                      className="group flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#0A6B62]/30 hover:shadow-md"
+                      className="group flex gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#0A6B62]/30 hover:shadow-md"
                     >
-                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${mod.tone}`}>
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md ${mod.tone}`}>
                         <Icon size={22} weight="fill" />
                       </div>
                       <div className="min-w-0">

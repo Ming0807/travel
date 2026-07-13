@@ -1,29 +1,15 @@
-import type { DashboardViewModel } from "@/types/dashboard";
 import { FunnelChart } from "@/components/dashboard/FunnelChart";
-import { NoDataState } from "@/components/dashboard/NoDataState";
-import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
+import type { DashboardViewModel } from "@/types/dashboard";
 
 export function FunnelSection({ data }: { data: DashboardViewModel }) {
   return (
-    <section className="space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-[#073F37]">Funnel analytics</h2>
-          <p className="mt-1 text-sm text-slate-500">Funnel events explain drop-off. They are not visits and not unique people.</p>
-        </div>
-        <ExportCsvButton />
+    <section className="space-y-5" aria-labelledby="funnel-heading">
+      <div>
+        <h2 id="funnel-heading" className="text-lg font-bold text-slate-900">เส้นทางการใช้งาน</h2>
+        <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">ใช้ค้นหาขั้นตอนที่ผู้ใช้ออกจากกระบวนการ ตั้งแต่สแกน QR จนถึงรับใบประกาศและตอบแบบสำรวจ</p>
       </div>
-      {data.funnel.largestDropOffStage ? (
-        <NoDataState
-          title="Largest drop-off signal"
-          description={`${data.funnel.largestDropOffStage.label}: ${
-            data.funnel.largestDropOffStage.dropOffFromPrevious === null
-              ? "No data"
-              : `${Math.round(data.funnel.largestDropOffStage.dropOffFromPrevious * 100)}% drop-off from previous stage`
-          }.`}
-        />
-      ) : null}
       <FunnelChart stages={data.funnel.stages} />
+      <p className="text-xs leading-5 text-slate-500">ข้อควรระวัง: เหตุการณ์หนึ่งคนอาจเกิดซ้ำได้ จึงไม่ควรตีความเป็นจำนวนบุคคลจริงจนกว่าจะมีการวิเคราะห์ระดับ session ที่สมบูรณ์</p>
     </section>
   );
 }

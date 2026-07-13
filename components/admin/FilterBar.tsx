@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useCallback, useId, useTransition } from "react";
 
 export interface FilterOption {
   value: string;
@@ -21,6 +21,7 @@ export function FilterSelect({ label, paramKey, options, allLabel = "ทั้�
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const currentValue = searchParams.get(paramKey) ?? "";
+  const selectId = useId();
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -39,15 +40,16 @@ export function FilterSelect({ label, paramKey, options, allLabel = "ทั้�
   );
 
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-bold uppercase tracking-wide text-slate-500">
+    <div className="flex min-w-0 flex-col gap-1 sm:min-w-[160px]">
+      <label htmlFor={selectId} className="text-xs font-bold text-slate-600">
         {label}
       </label>
       <select
+        id={selectId}
         value={currentValue}
         onChange={handleChange}
         disabled={isPending}
-        className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/20 disabled:opacity-60"
+        className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/20 disabled:opacity-60"
       >
         <option value="">{allLabel}</option>
         {options.map((option) => (
@@ -66,7 +68,7 @@ interface FilterBarProps {
 
 export function FilterBar({ children }: FilterBarProps) {
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex sm:flex-wrap sm:items-end">
       {children}
     </div>
   );

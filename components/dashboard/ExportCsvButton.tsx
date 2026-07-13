@@ -3,42 +3,23 @@
 import { useSearchParams } from "next/navigation";
 import { ExportPrivacyDialog } from "@/components/dashboard/ExportPrivacyDialog";
 
+const exports = [
+  ["summary", "สรุปภาพรวม"],
+  ["tourists", "โปรไฟล์นักท่องเที่ยว"],
+  ["visits", "รายการเข้าชม"],
+  ["surveys", "แบบสำรวจ"],
+  ["expenses", "ค่าใช้จ่าย"],
+] as const;
+
 export function ExportCsvButton() {
   const searchParams = useSearchParams();
-  const queryString = searchParams?.toString() ? `${searchParams.toString()}&` : "";
-
+  const queryString = searchParams.toString() ? `${searchParams.toString()}&` : "";
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <ExportPrivacyDialog
-        endpoint="/api/admin/dashboard/export"
-        exportType="summary"
-        label="Summary"
-        searchParams={queryString}
-      />
-      <ExportPrivacyDialog
-        endpoint="/api/admin/dashboard/export"
-        exportType="tourists"
-        label="Tourists"
-        searchParams={queryString}
-      />
-      <ExportPrivacyDialog
-        endpoint="/api/admin/dashboard/export"
-        exportType="visits"
-        label="Visits"
-        searchParams={queryString}
-      />
-      <ExportPrivacyDialog
-        endpoint="/api/admin/dashboard/export"
-        exportType="surveys"
-        label="Surveys"
-        searchParams={queryString}
-      />
-      <ExportPrivacyDialog
-        endpoint="/api/admin/dashboard/export"
-        exportType="expenses"
-        label="Expenses"
-        searchParams={queryString}
-      />
-    </div>
+    <details className="relative">
+      <summary className="inline-flex min-h-10 cursor-pointer list-none items-center rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">ส่งออกข้อมูล</summary>
+      <div className="absolute right-0 z-30 mt-2 flex w-60 flex-col gap-1 rounded-md border border-slate-200 bg-white p-2 shadow-card">
+        {exports.map(([exportType, label]) => <ExportPrivacyDialog key={exportType} endpoint="/api/admin/dashboard/export" exportType={exportType} label={label} searchParams={queryString} />)}
+      </div>
+    </details>
   );
 }

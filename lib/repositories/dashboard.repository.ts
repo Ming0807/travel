@@ -1,16 +1,11 @@
 import "server-only";
 
 import { DASHBOARD_ROW_LIMIT } from "@/constants/dashboard-metrics";
+import { AGE_GROUP_OPTIONS } from "@/lib/validation/checkin";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { DashboardFilters, DashboardReferenceOptions } from "@/types/dashboard";
 import {
-  type DashboardSummaryKpis,
-  getDashboardSummaryKpis as fetchSummaryKpis,
-  getDashboardSummaryTrend as fetchSummaryTrend,
-  getDashboardSummaryByProvince as fetchSummaryByProvince,
-  getDashboardSummaryTopAttractions as fetchSummaryTopAttractions,
-  getDashboardSummaryFunnelCounts as fetchSummaryFunnelCounts,
-  getDashboardSummaryRefreshTime
+  type DashboardSummaryKpis
 } from "@/lib/repositories/dashboard-summary.repository";
 import type { TrendPoint, DistributionItem, RankedAttraction } from "@/types/dashboard";
 
@@ -147,6 +142,21 @@ export async function getDashboardReferenceOptions(): Promise<DashboardReference
     }
   }
 
+  const ageGroupOptionMap = new Map<string, string>();
+  AGE_GROUP_OPTIONS.forEach((option) => ageGroupOptionMap.set(option.value, option.label));
+  [
+    ...(ageGroups.data ?? []).map((row: Record<string, unknown>) => String(row.label ?? "").trim()),
+    "0-15",
+    "16-24",
+    "25-34",
+    "35-44",
+    "45-54",
+    "55-64",
+    "65+",
+  ].filter(Boolean).forEach((value) => {
+    if (!ageGroupOptionMap.has(value)) ageGroupOptionMap.set(value, `${value} (ข้อมูลเดิม)`);
+  });
+
   return {
     provinces: mapOptions(provinces.data, "province_id", "province_name_th", "province_name_en"),
     districts: mapOptions(districts.data, "district_id", "district_name_th", "district_name_en"),
@@ -154,7 +164,7 @@ export async function getDashboardReferenceOptions(): Promise<DashboardReference
     attractionTypes: mapOptions(attractionTypes.data, "attraction_type_id", "type_name_th", "type_name_en"),
     originCountries: mapOptions(countries.data, "country_id", "country_name_th", "country_name_en"),
     originProvinces: mapOptions(provinces.data, "province_id", "province_name_th", "province_name_en"),
-    ageGroups: (ageGroups.data ?? []).map((row: Record<string, unknown>) => ({ value: String(row.label), label: String(row.label) })),
+    ageGroups: Array.from(ageGroupOptionMap, ([value, label]) => ({ value, label })),
     transportModes: mapOptions(transportModes.data, "transport_mode_id", "name_th", "name_en"),
     travelPurposes: mapOptions(travelPurposes.data, "travel_purpose_id", "name_th", "name_en")
   };
@@ -361,16 +371,26 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
     expensesQuery = expensesQuery.eq(`visits.tourists.${key}`, value);
   }
 
-  // Determine which queries are needed based on activeTab
-  const needVisits = ["executive", "tourists", "visits", "expenses", "satisfaction", "sustainability"].includes(activeTab);
-  const needCertificates = ["executive", "satisfaction", "sustainability"].includes(activeTab);
+  for (const [key, value] of [
+    ["transport_mode_id", filters.transportModeId],
+    ["travel_purpose_id", filters.travelPurposeId]
+  ] as const) {
+    if (!value) continue;
+    certificatesQuery = certificatesQuery.eq(`visits.${key}`, value);
+    stampsQuery = stampsQuery.eq(`visits.${key}`, value);
+    surveysQuery = surveysQuery.eq(`visits.${key}`, value);
+    expensesQuery = expensesQuery.eq(`visits.${key}`, value);
+  }
+
+  // Every populated section in one response is built from the same live source.
+  // Summary tables remain available for refresh/inspection, but they do not yet
+  // cover every demographic and behavior filter required by this view model.
+  const needVisits = ["executive", "tourists", "visits", "attractions", "expenses", "satisfaction", "sustainability"].includes(activeTab);
+  const needCertificates = ["executive", "attractions", "satisfaction", "sustainability"].includes(activeTab);
   const needStamps = ["executive", "sustainability"].includes(activeTab);
-  const needSurveys = ["executive", "satisfaction", "sustainability"].includes(activeTab);
+  const needSurveys = ["executive", "attractions", "satisfaction", "sustainability"].includes(activeTab);
   const needExpenses = ["executive", "expenses", "sustainability"].includes(activeTab);
   const needFunnel = ["executive", "funnel"].includes(activeTab);
-
-  // Fetch pre-aggregated summary data in parallel with live queries
-  const needSummary = ["executive", "tourists", "visits", "expenses", "satisfaction", "funnel", "sustainability"].includes(activeTab);
 
   const [
     visits,
@@ -379,13 +399,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
     surveys,
     expenses,
     funnelEvents,
-    referenceOptions,
-    summaryKpis,
-    summaryTrend,
-    summaryProvince,
-    summaryTop,
-    summaryFunnel,
-    summaryRefreshTime
+    referenceOptions
   ] = await Promise.all([
     needVisits ? visitsQuery : Promise.resolve({ data: [], error: null }),
     needCertificates ? certificatesQuery : Promise.resolve({ data: [], error: null }),
@@ -393,13 +407,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
     needSurveys ? surveysQuery : Promise.resolve({ data: [], error: null }),
     needExpenses ? expensesQuery : Promise.resolve({ data: [], error: null }),
     needFunnel ? funnelQuery : Promise.resolve({ data: [], error: null }),
-    getDashboardReferenceOptions(),
-    needSummary ? fetchSummaryKpis(filters) : Promise.resolve(null),
-    needSummary ? fetchSummaryTrend(filters) : Promise.resolve([]),
-    needSummary ? fetchSummaryByProvince(filters) : Promise.resolve([]),
-    needSummary ? fetchSummaryTopAttractions(filters) : Promise.resolve([]),
-    needSummary ? fetchSummaryFunnelCounts(filters) : Promise.resolve(new Map()),
-    needSummary ? getDashboardSummaryRefreshTime() : Promise.resolve(null)
+    getDashboardReferenceOptions()
   ]);
 
   for (const result of [visits, certificates, stamps, surveys, expenses, funnelEvents]) {
@@ -431,12 +439,12 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
       (needExpenses && expenseRows.length >= DASHBOARD_ROW_LIMIT) ||
       (needFunnel && funnelRows.length >= DASHBOARD_ROW_LIMIT),
     summary: {
-      kpis: summaryKpis,
-      trend: summaryTrend,
-      visitsByProvince: summaryProvince,
-      topAttractions: summaryTop,
-      funnelEventCounts: summaryFunnel,
-      refreshTimestamp: summaryRefreshTime
+      kpis: null,
+      trend: [],
+      visitsByProvince: [],
+      topAttractions: [],
+      funnelEventCounts: new Map(),
+      refreshTimestamp: null
     }
   };
 }

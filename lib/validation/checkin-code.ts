@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { adminPaginationSchema } from "@/lib/validation/admin-attraction";
+import { bangkokDateTimeInputToIso } from "@/lib/utils/bangkok-datetime";
 
 const requiredId = z.coerce.number().int().positive();
 
@@ -22,7 +23,7 @@ const optionalDateTime = z
   .refine((value) => value === null || !Number.isNaN(Date.parse(value)), {
     message: "Date and time must be valid."
   })
-  .transform((value) => (value === null ? null : new Date(value).toISOString()));
+  .transform((value) => (value === null ? null : bangkokDateTimeInputToIso(value)));
 
 const booleanFromForm = z.preprocess((value) => {
   if (typeof value === "boolean") return value;
@@ -46,7 +47,11 @@ export const adminCheckinCodeFiltersSchema = adminPaginationSchema.extend({
     (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
     z.string().max(120).optional()
   ),
-  isActive: booleanFromQuery
+  isActive: booleanFromQuery,
+  availability: z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? undefined : value),
+    z.enum(["current", "upcoming", "expired"]).optional()
+  )
 });
 
 export const adminCheckinCodeMutationSchema = z

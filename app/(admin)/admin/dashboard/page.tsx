@@ -9,7 +9,7 @@ import { NoDataState } from "@/components/dashboard/NoDataState";
 import { DashboardServiceError, getDashboardAnalytics } from "@/lib/services/dashboard.service";
 
 export const metadata: Metadata = {
-  title: "Dashboard Analytics | Admin"
+  title: "ภาพรวมการวิเคราะห์ | ผู้ดูแลระบบ"
 };
 
 type DashboardPageProps = {
@@ -33,8 +33,8 @@ export default async function AdminDashboardPage({ searchParams = {} }: Dashboar
     return (
       <AdminShell>
         <div className="space-y-6">
-          <AdminPageHeader eyebrow="Phase 09" title={isValidationError ? "Invalid filters" : "Dashboard unavailable"} description="Dashboard analytics are protected and return aggregated data only." />
-          <NoDataState title={isValidationError ? "Invalid filters" : "Error"} description={caughtError?.message ?? "Could not load dashboard data."} />
+          <AdminPageHeader eyebrow="ศูนย์วิเคราะห์ข้อมูล" title={isValidationError ? "ตัวกรองไม่ถูกต้อง" : "ไม่สามารถเปิด Dashboard ได้"} description="ข้อมูลวิเคราะห์ได้รับการป้องกันและแสดงเฉพาะข้อมูลแบบสรุป" />
+          <NoDataState title={isValidationError ? "ตรวจสอบตัวกรอง" : "เกิดข้อผิดพลาด"} description={isValidationError ? "กรุณาตรวจสอบช่วงวันที่และค่าตัวกรอง แล้วลองใหม่" : "ระบบยังโหลดข้อมูลไม่ได้ กรุณาลองใหม่อีกครั้ง"} />
         </div>
       </AdminShell>
     );
@@ -42,7 +42,7 @@ export default async function AdminDashboardPage({ searchParams = {} }: Dashboar
 
   return (
     <DashboardShell data={data}>
-      <ErrorBoundary fallbackTitle="Executive overview unavailable" fallbackDescription="The chart section encountered an error. Try refreshing the page.">
+      <ErrorBoundary fallbackTitle="ไม่สามารถแสดงภาพรวมได้" fallbackDescription="ส่วนแสดงผลพบข้อผิดพลาด กรุณารีเฟรชหน้าแล้วลองอีกครั้ง">
         <ExecutiveOverview data={data} />
       </ErrorBoundary>
     </DashboardShell>

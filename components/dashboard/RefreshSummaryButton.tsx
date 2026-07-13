@@ -2,56 +2,32 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowClockwise, Spinner, CheckCircle } from "@phosphor-icons/react/dist/ssr";
+import { ArrowClockwise, CheckCircle, Spinner } from "@phosphor-icons/react/dist/ssr";
 
 export function RefreshSummaryButton() {
   const router = useRouter();
   const [state, setState] = useState<"idle" | "refreshing" | "done" | "error">("idle");
 
-  const handleRefresh = async () => {
+  async function refresh() {
     setState("refreshing");
     try {
-      const res = await fetch("/api/admin/dashboard/refresh-summary", { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Refresh failed");
-      }
+      const response = await fetch("/api/admin/dashboard/refresh-summary", { method: "POST" });
+      if (!response.ok) throw new Error("REFRESH_FAILED");
       setState("done");
-      // Refresh the page to show new data
       router.refresh();
-      setTimeout(() => setState("idle"), 3000);
     } catch {
       setState("error");
-      setTimeout(() => setState("idle"), 3000);
+    } finally {
+      window.setTimeout(() => setState("idle"), 3000);
     }
-  };
+  }
+
+  const label = state === "refreshing" ? "กำลังประมวลผล..." : state === "done" ? "อัปเดตแล้ว" : state === "error" ? "ไม่สำเร็จ ลองอีกครั้ง" : "ประมวลผลข้อมูลสรุปใหม่";
 
   return (
-    <button
-      onClick={handleRefresh}
-      disabled={state === "refreshing"}
-      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
-        state === "error"
-          ? "bg-red-50 text-red-600"
-          : state === "done"
-          ? "bg-emerald-50 text-emerald-600"
-          : "bg-[#0A6B62] text-white hover:bg-[#08564E] active:scale-[0.97]"
-      }`}
-    >
-      {state === "refreshing" ? (
-        <Spinner className="animate-spin" size={18} weight="bold" />
-      ) : state === "done" ? (
-        <CheckCircle size={18} weight="fill" />
-      ) : (
-        <ArrowClockwise size={18} weight="bold" />
-      )}
-      {state === "refreshing"
-        ? "Refreshing..."
-        : state === "done"
-        ? "Refreshed!"
-        : state === "error"
-        ? "Error — try again"
-        : "Refresh summary"}
+    <button type="button" onClick={refresh} disabled={state === "refreshing"} className={`inline-flex min-h-10 items-center gap-2 rounded-md px-4 text-sm font-bold transition-colors disabled:cursor-wait ${state === "error" ? "bg-rose-50 text-rose-700" : state === "done" ? "bg-emerald-50 text-emerald-700" : "bg-[#0A6B62] text-white hover:bg-[#08564E]"}`}>
+      {state === "refreshing" ? <Spinner aria-hidden="true" className="animate-spin" size={18} /> : state === "done" ? <CheckCircle aria-hidden="true" size={18} weight="fill" /> : <ArrowClockwise aria-hidden="true" size={18} weight="bold" />}
+      {label}
     </button>
   );
 }

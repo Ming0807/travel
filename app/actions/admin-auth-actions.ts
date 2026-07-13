@@ -63,7 +63,9 @@ export async function loginAdminAction(formData: FormData) {
   return { success: true };
 }
 
-export async function logoutAdminAction() {
+export async function logoutAdminAction(): Promise<
+  { success: true } | { success: false; error: string }
+> {
   const headersList = await headers();
   const ip = headersList.get("x-forwarded-for") ?? headersList.get("x-real-ip") ?? "unknown";
 
@@ -72,7 +74,10 @@ export async function logoutAdminAction() {
   // Get user before signout for audit log
   const { data: { user } } = await supabase.auth.getUser();
 
-  await supabase.auth.signOut();
+  const { error: signOutError } = await supabase.auth.signOut();
+  if (signOutError) {
+    return { success: false, error: "ไม่สามารถออกจากระบบได้ กรุณาลองอีกครั้ง" };
+  }
 
   // Audit log logout
   if (user) {

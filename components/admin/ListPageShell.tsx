@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminShell, type AdminShellAdmin } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { Pagination } from "@/components/admin/Pagination";
@@ -21,6 +21,7 @@ type ListPageShellProps = {
   filters?: ReactNode;
   emptyTitle?: string;
   emptyDescription?: string;
+  admin?: AdminShellAdmin | null;
 };
 
 export function ListPageShell({
@@ -38,9 +39,10 @@ export function ListPageShell({
   filters,
   emptyTitle,
   emptyDescription,
+  admin,
 }: ListPageShellProps) {
   return (
-    <AdminShell>
+    <AdminShell admin={admin}>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <AdminPageHeader

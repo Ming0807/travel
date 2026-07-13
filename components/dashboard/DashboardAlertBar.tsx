@@ -1,127 +1,56 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { DashboardAlert } from "@/types/dashboard";
+import { useMemo, useState } from "react";
+import { CaretDown, CaretUp, Info, WarningCircle, WarningOctagon } from "@phosphor-icons/react/dist/ssr";
 import { DashboardAlertBanner } from "@/components/dashboard/DashboardAlertBanner";
-import {
-  WarningCircle,
-  WarningOctagon,
-  Info,
-  CaretDown,
-  CaretUp,
-} from "@phosphor-icons/react/dist/ssr";
+import type { DashboardAlert } from "@/types/dashboard";
 
-/* ─── severity counters ─── */
 function countBySeverity(alerts: DashboardAlert[]) {
-  let critical = 0;
-  let warning = 0;
-  let info = 0;
-  for (const a of alerts) {
-    if (a.severity === "critical") critical++;
-    else if (a.severity === "warning") warning++;
-    else info++;
-  }
-  return { critical, warning, info };
+  return alerts.reduce(
+    (counts, alert) => ({ ...counts, [alert.severity]: counts[alert.severity] + 1 }),
+    { critical: 0, warning: 0, info: 0 },
+  );
 }
 
-/* ─── main component ─── */
-export function DashboardAlertBar({
-  alerts,
-  filtersSig,
-}: {
-  alerts: DashboardAlert[];
-  filtersSig?: string;
-}) {
-  const [expanded, setExpanded] = useState(true);
-
+export function DashboardAlertBar({ alerts, filtersSig }: { alerts: DashboardAlert[]; filtersSig?: string }) {
+  const [expanded, setExpanded] = useState(false);
   const counts = useMemo(() => countBySeverity(alerts), [alerts]);
+  const visibleAlerts = alerts.slice(0, 3);
 
   if (alerts.length === 0) return null;
 
-  const hasCritical = counts.critical > 0;
-  const borderColor = hasCritical
-    ? "border-rose-200"
-    : counts.warning > 0
-      ? "border-amber-200"
-      : "border-sky-200";
-  const bgColor = hasCritical
-    ? "bg-rose-50/80"
-    : counts.warning > 0
-      ? "bg-amber-50/80"
-      : "bg-sky-50/80";
-
   return (
-    <div
-      className={`rounded-2xl border ${borderColor} ${bgColor} overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all`}
-    >
-      {/* summary header */}
+    <section className="dashboard-alert-bar overflow-hidden rounded-md border border-slate-200 bg-white" aria-labelledby="dashboard-alert-heading">
       <button
         type="button"
-        onClick={() => setExpanded((prev) => !prev)}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-black/5"
+        onClick={() => setExpanded((current) => !current)}
+        className="alert-bar-toggle flex min-h-12 w-full items-center gap-3 px-4 text-left hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0A6B62]"
+        aria-expanded={expanded}
+        aria-controls="dashboard-alert-list"
       >
-        {/* severity dots */}
-        <div className="flex items-center gap-1">
-          {counts.critical > 0 && (
-            <span className="flex h-2.5 w-2.5 items-center justify-center rounded-full bg-rose-500">
-              <WarningOctagon size={8} weight="fill" className="text-white" />
-            </span>
-          )}
-          {counts.warning > 0 && (
-            <span className="flex h-2.5 w-2.5 items-center justify-center rounded-full bg-amber-500">
-              <WarningCircle size={8} weight="fill" className="text-white" />
-            </span>
-          )}
-          {counts.info > 0 && (
-            <span className="flex h-2.5 w-2.5 items-center justify-center rounded-full bg-sky-500">
-              <Info size={8} weight="fill" className="text-white" />
-            </span>
-          )}
-        </div>
-
-        {/* summary text */}
-        <span className="text-sm font-bold text-slate-800">
-          {alerts.length === 1
-            ? "1 dashboard alert"
-            : `${alerts.length} dashboard alerts`}
+        <span className="flex items-center gap-1" aria-hidden="true">
+          {counts.critical > 0 ? <WarningOctagon data-severity-dot="critical" className="text-rose-600" size={17} weight="fill" /> : null}
+          {counts.warning > 0 ? <WarningCircle data-severity-dot="warning" className="text-amber-600" size={17} weight="fill" /> : null}
+          {counts.info > 0 ? <Info data-severity-dot="info" className="text-sky-600" size={17} weight="fill" /> : null}
         </span>
-
-        {/* breakdown */}
-        <span className="hidden text-xs text-slate-500 sm:inline">
-          {[
-            counts.critical > 0 && `${counts.critical} critical`,
-            counts.warning > 0 && `${counts.warning} warning`,
-            counts.info > 0 && `${counts.info} info`,
-          ]
-            .filter(Boolean)
-            .join(", ")}
+        <span id="dashboard-alert-heading" className="alert-bar-text text-sm font-bold text-slate-800">สิ่งที่ควรตรวจสอบ {alerts.length} รายการ</span>
+        <span className="alert-bar-breakdown hidden text-xs text-slate-500 sm:inline">
+          {[counts.critical > 0 && `เร่งด่วน ${counts.critical}`, counts.warning > 0 && `เฝ้าระวัง ${counts.warning}`, counts.info > 0 && `ข้อมูล ${counts.info}`].filter(Boolean).join(" · ")}
         </span>
-
-        <span className="ml-auto flex items-center gap-2 text-xs text-slate-400">
-          {expanded ? (
-            <>
-              Hide <CaretUp size={14} weight="bold" />
-            </>
-          ) : (
-            <>
-              Show <CaretDown size={14} weight="bold" />
-            </>
-          )}
+        <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#0A6B62]">
+          <span className="alert-bar-action-label">{expanded ? "ยุบ" : "ดูรายการ"}</span>
+          {expanded ? <CaretUp aria-hidden="true" size={14} /> : <CaretDown aria-hidden="true" size={14} />}
         </span>
       </button>
 
-      {/* expanded alert list */}
-      {expanded && (
-        <div className="space-y-2 px-4 pb-4">
-          {alerts.map((alertItem) => (
-            <DashboardAlertBanner
-              key={alertItem.id}
-              alert={alertItem}
-              filtersSig={filtersSig}
-            />
-          ))}
+      {expanded ? (
+        <div id="dashboard-alert-list" className="alert-bar-body space-y-2 border-t border-slate-200 p-3">
+          {visibleAlerts.map((alert) => <DashboardAlertBanner key={alert.id} alert={alert} filtersSig={filtersSig} />)}
+          {alerts.length > visibleAlerts.length ? (
+            <p className="px-1 text-xs text-slate-500">แสดง 3 รายการที่สำคัญที่สุด จากทั้งหมด {alerts.length} รายการ</p>
+          ) : null}
         </div>
-      )}
-    </div>
+      ) : null}
+    </section>
   );
 }

@@ -60,6 +60,10 @@ function toPayload(input: AdminCheckinCodeMutationInput) {
   };
 }
 
+function escapeIlikePattern(value: string) {
+  return value.replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
 export async function listAdminCheckinCodes(filters: AdminCheckinCodeFilters): Promise<PaginatedResult<AdminCheckinCodeRow>> {
   const supabase = createSupabaseServiceRoleClient();
   const from = (filters.page - 1) * filters.pageSize;
@@ -68,15 +72,28 @@ export async function listAdminCheckinCodes(filters: AdminCheckinCodeFilters): P
   let query = supabase
     .from("checkin_codes")
     .select("*, attractions (name_th, is_active, is_published), photo_spots (spot_name_th)", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
+    .order("created_at", { ascending: false });
 
   if (filters.attractionId) query = query.eq("attraction_id", filters.attractionId);
   if (filters.photoSpotId) query = query.eq("photo_spot_id", filters.photoSpotId);
   if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
   if (filters.search) {
-    query = query.or(`code.ilike.%${filters.search}%,label.ilike.%${filters.search}%`);
+    const search = escapeIlikePattern(filters.search);
+    query = query.or(`code.ilike.%${search}%,label.ilike.%${search}%`);
   }
+
+  const now = new Date().toISOString();
+  if (filters.availability === "current") {
+    query = query
+      .or(`starts_at.is.null,starts_at.lte.${now}`)
+      .or(`ends_at.is.null,ends_at.gte.${now}`);
+  } else if (filters.availability === "upcoming") {
+    query = query.gt("starts_at", now);
+  } else if (filters.availability === "expired") {
+    query = query.lt("ends_at", now);
+  }
+
+  query = query.range(from, to);
 
   const { data, error, count } = await query;
   if (error) throw new Error("ADMIN_CHECKIN_CODE_LIST_FAILED");
@@ -87,6 +104,44 @@ export async function listAdminCheckinCodes(filters: AdminCheckinCodeFilters): P
     page: filters.page,
     pageSize: filters.pageSize,
   };
+}
+
+export async function exportAdminCheckinCodes(
+  filters: Omit<AdminCheckinCodeFilters, "page" | "pageSize">,
+  limit?: number
+): Promise<AdminCheckinCodeRow[]> {
+  const supabase = createSupabaseServiceRoleClient();
+
+  let query = supabase
+    .from("checkin_codes")
+    .select("*, attractions (name_th, is_active, is_published), photo_spots (spot_name_th)")
+    .order("created_at", { ascending: false });
+
+  if (filters.attractionId) query = query.eq("attraction_id", filters.attractionId);
+  if (filters.photoSpotId) query = query.eq("photo_spot_id", filters.photoSpotId);
+  if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
+  if (filters.search) {
+    const search = escapeIlikePattern(filters.search);
+    query = query.or(`code.ilike.%${search}%,label.ilike.%${search}%`);
+  }
+
+  const now = new Date().toISOString();
+  if (filters.availability === "current") {
+    query = query
+      .or(`starts_at.is.null,starts_at.lte.${now}`)
+      .or(`ends_at.is.null,ends_at.gte.${now}`);
+  } else if (filters.availability === "upcoming") {
+    query = query.gt("starts_at", now);
+  } else if (filters.availability === "expired") {
+    query = query.lt("ends_at", now);
+  }
+
+  if (limit) query = query.limit(limit);
+
+  const { data, error } = await query;
+  if (error) throw new Error("ADMIN_CHECKIN_CODE_EXPORT_FAILED");
+
+  return (data ?? []).map(mapCheckinCode);
 }
 
 export async function getAdminCheckinCodeById(checkinCodeId: number): Promise<AdminCheckinCodeRow | null> {
@@ -111,18 +166,23 @@ export async function findCheckinCodeByCode(code: string, excludeId?: number) {
   return data ? Number(data.checkin_code_id) : null;
 }
 
-export async function photoSpotBelongsToAttraction(photoSpotId: number | null, attractionId: number) {
+export async function photoSpotBelongsToAttraction(
+  photoSpotId: number | null,
+  attractionId: number,
+  requireActive = false
+) {
   if (!photoSpotId) return true;
 
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("photo_spots")
-    .select("attraction_id")
+    .select("attraction_id, is_active")
     .eq("photo_spot_id", photoSpotId)
     .maybeSingle();
 
   if (error || !data) return false;
-  return Number(data.attraction_id) === attractionId;
+  if (Number(data.attraction_id) !== attractionId) return false;
+  return !requireActive || data.is_active === true;
 }
 
 export async function createAdminCheckinCode(input: AdminCheckinCodeMutationInput): Promise<AdminCheckinCodeRow> {

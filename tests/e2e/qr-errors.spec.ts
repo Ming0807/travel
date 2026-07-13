@@ -34,8 +34,8 @@ function validLandingHtml(code: string, attractionName: string = "บ่อน�
       <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-8 w-full text-center">
         <h1 class="text-3xl font-black text-ink mb-3">${attractionName}</h1>
         <p class="text-muted text-[15px] font-medium mb-8">รหัสเช็กอิน: ${code}</p>
-        <a href="/checkin/${code}/identity" class="w-full flex items-center justify-center gap-2 py-4 px-6 bg-ink text-white rounded-2xl font-bold text-lg">
-          เริ่มต้นเช็คอิน
+        <a href="/checkin/${code}/start" class="w-full flex items-center justify-center gap-2 py-4 px-6 bg-ink text-white rounded-2xl font-bold text-lg">
+          สร้างใบประกาศของฉัน
         </a>
       </div>
     </div>
@@ -176,63 +176,13 @@ test.describe("QR Check-in Error Handling", () => {
     // Verify landing page shows attraction name
     await expect(page.locator("h1")).toContainText("อุทยานแห่งชาติ");
 
-    // Verify start CTA links to identity selection
-    const startCta = page.locator('a[href="/checkin/active-code/identity"]');
+    // The reward-first flow goes straight to the minimal profile step.
+    const startCta = page.locator('a[href="/checkin/active-code/start"]');
     await expect(startCta).toBeVisible();
-    await expect(startCta).toContainText("เริ่มต้นเช็คอิน");
+    await expect(startCta).toContainText("สร้างใบประกาศของฉัน");
   });
 
-  test("valid QR routes to identity selection page", async ({ page }) => {
-    currentHandler = (url) => {
-      if (url.includes("/checkin/active-code/identity")) {
-        return {
-          status: 200,
-          contentType: "text/html",
-          body: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>Identity Selection</title></head>
-<body>
-  <div class="min-h-screen bg-slate-50">
-    <h1 class="text-[28px] font-black tracking-tight">เริ่มต้นเช็คอิน</h1>
-    <p class="text-[15px] font-medium text-ink/70">เลือกช่องทางการเข้าใช้งานที่สะดวกที่สุด</p>
-    <div class="space-y-4">
-      <a href="/checkin/active-code/start?identity=line" class="bg-[#00C300] text-white rounded-2xl font-bold px-4 py-4">
-        เข้าสู่ระบบด้วย LINE
-      </a>
-      <a href="/checkin/active-code/start?identity=email" class="border border-ink/10 text-ink rounded-2xl font-bold px-4 py-4">
-        เข้าสู่ระบบด้วยอีเมล
-      </a>
-      <a href="/checkin/active-code/start" class="font-bold text-sm">
-        ดำเนินการต่อแบบ (Guest)
-      </a>
-    </div>
-  </div>
-</body>
-</html>`,
-        };
-      }
-      // For the landing page, return valid landing
-      if (url.includes("/checkin/active-code")) {
-        return {
-          status: 200,
-          contentType: "text/html",
-          body: validLandingHtml("active-code", "อุทยานแห่งชาติ"),
-        };
-      }
-      return null;
-    };
-
-    // Navigate through landing page then to identity selection
-    await page.goto("/checkin/active-code/identity");
-
-    // Verify identity selection page
-    await expect(page.locator("h1")).toContainText("เริ่มต้นเช็คอิน");
-    await expect(page.locator('text=LINE')).toBeVisible();
-    await expect(page.locator('text=Guest')).toBeVisible();
-    await expect(page.locator('text=อีเมล')).toBeVisible();
-  });
-
-  test("identity selection guest link navigates to start page", async ({ page }) => {
+  test("landing CTA navigates directly to the minimal profile page", async ({ page }) => {
     currentHandler = (url) => {
       if (url.includes("/checkin/guest-code/start")) {
         return {
@@ -243,29 +193,13 @@ test.describe("QR Check-in Error Handling", () => {
 <head><meta charset="utf-8"><title>Start Check-in</title></head>
 <body>
   <main class="min-h-screen bg-slate-50">
-    <h1 class="text-3xl font-black text-ink">ข้อมูลของคุณ</h1>
-    <p class="text-muted text-sm font-medium">กรอกข้อมูลสั้น ๆ เพื่อสร้างใบประกาศดิจิทัลและสะสมตราประทับ</p>
+    <h1 class="text-3xl font-black text-ink">เตรียมความทรงจำของคุณ</h1>
+    <p class="text-muted text-sm font-medium">ใช้เวลาไม่ถึง 1 นาที</p>
     <form>
       <input name="displayName" placeholder="ชื่อที่ต้องการแสดงบนใบประกาศ" />
       <button type="submit">ดำเนินการต่อ</button>
     </form>
   </main>
-</body>
-</html>`,
-        };
-      }
-      if (url.includes("/checkin/guest-code/identity")) {
-        return {
-          status: 200,
-          contentType: "text/html",
-          body: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>Identity Selection</title></head>
-<body>
-  <div>
-    <h1>เริ่มต้นเช็คอิน</h1>
-    <a href="/checkin/guest-code/start">ดำเนินการต่อแบบ (Guest)</a>
-  </div>
 </body>
 </html>`,
         };
@@ -280,23 +214,17 @@ test.describe("QR Check-in Error Handling", () => {
       return null;
     };
 
-    // Start at identity selection
-    await page.goto("/checkin/guest-code/identity");
-
-    // Click guest link to navigate to start page
-    const guestLink = page.locator('a[href="/checkin/guest-code/start"]');
-    await expect(guestLink).toBeVisible();
-    await guestLink.click();
+    await page.goto("/checkin/guest-code");
+    await page.locator('a[href="/checkin/guest-code/start"]').click();
 
     // Verify start page shows form
-    await expect(page.locator("h1")).toContainText("ข้อมูลของคุณ");
+    await expect(page.locator("h1")).toContainText("เตรียมความทรงจำของคุณ");
     await expect(page.locator('input[name="displayName"]')).toBeVisible();
   });
 
-  test("prevents navigation to identity for expired QR", async ({ page }) => {
-    // identity page also checks code validity
+  test("prevents navigation to start for expired QR", async ({ page }) => {
     currentHandler = (url) => {
-      if (url.includes("/checkin/expired-code/identity")) {
+      if (url.includes("/checkin/expired-code/start")) {
         return {
           status: 200,
           contentType: "text/html",
@@ -313,10 +241,8 @@ test.describe("QR Check-in Error Handling", () => {
       return null;
     };
 
-    // Try to access identity page directly for expired code
-    await page.goto("/checkin/expired-code/identity");
+    await page.goto("/checkin/expired-code/start");
 
-    // Should show the expired error, not the identity selection
     await expect(page.locator("h1")).toContainText("QR Code หมดอายุแล้ว");
     await expect(page.locator("p")).toContainText("ไม่สามารถเช็กอินผ่านรหัสนี้ได้อีกต่อไป");
   });

@@ -319,6 +319,12 @@ en
 ms
 ```
 
+### Returning guest profile UX
+
+When an anonymous-device identity already exists, the check-in flow must show the saved profile before asking for data again. The tourist can continue immediately or edit display name, country/province, and age group inline. Updating the reusable profile must not rewrite previous visit or certificate history.
+
+Guest accounts do not have passwords. The profile UI must state that the passport is remembered on the current device and offer optional account linking for cross-device recovery. Never display, retrieve, or imply access to an existing password.
+
 MVP:
 
 ```text

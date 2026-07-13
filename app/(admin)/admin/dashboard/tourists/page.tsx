@@ -7,7 +7,7 @@ import { NoDataState } from "@/components/dashboard/NoDataState";
 import { DashboardServiceError, getDashboardAnalytics } from "@/lib/services/dashboard.service";
 
 export const metadata: Metadata = {
-  title: "Tourist Profiles | Admin Dashboard"
+  title: "ลักษณะนักท่องเที่ยว | Dashboard"
 };
 
 type DashboardPageProps = {
@@ -30,8 +30,8 @@ export default async function AdminDashboardTouristsPage({ searchParams = {} }: 
     return (
       <AdminShell>
         <div className="space-y-6">
-          <AdminPageHeader eyebrow="Phase 09" title={isValidationError ? "Invalid filters" : "Dashboard unavailable"} description="Dashboard analytics are protected." />
-          <NoDataState title="Error" description={caughtError?.message ?? "Could not load data."} />
+          <AdminPageHeader eyebrow="ศูนย์วิเคราะห์ข้อมูล" title={isValidationError ? "ตัวกรองไม่ถูกต้อง" : "ไม่สามารถเปิด Dashboard ได้"} description="ข้อมูลวิเคราะห์ได้รับการป้องกันและแสดงเฉพาะข้อมูลแบบสรุป" />
+          <NoDataState title="เกิดข้อผิดพลาด" description={isValidationError ? "กรุณาตรวจสอบช่วงวันที่และตัวกรอง" : "ระบบยังโหลดข้อมูลไม่ได้ กรุณาลองใหม่อีกครั้ง"} />
         </div>
       </AdminShell>
     );

@@ -5,7 +5,7 @@ import { initiateCheckin } from "@/app/actions/checkin-actions";
 import { minimalFormSchema } from "@/lib/validation/checkin";
 import { getCheckinCodeByCode, type CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
 import { createConsentRecord } from "@/lib/repositories/consent.repository";
-import { resolveCountryId, resolveProvinceId } from "@/lib/repositories/geography.repository";
+import { getCheckinOriginSelection } from "@/lib/repositories/geography.repository";
 import { getTouristStampByAttraction, awardTouristStamp } from "@/lib/repositories/stamp.repository";
 import { getVisitById } from "@/lib/repositories/visit.repository";
 import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
@@ -22,6 +22,10 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/lib/auth/guest", () => ({
   getOrCreateGuestIdentity: vi.fn().mockResolvedValue("mock-guest-token"),
+}));
+
+vi.mock("@/lib/auth/checkin-session", () => ({
+  getCheckinSessionId: vi.fn().mockResolvedValue("mock-checkin-session"),
 }));
 
 vi.mock("@/lib/services/visit.service", () => ({
@@ -92,8 +96,7 @@ vi.mock("@/lib/repositories/consent.repository", () => ({
 }));
 
 vi.mock("@/lib/repositories/geography.repository", () => ({
-  resolveCountryId: vi.fn(),
-  resolveProvinceId: vi.fn(),
+  getCheckinOriginSelection: vi.fn(),
 }));
 
 type VisitRow = Record<string, unknown>;
@@ -105,8 +108,11 @@ describe("QR Check-in Flow Hardening", () => {
     mockSupabaseQuery.reset();
     mockSupabaseFrom.mockReset();
     mockSupabaseFrom.mockReturnValue(mockSupabaseQuery);
-    vi.mocked(resolveCountryId).mockResolvedValue(1);
-    vi.mocked(resolveProvinceId).mockResolvedValue(null);
+    vi.mocked(getCheckinOriginSelection).mockResolvedValue({
+      countryId: 1,
+      provinceId: 10,
+      isThailand: true,
+    });
     vi.mocked(createConsentRecord).mockResolvedValue(undefined);
     vi.mocked(initiateVisit).mockResolvedValue("mock-visit-id");
   });
@@ -188,6 +194,9 @@ describe("QR Check-in Flow Hardening", () => {
     it("fails if consent is false", () => {
       const res = minimalFormSchema.safeParse({
         displayName: "John",
+        originCountryId: "1",
+        originProvinceId: "10",
+        ageGroup: "25_34",
         hasConsented: false,
       });
 
@@ -200,6 +209,9 @@ describe("QR Check-in Flow Hardening", () => {
     it("passes with valid data", () => {
       const res = minimalFormSchema.safeParse({
         displayName: "John",
+        originCountryId: "1",
+        originProvinceId: "10",
+        ageGroup: "25_34",
         hasConsented: true,
       });
 
@@ -224,9 +236,9 @@ describe("QR Check-in Flow Hardening", () => {
     const createValidFormData = (overrides: Record<string, string> = {}) => {
       const formData = new FormData();
       formData.set("displayName", overrides.displayName ?? "John");
-      formData.set("originCountry", overrides.originCountry ?? "Thailand");
-      formData.set("originProvince", overrides.originProvince ?? "Pattani");
-      formData.set("ageGroup", overrides.ageGroup ?? "25-34");
+      formData.set("originCountryId", overrides.originCountryId ?? "1");
+      formData.set("originProvinceId", overrides.originProvinceId ?? "10");
+      formData.set("ageGroup", overrides.ageGroup ?? "25_34");
       formData.set("hasConsented", overrides.hasConsented ?? "true");
       return formData;
     };
@@ -269,7 +281,7 @@ describe("QR Check-in Flow Hardening", () => {
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({
         data: {
           tourist_id: "mock-tourist-id",
-          tourists: { origin_country_id: 1, origin_province_id: 10, age_group: "15-24" },
+          tourists: { display_name: "John", origin_country_id: 1, origin_province_id: 10, age_group: "25_34" },
         },
         error: null,
       });
@@ -287,11 +299,10 @@ describe("QR Check-in Flow Hardening", () => {
 
     it("existing tourist with null fields is backfilled", async () => {
       mockValidCheckinCode();
-      vi.mocked(resolveProvinceId).mockResolvedValue(10);
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({
         data: {
           tourist_id: "mock-tourist-id",
-          tourists: { origin_country_id: null, origin_province_id: null, age_group: null },
+          tourists: { display_name: "John", origin_country_id: null, origin_province_id: null, age_group: null },
         },
         error: null,
       });
@@ -305,17 +316,66 @@ describe("QR Check-in Flow Hardening", () => {
       expect(mockSupabaseQuery.update).toHaveBeenCalledWith(expect.objectContaining({
         origin_country_id: 1,
         origin_province_id: 10,
-        age_group: "25-34",
+        age_group: "25_34",
       }));
+    });
+
+    it("updates an edited returning profile but creates a new visit for the same tourist", async () => {
+      mockValidCheckinCode();
+      vi.mocked(getCheckinOriginSelection).mockResolvedValue({
+        countryId: 1,
+        provinceId: 10,
+        isThailand: true,
+      });
+      mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({
+        data: {
+          tourist_id: "returning-tourist-id",
+          tourists: {
+            display_name: "ชื่อเดิม",
+            origin_country_id: 1,
+            origin_province_id: 11,
+            age_group: "18_24",
+          },
+        },
+        error: null,
+      });
+      vi.mocked(redirect).mockImplementationOnce(() => {
+        throw new Error("NEXT_REDIRECT");
+      });
+
+      await expect(initiateCheckin("test", {}, createValidFormData({
+        displayName: "ชื่อใหม่",
+        originProvinceId: "10",
+        ageGroup: "25_34",
+      }))).rejects.toThrow("NEXT_REDIRECT");
+
+      expect(mockSupabaseQuery.update).toHaveBeenCalledWith(expect.objectContaining({
+        display_name: "ชื่อใหม่",
+        origin_province_id: 10,
+        age_group: "25_34",
+      }));
+      expect(initiateVisit).toHaveBeenCalledWith(expect.objectContaining({
+        touristId: "returning-tourist-id",
+      }));
+    });
+
+    it("rejects inactive or mismatched geography IDs before creating tourist data", async () => {
+      mockValidCheckinCode();
+      vi.mocked(getCheckinOriginSelection).mockResolvedValue(null);
+
+      const result = await initiateCheckin("test", {}, createValidFormData());
+
+      expect(result.errors?.originProvinceId?.[0]).toBeDefined();
+      expect(mockSupabaseQuery.insert).not.toHaveBeenCalled();
+      expect(initiateVisit).not.toHaveBeenCalled();
     });
 
     it("existing tourist backfill failure returns an error and does not initiate visit", async () => {
       mockValidCheckinCode();
-      vi.mocked(resolveProvinceId).mockResolvedValue(10);
       mockSupabaseQuery.maybeSingle.mockResolvedValueOnce({
         data: {
           tourist_id: "mock-tourist-id",
-          tourists: { origin_country_id: null, origin_province_id: null, age_group: null },
+          tourists: { display_name: "John", origin_country_id: null, origin_province_id: null, age_group: null },
         },
         error: null,
       });
@@ -375,19 +435,17 @@ describe("QR Check-in Flow Hardening", () => {
 
     it("valid Thai tourist stores geography, links identity, records consent, and redirects", async () => {
       mockValidCheckinCode();
-      vi.mocked(resolveProvinceId).mockResolvedValue(10);
       vi.mocked(redirect).mockImplementationOnce(() => {
         throw new Error("NEXT_REDIRECT");
       });
 
       await expect(initiateCheckin("test", {}, createValidFormData())).rejects.toThrow("NEXT_REDIRECT");
 
-      expect(resolveCountryId).toHaveBeenCalledWith("Thailand");
-      expect(resolveProvinceId).toHaveBeenCalledWith("Pattani");
+      expect(getCheckinOriginSelection).toHaveBeenCalledWith(1, 10);
       expect(mockSupabaseQuery.insert).toHaveBeenNthCalledWith(1, expect.objectContaining({
         origin_country_id: 1,
         origin_province_id: 10,
-        age_group: "25-34",
+        age_group: "25_34",
       }));
       expect(mockSupabaseQuery.insert).toHaveBeenNthCalledWith(2, expect.objectContaining({
         provider: "anonymous_device",
@@ -405,19 +463,22 @@ describe("QR Check-in Flow Hardening", () => {
 
     it("foreign tourist stores country and null province", async () => {
       mockValidCheckinCode();
-      vi.mocked(resolveCountryId).mockResolvedValue(2);
+      vi.mocked(getCheckinOriginSelection).mockResolvedValue({
+        countryId: 2,
+        provinceId: null,
+        isThailand: false,
+      });
       vi.mocked(redirect).mockImplementationOnce(() => {
         throw new Error("NEXT_REDIRECT");
       });
 
       await expect(initiateCheckin("test", {}, createValidFormData({
         displayName: "Ali",
-        originCountry: "Malaysia",
-        originProvince: "",
+        originCountryId: "2",
+        originProvinceId: "",
       }))).rejects.toThrow("NEXT_REDIRECT");
 
-      expect(resolveCountryId).toHaveBeenCalledWith("Malaysia");
-      expect(resolveProvinceId).not.toHaveBeenCalled();
+      expect(getCheckinOriginSelection).toHaveBeenCalledWith(2, null);
       expect(mockSupabaseQuery.insert).toHaveBeenNthCalledWith(1, expect.objectContaining({
         origin_country_id: 2,
         origin_province_id: null,

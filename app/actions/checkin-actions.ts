@@ -7,13 +7,11 @@ import { resolveAndValidateCheckinCode, trackCheckinFunnelEvent } from "@/lib/se
 import { initiateVisit } from "@/lib/services/visit.service";
 import { awardXP } from "@/lib/services/xp.service";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
-import { resolveCountryId, resolveProvinceId } from "@/lib/repositories/geography.repository";
+import { getCheckinOriginSelection } from "@/lib/repositories/geography.repository";
 import { createConsentRecord } from "@/lib/repositories/consent.repository";
+import { CHECKIN_CONSENT_PURPOSE_KEY, CHECKIN_CONSENT_VERSION } from "@/lib/config/checkin";
 
 import { minimalFormSchema } from "@/lib/validation/checkin";
-
-const CHECKIN_CONSENT_VERSION = "1.0";
-const CHECKIN_CONSENT_PURPOSE_KEY = "checkin_profile_creation";
 
 export type MinimalFormState = {
   errors?: Record<string, string[]>;
@@ -67,9 +65,9 @@ export async function initiateCheckin(
     // 3. Validate form
     const raw = {
       displayName: formData.get("displayName"),
-      originCountry: formData.get("originCountry") || "Thailand",
-      originProvince: formData.get("originProvince") || null,
-      ageGroup: formData.get("ageGroup") || null,
+      originCountryId: formData.get("originCountryId"),
+      originProvinceId: formData.get("originProvinceId"),
+      ageGroup: formData.get("ageGroup"),
       hasConsented: formData.get("hasConsented") === "true",
     };
 
@@ -86,27 +84,30 @@ export async function initiateCheckin(
 
     const supabase = createSupabaseServiceRoleClient();
 
-    // Lookup geography
-    let originCountryId: number | null = null;
-    let originProvinceId: number | null = null;
+    // Validate controlled geography IDs against active master data.
+    let originSelection;
     try {
-      originCountryId = await resolveCountryId(parsed.data.originCountry);
+      originSelection = await getCheckinOriginSelection(
+        parsed.data.originCountryId,
+        parsed.data.originProvinceId,
+      );
     } catch {
-      return { errors: { _form: ["เกิดข้อผิดพลาดในฐานข้อมูลประเทศ กรุณาลองใหม่"] } };
+      return { errors: { _form: ["ไม่สามารถตรวจสอบประเทศและจังหวัดได้ กรุณาลองใหม่"] } };
     }
 
-    if (parsed.data.originCountry?.toLowerCase() === "thailand" || parsed.data.originCountry === "ไทย") {
-      try {
-        originProvinceId = await resolveProvinceId(parsed.data.originProvince ?? null);
-      } catch {
-        return { errors: { _form: ["เกิดข้อผิดพลาดในฐานข้อมูลจังหวัด กรุณาลองใหม่"] } };
-      }
+    if (!originSelection) {
+      return {
+        errors: {
+          originProvinceId: ["กรุณาเลือกประเทศและจังหวัดจากรายการที่ระบบกำหนด"],
+        },
+        message: "กรุณาตรวจสอบข้อมูลต้นทาง",
+      };
     }
 
     // Check if guest already has a tourist profile
     const { data: existingIdentity, error: identityLookupError } = await supabase
       .from("tourist_identities")
-      .select("tourist_id, tourists!inner(origin_country_id, origin_province_id, age_group)")
+      .select("tourist_id, tourists!inner(display_name, origin_country_id, origin_province_id, age_group)")
       .eq("provider", "anonymous_device")
       .eq("provider_user_id", guestToken)
       .maybeSingle();
@@ -120,22 +121,34 @@ export async function initiateCheckin(
 
     if (existingIdentity) {
       touristId = existingIdentity.tourist_id;
-      // Update last_seen
-      void supabase
+      await supabase
         .from("tourist_identities")
         .update({ last_seen_at: new Date().toISOString() })
         .eq("provider", "anonymous_device")
         .eq("provider_user_id", guestToken);
 
-      // Backfill missing fields
+      // Keep the reusable tourist profile current while visits remain immutable history.
       const t = Array.isArray(existingIdentity.tourists) ? existingIdentity.tourists[0] : existingIdentity.tourists;
       if (t) {
-        const updates: Partial<{ origin_country_id: number; origin_province_id: number; age_group: string }> = {};
-        if (!t.origin_country_id && originCountryId) updates.origin_country_id = originCountryId;
-        if (!t.origin_province_id && originProvinceId) updates.origin_province_id = originProvinceId;
-        if (!t.age_group && parsed.data.ageGroup) updates.age_group = parsed.data.ageGroup;
+        const updates: Partial<{
+          display_name: string;
+          origin_country_id: number;
+          origin_province_id: number | null;
+          age_group: string;
+          updated_at: string;
+        }> = {};
+        if (t.display_name !== parsed.data.displayName) updates.display_name = parsed.data.displayName;
+        if (Number(t.origin_country_id) !== originSelection.countryId) {
+          updates.origin_country_id = originSelection.countryId;
+        }
+        const currentProvinceId = t.origin_province_id ? Number(t.origin_province_id) : null;
+        if (currentProvinceId !== originSelection.provinceId) {
+          updates.origin_province_id = originSelection.provinceId;
+        }
+        if (t.age_group !== parsed.data.ageGroup) updates.age_group = parsed.data.ageGroup;
 
         if (Object.keys(updates).length > 0) {
+          updates.updated_at = new Date().toISOString();
           const { error: updateError } = await supabase.from("tourists").update(updates).eq("tourist_id", touristId);
           if (updateError) {
             return { errors: { _form: ["เกิดข้อผิดพลาดในการปรับปรุงข้อมูล กรุณาลองใหม่"] } };
@@ -149,9 +162,9 @@ export async function initiateCheckin(
         .from("tourists")
         .insert({
           display_name: parsed.data.displayName,
-          age_group: parsed.data.ageGroup || null,
-          origin_country_id: originCountryId,
-          origin_province_id: originProvinceId,
+          age_group: parsed.data.ageGroup,
+          origin_country_id: originSelection.countryId,
+          origin_province_id: originSelection.provinceId,
           profile_completed_at: new Date().toISOString(),
         })
         .select("tourist_id")

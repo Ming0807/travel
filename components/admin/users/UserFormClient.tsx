@@ -55,11 +55,11 @@ export function UserFormClient({ roles, initialData }: UserFormProps) {
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 space-y-8">
             {/* User Details Section */}
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">User Details</h3>
+              <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">ข้อมูลผู้ดูแล</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="email" className="block text-sm font-semibold text-slate-900">
-                    Email Address
+                    อีเมลสำหรับเข้าสู่ระบบ
                   </label>
                   <div className="mt-2">
                     {isEditing && (
@@ -77,13 +77,13 @@ export function UserFormClient({ roles, initialData }: UserFormProps) {
                     />
                   </div>
                   {isEditing && (
-                    <p className="mt-2 text-xs text-slate-500">Email address cannot be changed.</p>
+                    <p className="mt-2 text-xs text-slate-500">ไม่สามารถเปลี่ยนอีเมลจากหน้านี้ได้</p>
                   )}
                 </div>
 
                 <div>
                   <label htmlFor="displayName" className="block text-sm font-semibold text-slate-900">
-                    Display Name
+                    ชื่อที่แสดง
                   </label>
                   <div className="mt-2">
                     <input
@@ -94,7 +94,7 @@ export function UserFormClient({ roles, initialData }: UserFormProps) {
                       required
                       minLength={2}
                       className="block w-full rounded-lg border-0 py-2.5 px-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-teal sm:text-sm sm:leading-6 transition-all"
-                      placeholder="John Doe"
+                      placeholder="ชื่อผู้ดูแลระบบ"
                     />
                   </div>
                 </div>
@@ -103,11 +103,11 @@ export function UserFormClient({ roles, initialData }: UserFormProps) {
 
             {/* Active Status Section */}
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">Status & Access</h3>
+              <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">สถานะการเข้าใช้งาน</h3>
               <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-4 shadow-sm">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">Active Status</h4>
-                  <p className="text-sm text-slate-500 mt-0.5">Allow this user to sign in to the dashboard.</p>
+                  <h4 className="text-sm font-bold text-slate-900">เปิดใช้งานบัญชี</h4>
+                  <p className="text-sm text-slate-500 mt-0.5">อนุญาตให้บัญชีนี้เข้าสู่ระบบหลังบ้าน</p>
                 </div>
                 <div className="relative flex items-center">
                   <input type="hidden" name="isActive" value="false" />
@@ -128,9 +128,9 @@ export function UserFormClient({ roles, initialData }: UserFormProps) {
         {/* Right Column: Roles */}
         <div className="lg:col-span-5 space-y-8">
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">Assigned Roles</h3>
+            <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2 mb-4">บทบาทที่ได้รับ</h3>
             <p className="text-sm leading-6 text-slate-500 mb-4">
-              Select one or more roles for this user. These roles dictate their permissions across the platform.
+              เลือกบทบาทตามหน้าที่ของผู้ดูแล สิทธิ์ทั้งหมดจะอ้างอิงจากบทบาทที่เลือก
             </p>
             
             <div className="flex flex-col gap-3">
@@ -169,14 +169,14 @@ export function UserFormClient({ roles, initialData }: UserFormProps) {
           onClick={() => router.back()}
           className="text-sm font-semibold leading-6 text-slate-900 hover:text-slate-700 transition"
         >
-          Cancel
+          ยกเลิก
         </button>
         <button
           type="submit"
           disabled={isPending}
           className="rounded-xl bg-teal px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal disabled:opacity-50 transition-all"
         >
-          {isPending ? "Saving..." : "Save User"}
+          {isPending ? "กำลังบันทึก..." : isEditing ? "บันทึกการเปลี่ยนแปลง" : "เพิ่มผู้ดูแลระบบ"}
         </button>
       </div>
     </form>

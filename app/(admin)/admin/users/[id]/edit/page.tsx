@@ -8,11 +8,11 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Edit User | Admin | Southern Border Tourism",
+  title: "แก้ไขผู้ดูแลระบบ | Southern Border Tourism",
 };
 
 export default async function EditAdminUserPage({ params }: { params: Promise<{ id: string }> }) {
-  await requirePermission("user.update");
+  const guard = await requirePermission("user.manage");
   
   const { id } = await params;
   
@@ -26,12 +26,12 @@ export default async function EditAdminUserPage({ params }: { params: Promise<{ 
   }
 
   return (
-    <AdminShell>
+    <AdminShell admin={guard.actor}>
       <div className="mx-auto max-w-2xl">
         <AdminPageHeader
-          eyebrow="Admin Users"
-          title="Edit User"
-          description={`Update details and roles for ${user.display_name}.`}
+          eyebrow="ผู้ดูแลระบบ"
+          title="แก้ไขผู้ดูแลระบบ"
+          description={`ปรับข้อมูล สถานะ และบทบาทของ ${user.display_name || user.email}`}
         />
 
         <div className="mt-8">

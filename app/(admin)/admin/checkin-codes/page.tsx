@@ -8,26 +8,26 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import { SearchInput } from "@/components/admin/SearchInput";
 import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
 import { ListPageShell } from "@/components/admin/ListPageShell";
-import { requirePermission } from "@/lib/auth/guards";
+import { hasPermission, requirePermission } from "@/lib/auth/guards";
 import { listAdminCheckinCodes } from "@/lib/repositories/admin-checkin-code.repository";
 import { adminCheckinCodeFiltersSchema } from "@/lib/validation/checkin-code";
 import { CheckinCodeStatusAction } from "@/components/admin/checkin-codes/CheckinCodeStatusAction";
 import { DownloadQrAction } from "@/components/admin/checkin-codes/DownloadQrAction";
 import { CopyCheckinUrlAction } from "@/components/admin/checkin-codes/CopyCheckinUrlAction";
 import { ExportButton } from "@/components/admin/ExportButton";
-import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
+import { getAdminAttractionsList, getAdminPhotoSpotsList } from "@/lib/repositories/admin-attraction.repository";
 
 export const metadata: Metadata = {
   title: "QR Check-in Codes | Admin",
 };
 
 const columns = [
-  { key: "code", label: "Check-in code" },
-  { key: "attraction", label: "Attraction", className: "hidden md:table-cell" },
-  { key: "spot", label: "Photo spot", className: "hidden lg:table-cell" },
-  { key: "label", label: "Label", className: "hidden lg:table-cell" },
-  { key: "period", label: "Schedule", className: "hidden xl:table-cell" },
-  { key: "status", label: "Status" },
+  { key: "code", label: "รหัสเช็กอิน" },
+  { key: "attraction", label: "สถานที่", className: "hidden md:table-cell" },
+  { key: "spot", label: "จุดถ่ายภาพ", className: "hidden lg:table-cell" },
+  { key: "label", label: "ชื่ออ้างอิง", className: "hidden lg:table-cell" },
+  { key: "period", label: "ช่วงเวลา", className: "hidden xl:table-cell" },
+  { key: "status", label: "สถานะ" },
   { key: "actions", label: "", className: "w-48" },
 ];
 
@@ -37,6 +37,7 @@ function formatDate(dateStr: string | null) {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "Asia/Bangkok",
   });
 }
 
@@ -57,26 +58,51 @@ function AttractionStatusWarnings({
   );
 }
 
-function CheckinCodeActions({ code, label, id }: { code: string; label?: string | null; id: number }) {
+function getAvailabilityStatus(startsAt: string | null, endsAt: string | null) {
+  const now = Date.now();
+  if (startsAt && new Date(startsAt).getTime() > now) {
+    return { label: "ยังไม่เริ่ม", tone: "gold" as const };
+  }
+  if (endsAt && new Date(endsAt).getTime() < now) {
+    return { label: "หมดอายุ", tone: "gray" as const };
+  }
+  return { label: "อยู่ในช่วงเวลา", tone: "green" as const };
+}
+
+function CheckinCodeActions({
+  code,
+  label,
+  id,
+  canEdit,
+  canDownload,
+}: {
+  code: string;
+  label?: string | null;
+  id: number;
+  canEdit: boolean;
+  canDownload: boolean;
+}) {
   return (
     <div className="flex items-center justify-end gap-2">
       <CopyCheckinUrlAction code={code} />
-      <Link
-        href={`/admin/checkin-codes/${id}/edit`}
-        aria-label={`Edit ${code}`}
-        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-500 transition hover:bg-slate-50 hover:text-[#0A6B62]"
-      >
-        <PencilSimple size={18} weight="bold" />
-      </Link>
+      {canEdit ? (
+        <Link
+          href={`/admin/checkin-codes/${id}/edit`}
+          aria-label={`แก้ไขรหัส ${code}`}
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-500 transition hover:bg-slate-50 hover:text-[#0A6B62]"
+        >
+          <PencilSimple size={18} weight="bold" />
+        </Link>
+      ) : null}
       <Link
         href={`/c/${code}`}
         target="_blank"
-        aria-label={`Open QR landing for ${code}`}
-        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-500 transition hover:bg-slate-50 hover:text-[#0A6B62]"
+        aria-label={`เปิดหน้าทดสอบ QR ${code}`}
+        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-500 transition hover:bg-slate-50 hover:text-[#0A6B62]"
       >
         <ArrowSquareOut size={18} weight="bold" />
       </Link>
-      <DownloadQrAction code={code} label={label || code} />
+      {canDownload ? <DownloadQrAction code={code} label={label || code} /> : null}
     </div>
   );
 }
@@ -86,14 +112,20 @@ export default async function AdminCheckinCodesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requirePermission("checkin_code.read");
+  const guard = await requirePermission("checkin_code.read");
   const raw = await searchParams;
   const parsed = adminCheckinCodeFiltersSchema.safeParse(raw);
   const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
-  const [{ items, total, page, pageSize }, attractionsList] = await Promise.all([
+  const [{ items, total, page, pageSize }, attractionsList, photoSpotsList] = await Promise.all([
     listAdminCheckinCodes(filters),
-    getAdminAttractionsList()
+    getAdminAttractionsList(),
+    getAdminPhotoSpotsList(),
   ]);
+  const canCreate = hasPermission(guard.actor, "checkin_code.create");
+  const canEdit = hasPermission(guard.actor, "checkin_code.update");
+  const canToggle = hasPermission(guard.actor, "checkin_code.deactivate");
+  const canDownload = hasPermission(guard.actor, "checkin_code.download_qr");
+  const canExport = hasPermission(guard.actor, "export.checkin_codes");
 
   return (
     <ListPageShell
@@ -102,7 +134,8 @@ export default async function AdminCheckinCodesPage({
       description="จัดการ QR ที่นักท่องเที่ยวสแกนเพื่อเข้า flow check-in, certificate, และ stamp"
       createHref="/admin/checkin-codes/new"
       createLabel="สร้างรหัสใหม่"
-      headerActions={<ExportButton endpoint="/api/admin/export/checkin-codes" label="Export CSV" />}
+      hideCreateButton={!canCreate}
+      headerActions={canExport ? <ExportButton endpoint="/api/admin/export/checkin-codes" label="ส่งออก" /> : null}
       total={total}
       page={page}
       pageSize={pageSize}
@@ -110,7 +143,7 @@ export default async function AdminCheckinCodesPage({
       emptyDescription="ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองก่อนสร้าง QR ใหม่"
       filters={
         <FilterBar>
-          <div className="min-w-[220px] flex-1">
+          <div className="w-full sm:min-w-[220px] sm:flex-1">
             <SearchInput placeholder="ค้นหารหัส, label..." />
           </div>
           <FilterSelect
@@ -123,12 +156,31 @@ export default async function AdminCheckinCodesPage({
             }))}
           />
           <FilterSelect
-            label="สถานะ"
+            label="จุดถ่ายภาพ"
+            paramKey="photoSpotId"
+            allLabel="ทุกจุดถ่ายภาพ"
+            options={photoSpotsList.map((spot) => ({
+              value: spot.photo_spot_id.toString(),
+              label: `${spot.spot_name_th}${spot.is_active ? "" : " (ปิดใช้งาน)"}`,
+            }))}
+          />
+          <FilterSelect
+            label="การเปิดใช้งาน"
             paramKey="isActive"
-            allLabel="ทุกสถานะ"
+            allLabel="ทั้งหมด"
             options={[
               { value: "true", label: "เปิดใช้งาน" },
               { value: "false", label: "ปิดใช้งาน" },
+            ]}
+          />
+          <FilterSelect
+            label="ช่วงเวลา"
+            paramKey="availability"
+            allLabel="ทุกช่วงเวลา"
+            options={[
+              { value: "current", label: "อยู่ในช่วงเวลา" },
+              { value: "upcoming", label: "ยังไม่เริ่ม" },
+              { value: "expired", label: "หมดอายุ" },
             ]}
           />
         </FilterBar>
@@ -190,21 +242,27 @@ export default async function AdminCheckinCodesPage({
               <td className="px-4 py-3">
                 <div className="flex flex-col gap-1">
                   <StatusBadge
-                    label={code.is_active ? "Active" : "Inactive"}
+                    label={code.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                     tone={code.is_active ? "green" : "red"}
                   />
-                  {code.ends_at && new Date(code.ends_at) < new Date() ? (
-                    <StatusBadge label="Expired" tone="gray" />
-                  ) : null}
+                  <StatusBadge {...getAvailabilityStatus(code.starts_at, code.ends_at)} />
                 </div>
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-2">
-                  <CheckinCodeActions code={code.code} label={code.label} id={code.checkin_code_id} />
-                  <CheckinCodeStatusAction
-                    checkinCodeId={code.checkin_code_id}
-                    isActive={code.is_active}
+                  <CheckinCodeActions
+                    code={code.code}
+                    label={code.label}
+                    id={code.checkin_code_id}
+                    canEdit={canEdit}
+                    canDownload={canDownload}
                   />
+                  {canToggle ? (
+                    <CheckinCodeStatusAction
+                      checkinCodeId={code.checkin_code_id}
+                      isActive={code.is_active}
+                    />
+                  ) : null}
                 </div>
               </td>
             </tr>
@@ -226,18 +284,16 @@ export default async function AdminCheckinCodesPage({
               </div>
               <div className="flex flex-col items-end gap-1">
                 <StatusBadge
-                  label={code.is_active ? "Active" : "Inactive"}
+                  label={code.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                   tone={code.is_active ? "green" : "red"}
                 />
-                {code.ends_at && new Date(code.ends_at) < new Date() ? (
-                  <StatusBadge label="Expired" tone="gray" />
-                ) : null}
+                <StatusBadge {...getAvailabilityStatus(code.starts_at, code.ends_at)} />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <p className="text-xs text-slate-400">Attraction</p>
+                <p className="text-xs text-slate-500">สถานที่</p>
                 <p className="font-semibold text-slate-700">{code.attraction_name_th ?? "-"}</p>
                 <AttractionStatusWarnings
                   isActive={code.attraction_is_active}
@@ -245,17 +301,17 @@ export default async function AdminCheckinCodesPage({
                 />
               </div>
               <div>
-                <p className="text-xs text-slate-400">Photo spot</p>
+                <p className="text-xs text-slate-500">จุดถ่ายภาพ</p>
                 <p className="font-semibold text-slate-700">{code.photo_spot_name_th ?? "-"}</p>
               </div>
               {code.label ? (
                 <div>
-                  <p className="text-xs text-slate-400">Label</p>
+                  <p className="text-xs text-slate-500">ชื่ออ้างอิง</p>
                   <p className="font-semibold text-slate-700">{code.label}</p>
                 </div>
               ) : null}
               <div>
-                <p className="text-xs text-slate-400">Schedule</p>
+                <p className="text-xs text-slate-500">ช่วงเวลา</p>
                 <p className="text-[11px] text-slate-500">
                   {formatDate(code.starts_at)} - {formatDate(code.ends_at)}
                 </p>
@@ -263,11 +319,19 @@ export default async function AdminCheckinCodesPage({
             </div>
 
             <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-              <CheckinCodeActions code={code.code} label={code.label} id={code.checkin_code_id} />
-              <CheckinCodeStatusAction
-                checkinCodeId={code.checkin_code_id}
-                isActive={code.is_active}
+              <CheckinCodeActions
+                code={code.code}
+                label={code.label}
+                id={code.checkin_code_id}
+                canEdit={canEdit}
+                canDownload={canDownload}
               />
+              {canToggle ? (
+                <CheckinCodeStatusAction
+                  checkinCodeId={code.checkin_code_id}
+                  isActive={code.is_active}
+                />
+              ) : null}
             </div>
           </div>
         ))}

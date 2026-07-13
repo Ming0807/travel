@@ -14,11 +14,20 @@ import {
   AdminSaveBar,
 } from "@/components/admin/forms/AdminFormUX";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
+import {
+  bangkokDateTimeInputToIso,
+  isoToBangkokDateTimeInput,
+} from "@/lib/utils/bangkok-datetime";
 
 interface CheckinCodeFormProps {
   initialData?: AdminCheckinCodeRow | null;
   attractions: { attraction_id: number; name_th: string; is_active?: boolean | null; is_published?: boolean | null }[];
-  photoSpots: { photo_spot_id: number; attraction_id: number; spot_name_th: string }[];
+  photoSpots: {
+    photo_spot_id: number;
+    attraction_id: number;
+    spot_name_th: string;
+    is_active: boolean;
+  }[];
   defaultAttractionId?: number | null;
   defaultPhotoSpotId?: number | null;
 }
@@ -58,11 +67,6 @@ function buildSuggestedCode(attractionId: number | "", photoSpotId: number | "")
   return normalizeCode(`${scope}-${suffix}`);
 }
 
-function toLocalDateTimeInput(value?: string | null) {
-  if (!value) return "";
-  return new Date(value).toISOString().slice(0, 16);
-}
-
 function subscribeOrigin(_onStoreChange: () => void) {
   void _onStoreChange;
   return () => undefined;
@@ -76,8 +80,8 @@ function getScheduleStatus(isActive: boolean, startsAt: string, endsAt: string) 
   if (!isActive) return { label: "Inactive", help: "The QR landing should not be printed while inactive.", ready: false };
 
   const now = Date.now();
-  const startTime = startsAt ? new Date(startsAt).getTime() : null;
-  const endTime = endsAt ? new Date(endsAt).getTime() : null;
+  const startTime = startsAt ? new Date(bangkokDateTimeInputToIso(startsAt)).getTime() : null;
+  const endTime = endsAt ? new Date(bangkokDateTimeInputToIso(endsAt)).getTime() : null;
 
   if (startTime && startTime > now) {
     return { label: "Scheduled", help: "The QR will be active after the configured start time.", ready: true };
@@ -103,8 +107,8 @@ export function CheckinCodeForm({
   const [selectedAttractionId, setSelectedAttractionId] = useState<number | "">(initialData?.attraction_id ?? defaultAttractionId ?? "");
   const [selectedPhotoSpotId, setSelectedPhotoSpotId] = useState<number | "">(initialData?.photo_spot_id ?? defaultPhotoSpotId ?? "");
   const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
-  const [startsAt, setStartsAt] = useState(toLocalDateTimeInput(initialData?.starts_at));
-  const [endsAt, setEndsAt] = useState(toLocalDateTimeInput(initialData?.ends_at));
+  const [startsAt, setStartsAt] = useState(isoToBangkokDateTimeInput(initialData?.starts_at));
+  const [endsAt, setEndsAt] = useState(isoToBangkokDateTimeInput(initialData?.ends_at));
   const [copied, setCopied] = useState(false);
   const origin = useSyncExternalStore(subscribeOrigin, getBrowserOrigin, () => "");
 
@@ -115,8 +119,13 @@ export function CheckinCodeForm({
   });
 
   const filteredSpots = useMemo(
-    () => photoSpots.filter((spot) => spot.attraction_id === Number(selectedAttractionId)),
-    [photoSpots, selectedAttractionId]
+    () =>
+      photoSpots.filter(
+        (spot) =>
+          spot.attraction_id === Number(selectedAttractionId) &&
+          (spot.is_active || spot.photo_spot_id === Number(selectedPhotoSpotId))
+      ),
+    [photoSpots, selectedAttractionId, selectedPhotoSpotId]
   );
 
   const selectedAttraction = useMemo(
@@ -153,6 +162,7 @@ export function CheckinCodeForm({
   const codeIsValid = /^[a-z0-9_-]{3,100}$/.test(code);
   const scheduleStatus = getScheduleStatus(isActive, startsAt, endsAt);
   const photoSpotMatchesAttraction = !selectedPhotoSpot || selectedPhotoSpot.attraction_id === Number(selectedAttractionId);
+  const photoSpotReady = !selectedPhotoSpot || selectedPhotoSpot.is_active || !isActive;
   const hasAttractionStatus = typeof selectedAttraction?.is_active === "boolean" || typeof selectedAttraction?.is_published === "boolean";
   const attractionPublicReady = !!selectedAttraction && selectedAttraction.is_active !== false && selectedAttraction.is_published !== false;
   const attractionStatusHelp = !selectedAttraction
@@ -180,8 +190,10 @@ export function CheckinCodeForm({
     },
     {
       label: "ความสัมพันธ์จุดถ่ายภาพถูกต้อง",
-      complete: photoSpotMatchesAttraction,
-      help: "ถ้าเลือกจุดถ่ายภาพ จุดถ่ายภาพนั้นต้องอยู่ภายใต้สถานที่ที่เลือก",
+      complete: photoSpotMatchesAttraction && photoSpotReady,
+      help: selectedPhotoSpot?.is_active === false
+        ? "จุดถ่ายภาพนี้ปิดใช้งานอยู่ จึงต้องเปิดจุดถ่ายภาพหรือปิดใช้งาน QR นี้ก่อนบันทึก"
+        : "ถ้าเลือกจุดถ่ายภาพ จุดถ่ายภาพนั้นต้องอยู่ภายใต้สถานที่ที่เลือก",
     },
     {
       label: `สถานะการทำงาน: ${scheduleStatus.label}`,
@@ -278,7 +290,7 @@ export function CheckinCodeForm({
                   <option value="">ไม่มีจุดถ่ายภาพเฉพาะ</option>
                   {filteredSpots.map((spot) => (
                     <option key={spot.photo_spot_id} value={spot.photo_spot_id}>
-                      {spot.spot_name_th}
+                      {spot.spot_name_th}{spot.is_active ? "" : " (ปิดใช้งาน)"}
                     </option>
                   ))}
                 </select>

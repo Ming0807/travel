@@ -145,17 +145,25 @@ export type DashboardViewModel = {
     distribution: DistributionItem[];
     byAttraction: RankedAttraction[];
     safetyAverage: number | null;
+    safetyResponseCount: number;
     cleanlinessAverage: number | null;
+    cleanlinessResponseCount: number;
     accessibilityAverage: number | null;
+    accessibilityResponseCount: number;
     informationAverage: number | null;
+    informationResponseCount: number;
     valueAverage: number | null;
+    valueResponseCount: number;
     /**
      * Legacy score from the first schema. Kept so old survey rows remain readable,
      * but new survey UX writes accessibility/information/value instead.
      */
     facilityAverage: number | null;
+    facilityResponseCount: number;
     revisitIntentionRate: number | null;
+    revisitAnsweredCount: number;
     recommendIntentionRate: number | null;
+    recommendAnsweredCount: number;
   };
   funnel: {
     stages: FunnelStage[];

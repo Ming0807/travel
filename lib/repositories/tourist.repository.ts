@@ -1,5 +1,49 @@
 import "server-only";
+import { CHECKIN_CONSENT_PURPOSE_KEY, CHECKIN_CONSENT_VERSION } from "@/lib/config/checkin";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+
+export type GuestCheckinProfile = {
+  displayName: string;
+  originCountryId: number | null;
+  originProvinceId: number | null;
+  ageGroup: string | null;
+  hasCurrentConsent: boolean;
+};
+
+export async function getGuestCheckinProfile(guestToken: string): Promise<GuestCheckinProfile | null> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data: identity, error } = await supabase
+    .from("tourist_identities")
+    .select("tourist_id, tourists!inner(display_name, origin_country_id, origin_province_id, age_group)")
+    .eq("provider", "anonymous_device")
+    .eq("provider_user_id", guestToken)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load returning tourist profile: ${error.message}`);
+  if (!identity) return null;
+
+  const tourist = Array.isArray(identity.tourists) ? identity.tourists[0] : identity.tourists;
+  if (!tourist) return null;
+
+  const { data: consent, error: consentError } = await supabase
+    .from("consent_records")
+    .select("consent_id")
+    .eq("tourist_id", identity.tourist_id)
+    .eq("consent_version", CHECKIN_CONSENT_VERSION)
+    .eq("purpose_key", CHECKIN_CONSENT_PURPOSE_KEY)
+    .eq("has_consented", true)
+    .maybeSingle();
+
+  if (consentError) throw new Error(`Failed to load tourist consent: ${consentError.message}`);
+
+  return {
+    displayName: tourist.display_name,
+    originCountryId: tourist.origin_country_id ? Number(tourist.origin_country_id) : null,
+    originProvinceId: tourist.origin_province_id ? Number(tourist.origin_province_id) : null,
+    ageGroup: tourist.age_group,
+    hasCurrentConsent: Boolean(consent),
+  };
+}
 
 export async function findTouristByIdentity(provider: string, providerUserId: string) {
   const supabase = createSupabaseServiceRoleClient();

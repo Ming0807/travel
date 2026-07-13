@@ -1,4 +1,5 @@
 import "server-only";
+import { getCheckinSessionId } from "@/lib/auth/checkin-session";
 import { getCheckinCodeByCode, CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
 import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
 
@@ -53,11 +54,13 @@ export async function trackCheckinFunnelEvent(
   codeDetails: CheckinCodeDetails,
   extra?: { touristId?: string; visitId?: string }
 ) {
+  const sessionId = await getCheckinSessionId();
   await recordFunnelEvent({
     eventName,
     checkinCodeId: codeDetails.checkin_code_id,
     attractionId: codeDetails.attraction?.attraction_id,
     touristId: extra?.touristId,
     visitId: extra?.visitId,
+    sessionId,
   });
 }

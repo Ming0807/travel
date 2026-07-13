@@ -4,10 +4,13 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MapPin, CaretDown } from "@phosphor-icons/react/dist/ssr";
-import { navGroups, type NavGroup as NavGroupType, type NavItem } from "./admin-nav-items";
+import { getVisibleNavGroups, navGroups, type NavGroup as NavGroupType, type NavItem } from "./admin-nav-items";
+import { useAdminAccess } from "./AdminAccessContext";
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const access = useAdminAccess();
+  const visibleGroups = getVisibleNavGroups(navGroups, access.permissions, access.resolved);
 
   return (
     <aside className="hidden w-64 shrink-0 border-r border-slate-200/60 bg-slate-50 lg:flex lg:flex-col sticky top-0 h-screen">
@@ -16,10 +19,10 @@ export function AdminSidebar() {
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
             <MapPin size={20} weight="fill" />
           </div>
-          <span className="text-lg font-black tracking-tight text-slate-800 uppercase">Globe Trekker</span>
+          <span className="text-base font-black text-slate-800">ท่องเที่ยวชายแดนใต้</span>
         </Link>
         <nav aria-label="Admin navigation" className="flex-1 space-y-6 pb-20 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-track]:bg-transparent" style={{ scrollbarWidth: "thin" }}>
-          {navGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <NavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} />
           ))}
         </nav>
