@@ -2,7 +2,7 @@
 
 import { DownloadSimple, CaretDown } from "@phosphor-icons/react/dist/ssr";
 import { useSearchParams } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 
 type ExportButtonProps = {
   endpoint: string;
@@ -15,6 +15,13 @@ export function ExportButton({ endpoint, label = "Export", params }: ExportButto
   const [format, setFormat] = useState<"csv" | "xlsx">("csv");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
+
+  function closeMenu(restoreFocus = false) {
+    setIsOpen(false);
+    if (restoreFocus) triggerRef.current?.focus();
+  }
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -51,37 +58,51 @@ export function ExportButton({ endpoint, label = "Export", params }: ExportButto
           {label} ({formatLabel})
         </a>
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="inline-flex items-center rounded-r-xl border-l border-slate-200 px-2 py-2.5 text-sm text-slate-500 transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0A6B62]/50"
-          aria-haspopup="listbox"
+          aria-label="เลือกรูปแบบไฟล์ส่งออก"
+          aria-haspopup="menu"
           aria-expanded={isOpen}
+          aria-controls={isOpen ? menuId : undefined}
         >
           <CaretDown size={14} weight="bold" />
         </button>
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div
+          id={menuId}
+          role="menu"
+          aria-label="รูปแบบไฟล์ส่งออก"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              closeMenu(true);
+            }
+          }}
+          className="absolute right-0 z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
+        >
           <button
             type="button"
-            onClick={() => { setFormat("csv"); setIsOpen(false); }}
+            onClick={() => { setFormat("csv"); closeMenu(true); }}
             className={`flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${
               format === "csv" ? "font-bold text-[#0A6B62]" : "text-slate-700"
             }`}
-            role="option"
-            aria-selected={format === "csv"}
+            role="menuitemradio"
+            aria-checked={format === "csv"}
           >
             CSV (.csv)
           </button>
           <button
             type="button"
-            onClick={() => { setFormat("xlsx"); setIsOpen(false); }}
+            onClick={() => { setFormat("xlsx"); closeMenu(true); }}
             className={`flex w-full items-center px-4 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${
               format === "xlsx" ? "font-bold text-[#0A6B62]" : "text-slate-700"
             }`}
-            role="option"
-            aria-selected={format === "xlsx"}
+            role="menuitemradio"
+            aria-checked={format === "xlsx"}
           >
             Excel (.xlsx)
           </button>

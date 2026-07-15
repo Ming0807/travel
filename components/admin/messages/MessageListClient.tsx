@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { type FormEvent, useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { 
   EnvelopeSimple, 
   EnvelopeOpen, 
@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { Pagination } from "@/components/admin/Pagination";
 import { removeAdminMessage } from "@/app/actions/admin-messages";
+import type { AdminMessageQuery, ContactMessageStatusFilter, ContactMessageSort } from "@/lib/validation/admin-message";
 
 type MessageStatus = "unread" | "read" | "archived";
 
@@ -27,113 +28,166 @@ export type AdminMessageRow = {
   created_at: string;
 };
 
+const STATUS_OPTIONS: Array<{ value: ContactMessageStatusFilter; label: string }> = [
+  { value: "all", label: "ทั้งหมด" },
+  { value: "unread", label: "ยังไม่ได้อ่าน" },
+  { value: "read", label: "อ่านแล้ว" },
+  { value: "archived", label: "เก็บถาวร" },
+];
+
 export function MessageListClient({
   initialMessages,
   totalPages,
   currentPage,
   total,
   pageSize,
+  filters,
+  canDelete,
 }: {
   initialMessages: AdminMessageRow[];
   totalPages: number;
   currentPage: number;
   total?: number;
   pageSize?: number;
+  filters: AdminMessageQuery;
+  canDelete: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [statusFilter, setStatusFilter] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(filters.search ?? "");
 
-  const filteredMessages = initialMessages.filter((msg) => {
-    const matchesStatus = !statusFilter || msg.status === statusFilter;
-    const matchesSearch = !searchTerm || 
-      (msg.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (msg.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (msg.subject || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (msg.message || "").toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+  const navigateWithFilters = (updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "1");
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (!value || value === "all" || (key === "sort" && value === "newest")) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    }
+
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    navigateWithFilters({ search: searchTerm.trim() || null });
+  };
+
+  const currentListUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+  const detailHref = (id: string) =>
+    `/admin/messages/${id}?returnTo=${encodeURIComponent(currentListUrl)}`;
 
 
   const handleDelete = (id: string) => {
-    if (!confirm("Are you sure you want to delete this message?")) return;
+    if (!confirm("ยืนยันการลบข้อความนี้หรือไม่")) return;
     startTransition(async () => {
       try {
         await removeAdminMessage(id);
         router.refresh();
       } catch {
-        alert("Failed to delete message");
+        alert("ไม่สามารถลบข้อความได้ กรุณาลองใหม่");
       }
     });
   };
 
 
-  if (initialMessages.length === 0) {
-    return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-ink/10 bg-white p-12 text-center">
-        <div className="mb-4 rounded-full bg-slate-50 p-4 text-slate-400">
-          <EnvelopeSimple size={48} weight="light" />
-        </div>
-        <h3 className="text-lg font-bold text-ink">ไม่มีข้อความ</h3>
-        <p className="mt-2 text-sm text-muted max-w-sm">
-          ยังไม่มีข้อความติดต่อจากนักท่องเที่ยวในขณะนี้
-        </p>
+  const emptyState = (
+    <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-ink/10 bg-white p-12 text-center">
+      <div className="mb-4 rounded-full bg-slate-50 p-4 text-slate-400">
+        <EnvelopeSimple size={48} weight="light" />
       </div>
-    );
-  }
+      <h3 className="text-lg font-bold text-ink">ไม่มีข้อความ</h3>
+      <p className="mt-2 text-sm text-muted max-w-sm">
+        ยังไม่มีข้อความที่ตรงกับตัวกรองปัจจุบัน
+      </p>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
       {/* Filter Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm w-full">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-            <MagnifyingGlass size={18} />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <form className="w-full max-w-md" onSubmit={handleSearch}>
+          <label htmlFor="message-search" className="mb-1 block text-xs font-bold text-slate-600">
+            ค้นหาข้อความ
+          </label>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <MagnifyingGlass size={18} />
+            </div>
+            <input
+              id="message-search"
+              type="search"
+              className="block w-full rounded-lg border border-slate-300 py-2 pl-10 pr-3 text-sm focus:border-[#0A6B62] focus:outline-none focus:ring-1 focus:ring-[#0A6B62]/20"
+              placeholder="ค้นหาชื่อ อีเมล หัวข้อ หรือข้อความ"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <input
-            type="text"
-            className="block w-full rounded-lg border border-slate-300 py-2 pl-10 pr-3 text-sm focus:border-[#0A6B62] focus:outline-none focus:ring-1 focus:ring-[#0A6B62]/20"
-            placeholder="Search sender, subject, or message..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        </form>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm">
-            {["", "unread", "read", "archived"].map((status) => (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div>
+            <span className="mb-1 block text-xs font-bold text-slate-600">สถานะ</span>
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1 shadow-sm">
+            {STATUS_OPTIONS.map((status) => (
               <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
+                key={status.value}
+                type="button"
+                onClick={() => navigateWithFilters({ status: status.value })}
+                aria-pressed={filters.status === status.value}
                 className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                  statusFilter === status
+                  filters.status === status.value
                     ? "bg-[#F3704C] text-white"
                     : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
                 }`}
               >
-                {status === "" ? "All" : status === "unread" ? "Unread" : status === "read" ? "Read" : "Archived"}
+                {status.label}
               </button>
             ))}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="message-sort" className="mb-1 block text-xs font-bold text-slate-600">
+              เรียงลำดับ
+            </label>
+            <select
+              id="message-sort"
+              value={filters.sort}
+              onChange={(event) => navigateWithFilters({ sort: event.target.value as ContactMessageSort })}
+              className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 focus:border-[#0A6B62] focus:outline-none focus:ring-1 focus:ring-[#0A6B62]/20"
+            >
+              <option value="newest">ล่าสุดก่อน</option>
+              <option value="oldest">เก่าสุดก่อน</option>
+            </select>
           </div>
         </div>
       </div>
 
+      {initialMessages.length === 0 ? emptyState : (
+        <>
       {/* Desktop Table */}
-      <div className="hidden md:block overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-sm">
+      <div className="hidden overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-sm md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
               <tr>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Sender</th>
-                <th className="px-6 py-4">Subject / Message</th>
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4">สถานะ</th>
+                <th className="px-6 py-4">ผู้ส่ง</th>
+                <th className="px-6 py-4">หัวข้อ / ข้อความ</th>
+                <th className="px-6 py-4">วันที่</th>
+                <th className="px-6 py-4 text-right">คำสั่ง</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/5">
-              {filteredMessages.map((msg) => (
+              {initialMessages.map((msg) => (
                 <tr 
                   key={msg.id} 
                   className={`transition-colors hover:bg-slate-50 ${msg.status === "unread" ? "bg-slate-50 font-semibold" : ""}`}
@@ -143,24 +197,24 @@ export function MessageListClient({
                       {msg.status === "unread" ? (
                         <span className="flex items-center gap-1.5 rounded-full bg-[#FFEBE5] px-2.5 py-1 text-xs font-bold text-[#F3704C]">
                           <EnvelopeSimple size={14} weight="bold" />
-                          Unread
+                          ยังไม่ได้อ่าน
                         </span>
                       ) : msg.status === "archived" ? (
                         <span className="flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
                           <Archive size={14} weight="fill" />
-                          Archived
+                          เก็บถาวร
                         </span>
                       ) : (
                         <span className="flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
                           <EnvelopeOpen size={14} weight="regular" />
-                          Read
+                          อ่านแล้ว
                         </span>
                       )}
                       
                       {msg.is_replied && (
                         <span className="flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
                           <CheckCircle size={14} weight="fill" />
-                          Replied
+                          ตอบแล้ว
                         </span>
                       )}
                     </div>
@@ -170,7 +224,7 @@ export function MessageListClient({
                     <div className="text-xs text-muted">{msg.email}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <Link href={`/admin/messages/${msg.id}`} className="group block max-w-md">
+                    <Link href={detailHref(msg.id)} className="group block max-w-md">
                       <div className="truncate text-ink group-hover:text-blue-600 transition-colors">
                         {msg.subject || "(ไม่มีหัวข้อ)"}
                       </div>
@@ -191,20 +245,20 @@ export function MessageListClient({
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        href={`/admin/messages/${msg.id}`}
+                        href={detailHref(msg.id)}
                         className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
                       >
-                        View
+                        ดูรายละเอียด
                       </Link>
                       
-                      <button
+                      {canDelete ? <button
                         onClick={() => handleDelete(msg.id)}
                         disabled={isPending}
                         className="p-1.5 text-red-400 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50"
-                        title="Delete"
+                        title="ลบข้อความ"
                       >
                         <Trash size={18} />
-                      </button>
+                      </button> : null}
                     </div>
                   </td>
                 </tr>
@@ -216,10 +270,10 @@ export function MessageListClient({
 
       {/* Mobile Card View */}
       <div className="grid gap-4 md:hidden">
-        {filteredMessages.map((msg) => (
+        {initialMessages.map((msg) => (
           <Link
             key={msg.id}
-            href={`/admin/messages/${msg.id}`}
+            href={detailHref(msg.id)}
             className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
           >
             <div className="flex items-start justify-between gap-3">
@@ -285,6 +339,8 @@ export function MessageListClient({
       {/* Pagination */}
       {totalPages > 1 && (
         <Pagination page={currentPage} pageSize={pageSize ?? 20} total={total ?? totalPages * (pageSize ?? 20)} />
+      )}
+        </>
       )}
     </div>
   );

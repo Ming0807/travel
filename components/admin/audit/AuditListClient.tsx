@@ -14,42 +14,57 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { useRouter, usePathname } from "next/navigation";
 import { Pagination } from "@/components/admin/Pagination";
+import type { AdminAuditFilters } from "@/lib/validation/admin-audit";
 
 const ENTITY_TYPE_OPTIONS = [
-  { value: "", label: "All Types" },
-  { value: "attraction", label: "Attraction" },
-  { value: "story", label: "Story" },
-  { value: "route", label: "Route" },
-  { value: "restaurant", label: "Restaurant" },
-  { value: "accommodation", label: "Accommodation" },
-  { value: "media", label: "Media" },
-  { value: "photo_spot", label: "Photo Spot" },
-  { value: "checkin_code", label: "Check-in Code" },
-  { value: "badge", label: "Badge" },
-  { value: "review", label: "Review" },
-  { value: "admin_users", label: "Admin User" },
-  { value: "roles", label: "Role" },
-  { value: "content_media", label: "Content Media" },
-  { value: "settings", label: "Settings" },
-  { value: "site_settings", label: "Site Settings" },
-  { value: "certificate", label: "Certificate" },
+  { value: "", label: "ทุกประเภท" },
+  { value: "attraction", label: "สถานที่ท่องเที่ยว" },
+  { value: "story", label: "เรื่องราว" },
+  { value: "route", label: "เส้นทางแนะนำ" },
+  { value: "restaurant", label: "ร้านอาหาร" },
+  { value: "accommodation", label: "ที่พัก" },
+  { value: "media", label: "สื่อ" },
+  { value: "photo_spot", label: "จุดถ่ายภาพ" },
+  { value: "checkin_code", label: "รหัสเช็กอิน" },
+  { value: "badge", label: "ตรารางวัล" },
+  { value: "review", label: "รีวิว" },
+  { value: "admin_users", label: "ผู้ดูแลระบบ" },
+  { value: "roles", label: "บทบาท" },
+  { value: "content_media", label: "สื่อเนื้อหา" },
+  { value: "settings", label: "การตั้งค่า" },
+  { value: "site_settings", label: "การตั้งค่าเว็บไซต์" },
+  { value: "certificate", label: "เกียรติบัตร" },
+  { value: "audit_export", label: "การส่งออกบันทึกกิจกรรม" },
+  { value: "attraction_export", label: "การส่งออกสถานที่" },
+  { value: "photo_spot_export", label: "การส่งออกจุดถ่ายภาพ" },
+  { value: "checkin_code_export", label: "การส่งออกรหัสเช็กอิน" },
+  { value: "visit_export", label: "การส่งออกการเยี่ยมชม" },
+  { value: "survey_export", label: "การส่งออกแบบสำรวจ" },
+  { value: "tourist_export", label: "การส่งออกนักท่องเที่ยว" },
+  { value: "user_export", label: "การส่งออกผู้ดูแล" },
+  { value: "message_export", label: "การส่งออกข้อความ" },
 ];
 
 const ACTION_PREFIX_OPTIONS = [
-  { value: "", label: "All Actions" },
-  { value: "create", label: "Create" },
-  { value: "update", label: "Update" },
-  { value: "delete", label: "Delete" },
-  { value: "archive", label: "Archive" },
-  { value: "publish", label: "Publish" },
-  { value: "unpublish", label: "Unpublish" },
-  { value: "activate", label: "Activate" },
-  { value: "deactivate", label: "Deactivate" },
-  { value: "approve", label: "Approve" },
-  { value: "reject", label: "Reject" },
-  { value: "export", label: "Export" },
-  { value: "login", label: "Login" },
+  { value: "", label: "ทุกคำสั่ง" },
+  { value: "create", label: "สร้าง" },
+  { value: "update", label: "แก้ไข" },
+  { value: "delete", label: "ลบ" },
+  { value: "archive", label: "เก็บถาวร" },
+  { value: "publish", label: "เผยแพร่" },
+  { value: "unpublish", label: "ยกเลิกเผยแพร่" },
+  { value: "activate", label: "เปิดใช้งาน" },
+  { value: "deactivate", label: "ปิดใช้งาน" },
+  { value: "approve", label: "อนุมัติ" },
+  { value: "reject", label: "ปฏิเสธ" },
+  { value: "export", label: "ส่งออก" },
+  { value: "login", label: "เข้าสู่ระบบ" },
 ];
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "ล่าสุดก่อน" },
+  { value: "oldest", label: "เก่าสุดก่อน" },
+] as const;
 
 type JsonObject = Record<string, unknown>;
 type AuditResult = "success" | "failed" | "denied";
@@ -97,7 +112,7 @@ function ResultBadge({ result }: { result: AuditResult | null }) {
 }
 
 function activeFilterCount(filters: Record<string, string | undefined>): number {
-  return Object.entries(filters).filter(([key, val]) => key !== "search" && val).length;
+  return Object.entries(filters).filter(([key, val]) => key !== "search" && key !== "sort" && val).length;
 }
 
 type AuditListClientProps = {
@@ -109,17 +124,11 @@ type AuditListClientProps = {
     totalPages: number;
   };
   adminUsers: AuditAdminUserOption[];
-  initialFilters: {
-    adminId?: string;
-    action?: string;
-    entityType?: string;
-    startDate?: string;
-    endDate?: string;
-    search?: string;
-  };
+  initialFilters: AdminAuditFilters;
+  canExport: boolean;
 };
 
-export function AuditListClient({ initialData, adminUsers, initialFilters }: AuditListClientProps) {
+export function AuditListClient({ initialData, adminUsers, initialFilters, canExport }: AuditListClientProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -144,7 +153,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
   };
 
   const clearFilters = () => {
-    setFilters({});
+    setFilters({ sort: "newest" });
     router.push(pathname);
   };
 
@@ -187,7 +196,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
           <input
             type="text"
             className="block w-full rounded-lg border border-slate-300 py-2 pl-10 pr-3 text-sm focus:border-[#0A6B62] focus:outline-none focus:ring-1 focus:ring-[#0A6B62]/20"
-            placeholder="Search action or entity..."
+            placeholder="ค้นหาคำสั่งหรือประเภทข้อมูล"
             value={filters.search || ""}
             onChange={(e) => handleFilterChange("search", e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && applyFilters(1)}
@@ -204,7 +213,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
             }`}
           >
             <Sliders size={18} />
-            Filters
+            ตัวกรอง
             {activeFilterCount(filters) > 0 ? (
               <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0A6B62] px-1.5 text-xs font-extrabold text-white">
                 {activeFilterCount(filters)}
@@ -212,28 +221,28 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
             ) : null}
           </button>
 
-          <button
+          {canExport ? <button
             onClick={handleExport}
             disabled={isExporting}
             className="inline-flex items-center gap-2 rounded-lg bg-white border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             <DownloadSimple size={18} />
-            {isExporting ? "Exporting..." : "Export CSV"}
-          </button>
+            {isExporting ? "กำลังส่งออก..." : "ส่งออก CSV"}
+          </button> : null}
         </div>
       </div>
 
       {/* Active Filter Badges */}
       {activeFilterCount(filters) > 0 && !isFilterOpen ? (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-slate-500">Active filters:</span>              {Object.entries(filters).map(([key, val]) => {
-            if (!val || key === "search") return null;
+          <span className="text-xs font-bold text-slate-500">ตัวกรองที่ใช้อยู่:</span>              {Object.entries(filters).map(([key, val]) => {
+            if (!val || key === "search" || key === "sort") return null;
             const labelMap: Record<string, string> = {
-              adminId: "Admin",
-              action: "Action",
-              entityType: "Entity",
-              startDate: "From",
-              endDate: "To",
+              adminId: "ผู้ดูแล",
+              action: "คำสั่ง",
+              entityType: "ประเภทข้อมูล",
+              startDate: "ตั้งแต่",
+              endDate: "ถึง",
             };
             const displayKey = labelMap[key] || key;
             const displayVal = key === "adminId"
@@ -248,7 +257,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                 <button
                   type="button"
                   onClick={() => {
-                    const updated = { ...filters, [key]: "" } as Record<string, string>;
+                    const updated = { ...filters, [key]: undefined } as AdminAuditFilters;
                     setFilters(updated);
                     const params = new URLSearchParams();
                     Object.entries(updated).forEach(([k, v]) => {
@@ -257,7 +266,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                     router.push(`${pathname}?${params.toString()}`);
                   }}
                   className="ml-0.5 rounded-full p-0.5 hover:bg-slate-200"
-                  aria-label={`Remove ${key} filter`}
+                  aria-label={`ล้างตัวกรอง ${displayKey}`}
                 >
                   <X size={12} weight="bold" />
                 </button>
@@ -272,21 +281,21 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Admin User</label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">ผู้ดูแลระบบ</label>
               <select
                 className="w-full rounded-md border border-slate-300 p-2 text-sm"
                 value={filters.adminId || ""}
                 onChange={(e) => handleFilterChange("adminId", e.target.value)}
               >
-                <option value="">All Users</option>
-                <option value="system">System (No User ID)</option>
+                <option value="">ผู้ดูแลทุกคน</option>
+                <option value="system">ระบบอัตโนมัติ</option>
                 {adminUsers.map(u => (
                   <option key={u.admin_id} value={u.admin_id}>{u.display_name} ({u.email})</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Action</label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">คำสั่ง</label>
               <select
                 className="w-full rounded-md border border-slate-300 p-2 text-sm"
                 value={filters.action || ""}
@@ -298,7 +307,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Entity Type</label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">ประเภทข้อมูล</label>
               <select
                 className="w-full rounded-md border border-slate-300 p-2 text-sm"
                 value={filters.entityType || ""}
@@ -310,14 +319,26 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">Date Range</label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">เรียงลำดับ</label>
+              <select
+                className="w-full rounded-md border border-slate-300 p-2 text-sm"
+                value={filters.sort || "newest"}
+                onChange={(e) => handleFilterChange("sort", e.target.value)}
+              >
+                {SORT_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">ช่วงวันที่</label>
               <div className="flex gap-2">
                 <input
                   type="date"
                   className="w-full rounded-md border border-slate-300 p-2 text-sm"
                   value={filters.startDate || ""}
                   onChange={(e) => handleFilterChange("startDate", e.target.value)}
-                  aria-label="Start date"
+                  aria-label="วันที่เริ่มต้น"
                 />
                 <span className="flex items-center text-slate-400 text-xs">-</span>
                 <input
@@ -325,7 +346,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                   className="w-full rounded-md border border-slate-300 p-2 text-sm"
                   value={filters.endDate || ""}
                   onChange={(e) => handleFilterChange("endDate", e.target.value)}
-                  aria-label="End date"
+                  aria-label="วันที่สิ้นสุด"
                 />
               </div>
             </div>
@@ -335,13 +356,13 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
               onClick={clearFilters}
               className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900"
             >
-              Clear All
+              ล้างทั้งหมด
             </button>
             <button
               onClick={() => applyFilters(1)}
               className="rounded-lg bg-[#F3704C] px-4 py-2 text-sm font-medium text-white hover:bg-[#E55A35]"
             >
-              Apply Filters
+              ใช้ตัวกรอง
             </button>
           </div>
         </div>
@@ -356,22 +377,22 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Timestamp
+                    วันเวลา
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Admin User
+                    ผู้ดูแลระบบ
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Action
+                    คำสั่ง
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Entity
+                    ประเภทข้อมูล
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Result
+                    ผลลัพธ์
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Details
+                    รายละเอียด
                   </th>
                 </tr>
               </thead>
@@ -379,7 +400,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                 {logs.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                      No audit logs match your filters.
+                      ไม่พบบันทึกกิจกรรมตามตัวกรองที่เลือก
                     </td>
                   </tr>
                 ) : (
@@ -395,7 +416,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                             <div className="text-xs text-slate-500">{log.admin_users.email}</div>
                           </>
                         ) : (
-                          <span className="text-slate-400 italic">System</span>
+                          <span className="text-slate-400 italic">ระบบอัตโนมัติ</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -416,7 +437,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                             className="text-[#0A6B62] hover:text-[#F3704C] inline-flex items-center gap-1 bg-[#E6F4EF] px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
                           >
                             <FileText size={16} />
-                            View Data
+                            ดูข้อมูล
                           </button>
                         ) : (
                           <span className="text-slate-300">-</span>
@@ -433,7 +454,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
           <div className="grid gap-3 p-4 md:hidden">
             {logs.length === 0 ? (
               <div className="px-6 py-12 text-center text-sm text-slate-500">
-                No audit logs match your filters.
+                ไม่พบบันทึกกิจกรรมตามตัวกรองที่เลือก
               </div>
             ) : (
               logs.map((log) => {
@@ -469,7 +490,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
                       <div>
                         <p className="font-bold text-slate-500">Admin</p>
                         <p className="mt-0.5 font-semibold text-slate-800">
-                          {log.admin_users?.display_name || "System"}
+                          {log.admin_users?.display_name || "ระบบอัตโนมัติ"}
                         </p>
                         {log.admin_users?.email ? (
                           <p className="text-xs text-slate-500">{log.admin_users.email}</p>
@@ -525,7 +546,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters }: Aud
               )}
               {logs.find(l => l.log_id === selectedDetails)?.new_data && (
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-500 mb-2 uppercase">New Data / Details</h4>
+                  <h4 className="mb-2 text-xs font-semibold uppercase text-slate-500">ข้อมูลใหม่ / รายละเอียด</h4>
                   {renderDetails(logs.find(l => l.log_id === selectedDetails)?.new_data)}
                 </div>
               )}

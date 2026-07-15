@@ -953,6 +953,18 @@ Do not log full exported data.
 
 Do not log secrets.
 
+For audit-log exports specifically, audit metadata must remain a safe summary only:
+
+```text
+rowCount
+maxRows
+format
+filters
+privacyLevel
+```
+
+Do not store raw audit `old_data`, raw audit `new_data`, exported rows, admin email addresses, signed URLs, provider identifiers, guest/device tokens, or service role key material in export audit metadata.
+
 ---
 
 ## 27. Export File Storage
@@ -1028,6 +1040,13 @@ If more:
 
 ```text
 ask user to narrow filters
+```
+
+Implementation rule:
+
+```text
+export query limit = EXPORT_MAX_ROWS + 1
+if returned rows > EXPORT_MAX_ROWS, return EXPORT_TOO_LARGE / HTTP 413 before generating the file
 ```
 
 Future:
@@ -1300,6 +1319,15 @@ code: EXPORT_GENERATION_FAILED
 message: Could not generate export. Please try again.
 ```
 
+## 38.6 Invalid Filters
+
+```text
+code: VALIDATION_FAILED
+message: Invalid export filters.
+```
+
+Filter validation must happen before querying export rows. Unknown filter keys, invalid enum values, invalid dates, and reversed date ranges should be rejected instead of ignored.
+
 ---
 
 ## 39. Export API Endpoints
@@ -1450,6 +1478,9 @@ export estimated spending
 export audit log created
 CSV escaping commas/quotes/newlines
 UTF-8 Excel compatibility
+audit export invalid filters return 400
+audit export row limit exceeded returns 413
+audit export metadata excludes raw old_data/new_data and secrets
 ```
 
 ---

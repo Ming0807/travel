@@ -1,4 +1,10 @@
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import {
+  buildAuditSearchFilter,
+  escapeAuditIlikePattern,
+  sanitizeAuditLogDetails,
+  type AdminAuditFilters,
+} from "@/lib/validation/admin-audit";
 
 export async function logAdminAction({
   adminId,
@@ -19,7 +25,7 @@ export async function logAdminAction({
     action,
     entity_type: entityType,
     entity_id: entityId,
-    new_data: details
+    new_data: details ? sanitizeAuditLogDetails(details) : undefined
   });
 
   if (error) {
@@ -58,6 +64,7 @@ export type AuditLogFilters = {
   startDate?: string;
   endDate?: string;
   search?: string;
+  sort?: "newest" | "oldest";
 };
 
 export async function getAuditLogsPaginated(
@@ -79,15 +86,17 @@ export async function getAuditLogsPaginated(
     `, { count: "exact" });
 
   if (filters.adminId) {
-    query = query.eq("admin_id", filters.adminId);
+    query = filters.adminId === "system"
+      ? query.is("admin_id", null)
+      : query.eq("admin_id", filters.adminId);
   }
   
   if (filters.action) {
-    query = query.ilike("action", `%${filters.action}%`);
+    query = query.ilike("action", `%${escapeAuditIlikePattern(filters.action)}%`);
   }
   
   if (filters.entityType) {
-    query = query.ilike("entity_type", `%${filters.entityType}%`);
+    query = query.ilike("entity_type", `%${escapeAuditIlikePattern(filters.entityType)}%`);
   }
 
   if (filters.startDate) {
@@ -99,14 +108,11 @@ export async function getAuditLogsPaginated(
   }
 
   if (filters.search) {
-    // Basic search across action, entity_type or related user email/name
-    // Note: PostgREST doesn't support easy full-text cross-table search via API easily without a view
-    // so we search on action and entity_type directly. 
-    query = query.or(`action.ilike.%${filters.search}%,entity_type.ilike.%${filters.search}%`);
+    query = query.or(buildAuditSearchFilter(filters.search));
   }
 
   const { data, error, count } = await query
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: filters.sort === "oldest" })
     .range(offset, offset + limit - 1);
 
   if (error) {
@@ -122,3 +128,5 @@ export async function getAuditLogsPaginated(
     totalPages: count ? Math.ceil(count / limit) : 0,
   };
 }
+
+export type { AdminAuditFilters };

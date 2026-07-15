@@ -95,6 +95,15 @@ When exports are implemented, every export attempt must be audited with:
 
 Never log exported rows, signed download URLs, guest tokens, provider identifiers, or raw comments in audit metadata.
 
+Current audit-log export hardening uses the same strict query schema as the audit list:
+
+- Filters: `adminId`, `action`, `entityType`, `startDate`, `endDate`, and `search`.
+- Sort: `newest` or `oldest`.
+- Invalid export filters return HTTP 400 and are audited as `export.audit.invalid_filters`.
+- Export fetches `EXPORT_MAX_ROWS + 1` rows as a sentinel and returns HTTP 413 when the result is too large.
+- Successful export metadata stores only `rowCount`, `maxRows`, `format`, `filters`, and `privacyLevel`.
+- Audit export rows include only timestamp, actor display name, action, entity type, entity ID, and old/new data field names. They do not include raw `old_data` or `new_data` values.
+
 ## Sanitization Rules
 
 Audit metadata must remove or redact:
@@ -111,6 +120,8 @@ Audit metadata must remove or redact:
 - Long free-text comments.
 
 Use summaries, hashes, or explicit redaction where context is needed.
+
+Legacy audit writers that pass arbitrary detail objects must sanitize within the audit repository/service boundary before inserting metadata. At minimum, redact password/token/secret/authorization keys, service role references, provider IDs, guest/device tokens, signed URLs, and truncate long free text.
 
 ## Personal Data Minimization
 
@@ -150,7 +161,7 @@ Normal admins and viewers should not see audit metadata by default.
 - Denied sensitive actions are audited where required.
 - Audit records do not include secrets, tokens, signed URLs, or raw request bodies.
 - Viewer and normal admin roles cannot read audit logs unless explicitly permitted.
-- Export attempts are audited once export features exist.
+- Audit export attempts require `audit.export`, validate filters, enforce `EXPORT_MAX_ROWS`, return 413 for oversized exports, and audit success/failure without exported row contents.
 
 ## Related Documents
 

@@ -1,44 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
+import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { getServerEnv } from "@/lib/config/server-env";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { exportAdminUsers } from "@/lib/repositories/admin-user.repository";
 import { logAuditAction } from "@/lib/services/audit-log.service";
-import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
-import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
+import { createExportResponse, parseExportFormat } from "@/lib/utils/export-response";
+import { adminUserFiltersSchema, type AdminUserFilters } from "@/lib/validation/admin-user";
 
 export const dynamic = "force-dynamic";
 
-type ExportRecord = Record<string, unknown>;
+function auditFilterSummary(filters: Omit<AdminUserFilters, "page" | "pageSize">) {
+  return {
+    hasSearch: Boolean(filters.search),
+    status: filters.status,
+    roleId: filters.roleId,
+    sort: filters.sort,
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
+    await requirePermission("user.read");
     await requirePermission("user.manage");
+    await requirePermission("export.users");
     const guard = await requirePermission("export.personal_data");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
+    const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+    delete rawParams.format;
+    const parsed = adminUserFiltersSchema.safeParse(rawParams);
+
+    if (!parsed.success) {
+      await logAuditAction({
+        actor: guard.actor,
+        action: "export.admin_users.invalid_filters",
+        entityType: "user_export",
+        result: "failed",
+        metadata: { reason: "invalid_filters", privacyLevel: "restricted" },
+      });
+      return NextResponse.json({ error: "Invalid export filters." }, { status: 400 });
+    }
 
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
-
-    const supabase = createSupabaseServiceRoleClient();
-
-    const { data, error } = await supabase
-      .from("admin_users")
-      .select(`
-        admin_id,
-        email,
-        display_name,
-        is_active,
-        last_login_at,
-        created_at,
-        admin_user_roles (
-          roles (role_name)
-        )
-      `)
-      .order("created_at", { ascending: false })
-      .limit(maxRows + 1);
-
-    if (error) {
-      throw new Error("EXPORT_USERS_FAILED");
-    }
+    const { page: _page, pageSize: _pageSize, ...filters } = parsed.data;
+    void _page;
+    void _pageSize;
+    const filterSummary = auditFilterSummary(filters);
+    const data = await exportAdminUsers(filters, maxRows + 1);
 
     if (data.length > maxRows) {
       await logAuditAction({
@@ -46,47 +52,51 @@ export async function GET(request: NextRequest) {
         action: "export.admin_users.too_large",
         entityType: "user_export",
         result: "failed",
-        metadata: { maxRows, privacyLevel: "restricted" }
+        metadata: {
+          maxRows,
+          format,
+          privacyLevel: "restricted",
+          filters: filterSummary,
+        },
       });
-      return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
+      return NextResponse.json(
+        { error: "Export is too large. Please apply more filters." },
+        { status: 413 }
+      );
     }
 
-    const rows = ((data || []) as ExportRecord[]).map((row, index) => {
-      const adminUserRoles = (row.admin_user_roles ?? []) as ExportRecord[];
-      const roles = adminUserRoles
-        .map((ur) => {
-          const role = firstJoin(ur.roles as SupabaseJoin<ExportRecord>);
-          return role?.role_name || "";
-        })
-        .filter(Boolean)
-        .join(", ");
-
-      return {
-        "Admin Ref": `A-${String(index + 1).padStart(6, "0")}`,
-        "Email": row.email || "",
-        "Display Name": row.display_name || "",
-        "Roles": roles,
-        "Is Active": row.is_active ? "Yes" : "No",
-        "Last Login At": row.last_login_at || "",
-        "Created At": row.created_at || "",
-      };
-    });
+    const rows = data.map((row, index) => ({
+      "รหัสอ้างอิง": `A-${String(index + 1).padStart(6, "0")}`,
+      "อีเมล": row.email || "",
+      "ชื่อที่แสดง": row.display_name || "",
+      "บทบาท": row.roles.join(", "),
+      "สถานะ": row.is_active ? "ใช้งานอยู่" : "ปิดใช้งาน",
+      "เข้าสู่ระบบล่าสุด": row.last_login_at || "",
+      "สร้างเมื่อ": row.created_at || "",
+    }));
 
     await logAuditAction({
       actor: guard.actor,
       action: `export.admin_users.${format}`,
       entityType: "user_export",
       result: "success",
-      metadata: { rowCount: rows.length, maxRows, privacyLevel: "restricted" }
+      metadata: {
+        rowCount: rows.length,
+        maxRows,
+        format,
+        privacyLevel: "restricted",
+        filters: filterSummary,
+      },
     });
 
     const date = new Date().toISOString().split("T")[0];
-    const baseFilename = `users_export_${date}`;
-
-    return await createExportResponse(rows, baseFilename, format);
+    return await createExportResponse(rows, `users_export_${date}`, format);
   } catch (error) {
     if (error instanceof AdminAuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.code === "UNAUTHORIZED" ? 401 : 403 }
+      );
     }
     console.error("Export Users Error:", error);
     return NextResponse.json({ error: "Failed to export data." }, { status: 500 });

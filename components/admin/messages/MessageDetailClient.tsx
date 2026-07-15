@@ -16,7 +16,17 @@ import {
 } from "@/app/actions/admin-messages";
 import type { AdminMessageRow } from "@/components/admin/messages/MessageListClient";
 
-export function MessageDetailClient({ message }: { message: AdminMessageRow }) {
+export function MessageDetailClient({
+  message,
+  returnTo,
+  canUpdate,
+  canDelete,
+}: {
+  message: AdminMessageRow;
+  returnTo: string;
+  canUpdate: boolean;
+  canDelete: boolean;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -25,25 +35,25 @@ export function MessageDetailClient({ message }: { message: AdminMessageRow }) {
       try {
         await setAdminMessageStatus(message.id, status);
         if (status === "archived") {
-          router.push("/admin/messages");
+          router.push(returnTo);
         } else {
           router.refresh();
         }
       } catch {
-        alert("Failed to update status");
+        alert("ไม่สามารถอัปเดตสถานะได้ กรุณาลองใหม่");
       }
     });
   };
 
   const handleDelete = () => {
-    if (!confirm("Are you sure you want to delete this message?")) return;
+    if (!confirm("ยืนยันการลบข้อความนี้หรือไม่")) return;
     startTransition(async () => {
       try {
         await removeAdminMessage(message.id);
-        router.push("/admin/messages");
+        router.push(returnTo);
         router.refresh();
       } catch {
-        alert("Failed to delete message");
+        alert("ไม่สามารถลบข้อความได้ กรุณาลองใหม่");
       }
     });
   };
@@ -54,7 +64,7 @@ export function MessageDetailClient({ message }: { message: AdminMessageRow }) {
         await toggleAdminMessageReplied(message.id, !message.is_replied);
         router.refresh();
       } catch {
-        alert("Failed to update replied status");
+        alert("ไม่สามารถอัปเดตสถานะการตอบกลับได้ กรุณาลองใหม่");
       }
     });
   };
@@ -62,7 +72,8 @@ export function MessageDetailClient({ message }: { message: AdminMessageRow }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Actions Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-ink/10 bg-white p-3 shadow-sm">
+      {canUpdate || canDelete ? <div className="flex flex-wrap items-center gap-3 rounded-xl border border-ink/10 bg-white p-3 shadow-sm">
+        {canUpdate ? <>
         <button
           onClick={() => handleToggleReplied()}
           disabled={isPending}
@@ -74,11 +85,11 @@ export function MessageDetailClient({ message }: { message: AdminMessageRow }) {
         >
           {message.is_replied ? (
             <>
-              <CheckCircle size={18} weight="fill" /> Marked as Replied
+              <CheckCircle size={18} weight="fill" /> ตอบแล้ว
             </>
           ) : (
             <>
-              <ArrowUUpLeft size={18} /> Mark as Replied
+              <ArrowUUpLeft size={18} /> ทำเครื่องหมายว่าตอบแล้ว
             </>
           )}
         </button>
@@ -91,7 +102,7 @@ export function MessageDetailClient({ message }: { message: AdminMessageRow }) {
             disabled={isPending}
             className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
           >
-            <EnvelopeSimple size={18} /> Mark Unread
+            <EnvelopeSimple size={18} /> ทำเครื่องหมายว่ายังไม่อ่าน
           </button>
         )}
 
@@ -101,20 +112,22 @@ export function MessageDetailClient({ message }: { message: AdminMessageRow }) {
             disabled={isPending}
             className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
           >
-            <Archive size={18} /> Archive
+            <Archive size={18} /> เก็บถาวร
           </button>
         )}
 
-        <div className="flex-1"></div>
+        </> : null}
 
-        <button
+        <div className="flex-1" />
+
+        {canDelete ? <button
           onClick={handleDelete}
           disabled={isPending}
           className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
         >
-          <Trash size={18} /> Delete
-        </button>
-      </div>
+          <Trash size={18} /> ลบข้อความ
+        </button> : null}
+      </div> : null}
 
       {/* Message Content */}
       <div className="rounded-2xl border border-ink/10 bg-white p-6 shadow-sm sm:p-8">

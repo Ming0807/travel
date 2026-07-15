@@ -1,30 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
 import { getServerEnv } from "@/lib/config/server-env";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { exportContactMessages } from "@/lib/repositories/admin-message.repository";
 import { logAuditAction } from "@/lib/services/audit-log.service";
+import {
+  adminMessageQuerySchema,
+  messageExportFilters,
+  toContactMessageExportRows,
+} from "@/lib/validation/admin-message";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 
 export const dynamic = "force-dynamic";
 
+function auditFilterSummary(filters: ReturnType<typeof messageExportFilters>) {
+  return {
+    hasSearch: Boolean(filters.search),
+    status: filters.status,
+    sort: filters.sort,
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
+    await requirePermission("export.messages");
     const guard = await requirePermission("export.personal_data");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
+    const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+    delete rawParams.format;
+    const parsed = adminMessageQuerySchema.safeParse(rawParams);
+    if (!parsed.success) {
+      await logAuditAction({
+        actor: guard.actor,
+        action: "export.contact_messages.invalid_filters",
+        entityType: "message_export",
+        result: "failed",
+        metadata: { reason: "invalid_filters", privacyLevel: "restricted" }
+      });
+      return NextResponse.json({ error: "Invalid export filters." }, { status: 400 });
+    }
 
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
+    const filters = messageExportFilters(parsed.data);
+    const filterSummary = auditFilterSummary(filters);
 
-    const supabase = createSupabaseServiceRoleClient();
-
-    const { data, error } = await supabase
-      .from("contact_messages")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(maxRows + 1);
-
-    if (error) {
-      throw new Error("EXPORT_MESSAGES_FAILED");
-    }
+    const data = await exportContactMessages(filters, maxRows + 1);
 
     if (data.length > maxRows) {
       await logAuditAction({
@@ -32,29 +51,24 @@ export async function GET(request: NextRequest) {
         action: "export.contact_messages.too_large",
         entityType: "message_export",
         result: "failed",
-        metadata: { maxRows, privacyLevel: "restricted" }
+        metadata: { maxRows, filters: filterSummary, privacyLevel: "restricted" }
       });
       return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
     }
 
-    const rows = ((data || []) as Array<Record<string, unknown>>).map((row) => ({
-      "Name": row.name || "",
-      "Email": row.email || "",
-      "Phone": row.phone || "",
-      "Subject": row.subject || "",
-      "Message": row.message || "",
-      "Status": row.status || "",
-      "Is Replied": row.is_replied ? "Yes" : "No",
-      "Read At": row.read_at || "",
-      "Created At": row.created_at || "",
-    }));
+    const rows = toContactMessageExportRows(data);
 
     await logAuditAction({
       actor: guard.actor,
       action: `export.contact_messages.${format}`,
       entityType: "message_export",
       result: "success",
-      metadata: { rowCount: rows.length, maxRows, privacyLevel: "restricted" }
+      metadata: {
+        rowCount: rows.length,
+        maxRows,
+        filters: filterSummary,
+        privacyLevel: "restricted",
+      }
     });
 
     const date = new Date().toISOString().split("T")[0];

@@ -70,6 +70,9 @@ export type PermissionKey =
   | "review.reject"
   | "review.delete"
   | "review.manage"
+  | "message.read"
+  | "message.update"
+  | "message.delete"
   | "badge.read"
   | "badge.create"
   | "badge.update"
@@ -218,6 +221,9 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   "review.reject",
   "review.delete",
   "review.manage",
+  "message.read",
+  "message.update",
+  "message.delete",
   "badge.read",
   "badge.create",
   "badge.update",
@@ -367,6 +373,13 @@ const CONTENT_ADMIN_PERMISSIONS: PermissionKey[] = [
   "export.summary"
 ];
 
+const ADMIN_MESSAGE_PERMISSIONS: PermissionKey[] = [
+  "message.read",
+  "message.update",
+  "message.delete",
+  "export.messages"
+];
+
 const VIEWER_PERMISSIONS: PermissionKey[] = [
   "dashboard.read",
   "attraction.read",
@@ -502,6 +515,9 @@ function buildPermissionSet(roleNames: string[], rawPermissionNames: string[]) {
     }
     if (roleName === "admin" || roleName === "province_admin" || roleName === "attraction_manager") {
       CONTENT_ADMIN_PERMISSIONS.forEach((permission) => permissions.add(permission));
+    }
+    if (roleName === "admin") {
+      ADMIN_MESSAGE_PERMISSIONS.forEach((permission) => permissions.add(permission));
     }
     if (roleName === "viewer") {
       VIEWER_PERMISSIONS.forEach((permission) => permissions.add(permission));

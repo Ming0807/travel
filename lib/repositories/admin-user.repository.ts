@@ -1,4 +1,5 @@
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import type { AdminUserFilters } from "@/lib/validation/admin-user";
 
 type AdminUserRoleJoin = {
   role_id: number;
@@ -9,9 +10,149 @@ type AdminUserRoleIdJoin = {
   role_id: number;
 };
 
+type AdminUserDatabaseRow = {
+  admin_id: string;
+  email: string | null;
+  display_name: string | null;
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  admin_user_roles: AdminUserRoleJoin[];
+};
+
+export type AdminUserListItem = Omit<AdminUserDatabaseRow, "admin_user_roles"> & {
+  roles: string[];
+};
+
+export type AdminUserRoleOption = {
+  role_id: number;
+  role_name: string;
+};
+
+type FilterableAdminUserQuery<T> = {
+  eq(column: string, value: unknown): T;
+  or(filters: string): T;
+  order(column: string, options: { ascending: boolean }): T;
+};
+
 function getJoinedRoleName(join: AdminUserRoleJoin): string | null {
   const role = Array.isArray(join.roles) ? join.roles[0] : join.roles;
   return role?.role_name ?? null;
+}
+
+function mapAdminUser(row: unknown): AdminUserListItem {
+  const user = row as AdminUserDatabaseRow;
+  return {
+    admin_id: user.admin_id,
+    email: user.email,
+    display_name: user.display_name,
+    is_active: user.is_active,
+    last_login_at: user.last_login_at,
+    created_at: user.created_at,
+    roles: (user.admin_user_roles ?? [])
+      .map(getJoinedRoleName)
+      .filter((roleName): roleName is string => Boolean(roleName)),
+  };
+}
+
+function quoteAdminUserSearchPattern(search: string): string {
+  const escaped = search
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
+    .replace(/"/g, '\\"');
+  return `"%${escaped}%"`;
+}
+
+function applyAdminUserFiltersAndSort<T extends FilterableAdminUserQuery<T>>(
+  query: T,
+  filters: Omit<AdminUserFilters, "page" | "pageSize">
+): T {
+  let filteredQuery = query;
+  if (filters.search) {
+    const pattern = quoteAdminUserSearchPattern(filters.search);
+    filteredQuery = filteredQuery.or(`display_name.ilike.${pattern},email.ilike.${pattern}`);
+  }
+  if (filters.status) filteredQuery = filteredQuery.eq("is_active", filters.status === "active");
+  if (filters.roleId) filteredQuery = filteredQuery.eq("filter_roles.role_id", filters.roleId);
+
+  if (filters.sort === "name_asc" || filters.sort === "name_desc") {
+    filteredQuery = filteredQuery.order("display_name", { ascending: filters.sort === "name_asc" });
+  } else {
+    filteredQuery = filteredQuery.order("created_at", { ascending: filters.sort === "oldest" });
+  }
+  return filteredQuery.order("admin_id", { ascending: true });
+}
+
+function adminUserSelect(filters: Omit<AdminUserFilters, "page" | "pageSize">): string {
+  const roleFilterJoin = filters.roleId
+    ? ", filter_roles:admin_user_roles!inner(role_id)"
+    : "";
+  return `
+    admin_id,
+    email,
+    display_name,
+    is_active,
+    last_login_at,
+    created_at,
+    admin_user_roles (
+      role_id,
+      roles (role_name)
+    )${roleFilterJoin}
+  `;
+}
+
+export async function listAdminUsers(filters: AdminUserFilters): Promise<{
+  items: AdminUserListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}> {
+  const supabase = createSupabaseServiceRoleClient();
+  const from = (filters.page - 1) * filters.pageSize;
+  const to = from + filters.pageSize - 1;
+
+  let query = supabase
+    .from("admin_users")
+    .select(adminUserSelect(filters), { count: "exact" });
+  query = applyAdminUserFiltersAndSort(query, filters);
+
+  const { data, error, count } = await query.range(from, to);
+  if (error) {
+    console.error("listAdminUsers error:", error);
+    throw new Error("Failed to fetch admin users");
+  }
+
+  return {
+    items: (data ?? []).map(mapAdminUser),
+    total: count ?? 0,
+    page: filters.page,
+    pageSize: filters.pageSize,
+  };
+}
+
+export async function exportAdminUsers(
+  filters: Omit<AdminUserFilters, "page" | "pageSize">,
+  limit: number
+): Promise<AdminUserListItem[]> {
+  const supabase = createSupabaseServiceRoleClient();
+  let query = supabase.from("admin_users").select(adminUserSelect(filters));
+  query = applyAdminUserFiltersAndSort(query, filters);
+
+  const { data, error } = await query.limit(limit);
+  if (error) throw new Error("EXPORT_USERS_FAILED");
+  return (data ?? []).map(mapAdminUser);
+}
+
+export async function getAdminUserRoleOptions(): Promise<AdminUserRoleOption[]> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("roles")
+    .select("role_id, role_name")
+    .order("role_name", { ascending: true });
+
+  if (error) throw new Error("Failed to fetch admin user role options");
+  return (data ?? []) as AdminUserRoleOption[];
 }
 
 export async function getAdminUsers() {
@@ -39,12 +180,14 @@ export async function getAdminUsers() {
     throw new Error("Failed to fetch admin users");
   }
 
-  return data.map(user => ({
-    ...user,
-    roles: (user.admin_user_roles as unknown as AdminUserRoleJoin[])
-      .map(getJoinedRoleName)
-      .filter((roleName): roleName is string => Boolean(roleName))
-  }));
+  return data.map((row) => {
+    const user = mapAdminUser(row);
+    return {
+      ...user,
+      display_name: user.display_name ?? "",
+      email: user.email ?? "",
+    };
+  });
 }
 
 export async function toggleAdminUserStatus(adminId: string, isActive: boolean) {

@@ -97,7 +97,11 @@ export async function saveAdminUserAction(formData: FormData) {
         action: "user.create",
         entityType: "admin_user",
         entityId: newId as string,
-        details: { email: validated.data.email, displayName: validated.data.displayName, roles: validated.data.roleIds }
+        details: {
+          roleIds: validated.data.roleIds,
+          isActive: true,
+          invitationSent: true,
+        }
       });
     }
 

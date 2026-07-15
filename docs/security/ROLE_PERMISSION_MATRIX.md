@@ -148,6 +148,19 @@ When implemented:
 - Personal data export should be disabled or super-admin restricted until a privacy workflow exists.
 - Every export attempt must be audit logged.
 
+## Contact Message Permissions
+
+Contact messages contain names and contact details, so they are not part of general viewer access.
+
+| Permission | Meaning | Default roles |
+|---|---|---|
+| `message.read` | Read contact messages | `super_admin`, `admin` |
+| `message.update` | Change read, archived, and replied status | `super_admin`, `admin` |
+| `message.delete` | Delete contact messages | `super_admin`, `admin` |
+| `export.messages` | Request a contact-message export | `super_admin`, `admin` |
+
+Message export also requires `export.personal_data`. The page must hide unavailable commands, while every server action and export route still enforces permissions independently.
+
 ## Authorization Tests
 
 Test coverage should verify:

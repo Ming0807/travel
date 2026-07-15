@@ -270,6 +270,9 @@ VALUES
   ('stamp.definition_manage', 'Manage stamp definitions'),
   ('stamp.revoke', 'Revoke stamps'),
   ('stamp.award_manual', 'Award stamps manually'),
+  ('message.read', 'Read contact message records'),
+  ('message.update', 'Update contact message status and reply markers'),
+  ('message.delete', 'Delete contact message records'),
   ('export.summary', 'Create summary exports'),
   ('export.detailed', 'Create detailed exports'),
   ('export.create', 'Create export jobs'),
@@ -280,6 +283,7 @@ VALUES
   ('export.funnel_data', 'Export funnel data'),
   ('export.dashboard_summary', 'Export dashboard summaries'),
   ('export.comments', 'Export optional comments'),
+  ('export.messages', 'Export contact message records'),
   ('export.personal_data', 'Export personal data when policy allows'),
   ('official_data.read', 'Read official imported data'),
   ('official_data.import', 'Import official data'),
@@ -315,6 +319,18 @@ SELECT r.role_id, p.permission_id
 FROM public.roles r
 CROSS JOIN public.permissions p
 WHERE r.role_name = 'super_admin'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.role_permissions (role_id, permission_id)
+SELECT r.role_id, p.permission_id
+FROM public.roles r
+JOIN public.permissions p ON p.permission_name IN (
+  'message.read',
+  'message.update',
+  'message.delete',
+  'export.messages'
+)
+WHERE r.role_name IN ('super_admin', 'admin')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.role_permissions (role_id, permission_id)

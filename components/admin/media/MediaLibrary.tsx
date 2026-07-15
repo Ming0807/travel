@@ -6,6 +6,8 @@ import {
   Archive,
   ArrowCounterClockwise,
   ArrowSquareOut,
+  CaretLeft,
+  CaretRight,
   CheckCircle,
   Eye,
   EyeSlash,
@@ -22,11 +24,13 @@ export type MediaAsset = {
   id: string;
   file_name: string;
   storage_path: string;
+  thumbnail_storage_path?: string | null;
   mime_type: string;
   size_bytes: number;
   category: string;
   created_at: string;
   url: string;
+  thumbnail_url?: string | null;
   lifecycle_status?: string;
   is_active?: boolean;
 };
@@ -61,7 +65,34 @@ type MediaLibraryProps = {
   mode?: "manage" | "pick";
   onSelect?: (url: string, asset?: MediaAsset) => void;
   showArchived?: boolean;
+  serverData?: {
+    assets: MediaAsset[];
+    total: number;
+    page: number;
+    pageSize: number;
+    filters: {
+      search?: string;
+      category?: string;
+      lifecycleStatus: "active" | "archived" | "all";
+      mediaType?: "jpeg" | "png" | "webp";
+    };
+  };
 };
+
+function mediaLibraryPageHref(
+  filters: NonNullable<MediaLibraryProps["serverData"]>["filters"],
+  page: number,
+  pageSize: number,
+) {
+  const params = new URLSearchParams();
+  if (filters.search) params.set("search", filters.search);
+  if (filters.category) params.set("category", filters.category);
+  params.set("lifecycleStatus", filters.lifecycleStatus);
+  if (filters.mediaType) params.set("mediaType", filters.mediaType);
+  params.set("page", String(page));
+  params.set("pageSize", String(pageSize));
+  return `/admin/media?${params.toString()}`;
+}
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -242,7 +273,13 @@ function ReferencesDialog({
 
 // ─── Media Library Component ────────────────────────────────────────────────
 
-export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialShowArchived }: MediaLibraryProps) {
+export function MediaLibrary({
+  mode = "manage",
+  onSelect,
+  showArchived: initialShowArchived,
+  serverData,
+}: MediaLibraryProps) {
+  const isServerManaged = mode === "manage" && Boolean(serverData);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
@@ -273,13 +310,20 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
     );
   }, [assets, query]);
 
+  const visibleAssets = isServerManaged ? serverData?.assets ?? [] : filteredAssets;
   const stats = useMemo(() => {
-    const activeAssets = assets.filter((a) => a.lifecycle_status !== "archived");
-    const archivedCount = assets.filter((a) => a.lifecycle_status === "archived").length;
+    const statsAssets = isServerManaged ? serverData?.assets ?? [] : assets;
+    const activeAssets = statsAssets.filter((a) => a.lifecycle_status !== "archived");
+    const archivedCount = statsAssets.filter((a) => a.lifecycle_status === "archived").length;
     const largeCount = activeAssets.filter((asset) => asset.size_bytes > 2 * 1024 * 1024).length;
     const unsupportedCount = activeAssets.filter((asset) => !ALLOWED_TYPES.includes(asset.mime_type)).length;
-    return { total: activeAssets.length, archivedCount, largeCount, unsupportedCount };
-  }, [assets]);
+    return {
+      total: isServerManaged ? serverData?.total ?? 0 : activeAssets.length,
+      archivedCount,
+      largeCount,
+      unsupportedCount,
+    };
+  }, [assets, isServerManaged, serverData?.assets, serverData?.total]);
 
   const fetchMedia = async () => {
     setLoading(true);
@@ -302,10 +346,11 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
 
 
   useEffect(() => {
+    if (isServerManaged) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchMedia();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, showArchived]);
+  }, [category, showArchived, isServerManaged]);
 
   const uploadFile = async (file: File) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -323,7 +368,8 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("category", category === "All" ? "General" : category);
+    const uploadCategory = isServerManaged ? serverData?.filters.category ?? "General" : category;
+    formData.append("category", uploadCategory === "All" ? "General" : uploadCategory);
 
     try {
       const response = await fetch("/api/admin/media", {
@@ -338,7 +384,11 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
       }
 
       if (data?.asset) {
-        setAssets((current) => [data.asset, ...current]);
+        if (isServerManaged) {
+          window.location.reload();
+        } else {
+          setAssets((current) => [data.asset, ...current]);
+        }
       }
     } catch {
       setError("Upload failed because the connection was interrupted. Please try again.");
@@ -425,7 +475,11 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
         return;
       }
       // Refresh the full list so archived assets get proper styling when showArchived is on
-      await fetchMedia();
+      if (isServerManaged) {
+        window.location.reload();
+      } else {
+        await fetchMedia();
+      }
       setIsArchiving(false);
       setDeleteCandidate(null);
       setArchiveReferences([]);
@@ -449,13 +503,26 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
         return;
       }
       // Refresh the list
-      await fetchMedia();
+      if (isServerManaged) {
+        window.location.reload();
+      } else {
+        await fetchMedia();
+      }
     } catch {
       setError("Unarchive failed because the connection was interrupted. Please try again.");
     }
   };
 
   const isArchived = (asset: MediaAsset) => asset.lifecycle_status === "archived";
+  const serverTotalPages = serverData
+    ? Math.max(1, Math.ceil(serverData.total / serverData.pageSize))
+    : 1;
+  const serverPageFrom = serverData
+    ? Math.min((serverData.page - 1) * serverData.pageSize + 1, serverData.total)
+    : 0;
+  const serverPageTo = serverData
+    ? Math.min(serverData.page * serverData.pageSize, serverData.total)
+    : 0;
 
   return (
     <div className="flex h-full flex-col bg-slate-50 overflow-hidden">
@@ -516,6 +583,102 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
           </div>
         </div>
 
+        {isServerManaged && serverData ? (
+          <>
+            <form
+              action="/admin/media"
+              method="get"
+              role="search"
+              className="mt-4 grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_180px_180px_160px_auto] xl:items-end"
+            >
+              <input type="hidden" name="page" value="1" />
+              <input type="hidden" name="pageSize" value={serverData.pageSize} />
+              <div className="min-w-0">
+                <label htmlFor="media-search" className="mb-1 block text-xs font-black text-slate-700">
+                  ค้นหาสื่อ
+                </label>
+                <div className="relative">
+                  <MagnifyingGlass
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    size={18}
+                    weight="bold"
+                  />
+                  <input
+                    id="media-search"
+                    name="search"
+                    defaultValue={serverData.filters.search ?? ""}
+                    className="min-h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                    placeholder="ชื่อไฟล์ พาธ หมวดหมู่ หรือประเภทไฟล์"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="media-category" className="mb-1 block text-xs font-black text-slate-700">
+                  หมวดหมู่
+                </label>
+                <select
+                  id="media-category"
+                  name="category"
+                  defaultValue={serverData.filters.category ?? ""}
+                  className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                >
+                  <option value="">ทั้งหมด</option>
+                  {CATEGORIES.filter((item) => item.value !== "All").map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="media-lifecycle" className="mb-1 block text-xs font-black text-slate-700">
+                  สถานะสื่อ
+                </label>
+                <select
+                  id="media-lifecycle"
+                  name="lifecycleStatus"
+                  defaultValue={serverData.filters.lifecycleStatus}
+                  className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                >
+                  <option value="active">ใช้งานอยู่</option>
+                  <option value="archived">เก็บถาวรแล้ว</option>
+                  <option value="all">ทุกสถานะ</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="media-type" className="mb-1 block text-xs font-black text-slate-700">
+                  ประเภทไฟล์
+                </label>
+                <select
+                  id="media-type"
+                  name="mediaType"
+                  defaultValue={serverData.filters.mediaType ?? ""}
+                  className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                >
+                  <option value="">ทั้งหมด</option>
+                  <option value="jpeg">JPEG</option>
+                  <option value="png">PNG</option>
+                  <option value="webp">WebP</option>
+                </select>
+              </div>
+              <div className="flex gap-2 sm:col-span-2 xl:col-span-1">
+                <button
+                  type="submit"
+                  className="min-h-11 flex-1 rounded-lg bg-[#073F37] px-4 py-2 text-sm font-black text-white transition hover:bg-[#052F29]"
+                >
+                  ใช้ตัวกรอง
+                </button>
+                <Link
+                  href="/admin/media"
+                  className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-100"
+                >
+                  ล้างตัวกรอง
+                </Link>
+              </div>
+            </form>
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              ต้องการตรวจสอบเจ้าของหรือจุดที่อ้างอิงสื่อ ให้กดปุ่ม “การใช้งาน” บนรายการสื่อนั้น
+            </p>
+          </>
+        ) : (
         <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="relative">
             <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} weight="bold" />
@@ -568,11 +731,19 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
             </button>
           </div>
         </div>
+        )}
 
         <div className="mt-4 hidden sm:grid gap-3 sm:grid-cols-4" role="list" aria-label="Media statistics">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" role="listitem">
-            <p className="text-xs font-bold text-slate-500">สื่อที่ใช้งาน</p>
-            <p className="mt-1 text-xl font-black text-slate-900" aria-label={`${stats.total} active assets`}>{stats.total}</p>
+            <p className="text-xs font-bold text-slate-500">
+              {isServerManaged ? "ผลลัพธ์ทั้งหมด" : "สื่อที่ใช้งาน"}
+            </p>
+            <p
+              className="mt-1 text-xl font-black text-slate-900"
+              aria-label={`${stats.total} ${isServerManaged ? "matching assets" : "active assets"}`}
+            >
+              {stats.total}
+            </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" role="listitem">
             <p className="text-xs font-bold text-slate-500">เก็บถาวรแล้ว</p>
@@ -597,11 +768,11 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
       ) : null}
 
       <div className={mode === "pick" ? "flex-1 overflow-y-auto p-5" : "p-5"}>
-        {loading ? (
+        {!isServerManaged && loading ? (
           <div className="flex h-[200px] items-center justify-center" role="status" aria-label="Loading media assets">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#0A6B62]" />
           </div>
-        ) : filteredAssets.length === 0 ? (
+        ) : visibleAssets.length === 0 ? (
           <div className="flex min-h-72 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-5 text-center">
             <ImageIcon size={48} weight="duotone" className="text-slate-300" />
             <p className="mt-3 text-sm font-black text-slate-800">ไม่พบสื่อที่ตรงกับคำค้น</p>
@@ -612,7 +783,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {filteredAssets.map((asset) => {
+            {visibleAssets.map((asset) => {
               const readiness = getAssetReadiness(asset);
               const isPickMode = mode === "pick";
               const archived = isArchived(asset);
@@ -640,7 +811,7 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
                 >
                   <div className="relative aspect-[4/3] bg-slate-100">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={asset.url} alt={asset.file_name} className="h-full w-full object-cover" loading="lazy" />
+                    <img src={asset.thumbnail_url ?? asset.url} alt={asset.file_name} className="h-full w-full object-cover" loading="lazy" />
                     <div className="absolute left-3 top-3 flex flex-wrap gap-2">
                       {archived ? (
                         <span className="rounded-full bg-slate-700/80 px-2.5 py-1 text-xs font-black text-white">
@@ -763,6 +934,53 @@ export function MediaLibrary({ mode = "manage", onSelect, showArchived: initialS
             })}
           </div>
         )}
+        {isServerManaged && serverData && serverData.total > 0 ? (
+          <nav
+            aria-label="การแบ่งหน้าคลังสื่อ"
+            className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="text-xs font-bold text-slate-600">
+              แสดง {serverPageFrom}-{serverPageTo} จาก {serverData.total.toLocaleString("th-TH")} รายการ
+            </p>
+            <div className="flex items-center gap-2">
+              {serverData.page > 1 ? (
+                <Link
+                  href={mediaLibraryPageHref(serverData.filters, serverData.page - 1, serverData.pageSize)}
+                  aria-label="หน้าก่อนหน้า"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#0A6B62]/30"
+                >
+                  <CaretLeft size={16} weight="bold" />
+                </Link>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-slate-300"
+                >
+                  <CaretLeft size={16} weight="bold" />
+                </span>
+              )}
+              <span className="min-w-20 text-center text-xs font-black text-[#073F37]">
+                หน้า {serverData.page} / {serverTotalPages}
+              </span>
+              {serverData.page < serverTotalPages ? (
+                <Link
+                  href={mediaLibraryPageHref(serverData.filters, serverData.page + 1, serverData.pageSize)}
+                  aria-label="หน้าถัดไป"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#0A6B62]/30"
+                >
+                  <CaretRight size={16} weight="bold" />
+                </Link>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-slate-300"
+                >
+                  <CaretRight size={16} weight="bold" />
+                </span>
+              )}
+            </div>
+          </nav>
+        ) : null}
       </div>
 
       {/* ─── Archive confirmation dialog ───────────────────────────────── */}

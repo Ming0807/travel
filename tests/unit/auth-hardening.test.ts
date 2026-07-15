@@ -242,6 +242,13 @@ describe("PermissionKey hardening (Phase 3)", () => {
     }
   });
 
+  it("contains explicit contact message permissions", () => {
+    expect(ALL_PERMISSION_KEYS).toContain("message.read");
+    expect(ALL_PERMISSION_KEYS).toContain("message.update");
+    expect(ALL_PERMISSION_KEYS).toContain("message.delete");
+    expect(ALL_PERMISSION_KEYS).toContain("export.messages");
+  });
+
   it("hasPermission behaves correctly after story.publish dedup", () => {
     const actor = { permissions: ["story.publish" as PermissionKey] };
     expect(hasPermission(actor, "story.publish")).toBe(true);
@@ -293,5 +300,9 @@ describe("Guard role-based permission expansion", () => {
     // Viewer CANNOT manage
     expect(hasPermission(actor, "user.manage")).toBe(false);
     expect(hasPermission(actor, "system.settings_update")).toBe(false);
+    expect(hasPermission(actor, "message.read")).toBe(false);
+    expect(hasPermission(actor, "message.update")).toBe(false);
+    expect(hasPermission(actor, "message.delete")).toBe(false);
+    expect(hasPermission(actor, "export.messages")).toBe(false);
   });
 });
