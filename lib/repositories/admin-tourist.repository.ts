@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import type { PaginatedResult } from "@/lib/repositories/admin-attraction.repository";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { firstJoin } from "@/lib/utils/supabase-joins";
@@ -19,6 +20,19 @@ export type AdminTouristListRow = {
   certificateCount: number;
   stampCount: number;
   surveyCount: number;
+};
+
+export type AdminTouristExportRow = {
+  "รหัสอ้างอิง": string;
+  "ประเทศ": string;
+  "จังหวัด": string;
+  "ช่วงอายุ": string;
+  "ช่องทางบัญชี": string;
+  "จำนวนการเยี่ยมชม": number;
+  "จำนวนประกาศนียบัตร": number;
+  "จำนวนตราประทับ": number;
+  "จำนวนแบบสำรวจ": number;
+  "เดือนที่ลงทะเบียน": string;
 };
 
 export type AdminTouristVisitHistory = {
@@ -89,7 +103,8 @@ function increment(map: Map<string, number>, key: string): void {
 }
 
 function referenceFor(touristId: string): string {
-  return `T-${touristId.slice(0, 8).toUpperCase()}`;
+  const digest = createHash("sha256").update(touristId).digest("hex").slice(0, 10).toUpperCase();
+  return `T-${digest}`;
 }
 
 function relationRecord(value: unknown): Record<string, unknown> {
@@ -118,6 +133,43 @@ function mapListRow(rawRow: unknown, counts: CountMaps): AdminTouristListRow {
   };
 }
 
+function summarizeIdentityProviders(providers: string[]): string {
+  const uniqueProviders = new Set(providers);
+  if (uniqueProviders.size === 0) return "unknown";
+  if (uniqueProviders.size > 1) return "multiple";
+  if (uniqueProviders.has("anonymous_device")) return "guest_only";
+  if (uniqueProviders.has("line")) return "line_linked";
+  if (uniqueProviders.has("email")) return "email_linked";
+  if (uniqueProviders.has("google") || uniqueProviders.has("google_optional")) return "google_linked";
+  return "linked";
+}
+
+type FilterableTouristQuery<T> = {
+  eq(column: string, value: unknown): T;
+  ilike(column: string, pattern: string): T;
+  order(column: string, options: { ascending: boolean }): T;
+};
+
+function applyTouristFiltersAndSort<T extends FilterableTouristQuery<T>>(
+  query: T,
+  filters: Omit<AdminTouristFilters, "page" | "pageSize">
+): T {
+  let filteredQuery = query;
+  if (filters.search) {
+    filteredQuery = UUID_PATTERN.test(filters.search)
+      ? filteredQuery.eq("tourist_id", filters.search)
+      : filteredQuery.ilike("display_name", `%${filters.search.replace(/%/g, "\\%").replace(/_/g, "\\_")}%`);
+  }
+  if (filters.countryId) filteredQuery = filteredQuery.eq("origin_country_id", filters.countryId);
+  if (filters.provinceId) filteredQuery = filteredQuery.eq("origin_province_id", filters.provinceId);
+  if (filters.provider) filteredQuery = filteredQuery.eq("tourist_identities.provider", filters.provider);
+
+  if (filters.sort === "name_asc" || filters.sort === "name_desc") {
+    return filteredQuery.order("display_name", { ascending: filters.sort === "name_asc" });
+  }
+  return filteredQuery.order("created_at", { ascending: filters.sort === "oldest" });
+}
+
 async function loadPageCounts(touristIds: string[]): Promise<CountMaps> {
   const empty: CountMaps = {
     identities: new Map(),
@@ -129,42 +181,50 @@ async function loadPageCounts(touristIds: string[]): Promise<CountMaps> {
   if (touristIds.length === 0) return empty;
 
   const supabase = createSupabaseServiceRoleClient();
-  const [identityResult, visitResult, stampResult, surveyResult] = await Promise.all([
-    supabase.from("tourist_identities").select("tourist_id, provider").in("tourist_id", touristIds),
-    supabase.from("visits").select("visit_id, tourist_id").in("tourist_id", touristIds),
-    supabase.from("tourist_stamps").select("tourist_id").in("tourist_id", touristIds),
-    supabase.from("satisfaction_surveys").select("tourist_id").in("tourist_id", touristIds),
-  ]);
-
-  if (identityResult.error || visitResult.error || stampResult.error || surveyResult.error) {
-    throw new Error("ADMIN_TOURIST_SUMMARY_FAILED");
-  }
-
-  for (const raw of identityResult.data ?? []) {
-    const row = asRecord(raw);
-    const touristId = stringValue(row.tourist_id);
-    const provider = nullableString(row.provider);
-    if (!provider) continue;
-    const providers = empty.identities.get(touristId) ?? new Set<string>();
-    providers.add(provider);
-    empty.identities.set(touristId, providers);
-  }
-
   const visitToTourist = new Map<string, string>();
-  for (const raw of visitResult.data ?? []) {
-    const row = asRecord(raw);
-    const touristId = stringValue(row.tourist_id);
-    const visitId = stringValue(row.visit_id);
-    increment(empty.visits, touristId);
-    visitToTourist.set(visitId, touristId);
-  }
+  const batchSize = 200;
 
-  for (const raw of stampResult.data ?? []) increment(empty.stamps, stringValue(asRecord(raw).tourist_id));
-  for (const raw of surveyResult.data ?? []) increment(empty.surveys, stringValue(asRecord(raw).tourist_id));
+  for (let index = 0; index < touristIds.length; index += batchSize) {
+    const batch = touristIds.slice(index, index + batchSize);
+    const [identityResult, visitResult, stampResult, surveyResult] = await Promise.all([
+      supabase.from("tourist_identities").select("tourist_id, provider").in("tourist_id", batch),
+      supabase.from("visits").select("visit_id, tourist_id").in("tourist_id", batch),
+      supabase.from("tourist_stamps").select("tourist_id").in("tourist_id", batch),
+      supabase.from("satisfaction_surveys").select("tourist_id").in("tourist_id", batch),
+    ]);
+
+    if (identityResult.error || visitResult.error || stampResult.error || surveyResult.error) {
+      throw new Error("ADMIN_TOURIST_SUMMARY_FAILED");
+    }
+
+    for (const raw of identityResult.data ?? []) {
+      const row = asRecord(raw);
+      const touristId = stringValue(row.tourist_id);
+      const provider = nullableString(row.provider);
+      if (!provider) continue;
+      const providers = empty.identities.get(touristId) ?? new Set<string>();
+      providers.add(provider);
+      empty.identities.set(touristId, providers);
+    }
+
+    for (const raw of visitResult.data ?? []) {
+      const row = asRecord(raw);
+      const touristId = stringValue(row.tourist_id);
+      const visitId = stringValue(row.visit_id);
+      increment(empty.visits, touristId);
+      visitToTourist.set(visitId, touristId);
+    }
+
+    for (const raw of stampResult.data ?? []) increment(empty.stamps, stringValue(asRecord(raw).tourist_id));
+    for (const raw of surveyResult.data ?? []) increment(empty.surveys, stringValue(asRecord(raw).tourist_id));
+  }
 
   const visitIds = Array.from(visitToTourist.keys());
-  if (visitIds.length > 0) {
-    const certificateResult = await supabase.from("certificates").select("visit_id").in("visit_id", visitIds);
+  for (let index = 0; index < visitIds.length; index += batchSize) {
+    const certificateResult = await supabase
+      .from("certificates")
+      .select("visit_id")
+      .in("visit_id", visitIds.slice(index, index + batchSize));
     if (certificateResult.error) throw new Error("ADMIN_TOURIST_SUMMARY_FAILED");
     for (const raw of certificateResult.data ?? []) {
       const touristId = visitToTourist.get(stringValue(asRecord(raw).visit_id));
@@ -192,21 +252,7 @@ export async function listAdminTourists(
       { count: "exact" }
     );
 
-  if (filters.search) {
-    query = UUID_PATTERN.test(filters.search)
-      ? query.eq("tourist_id", filters.search)
-      : query.ilike("display_name", `%${filters.search.replace(/%/g, "\\%").replace(/_/g, "\\_")}%`);
-  }
-  if (filters.countryId) query = query.eq("origin_country_id", filters.countryId);
-  if (filters.provinceId) query = query.eq("origin_province_id", filters.provinceId);
-  if (filters.provider) query = query.eq("tourist_identities.provider", filters.provider);
-
-  const sort = filters.sort;
-  if (sort === "name_asc" || sort === "name_desc") {
-    query = query.order("display_name", { ascending: sort === "name_asc" });
-  } else {
-    query = query.order("created_at", { ascending: sort === "oldest" });
-  }
+  query = applyTouristFiltersAndSort(query, filters);
 
   const { data, error, count } = await query.range(from, to);
   if (error) throw new Error("ADMIN_TOURIST_LIST_FAILED");
@@ -220,6 +266,56 @@ export async function listAdminTourists(
     page: filters.page,
     pageSize: filters.pageSize,
   };
+}
+
+export async function exportAdminTourists(
+  filters: Omit<AdminTouristFilters, "page" | "pageSize">,
+  limit: number
+): Promise<AdminTouristListRow[]> {
+  const supabase = createSupabaseServiceRoleClient();
+  const identityJoin = filters.provider ? ", tourist_identities!inner(provider)" : "";
+  let query = supabase
+    .from("tourists")
+    .select(
+      `tourist_id, display_name, age_group, created_at,
+       countries (country_name_th, country_name_en),
+       provinces (province_name_th, province_name_en)${identityJoin}`
+    );
+
+  query = applyTouristFiltersAndSort(query, filters);
+  const { data, error } = await query.limit(limit);
+  if (error) throw new Error("ADMIN_TOURIST_EXPORT_FAILED");
+
+  const exportRows = data ?? [];
+  if (exportRows.length >= limit) {
+    const emptyCounts: CountMaps = {
+      identities: new Map(),
+      visits: new Map(),
+      certificates: new Map(),
+      stamps: new Map(),
+      surveys: new Map(),
+    };
+    return exportRows.map((row) => mapListRow(row, emptyCounts));
+  }
+
+  const touristIds = exportRows.map((row) => stringValue(asRecord(row).tourist_id));
+  const counts = await loadPageCounts(touristIds);
+  return exportRows.map((row) => mapListRow(row, counts));
+}
+
+export function toSafeTouristExportRows(rows: AdminTouristListRow[]): AdminTouristExportRow[] {
+  return rows.map((row) => ({
+    "รหัสอ้างอิง": row.reference,
+    "ประเทศ": row.countryName ?? "",
+    "จังหวัด": row.provinceName ?? "",
+    "ช่วงอายุ": row.ageGroup ?? "",
+    "ช่องทางบัญชี": summarizeIdentityProviders(row.identityProviders),
+    "จำนวนการเยี่ยมชม": row.visitCount,
+    "จำนวนประกาศนียบัตร": row.certificateCount,
+    "จำนวนตราประทับ": row.stampCount,
+    "จำนวนแบบสำรวจ": row.surveyCount,
+    "เดือนที่ลงทะเบียน": row.joinedAt.slice(0, 7),
+  }));
 }
 
 function mapSurvey(rawValue: unknown): AdminTouristVisitHistory["survey"] {

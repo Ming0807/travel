@@ -31,8 +31,10 @@ vi.mock("@/lib/supabase/service-role", () => ({
 }));
 
 import {
+  exportAdminTourists,
   getAdminTouristDetail,
   listAdminTourists,
+  toSafeTouristExportRows,
 } from "@/lib/repositories/admin-tourist.repository";
 import { adminTouristFiltersSchema } from "@/lib/validation/admin-tourist";
 
@@ -121,7 +123,7 @@ describe("admin tourist repository", () => {
     expect(touristQuery?.order).toHaveBeenCalledWith("display_name", { ascending: true });
     expect(touristQuery?.range).toHaveBeenCalledWith(20, 39);
     expect(response.items[0]).toMatchObject({
-      reference: "T-11111111",
+      reference: "T-BD7662A5EE",
       displayName: "นักท่องเที่ยวทดสอบ",
       identityProviders: ["line"],
       visitCount: 1,
@@ -129,6 +131,80 @@ describe("admin tourist repository", () => {
       stampCount: 1,
       surveyCount: 1,
     });
+  });
+
+  it("applies the same filters and stable references to privacy-safe exports", async () => {
+    const touristId = "11111111-1111-4111-8111-111111111111";
+    setResults(
+      "tourists",
+      result([
+        {
+          tourist_id: touristId,
+          display_name: "ชื่อที่ต้องไม่อยู่ในไฟล์ส่งออก",
+          age_group: "25-34",
+          created_at: "2026-07-01T00:00:00.000Z",
+          countries: { country_name_th: "ไทย" },
+          provinces: { province_name_th: "ปัตตานี" },
+        },
+      ])
+    );
+    setResults("tourist_identities", result([{ tourist_id: touristId, provider: "line" }]));
+    setResults("visits", result([{ visit_id: "visit-1", tourist_id: touristId }]));
+    setResults("tourist_stamps", result([{ tourist_id: touristId }]));
+    setResults("satisfaction_surveys", result([{ tourist_id: touristId }]));
+    setResults("certificates", result([{ visit_id: "visit-1" }]));
+
+    const exported = await exportAdminTourists(
+      {
+        search: "นักท่องเที่ยว_100%",
+        countryId: 1,
+        provinceId: 2,
+        provider: "line",
+        sort: "name_desc",
+      },
+      51
+    );
+
+    const touristQuery = buildersByTable.get("tourists")?.[0];
+    expect(touristQuery?.select.mock.calls[0]?.[0]).toContain("tourist_identities!inner(provider)");
+    expect(touristQuery?.ilike).toHaveBeenCalledWith("display_name", "%นักท่องเที่ยว\\_100\\%%");
+    expect(touristQuery?.eq).toHaveBeenCalledWith("origin_country_id", 1);
+    expect(touristQuery?.eq).toHaveBeenCalledWith("origin_province_id", 2);
+    expect(touristQuery?.eq).toHaveBeenCalledWith("tourist_identities.provider", "line");
+    expect(touristQuery?.order).toHaveBeenCalledWith("display_name", { ascending: false });
+    expect(touristQuery?.limit).toHaveBeenCalledWith(51);
+
+    const rows = toSafeTouristExportRows(exported);
+    expect(rows).toEqual([
+      {
+        "รหัสอ้างอิง": "T-BD7662A5EE",
+        "ประเทศ": "ไทย",
+        "จังหวัด": "ปัตตานี",
+        "ช่วงอายุ": "25-34",
+        "ช่องทางบัญชี": "line_linked",
+        "จำนวนการเยี่ยมชม": 1,
+        "จำนวนประกาศนียบัตร": 1,
+        "จำนวนตราประทับ": 1,
+        "จำนวนแบบสำรวจ": 1,
+        "เดือนที่ลงทะเบียน": "2026-07",
+      },
+    ]);
+    expect(JSON.stringify(rows)).not.toContain("ชื่อที่ต้องไม่อยู่ในไฟล์ส่งออก");
+    expect(JSON.stringify(rows)).not.toContain(touristId);
+  });
+
+  it("skips summary queries when the export reaches the oversized sentinel", async () => {
+    const touristId = "11111111-1111-4111-8111-111111111111";
+    setResults(
+      "tourists",
+      result([{ tourist_id: touristId, created_at: "2026-07-01T00:00:00.000Z" }])
+    );
+
+    const exported = await exportAdminTourists({ sort: "newest" }, 1);
+
+    expect(exported).toHaveLength(1);
+    expect(serviceRoleMocks.from).toHaveBeenCalledTimes(1);
+    expect(serviceRoleMocks.from).toHaveBeenCalledWith("tourists");
   });
 
   it("returns a privacy-safe detail DTO without identity IDs, comments, or storage paths", async () => {
