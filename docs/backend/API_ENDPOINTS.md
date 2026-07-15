@@ -1,5 +1,21 @@
 # API_ENDPOINTS.md
 
+## Admin Content Export Endpoints
+
+Content exports require their module-specific export permission, accept `format=csv|xlsx`, enforce
+`EXPORT_MAX_ROWS`, and reuse the same validated URL filters shown on the corresponding admin list.
+Invalid filter values return `400`; oversized exports return `413` and require narrower filters.
+
+| Path | Supported list filters |
+|---|---|
+| `/api/admin/export/attractions` | `search`, `provinceId`, `districtId`, `attractionTypeId`, `isPublished`, `isActive` |
+| `/api/admin/export/stories` | `search`, `provinceId`, `status`, `isPublished` |
+| `/api/admin/export/routes` | `search`, `isPublished`, `isActive` |
+| `/api/admin/export/restaurants` | `search`, `provinceId`, `foodType`, `isPublished` |
+| `/api/admin/export/accommodations` | `search`, `provinceId`, `accommodationType`, `isPublished` |
+| `/api/admin/export/badges` | `search`, `category`, `isActive` |
+| `/api/admin/export/tourists` | `search`, `countryId`, `provinceId`, `provider`, `sort`; exports pseudonymous references and summary fields only |
+
 ## Tourist Identity Resolution (Server Actions)
 
 These server actions and auth guards support the OAuth tourist identity resolution added in June 2026. They resolve tourist identity from Supabase Auth sessions (Google, email, LINE) with guest fallback.

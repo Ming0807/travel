@@ -3,6 +3,7 @@ import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
 import { getServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAuditAction } from "@/lib/services/audit-log.service";
+import { adminRouteFiltersSchema } from "@/lib/validation/route";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 
 export const dynamic = "force-dynamic";
@@ -11,16 +12,32 @@ export async function GET(request: NextRequest) {
   try {
     const guard = await requirePermission("export.routes");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
+    const parsed = adminRouteFiltersSchema.safeParse(Object.fromEntries(request.nextUrl.searchParams.entries()));
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid export filters." }, { status: 400 });
+    }
+    const { page: _page, pageSize: _pageSize, ...filters } = parsed.data;
+    void _page;
+    void _pageSize;
 
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
 
     const supabase = createSupabaseServiceRoleClient();
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("suggested_routes")
       .select("*")
       .order("updated_at", { ascending: false, nullsFirst: false })
       .limit(maxRows + 1);
+
+    if (filters.search) {
+      const escaped = filters.search.replace(/%/g, "\\%").replace(/_/g, "\\_");
+      query = query.or(`name_th.ilike.%${escaped}%,name_en.ilike.%${escaped}%,slug.ilike.%${escaped}%`);
+    }
+    if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
+    if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
+
+    const { data, error } = await query;
 
     if (error) {
       throw new Error("EXPORT_ROUTES_FAILED");

@@ -6,20 +6,22 @@ import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 import { getServerEnv } from "@/lib/config/server-env";
 import { logAuditAction } from "@/lib/services/audit-log.service";
+import { adminRestaurantFiltersSchema } from "@/lib/validation/admin-restaurant";
 
 export async function GET(request: NextRequest) {
   try {
     const db = createSupabaseServiceRoleClient();
     const guard = await requirePermission("export.restaurants");
 
-    const { searchParams } = new URL(request.url);
-    const format = parseExportFormat(searchParams.get("format"));
-    const nameSearch = searchParams.get("search") ?? undefined;
-    const isPublishedRaw = searchParams.get("isPublished");
-    const isPublished =
-      isPublishedRaw === "true" ? true : isPublishedRaw === "false" ? false : undefined;
+    const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
+    const parsed = adminRestaurantFiltersSchema.safeParse(Object.fromEntries(request.nextUrl.searchParams.entries()));
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid export filters." }, { status: 400 });
+    }
+    const { page: _page, pageSize: _pageSize, ...filters } = parsed.data;
+    void _page;
+    void _pageSize;
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
-    const filters = { search: nameSearch, isPublished };
 
     let query = db
       .from("restaurants")
@@ -48,13 +50,15 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false })
       .limit(maxRows + 1);
 
-    if (nameSearch) {
-      const escaped = nameSearch.replace(/%/g, "\\%").replace(/_/g, "\\_");
+    if (filters.search) {
+      const escaped = filters.search.replace(/%/g, "\\%").replace(/_/g, "\\_");
       query = query.or(
         `name_th.ilike.%${escaped}%,name_en.ilike.%${escaped}%,slug.ilike.%${escaped}%`,
       );
     }
-    if (isPublished !== undefined) query = query.eq("is_published", isPublished);
+    if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
+    if (filters.foodType) query = query.ilike("food_type", `%${filters.foodType.replace(/%/g, "\\%").replace(/_/g, "\\_")}%`);
+    if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
 
     const { data, error } = await query;
 

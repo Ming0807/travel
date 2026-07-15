@@ -3,6 +3,7 @@ import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
 import { getServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { logAuditAction } from "@/lib/services/audit-log.service";
+import { adminAccommodationFiltersSchema } from "@/lib/validation/admin-accommodation";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 
@@ -14,12 +15,19 @@ export async function GET(request: NextRequest) {
   try {
     const guard = await requirePermission("export.accommodations");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
+    const parsed = adminAccommodationFiltersSchema.safeParse(Object.fromEntries(request.nextUrl.searchParams.entries()));
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid export filters." }, { status: 400 });
+    }
+    const { page: _page, pageSize: _pageSize, ...filters } = parsed.data;
+    void _page;
+    void _pageSize;
 
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
 
     const supabase = createSupabaseServiceRoleClient();
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("accommodations")
       .select(`
         *,
@@ -27,6 +35,19 @@ export async function GET(request: NextRequest) {
       `)
       .order("updated_at", { ascending: false, nullsFirst: false })
       .limit(maxRows + 1);
+
+    if (filters.search) {
+      const escaped = filters.search.replace(/%/g, "\\%").replace(/_/g, "\\_");
+      query = query.or(`name_th.ilike.%${escaped}%,name_en.ilike.%${escaped}%,slug.ilike.%${escaped}%`);
+    }
+    if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
+    if (filters.accommodationType) {
+      const escapedType = filters.accommodationType.replace(/%/g, "\\%").replace(/_/g, "\\_");
+      query = query.ilike("accommodation_type", `%${escapedType}%`);
+    }
+    if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
+
+    const { data, error } = await query;
 
     if (error) {
       throw new Error("EXPORT_ACCOMMODATIONS_FAILED");
