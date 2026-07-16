@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 type QueryResult = {
-  data: Array<Record<string, unknown>> | null;
+  data: unknown;
   error: unknown;
   count?: number | null;
 };
@@ -18,6 +18,7 @@ type MockBuilder = {
   order: MockFn;
   range: MockFn;
   limit: MockFn;
+  maybeSingle: MockFn;
   then: <TResult1 = QueryResult, TResult2 = never>(
     onfulfilled?: ((value: QueryResult) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
@@ -32,6 +33,7 @@ vi.mock("@/lib/supabase/service-role", () => ({
 
 import {
   exportAdminCertificateTemplates,
+  getAdminCertificateTemplateForStudio,
   listAdminCertificateTemplates,
 } from "@/lib/repositories/admin-certificate-template.repository";
 
@@ -41,6 +43,7 @@ function createBuilder(result: QueryResult): MockBuilder {
     builder[method] = vi.fn(() => builder);
   }
   builder.then = (onfulfilled, onrejected) => Promise.resolve(result).then(onfulfilled, onrejected);
+  builder.maybeSingle = vi.fn(async () => result);
   return builder;
 }
 
@@ -54,6 +57,7 @@ const templateRow = {
   is_active: true,
   created_at: "2026-07-01T00:00:00.000Z",
   updated_at: null,
+  layout_config_json: { orientation: "portrait", photoX: 52 },
   attractions: { name_th: "สกายวอล์คอัยเยอร์เวง", name_en: "Aiyerweng Skywalk" },
 };
 
@@ -108,5 +112,23 @@ describe("admin certificate template repository", () => {
     expect(builder.limit).toHaveBeenCalledWith(51);
     expect(builder.range).not.toHaveBeenCalled();
     expect(rows[0]?.template_name).toBe("Yala Memory");
+  });
+
+  it("returns a normalized typed layout for the studio", async () => {
+    builder = createBuilder({ data: templateRow, error: null });
+    serviceRoleMocks.from.mockReturnValue(builder);
+
+    const result = await getAdminCertificateTemplateForStudio(4);
+
+    expect(builder.eq).toHaveBeenCalledWith("template_id", 4);
+    expect(result).toMatchObject({
+      template_id: 4,
+      layoutConfig: {
+        version: 1,
+        orientation: "portrait",
+        photoX: 52,
+        contentX: 50,
+      },
+    });
   });
 });

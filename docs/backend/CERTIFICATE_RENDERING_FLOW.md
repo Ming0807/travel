@@ -1161,3 +1161,7 @@ matches the template shown in preview.
 Template orientation is stored in `layout_config_json.orientation` as `landscape` or `portrait`.
 Legacy rows default to landscape because the original admin upload workflow requested horizontal
 backgrounds.
+
+The admin Studio and tourist preview both render through `CertificateArtwork`. Layout JSON is
+normalized before rendering and strictly validated before save. The server rejects positions that
+overlap or leave the configured safe zone, even if a client bypasses the Studio controls.

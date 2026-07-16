@@ -3,8 +3,10 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toPng } from "html-to-image";
-import { DownloadSimple, ArrowLeft, Spinner, Stamp } from "@phosphor-icons/react/dist/ssr";
+import { DownloadSimple, ArrowLeft, Spinner } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { CertificateArtwork } from "@/components/certificate/CertificateArtwork";
+import type { CertificateTemplateLayout } from "@/lib/certificate/certificate-template-layout";
 
 interface CertificatePreviewProps {
   visitId: string;
@@ -18,7 +20,7 @@ interface CertificatePreviewProps {
   templateName: string;
   templateBackgroundUrl: string;
   language: "th" | "en";
-  orientation: "landscape" | "portrait";
+  layout: CertificateTemplateLayout;
 }
 
 export function CertificatePreview({
@@ -33,7 +35,7 @@ export function CertificatePreview({
   templateName,
   templateBackgroundUrl,
   language,
-  orientation,
+  layout,
 }: CertificatePreviewProps) {
   const router = useRouter();
   const certRef = useRef<HTMLDivElement>(null);
@@ -104,71 +106,19 @@ export function CertificatePreview({
       {/* Certificate DOM to Capture */}
       <div
         className={`relative w-full overflow-hidden rounded-2xl border-4 border-white shadow-lg animate-in fade-in zoom-in-95 duration-700 delay-200 fill-mode-both ${
-          orientation === "landscape" ? "aspect-[1.414/1] max-w-[560px]" : "aspect-[4/5] max-w-[400px]"
+          layout.orientation === "landscape" ? "aspect-[1.414/1] max-w-[560px]" : "aspect-[4/5] max-w-[400px]"
         }`}
       >
-        <div 
-          ref={certRef} 
-          className="absolute inset-0 bg-white flex flex-col justify-between"
-        >
-          {templateBackgroundUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={templateBackgroundUrl}
-              alt=""
-              aria-hidden="true"
-              crossOrigin="anonymous"
-              className="absolute inset-0 z-0 h-full w-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 z-0 bg-[#F4F1EA]" />
-          )}
-          <div className="absolute inset-0 z-0 bg-white/10" />
-          
-          <div className={`relative z-10 flex h-full flex-col items-center text-center ${
-            orientation === "landscape" ? "p-3 sm:p-5" : "p-8 pt-10"
-          }`}>
-            <h2 className={`${orientation === "landscape" ? "text-base sm:text-xl" : "text-2xl"} mb-1 font-bold uppercase tracking-widest text-ink`}>Travel Memory</h2>
-            <p className={`${orientation === "landscape" ? "mb-2 text-[8px] sm:text-[10px]" : "mb-6 text-xs"} font-semibold tracking-widest text-gold`}>SOUTHERN BORDER DIGITAL PASSPORT</p>
-
-            <div className={`flex w-full flex-1 items-center justify-center ${orientation === "landscape" ? "flex-row gap-3 sm:gap-6" : "flex-col"}`}>
-              <div className={`${orientation === "landscape" ? "h-20 w-20 sm:h-28 sm:w-28" : "mb-6 h-48 w-48"} flex flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-teal/10 to-coral/10 shadow-lg`}>
-                {previewUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={previewUrl} alt="Tourist Memory" className="h-full w-full object-cover" crossOrigin="anonymous" />
-                ) : (
-                  <div className="flex flex-col items-center text-ink/30">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                      <circle cx="8.5" cy="8.5" r="1.5"/>
-                      <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                    <span className="mt-1 text-[9px] font-medium">No photo</span>
-                  </div>
-                )}
-              </div>
-
-              <div className={`flex min-w-0 flex-col justify-center ${orientation === "landscape" ? "flex-1 text-left" : "w-full flex-1 text-center"}`}>
-                <h3 className={`${orientation === "landscape" ? "text-base sm:text-xl" : "text-2xl"} mb-1 line-clamp-2 break-words font-bold text-ink`}>{touristName}</h3>
-                <p className={`${orientation === "landscape" ? "mb-2 text-[10px] sm:text-xs" : "mb-4 text-sm"} font-medium text-ink-light`}>has visited</p>
-
-                <div className={`${orientation === "landscape" ? "px-3 py-2" : "px-4 py-3"} w-full rounded-lg border border-gold/30 bg-white/70`}>
-                  <p className={`${orientation === "landscape" ? "text-xs sm:text-sm" : "text-base"} line-clamp-2 font-bold leading-tight text-teal`}>{attractionName}</p>
-                  <p className="mt-1 text-[10px] text-ink-light sm:text-xs">{provinceName}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className={`flex w-full items-end justify-between ${orientation === "landscape" ? "mt-1" : "mt-4"}`}>
-              <div className="text-left">
-                <p className="text-[8px] font-semibold uppercase tracking-wider text-ink-light sm:text-[10px]">Date</p>
-                <p className="text-[9px] font-medium text-ink sm:text-xs">{visitDate}</p>
-              </div>
-              <div className={`${orientation === "landscape" ? "h-7 w-7 sm:h-9 sm:w-9" : "h-10 w-10"} flex items-center justify-center rounded-full bg-gold/20 text-gold`}>
-                <Stamp weight="fill" className={orientation === "landscape" ? "h-4 w-4 sm:h-5 sm:w-5" : "h-6 w-6"} />
-              </div>
-            </div>
-          </div>
+        <div ref={certRef} className="absolute inset-0">
+          <CertificateArtwork
+            layout={layout}
+            templateBackgroundUrl={templateBackgroundUrl}
+            previewUrl={previewUrl}
+            touristName={touristName}
+            attractionName={attractionName}
+            provinceName={provinceName}
+            visitDate={visitDate}
+          />
         </div>
 
         {/* Loading Shimmer Overlay */}

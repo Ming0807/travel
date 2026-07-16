@@ -36,5 +36,9 @@ describe("TemplateListClient", () => {
     expect(screen.getByText("เฉพาะสถานที่")).toBeInTheDocument();
     expect(screen.getByText("สกายวอล์คอัยเยอร์เวง")).toBeInTheDocument();
     expect(screen.queryByText("Active")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ออกแบบเทมเพลต" })).toHaveAttribute(
+      "href",
+      "/admin/certificate-templates/4/edit"
+    );
   });
 });

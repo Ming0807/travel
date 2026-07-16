@@ -11,6 +11,7 @@ import {
 import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/private-files";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { certificateTemplateUploadFieldsSchema } from "@/lib/validation/admin-certificate-template";
+import { createDefaultCertificateLayout } from "@/lib/certificate/certificate-template-layout";
 
 export const runtime = "nodejs";
 
@@ -88,12 +89,10 @@ export async function POST(req: NextRequest) {
     });
     uploadedPath = uploaded.storagePath;
 
-    const layoutConfig = {
-      theme,
-      photo: "center",
-      language,
-      orientation: processed.width >= processed.height ? "landscape" : "portrait",
-    };
+    const layoutConfig = createDefaultCertificateLayout(
+      processed.width >= processed.height ? "landscape" : "portrait",
+      theme
+    );
 
     const { data, error } = await supabase
       .from("certificate_templates")

@@ -548,9 +548,9 @@ SET attraction_id = EXCLUDED.attraction_id,
 
 INSERT INTO public.certificate_templates (template_name, background_path, layout_config_json, language, is_default, is_active)
 VALUES
-  ('Southern Border Memory Card TH', 'certificate-templates/southern-border-th.png', '{"theme":"emerald-gold","photo":"center","language":"th"}'::jsonb, 'th', true, true),
-  ('Southern Border Memory Card EN', 'certificate-templates/southern-border-en.png', '{"theme":"emerald-gold","photo":"center","language":"en"}'::jsonb, 'en', false, true)
-ON CONFLICT (template_name, language) DO UPDATE
+  ('Southern Border Memory Card TH', 'certificate-templates/southern-border-th.png', '{"version":1,"orientation":"landscape","theme":"emerald-gold","photoShape":"circle","photoX":27,"photoY":52,"photoSize":30,"contentX":68,"contentY":52,"contentWidth":48,"textAlign":"left","overlayOpacity":10,"textColor":"#173F37","accentColor":"#0A6B62","titleScale":100,"safeMargin":6,"showProvince":true,"showDate":true}'::jsonb, 'th', true, true),
+  ('Southern Border Memory Card EN', 'certificate-templates/southern-border-en.png', '{"version":1,"orientation":"landscape","theme":"emerald-gold","photoShape":"circle","photoX":27,"photoY":52,"photoSize":30,"contentX":68,"contentY":52,"contentWidth":48,"textAlign":"left","overlayOpacity":10,"textColor":"#173F37","accentColor":"#0A6B62","titleScale":100,"safeMargin":6,"showProvince":true,"showDate":true}'::jsonb, 'en', false, true)
+ON CONFLICT (lower(template_name), language) WHERE attraction_id IS NULL DO UPDATE
 SET background_path = EXCLUDED.background_path,
     layout_config_json = EXCLUDED.layout_config_json,
     is_default = EXCLUDED.is_default,

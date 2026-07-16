@@ -586,6 +586,22 @@ MVP status:
 
 Optional.
 
+## 9.10 Certificate Templates
+
+```text
+/admin/certificate-templates
+/admin/certificate-templates/new
+/admin/certificate-templates/[templateId]/edit
+```
+
+Purpose:
+
+- search, filter, activate, default, and export templates
+- create global or attraction-specific backgrounds
+- edit bounded photo/text positions through the Certificate Template Studio
+- preview the same renderer used by the tourist certificate flow
+- block unsafe overlap and out-of-safe-zone layouts before save
+
 ---
 
 ## 10. Dashboard Routes

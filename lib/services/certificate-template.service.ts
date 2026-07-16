@@ -1,13 +1,14 @@
 import "server-only";
 
 import { listActiveCertificateTemplatesForAttraction } from "@/lib/repositories/certificate-template.repository";
+import type { CertificateTemplateLayout } from "@/lib/certificate/certificate-template-layout";
 
 export type CertificateTemplateCandidate = {
   templateId: number;
   templateName: string;
   attractionId: number | null;
   backgroundPath: string | null;
-  layoutConfig: unknown;
+  layoutConfig: CertificateTemplateLayout;
   language: string;
   isDefault: boolean;
   orientation: "landscape" | "portrait";

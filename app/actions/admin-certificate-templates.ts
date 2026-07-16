@@ -6,6 +6,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { logAdminAction } from "@/lib/repositories/admin-audit.repository";
 import { deletePrivateFile } from "@/lib/storage/private-files";
+import {
+  certificateTemplateLayoutInputSchema,
+  getCertificateLayoutWarnings,
+} from "@/lib/certificate/certificate-template-layout";
 
 const templateIdSchema = z.number().int().positive();
 const attractionSearchSchema = z.string().trim().min(2).max(100);
@@ -38,6 +42,44 @@ export async function searchCertificateTemplateAttractions(query: string) {
   }
 
   return { success: true as const, data: data ?? [] };
+}
+
+export async function updateCertificateTemplateLayout(
+  templateId: number,
+  layout: unknown
+) {
+  const guard = await requirePermission("certificate.template_manage");
+  const validTemplateId = parseTemplateId(templateId);
+  const parsedLayout = certificateTemplateLayoutInputSchema.safeParse(layout);
+  if (!parsedLayout.success) throw new Error("รูปแบบเทมเพลตไม่ถูกต้อง");
+  if (getCertificateLayoutWarnings(parsedLayout.data).length > 0) {
+    throw new Error("องค์ประกอบอยู่นอกขอบเขตปลอดภัยหรือทับกัน");
+  }
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("certificate_templates")
+    .update({ layout_config_json: parsedLayout.data, updated_at: new Date().toISOString() })
+    .eq("template_id", validTemplateId)
+    .select("template_id")
+    .maybeSingle();
+
+  if (error || !data) throw new Error("ไม่สามารถบันทึกรูปแบบเทมเพลตได้");
+  await logAdminAction({
+    adminId: guard.adminId,
+    action: "certificate.template_layout_updated",
+    entityType: "certificate_template",
+    entityId: String(validTemplateId),
+    details: {
+      orientation: parsedLayout.data.orientation,
+      theme: parsedLayout.data.theme,
+      photoShape: parsedLayout.data.photoShape,
+    },
+  });
+
+  revalidatePath("/admin/certificate-templates");
+  revalidatePath(`/admin/certificate-templates/${validTemplateId}/edit`);
+  return { success: true as const };
 }
 
 export async function toggleTemplateStatus(templateId: number, isActive: boolean) {

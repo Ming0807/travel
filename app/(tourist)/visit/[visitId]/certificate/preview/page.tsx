@@ -165,7 +165,7 @@ export default async function CertificatePreviewPage({
           templateName={template.templateName}
           templateBackgroundUrl={templateBackgroundUrl}
           language={language}
-          orientation={template.orientation}
+          layout={template.layoutConfig}
         />
       </div>
     </main>

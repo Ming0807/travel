@@ -1155,7 +1155,10 @@ Implemented:
 [x] One default per language and scope enforced by partial unique indexes
 [x] Admin attraction picker for scoped templates
 [x] Template mutation audit logs and orphan background cleanup
+[x] Certificate Template Studio with shared live renderer
+[x] Guided photo/text positioning, shape, colors, visibility, and safe-zone checks
+[x] Draft save/cancel behavior with server-side overlap validation
 ```
 
-Future template-studio work remains separate: editable text coordinates, font controls, safe zones,
-photo masks, campaign templates, and tourist-selectable variants.
+Future advanced studio work remains separate: custom font upload, freeform photo masks, campaign
+variants, reusable design presets, and tourist-selectable variants.

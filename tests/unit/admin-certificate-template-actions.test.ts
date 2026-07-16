@@ -8,6 +8,7 @@ type Builder = {
   eq: MockFn;
   is: MockFn;
   single: MockFn;
+  maybeSingle: MockFn;
   then: <TResult1 = unknown, TResult2 = never>(
     onfulfilled?: ((value: unknown) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
@@ -44,6 +45,7 @@ import {
   searchCertificateTemplateAttractions,
   setTemplateAsDefault,
   toggleTemplateStatus,
+  updateCertificateTemplateLayout,
 } from "@/app/actions/admin-certificate-templates";
 
 function builder(result: unknown): Builder {
@@ -52,6 +54,7 @@ function builder(result: unknown): Builder {
     query[method] = vi.fn(() => query);
   }
   query.single = vi.fn(async () => result);
+  query.maybeSingle = vi.fn(async () => result);
   query.then = (onfulfilled, onrejected) => Promise.resolve(result).then(onfulfilled, onrejected);
   return query;
 }
@@ -163,5 +166,82 @@ describe("admin certificate template actions", () => {
     expect(mocks.requirePermission).toHaveBeenCalledWith("certificate.template_manage");
     expect(query.eq).toHaveBeenCalledWith("is_active", true);
     expect(query.limit).toHaveBeenCalledWith(20);
+  });
+
+  it("updates a validated studio layout and writes a privacy-safe audit event", async () => {
+    const layout = {
+      version: 1 as const,
+      orientation: "landscape" as const,
+      theme: "emerald-gold" as const,
+      photoShape: "circle" as const,
+      photoX: 27,
+      photoY: 52,
+      photoSize: 30,
+      contentX: 68,
+      contentY: 52,
+      contentWidth: 48,
+      textAlign: "left" as const,
+      overlayOpacity: 10,
+      textColor: "#173F37",
+      accentColor: "#0A6B62",
+      titleScale: 100,
+      safeMargin: 6,
+      showProvince: true,
+      showDate: true,
+    };
+    mocks.from.mockReturnValueOnce(builder({ data: { template_id: 4 }, error: null }));
+
+    await expect(updateCertificateTemplateLayout(4, layout)).resolves.toEqual({ success: true });
+    expect(mocks.requirePermission).toHaveBeenCalledWith("certificate.template_manage");
+    expect(mocks.logAdminAction).toHaveBeenCalledWith({
+      adminId: "admin-1",
+      action: "certificate.template_layout_updated",
+      entityType: "certificate_template",
+      entityId: "4",
+      details: {
+        orientation: "landscape",
+        theme: "emerald-gold",
+        photoShape: "circle",
+      },
+    });
+  });
+
+  it("rejects an out-of-bounds studio layout before opening a database query", async () => {
+    await expect(
+      updateCertificateTemplateLayout(4, {
+        version: 1,
+        orientation: "landscape",
+        photoX: 999,
+      })
+    ).rejects.toThrow("รูปแบบเทมเพลตไม่ถูกต้อง");
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("rejects an overlapping layout even when every field is within its numeric bounds", async () => {
+    const overlappingLayout = {
+      version: 1,
+      orientation: "landscape",
+      theme: "emerald-gold",
+      photoShape: "circle",
+      photoX: 50,
+      photoY: 50,
+      photoSize: 40,
+      contentX: 52,
+      contentY: 50,
+      contentWidth: 50,
+      textAlign: "left",
+      overlayOpacity: 10,
+      textColor: "#173F37",
+      accentColor: "#0A6B62",
+      titleScale: 100,
+      safeMargin: 6,
+      showProvince: true,
+      showDate: true,
+    };
+
+    await expect(updateCertificateTemplateLayout(4, overlappingLayout)).rejects.toThrow(
+      "องค์ประกอบอยู่นอกขอบเขตปลอดภัยหรือทับกัน"
+    );
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import {
   selectCertificateTemplate,
   type CertificateTemplateCandidate,
 } from "@/lib/services/certificate-template.service";
+import { createDefaultCertificateLayout } from "@/lib/certificate/certificate-template-layout";
 
 const candidates: CertificateTemplateCandidate[] = [
   {
@@ -13,7 +14,7 @@ const candidates: CertificateTemplateCandidate[] = [
     backgroundPath: "certificate-templates/global-th.webp",
     language: "th",
     isDefault: true,
-    layoutConfig: null,
+    layoutConfig: createDefaultCertificateLayout("landscape", "emerald-gold"),
     orientation: "landscape",
   },
   {
@@ -23,7 +24,7 @@ const candidates: CertificateTemplateCandidate[] = [
     backgroundPath: "certificate-templates/yala-th.webp",
     language: "th",
     isDefault: true,
-    layoutConfig: { theme: "emerald-gold" },
+    layoutConfig: createDefaultCertificateLayout("landscape", "emerald-gold"),
     orientation: "landscape",
   },
   {
@@ -33,7 +34,7 @@ const candidates: CertificateTemplateCandidate[] = [
     backgroundPath: "certificate-templates/yala-en.webp",
     language: "en",
     isDefault: true,
-    layoutConfig: null,
+    layoutConfig: createDefaultCertificateLayout("portrait", "blue-silver"),
     orientation: "portrait",
   },
 ];

@@ -6,6 +6,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { CertificatePreview } from "@/components/certificate/CertificatePreview";
+import { createDefaultCertificateLayout } from "@/lib/certificate/certificate-template-layout";
 
 describe("CertificatePreview template rendering", () => {
   it("renders the resolved background and template name in landscape mode", () => {
@@ -22,7 +23,7 @@ describe("CertificatePreview template rendering", () => {
         templateName="ความทรงจำยะลา"
         templateBackgroundUrl="https://example.com/template.webp"
         language="th"
-        orientation="landscape"
+        layout={createDefaultCertificateLayout("landscape", "emerald-gold")}
       />
     );
 
@@ -31,6 +32,7 @@ describe("CertificatePreview template rendering", () => {
       'img[src="https://example.com/template.webp"]'
     );
     expect(background).toHaveAttribute("aria-hidden", "true");
-    expect(background?.closest("div.relative.w-full")).toHaveClass("aspect-[1.414/1]");
+    const artwork = container.querySelector('[data-orientation="landscape"]');
+    expect(artwork?.parentElement?.parentElement).toHaveClass("aspect-[1.414/1]");
   });
 });

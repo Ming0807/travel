@@ -2,8 +2,9 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle, XCircle, Star, Trash, Image as ImageIcon } from "@phosphor-icons/react";
+import { CheckCircle, XCircle, Star, Trash, Image as ImageIcon, PencilSimple } from "@phosphor-icons/react";
 import { toggleTemplateStatus, setTemplateAsDefault, deleteTemplate } from "@/app/actions/admin-certificate-templates";
 
 function getStorageUrl(path: string) {
@@ -80,7 +81,7 @@ export function TemplateListClient({ templates }: { templates: CertificateTempla
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {templates.map((template) => (
+      {templates.map((template, index) => (
         <div 
           key={template.template_id} 
           className={`group flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:shadow-md ${
@@ -94,6 +95,8 @@ export function TemplateListClient({ templates }: { templates: CertificateTempla
                 src={getStorageUrl(template.background_path)}
                 alt={template.template_name}
                 fill
+                priority={index === 0}
+                sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 unoptimized // Use unoptimized if Next image optimization still acts up for external URLs
               />
@@ -154,6 +157,14 @@ export function TemplateListClient({ templates }: { templates: CertificateTempla
               </button>
 
               <div className="flex items-center gap-1">
+                <Link
+                  href={`/admin/certificate-templates/${template.template_id}/edit`}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#0A6B62] hover:bg-[#E6F4EF]"
+                  title="ออกแบบเทมเพลต"
+                >
+                  <PencilSimple size={18} weight="bold" />
+                  <span className="sr-only">ออกแบบเทมเพลต</span>
+                </Link>
                 {!template.is_default && (
                   <button
                     onClick={() => handleSetDefault(template.template_id)}

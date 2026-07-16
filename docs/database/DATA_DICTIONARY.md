@@ -721,6 +721,19 @@ check(not is_default or is_active)
 performed atomically by `public.set_certificate_template_default(bigint)`, executable only by the
 `service_role` after application-level permission checks.
 
+Current `layout_config_json` contract (version 1):
+
+```text
+orientation, theme, photoShape
+photoX, photoY, photoSize
+contentX, contentY, contentWidth, textAlign
+overlayOpacity, textColor, accentColor, titleScale
+safeMargin, showProvince, showDate
+```
+
+Positions and sizes use bounded percentages so the same renderer works on mobile preview and the
+generated certificate image.
+
 ---
 
 ## 19. Table: certificates

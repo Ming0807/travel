@@ -5,6 +5,10 @@ import type {
   AdminCertificateTemplateExportFilters,
   AdminCertificateTemplateFilters,
 } from "@/lib/validation/admin-certificate-template";
+import {
+  normalizeCertificateTemplateLayout,
+  type CertificateTemplateLayout,
+} from "@/lib/certificate/certificate-template-layout";
 
 type AttractionJoin =
   | { name_th: string | null; name_en: string | null }
@@ -57,6 +61,7 @@ const ADMIN_CERTIFICATE_TEMPLATE_SELECT = `
 
 function mapCertificateTemplate(row: unknown): AdminCertificateTemplateListItem {
   const template = row as CertificateTemplateDatabaseRow;
+  const layout = normalizeCertificateTemplateLayout(template.layout_config_json);
   const attraction = Array.isArray(template.attractions)
     ? template.attractions[0]
     : template.attractions;
@@ -71,13 +76,32 @@ function mapCertificateTemplate(row: unknown): AdminCertificateTemplateListItem 
     created_at: template.created_at,
     updated_at: template.updated_at,
     attraction_name: attraction?.name_th || attraction?.name_en || null,
-    orientation:
-      template.layout_config_json &&
-      typeof template.layout_config_json === "object" &&
-      "orientation" in template.layout_config_json &&
-      template.layout_config_json.orientation === "portrait"
-        ? "portrait"
-        : "landscape",
+    orientation: layout.orientation,
+  };
+}
+
+export type AdminCertificateTemplateStudio = AdminCertificateTemplateListItem & {
+  layoutConfig: CertificateTemplateLayout;
+};
+
+export async function getAdminCertificateTemplateForStudio(
+  templateId: number
+): Promise<AdminCertificateTemplateStudio | null> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("certificate_templates")
+    .select(ADMIN_CERTIFICATE_TEMPLATE_SELECT)
+    .eq("template_id", templateId)
+    .maybeSingle();
+
+  if (error) throw new Error("ADMIN_CERTIFICATE_TEMPLATE_DETAIL_FAILED");
+  if (!data) return null;
+  const item = mapCertificateTemplate(data);
+  return {
+    ...item,
+    layoutConfig: normalizeCertificateTemplateLayout(
+      (data as CertificateTemplateDatabaseRow).layout_config_json
+    ),
   };
 }
 

@@ -5,6 +5,7 @@ import {
   isPublicContentMediaReference,
   normalizePublicContentMediaReference,
   normalizeSiteMediaStoragePath,
+  resolveSafeImageContentType,
   siteMediaImageUrl,
 } from "@/lib/media/storage-paths";
 
@@ -31,7 +32,24 @@ export async function GET(req: NextRequest) {
     try {
       const mediaUrl = siteMediaImageUrl(normalizeSiteMediaStoragePath(path));
       if (mediaUrl) {
-        return NextResponse.redirect(new URL(mediaUrl, req.url));
+        const resolvedMediaUrl = new URL(mediaUrl, req.url);
+        const upstream = await fetch(resolvedMediaUrl, {
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!upstream.ok) throw new Error("MEDIA_PREVIEW_UPSTREAM_FAILED");
+        const contentType = resolveSafeImageContentType(
+          upstream.headers.get("content-type"),
+          path
+        );
+        if (!contentType) throw new Error("MEDIA_PREVIEW_INVALID_CONTENT_TYPE");
+        return new NextResponse(await upstream.arrayBuffer(), {
+          status: 200,
+          headers: {
+            "Content-Type": contentType,
+            "Cache-Control": "private, max-age=300",
+            "X-Content-Type-Options": "nosniff",
+          },
+        });
       }
     } catch {
       // Not a public site-media path; try private storage below.

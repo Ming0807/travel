@@ -1,6 +1,10 @@
 import "server-only";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import {
+  normalizeCertificateTemplateLayout,
+  type CertificateTemplateLayout,
+} from "@/lib/certificate/certificate-template-layout";
 
 type CertificateTemplateRow = {
   template_id: number;
@@ -17,34 +21,23 @@ export type ActiveCertificateTemplate = {
   templateName: string;
   attractionId: number | null;
   backgroundPath: string | null;
-  layoutConfig: unknown;
+  layoutConfig: CertificateTemplateLayout;
   language: string;
   isDefault: boolean;
   orientation: "landscape" | "portrait";
 };
 
-function resolveOrientation(layoutConfig: unknown): "landscape" | "portrait" {
-  if (
-    layoutConfig &&
-    typeof layoutConfig === "object" &&
-    "orientation" in layoutConfig &&
-    (layoutConfig.orientation === "landscape" || layoutConfig.orientation === "portrait")
-  ) {
-    return layoutConfig.orientation;
-  }
-  return "landscape";
-}
-
 function mapTemplate(row: CertificateTemplateRow): ActiveCertificateTemplate {
+  const layoutConfig = normalizeCertificateTemplateLayout(row.layout_config_json);
   return {
     templateId: row.template_id,
     templateName: row.template_name,
     attractionId: row.attraction_id,
     backgroundPath: row.background_path,
-    layoutConfig: row.layout_config_json,
+    layoutConfig,
     language: row.language || "th",
     isDefault: row.is_default,
-    orientation: resolveOrientation(row.layout_config_json),
+    orientation: layoutConfig.orientation,
   };
 }
 
