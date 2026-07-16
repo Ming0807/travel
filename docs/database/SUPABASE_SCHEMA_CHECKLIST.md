@@ -42,6 +42,16 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Orientation metadata**: Existing template rows should have `layout_config_json.orientation` set to `landscape` or `portrait`.
 
 ## Resolving Drift
+Run the read-only history comparison before applying or repairing migrations:
+
+```bash
+npm run db:migrations:check
+```
+
+The command compares every local `supabase/migrations/*.sql` version with `supabase_migrations.schema_migrations`. It never applies SQL and exits non-zero for pending, remote-only, duplicate, invalid, or name-mismatched history.
+
+If the direct host (`db.<project-ref>.supabase.co`) resolves only to IPv6 and the development network has no IPv6 route, copy the **Session Pooler** connection string from Supabase Dashboard > Connect into `SUPABASE_DATABASE_URL`. Do not guess the pooler region, hostname, username, or password. Keep TLS enabled and never commit the connection string.
+
 If you find that a schema object exists but `supabase db push` or `supabase status` complains about migration drift:
 1. Identify the missing migration version in `supabase_migrations.schema_migrations`.
 2. Do not just delete the migration file. After manually applying SQL and verifying schema objects, use `supabase migration repair --status applied <version>` if CLI migration history needs repair.

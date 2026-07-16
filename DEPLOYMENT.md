@@ -287,6 +287,14 @@ supabase migration up
 supabase gen types typescript --local > src/lib/types/database.types.ts
 ```
 
+Repository migration history check (read-only):
+
+```bash
+pnpm run db:migrations:check
+```
+
+This command requires `SUPABASE_DATABASE_URL`, prints migration versions/names only, and never applies or repairs SQL. A non-zero result is a release blocker until actual schema objects and migration history are reconciled.
+
 Do not claim a command passed if it was not run.
 
 ---

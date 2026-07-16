@@ -25,7 +25,7 @@ Never commit real secrets to the repository.
 | `NEXT_PUBLIC_SUPABASE_URL` | **Yes** | — | Supabase project URL (public) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Yes** | — | Supabase anonymous key (public) |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Yes** | — | Supabase service role key (server-only, never expose to browser) |
-| `SUPABASE_DATABASE_URL` | **Yes** | — | Direct PostgreSQL connection string |
+| `SUPABASE_DATABASE_URL` | **Yes** | — | PostgreSQL connection string for migration/maintenance tools. Prefer the exact Session Pooler URL from Supabase Connect when the direct host is IPv6-only. |
 
 ---
 
