@@ -19,7 +19,8 @@ const validServerEnv = {
   ALLOWED_TOURIST_IMAGE_MIME_TYPES: "image/jpeg,image/png,image/webp",
   CERTIFICATE_SIGNED_URL_TTL_SECONDS: "600",
   EXPORT_SIGNED_URL_TTL_SECONDS: "600",
-  EXPORT_MAX_ROWS: "5000"
+  EXPORT_MAX_ROWS: "5000",
+  HEALTH_CHECK_SECRET: "health-check-secret-value"
 };
 
 describe("environment validation", () => {
@@ -68,5 +69,11 @@ describe("environment validation", () => {
 
     expect(parsed.STORAGE_PROVIDER).toBe("cloudinary");
     expect(parsed.CLOUDINARY_DELIVERY_TYPE).toBe("authenticated");
+  });
+
+  it("rejects a weak health check secret when one is configured", () => {
+    expect(() => parseServerEnv({ ...validServerEnv, HEALTH_CHECK_SECRET: "too-short" })).toThrow(
+      "Server environment configuration is invalid",
+    );
   });
 });

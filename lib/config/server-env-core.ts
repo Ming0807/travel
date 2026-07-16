@@ -23,7 +23,8 @@ const serverEnvSchema = z.object({
   UNIVERSITY_STORAGE_UPLOAD_ENDPOINT: z.string().url().optional(),
   UNIVERSITY_STORAGE_ACCESS_TOKEN: z.string().optional(),
   LINE_CHANNEL_ID: z.string().optional(),
-  LINE_CHANNEL_SECRET: z.string().optional()
+  LINE_CHANNEL_SECRET: z.string().optional(),
+  HEALTH_CHECK_SECRET: z.string().min(16).optional()
 }).superRefine((value, ctx) => {
   if (value.STORAGE_PROVIDER === "cloudinary") {
     for (const key of ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"] as const) {

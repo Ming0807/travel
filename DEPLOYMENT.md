@@ -258,6 +258,17 @@ pnpm run test
 pnpm run build
 ```
 
+After deploying to preview or staging, run the non-destructive release gates:
+
+```bash
+RELEASE_BASE_URL=https://preview.example.com pnpm run release:smoke
+PLAYWRIGHT_BASE_URL=https://preview.example.com E2E_ADMIN_USERNAME=staging-admin E2E_ADMIN_PASSWORD=... pnpm run test:e2e:admin-live
+```
+
+Provide `HEALTH_CHECK_SECRET` to the smoke runner when protected dependency readiness must be verified. Use a dedicated staging admin and never place real credentials in source control or command examples committed with actual values.
+
+The release smoke command verifies liveness, optional dependency readiness, required security headers, public pages, the admin login page, and anonymous admin redirection. It does not mutate data and does not replace QR-to-certificate acceptance testing.
+
 If configured:
 
 ```bash

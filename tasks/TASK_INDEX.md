@@ -21,7 +21,7 @@
 | `PHASE_11_LINE_LIFF_OPTIONAL.md` | Implemented foundation | Optional LINE passport linking |
 | `PHASE_12_TESTING_HARDENING.md` | Completed | Stability, security, performance, and QA |
 | `PHASE_12A_ADMIN_E2E_QA.md` | Implemented | Authenticated non-destructive admin smoke tests against the real app |
-| `PHASE_13_DEPLOYMENT.md` | Planned | Deployment and release |
+| `PHASE_13_DEPLOYMENT.md` | In progress | Release health gates implemented; preview/staging and operational sign-off remain |
 | `PHASE_13A_CLOUDINARY_STORAGE_DEPLOYMENT.md` | Completed | Cloudinary-first Vercel storage with future university-storage path |
 
 ## Immediate Priority

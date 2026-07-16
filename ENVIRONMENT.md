@@ -76,6 +76,18 @@ Never commit real secrets to the repository.
 
 ---
 
+## Health Monitoring and Release Smoke
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `HEALTH_CHECK_SECRET` | Recommended for staging/production | — | Server-only bearer secret (minimum 16 characters) for `/api/health?mode=ready` dependency checks |
+| `RELEASE_BASE_URL` | Only on the machine running smoke checks | — | Absolute HTTPS deployment URL consumed by `npm run release:smoke`; do not configure it as an application secret |
+| `RELEASE_SMOKE_TIMEOUT_MS` | No | `20000` | Per-request timeout used by the release smoke CLI |
+
+`GET /api/health` is a public, lightweight liveness check and does not query dependencies. Readiness requires `Authorization: Bearer <HEALTH_CHECK_SECRET>` and reports only generic environment/database/storage statuses. Never put the secret in a URL, screenshot, repository, or deployment log.
+
+---
+
 ## LINE Integration (Optional)
 
 | Variable | Required | Default | Description |
@@ -121,6 +133,7 @@ CLOUDINARY_DELIVERY_TYPE=authenticated
 
 # App
 APP_ENV=production
+HEALTH_CHECK_SECRET=use-a-long-random-server-secret
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 ## Status
 
-Planned / In progress.
+In progress. Repository-side liveness/readiness and non-destructive release smoke gates are implemented. Preview/staging environment verification, backup confirmation, migration verification, and operational sign-off remain required.
 
 ## Objective
 
@@ -82,6 +82,15 @@ npm run lint
 npm run test
 npm run build
 ```
+
+Run after preview/staging deployment:
+
+```bash
+RELEASE_BASE_URL=https://preview.example.com npm run release:smoke
+PLAYWRIGHT_BASE_URL=https://preview.example.com E2E_ADMIN_USERNAME=staging-admin E2E_ADMIN_PASSWORD=... npm run test:e2e:admin-live
+```
+
+Configure `HEALTH_CHECK_SECRET` on staging/production to enable protected readiness checks for environment, database, and storage configuration. The public `/api/health` endpoint is liveness-only and does not query Supabase.
 
 Run Supabase migration/seed validation on a controlled environment before production.
 
