@@ -189,6 +189,7 @@ export async function submitTouristStoryAction(formData: FormData) {
         province_id: provinceId,
         author_type: "tourist",
         tourist_id: touristId,
+        // Pre-migration compatibility: the editorial-platform trigger maps this to submitted.
         status: "pending",
         is_published: false,
       })

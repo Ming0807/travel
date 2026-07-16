@@ -77,7 +77,7 @@ New UI areas:
 - [x] Implement strict Zod document schemas with a schema version.
 - [x] Implement pure workflow and readiness functions.
 - [x] Run targeted tests, typecheck, and ESLint.
-- [ ] Commit: `feat: add typed story content and workflow contracts`
+- [x] Commit: `feat: add typed story content and workflow contracts`
 
 ## Task 3: Add Backward-Compatible Story Schema
 
@@ -89,15 +89,15 @@ New UI areas:
 - Modify: `docs/security/ROLE_PERMISSION_MATRIX.md`
 - Create: `tests/unit/story-migration-contract.test.ts`
 
-- [ ] Write migration contract tests for fields, checks, indexes, RLS, and constraints.
-- [ ] Add structured content, SEO, scheduling, review, reading-time, and archive fields.
-- [ ] Add topics, tags, links, revisions, and curated recommendation tables.
-- [ ] Expand status constraints without breaking existing rows.
-- [ ] Add permissions for review, schedule, restore revision, and taxonomy management.
-- [ ] Add indexes for list/filter/publish/recommendation queries.
-- [ ] Verify migration is idempotent where repository convention requires it.
-- [ ] Do not apply the migration remotely in this task.
-- [ ] Commit: `feat: add story editorial platform schema`
+- [x] Write migration contract tests for fields, checks, indexes, RLS, and constraints.
+- [x] Add structured content, SEO, scheduling, review, reading-time, and archive fields.
+- [x] Add topics, tags, links, revisions, and curated recommendation tables.
+- [x] Expand status constraints without breaking existing rows.
+- [x] Add permissions for review, schedule, restore revision, and taxonomy management.
+- [x] Add indexes for list/filter/publish/recommendation queries.
+- [x] Verify migration is idempotent where repository convention requires it.
+- [x] Do not apply the migration remotely in this task.
+- [x] Commit: `feat: add story editorial platform schema`
 
 ## Task 4: Refactor Repository and Service Boundaries
 

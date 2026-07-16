@@ -52,7 +52,18 @@ export const adminStoryMutationSchema = z.object({
   provinceId: optionalId,
   category: optionalShortText,
   isPublished: booleanFromForm,
-  status: z.enum(["draft", "pending", "published", "rejected"]).optional(),
+  status: z.enum([
+    "draft",
+    "pending",
+    "submitted",
+    "in_review",
+    "changes_requested",
+    "approved",
+    "scheduled",
+    "published",
+    "rejected",
+    "archived",
+  ]).optional(),
   coverMediaId: optionalId
 });
 

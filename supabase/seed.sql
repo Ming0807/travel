@@ -246,6 +246,19 @@ VALUES
   ('media.deactivate', 'Deactivate media'),
   ('media.activate', 'Restore archived media'),
   ('media.delete', 'Delete media'),
+  ('story.read', 'Read story records'),
+  ('story.create', 'Create editorial stories'),
+  ('story.update', 'Update story records'),
+  ('story.publish', 'Publish approved stories'),
+  ('story.unpublish', 'Return published stories to draft'),
+  ('story.delete', 'Delete story records when policy allows'),
+  ('story.manage', 'Legacy full story management permission'),
+  ('story.review', 'Review editorial and tourist story submissions'),
+  ('story.schedule', 'Schedule approved editorial stories'),
+  ('story.revision_read', 'Read story revision history'),
+  ('story.revision_restore', 'Restore a previous story revision'),
+  ('story.taxonomy_manage', 'Manage story topics and tags'),
+  ('story.recommend_manage', 'Manage curated story recommendations'),
   ('visit.read', 'Read operational visit records'),
   ('visit.detail', 'Read visit detail records'),
   ('visit.update', 'Update visit records'),
@@ -342,6 +355,7 @@ JOIN public.permissions p ON p.permission_name IN (
   'photo_spot.read', 'photo_spot.create', 'photo_spot.update', 'photo_spot.deactivate',
   'checkin_code.read', 'checkin_code.create', 'checkin_code.update', 'checkin_code.deactivate', 'checkin_code.download_qr',
   'media.read', 'media.upload', 'media.update', 'media.deactivate', 'media.activate',
+  'story.read', 'story.create', 'story.update', 'story.publish', 'story.unpublish',
   'visit.read', 'visit.detail',
   'survey.read', 'survey.detail',
   'certificate.read',
@@ -355,7 +369,17 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.role_permissions (role_id, permission_id)
 SELECT r.role_id, p.permission_id
 FROM public.roles r
-JOIN public.permissions p ON p.permission_name IN ('dashboard.read', 'attraction.read', 'visit.read', 'survey.read', 'export.summary', 'official_data.read')
+JOIN public.permissions p ON p.permission_name IN (
+  'story.review', 'story.schedule', 'story.revision_read',
+  'story.revision_restore', 'story.taxonomy_manage', 'story.recommend_manage'
+)
+WHERE r.role_name IN ('super_admin', 'admin')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.role_permissions (role_id, permission_id)
+SELECT r.role_id, p.permission_id
+FROM public.roles r
+JOIN public.permissions p ON p.permission_name IN ('dashboard.read', 'attraction.read', 'story.read', 'visit.read', 'survey.read', 'export.summary', 'official_data.read')
 WHERE r.role_name = 'viewer'
 ON CONFLICT DO NOTHING;
 
@@ -1209,7 +1233,7 @@ VALUES
     null, 
     'tourist', 
     (SELECT tourist_id FROM public.tourists LIMIT 1 OFFSET 1), 
-    'pending'
+    'submitted'
   ),
   (
     'narathat-beach-sunset', 
@@ -1222,7 +1246,7 @@ VALUES
     null, 
     'tourist', 
     (SELECT tourist_id FROM public.tourists LIMIT 1 OFFSET 2), 
-    'pending'
+    'submitted'
   ),
   (
     'hala-bala-wildlife-encounter', 
@@ -1259,3 +1283,40 @@ SET title = EXCLUDED.title,
     author_type = EXCLUDED.author_type,
     tourist_id = EXCLUDED.tourist_id,
     status = EXCLUDED.status;
+
+INSERT INTO public.story_topics (topic_key, name_th, name_en, display_order, is_active)
+VALUES
+  ('nature', 'ธรรมชาติ', 'Nature', 10, true),
+  ('culture', 'วัฒนธรรมและประวัติศาสตร์', 'Culture and History', 20, true),
+  ('food', 'อาหารและวิถีท้องถิ่น', 'Food and Local Life', 30, true),
+  ('community', 'ชุมชนและความยั่งยืน', 'Community and Sustainability', 40, true),
+  ('travel-guide', 'คู่มือการเดินทาง', 'Travel Guide', 50, true),
+  ('faith', 'ศรัทธาและศาสนสถาน', 'Faith and Sacred Places', 60, true),
+  ('events', 'เทศกาลและกิจกรรม', 'Events and Activities', 70, true)
+ON CONFLICT (topic_key) DO UPDATE
+SET name_th = EXCLUDED.name_th,
+    name_en = EXCLUDED.name_en,
+    display_order = EXCLUDED.display_order,
+    is_active = EXCLUDED.is_active;
+
+INSERT INTO public.story_topic_links (story_id, topic_id, is_primary)
+SELECT
+  story.story_id,
+  topic.topic_id,
+  true
+FROM public.travel_stories story
+JOIN public.story_topics topic
+  ON topic.topic_key = CASE
+    WHEN lower(COALESCE(story.category, '')) ~ 'nature|ธรรมชาติ' THEN 'nature'
+    WHEN lower(COALESCE(story.category, '')) ~ 'culture|history|วัฒนธรรม|ประวัติ' THEN 'culture'
+    WHEN lower(COALESCE(story.category, '')) ~ 'food|อาหาร' THEN 'food'
+    WHEN lower(COALESCE(story.category, '')) ~ 'community|ชุมชน|ยั่งยืน' THEN 'community'
+    WHEN lower(COALESCE(story.category, '')) ~ 'faith|religion|ศรัทธา|ศาสนา' THEN 'faith'
+    WHEN lower(COALESCE(story.category, '')) ~ 'event|festival|เทศกาล|กิจกรรม' THEN 'events'
+    ELSE 'travel-guide'
+  END
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.story_topic_links existing
+  WHERE existing.story_id = story.story_id AND existing.is_primary = true
+)
+ON CONFLICT (story_id, topic_id) DO NOTHING;

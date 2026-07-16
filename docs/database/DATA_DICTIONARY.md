@@ -1405,6 +1405,19 @@ Stories are public content, not private tourist records. They must not contain p
 | published_at | timestamptz | no | Publication timestamp |
 | created_at | timestamptz | yes | Created timestamp |
 | updated_at | timestamptz | no | Updated timestamp |
+| content_document | jsonb | no | Canonical versioned TipTap document for structured editorial content |
+| content_schema_version | integer | yes | Structured document schema version, default 1 |
+| primary_language | varchar(10) | yes | th, en, or ms |
+| geographic_scope | varchar(30) | yes | province or cross_province |
+| seo_title | varchar(255) | no | Story-specific SEO title |
+| seo_description | varchar(320) | no | Story-specific SEO description |
+| scheduled_at | timestamptz | no | Future publication time for scheduled stories |
+| first_published_at | timestamptz | no | First publication time retained across later drafts |
+| archived_at | timestamptz | no | Archive timestamp |
+| reviewed_by | uuid | no | Admin who most recently reviewed the story |
+| reviewed_at | timestamptz | no | Most recent review timestamp |
+| reading_minutes | integer | no | Validated reading-time estimate from 1 to 240 minutes |
+| content_quality_score | integer | no | Publish-readiness score from 0 to 100 |
 
 ## 37.3 Constraints and Access Rules
 
@@ -1413,7 +1426,24 @@ primary key(story_id)
 unique(slug)
 foreign key(province_id) references provinces(province_id)
 public read only when is_published = true
+status is canonical; is_published is synchronized for compatibility
 ```
+
+## 37.4 Editorial Supporting Tables (P2)
+
+| Table | Purpose | Public access |
+|---|---|---|
+| story_topics | Controlled high-level story subjects | Active rows only |
+| story_tags | Reusable specific labels | Active rows only |
+| story_topic_links | Story-to-topic relationships | Published stories only |
+| story_tag_links | Story-to-tag relationships | Published stories only |
+| story_revisions | Immutable editorial recovery snapshots | Server/admin only |
+| story_review_events | Moderation and workflow decision history | Server/admin only |
+| story_recommendations | Ordered editorial story relationships | Only when source and target are published |
+
+`story_revisions` and `story_review_events` have RLS enabled without public policies. Permission-controlled server code owns their access.
+
+Legacy application writes using `pending` remain temporarily accepted by the publication-state trigger and are normalized to `submitted` for traveler stories or `in_review` for editorial stories before constraints are checked.
 
 ---
 

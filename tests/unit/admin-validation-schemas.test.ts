@@ -304,6 +304,7 @@ describe("adminRouteMutationSchema", () => {
       adminRouteMutationSchema.parse({ ...validPayload, slug: "MY ROUTE" })
     ).toThrow(/URL-safe/);
   });
+
 });
 
 describe("adminRouteStopMutationSchema", () => {
@@ -375,6 +376,23 @@ describe("adminStoryMutationSchema", () => {
     expect(() =>
       adminStoryMutationSchema.parse({ ...validPayload, slug: "สวัสดี" })
     ).toThrow(/URL-safe/);
+  });
+
+  it("accepts backward-compatible editorial and traveler workflow statuses", () => {
+    for (const status of [
+      "draft",
+      "pending",
+      "submitted",
+      "in_review",
+      "changes_requested",
+      "approved",
+      "scheduled",
+      "published",
+      "rejected",
+      "archived",
+    ]) {
+      expect(adminStoryMutationSchema.safeParse({ ...validPayload, status }).success).toBe(true);
+    }
   });
 });
 

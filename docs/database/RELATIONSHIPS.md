@@ -18,6 +18,27 @@ This file should be read before writing database migrations, ORM models, API ser
 
 ---
 
+## 1.1 Story Editorial Platform Relationships (P2)
+
+```text
+travel_stories 1 --- * story_revisions
+travel_stories 1 --- * story_review_events
+travel_stories * --- * story_topics through story_topic_links
+travel_stories * --- * story_tags through story_tag_links
+travel_stories * --- * travel_stories through story_recommendations
+admin_users 1 --- * story_revisions / review events / curated relationships
+```
+
+Rules:
+
+- Story slugs and IDs remain stable public identities.
+- Revisions and review events cascade with their story and are never public content.
+- Topics and tags use restricted deletion so active relationships are not silently broken.
+- Curated recommendation links reject self-links and duplicate source-target pairs.
+- Public recommendation reads require both source and target stories to be published.
+
+---
+
 ## 2. Relationship Design Principles
 
 ## 2.1 Use Explicit Foreign Keys

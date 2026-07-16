@@ -46,6 +46,12 @@ export type PermissionKey =
   | "story.unpublish"
   | "story.delete"
   | "story.manage"
+  | "story.review"
+  | "story.schedule"
+  | "story.revision_read"
+  | "story.revision_restore"
+  | "story.taxonomy_manage"
+  | "story.recommend_manage"
   | "route.read"
   | "route.create"
   | "route.update"
@@ -197,6 +203,12 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   "story.unpublish",
   "story.delete",
   "story.manage",
+  "story.review",
+  "story.schedule",
+  "story.revision_read",
+  "story.revision_restore",
+  "story.taxonomy_manage",
+  "story.recommend_manage",
   "route.read",
   "route.create",
   "route.update",
@@ -380,6 +392,15 @@ const ADMIN_MESSAGE_PERMISSIONS: PermissionKey[] = [
   "export.messages"
 ];
 
+const EDITORIAL_ADMIN_PERMISSIONS: PermissionKey[] = [
+  "story.review",
+  "story.schedule",
+  "story.revision_read",
+  "story.revision_restore",
+  "story.taxonomy_manage",
+  "story.recommend_manage"
+];
+
 const VIEWER_PERMISSIONS: PermissionKey[] = [
   "dashboard.read",
   "attraction.read",
@@ -426,7 +447,13 @@ const LEGACY_PERMISSION_EXPANSIONS: Record<string, PermissionKey[]> = {
     "story.update",
     "story.publish",
     "story.unpublish",
-    "story.delete"
+    "story.delete",
+    "story.review",
+    "story.schedule",
+    "story.revision_read",
+    "story.revision_restore",
+    "story.taxonomy_manage",
+    "story.recommend_manage"
   ],
   "route.manage": [
     "route.read",
@@ -518,6 +545,7 @@ function buildPermissionSet(roleNames: string[], rawPermissionNames: string[]) {
     }
     if (roleName === "admin") {
       ADMIN_MESSAGE_PERMISSIONS.forEach((permission) => permissions.add(permission));
+      EDITORIAL_ADMIN_PERMISSIONS.forEach((permission) => permissions.add(permission));
     }
     if (roleName === "viewer") {
       VIEWER_PERMISSIONS.forEach((permission) => permissions.add(permission));

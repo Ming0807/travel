@@ -14,6 +14,23 @@ The matrix protects:
 
 Phase 08 focuses on admin CMS alignment. Full analytics, export workflows, LINE LIFF, and official import operations are not claimed as complete here.
 
+## Story Editorial Permissions (P2)
+
+| Permission | Purpose | Default roles |
+|---|---|---|
+| `story.read` | Read story records | super_admin, admin, province_admin, attraction_manager, viewer |
+| `story.create` | Create editorial stories | super_admin, admin, province_admin, attraction_manager |
+| `story.update` | Edit permitted stories | super_admin, admin, province_admin, attraction_manager |
+| `story.publish` / `story.unpublish` | Change public visibility | super_admin, admin, province_admin, attraction_manager |
+| `story.review` | Review editorial and traveler submissions | super_admin, admin |
+| `story.schedule` | Schedule approved stories | super_admin, admin |
+| `story.revision_read` | Read immutable revision history | super_admin, admin |
+| `story.revision_restore` | Restore a revision | super_admin, admin |
+| `story.taxonomy_manage` | Manage controlled topics and tags | super_admin, admin |
+| `story.recommend_manage` | Curate related stories | super_admin, admin |
+
+Viewer remains read-only. New editorial workflow permissions are not granted to viewer, province_admin, or attraction_manager by default.
+
 ## Principle
 
 Permissions are the source of truth. Roles are bundles of permissions.
