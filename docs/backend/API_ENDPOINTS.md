@@ -17,6 +17,7 @@ Invalid filter values return `400`; oversized exports return `413` and require n
 | `/api/admin/export/tourists` | `search`, `countryId`, `provinceId`, `provider`, `sort`; exports pseudonymous references and summary fields only |
 | `/api/admin/export/roles` | `search`, `status`, `sort`; requires both `role.read` and `export.roles` |
 | `/api/admin/export/certificate-templates` | `search`, `status`, `language`, `scope`, `sort`; excludes private storage paths |
+| `/api/certificate/template-image` | `visitId`, `templateId`; verifies tourist visit ownership and template attraction scope before proxying private image bytes |
 
 ## Tourist Identity Resolution (Server Actions)
 

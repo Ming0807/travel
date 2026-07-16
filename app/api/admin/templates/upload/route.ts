@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
       templateName: formData.get("template_name"),
       language: formData.get("language"),
       theme: formData.get("theme"),
+      scope: formData.get("template_scope"),
+      attractionId: formData.get("attraction_id"),
     });
 
     if (!file || !metadata.success) {
@@ -52,7 +54,23 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-    const { templateName, language, theme } = metadata.data;
+    const { templateName, language, theme, attractionId } = metadata.data;
+    const supabase = createSupabaseServiceRoleClient();
+
+    if (attractionId) {
+      const { data: attraction, error: attractionError } = await supabase
+        .from("attractions")
+        .select("attraction_id")
+        .eq("attraction_id", attractionId)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (attractionError || !attraction) {
+        return NextResponse.json(
+          { success: false, error: "ไม่พบสถานที่ที่พร้อมใช้งาน กรุณาเลือกสถานที่ใหม่" },
+          { status: 400 }
+        );
+      }
+    }
 
     const processed = await processAdminImageToWebp(file, {
       allowedMimeTypes: CERTIFICATE_TEMPLATE_ALLOWED_TYPES,
@@ -70,17 +88,18 @@ export async function POST(req: NextRequest) {
     });
     uploadedPath = uploaded.storagePath;
 
-    const supabase = createSupabaseServiceRoleClient();
     const layoutConfig = {
       theme,
       photo: "center",
       language,
+      orientation: processed.width >= processed.height ? "landscape" : "portrait",
     };
 
     const { data, error } = await supabase
       .from("certificate_templates")
       .insert({
         template_name: templateName,
+        attraction_id: attractionId ?? null,
         background_path: uploaded.storagePath,
         layout_config_json: layoutConfig,
         language,
@@ -93,6 +112,15 @@ export async function POST(req: NextRequest) {
     if (error) {
       await deletePrivateFile({ bucket: "southern-border-tourism", path: uploaded.storagePath });
       uploadedPath = null;
+      if (error.code === "23505") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "มีเทมเพลตชื่อนี้ในภาษาและขอบเขตเดียวกันแล้ว กรุณาใช้ชื่ออื่น",
+          },
+          { status: 409 }
+        );
+      }
       throw new Error("Failed to save template record");
     }
 
@@ -109,6 +137,7 @@ export async function POST(req: NextRequest) {
         height: processed.height,
         language,
         theme,
+        attractionId: attractionId ?? null,
       },
     });
 
@@ -141,7 +170,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "ไม่สามารถอัปโหลดเทมเพลตได้ กรุณาลองใหม่" },
+      { success: false, error: "ไม่สามารถอัปโหลดเทมเพลตได้ กรุณาลองใหม่" },
       { status: 500 },
     );
   }

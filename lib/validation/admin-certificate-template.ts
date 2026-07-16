@@ -29,8 +29,29 @@ export const certificateTemplateUploadFieldsSchema = z
     templateName: z.string().trim().min(2).max(120),
     language: z.enum(["th", "en"]),
     theme: z.enum(["emerald-gold", "blue-silver", "coral-white"]),
+    scope: z.enum(["global", "attraction"]),
+    attractionId: z.preprocess(
+      (value) => (value === "" || value === null || value === undefined ? undefined : value),
+      z.coerce.number().int().positive().optional()
+    ),
   })
-  .strict();
+  .strict()
+  .superRefine((value, context) => {
+    if (value.scope === "attraction" && !value.attractionId) {
+      context.addIssue({
+        code: "custom",
+        path: ["attractionId"],
+        message: "Attraction is required for attraction-scoped templates",
+      });
+    }
+    if (value.scope === "global" && value.attractionId) {
+      context.addIssue({
+        code: "custom",
+        path: ["attractionId"],
+        message: "Global templates cannot have an attraction",
+      });
+    }
+  });
 
 export type AdminCertificateTemplateFilters = z.infer<
   typeof adminCertificateTemplateFiltersSchema

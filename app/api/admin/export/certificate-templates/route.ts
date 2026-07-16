@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
       "ภาษา": template.language,
       "ขอบเขต": template.attraction_id ? "เฉพาะสถานที่" : "ส่วนกลาง",
       "สถานที่": template.attraction_name ?? "",
+      "แนวภาพ": template.orientation === "portrait" ? "แนวตั้ง" : "แนวนอน",
       "สถานะ": template.is_active ? "ใช้งานอยู่" : "ปิดใช้งาน",
       "ค่าเริ่มต้น": template.is_default ? "ใช่" : "ไม่ใช่",
       "สร้างเมื่อ": template.created_at,

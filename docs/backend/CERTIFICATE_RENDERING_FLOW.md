@@ -1138,3 +1138,26 @@ background rendering job
 The certificate is the reward that makes the data collection strategy work.
 
 The rendering flow must be reliable, attractive, privacy-safe, and correctly connected to visit, photo, stamp, and survey workflows.
+
+---
+
+## 39. Production Template Resolution (Implemented 2026-07-16)
+
+The preview and generation API now use the same server-side resolver:
+
+```text
+active template in requested language
+  -> attraction-specific template
+  -> global template
+  -> Thai-language fallback
+```
+
+The client submits the resolved `templateId`, but `/api/certificate/generate` validates it again
+against the owned visit and its attraction before storage or database writes. Template backgrounds
+are delivered through `/api/certificate/template-image`, which checks visit ownership and template
+scope before proxying private image bytes. The generated `certificates.template_id` therefore
+matches the template shown in preview.
+
+Template orientation is stored in `layout_config_json.orientation` as `landscape` or `portrait`.
+Legacy rows default to landscape because the original admin upload workflow requested horizontal
+backgrounds.

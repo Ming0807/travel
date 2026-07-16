@@ -22,6 +22,7 @@ type CertificateTemplateListItem = {
   is_active: boolean;
   created_at: string;
   updated_at: string | null;
+  orientation: "landscape" | "portrait";
 };
 
 export function TemplateListClient({ templates }: { templates: CertificateTemplateListItem[] }) {
@@ -124,6 +125,9 @@ export function TemplateListClient({ templates }: { templates: CertificateTempla
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
               <span className="rounded-full bg-[#E6F4EF] px-2.5 py-1 font-semibold text-[#0A6B62]">
                 {template.attraction_id ? "เฉพาะสถานที่" : "ส่วนกลาง"}
+              </span>
+              <span className="text-slate-500">
+                {template.orientation === "portrait" ? "แนวตั้ง" : "แนวนอน"}
               </span>
               {template.attraction_name ? (
                 <span className="truncate text-slate-600">{template.attraction_name}</span>

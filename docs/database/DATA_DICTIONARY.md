@@ -712,7 +712,14 @@ Stores certificate template configuration.
 ```text
 primary key(template_id)
 foreign key(attraction_id) references attractions(attraction_id)
+unique default per language where attraction_id is null
+unique default per attraction and language where attraction_id is not null
+check(not is_default or is_active)
 ```
+
+`layout_config_json.orientation` is normalized to `landscape` or `portrait`. Default switching is
+performed atomically by `public.set_certificate_template_default(bigint)`, executable only by the
+`service_role` after application-level permission checks.
 
 ---
 

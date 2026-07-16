@@ -16,6 +16,7 @@ type CertificateTemplateDatabaseRow = {
   template_name: string;
   attraction_id: number | null;
   background_path: string | null;
+  layout_config_json: unknown;
   language: string;
   is_default: boolean;
   is_active: boolean;
@@ -26,9 +27,10 @@ type CertificateTemplateDatabaseRow = {
 
 export type AdminCertificateTemplateListItem = Omit<
   CertificateTemplateDatabaseRow,
-  "attractions"
+  "attractions" | "layout_config_json"
 > & {
   attraction_name: string | null;
+  orientation: "landscape" | "portrait";
 };
 
 type FilterableTemplateQuery<T> = {
@@ -44,6 +46,7 @@ const ADMIN_CERTIFICATE_TEMPLATE_SELECT = `
   template_name,
   attraction_id,
   background_path,
+  layout_config_json,
   language,
   is_default,
   is_active,
@@ -68,6 +71,13 @@ function mapCertificateTemplate(row: unknown): AdminCertificateTemplateListItem 
     created_at: template.created_at,
     updated_at: template.updated_at,
     attraction_name: attraction?.name_th || attraction?.name_en || null,
+    orientation:
+      template.layout_config_json &&
+      typeof template.layout_config_json === "object" &&
+      "orientation" in template.layout_config_json &&
+      template.layout_config_json.orientation === "portrait"
+        ? "portrait"
+        : "landscape",
   };
 }
 

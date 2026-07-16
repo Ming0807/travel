@@ -33,6 +33,14 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Survey RPC**: Confirm `submit_post_certificate_survey(...)` exists and execute permission is limited to `service_role`.
 - [ ] **Funnel idempotency**: Confirm `uq_funnel_events_survey_completed_visit` prevents repeated survey submissions from inflating completion counts.
 
+### 6. Certificate Template Defaults
+- [ ] **Migration `20260716000000_harden_certificate_template_defaults.sql`**: Apply after the survey and permission migrations.
+- [ ] **Default uniqueness**: Confirm `uq_certificate_templates_global_default_language` and `uq_certificate_templates_attraction_default_language` exist.
+- [ ] **Resolver index**: Confirm `idx_certificate_templates_active_scope_language` exists for active scope/language lookup.
+- [ ] **Active default rule**: Confirm `certificate_templates_default_requires_active` prevents an inactive default template.
+- [ ] **Atomic default RPC**: Confirm `set_certificate_template_default(bigint)` exists and execute permission is limited to `service_role`.
+- [ ] **Orientation metadata**: Existing template rows should have `layout_config_json.orientation` set to `landscape` or `portrait`.
+
 ## Resolving Drift
 If you find that a schema object exists but `supabase db push` or `supabase status` complains about migration drift:
 1. Identify the missing migration version in `supabase_migrations.schema_migrations`.

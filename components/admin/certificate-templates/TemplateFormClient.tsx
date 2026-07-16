@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Image as ImageIcon, UploadSimple, ArrowLeft } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
+import { TemplateAttractionPicker } from "./TemplateAttractionPicker";
 
 export function TemplateFormClient() {
   const router = useRouter();
@@ -123,9 +124,11 @@ export function TemplateFormClient() {
             </div>
           </div>
 
+          <TemplateAttractionPicker />
+
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
-              ภาพพื้นหลังแนวนอนความละเอียดสูง
+              ภาพพื้นหลังความละเอียดสูง
             </label>
             <div className="relative flex justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-10 transition-colors hover:border-[#0A6B62]">
               <div className="text-center">
@@ -153,7 +156,7 @@ export function TemplateFormClient() {
                     />
                   </label>
                 </div>
-                <p className="text-xs leading-5 text-slate-500">รองรับ PNG, JPG หรือ WebP สูงสุด 10MB ระบบจะปรับขนาดและแปลงไฟล์ก่อนบันทึก</p>
+                <p className="text-xs leading-5 text-slate-500">รองรับภาพแนวนอนหรือแนวตั้ง PNG, JPG หรือ WebP สูงสุด 10MB ระบบจะตรวจสัดส่วน ปรับขนาด และแปลงไฟล์ก่อนบันทึก</p>
               </div>
             </div>
           </div>

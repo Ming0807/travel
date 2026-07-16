@@ -1138,3 +1138,24 @@ This module is done when:
 [ ] Error handling is friendly.
 [ ] Documentation and tests are updated.
 ```
+
+---
+
+## 43. Current Production Status (2026-07-16)
+
+Implemented:
+
+```text
+[x] Attraction-specific and global template resolution
+[x] Thai/English preference with Thai fallback
+[x] Server validation of requested template against visit attraction
+[x] Private same-origin template image proxy
+[x] Landscape and portrait preview rendering
+[x] Atomic default-template switch through service-role-only RPC
+[x] One default per language and scope enforced by partial unique indexes
+[x] Admin attraction picker for scoped templates
+[x] Template mutation audit logs and orphan background cleanup
+```
+
+Future template-studio work remains separate: editable text coordinates, font controls, safe zones,
+photo masks, campaign templates, and tourist-selectable variants.

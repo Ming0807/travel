@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { requireTouristVisitAccess, TouristAccessError } from "@/lib/auth/guards";
 import { getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
 import { getPhotoById } from "@/lib/repositories/visit-photo.repository";
@@ -7,11 +8,16 @@ import { processCertificateGeneration } from "@/lib/services/certificate.service
 import { assignStampForVisit } from "@/lib/services/stamp.service";
 import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/private-files";
 import { uuidSchema } from "@/lib/validation/common";
+import {
+  CertificateTemplateResolutionError,
+  resolveCertificateTemplate,
+} from "@/lib/services/certificate-template.service";
 
 export const runtime = "nodejs";
 
 const MAX_CERTIFICATE_IMAGE_BYTES = 8 * 1024 * 1024;
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const templateIdSchema = z.number().int().positive();
 
 function errorResponse(code: string, message: string, status: number) {
   return NextResponse.json({ success: false, code, error: message }, { status });
@@ -59,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     const visitId = visitIdResult.data;
-    await requireTouristVisitAccess(visitId);
+    const access = await requireTouristVisitAccess(visitId);
 
     const existingCertificate = await getCertificateByVisitId(visitId);
     if (existingCertificate) {
@@ -71,6 +77,33 @@ export async function POST(request: NextRequest) {
         certificateUrl: certificateUrl(existingCertificate.certificate_path),
       });
     }
+
+    const visit = access.visit as { attraction_id?: number | null };
+    if (!Number.isInteger(visit.attraction_id) || Number(visit.attraction_id) <= 0) {
+      return errorResponse(
+        "CERTIFICATE_TEMPLATE_NOT_FOUND",
+        "ไม่พบเทมเพลตใบประกาศสำหรับสถานที่นี้",
+        409
+      );
+    }
+
+    const rawTemplateId = body.templateId;
+    const requestedTemplateId =
+      rawTemplateId === undefined ? undefined : templateIdSchema.safeParse(rawTemplateId);
+    if (requestedTemplateId && !requestedTemplateId.success) {
+      return errorResponse(
+        "CERTIFICATE_TEMPLATE_INVALID",
+        "เทมเพลตใบประกาศไม่ถูกต้อง กรุณารีเฟรชแล้วลองอีกครั้ง",
+        400
+      );
+    }
+
+    const language = body.language === "en" ? "en" : "th";
+    const template = await resolveCertificateTemplate({
+      attractionId: Number(visit.attraction_id),
+      language,
+      requestedTemplateId: requestedTemplateId?.data,
+    });
 
     const rawPhotoId = typeof body.photoId === "string" && body.photoId.trim() ? body.photoId : null;
     if (rawPhotoId) {
@@ -101,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     const certificateId = await processCertificateGeneration({
       visitId,
-      templateId: 1,
+      templateId: template.templateId,
       photoId: rawPhotoId || undefined,
       certificatePath,
     });
@@ -128,6 +161,17 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof TouristAccessError) {
       return errorResponse(error.code, error.message, error.code === "VISIT_ACCESS_DENIED" ? 403 : 404);
+    }
+
+    if (
+      error instanceof CertificateTemplateResolutionError ||
+      (error instanceof Error && error.message === "CERTIFICATE_TEMPLATE_NOT_FOUND")
+    ) {
+      return errorResponse(
+        "CERTIFICATE_TEMPLATE_NOT_FOUND",
+        "เทมเพลตใบประกาศนี้ไม่พร้อมใช้งาน กรุณารีเฟรชแล้วลองอีกครั้ง",
+        409
+      );
     }
 
     console.error("Certificate generation failed:", error instanceof Error ? error.message : "unknown error");

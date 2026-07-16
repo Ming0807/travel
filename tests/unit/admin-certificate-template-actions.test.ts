@@ -19,6 +19,9 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   createServiceRole: vi.fn(),
   createServerClient: vi.fn(),
+  rpc: vi.fn(),
+  logAdminAction: vi.fn(),
+  deletePrivateFile: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/guards", () => ({ requirePermission: mocks.requirePermission }));
@@ -29,8 +32,16 @@ vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: mocks.createServerClient,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/repositories/admin-audit.repository", () => ({
+  logAdminAction: mocks.logAdminAction,
+}));
+vi.mock("@/lib/storage/private-files", () => ({
+  deletePrivateFile: mocks.deletePrivateFile,
+}));
 
 import {
+  deleteTemplate,
+  searchCertificateTemplateAttractions,
   setTemplateAsDefault,
   toggleTemplateStatus,
 } from "@/app/actions/admin-certificate-templates";
@@ -49,8 +60,10 @@ describe("admin certificate template actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.requirePermission.mockResolvedValue({ adminId: "admin-1" });
-    mocks.createServiceRole.mockReturnValue({ from: mocks.from });
+    mocks.createServiceRole.mockReturnValue({ from: mocks.from, rpc: mocks.rpc });
     mocks.createServerClient.mockRejectedValue(new Error("anon client must not be used"));
+    mocks.logAdminAction.mockResolvedValue(undefined);
+    mocks.deletePrivateFile.mockResolvedValue(undefined);
   });
 
   it("uses the service-role boundary after permission checks", async () => {
@@ -83,16 +96,72 @@ describe("admin certificate template actions", () => {
     expect(mocks.from).toHaveBeenCalledTimes(1);
   });
 
-  it("does not set a new default when clearing the previous default fails", async () => {
-    mocks.from
-      .mockReturnValueOnce(
-        builder({ data: { language: "th", attraction_id: null }, error: null })
-      )
-      .mockReturnValueOnce(builder({ error: { message: "update failed" } }));
+  it("uses the atomic RPC and reports a failed default switch", async () => {
+    mocks.rpc.mockResolvedValue({
+      data: { success: false, error_code: "TEMPLATE_DEFAULT_UPDATE_FAILED" },
+      error: null,
+    });
 
     await expect(setTemplateAsDefault(4)).rejects.toThrow(
-      "ไม่สามารถยกเลิกเทมเพลตเริ่มต้นเดิมได้"
+      "ไม่สามารถตั้งเป็นค่าเริ่มต้นได้"
     );
-    expect(mocks.from).toHaveBeenCalledTimes(2);
+    expect(mocks.rpc).toHaveBeenCalledWith("set_certificate_template_default", {
+      p_template_id: 4,
+    });
+    expect(mocks.logAdminAction).not.toHaveBeenCalled();
+  });
+
+  it("blocks deleting the default template on the server", async () => {
+    mocks.from.mockReturnValueOnce(
+      builder({ data: { background_path: "template.webp", is_default: true }, error: null })
+    );
+
+    await expect(deleteTemplate(4)).rejects.toThrow("ไม่สามารถลบเทมเพลตเริ่มต้นได้");
+    expect(mocks.from).toHaveBeenCalledTimes(1);
+    expect(mocks.deletePrivateFile).not.toHaveBeenCalled();
+  });
+
+  it("removes the private background after deleting an unused template", async () => {
+    mocks.from
+      .mockReturnValueOnce(
+        builder({ data: { background_path: "certificate-templates/old.webp", is_default: false }, error: null })
+      )
+      .mockReturnValueOnce(builder({ error: null }));
+
+    await expect(deleteTemplate(4)).resolves.toBeUndefined();
+    expect(mocks.deletePrivateFile).toHaveBeenCalledWith({
+      bucket: "southern-border-tourism",
+      path: "certificate-templates/old.webp",
+    });
+    expect(mocks.logAdminAction).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "certificate.template_deleted", entityId: "4" })
+    );
+  });
+
+  it("searches active attractions for the guided template picker", async () => {
+    const query = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      or: vi.fn(),
+      order: vi.fn(),
+      limit: vi.fn(),
+    };
+    query.select.mockReturnValue(query);
+    query.eq.mockReturnValue(query);
+    query.or.mockReturnValue(query);
+    query.order.mockReturnValue(query);
+    query.limit.mockResolvedValue({
+      data: [{ attraction_id: 12, name_th: "อัยเยอร์เวง", name_en: "Aiyerweng", slug: "aiyerweng" }],
+      error: null,
+    });
+    mocks.from.mockReturnValue(query);
+
+    await expect(searchCertificateTemplateAttractions(" อัย ")).resolves.toMatchObject({
+      success: true,
+      data: [expect.objectContaining({ attraction_id: 12 })],
+    });
+    expect(mocks.requirePermission).toHaveBeenCalledWith("certificate.template_manage");
+    expect(query.eq).toHaveBeenCalledWith("is_active", true);
+    expect(query.limit).toHaveBeenCalledWith(20);
   });
 });

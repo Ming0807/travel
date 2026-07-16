@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => {
     deletePrivateFile: vi.fn(),
     processCertificateGeneration: vi.fn(),
     assignStampForVisit: vi.fn(),
+    resolveCertificateTemplate: vi.fn(),
   };
 });
 
@@ -48,6 +49,13 @@ vi.mock("@/lib/services/certificate.service", () => ({
 
 vi.mock("@/lib/services/stamp.service", () => ({
   assignStampForVisit: mocks.assignStampForVisit,
+}));
+
+vi.mock("@/lib/services/certificate-template.service", () => ({
+  CertificateTemplateResolutionError: class CertificateTemplateResolutionError extends Error {
+    code = "CERTIFICATE_TEMPLATE_NOT_FOUND";
+  },
+  resolveCertificateTemplate: mocks.resolveCertificateTemplate,
 }));
 
 import { POST } from "@/app/api/certificate/generate/route";
@@ -84,6 +92,7 @@ describe("POST /api/certificate/generate", () => {
     }));
     mocks.processCertificateGeneration.mockResolvedValue("certificate-1");
     mocks.assignStampForVisit.mockResolvedValue({ success: true, status: "earned", stampId: "stamp-1" });
+    mocks.resolveCertificateTemplate.mockResolvedValue({ templateId: 7 });
   });
 
   it("rejects visits the current tourist does not own before upload", async () => {
@@ -168,8 +177,32 @@ describe("POST /api/certificate/generate", () => {
     expect(mocks.processCertificateGeneration).toHaveBeenCalledWith(expect.objectContaining({
       visitId,
       photoId,
+      templateId: 7,
       certificatePath: uploadArg.path,
     }));
+  });
+
+  it("validates the requested template against the visit attraction before upload", async () => {
+    await POST(request({ visitId, templateId: 7, photoId, base64Image: pngDataUrl }));
+
+    expect(mocks.resolveCertificateTemplate).toHaveBeenCalledWith({
+      attractionId: 12,
+      language: "th",
+      requestedTemplateId: 7,
+    });
+  });
+
+  it("does not upload when no eligible certificate template exists", async () => {
+    const error = new Error("CERTIFICATE_TEMPLATE_NOT_FOUND");
+    error.name = "CertificateTemplateResolutionError";
+    mocks.resolveCertificateTemplate.mockRejectedValueOnce(error);
+
+    const response = await POST(request({ visitId, templateId: 99, base64Image: pngDataUrl }));
+    const body = await json(response);
+
+    expect(response.status).toBe(409);
+    expect(body.code).toBe("CERTIFICATE_TEMPLATE_NOT_FOUND");
+    expect(mocks.uploadPrivateFile).not.toHaveBeenCalled();
   });
 
   it("deletes the certificate object if DB certificate creation fails", async () => {

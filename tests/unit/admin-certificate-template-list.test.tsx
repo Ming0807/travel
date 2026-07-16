@@ -26,6 +26,7 @@ describe("TemplateListClient", () => {
             is_active: true,
             created_at: "2026-07-01T00:00:00.000Z",
             updated_at: null,
+            orientation: "landscape",
           },
         ]}
       />

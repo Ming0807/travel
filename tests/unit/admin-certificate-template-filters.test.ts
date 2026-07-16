@@ -62,11 +62,15 @@ describe("certificateTemplateUploadFieldsSchema", () => {
         templateName: "  เทมเพลตยะลา  ",
         language: "th",
         theme: "emerald-gold",
+        scope: "attraction",
+        attractionId: "12",
       })
     ).toEqual({
       templateName: "เทมเพลตยะลา",
       language: "th",
       theme: "emerald-gold",
+      scope: "attraction",
+      attractionId: 12,
     });
   });
 
@@ -76,6 +80,7 @@ describe("certificateTemplateUploadFieldsSchema", () => {
         templateName: "Template",
         language: "jp",
         theme: "emerald-gold",
+        scope: "global",
       }).success
     ).toBe(false);
     expect(
@@ -83,6 +88,7 @@ describe("certificateTemplateUploadFieldsSchema", () => {
         templateName: "Template",
         language: "th",
         theme: "unknown",
+        scope: "global",
       }).success
     ).toBe(false);
     expect(
@@ -90,6 +96,15 @@ describe("certificateTemplateUploadFieldsSchema", () => {
         templateName: "x".repeat(121),
         language: "th",
         theme: "emerald-gold",
+        scope: "global",
+      }).success
+    ).toBe(false);
+    expect(
+      certificateTemplateUploadFieldsSchema.safeParse({
+        templateName: "Template",
+        language: "th",
+        theme: "emerald-gold",
+        scope: "attraction",
       }).success
     ).toBe(false);
   });

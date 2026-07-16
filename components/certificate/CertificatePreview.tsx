@@ -14,6 +14,11 @@ interface CertificatePreviewProps {
   attractionName: string;
   provinceName: string;
   visitDate: string;
+  templateId: number;
+  templateName: string;
+  templateBackgroundUrl: string;
+  language: "th" | "en";
+  orientation: "landscape" | "portrait";
 }
 
 export function CertificatePreview({
@@ -24,6 +29,11 @@ export function CertificatePreview({
   attractionName,
   provinceName,
   visitDate,
+  templateId,
+  templateName,
+  templateBackgroundUrl,
+  language,
+  orientation,
 }: CertificatePreviewProps) {
   const router = useRouter();
   const certRef = useRef<HTMLDivElement>(null);
@@ -31,30 +41,18 @@ export function CertificatePreview({
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
-    console.log("handleGenerate clicked, certRef:", !!certRef.current);
     if (!certRef.current) return;
     setIsGenerating(true);
     setError(null);
 
     try {
       // 1. Capture DOM as PNG
-      let dataUrl = "";
-      console.log("webdriver:", typeof window !== "undefined" ? window.navigator.webdriver : "unknown");
-      if (typeof window !== "undefined" && window.navigator.webdriver) {
-        // Mock dataUrl for Playwright tests to prevent html-to-image hanging on remote images
-        dataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
-        console.log("Using mocked dataUrl for webdriver");
-      } else {
-        console.log("Calling toPng...");
-        dataUrl = await toPng(certRef.current, {
-          cacheBust: true,
-          quality: 1,
-          pixelRatio: 2, // high quality
-        });
-        console.log("toPng finished");
-      }
+      const dataUrl = await toPng(certRef.current, {
+        cacheBust: true,
+        quality: 1,
+        pixelRatio: 2,
+      });
 
-      console.log("Calling fetch...");
       // 2. Upload to server
       const res = await fetch("/api/certificate/generate", {
         method: "POST",
@@ -62,11 +60,12 @@ export function CertificatePreview({
         body: JSON.stringify({
           visitId,
           photoId,
+          templateId,
+          language,
           base64Image: dataUrl,
         }),
       });
 
-      console.log("fetch status:", res.status);
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Generation failed");
@@ -83,7 +82,7 @@ export function CertificatePreview({
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-md mx-auto gap-6 animate-in fade-in duration-500">
+    <div className="flex w-full max-w-xl flex-col items-center gap-6 mx-auto animate-in fade-in duration-500">
       
       {/* Action Bar */}
       <div className="w-full flex justify-between items-center px-2 animate-in fade-in slide-in-from-top-2 duration-500 delay-100 fill-mode-both">
@@ -103,56 +102,70 @@ export function CertificatePreview({
       )}
 
       {/* Certificate DOM to Capture */}
-      <div 
-        className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-lg border-4 border-white animate-in fade-in zoom-in-95 duration-700 delay-200 fill-mode-both"
-        style={{ width: "100%", maxWidth: "400px" }}
+      <div
+        className={`relative w-full overflow-hidden rounded-2xl border-4 border-white shadow-lg animate-in fade-in zoom-in-95 duration-700 delay-200 fill-mode-both ${
+          orientation === "landscape" ? "aspect-[1.414/1] max-w-[560px]" : "aspect-[4/5] max-w-[400px]"
+        }`}
       >
         <div 
           ref={certRef} 
           className="absolute inset-0 bg-white flex flex-col justify-between"
-          style={{ width: "400px", height: "500px", transform: "scale(1)", transformOrigin: "top left" }} // Fixed dimension for consistent html-to-image
         >
-          {/* Background / Styling for MVP Certificate */}
-          <div className="absolute inset-0 bg-[#F4F1EA] z-0"></div>
+          {templateBackgroundUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={templateBackgroundUrl}
+              alt=""
+              aria-hidden="true"
+              crossOrigin="anonymous"
+              className="absolute inset-0 z-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 z-0 bg-[#F4F1EA]" />
+          )}
+          <div className="absolute inset-0 z-0 bg-white/10" />
           
-          <div className="relative z-10 flex flex-col h-full items-center p-8 text-center pt-10">
-            <h2 className="text-2xl font-bold text-ink uppercase tracking-widest mb-1">Travel Memory</h2>
-            <p className="text-xs font-semibold text-gold tracking-widest mb-6">SOUTHERN BORDER DIGITAL PASSPORT</p>
-            
-            {/* Photo */}
-            <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-lg mb-6 flex-shrink-0 bg-gradient-to-br from-teal/10 to-coral/10 flex items-center justify-center">
-              {previewUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={previewUrl} alt="Tourist Memory" className="w-full h-full object-cover" crossOrigin="anonymous" />
-              ) : (
-                <div className="flex flex-col items-center text-ink/30">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                    <polyline points="21 15 16 10 5 21"/>
-                  </svg>
-                  <span className="mt-1 text-[10px] font-medium">No photo</span>
+          <div className={`relative z-10 flex h-full flex-col items-center text-center ${
+            orientation === "landscape" ? "p-3 sm:p-5" : "p-8 pt-10"
+          }`}>
+            <h2 className={`${orientation === "landscape" ? "text-base sm:text-xl" : "text-2xl"} mb-1 font-bold uppercase tracking-widest text-ink`}>Travel Memory</h2>
+            <p className={`${orientation === "landscape" ? "mb-2 text-[8px] sm:text-[10px]" : "mb-6 text-xs"} font-semibold tracking-widest text-gold`}>SOUTHERN BORDER DIGITAL PASSPORT</p>
+
+            <div className={`flex w-full flex-1 items-center justify-center ${orientation === "landscape" ? "flex-row gap-3 sm:gap-6" : "flex-col"}`}>
+              <div className={`${orientation === "landscape" ? "h-20 w-20 sm:h-28 sm:w-28" : "mb-6 h-48 w-48"} flex flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-teal/10 to-coral/10 shadow-lg`}>
+                {previewUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={previewUrl} alt="Tourist Memory" className="h-full w-full object-cover" crossOrigin="anonymous" />
+                ) : (
+                  <div className="flex flex-col items-center text-ink/30">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <span className="mt-1 text-[9px] font-medium">No photo</span>
+                  </div>
+                )}
+              </div>
+
+              <div className={`flex min-w-0 flex-col justify-center ${orientation === "landscape" ? "flex-1 text-left" : "w-full flex-1 text-center"}`}>
+                <h3 className={`${orientation === "landscape" ? "text-base sm:text-xl" : "text-2xl"} mb-1 line-clamp-2 break-words font-bold text-ink`}>{touristName}</h3>
+                <p className={`${orientation === "landscape" ? "mb-2 text-[10px] sm:text-xs" : "mb-4 text-sm"} font-medium text-ink-light`}>has visited</p>
+
+                <div className={`${orientation === "landscape" ? "px-3 py-2" : "px-4 py-3"} w-full rounded-lg border border-gold/30 bg-white/70`}>
+                  <p className={`${orientation === "landscape" ? "text-xs sm:text-sm" : "text-base"} line-clamp-2 font-bold leading-tight text-teal`}>{attractionName}</p>
+                  <p className="mt-1 text-[10px] text-ink-light sm:text-xs">{provinceName}</p>
                 </div>
-              )}
-            </div>
-
-            <div className="flex-1 flex flex-col justify-center w-full">
-              <h3 className="text-2xl font-bold text-ink mb-1">{touristName}</h3>
-              <p className="text-sm font-medium text-ink-light mb-4">has visited</p>
-              
-              <div className="w-full py-3 px-4 bg-white/60 rounded-xl border border-gold/30">
-                <p className="font-bold text-teal leading-tight">{attractionName}</p>
-                <p className="text-xs text-ink-light mt-1">{provinceName}</p>
               </div>
             </div>
 
-            <div className="w-full flex justify-between items-end mt-4">
+            <div className={`flex w-full items-end justify-between ${orientation === "landscape" ? "mt-1" : "mt-4"}`}>
               <div className="text-left">
-                <p className="text-[10px] text-ink-light uppercase tracking-wider font-semibold">Date</p>
-                <p className="text-xs font-medium text-ink">{visitDate}</p>
+                <p className="text-[8px] font-semibold uppercase tracking-wider text-ink-light sm:text-[10px]">Date</p>
+                <p className="text-[9px] font-medium text-ink sm:text-xs">{visitDate}</p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
-                <Stamp weight="fill" size={24} />
+              <div className={`${orientation === "landscape" ? "h-7 w-7 sm:h-9 sm:w-9" : "h-10 w-10"} flex items-center justify-center rounded-full bg-gold/20 text-gold`}>
+                <Stamp weight="fill" className={orientation === "landscape" ? "h-4 w-4 sm:h-5 sm:w-5" : "h-6 w-6"} />
               </div>
             </div>
           </div>
@@ -173,6 +186,9 @@ export function CertificatePreview({
       </div>
 
       <div className="w-full bg-white p-6 rounded-2xl border border-ink/5 mt-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
+        <p className="mb-2 text-xs font-semibold text-[#0A6B62]">
+          รูปแบบ: {templateName}
+        </p>
         <h3 className="font-bold text-lg text-ink mb-2">ยืนยันและสร้างใบประกาศ</h3>
         <p className="text-sm text-muted mb-6">
           คุณสามารถบันทึกภาพนี้เพื่อเก็บเป็นความทรงจำ หรือแชร์ให้เพื่อนๆ ได้

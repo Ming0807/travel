@@ -4,8 +4,11 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { requirePermission } from "@/lib/auth/guards";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logAdminAction } from "@/lib/repositories/admin-audit.repository";
+import { deletePrivateFile } from "@/lib/storage/private-files";
 
 const templateIdSchema = z.number().int().positive();
+const attractionSearchSchema = z.string().trim().min(2).max(100);
 
 function parseTemplateId(templateId: number): number {
   const parsed = templateIdSchema.safeParse(templateId);
@@ -13,8 +16,32 @@ function parseTemplateId(templateId: number): number {
   return parsed.data;
 }
 
-export async function toggleTemplateStatus(templateId: number, isActive: boolean) {
+export async function searchCertificateTemplateAttractions(query: string) {
   await requirePermission("certificate.template_manage");
+  const parsed = attractionSearchSchema.safeParse(query);
+  if (!parsed.success) {
+    return { success: false as const, error: "กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร" };
+  }
+
+  const escaped = parsed.data.replace(/[\\%_]/g, "\\$&").replace(/,/g, " ");
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("attractions")
+    .select("attraction_id, name_th, name_en, slug")
+    .eq("is_active", true)
+    .or(`name_th.ilike.%${escaped}%,name_en.ilike.%${escaped}%,slug.ilike.%${escaped}%`)
+    .order("name_th", { ascending: true })
+    .limit(20);
+
+  if (error) {
+    return { success: false as const, error: "ไม่สามารถค้นหาสถานที่ได้ กรุณาลองอีกครั้ง" };
+  }
+
+  return { success: true as const, data: data ?? [] };
+}
+
+export async function toggleTemplateStatus(templateId: number, isActive: boolean) {
+  const guard = await requirePermission("certificate.template_manage");
   const validTemplateId = parseTemplateId(templateId);
   const supabase = createSupabaseServiceRoleClient();
 
@@ -35,54 +62,55 @@ export async function toggleTemplateStatus(templateId: number, isActive: boolean
     .eq("template_id", validTemplateId);
 
   if (error) throw new Error("ไม่สามารถเปลี่ยนสถานะเทมเพลตได้");
+  await logAdminAction({
+    adminId: guard.adminId,
+    action: "certificate.template_status_updated",
+    entityType: "certificate_template",
+    entityId: String(validTemplateId),
+    details: { isActive },
+  });
   revalidatePath("/admin/certificate-templates");
 }
 
 export async function setTemplateAsDefault(templateId: number) {
-  await requirePermission("certificate.template_manage");
+  const guard = await requirePermission("certificate.template_manage");
   const validTemplateId = parseTemplateId(templateId);
   const supabase = createSupabaseServiceRoleClient();
-  
-  // Get the template to find its language
-  const { data: template, error: fetchError } = await supabase
-    .from("certificate_templates")
-    .select("language, attraction_id")
-    .eq("template_id", validTemplateId)
-    .single();
 
-  if (fetchError || !template) throw new Error("ไม่พบเทมเพลต");
-
-  // First, unset all defaults for the same language (and attraction if applicable)
-  let query = supabase
-    .from("certificate_templates")
-    .update({ is_default: false })
-    .eq("language", template.language);
-
-  // If we support attraction-specific templates, we should scope it
-  if (template.attraction_id) {
-    query = query.eq("attraction_id", template.attraction_id);
-  } else {
-    query = query.is("attraction_id", null);
+  const { data, error } = await supabase.rpc("set_certificate_template_default", {
+    p_template_id: validTemplateId,
+  });
+  const result = data as { success?: boolean; error_code?: string } | null;
+  if (error || !result?.success) {
+    if (result?.error_code === "TEMPLATE_NOT_FOUND") throw new Error("ไม่พบเทมเพลต");
+    if (result?.error_code === "TEMPLATE_INACTIVE") {
+      throw new Error("กรุณาเปิดใช้งานเทมเพลตก่อนตั้งเป็นค่าเริ่มต้น");
+    }
+    throw new Error("ไม่สามารถตั้งเป็นค่าเริ่มต้นได้");
   }
 
-  const { error: unsetError } = await query;
-  if (unsetError) throw new Error("ไม่สามารถยกเลิกเทมเพลตเริ่มต้นเดิมได้");
-
-  // Then set this one as default
-  const { error } = await supabase
-    .from("certificate_templates")
-    .update({ is_default: true, is_active: true }) // make sure it's active
-    .eq("template_id", validTemplateId);
-
-  if (error) throw new Error("ไม่สามารถตั้งเป็นค่าเริ่มต้นได้");
+  await logAdminAction({
+    adminId: guard.adminId,
+    action: "certificate.template_default_updated",
+    entityType: "certificate_template",
+    entityId: String(validTemplateId),
+  });
   revalidatePath("/admin/certificate-templates");
 }
 
 export async function deleteTemplate(templateId: number) {
-  await requirePermission("certificate.template_manage");
+  const guard = await requirePermission("certificate.template_manage");
   const validTemplateId = parseTemplateId(templateId);
   const supabase = createSupabaseServiceRoleClient();
-  
+
+  const { data: template, error: fetchError } = await supabase
+    .from("certificate_templates")
+    .select("background_path, is_default")
+    .eq("template_id", validTemplateId)
+    .single();
+  if (fetchError || !template) throw new Error("ไม่พบเทมเพลต");
+  if (template.is_default) throw new Error("ไม่สามารถลบเทมเพลตเริ่มต้นได้");
+
   const { error } = await supabase
     .from("certificate_templates")
     .delete()
@@ -94,5 +122,26 @@ export async function deleteTemplate(templateId: number) {
     }
     throw new Error("ไม่สามารถลบเทมเพลตได้ กรุณาลองอีกครั้ง");
   }
+
+  if (template.background_path) {
+    try {
+      await deletePrivateFile({
+        bucket: "southern-border-tourism",
+        path: template.background_path,
+      });
+    } catch (cleanupError) {
+      console.error(
+        "Certificate template storage cleanup failed:",
+        cleanupError instanceof Error ? cleanupError.message : "unknown error"
+      );
+    }
+  }
+
+  await logAdminAction({
+    adminId: guard.adminId,
+    action: "certificate.template_deleted",
+    entityType: "certificate_template",
+    entityId: String(validTemplateId),
+  });
   revalidatePath("/admin/certificate-templates");
 }
