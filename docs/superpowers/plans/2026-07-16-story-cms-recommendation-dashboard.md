@@ -110,13 +110,13 @@ New UI areas:
 - Create: `tests/unit/story-editorial-service.test.ts`
 - Modify: relevant admin story action tests.
 
-- [ ] Write failing tests for transitions, revisions, scheduling, and rollback on failure.
-- [ ] Keep authorization in guards/actions and persistence in repositories.
-- [ ] Make status canonical and synchronize legacy `is_published` behavior.
-- [ ] Save a revision on meaningful editorial changes.
-- [ ] Audit all workflow mutations without logging content bodies or secrets.
-- [ ] Run targeted tests, typecheck, and ESLint.
-- [ ] Commit: `refactor: add story editorial service boundary`
+- [x] Write failing tests for transitions, revisions, scheduling, and rollback on failure.
+- [x] Keep authorization in guards/actions and persistence in repositories.
+- [x] Make status canonical and synchronize legacy `is_published` behavior.
+- [x] Save a revision on meaningful editorial changes through the atomic RPC.
+- [x] Audit new workflow mutations without logging content bodies or secrets.
+- [x] Run targeted tests, typecheck, and ESLint.
+- [x] Commit: `refactor: add story editorial service boundary`
 
 ## Task 5: Build Editorial Library and Moderation Queue
 

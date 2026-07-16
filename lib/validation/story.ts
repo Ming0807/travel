@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminPaginationSchema } from "./admin-attraction";
 import { optionalBooleanQuery } from "@/lib/validation/query-params";
+import { storyDocumentSchema } from "@/lib/content/story-document";
 
 const optionalText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
@@ -71,5 +72,59 @@ export const adminStoryIdSchema = z.object({
   storyId: requiredId
 });
 
+const storyStatusSchema = z.enum([
+  "draft",
+  "submitted",
+  "in_review",
+  "changes_requested",
+  "approved",
+  "scheduled",
+  "published",
+  "rejected",
+  "archived",
+]);
+
+const editorialChangeSchema = z
+  .object({
+    title: z.string().trim().min(1).max(255).optional(),
+    slug: z
+      .string()
+      .trim()
+      .min(3)
+      .max(200)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+      .optional(),
+    excerpt: z.string().trim().max(2_000).nullable().optional(),
+    legacyContent: z.string().max(500_000).nullable().optional(),
+    contentDocument: storyDocumentSchema.nullable().optional(),
+    contentSchemaVersion: z.literal(1).optional(),
+    provinceId: z.number().int().positive().nullable().optional(),
+    geographicScope: z.enum(["province", "cross_province"]).optional(),
+    topicIds: z
+      .array(z.number().int().positive())
+      .max(20)
+      .refine((items) => new Set(items).size === items.length, "Story topics must be unique.")
+      .optional(),
+    seoTitle: z.string().trim().max(255).nullable().optional(),
+    seoDescription: z.string().trim().max(500).nullable().optional(),
+    usesGeneratedSeo: z.boolean().optional(),
+    primaryLanguage: z.enum(["th", "en", "ms"]).optional(),
+    scheduledAt: z.string().datetime({ offset: true }).nullable().optional(),
+    readingMinutes: z.number().int().min(1).max(120).nullable().optional(),
+    contentQualityScore: z.number().int().min(0).max(100).nullable().optional(),
+    targetStatus: storyStatusSchema.optional(),
+    reviewNote: z.string().trim().max(2_000).nullable().optional(),
+    changeSummary: z.string().trim().max(500).nullable().optional(),
+  })
+  .strict()
+  .refine((change) => Object.keys(change).length > 0, "Editorial change cannot be empty.");
+
+export const storyEditorialChangeInputSchema = z.object({
+  storyId: requiredId,
+  expectedUpdatedAt: z.string().datetime({ offset: true }),
+  change: editorialChangeSchema,
+});
+
 export type AdminStoryFilters = z.infer<typeof adminStoryFiltersSchema>;
 export type AdminStoryMutationInput = z.infer<typeof adminStoryMutationSchema>;
+export type StoryEditorialChangeInput = z.infer<typeof storyEditorialChangeInputSchema>;

@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
+import { requiredStoryEditorialPermission } from "@/lib/auth/story-editorial-permission";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
-import { adminStoryMutationSchema } from "@/lib/validation/story";
+import { applyStoryEditorialChange, StoryEditorialServiceError } from "@/lib/services/story-editorial.service";
+import { adminStoryMutationSchema, storyEditorialChangeInputSchema } from "@/lib/validation/story";
 import { clearCoverMediaForEntity, linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminStory,
@@ -11,7 +13,9 @@ import {
   updateAdminStoryStatus,
   findStoryBySlug,
   getAdminStoryById,
+  toStoryEditorialState,
 } from "@/lib/repositories/admin-story.repository";
+import { storyEditorialChangeStore } from "@/lib/repositories/story-revision.repository";
 
 type ActionResult<TData = unknown> = {
   success: boolean;
@@ -19,6 +23,82 @@ type ActionResult<TData = unknown> = {
   fieldErrors?: Record<string, string[] | undefined>;
   data?: TData;
 };
+
+function editorialErrorMessage(error: StoryEditorialServiceError): string {
+  switch (error.code) {
+    case "EDIT_CONFLICT":
+      return "มีผู้แก้ไขเนื้อหานี้หลังจากที่คุณเปิดหน้า กรุณาโหลดข้อมูลล่าสุดแล้วตรวจสอบอีกครั้ง";
+    case "STORY_NOT_FOUND":
+      return "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว";
+    case "INVALID_DOCUMENT":
+      return "รูปแบบเนื้อหาไม่ถูกต้อง กรุณาตรวจสอบเนื้อหาแล้วลองอีกครั้ง";
+    case "NOT_READY_FOR_REVIEW":
+    case "NOT_READY_FOR_PUBLISH":
+      return "เนื้อหายังไม่พร้อมสำหรับขั้นตอนนี้ กรุณาตรวจสอบรายการความพร้อม";
+    case "REVIEW_NOTE_REQUIRED":
+      return "กรุณาระบุเหตุผลประกอบการพิจารณา";
+    case "SCHEDULE_REQUIRED":
+    case "SCHEDULE_MUST_BE_FUTURE":
+      return "กรุณาเลือกวันและเวลาเผยแพร่ในอนาคต";
+    case "INVALID_TRANSITION":
+    case "NO_CHANGE":
+      return "ไม่สามารถเปลี่ยนเป็นสถานะที่เลือกจากสถานะปัจจุบันได้";
+    default:
+      return "ยังบันทึกการแก้ไขไม่ได้ กรุณาลองอีกครั้ง";
+  }
+}
+
+export async function saveStoryEditorialChangeAction(
+  input: unknown
+): Promise<ActionResult<{ updatedAt: string; revisionNumber: number }>> {
+  const parsed = storyEditorialChangeInputSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "ข้อมูลการแก้ไขไม่ถูกต้อง" };
+
+  try {
+    await requirePermission("story.read");
+    const story = await getAdminStoryById(parsed.data.storyId);
+    if (!story) return { success: false, error: "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว" };
+
+    const persistedState = toStoryEditorialState(story);
+    const targetStatus = parsed.data.change.targetStatus ?? persistedState.status;
+    const permission = requiredStoryEditorialPermission(
+      persistedState.authorType,
+      persistedState.status,
+      targetStatus
+    );
+    const guard = await requirePermission(permission);
+    const result = await applyStoryEditorialChange({
+      actorId: guard.actor.adminId,
+      current: { ...persistedState, updatedAt: parsed.data.expectedUpdatedAt },
+      change: parsed.data.change,
+      store: storyEditorialChangeStore,
+    });
+
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "story.editorial.save",
+      entityType: "travel_story",
+      entityId: parsed.data.storyId,
+      oldValues: { status: persistedState.status, updatedAt: persistedState.updatedAt },
+      newValues: {
+        status: targetStatus,
+        revisionNumber: result.revisionNumber,
+        changedFields: Object.keys(parsed.data.change),
+      },
+    });
+
+    revalidatePath("/admin/stories");
+    revalidatePath(`/admin/stories/${parsed.data.storyId}/edit`);
+    revalidatePath(`/stories/${story.slug}`);
+    return { success: true, data: result };
+  } catch (error) {
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    if (error instanceof StoryEditorialServiceError) {
+      return { success: false, error: editorialErrorMessage(error) };
+    }
+    return { success: false, error: "ยังบันทึกการแก้ไขไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
 
 export async function createStoryAction(_prevState: ActionResult<{ id: number; slug: string }>, formData: FormData): Promise<ActionResult<{ id: number; slug: string }>> {
   try {

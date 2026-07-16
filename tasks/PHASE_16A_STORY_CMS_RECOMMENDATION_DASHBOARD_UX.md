@@ -1,6 +1,6 @@
 # Phase 16A: Story CMS, Recommendation, and Dashboard UX
 
-Status: In progress (design and implementation plan complete)
+Status: In progress (domain, schema, and editorial service foundation complete)
 Priority: P2
 Approved direction: 2026-07-16
 
@@ -58,7 +58,10 @@ Build a full editorial Story/Blog CMS, explainable content recommendations, a ta
 - [x] Implementation plan written
 - [x] Story domain contracts implemented
 - [x] Database migration created and reviewed
-- [ ] Database migration applied through the controlled release process
+- [x] Story platform schema migration applied and verified by the project owner
+- [x] Atomic editorial-change RPC migration applied and confirmed by the project owner
+- [x] Editorial service, validation, RBAC policy, optimistic locking, and revision repository implemented
+- [ ] Existing visual editor migrated from compatibility actions to the atomic editorial action
 - [ ] Editorial library and moderation queue implemented
 - [ ] Structured editor and revisions implemented
 - [ ] Public story experience implemented

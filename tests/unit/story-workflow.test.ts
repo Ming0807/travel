@@ -73,4 +73,26 @@ describe("story workflow", () => {
     expect(normalizeLegacyStoryStatus("tourist", "rejected")).toBe("rejected");
     expect(normalizeLegacyStoryStatus("admin", "published")).toBe("published");
   });
+
+  it("preserves every canonical workflow status", () => {
+    for (const status of ["draft", "in_review", "approved", "scheduled", "published", "archived"] as const) {
+      expect(normalizeLegacyStoryStatus("admin", status)).toBe(status);
+    }
+    for (const status of [
+      "submitted",
+      "in_review",
+      "changes_requested",
+      "approved",
+      "published",
+      "rejected",
+      "archived",
+    ] as const) {
+      expect(normalizeLegacyStoryStatus("tourist", status)).toBe(status);
+    }
+  });
+
+  it("does not accept object prototype keys as workflow states", () => {
+    expect(normalizeLegacyStoryStatus("admin", "toString")).toBe("draft");
+    expect(normalizeLegacyStoryStatus("tourist", "constructor")).toBe("submitted");
+  });
 });

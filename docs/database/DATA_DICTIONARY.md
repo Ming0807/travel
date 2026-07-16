@@ -1445,6 +1445,13 @@ status is canonical; is_published is synchronized for compatibility
 
 Legacy application writes using `pending` remain temporarily accepted by the publication-state trigger and are normalized to `submitted` for traveler stories or `in_review` for editorial stories before constraints are checked.
 
+The P2 Editorial Studio persists meaningful changes through the service-role-only
+`apply_story_editorial_change(...)` function. The function locks the story row,
+checks the editor's expected `updated_at`, updates content and taxonomy, writes an
+immutable revision, and records a status transition as one PostgreSQL transaction.
+The existing visual editor remains on its compatibility action until the RPC
+migration is applied and the structured editor rollout is complete.
+
 ---
 
 ## 38. Table: data_import_logs

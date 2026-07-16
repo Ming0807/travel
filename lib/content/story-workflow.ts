@@ -43,11 +43,11 @@ const touristTransitions: Record<TouristStoryStatus, readonly TouristStoryStatus
 };
 
 function isEditorialStatus(value: StoryStatus): value is EditorialStoryStatus {
-  return value in editorialTransitions;
+  return Object.hasOwn(editorialTransitions, value);
 }
 
 function isTouristStatus(value: StoryStatus): value is TouristStoryStatus {
-  return value in touristTransitions;
+  return Object.hasOwn(touristTransitions, value);
 }
 
 export function getAllowedStoryTransitions(authorType: "admin", status: EditorialStoryStatus): EditorialStoryStatus[];
@@ -93,13 +93,12 @@ export function evaluateStoryTransition(input: {
 
 export function normalizeLegacyStoryStatus(authorType: StoryAuthorType, status: string): StoryStatus {
   if (authorType === "tourist") {
-    if (status === "published") return "published";
-    if (status === "rejected") return "rejected";
+    if (isTouristStatus(status as StoryStatus)) return status as TouristStoryStatus;
     return "submitted";
   }
 
+  if (isEditorialStatus(status as StoryStatus)) return status as EditorialStoryStatus;
   if (status === "pending") return "in_review";
-  if (status === "published") return "published";
   if (status === "rejected") return "archived";
   return "draft";
 }

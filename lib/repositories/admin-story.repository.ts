@@ -1,6 +1,8 @@
 import "server-only";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { normalizeLegacyStoryStatus, type StoryAuthorType } from "@/lib/content/story-workflow";
+import type { StoryEditorialState } from "@/lib/services/story-editorial.service";
 import type { AdminStoryFilters, AdminStoryMutationInput } from "@/lib/validation/story";
 import { firstJoin } from "@/lib/utils/supabase-joins";
 import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
@@ -11,10 +13,15 @@ export type AdminStoryRow = {
   title: string;
   excerpt: string | null;
   content: string | null;
+  content_document?: unknown;
+  content_schema_version?: number;
   province_id: number | null;
   category: string | null;
   is_published: boolean;
   published_at: string | null;
+  first_published_at?: string | null;
+  scheduled_at?: string | null;
+  archived_at?: string | null;
   created_at: string;
   updated_at: string | null;
   province_name_th: string | null;
@@ -22,6 +29,21 @@ export type AdminStoryRow = {
   tourist_id: string | null;
   status: string;
   tourist_name: string | null;
+  primary_language?: "th" | "en" | "ms";
+  geographic_scope?: "province" | "cross_province";
+  seo_title?: string | null;
+  seo_description?: string | null;
+  reading_minutes?: number | null;
+  content_quality_score?: number | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  topic_ids?: number[];
+  cover_media?: {
+    media_id: number;
+    is_active: boolean;
+    alt_text_th: string | null;
+    alt_text_en: string | null;
+  } | null;
 };
 
 export type PaginatedResult<T> = {
@@ -31,10 +53,37 @@ export type PaginatedResult<T> = {
   pageSize: number;
 };
 
-function mapStory(rawRow: unknown): AdminStoryRow {
+function storyAuthorType(value: unknown): StoryAuthorType {
+  return value === "tourist" ? "tourist" : "admin";
+}
+
+function primaryLanguage(value: unknown): "th" | "en" | "ms" {
+  return value === "en" || value === "ms" ? value : "th";
+}
+
+function geographicScope(value: unknown): "province" | "cross_province" {
+  return value === "cross_province" ? "cross_province" : "province";
+}
+
+export function mapAdminStoryRow(rawRow: unknown): AdminStoryRow {
   const row = asRecord(rawRow);
   const province = asRecord(firstJoin(row.provinces as { province_name_th?: unknown } | { province_name_th?: unknown }[] | null));
   const tourist = asRecord(firstJoin(row.tourists as { display_name?: unknown } | { display_name?: unknown }[] | null));
+  const topicIds = Array.isArray(row.story_topic_links)
+    ? row.story_topic_links
+        .map((link) => nullableNumber(asRecord(link).topic_id))
+        .filter((topicId): topicId is number => topicId !== null)
+    : [];
+  const coverRecord = Array.isArray(row.content_media)
+    ? row.content_media
+        .map(asRecord)
+        .find(
+          (media) =>
+            booleanValue(media.is_cover) &&
+            booleanValue(media.is_active) &&
+            (!media.lifecycle_status || media.lifecycle_status === "active")
+        )
+    : undefined;
 
   return {
     story_id: numberValue(row.story_id),
@@ -42,17 +91,72 @@ function mapStory(rawRow: unknown): AdminStoryRow {
     title: stringValue(row.title),
     excerpt: nullableString(row.excerpt),
     content: nullableString(row.content),
+    content_document: row.content_document ?? null,
+    content_schema_version: numberValue(row.content_schema_version, 1),
     province_id: nullableNumber(row.province_id),
     category: nullableString(row.category),
     is_published: booleanValue(row.is_published),
     published_at: nullableString(row.published_at),
+    first_published_at: nullableString(row.first_published_at),
+    scheduled_at: nullableString(row.scheduled_at),
+    archived_at: nullableString(row.archived_at),
     created_at: stringValue(row.created_at),
     updated_at: nullableString(row.updated_at),
     province_name_th: nullableString(province.province_name_th),
-    author_type: stringValue(row.author_type),
+    author_type: storyAuthorType(row.author_type),
     tourist_id: nullableString(row.tourist_id),
     status: stringValue(row.status),
-    tourist_name: nullableString(tourist.display_name)
+    tourist_name: nullableString(tourist.display_name),
+    primary_language: primaryLanguage(row.primary_language),
+    geographic_scope: geographicScope(row.geographic_scope),
+    seo_title: nullableString(row.seo_title),
+    seo_description: nullableString(row.seo_description),
+    reading_minutes: nullableNumber(row.reading_minutes),
+    content_quality_score: nullableNumber(row.content_quality_score),
+    reviewed_by: nullableString(row.reviewed_by),
+    reviewed_at: nullableString(row.reviewed_at),
+    topic_ids: topicIds,
+    cover_media: coverRecord
+      ? {
+          media_id: numberValue(coverRecord.media_id),
+          is_active: true,
+          alt_text_th: nullableString(coverRecord.alt_text_th),
+          alt_text_en: nullableString(coverRecord.alt_text_en),
+        }
+      : null,
+  };
+}
+
+export function toStoryEditorialState(row: AdminStoryRow): StoryEditorialState {
+  const authorType = storyAuthorType(row.author_type);
+  return {
+    storyId: row.story_id,
+    authorType,
+    status: normalizeLegacyStoryStatus(authorType, row.status),
+    updatedAt: row.updated_at ?? row.created_at,
+    title: row.title,
+    slug: row.slug,
+    excerpt: row.excerpt,
+    legacyContent: row.content,
+    contentDocument: row.content_document ?? null,
+    contentSchemaVersion: row.content_schema_version ?? 1,
+    provinceId: row.province_id,
+    geographicScope: row.geographic_scope ?? "province",
+    topicIds: [...(row.topic_ids ?? [])],
+    seoTitle: row.seo_title ?? null,
+    seoDescription: row.seo_description ?? null,
+    usesGeneratedSeo: false,
+    primaryLanguage: row.primary_language ?? "th",
+    scheduledAt: row.scheduled_at ?? null,
+    readingMinutes: row.reading_minutes ?? null,
+    contentQualityScore: row.content_quality_score ?? null,
+    cover: row.cover_media
+      ? {
+          mediaId: row.cover_media.media_id,
+          isActive: row.cover_media.is_active,
+          altText: row.cover_media.alt_text_th ?? row.cover_media.alt_text_en,
+        }
+      : null,
   };
 }
 
@@ -104,7 +208,7 @@ export async function listAdminStories(filters: AdminStoryFilters): Promise<Pagi
   }
 
   return {
-    items: (data ?? []).map((row) => mapStory(row)),
+    items: (data ?? []).map((row) => mapAdminStoryRow(row)),
     total: count ?? 0,
     page: filters.page,
     pageSize: filters.pageSize
@@ -119,7 +223,9 @@ export async function getAdminStoryById(storyId: number): Promise<AdminStoryRow 
       `
         *,
         provinces (province_name_th),
-        tourists (display_name)
+        tourists (display_name),
+        story_topic_links (topic_id),
+        content_media (media_id, is_cover, is_active, lifecycle_status, alt_text_th, alt_text_en)
       `
     )
     .eq("story_id", storyId)
@@ -131,7 +237,7 @@ export async function getAdminStoryById(storyId: number): Promise<AdminStoryRow 
 
   if (!data) return null;
 
-  return mapStory(data);
+  return mapAdminStoryRow(data);
 }
 
 export async function findStoryBySlug(slug: string, excludeStoryId?: number) {
@@ -159,7 +265,7 @@ export async function createAdminStory(input: AdminStoryMutationInput): Promise<
     throw new Error(error.code === "23505" ? "DUPLICATE_SLUG" : "ADMIN_STORY_CREATE_FAILED");
   }
 
-  return mapStory(data);
+  return mapAdminStoryRow(data);
 }
 
 export async function updateAdminStory(storyId: number, input: AdminStoryMutationInput): Promise<AdminStoryRow> {
@@ -175,7 +281,7 @@ export async function updateAdminStory(storyId: number, input: AdminStoryMutatio
     throw new Error(error.code === "23505" ? "DUPLICATE_SLUG" : "ADMIN_STORY_UPDATE_FAILED");
   }
 
-  return mapStory(data);
+  return mapAdminStoryRow(data);
 }
 
 export async function updateAdminStoryStatus(
@@ -202,5 +308,5 @@ export async function updateAdminStoryStatus(
     throw new Error("ADMIN_STORY_UPDATE_FAILED");
   }
 
-  return mapStory(data);
+  return mapAdminStoryRow(data);
 }

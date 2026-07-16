@@ -41,6 +41,13 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Atomic default RPC**: Confirm `set_certificate_template_default(bigint)` exists and execute permission is limited to `service_role`.
 - [ ] **Orientation metadata**: Existing template rows should have `layout_config_json.orientation` set to `landscape` or `portrait`.
 
+### 7. Story Editorial Platform (P2)
+- [x] **Migration `20260717000000_add_story_editorial_platform.sql`**: Applied manually and verified by the project owner on 2026-07-17.
+- [x] **Migration `20260717010000_add_story_editorial_change_rpc.sql`**: Applied manually and confirmed by the project owner on 2026-07-17.
+- [x] **Atomic editorial RPC**: `apply_story_editorial_change(...)` is installed with execute permission limited to `service_role` by the migration.
+- [ ] **Atomic save behavior**: Confirm one call updates the story and topics, creates one immutable revision, and records a workflow event in the same transaction.
+- [ ] **Migration history**: If either file was run in SQL Editor, reconcile `supabase_migrations.schema_migrations` through the controlled repair process described below.
+
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:
 
