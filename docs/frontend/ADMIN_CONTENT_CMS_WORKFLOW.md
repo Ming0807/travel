@@ -32,6 +32,24 @@ QR Code = public entry point linked to attraction and optional photo spot
 Homepage Slot = selection of existing published content
 ```
 
+## P2 Story Platform Direction
+
+The approved P2 direction expands Story into a shared content platform with separate workflows:
+
+```text
+Editorial article  draft -> review -> approval -> scheduled/published -> archived
+Traveler story     submitted -> moderation -> approved/rejected -> published -> archived
+```
+
+Both workflows share Media Library, taxonomy, search, public rendering, and recommendation infrastructure. They must remain separate queues in admin UX.
+
+The editor will use hybrid structured content: TipTap JSON is the canonical editable document and sanitized HTML remains available for rendering and compatibility with existing stories. Public recommendations begin with curated relationships and deterministic relevance scoring. They must not be labeled AI.
+
+See:
+
+- `docs/superpowers/specs/2026-07-16-story-cms-recommendation-dashboard-design.md`
+- `tasks/PHASE_16A_STORY_CMS_RECOMMENDATION_DASHBOARD_UX.md`
+
 Important rule:
 
 ```text

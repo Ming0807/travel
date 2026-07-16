@@ -23,6 +23,7 @@
 | `PHASE_12A_ADMIN_E2E_QA.md` | Implemented | Authenticated non-destructive admin smoke tests against the real app |
 | `PHASE_13_DEPLOYMENT.md` | In progress | Release health gates implemented; preview/staging and operational sign-off remain |
 | `PHASE_13A_CLOUDINARY_STORAGE_DEPLOYMENT.md` | Completed | Cloudinary-first Vercel storage with future university-storage path |
+| `PHASE_16A_STORY_CMS_RECOMMENDATION_DASHBOARD_UX.md` | Planned (P2) | Full Story CMS, explainable recommendations, operational admin home, and analytical dashboard UX |
 
 ## Immediate Priority
 
@@ -33,3 +34,11 @@ Reason:
 - Core admin UX hardening is complete.
 - Authenticated local smoke now covers the real application without destructive mutations.
 - Preview/staging must still prove environment configuration, storage, migrations, and runtime behavior before production release.
+
+## P2 Product Expansion
+
+Phase 16A is approved as the next product-expansion stream after higher-priority release work. Its design and implementation plan are documented, but it does not supersede the Immediate Priority above.
+
+- `tasks/PHASE_16A_STORY_CMS_RECOMMENDATION_DASHBOARD_UX.md`
+- `docs/superpowers/specs/2026-07-16-story-cms-recommendation-dashboard-design.md`
+- `docs/superpowers/plans/2026-07-16-story-cms-recommendation-dashboard.md`

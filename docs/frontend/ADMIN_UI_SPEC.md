@@ -29,6 +29,19 @@ It must protect:
 - historical records
 - privacy and permissions
 
+## 2.1 Admin Home and Analytics Are Different Products
+
+The admin information architecture separates two questions:
+
+```text
+/admin            What needs attention today?
+/admin/dashboard  What does the collected tourism data mean?
+```
+
+`/admin` is the operational command center for review queues, drafts, scheduled content, content health, recent activity, and direct actions. `/admin/dashboard` is the analytical center for aggregated KPIs, trends, distributions, funnel analysis, satisfaction, expenses, and sustainable-tourism insights.
+
+Do not duplicate the full analytical dashboard on the admin home page.
+
 ---
 
 ## 3. Admin User Types
@@ -100,6 +113,8 @@ MVP routes:
 /admin/visits
 /admin/reports
 /admin/settings
+/admin/stories
+/admin/stories/submissions
 ```
 
 Phase 2 routes:
@@ -115,6 +130,8 @@ Phase 2 routes:
 /admin/users
 /admin/roles
 ```
+
+Planned P2 routes are defined in `tasks/PHASE_16A_STORY_CMS_RECOMMENDATION_DASHBOARD_UX.md`. A planned route must not be described as implemented until its acceptance criteria pass.
 
 ---
 

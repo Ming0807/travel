@@ -31,6 +31,17 @@ The dashboard should help users understand:
 
 The dashboard must be useful, not just beautiful.
 
+## 2.1 Product Boundary
+
+This specification owns `/admin/dashboard`, the analytical center. The operational command center at `/admin` owns work queues, drafts, moderation, content health, and shortcuts.
+
+The visual reference for the P2 redesign contributes compact density, a quiet sidebar, clear KPI hierarchy, and visible next actions. It does not change the dashboard into a project-management tool.
+
+Approved P2 design:
+
+- `docs/superpowers/specs/2026-07-16-story-cms-recommendation-dashboard-design.md`
+- `docs/superpowers/plans/2026-07-16-story-cms-recommendation-dashboard.md`
+
 ---
 
 ## 3. Dashboard Users
@@ -119,6 +130,18 @@ date range
 province
 attraction
 ```
+
+## 4.5 First-Viewport Hierarchy
+
+The executive dashboard first viewport should present, in order:
+
+1. data freshness, export, and active filter context
+2. four decision-oriented KPIs
+3. the primary visit trend with comparison
+4. province or attraction distribution
+5. prioritized analytical alerts and recommended actions
+
+Secondary topics remain available as drill-down pages. Do not give every chart equal visual weight.
 
 ## 4.5 Show Data Freshness
 
