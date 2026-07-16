@@ -10,6 +10,7 @@ import {
 } from "@/lib/services/admin-image-processing.service";
 import { deletePrivateFile, uploadPrivateFile } from "@/lib/storage/private-files";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { certificateTemplateUploadFieldsSchema } from "@/lib/validation/admin-certificate-template";
 
 export const runtime = "nodejs";
 
@@ -39,16 +40,19 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const templateName = String(formData.get("template_name") || "").trim();
-    const language = String(formData.get("language") || "").trim();
-    const theme = String(formData.get("theme") || "").trim();
+    const metadata = certificateTemplateUploadFieldsSchema.safeParse({
+      templateName: formData.get("template_name"),
+      language: formData.get("language"),
+      theme: formData.get("theme"),
+    });
 
-    if (!file || !templateName || !language || !theme) {
+    if (!file || !metadata.success) {
       return NextResponse.json(
         { success: false, error: "กรุณากรอกข้อมูลเทมเพลตและเลือกไฟล์ภาพให้ครบ" },
         { status: 400 },
       );
     }
+    const { templateName, language, theme } = metadata.data;
 
     const processed = await processAdminImageToWebp(file, {
       allowedMimeTypes: CERTIFICATE_TEMPLATE_ALLOWED_TYPES,
@@ -137,7 +141,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Upload failed. Please try again." },
+      { success: false, error: error instanceof Error ? error.message : "ไม่สามารถอัปโหลดเทมเพลตได้ กรุณาลองใหม่" },
       { status: 500 },
     );
   }

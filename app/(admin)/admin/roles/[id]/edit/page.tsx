@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function EditAdminRolePage({ params }: { params: Promise<{ id: string }> }) {
-  const guard = await requirePermission("role.manage");
+  const guard = await requirePermission("role.update");
   
   const { id } = await params;
   const numId = parseInt(id, 10);

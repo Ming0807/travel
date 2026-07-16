@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NewAdminRolePage() {
-  const guard = await requirePermission("role.manage");
+  const guard = await requirePermission("role.create");
   
   const permissions = await getAllPermissions();
 

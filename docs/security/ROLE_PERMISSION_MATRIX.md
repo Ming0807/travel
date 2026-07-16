@@ -115,8 +115,10 @@ If a granular permission is not implemented yet, the server must use an approved
 | `/admin/checkin-codes` | `checkin_code.manage` |
 | `/admin/visits` | `visit.read` or compact operational read permission |
 | `/admin/surveys` | `survey.read` or compact operational read permission |
-| `/admin/audit-logs` | `audit.read` |
-| `/admin/users` | `user.manage` |
+| `/admin/audit` | `audit.read` |
+| `/admin/users` | `user.read`; mutations require granular user permissions |
+| `/admin/roles` | `role.read`; create/update/delete require their matching granular permission |
+| `/admin/certificate-templates` | `certificate.template_manage` |
 
 ## Sensitive Fields
 
@@ -160,6 +162,15 @@ Contact messages contain names and contact details, so they are not part of gene
 | `export.messages` | Request a contact-message export | `super_admin`, `admin` |
 
 Message export also requires `export.personal_data`. The page must hide unavailable commands, while every server action and export route still enforces permissions independently.
+
+## Role And Certificate Template Operations
+
+- Role list access requires `role.read`.
+- Role creation, update, and deletion require `role.create`, `role.update`, and `role.delete` respectively.
+- Role export requires both `role.read` and `export.roles`.
+- Certificate template list and mutations require `certificate.template_manage`.
+- Certificate template export additionally requires `export.certificate_templates` and never includes private background storage paths.
+- Certificate template mutations use the service-role client only after the server permission guard succeeds because the table's public RLS policy is read-only.
 
 ## Authorization Tests
 

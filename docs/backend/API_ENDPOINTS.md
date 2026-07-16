@@ -15,6 +15,8 @@ Invalid filter values return `400`; oversized exports return `413` and require n
 | `/api/admin/export/accommodations` | `search`, `provinceId`, `accommodationType`, `isPublished` |
 | `/api/admin/export/badges` | `search`, `category`, `isActive` |
 | `/api/admin/export/tourists` | `search`, `countryId`, `provinceId`, `provider`, `sort`; exports pseudonymous references and summary fields only |
+| `/api/admin/export/roles` | `search`, `status`, `sort`; requires both `role.read` and `export.roles` |
+| `/api/admin/export/certificate-templates` | `search`, `status`, `language`, `scope`, `sort`; excludes private storage paths |
 
 ## Tourist Identity Resolution (Server Actions)
 

@@ -1,15 +1,15 @@
 "use server";
 
-import { requireAdmin } from "@/lib/auth/guards";
+import { requirePermission } from "@/lib/auth/guards";
 import { createRole, updateRole, deleteRole } from "@/lib/repositories/role.repository";
 import { logAdminAction } from "@/lib/repositories/admin-audit.repository";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const roleSchema = z.object({
-  id: z.string().optional(),
-  roleName: z.string().min(2, "Role Name must be at least 2 characters").regex(/^[a-z_]+$/, "Role Name can only contain lowercase letters and underscores"),
-  description: z.string().min(2, "Description must be at least 2 characters"),
+  id: z.coerce.number().int().positive().optional(),
+  roleName: z.string().min(2, "ชื่อบทบาทต้องมีอย่างน้อย 2 ตัวอักษร").regex(/^[a-z_]+$/, "ชื่อบทบาทใช้ได้เฉพาะตัวอักษรอังกฤษพิมพ์เล็กและขีดล่าง"),
+  description: z.string().min(2, "คำอธิบายต้องมีอย่างน้อย 2 ตัวอักษร"),
   isActive: z.boolean(),
   permissionIds: z.array(z.number()),
 });
@@ -20,14 +20,8 @@ function getErrorMessage(error: unknown, fallback: string) {
 
 export async function saveRoleAction(formData: FormData) {
   try {
-    const guard = await requireAdmin();
-    if (!guard.adminId) throw new Error("Unauthorized");
-    
-    // Check permission - must have role.manage
-    const { requirePermission } = await import("@/lib/auth/guards");
-    await requirePermission("role.manage");
-
-    const id = formData.get("id") as string;
+    const id = String(formData.get("id") || "").trim();
+    const guard = await requirePermission(id ? "role.update" : "role.create");
     const roleName = formData.get("roleName") as string;
     const description = formData.get("description") as string;
     const isActive = formData.get("isActive") === "true";
@@ -48,21 +42,20 @@ export async function saveRoleAction(formData: FormData) {
 
     let newId;
 
-    if (id) {
-      const numId = parseInt(id, 10);
-      await updateRole(numId, {
+    if (validated.data.id) {
+      await updateRole(validated.data.id, {
         roleName: validated.data.roleName,
         description: validated.data.description,
         isActive: validated.data.isActive,
         permissionIds: validated.data.permissionIds,
       });
-      newId = numId;
+      newId = validated.data.id;
 
       await logAdminAction({
         adminId: guard.adminId,
         action: "role.update",
         entityType: "roles",
-        entityId: id,
+        entityId: String(validated.data.id),
         details: { roleName: validated.data.roleName, isActive: validated.data.isActive, permissions: validated.data.permissionIds }
       });
     } else {
@@ -92,25 +85,17 @@ export async function saveRoleAction(formData: FormData) {
 
 export async function deleteRoleAction(formData: FormData) {
   try {
-    const guard = await requireAdmin();
-    if (!guard.adminId) throw new Error("Unauthorized");
-    
-    // Check permission - must have role.manage
-    const { requirePermission } = await import("@/lib/auth/guards");
-    await requirePermission("role.manage");
+    const guard = await requirePermission("role.delete");
+    const parsedId = z.coerce.number().int().positive().safeParse(formData.get("id"));
+    if (!parsedId.success) throw new Error("กรุณาระบุ ID บทบาทที่ถูกต้อง");
 
-    const id = formData.get("id") as string;
-    if (!id) throw new Error("กรุณาระบุ ID บทบาท");
-    
-    const numId = parseInt(id, 10);
-
-    await deleteRole(numId);
+    await deleteRole(parsedId.data);
 
     await logAdminAction({
       adminId: guard.adminId,
       action: "role.delete",
       entityType: "roles",
-      entityId: id,
+      entityId: String(parsedId.data),
     });
 
     revalidatePath("/admin/roles");

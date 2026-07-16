@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, PencilSimple, Trash } from "@phosphor-icons/react";
 import { deleteRoleAction } from "@/app/actions/admin-roles";
 
@@ -10,11 +11,20 @@ type RoleWithPermissions = {
   role_name: string;
   description: string;
   is_active: boolean;
+  created_at: string;
   permissions: string[];
 };
 
-export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermissions[] }) {
-  const [roles, setRoles] = useState(initialRoles);
+export function RoleListClient({
+  roles,
+  canUpdate,
+  canDelete,
+}: {
+  roles: RoleWithPermissions[];
+  canUpdate: boolean;
+  canDelete: boolean;
+}) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = async (roleId: number, roleName: string) => {
@@ -30,7 +40,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
       if (res.error) {
         alert(res.error);
       } else {
-        setRoles(roles.filter(r => r.role_id !== roleId));
+        router.refresh();
       }
     });
   };
@@ -97,15 +107,16 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                   </div>
                 </div>
 
+                {canUpdate || (canDelete && !isProtectedRole(role.role_name)) ? (
                 <div className="mt-2 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
-                  <Link
+                  {canUpdate ? <Link
                     href={`/admin/roles/${role.role_id}/edit`}
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-100 transition-colors"
                   >
                     <PencilSimple size={16} />
                     แก้ไข
-                  </Link>
-                  {!isProtectedRole(role.role_name) && (
+                  </Link> : null}
+                  {canDelete && !isProtectedRole(role.role_name) && (
                     <button
                       onClick={() => handleDelete(role.role_id, role.role_name)}
                       disabled={isPending}
@@ -116,6 +127,7 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                     </button>
                   )}
                 </div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -130,7 +142,9 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                     <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500">คำอธิบาย</th>
                     <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-slate-500">สิทธิ์</th>
                     <th scope="col" className="px-6 py-4 text-center text-xs font-semibold text-slate-500">สถานะ</th>
-                    <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-slate-500">จัดการ</th>
+                    {canUpdate || canDelete ? (
+                      <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-slate-500">จัดการ</th>
+                    ) : null}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -181,17 +195,17 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {canUpdate || canDelete ? <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          <Link
+                          {canUpdate ? <Link
                             href={`/admin/roles/${role.role_id}/edit`}
                             className="inline-flex items-center justify-center rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-[#F3704C] transition-colors"
                             title="แก้ไขบทบาท"
                           >
                             <PencilSimple size={20} />
                             <span className="sr-only">แก้ไข</span>
-                          </Link>
-                          {!isProtectedRole(role.role_name) ? (
+                          </Link> : null}
+                          {canDelete && !isProtectedRole(role.role_name) ? (
                             <button
                               onClick={() => handleDelete(role.role_id, role.role_name)}
                               disabled={isPending}
@@ -201,11 +215,9 @@ export function RoleListClient({ initialRoles }: { initialRoles: RoleWithPermiss
                               <Trash size={20} />
                               <span className="sr-only">ลบ</span>
                             </button>
-                          ) : (
-                            <div className="w-9"></div>
-                          )}
+                          ) : null}
                         </div>
-                      </td>
+                      </td> : null}
                     </tr>
                   ))}
                 </tbody>

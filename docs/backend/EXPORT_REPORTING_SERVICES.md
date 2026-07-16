@@ -1609,3 +1609,23 @@ export expiration automation
 Export services must be useful for planning but safe by default.
 
 A system that exports too much private data is not production-ready, even if the dashboard looks good.
+
+---
+
+## 50. Admin Role And Certificate Template Exports
+
+Implemented admin configuration exports reuse the exact validated filters from their list pages:
+
+```text
+roles: search, status, sort
+certificate templates: search, status, language, scope, sort
+```
+
+Both exports:
+
+- enforce module-specific read/manage and export permissions;
+- reject unknown filters with `400`;
+- query `EXPORT_MAX_ROWS + 1` and return `413` when the result is too large;
+- record only filter summaries in audit metadata;
+- preserve stable server-side ordering; and
+- exclude authentication identifiers and private certificate-template storage paths.

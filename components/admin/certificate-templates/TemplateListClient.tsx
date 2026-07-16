@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { CheckCircle, XCircle, Star, Trash, Image as ImageIcon } from "@phosphor-icons/react";
 import { toggleTemplateStatus, setTemplateAsDefault, deleteTemplate } from "@/app/actions/admin-certificate-templates";
@@ -13,20 +14,25 @@ function getStorageUrl(path: string) {
 type CertificateTemplateListItem = {
   template_id: number;
   template_name: string;
+  attraction_id: number | null;
+  attraction_name: string | null;
   background_path: string | null;
   language: string;
   is_default: boolean;
   is_active: boolean;
   created_at: string;
+  updated_at: string | null;
 };
 
-export function TemplateListClient({ initialTemplates }: { initialTemplates: CertificateTemplateListItem[] }) {
+export function TemplateListClient({ templates }: { templates: CertificateTemplateListItem[] }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleToggleStatus = (templateId: number, currentStatus: boolean) => {
     startTransition(async () => {
       try {
         await toggleTemplateStatus(templateId, !currentStatus);
+        router.refresh();
       } catch {
         alert("ไม่สามารถเปลี่ยนสถานะได้");
       }
@@ -38,6 +44,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: Cer
     startTransition(async () => {
       try {
         await setTemplateAsDefault(templateId);
+        router.refresh();
       } catch {
         alert("ไม่สามารถตั้งค่าเริ่มต้นได้");
       }
@@ -49,13 +56,14 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: Cer
     startTransition(async () => {
       try {
         await deleteTemplate(templateId);
+        router.refresh();
       } catch (err: unknown) {
         alert(err instanceof Error ? err.message : "ไม่สามารถลบเทมเพลตได้");
       }
     });
   };
 
-  if (!initialTemplates.length) {
+  if (!templates.length) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-dashed border-ink/10 bg-white p-12 text-center">
         <div className="mb-4 rounded-full bg-slate-50 p-4 text-slate-400">
@@ -71,7 +79,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: Cer
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {initialTemplates.map((template) => (
+      {templates.map((template) => (
         <div 
           key={template.template_id} 
           className={`group flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:shadow-md ${
@@ -99,7 +107,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: Cer
               {template.is_default && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-[#E18868] shadow-sm backdrop-blur">
                   <Star size={14} weight="fill" />
-                  Default
+                  ค่าเริ่มต้น
                 </span>
               )}
             </div>
@@ -113,6 +121,14 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: Cer
           {/* Content Area */}
           <div className="flex flex-1 flex-col p-5">
             <h3 className="font-bold text-ink line-clamp-1">{template.template_name}</h3>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+              <span className="rounded-full bg-[#E6F4EF] px-2.5 py-1 font-semibold text-[#0A6B62]">
+                {template.attraction_id ? "เฉพาะสถานที่" : "ส่วนกลาง"}
+              </span>
+              {template.attraction_name ? (
+                <span className="truncate text-slate-600">{template.attraction_name}</span>
+              ) : null}
+            </div>
             <p className="mt-1 text-xs text-muted">
               สร้างเมื่อ: {new Date(template.created_at).toLocaleDateString("th-TH")}
             </p>
@@ -130,7 +146,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: Cer
                 title={template.is_default ? "เทมเพลตเริ่มต้นต้องเปิดใช้งานเสมอ" : "คลิกเพื่อสลับสถานะ"}
               >
                 {template.is_active ? <CheckCircle size={16} weight="fill" /> : <XCircle size={16} weight="fill" />}
-                {template.is_active ? "Active" : "Inactive"}
+                {template.is_active ? "ใช้งานอยู่" : "ปิดใช้งาน"}
               </button>
 
               <div className="flex items-center gap-1">
@@ -138,7 +154,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: Cer
                   <button
                     onClick={() => handleSetDefault(template.template_id)}
                     disabled={isPending || !template.is_active}
-                    className="p-2 text-slate-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-full transition-colors disabled:opacity-50"
+                    className="p-2 text-yellow-700 hover:text-yellow-800 hover:bg-yellow-50 rounded-full transition-colors disabled:opacity-50"
                     title="ตั้งเป็นค่าเริ่มต้น"
                   >
                     <Star size={18} weight="bold" />
@@ -148,7 +164,7 @@ export function TemplateListClient({ initialTemplates }: { initialTemplates: Cer
                   <button
                     onClick={() => handleDelete(template.template_id)}
                     disabled={isPending}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50"
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50"
                     title="ลบเทมเพลต"
                   >
                     <Trash size={18} weight="bold" />

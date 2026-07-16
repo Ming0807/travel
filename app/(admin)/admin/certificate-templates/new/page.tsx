@@ -4,14 +4,14 @@ import { TemplateFormClient } from "@/components/admin/certificate-templates/Tem
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "New Certificate Template | Admin",
+  title: "เพิ่มเทมเพลตเกียรติบัตร | Admin",
 };
 
 export default async function NewTemplatePage() {
-  await requirePermission("certificate.template_manage");
+  const guard = await requirePermission("certificate.template_manage");
 
   return (
-    <AdminShell>
+    <AdminShell admin={guard.actor}>
       <TemplateFormClient />
     </AdminShell>
   );

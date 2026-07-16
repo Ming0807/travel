@@ -1,38 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission, AdminAuthError } from "@/lib/auth/guards";
+import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { getServerEnv } from "@/lib/config/server-env";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { exportAdminRoles } from "@/lib/repositories/role.repository";
 import { logAuditAction } from "@/lib/services/audit-log.service";
-import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
-import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
+import { createExportResponse, parseExportFormat } from "@/lib/utils/export-response";
+import { adminRoleFiltersSchema, roleExportFilters } from "@/lib/validation/admin-role";
 
 export const dynamic = "force-dynamic";
 
-type ExportRecord = Record<string, unknown>;
-
 export async function GET(request: NextRequest) {
   try {
+    await requirePermission("role.read");
     const guard = await requirePermission("export.roles");
     const format = parseExportFormat(request.nextUrl.searchParams.get("format"));
+    const rawParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+    delete rawParams.format;
+    const parsed = adminRoleFiltersSchema.safeParse(rawParams);
 
-    const maxRows = getServerEnv().EXPORT_MAX_ROWS;
-
-    const supabase = createSupabaseServiceRoleClient();
-
-    const { data, error } = await supabase
-      .from("roles")
-      .select(`
-        *,
-        role_permissions (
-          permissions (permission_name)
-        )
-      `)
-      .order("role_id", { ascending: true })
-      .limit(maxRows + 1);
-
-    if (error) {
-      throw new Error("EXPORT_ROLES_FAILED");
+    if (!parsed.success) {
+      await logAuditAction({
+        actor: guard.actor,
+        action: "export.roles.invalid_filters",
+        entityType: "role_export",
+        result: "failed",
+        metadata: { reason: "invalid_filters", privacyLevel: "internal" },
+      });
+      return NextResponse.json({ error: "Invalid export filters." }, { status: 400 });
     }
+
+    const filters = roleExportFilters(parsed.data);
+    const filterSummary = {
+      hasSearch: Boolean(filters.search),
+      status: filters.status ?? null,
+      sort: filters.sort,
+    };
+    const maxRows = getServerEnv().EXPORT_MAX_ROWS;
+    const data = await exportAdminRoles(filters, maxRows + 1);
 
     if (data.length > maxRows) {
       await logAuditAction({
@@ -40,46 +43,44 @@ export async function GET(request: NextRequest) {
         action: "export.roles.too_large",
         entityType: "role_export",
         result: "failed",
-        metadata: { maxRows }
+        metadata: { maxRows, filters: filterSummary, privacyLevel: "internal" },
       });
-      return NextResponse.json({ error: "Export is too large. Please apply more filters." }, { status: 413 });
+      return NextResponse.json(
+        { error: "Export is too large. Please apply more filters." },
+        { status: 413 }
+      );
     }
 
-    const rows = ((data || []) as ExportRecord[]).map((row) => {
-      const rolePermissions = (row.role_permissions ?? []) as ExportRecord[];
-      const permissions = rolePermissions
-        .map((rp) => {
-          const perm = firstJoin(rp.permissions as SupabaseJoin<ExportRecord>);
-          return perm?.permission_name || "";
-        })
-        .filter(Boolean)
-        .join(", ");
-
-      return {
-        "ID": String(row.role_id),
-        "Role Name": row.role_name || "",
-        "Description": row.description || "",
-        "Permissions": permissions,
-        "Is Active": row.is_active ? "Yes" : "No",
-        "Created At": row.created_at || "",
-      };
-    });
+    const rows = data.map((role) => ({
+      "รหัสบทบาท": String(role.role_id),
+      "ชื่อบทบาท": role.role_name,
+      "คำอธิบาย": role.description,
+      "สิทธิ์": role.permissions.join(", "),
+      "สถานะ": role.is_active ? "ใช้งานอยู่" : "ปิดใช้งาน",
+      "สร้างเมื่อ": role.created_at,
+    }));
 
     await logAuditAction({
       actor: guard.actor,
       action: `export.roles.${format}`,
       entityType: "role_export",
       result: "success",
-      metadata: { rowCount: rows.length, maxRows }
+      metadata: {
+        rowCount: rows.length,
+        maxRows,
+        filters: filterSummary,
+        privacyLevel: "internal",
+      },
     });
 
     const date = new Date().toISOString().split("T")[0];
-    const baseFilename = `roles_export_${date}`;
-
-    return await createExportResponse(rows, baseFilename, format);
+    return await createExportResponse(rows, `roles_export_${date}`, format);
   } catch (error) {
     if (error instanceof AdminAuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.code === "UNAUTHORIZED" ? 401 : 403 });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.code === "UNAUTHORIZED" ? 401 : 403 }
+      );
     }
     console.error("Export Roles Error:", error);
     return NextResponse.json({ error: "Failed to export data." }, { status: 500 });

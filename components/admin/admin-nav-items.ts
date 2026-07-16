@@ -70,7 +70,12 @@ export const navGroups: NavGroup[] = [
   {
     group: "การดำเนินงาน",
     items: [
-      { href: "/admin/certificate-templates", label: "แม่แบบใบประกาศ", icon: Certificate },
+      {
+        href: "/admin/certificate-templates",
+        label: "แม่แบบใบประกาศ",
+        icon: Certificate,
+        requiredAny: ["certificate.template_manage"],
+      },
       { href: "/admin/checkin-codes", label: "รหัส QR เช็กอิน", icon: QrCode },
       { href: "/admin/badges", label: "เหรียญรางวัล", icon: Medal },
       { href: "/admin/leaderboard", label: "ตารางอันดับ", icon: Trophy },
@@ -83,13 +88,13 @@ export const navGroups: NavGroup[] = [
         href: "/admin/users",
         label: "ผู้ดูแลระบบ",
         icon: UserCircle,
-        requiredAny: ["user.manage"],
+        requiredAny: ["user.read"],
       },
       {
         href: "/admin/roles",
         label: "บทบาทและสิทธิ์",
         icon: Shield,
-        requiredAny: ["role.manage"],
+        requiredAny: ["role.read"],
       },
       {
         href: "/admin/audit",
@@ -97,7 +102,12 @@ export const navGroups: NavGroup[] = [
         icon: Scroll,
         requiredAny: ["audit.read"],
       },
-      { href: "/admin/messages", label: "ข้อความ", icon: EnvelopeSimple },
+      {
+        href: "/admin/messages",
+        label: "ข้อความ",
+        icon: EnvelopeSimple,
+        requiredAny: ["message.read"],
+      },
       {
         href: "/admin/settings",
         label: "ตั้งค่าระบบ",

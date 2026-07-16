@@ -90,7 +90,7 @@ describe("Admin account menu", () => {
 });
 
 describe("Permission-aware admin navigation", () => {
-  const accessLabels = ["ผู้ดูแลระบบ", "บทบาทและสิทธิ์", "บันทึกการใช้งาน", "ตั้งค่าระบบ"];
+  const accessLabels = ["ผู้ดูแลระบบ", "บทบาทและสิทธิ์", "บันทึกการใช้งาน", "ข้อความ", "ตั้งค่าระบบ"];
 
   function visibleLabels(permissions: string[], resolved = true) {
     return getVisibleNavGroups(navGroups, permissions, resolved).flatMap((group) => group.items.map((item) => item.label));
@@ -99,15 +99,28 @@ describe("Permission-aware admin navigation", () => {
   it("fails closed for access-control links while permissions are loading", () => {
     const labels = visibleLabels([], false);
     accessLabels.forEach((label) => expect(labels).not.toContain(label));
-    expect(labels).toContain("ข้อความ");
+    expect(labels).not.toContain("แม่แบบใบประกาศ");
   });
 
   it("shows only access-control destinations allowed by the current permissions", () => {
     const labels = visibleLabels(["user.read", "audit.read"]);
-    expect(labels).not.toContain("ผู้ดูแลระบบ");
+    expect(labels).toContain("ผู้ดูแลระบบ");
     expect(labels).toContain("บันทึกการใช้งาน");
     expect(labels).not.toContain("บทบาทและสิทธิ์");
     expect(labels).not.toContain("ตั้งค่าระบบ");
+  });
+
+  it("shows role, message, and template destinations only with matching read permissions", () => {
+    const labels = visibleLabels([
+      "role.read",
+      "message.read",
+      "certificate.template_manage",
+    ]);
+
+    expect(labels).toContain("บทบาทและสิทธิ์");
+    expect(labels).toContain("ข้อความ");
+    expect(labels).toContain("แม่แบบใบประกาศ");
+    expect(labels).not.toContain("ผู้ดูแลระบบ");
   });
 
   it("shows every protected access-control destination to system administrators", () => {

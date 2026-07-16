@@ -1,32 +1,38 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { requirePermission } from "@/lib/auth/guards";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
-export async function listCertificateTemplates() {
-  await requirePermission("certificate.template_manage");
-  const supabase = await createSupabaseServerClient();
-  
-  const { data, error } = await supabase
-    .from("certificate_templates")
-    .select("*")
-    .order("is_active", { ascending: false })
-    .order("is_default", { ascending: false })
-    .order("created_at", { ascending: false });
+const templateIdSchema = z.number().int().positive();
 
-  if (error) throw new Error("ไม่สามารถโหลดเทมเพลตได้");
-  return data;
+function parseTemplateId(templateId: number): number {
+  const parsed = templateIdSchema.safeParse(templateId);
+  if (!parsed.success) throw new Error("รหัสเทมเพลตไม่ถูกต้อง");
+  return parsed.data;
 }
 
 export async function toggleTemplateStatus(templateId: number, isActive: boolean) {
   await requirePermission("certificate.template_manage");
-  const supabase = await createSupabaseServerClient();
+  const validTemplateId = parseTemplateId(templateId);
+  const supabase = createSupabaseServiceRoleClient();
+
+  if (!isActive) {
+    const { data: template, error: fetchError } = await supabase
+      .from("certificate_templates")
+      .select("is_default")
+      .eq("template_id", validTemplateId)
+      .single();
+
+    if (fetchError || !template) throw new Error("ไม่พบเทมเพลต");
+    if (template.is_default) throw new Error("เทมเพลตเริ่มต้นต้องเปิดใช้งานเสมอ");
+  }
   
   const { error } = await supabase
     .from("certificate_templates")
     .update({ is_active: isActive })
-    .eq("template_id", templateId);
+    .eq("template_id", validTemplateId);
 
   if (error) throw new Error("ไม่สามารถเปลี่ยนสถานะเทมเพลตได้");
   revalidatePath("/admin/certificate-templates");
@@ -34,13 +40,14 @@ export async function toggleTemplateStatus(templateId: number, isActive: boolean
 
 export async function setTemplateAsDefault(templateId: number) {
   await requirePermission("certificate.template_manage");
-  const supabase = await createSupabaseServerClient();
+  const validTemplateId = parseTemplateId(templateId);
+  const supabase = createSupabaseServiceRoleClient();
   
   // Get the template to find its language
   const { data: template, error: fetchError } = await supabase
     .from("certificate_templates")
     .select("language, attraction_id")
-    .eq("template_id", templateId)
+    .eq("template_id", validTemplateId)
     .single();
 
   if (fetchError || !template) throw new Error("ไม่พบเทมเพลต");
@@ -58,13 +65,14 @@ export async function setTemplateAsDefault(templateId: number) {
     query = query.is("attraction_id", null);
   }
 
-  await query;
+  const { error: unsetError } = await query;
+  if (unsetError) throw new Error("ไม่สามารถยกเลิกเทมเพลตเริ่มต้นเดิมได้");
 
   // Then set this one as default
   const { error } = await supabase
     .from("certificate_templates")
     .update({ is_default: true, is_active: true }) // make sure it's active
-    .eq("template_id", templateId);
+    .eq("template_id", validTemplateId);
 
   if (error) throw new Error("ไม่สามารถตั้งเป็นค่าเริ่มต้นได้");
   revalidatePath("/admin/certificate-templates");
@@ -72,12 +80,13 @@ export async function setTemplateAsDefault(templateId: number) {
 
 export async function deleteTemplate(templateId: number) {
   await requirePermission("certificate.template_manage");
-  const supabase = await createSupabaseServerClient();
+  const validTemplateId = parseTemplateId(templateId);
+  const supabase = createSupabaseServiceRoleClient();
   
   const { error } = await supabase
     .from("certificate_templates")
     .delete()
-    .eq("template_id", templateId);
+    .eq("template_id", validTemplateId);
 
   if (error) {
     if (error.code === '23503') { // Foreign key constraint violation
