@@ -56,7 +56,7 @@ Build a full editorial Story/Blog CMS, explainable content recommendations, a ta
 - [x] Product direction approved
 - [x] Design specification written
 - [x] Implementation plan written
-- [ ] Story domain contracts implemented
+- [x] Story domain contracts implemented
 - [ ] Database migration reviewed and applied through the controlled release process
 - [ ] Editorial library and moderation queue implemented
 - [ ] Structured editor and revisions implemented

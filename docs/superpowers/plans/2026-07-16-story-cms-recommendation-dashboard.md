@@ -71,12 +71,12 @@ New UI areas:
 - Create: `tests/unit/story-workflow.test.ts`
 - Create: `tests/unit/story-readiness.test.ts`
 
-- [ ] Write failing tests for valid document nodes and unsafe/unknown nodes.
-- [ ] Write failing tests for editorial and UGC transition matrices.
-- [ ] Write failing readiness tests for title, excerpt, cover, topic, content, and SEO.
-- [ ] Implement strict Zod document schemas with a schema version.
-- [ ] Implement pure workflow and readiness functions.
-- [ ] Run targeted tests, typecheck, and ESLint.
+- [x] Write failing tests for valid document nodes and unsafe/unknown nodes.
+- [x] Write failing tests for editorial and UGC transition matrices.
+- [x] Write failing readiness tests for title, excerpt, cover, topic, content, and SEO.
+- [x] Implement strict Zod document schemas with a schema version.
+- [x] Implement pure workflow and readiness functions.
+- [x] Run targeted tests, typecheck, and ESLint.
 - [ ] Commit: `feat: add typed story content and workflow contracts`
 
 ## Task 3: Add Backward-Compatible Story Schema
