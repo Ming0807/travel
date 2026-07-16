@@ -100,6 +100,7 @@ Created `components/ErrorBoundary.tsx` — class-based React ErrorBoundary with:
 - [x] Load testing for API routes
 - [x] Accessibility audit
 - [x] Error boundary components for graceful failures
-- [ ] Full E2E test coverage for admin CRUD flows (Phase 13+)
+- [x] Authenticated non-destructive admin smoke coverage against the real app (Phase 12A)
+- [ ] Destructive admin CRUD E2E coverage in an isolated staging database (Phase 13+)
 - [ ] Visual regression testing for responsive UI
 - [ ] Performance budget enforcement with Lighthouse CI

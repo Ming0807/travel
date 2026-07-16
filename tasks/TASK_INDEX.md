@@ -20,15 +20,16 @@
 | `PHASE_10_REPORT_EXPORT.md` | Implemented / privacy regression testing needed | Privacy-safe report export |
 | `PHASE_11_LINE_LIFF_OPTIONAL.md` | Implemented foundation | Optional LINE passport linking |
 | `PHASE_12_TESTING_HARDENING.md` | Completed | Stability, security, performance, and QA |
+| `PHASE_12A_ADMIN_E2E_QA.md` | Implemented | Authenticated non-destructive admin smoke tests against the real app |
 | `PHASE_13_DEPLOYMENT.md` | Planned | Deployment and release |
 | `PHASE_13A_CLOUDINARY_STORAGE_DEPLOYMENT.md` | Completed | Cloudinary-first Vercel storage with future university-storage path |
 
 ## Immediate Priority
 
-Proceed to `PHASE_08B_ADMIN_UX_HARDENING.md` before production deployment.
+Proceed to Phase 13 preview/staging release verification. Run `PHASE_12A_ADMIN_E2E_QA.md` against the deployment before production sign-off.
 
 Reason:
 
-- Core admin CRUD exists, but real admin usability still needs a careful hardening pass.
-- Content, media, QR, settings, and publish readiness must be understandable before handing the system to non-developer admins.
-- Deployment should wait until admin workflows can be completed and tested end to end.
+- Core admin UX hardening is complete.
+- Authenticated local smoke now covers the real application without destructive mutations.
+- Preview/staging must still prove environment configuration, storage, migrations, and runtime behavior before production release.

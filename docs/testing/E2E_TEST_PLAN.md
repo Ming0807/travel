@@ -1196,9 +1196,14 @@ no orphan metadata record
 
 ```bash
 npm run test:e2e
+npm run test:e2e:admin-live
 npm run test:e2e:headed
 npm run test:e2e:ui
 ```
+
+`test:e2e:admin-live` opens the real application and performs one non-destructive authenticated journey across critical admin modules, a mobile viewport, and logout. It does not use route-intercepted HTML. Supply `E2E_ADMIN_USERNAME` and `E2E_ADMIN_PASSWORD` through the environment. Set `PLAYWRIGHT_BASE_URL` for an approved preview or staging deployment; omit it for local development.
+
+The live suite intentionally logs in once and runs with one worker to respect authentication rate limits. Never put credentials in the test file or command committed to source control.
 
 Suggested package scripts:
 
@@ -1249,10 +1254,10 @@ export privacy
 [ ] Stamp is awarded or already-earned is handled.
 [ ] Survey is optional and can be submitted.
 [ ] Returning tourist flow works.
-[ ] Admin login works.
+[x] Admin login and visible logout work in the Phase 12A live smoke suite.
 [ ] Viewer permissions are enforced.
 [ ] Admin can manage attractions/photo spots/check-in codes.
-[ ] Dashboard loads.
+[x] Dashboard and critical admin modules load in the Phase 12A live smoke suite.
 [ ] Dashboard filters work.
 [ ] Export works and excludes private identifiers.
 [ ] Mobile viewport tourist flow works.
