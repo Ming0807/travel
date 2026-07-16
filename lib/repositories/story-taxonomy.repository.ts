@@ -27,6 +27,11 @@ export type StoryTagOption = {
   isActive: boolean;
 };
 
+export type StoryProvinceOption = {
+  id: number;
+  nameTh: string;
+};
+
 export function mapStoryTopic(value: unknown): StoryTopicOption {
   const row = asRecord(value);
   return {
@@ -48,6 +53,14 @@ export function mapStoryTag(value: unknown): StoryTagOption {
     nameTh: stringValue(row.name_th),
     nameEn: nullableString(row.name_en),
     isActive: booleanValue(row.is_active),
+  };
+}
+
+export function mapStoryProvince(value: unknown): StoryProvinceOption {
+  const row = asRecord(value);
+  return {
+    id: numberValue(row.province_id),
+    nameTh: stringValue(row.province_name_th),
   };
 }
 
@@ -76,4 +89,15 @@ export async function listStoryTags(options: { includeInactive?: boolean } = {})
   const { data, error } = await query;
   if (error) throw new Error("STORY_TAG_LIST_FAILED");
   return (data ?? []).map(mapStoryTag);
+}
+
+export async function listStoryProvinceOptions(): Promise<StoryProvinceOption[]> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("provinces")
+    .select("province_id, province_name_th")
+    .order("province_name_th", { ascending: true });
+
+  if (error) throw new Error("STORY_PROVINCE_LIST_FAILED");
+  return (data ?? []).map(mapStoryProvince);
 }

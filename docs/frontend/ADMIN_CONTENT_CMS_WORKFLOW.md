@@ -94,6 +94,8 @@ Implemented baseline:
 - Public homepage popular-destination province tabs filter the displayed selected attraction records in place and show an empty state when a province has no featured items.
 - Settings supports direct group links such as `/admin/settings?tab=homepage` so the Content Hub can send admins to the correct surface.
 - Story and route admin forms show public-page readiness panels and preview links after records are saved.
+- Story administration now separates team-authored articles at `/admin/stories` from traveler submissions at `/admin/stories/submissions`, while sharing URL-backed filters, pagination, taxonomy, and export behavior.
+- Story list actions open the editor or media workflow and no longer expose a quick-publish control that bypasses the editorial state machine.
 - Main CMS image surfaces use saved media paths or missing-image states instead of Unsplash fallback images.
 - Public attraction detail sections now use a shared, content-aware section model so public navigation and the attraction visual editor use the same order and localized labels.
 - Public attraction mobile section navigation uses a jump selector instead of rows that look expandable but only scroll.

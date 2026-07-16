@@ -128,13 +128,13 @@ New UI areas:
 - Modify: `components/admin/admin-nav-items.tsx` or current nav owner.
 - Create component and action tests.
 
-- [ ] Write failing filter, pagination, permission, and saved-state tests.
-- [ ] Build server-side search, author type, province, topic, state, date, and readiness filters.
-- [ ] Separate editorial tabs from UGC moderation tabs.
-- [ ] Add accessible bulk selection only for safe non-destructive actions.
-- [ ] Add Thai empty, loading, error, and no-permission states.
-- [ ] Verify 375px and desktop layouts.
-- [ ] Commit: `feat: add editorial library and UGC moderation queue`
+- [x] Write failing filter and server-side query tests, plus authenticated route coverage.
+- [x] Build server-side search, author type, province, topic, state, date, and readiness filters.
+- [x] Separate editorial tabs from UGC moderation tabs.
+- [x] Omit bulk selection until a safe, concrete bulk operation is defined.
+- [x] Add Thai empty, invalid-filter recovery, and permission-protected states.
+- [x] Verify 375px and desktop layouts with authenticated Playwright coverage.
+- [x] Commit: `feat: add editorial library and UGC moderation queue`
 
 ## Task 6: Build Structured Editorial Studio
 

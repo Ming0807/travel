@@ -133,6 +133,13 @@ Phase 2 routes:
 
 Planned P2 routes are defined in `tasks/PHASE_16A_STORY_CMS_RECOMMENDATION_DASHBOARD_UX.md`. A planned route must not be described as implemented until its acceptance criteria pass.
 
+Implemented Story workspace behavior:
+
+- `/admin/stories` is the editorial article library.
+- `/admin/stories/submissions` is the traveler-story moderation queue.
+- The two routes share a compact operational summary and server-side filters but never mix author workflows in one result set.
+- Status labels, empty states, filter recovery, and row actions are Thai-first.
+
 ---
 
 ## 5. Admin Layout Specification

@@ -570,6 +570,21 @@ MVP status:
 
 Optional.
 
+## 9.8.1 Story Workspaces
+
+```text
+/admin/stories
+/admin/stories/submissions
+```
+
+Purpose:
+
+- `/admin/stories` manages editorial articles written by the content team
+- `/admin/stories/submissions` provides a separate moderation queue for traveler stories
+- both routes use server-side search, status, province, topic, date, pagination, and export filters
+- editorial readiness filtering uses the stored content quality score and labels unscored content honestly
+- workflow changes happen inside the story editor; list rows do not provide a shortcut that bypasses review rules
+
 ## 9.9 Settings
 
 ```text

@@ -27,11 +27,15 @@ export async function GET(request: NextRequest) {
 
     const supabase = createSupabaseServiceRoleClient();
 
+    const topicRelation = filters.topicId
+      ? "story_topic_links!inner (topic_id)"
+      : "story_topic_links (topic_id)";
     let query = supabase
       .from("travel_stories")
       .select(`
         *,
-        provinces (province_name_th, province_name_en)
+        provinces (province_name_th, province_name_en),
+        ${topicRelation}
       `)
       .order("updated_at", { ascending: false, nullsFirst: false })
       .limit(maxRows + 1);
@@ -40,8 +44,17 @@ export async function GET(request: NextRequest) {
       const escaped = filters.search.replace(/%/g, "\\%").replace(/_/g, "\\_");
       query = query.or(`title.ilike.%${escaped}%,slug.ilike.%${escaped}%`);
     }
+    if (filters.authorType) query = query.eq("author_type", filters.authorType);
     if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
+    if (filters.topicId) query = query.eq("story_topic_links.topic_id", filters.topicId);
     if (filters.status) query = query.eq("status", filters.status);
+    if (filters.readiness === "ready") query = query.eq("content_quality_score", 100);
+    if (filters.readiness === "needs_work") {
+      query = query.or("content_quality_score.lt.100,content_quality_score.is.null");
+    }
+    if (filters.readiness === "unscored") query = query.is("content_quality_score", null);
+    if (filters.dateFrom) query = query.gte("created_at", `${filters.dateFrom}T00:00:00.000Z`);
+    if (filters.dateTo) query = query.lte("created_at", `${filters.dateTo}T23:59:59.999Z`);
     if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
 
     const { data, error } = await query;

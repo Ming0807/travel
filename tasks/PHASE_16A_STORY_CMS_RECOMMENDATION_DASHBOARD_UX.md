@@ -62,7 +62,7 @@ Build a full editorial Story/Blog CMS, explainable content recommendations, a ta
 - [x] Atomic editorial-change RPC migration applied and confirmed by the project owner
 - [x] Editorial service, validation, RBAC policy, optimistic locking, and revision repository implemented
 - [ ] Existing visual editor migrated from compatibility actions to the atomic editorial action
-- [ ] Editorial library and moderation queue implemented
+- [x] Editorial library and traveler moderation queue implemented with server-side filters and pagination
 - [ ] Structured editor and revisions implemented
 - [ ] Public story experience implemented
 - [ ] Recommendation engine implemented

@@ -27,18 +27,58 @@ const booleanFromForm = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
-export const adminStoryFiltersSchema = adminPaginationSchema.extend({
-  search: z.preprocess(
-    (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
-    z.string().max(120).optional()
-  ),
-  provinceId: optionalId.optional(),
-  status: z.preprocess(
-    (value) => (value === "" || value === null || value === undefined ? undefined : value),
-    z.string().optional()
-  ),
-  isPublished: optionalBooleanQuery
-});
+const storyStatusSchema = z.enum([
+  "draft",
+  "submitted",
+  "in_review",
+  "changes_requested",
+  "approved",
+  "scheduled",
+  "published",
+  "rejected",
+  "archived",
+]);
+
+const optionalDateQuery = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
+  z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine((value) => {
+      const [year, month, day] = value.split("-").map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+    }, "Invalid calendar date.")
+    .optional()
+);
+
+export const adminStoryFiltersSchema = adminPaginationSchema
+  .extend({
+    search: z.preprocess(
+      (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
+      z.string().max(120).optional()
+    ),
+    provinceId: optionalId.optional(),
+    topicId: optionalId.optional(),
+    authorType: z.enum(["admin", "tourist"]).optional(),
+    status: z.preprocess(
+      (value) => (value === "" || value === null || value === undefined ? undefined : value),
+      storyStatusSchema.optional()
+    ),
+    readiness: z.enum(["ready", "needs_work", "unscored"]).optional(),
+    dateFrom: optionalDateQuery,
+    dateTo: optionalDateQuery,
+    isPublished: optionalBooleanQuery,
+  })
+  .superRefine((filters, context) => {
+    if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
+      context.addIssue({
+        code: "custom",
+        message: "Start date must be on or before end date.",
+        path: ["dateTo"],
+      });
+    }
+  });
 
 export const adminStoryMutationSchema = z.object({
   title: z.string().trim().min(1, "Title is required.").max(255),
@@ -71,18 +111,6 @@ export const adminStoryMutationSchema = z.object({
 export const adminStoryIdSchema = z.object({
   storyId: requiredId
 });
-
-const storyStatusSchema = z.enum([
-  "draft",
-  "submitted",
-  "in_review",
-  "changes_requested",
-  "approved",
-  "scheduled",
-  "published",
-  "rejected",
-  "archived",
-]);
 
 const editorialChangeSchema = z
   .object({
