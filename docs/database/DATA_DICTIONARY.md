@@ -1649,3 +1649,32 @@ official_attraction_refs
 When a database migration changes any table or column, update this file.
 
 Do not let the data dictionary become outdated.
+
+---
+
+## 44. Story Engagement Tables
+
+### `story_engagement_events`
+
+Minimized raw Story signals retained for 30 days. Columns are limited to
+`event_id`, `story_id`, optional `related_story_id`, `event_name`, `surface`,
+`locale`, optional `position`, and server-generated `occurred_at`.
+
+### `story_engagement_daily`
+
+Long-term anonymous daily counts grouped by Story, related Story, event,
+surface, and locale. `unique_session_count` represents accepted 24-hour
+deduplicated signals, not verified unique people.
+
+### `story_engagement_dedup`
+
+Short-lived HMAC-SHA256 digests used for 24-hour event deduplication. It never
+stores the source nonce.
+
+### `story_engagement_rate_buckets`
+
+Short-lived HMAC-SHA256 buckets used for distributed API rate limiting. It
+never stores a raw IP address or origin.
+
+All four tables use RLS with no public policies. Only service-role RPCs may
+write or maintain them.

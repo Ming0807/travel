@@ -1,5 +1,20 @@
 # API_ENDPOINTS.md
 
+## Public Story Engagement Endpoint
+
+| Method | Path | Status | Purpose | Privacy rules |
+|---|---|---|---|---|
+| `POST` | `/api/content/events` | Implemented; migration and production secret pending | Record minimized Story impression, open, related click, or meaningful completion signals. | Exact same-origin JSON only, maximum 2 KB, strict allowlist, HMAC-only dedup/rate keys, no tourist identity/IP/URL/referrer storage. |
+
+The endpoint returns `202` for accepted, duplicate, or rate-limited valid
+signals so it cannot be used as a tracking oracle. Invalid input receives a
+safe `4xx`; infrastructure/configuration failure receives a generic `503`.
+Event recording is non-critical and must never block Story reading.
+
+| Method | Path | Status | Purpose | Protection |
+|---|---|---|---|---|
+| `GET` | `/api/cron/story-engagement-maintenance` | Implemented; production cron registration pending deployment | Aggregate complete Bangkok calendar days, then purge expired raw/dedup/rate records. | `Authorization: Bearer $CRON_SECRET`; production Vercel cron only. |
+
 ## Admin Content Export Endpoints
 
 Content exports require their module-specific export permission, accept `format=csv|xlsx`, enforce

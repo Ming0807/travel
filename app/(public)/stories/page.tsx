@@ -38,6 +38,9 @@ export default async function StoriesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const engagementEnabled = Boolean(
+    process.env.CONTENT_ENGAGEMENT_HASH_SECRET,
+  );
   const rawSearchParams = await searchParams;
   const query = parsePublicStorySearchParams(rawSearchParams);
   const settingsService = new SettingsService();
@@ -252,7 +255,15 @@ export default async function StoriesPage({
           <>
             {featuredStory ? (
               <section className="pb-14" aria-label="เรื่องแนะนำล่าสุด">
-                <PublicStoryCard story={featuredStory} featured />
+                <PublicStoryCard
+                  story={featuredStory}
+                  featured
+                  tracking={
+                    engagementEnabled
+                      ? { surface: "story_hub", position: 1 }
+                      : undefined
+                  }
+                />
               </section>
             ) : null}
             {stories.length > 0 ? (
@@ -260,8 +271,19 @@ export default async function StoriesPage({
                 className="grid gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3"
                 aria-label="รายการเรื่องราว"
               >
-                {stories.map((story) => (
-                  <PublicStoryCard key={story.id} story={story} />
+                {stories.map((story, index) => (
+                  <PublicStoryCard
+                    key={story.id}
+                    story={story}
+                    tracking={
+                      engagementEnabled
+                        ? {
+                            surface: "story_hub",
+                            position: index + (featuredStory ? 2 : 1),
+                          }
+                        : undefined
+                    }
+                  />
                 ))}
               </section>
             ) : null}

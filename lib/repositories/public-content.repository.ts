@@ -11,6 +11,7 @@ import {
   rankStoryRecommendations,
   type StoryRecommendationReason,
 } from "@/lib/content/story-recommendation";
+import { listStoryEngagementSignals } from "@/lib/repositories/story-engagement.repository";
 import type { AttractionCard } from "@/types/tourism";
 
 type DbRecord = Record<string, unknown>;
@@ -27,6 +28,7 @@ type PublicAttractionListOptions = {
 };
 
 export type PublicStoryCard = {
+  storyId: number;
   id: string;
   title: string;
   excerpt: string;
@@ -298,6 +300,7 @@ function mapStory(row: DbRecord): PublicStoryCard {
     ? text(primaryTopic.name_th, text(primaryTopic.name_en))
     : "";
   return {
+    storyId: numberValue(row.story_id),
     id: text(row.slug),
     title: text(row.title, "Untitled story"),
     excerpt: text(row.excerpt),
@@ -628,6 +631,7 @@ export async function listPublicStories(options?: { limit?: number; province?: s
 }
 
 const publicStorySelect = (withProvinceFilter: boolean, withTopicFilter: boolean) => `
+  story_id,
   slug,
   title,
   excerpt,
@@ -764,7 +768,7 @@ export async function listMyStories(touristId: string, options?: { limit?: numbe
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("travel_stories")
-      .select(`slug, title, excerpt, category, published_at, created_at, author_type, status, tourists (display_name), provinces (province_name_th, province_name_en), content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)`)
+      .select(`story_id, slug, title, excerpt, category, published_at, created_at, author_type, status, tourists (display_name), provinces (province_name_th, province_name_en), content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)`)
       .eq("author_type", "tourist")
       .eq("tourist_id", touristId)
       .order("created_at", { ascending: false })
@@ -873,6 +877,11 @@ export async function getPublicStory(slug: string): Promise<{ story: PublicStory
     const candidateBySlug = new Map(
       candidates.map((candidate) => [candidate.id, candidate])
     );
+    const engagementSignals = await listStoryEngagementSignals(
+      candidates.flatMap((candidate) =>
+        candidate.storyId ? [candidate.storyId] : []
+      )
+    );
     const ranked = rankStoryRecommendations(
       {
         id: story.id,
@@ -883,12 +892,17 @@ export async function getPublicStory(slug: string): Promise<{ story: PublicStory
       },
       candidates.map((candidate) => {
         const curated = curatedBySlug.get(candidate.id);
+        const engagement = candidate.storyId
+          ? engagementSignals.get(candidate.storyId)
+          : undefined;
         return {
           id: candidate.id,
           province: candidate.province,
           topicKey: candidate.primaryTopic?.key ?? null,
           publishedAt: candidate.publishedAt,
           publicReady: Boolean(candidate.imageUrl),
+          engagementScore: engagement?.engagementScore,
+          engagementSampleSize: engagement?.engagementSampleSize,
           ...(curated
             ? {
                 curatedOrder: curated.order,

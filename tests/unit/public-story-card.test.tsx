@@ -4,6 +4,7 @@ import { PublicStoryCard } from "@/components/stories/PublicStoryCard";
 import type { PublicStoryCard as PublicStoryCardData } from "@/lib/repositories/public-content.repository";
 
 const story: PublicStoryCardData = {
+  storyId: 42,
   id: "pattani-culture",
   title: "เรื่องราววัฒนธรรมปัตตานี",
   excerpt: "ทำความรู้จักวิถีชีวิตและสถานที่สำคัญ",

@@ -145,3 +145,21 @@ HEALTH_CHECK_SECRET=use-a-long-random-server-secret
 3. **Private file references** (`cloudinary:image:authenticated:v123:png:folder/file`) are internal identifiers and must not be exposed in public API responses.
 4. **Tourist uploads** go through the storage adapter (`lib/storage/private-files.ts`), never directly to Cloudinary or Supabase from the browser.
 5. **Admin media uploads** go through `/api/admin/media/upload` which also uses the storage adapter.
+## Privacy-Safe Story Engagement
+
+`CONTENT_ENGAGEMENT_HASH_SECRET` is a server-only secret used to create
+irreversible HMAC digests for short-lived Story-event deduplication and
+distributed rate limiting.
+
+```text
+CONTENT_ENGAGEMENT_HASH_SECRET=<random value with at least 32 characters>
+```
+
+Set a different value in local, preview, and production environments. Never
+prefix it with `NEXT_PUBLIC_`, expose it to browser code, write it to logs, or
+commit its real value. Rotating it only resets short-lived deduplication and
+rate-limit continuity; it does not change Story content or tourist records.
+
+`CRON_SECRET` protects Vercel's daily Story-engagement maintenance route. Use a
+different random value with at least 32 characters. Vercel sends it as
+`Authorization: Bearer $CRON_SECRET`; the route fails closed when it is missing.

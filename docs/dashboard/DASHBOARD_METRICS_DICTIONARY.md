@@ -2304,3 +2304,35 @@ Interpretation rules:
 - Revisit and recommend rates use only respondents who answered the respective question as denominators.
 - Row-level review supports data-quality and service follow-up; policy conclusions should use aggregate dashboard metrics with sample counts.
 - Public or shared dashboard views must not expose respondent names, masked references, comments, tourist IDs, or visit IDs.
+
+---
+
+## 43. Story Meaningful Completion Rate
+
+**Metric key:** `story_meaningful_completion_rate`
+
+**Meaning:** The share of deduplicated Story opens that reached the end-of-
+article sentinel. It supports editorial improvement and deterministic
+recommendations; it is not proof that a person read or understood every word.
+
+**Source:** `story_engagement_daily`
+
+**Calculation:**
+
+```text
+sum(unique_session_count where event_name = meaningful_read_complete)
+/
+sum(unique_session_count where event_name = story_open)
+```
+
+**Minimum sample:** At least 100 deduplicated Story opens. Below the threshold,
+the recommendation engagement component is zero and the dashboard must show
+insufficient sample rather than a percentage.
+
+**Filters:** date range, Story, topic, destination scope, locale.
+
+**Privacy:** No tourist identity, visit, guest token, IP address, URL, or
+referrer is available in this metric.
+
+**Limitations:** Session deduplication is approximate, privacy controls can
+reduce counts, and completion does not equal satisfaction.

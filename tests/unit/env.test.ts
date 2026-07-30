@@ -76,4 +76,30 @@ describe("environment validation", () => {
       "Server environment configuration is invalid",
     );
   });
+
+  it("accepts a strong Story engagement secret and rejects weak values", () => {
+    expect(
+      parseServerEnv({
+        ...validServerEnv,
+        CONTENT_ENGAGEMENT_HASH_SECRET:
+          "0123456789abcdef0123456789abcdef",
+      }).CONTENT_ENGAGEMENT_HASH_SECRET,
+    ).toHaveLength(32);
+
+    expect(() =>
+      parseServerEnv({
+        ...validServerEnv,
+        CONTENT_ENGAGEMENT_HASH_SECRET: "too-short",
+      }),
+    ).toThrow("Server environment configuration is invalid");
+  });
+
+  it("rejects a weak cron secret when one is configured", () => {
+    expect(() =>
+      parseServerEnv({
+        ...validServerEnv,
+        CRON_SECRET: "too-short",
+      }),
+    ).toThrow("Server environment configuration is invalid");
+  });
 });

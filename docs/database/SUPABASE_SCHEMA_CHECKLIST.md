@@ -54,6 +54,17 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Atomic recommendation RPC**: Confirm `replace_story_recommendations(bigint, jsonb, uuid)` exists and execute permission is limited to `service_role`.
 - [ ] **Recommendation constraints**: Confirm the RPC rejects self-links, duplicates, non-public targets, reasons over 255 characters, and more than 12 targets before replacing the list in one transaction.
 
+### 8. Privacy-Safe Story Engagement (P2)
+- [ ] **Migration `20260730100000_add_story_engagement_signals.sql`**: Apply after the Story editorial and recommendation migrations.
+- [ ] **Minimized event tables**: Confirm `story_engagement_events`, `story_engagement_daily`, `story_engagement_dedup`, and `story_engagement_rate_buckets` exist with RLS enabled and no anonymous policies.
+- [ ] **No identity fields**: Confirm the tables contain no tourist ID, visit ID, guest token, provider identity, raw IP, URL, referrer, or arbitrary metadata.
+- [ ] **Atomic event RPC**: Confirm `record_story_engagement_event(...)` validates public Story state and atomically deduplicates before inserting.
+- [ ] **Distributed rate limit RPC**: Confirm `consume_story_engagement_rate_limit(...)` is executable only by `service_role`.
+- [ ] **Retention RPCs**: Confirm `aggregate_story_engagement_events(...)` and `purge_story_engagement_data()` exist and are scheduled through an approved job before production traffic.
+- [ ] **Daily maintenance**: Confirm Vercel registered `/api/cron/story-engagement-maintenance` at `18:17 UTC` (`01:17 Asia/Bangkok`) and `CRON_SECRET` is set in production.
+- [ ] **Server secret**: Confirm `CONTENT_ENGAGEMENT_HASH_SECRET` is set separately in preview and production and is not exposed as a public environment variable.
+- [ ] **Post-apply verification**: Run `npm run db:story-engagement:verify` after applying the migration. It checks required tables, forbidden identity columns, and execute privileges without mutating data.
+
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:
 

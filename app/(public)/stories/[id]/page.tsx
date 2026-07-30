@@ -9,6 +9,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicStoryCard } from "@/components/stories/PublicStoryCard";
+import { StoryDetailEngagement } from "@/components/stories/StoryEngagementTracker";
 import {
   StoryDocumentRenderer,
   buildStoryTableOfContents,
@@ -88,6 +89,9 @@ export default async function StoryDetailsPage({
   if (!data) notFound();
 
   const { story, relatedStories } = data;
+  const engagementEnabled = Boolean(
+    process.env.CONTENT_ENGAGEMENT_HASH_SECRET,
+  );
   const paragraphs = storyParagraphs(story.content, story.excerpt);
   const toc = story.contentDocument
     ? buildStoryTableOfContents(story.contentDocument)
@@ -252,6 +256,12 @@ export default async function StoryDetailsPage({
                 )}
               </div>
             )}
+            {engagementEnabled && story.storyId > 0 ? (
+              <StoryDetailEngagement
+                storyId={story.storyId}
+                locale={story.primaryLanguage === "en" ? "en" : "th"}
+              />
+            ) : null}
           </article>
           <span className="hidden lg:block" />
         </div>
@@ -275,11 +285,20 @@ export default async function StoryDetailsPage({
               </Link>
             </div>
             <div className="mt-8 grid gap-8 md:grid-cols-3">
-              {relatedStories.map((recommendation) => (
+              {relatedStories.map((recommendation, index) => (
                 <PublicStoryCard
                   key={recommendation.story.id}
                   story={recommendation.story}
                   reason={recommendation.reasonLabel}
+                  tracking={
+                    engagementEnabled
+                      ? {
+                          surface: "related_rail",
+                          sourceStoryId: story.storyId,
+                          position: index + 1,
+                        }
+                      : undefined
+                  }
                 />
               ))}
             </div>

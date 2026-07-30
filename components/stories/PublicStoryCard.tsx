@@ -1,18 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Clock, FileText } from "@phosphor-icons/react/dist/ssr";
+import {
+  StoryCardEngagement,
+  type StoryCardTracking,
+} from "@/components/stories/StoryEngagementTracker";
 import type { PublicStoryCard as PublicStoryCardData } from "@/lib/repositories/public-content.repository";
 
 export function PublicStoryCard({
   story,
   featured = false,
   reason,
+  tracking,
 }: {
   story: PublicStoryCardData;
   featured?: boolean;
   reason?: string;
+  tracking?: StoryCardTracking;
 }) {
-  return (
+  const content = (
     <article
       className={
         featured
@@ -93,5 +99,20 @@ export function PublicStoryCard({
         </div>
       </div>
     </article>
+  );
+
+  if (!tracking) return content;
+
+  const storyId = story.storyId;
+  if (!Number.isInteger(storyId) || storyId <= 0) return content;
+
+  return (
+    <StoryCardEngagement
+      storyId={storyId}
+      locale={story.primaryLanguage === "en" ? "en" : "th"}
+      tracking={tracking}
+    >
+      {content}
+    </StoryCardEngagement>
   );
 }

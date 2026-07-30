@@ -1143,3 +1143,28 @@ The system should keep planning value, not unnecessary personal risk.
 Long-term data should be aggregated, anonymized, or clearly justified.
 
 Raw identifiable data should have a clear purpose and a clear end date.
+
+---
+
+## 23. Story Engagement Retention
+
+Story engagement is a separate anonymous product-improvement signal. It must
+not reuse tourist funnel events or contain a tourist, visit, provider identity,
+guest token, raw IP address, page URL, or referrer.
+
+| Data | Retention | Action |
+|---|---:|---|
+| Raw accepted Story events | 30 days | Aggregate by day, Story, event, surface, and locale; then delete |
+| HMAC deduplication digests | Up to 24 hours | Delete after expiry |
+| HMAC rate-limit buckets | Up to 24 hours | Delete after expiry |
+| Daily anonymous aggregates | Long-term | Keep for content planning and thresholded recommendations |
+
+`aggregate_story_engagement_events(...)` must run before raw event deletion.
+`purge_story_engagement_data()` removes expired raw and short-lived records.
+The HMAC secret and raw transient request source are never stored in these
+tables.
+
+Production uses the protected Vercel cron route once daily at 01:17
+Asia/Bangkok. Aggregation uses Bangkok calendar dates and may be safely rerun;
+the daily dimension constraint updates existing aggregates instead of adding
+duplicates.

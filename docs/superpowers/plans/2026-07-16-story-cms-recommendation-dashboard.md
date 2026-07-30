@@ -199,12 +199,12 @@ New UI areas:
 - Create validation, rate-limit, repository, and retention tests.
 - Update PDPA and retention documentation.
 
-- [ ] Write failing tests for allowed events, invalid origins, rate limiting, payload minimization, and no identifiers.
-- [ ] Record impression, open, related click, and meaningful completion.
-- [ ] Use short-lived anonymous deduplication only when needed.
-- [ ] Add retention and aggregation rules.
-- [ ] Keep engagement weight disabled until the minimum sample threshold is met.
-- [ ] Commit: `feat: add privacy-safe content engagement signals`
+- [x] Write failing tests for allowed events, invalid origins, rate limiting, payload minimization, and no identifiers.
+- [x] Record impression, open, related click, and meaningful completion.
+- [x] Use short-lived anonymous deduplication only when needed.
+- [x] Add retention and aggregation rules.
+- [x] Keep engagement weight disabled until the minimum sample threshold is met.
+- [x] Commit: `feat: add privacy-safe content engagement signals`
 
 ## Task 10: Redesign `/admin` as an Operational Command Center
 

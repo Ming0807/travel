@@ -1096,3 +1096,36 @@ admin privacy review queue
 The system should produce useful tourism planning data without collecting more personal information than necessary.
 
 A privacy-safe system is more trustworthy and more suitable for real-world academic or government-related deployment.
+
+---
+
+## 34. Privacy-Safe Story Engagement
+
+Story engagement exists only to improve content quality and explainable
+recommendations. It is not a tourist profile or cross-page tracking system.
+
+Allowed events:
+
+```text
+story_impression
+story_open
+related_content_click
+meaningful_read_complete
+```
+
+The browser sends only Story IDs, event, surface, locale, optional list
+position, and a random session nonce. The API may read an IP address
+transiently to derive an HMAC rate-limit digest, but must immediately discard
+the raw value. The database must not store identity, IP, URL, referrer, title,
+or arbitrary metadata.
+
+Privacy controls:
+
+- Exact same-origin requests only.
+- Browser Global Privacy Control and Do Not Track disable client recording.
+- Session nonce expires after 24 hours and is not a login or tourist identity.
+- Raw events expire after 30 days.
+- Public reading never waits for or depends on event recording.
+- Engagement affects recommendations only after at least 100 deduplicated
+  Story opens.
+- Small-sample engagement values are not shown publicly.
