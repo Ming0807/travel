@@ -146,6 +146,8 @@ Used for attraction location and domestic tourist origin.
 | region_name | varchar(150) | no | Region name |
 | is_target_area | boolean | yes | True for Yala, Pattani, Narathiwat |
 | is_active | boolean | yes | Whether available for selection |
+| destination_status | text | yes | Destination lifecycle: hidden, pilot, live, or retired. Never use for tourist origin filtering |
+| destination_display_order | smallint | no | Ordering for destination selectors only |
 | created_at | timestamptz | yes | Record creation time |
 | updated_at | timestamptz | no | Last update time |
 
@@ -166,6 +168,10 @@ Yala
 Pattani
 Narathiwat
 ```
+
+`destination_status` controls public destination availability. It does not
+replace `is_active`: `tourists.origin_province_id` uses this same master and
+must continue to support every valid active Thai origin province.
 
 ---
 

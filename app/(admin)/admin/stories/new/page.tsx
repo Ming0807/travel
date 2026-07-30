@@ -3,7 +3,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { StoryForm } from "@/components/admin/stories/StoryForm";
 import { requirePermission } from "@/lib/auth/guards";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { listLiveDestinationProvinces } from "@/lib/repositories/destination-scope.repository";
 
 export const metadata: Metadata = {
   title: "New Travel Story | Admin",
@@ -12,11 +12,7 @@ export const metadata: Metadata = {
 export default async function NewAdminStoryPage() {
   await requirePermission("story.create");
 
-  const supabase = await createSupabaseServerClient();
-  const { data: provinces } = await supabase
-    .from("provinces")
-    .select("province_id, province_name_th")
-    .order("province_id");
+  const provinces = await listLiveDestinationProvinces();
 
   return (
     <AdminShell>
@@ -28,7 +24,12 @@ export default async function NewAdminStoryPage() {
         />
 
         <div className="mt-8">
-          <StoryForm provinces={provinces ?? []} />
+          <StoryForm
+            provinces={provinces.map((province) => ({
+              province_id: province.provinceId,
+              province_name_th: province.nameTh,
+            }))}
+          />
         </div>
       </div>
     </AdminShell>

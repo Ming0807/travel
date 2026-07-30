@@ -1,6 +1,7 @@
 import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { listLiveDestinationProvinceIds } from "@/lib/repositories/destination-scope.repository";
 
 type JoinedRecord = Record<string, unknown>;
 
@@ -42,6 +43,8 @@ export interface CheckinCodeDetails {
     cover_image_url: string | null;
     province: {
       province_name_th: string;
+      is_active: boolean;
+      destination_status: string;
     } | null;
   } | null;
   photo_spot: {
@@ -54,6 +57,7 @@ export interface CheckinCodeDetails {
 
 export async function getCheckinCodeByCode(code: string): Promise<CheckinCodeDetails | null> {
   const supabase = createSupabaseServiceRoleClient();
+  const liveProvinceIds = new Set(await listLiveDestinationProvinceIds());
   
   const { data, error } = await supabase
     .from("checkin_codes")
@@ -78,7 +82,11 @@ export async function getCheckinCodeByCode(code: string): Promise<CheckinCodeDet
           display_order
         ),
         provinces (
-          province_name_th
+          province_id,
+          province_name_th,
+          province_name_en,
+          is_active,
+          is_target_area
         )
       ),
       photo_spots (
@@ -114,7 +122,13 @@ export async function getCheckinCodeByCode(code: string): Promise<CheckinCodeDet
       is_published: attractionData.is_published === true,
       cover_image_url: publicCoverUrl(attractionData.content_media),
       province: provinceData ? {
-        province_name_th: String(provinceData.province_name_th ?? "")
+        province_name_th: String(provinceData.province_name_th ?? ""),
+        is_active: provinceData.is_active === true,
+        destination_status: liveProvinceIds.has(
+          Number(provinceData.province_id),
+        )
+          ? "live"
+          : "hidden",
       } : null
     } : null,
     photo_spot: photoSpotData ? {

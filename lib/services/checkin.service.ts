@@ -1,5 +1,6 @@
 import "server-only";
 import { getCheckinSessionId } from "@/lib/auth/checkin-session";
+import { isLiveDestinationProvince } from "@/lib/destinations/launch-scope";
 import { getCheckinCodeByCode, CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
 import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
 
@@ -28,6 +29,10 @@ export async function resolveAndValidateCheckinCode(code: string): Promise<Resol
   }
 
   if (!details.attraction || !details.attraction.is_active || !details.attraction.is_published) {
+    return { status: "unavailable", details };
+  }
+
+  if (!isLiveDestinationProvince(details.attraction.province)) {
     return { status: "unavailable", details };
   }
 

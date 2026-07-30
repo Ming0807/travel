@@ -1,4 +1,5 @@
 import "server-only";
+import { assertLiveDestinationProvinceId } from "@/lib/repositories/destination-scope.repository";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminAccommodationFilters, AdminAccommodationMutationInput } from "@/lib/validation/admin-accommodation";
@@ -176,6 +177,7 @@ export async function findAccommodationBySlug(slug: string, excludeAccommodation
 }
 
 export async function createAdminAccommodation(input: AdminAccommodationMutationInput): Promise<AdminAccommodationRow> {
+  await assertLiveDestinationProvinceId(input.provinceId);
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("accommodations")

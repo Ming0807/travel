@@ -65,6 +65,16 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Server secret**: Confirm `CONTENT_ENGAGEMENT_HASH_SECRET` is set separately in preview and production and is not exposed as a public environment variable.
 - [ ] **Post-apply verification**: Run `npm run db:story-engagement:verify` after applying the migration. It checks required tables, forbidden identity columns, and execute privileges without mutating data.
 
+### 9. Yala Destination Launch Scope (P2)
+- [ ] **Migration `20260730110000_add_destination_launch_scope.sql`**: Apply after the Story engagement migration.
+- [ ] **Migration `20260730111000_enforce_destination_launch_scope.sql`**: Apply immediately after the destination column migration.
+- [ ] **Non-destructive scope**: Confirm Yala is the only `live` destination and Pattani/Narathiwat rows and historical content remain present.
+- [ ] **Origin geography preserved**: Confirm active origin provinces still contain more than Yala and the public active-province policy does not reference `destination_status`.
+- [ ] **Public policy scope**: Confirm destination content policies use the launch-scope helper functions.
+- [ ] **Service-role scope**: Confirm public repositories, check-in validation, passport targets, and new CMS forms repeat the destination boundary.
+- [ ] **Post-apply verification**: Run `npm run db:destination-scope:verify`. This command is read-only and requires `SUPABASE_DATABASE_URL`.
+- [ ] **Official Yala import**: Do not run `supabase/seed.sql` in production. Prepare a separate provenance-checked import only after official geography/content validation.
+
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:
 

@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { listPublicAttractionCards } from "@/lib/repositories/public-content.repository";
+import { listLiveDestinationProvinces } from "@/lib/repositories/destination-scope.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AttractionCard } from "@/types/tourism";
@@ -56,10 +57,10 @@ export default async function AttractionsPage({
   const settingsService = new SettingsService();
   const supabase = await createSupabaseServerClient();
 
-  const [attractions, heroSettings, bannerSettings, provincesRes, typesRes] = await Promise.all([
+  const [attractions, heroSettings, bannerSettings, liveProvinces, typesRes] = await Promise.all([
     listPublicAttractionCards(24, { search, province, type }),
     settingsService.getSetting("attractions_page_hero", {
-      title: "สำรวจ <span class=\"text-coral\">สถานที่ท่องเที่ยว</span><br/>ใน 3 จังหวัดชายแดนใต้",
+      title: "สำรวจ <span class=\"text-coral\">สถานที่ท่องเที่ยว</span><br/>ในจังหวัดยะลา",
       description:
         "ค้นหาสถานที่จริงจากฐานข้อมูล เลือกจังหวัดและประเภทที่เหมาะกับแผนเดินทางของคุณ",
     }),
@@ -70,12 +71,7 @@ export default async function AttractionsPage({
       linkUrl: "/attractions",
       image: "",
     }),
-    supabase
-      .from("provinces")
-      .select("province_name_en, province_name_th")
-      .eq("is_active", true)
-      .eq("is_target_area", true)
-      .order("province_name_th"),
+    listLiveDestinationProvinces(),
     supabase
       .from("attraction_types")
       .select("type_name_en, type_name_th")
@@ -85,14 +81,15 @@ export default async function AttractionsPage({
   ]);
 
   const provinceOptions: ProvinceOption[] =
-    provincesRes.data?.map((item) => ({
-      value: item.province_name_en,
-      label: item.province_name_th,
-    })) ?? [
-      { value: "Yala", label: "ยะลา" },
-      { value: "Pattani", label: "ปัตตานี" },
-      { value: "Narathiwat", label: "นราธิวาส" },
-    ];
+    liveProvinces.map((item) => ({
+      value: item.nameEn,
+      label: item.nameTh,
+    }));
+  const selectedProvince = provinceOptions.some(
+    (item) => item.value === province,
+  )
+    ? province
+    : undefined;
 
   const typeOptions: TypeOption[] =
     typesRes.data?.map((item) => ({
@@ -103,7 +100,7 @@ export default async function AttractionsPage({
   const buildAttractionsHref = (updates: Partial<{ q: string; province: string; type: string }>) => {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
-    if (province) params.set("province", province);
+    if (selectedProvince) params.set("province", selectedProvince);
     if (type) params.set("type", type);
 
     Object.entries(updates).forEach(([key, value]) => {
@@ -116,7 +113,7 @@ export default async function AttractionsPage({
   };
 
   const featured = attractions[0] ?? null;
-  const hasFilters = Boolean(search || province || type);
+  const hasFilters = Boolean(search || selectedProvince || type);
   const emptyMessage = hasFilters
     ? "ไม่พบสถานที่ท่องเที่ยวที่ตรงกับเงื่อนไข ลองเปลี่ยนคำค้น จังหวัด หรือประเภท"
     : "ยังไม่มีสถานที่ท่องเที่ยวที่เผยแพร่ในขณะนี้";
@@ -148,7 +145,11 @@ export default async function AttractionsPage({
             <form
               action="/attractions"
               method="GET"
-              className="mt-8 grid gap-3 rounded-3xl border border-ink/10 bg-white p-3 shadow-sm lg:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.8fr)_minmax(160px,0.8fr)_auto]"
+              className={`mt-8 grid gap-3 rounded-3xl border border-ink/10 bg-white p-3 shadow-sm ${
+                provinceOptions.length > 1
+                  ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.8fr)_minmax(160px,0.8fr)_auto]"
+                  : "lg:grid-cols-[minmax(0,1.4fr)_minmax(160px,0.8fr)_auto]"
+              }`}
             >
               <label className="relative block">
                 <span className="sr-only">ค้นหาสถานที่</span>
@@ -162,19 +163,21 @@ export default async function AttractionsPage({
                 />
               </label>
 
-              <label className="block">
-                <span className="sr-only">จังหวัด</span>
-                <select
-                  name="province"
-                  defaultValue={province ?? ""}
-                  className="h-12 w-full rounded-2xl border border-ink/10 bg-cream/40 px-4 text-sm font-bold text-ink outline-none transition focus:border-coral focus:bg-white focus:ring-2 focus:ring-coral/15"
-                >
-                  <option value="">ทุกจังหวัด</option>
-                  {provinceOptions.map((item) => (
-                    <option key={item.value} value={item.value}>{item.label}</option>
-                  ))}
-                </select>
-              </label>
+              {provinceOptions.length > 1 ? (
+                <label className="block">
+                  <span className="sr-only">จังหวัดปลายทาง</span>
+                  <select
+                    name="province"
+                    defaultValue={selectedProvince ?? ""}
+                    className="h-12 w-full rounded-2xl border border-ink/10 bg-cream/40 px-4 text-sm font-bold text-ink outline-none transition focus:border-coral focus:bg-white focus:ring-2 focus:ring-coral/15"
+                  >
+                    <option value="">ทุกจังหวัดที่เปิดให้บริการ</option>
+                    {provinceOptions.map((item) => (
+                      <option key={item.value} value={item.value}>{item.label}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
 
               <label className="block">
                 <span className="sr-only">ประเภทสถานที่</span>
@@ -202,7 +205,7 @@ export default async function AttractionsPage({
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-bold">
                 <span className="text-muted">กำลังกรองผลลัพธ์</span>
                 {search ? <span className="rounded-full bg-white px-3 py-1 text-ink">คำค้น: {search}</span> : null}
-                {province ? <span className="rounded-full bg-white px-3 py-1 text-ink">จังหวัด: {provinceOptions.find((item) => item.value === province)?.label ?? province}</span> : null}
+                {selectedProvince ? <span className="rounded-full bg-white px-3 py-1 text-ink">จังหวัด: {provinceOptions.find((item) => item.value === selectedProvince)?.label ?? selectedProvince}</span> : null}
                 {type ? <span className="rounded-full bg-white px-3 py-1 text-ink">ประเภท: {typeOptions.find((item) => item.value === type)?.label ?? type}</span> : null}
                 <Link href="/attractions" className="rounded-full px-3 py-1 text-coral transition hover:bg-white">
                   ล้างตัวกรอง
@@ -251,13 +254,14 @@ export default async function AttractionsPage({
           </div>
         </section>
 
+        {provinceOptions.length > 1 ? (
         <section className="mb-14">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <h2 className="text-2xl font-black text-ink">เลือกตามจังหวัด</h2>
               <p className="mt-1 text-sm text-muted">กดแล้วไปยังรายการสถานที่ของจังหวัดนั้นทันที</p>
             </div>
-            {province ? (
+            {selectedProvince ? (
               <Link href={buildAttractionsHref({ province: "" })} className="text-sm font-black text-coral hover:underline">
                 ดูทุกจังหวัด
               </Link>
@@ -266,7 +270,7 @@ export default async function AttractionsPage({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {provinceOptions.map((item) => {
-              const isActive = province === item.value;
+              const isActive = selectedProvince === item.value;
               return (
                 <Link
                   href={buildAttractionsHref({ province: item.value })}
@@ -287,6 +291,7 @@ export default async function AttractionsPage({
             })}
           </div>
         </section>
+        ) : null}
 
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px]">
           <section id="destinations" className="min-w-0">

@@ -1,6 +1,7 @@
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { listLiveDestinationProvinces } from "@/lib/repositories/destination-scope.repository";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { ShareStoryForm } from "@/components/stories/ShareStoryForm";
 import { TouristAuthGate } from "@/components/auth/TouristAuthGate";
@@ -21,15 +22,10 @@ export default async function ShareStoryPage() {
 
   const isAuthenticated = !!session?.user;
 
-  // Fetch provinces for the form
-  const { data: provinces } = await supabase
-    .from("provinces")
-    .select("province_id, province_name_en, province_name_th")
-    .order("province_id");
-
-  const formattedProvinces = (provinces || []).map((p) => ({
-    id: p.province_id,
-    name: p.province_name_th || p.province_name_en, // Prefer Thai name
+  const liveProvinces = await listLiveDestinationProvinces();
+  const formattedProvinces = liveProvinces.map((province) => ({
+    id: province.provinceId,
+    name: province.nameTh || province.nameEn,
   }));
 
   return (

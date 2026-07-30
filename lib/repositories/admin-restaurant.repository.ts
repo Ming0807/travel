@@ -1,4 +1,5 @@
 import "server-only";
+import { assertLiveDestinationProvinceId } from "@/lib/repositories/destination-scope.repository";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminRestaurantFilters, AdminRestaurantMutationInput } from "@/lib/validation/admin-restaurant";
@@ -176,6 +177,7 @@ export async function findRestaurantBySlug(slug: string, excludeRestaurantId?: n
 }
 
 export async function createAdminRestaurant(input: AdminRestaurantMutationInput): Promise<AdminRestaurantRow> {
+  await assertLiveDestinationProvinceId(input.provinceId);
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("restaurants")

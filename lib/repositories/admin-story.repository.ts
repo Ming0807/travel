@@ -1,4 +1,5 @@
 import "server-only";
+import { assertLiveDestinationProvinceId } from "@/lib/repositories/destination-scope.repository";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { normalizeLegacyStoryStatus, type StoryAuthorType } from "@/lib/content/story-workflow";
@@ -306,6 +307,7 @@ export async function findStoryBySlug(slug: string, excludeStoryId?: number) {
 }
 
 export async function createAdminStory(input: AdminStoryMutationInput): Promise<AdminStoryRow> {
+  await assertLiveDestinationProvinceId(input.provinceId);
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("travel_stories")

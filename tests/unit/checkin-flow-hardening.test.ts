@@ -172,6 +172,31 @@ describe("QR Check-in Flow Hardening", () => {
       expect(res.status).toBe("unavailable");
     });
 
+    it("returns unavailable when the attraction destination is not live", async () => {
+      vi.mocked(getCheckinCodeByCode).mockResolvedValue({
+        checkin_code_id: 1,
+        code: "hidden-destination",
+        is_active: true,
+        starts_at: null,
+        ends_at: null,
+        attraction: {
+          is_active: true,
+          is_published: true,
+          attraction_id: 1,
+          province: {
+            province_name_th: "ปัตตานี",
+            is_active: true,
+            destination_status: "hidden",
+          },
+        },
+        photo_spot: null,
+      } as unknown as CheckinCodeDetails);
+
+      const res = await resolveAndValidateCheckinCode("hidden-destination");
+
+      expect(res.status).toBe("unavailable");
+    });
+
     it("returns valid if all conditions are met", async () => {
       vi.mocked(getCheckinCodeByCode).mockResolvedValue({
         checkin_code_id: 1,
@@ -180,7 +205,16 @@ describe("QR Check-in Flow Hardening", () => {
         attraction_id: 1,
         starts_at: null,
         ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
+        attraction: {
+          is_active: true,
+          is_published: true,
+          attraction_id: 1,
+          province: {
+            province_name_th: "ยะลา",
+            is_active: true,
+            destination_status: "live",
+          },
+        },
         photo_spot: null,
       } as unknown as CheckinCodeDetails);
 
@@ -228,7 +262,16 @@ describe("QR Check-in Flow Hardening", () => {
         attraction_id: 1,
         starts_at: null,
         ends_at: null,
-        attraction: { is_active: true, is_published: true, attraction_id: 1 },
+        attraction: {
+          is_active: true,
+          is_published: true,
+          attraction_id: 1,
+          province: {
+            province_name_th: "ยะลา",
+            is_active: true,
+            destination_status: "live",
+          },
+        },
         photo_spot: null,
       } as unknown as CheckinCodeDetails);
     };

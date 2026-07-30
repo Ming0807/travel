@@ -42,7 +42,7 @@ Deliver a reversible Yala-first pilot, privacy-safe Story engagement, a premium 
 - [x] Database scope/data audit completed
 - [x] Detailed implementation plan written
 - [x] Privacy-safe Story engagement implemented locally; migration and production secret pending
-- [ ] Yala launch scope implemented
+- [x] Yala launch scope implemented in code; two production migrations pending owner apply/verify
 - [ ] Real Yala seed/import prepared and documented
 - [ ] Admin visual foundation implemented
 - [ ] Operational command center implemented
@@ -50,6 +50,20 @@ Deliver a reversible Yala-first pilot, privacy-safe Story engagement, a premium 
 - [ ] Analytical dashboard redesigned
 - [ ] Production browser QA completed
 - [ ] SQL run ledger reconciled with the owner
+
+## SQL Ledger (2026-07-30)
+
+- `20260730110000_add_destination_launch_scope.sql`: created, not applied remotely
+- `20260730111000_enforce_destination_launch_scope.sql`: created, not applied remotely
+- `20260730112000_complete_thai_origin_and_yala_geography.sql`: planned only, not created; requires official reference validation
+
+After applying the first two migrations, run:
+
+```bash
+npm run db:destination-scope:verify
+```
+
+Do not run `supabase/seed.sql` in production. It contains development/demo data and is not the approved Yala official-data import.
 
 ## Definition of Done
 

@@ -11,18 +11,17 @@ const foodTypes = [
   { value: "Halal", label: "Halal / ฮาลาล" },
 ];
 
-const provinces = [
-  { name: "Yala", slug: "Yala" },
-  { name: "Pattani", slug: "Pattani" },
-  { name: "Narathiwat", slug: "Narathiwat" },
-];
-
 type RestaurantFilterBarProps = {
   foodType?: string;
   province?: string;
+  provinces?: Array<{ value: string; label: string }>;
 };
 
-export function RestaurantFilterBar({ foodType, province }: RestaurantFilterBarProps) {
+export function RestaurantFilterBar({
+  foodType,
+  province,
+  provinces = [],
+}: RestaurantFilterBarProps) {
   return (
     <div className="flex flex-wrap gap-3">
       <div className="relative">
@@ -38,14 +37,14 @@ export function RestaurantFilterBar({ foodType, province }: RestaurantFilterBarP
           }}
           className="appearance-none bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink cursor-pointer hover:bg-cream transition-colors pr-8"
         >
-          <option value="">All Food Types</option>
+          <option value="">ทุกประเภทอาหาร</option>
           {foodTypes.map((ft) => (
             <option key={ft.value} value={ft.value}>{ft.label}</option>
           ))}
         </select>
         <CaretDown size={10} weight="bold" className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted" />
       </div>
-      <div className="relative">
+      {provinces.length > 1 ? <div className="relative">
         <select
           name="province"
           defaultValue={province || ""}
@@ -58,13 +57,13 @@ export function RestaurantFilterBar({ foodType, province }: RestaurantFilterBarP
           }}
           className="appearance-none bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink cursor-pointer hover:bg-cream transition-colors pr-8"
         >
-          <option value="">All Provinces</option>
+          <option value="">ทุกจังหวัดที่เปิดให้บริการ</option>
           {provinces.map((p) => (
-            <option key={p.slug} value={p.name}>{p.name}</option>
+            <option key={p.value} value={p.value}>{p.label}</option>
           ))}
         </select>
         <CaretDown size={10} weight="bold" className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted" />
-      </div>
+      </div> : null}
     </div>
   );
 }

@@ -16,7 +16,8 @@
     "test:e2e:admin-live": "playwright test --config=playwright.admin-live.config.ts",
     "release:smoke": "node scripts/release-smoke.mjs",
     "db:migrations:check": "node scripts/check-supabase-migrations.mjs",
-    "db:story-engagement:verify": "node scripts/verify-story-engagement-schema.mjs"
+    "db:story-engagement:verify": "node scripts/verify-story-engagement-schema.mjs",
+    "db:destination-scope:verify": "node scripts/verify-destination-launch-scope.mjs"
   },
   "dependencies": {
     "@line/liff": "^2.29.0",

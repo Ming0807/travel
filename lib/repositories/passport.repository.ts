@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { listLiveDestinationProvinceIds } from "@/lib/repositories/destination-scope.repository";
 
 export async function listPassportStamps(touristId: string) {
   const supabase = createSupabaseServiceRoleClient();
@@ -37,6 +38,8 @@ export async function listPassportStamps(touristId: string) {
 
 export async function listPublishedAttractionStampTargets() {
   const supabase = createSupabaseServiceRoleClient();
+  const liveProvinceIds = await listLiveDestinationProvinceIds();
+  if (liveProvinceIds.length === 0) return [];
   const { data, error } = await supabase
     .from("attractions")
     .select(`
@@ -54,6 +57,7 @@ export async function listPublishedAttractionStampTargets() {
     `)
     .eq("is_active", true)
     .eq("is_published", true)
+    .in("province_id", liveProvinceIds)
     .eq("stamp_definitions.is_active", true);
 
   if (error) {

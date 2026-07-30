@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/repositories/destination-scope.repository", () => ({
+  listLiveDestinationProvinces: vi.fn().mockResolvedValue([
+    { provinceId: 1, nameTh: "ยะลา", nameEn: "Yala", displayOrder: 1 },
+  ]),
+  listLiveDestinationProvinceIds: vi.fn().mockResolvedValue([1]),
+}));
 
 const { chain, client } = vi.hoisted(() => {
   const query: Record<string, ReturnType<typeof vi.fn>> = {};
@@ -103,7 +109,7 @@ describe("public story repository pagination", () => {
 
     expect(chain.eq).toHaveBeenCalledWith("status", "published");
     expect(chain.eq).toHaveBeenCalledWith("is_published", true);
-    expect(chain.eq).toHaveBeenCalledWith(
+    expect(chain.eq).not.toHaveBeenCalledWith(
       "provinces.province_name_en",
       "Pattani"
     );

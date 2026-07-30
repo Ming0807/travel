@@ -2,8 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock server-only to prevent import errors in test environment
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/repositories/destination-scope.repository", () => ({
+  listLiveDestinationProvinces: vi.fn().mockResolvedValue([
+    { provinceId: 1, nameTh: "ยะลา", nameEn: "Yala", displayOrder: 1 },
+  ]),
+  listLiveDestinationProvinceIds: vi.fn().mockResolvedValue([1]),
+}));
 
 import { listPublicAttractionCards, listPublicStories, listPublicRoutes } from "@/lib/repositories/public-content.repository";
+import { listLiveDestinationProvinceIds } from "@/lib/repositories/destination-scope.repository";
 
 // ── Configurable Supabase mock ─────────────────────────────────────────────
 
@@ -69,6 +76,7 @@ describe("listPublicAttractionCards", () => {
       mockFromChain[m].mockReturnValue(mockFromChain);
     }
     mockSupabaseClient.from.mockReturnValue(mockFromChain);
+    vi.mocked(listLiveDestinationProvinceIds).mockResolvedValue([1]);
   });
 
   it("attaches approved review summaries from the reviews table", async () => {
@@ -108,7 +116,7 @@ describe("listPublicAttractionCards", () => {
     expect("attractionId" in attractions[0]).toBe(false);
   });
 
-  it("applies public province, type, and search filters", async () => {
+  it("drops stale hidden province filters while applying type and search filters", async () => {
     mockFromChain.limit.mockResolvedValueOnce({ data: [], error: null });
 
     await listPublicAttractionCards(4, {
@@ -119,7 +127,7 @@ describe("listPublicAttractionCards", () => {
 
     expect(mockFromChain.eq).toHaveBeenCalledWith("is_published", true);
     expect(mockFromChain.eq).toHaveBeenCalledWith("is_active", true);
-    expect(mockFromChain.eq).toHaveBeenCalledWith("provinces.province_name_en", "Pattani");
+    expect(mockFromChain.eq).not.toHaveBeenCalledWith("provinces.province_name_en", "Pattani");
     expect(mockFromChain.eq).toHaveBeenCalledWith("attraction_types.type_name_en", "Culture");
     expect(mockFromChain.or).toHaveBeenCalledWith(expect.stringContaining("slug.ilike"));
     expect(mockFromChain.or).toHaveBeenCalledWith(expect.not.stringContaining("old,_town"));
@@ -161,15 +169,19 @@ describe("listPublicAttractionCards", () => {
       ],
       error: null,
     });
-    mockFromChain.in.mockResolvedValueOnce({
-      data: [
-        {
-          storage_path: "general/full-size.webp",
-          thumbnail_storage_path: "general/full-size_thumb.webp",
-        },
-      ],
-      error: null,
-    });
+    mockFromChain.in.mockImplementation((column: string) =>
+      column === "storage_path"
+        ? Promise.resolve({
+            data: [
+              {
+                storage_path: "general/full-size.webp",
+                thumbnail_storage_path: "general/full-size_thumb.webp",
+              },
+            ],
+            error: null,
+          })
+        : mockFromChain,
+    );
     mockFromChain.is.mockResolvedValueOnce({ data: [], error: null });
 
     const attractions = await listPublicAttractionCards(4);
@@ -197,6 +209,7 @@ describe("listPublicRoutes — featured slugs", () => {
       mockFromChain[m].mockReturnValue(mockFromChain);
     }
     mockSupabaseClient.from.mockReturnValue(mockFromChain);
+    vi.mocked(listLiveDestinationProvinceIds).mockResolvedValue([1]);
   });
 
   function buildRouteRows(stopsPerRoute: Record<string, number[]>) {
@@ -207,7 +220,17 @@ describe("listPublicRoutes — featured slugs", () => {
       description_th: `Description for ${slug}`,
       description_en: null,
       content_media: [],
-      suggested_route_stops: dayNumbers.map((d) => ({ day_number: d })),
+      suggested_route_stops: dayNumbers.map((d) => ({
+        day_number: d,
+        attractions: {
+          is_active: true,
+          is_published: true,
+          provinces: {
+            province_id: 1,
+            is_active: true,
+          },
+        },
+      })),
     }));
   }
 
@@ -237,11 +260,10 @@ describe("listPublicRoutes — featured slugs", () => {
     expect(routes[2].days).toBe(1);
   });
 
-  it("returns days=1 when route has no stops", async () => {
+  it("hides routes with no stops", async () => {
     setupRoutesQuery(buildRouteRows({ "no-stops-route": [] }));
 
     const routes = await listPublicRoutes(10, ["no-stops-route"]);
-    expect(routes).toHaveLength(1);
-    expect(routes[0].days).toBe(1);
+    expect(routes).toEqual([]);
   });
 });

@@ -9,6 +9,7 @@ import {
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { AccommodationFilterBar } from "@/components/accommodations/AccommodationFilterBar";
 import { listPublicAccommodations } from "@/lib/repositories/public-content.repository";
+import { listLiveDestinationProvinces } from "@/lib/repositories/destination-scope.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 
 export const dynamic = "force-dynamic";
@@ -24,10 +25,10 @@ export default async function AccommodationsPage({
   const province = typeof resolvedParams.province === 'string' ? resolvedParams.province : undefined;
 
   const settingsService = new SettingsService();
-  const [accommodations, heroSettings, featureSettings, ctaSettings] = await Promise.all([
+  const [accommodations, heroSettings, featureSettings, ctaSettings, liveProvinces] = await Promise.all([
     listPublicAccommodations({ search, province }),
     settingsService.getSetting("accommodations_page_hero", {
-      title: "ค้นพบ <span class=\"text-coral\">ที่พัก</span><br/>ใน 3 จังหวัดชายแดนใต้",
+      title: "ค้นพบ <span class=\"text-coral\">ที่พัก</span><br/>ในจังหวัดยะลา",
       description: "สัมผัสประสบการณ์การพักผ่อนที่ผสมผสานวัฒนธรรมท้องถิ่นและความสะดวกสบายอย่างลงตัว ค้นหาที่พักที่ใช่สำหรับการเดินทางของคุณ"
     }),
     settingsService.getSetting("accommodations_page_feature", {
@@ -41,8 +42,13 @@ export default async function AccommodationsPage({
       linkText: "ลงทะเบียนที่พัก",
       linkUrl: "/contact",
       image: ""
-    })
+    }),
+    listLiveDestinationProvinces(),
   ]);
+  const provinceOptions = liveProvinces.map((item) => ({
+    value: item.nameEn,
+    label: item.nameTh,
+  }));
 
   // Client-side filtering for accommodationType since it might not be directly supported by the backend repo out-of-the-box
   // To keep it simple, we filter the results here if a type is provided.
@@ -92,7 +98,11 @@ export default async function AccommodationsPage({
 
             {/* Filters */}
             <div className="flex flex-wrap gap-3 items-center">
-              <AccommodationFilterBar accommodationType={accommodationType} province={province} />
+              <AccommodationFilterBar
+                accommodationType={accommodationType}
+                province={province}
+                provinces={provinceOptions}
+              />
               {(search || accommodationType || province) && (
                 <Link href="/accommodations" className="px-4 py-2 text-xs font-bold text-coral hover:underline transition-colors">
                   ดูที่พักทั้งหมด &rarr;

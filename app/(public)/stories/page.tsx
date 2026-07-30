@@ -12,6 +12,7 @@ import {
   listPublicStoryPage,
   listPublicStoryTopics,
 } from "@/lib/repositories/public-content.repository";
+import { listLiveDestinationProvinces } from "@/lib/repositories/destination-scope.repository";
 import {
   buildPublicStoryHref,
   parsePublicStorySearchParams,
@@ -27,12 +28,6 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
-const provinceOptions = [
-  { value: "Yala", label: "ยะลา" },
-  { value: "Pattani", label: "ปัตตานี" },
-  { value: "Narathiwat", label: "นราธิวาส" },
-];
-
 export default async function StoriesPage({
   searchParams,
 }: {
@@ -42,7 +37,20 @@ export default async function StoriesPage({
     process.env.CONTENT_ENGAGEMENT_HASH_SECRET,
   );
   const rawSearchParams = await searchParams;
-  const query = parsePublicStorySearchParams(rawSearchParams);
+  const parsedQuery = parsePublicStorySearchParams(rawSearchParams);
+  const liveProvinces = await listLiveDestinationProvinces();
+  const provinceOptions = liveProvinces.map((province) => ({
+    value: province.nameEn,
+    label: province.nameTh,
+  }));
+  const query = {
+    ...parsedQuery,
+    province: provinceOptions.some(
+      (province) => province.value === parsedQuery.province,
+    )
+      ? parsedQuery.province
+      : undefined,
+  };
   const settingsService = new SettingsService();
   const [storyPage, topics, heroSettings] = await Promise.all([
     listPublicStoryPage(query),
@@ -123,6 +131,7 @@ export default async function StoriesPage({
                 className="min-h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 outline-none focus:border-[#075E54] focus:ring-2 focus:ring-[#075E54]/15"
               />
             </label>
+            {provinceOptions.length > 1 ? (
             <label className="md:col-span-3">
               <span className="sr-only">เลือกจังหวัด</span>
               <select
@@ -138,6 +147,7 @@ export default async function StoriesPage({
                 ))}
               </select>
             </label>
+            ) : null}
             <label className="md:col-span-3">
               <span className="sr-only">เลือกหัวข้อ</span>
               <select

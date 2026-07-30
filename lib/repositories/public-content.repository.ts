@@ -11,6 +11,14 @@ import {
   rankStoryRecommendations,
   type StoryRecommendationReason,
 } from "@/lib/content/story-recommendation";
+import {
+  routeStopsArePublicForLaunch,
+  sanitizeDestinationProvinceFilter,
+} from "@/lib/destinations/launch-scope";
+import {
+  listLiveDestinationProvinceIds,
+  listLiveDestinationProvinces,
+} from "@/lib/repositories/destination-scope.repository";
 import { listStoryEngagementSignals } from "@/lib/repositories/story-engagement.repository";
 import type { AttractionCard } from "@/types/tourism";
 
@@ -351,6 +359,13 @@ function mapStoryDetail(row: DbRecord): PublicStoryDetail {
 export async function listPublicAttractionCards(limit = 16, options?: PublicAttractionListOptions): Promise<AttractionCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
+    const liveProvinces = await listLiveDestinationProvinces();
+    const liveProvinceIds = liveProvinces.map((province) => province.provinceId);
+    if (liveProvinceIds.length === 0) return [];
+    const provinceFilter = sanitizeDestinationProvinceFilter(
+      options?.province,
+      liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+    );
     const buildBaseQuery = () => {
       const attractionTypesRelation = options?.type ? "attraction_types!inner" : "attraction_types";
       let q = supabase
@@ -367,7 +382,8 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
           content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
         `)
         .eq("is_published", true)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .in("province_id", liveProvinceIds);
 
       if (options?.search) {
         const search = escapeIlikePattern(options.search);
@@ -376,8 +392,8 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
         }
       }
 
-      if (options?.province) {
-        q = q.eq('provinces.province_name_en', options.province);
+      if (provinceFilter) {
+        q = q.eq('provinces.province_name_en', provinceFilter);
       }
 
       if (options?.type) {
@@ -455,7 +471,12 @@ export async function getPublicAttractionDetail(slug: string, options?: { previe
       .eq("slug", slug);
 
     if (!options?.previewMode) {
-      query = query.eq("is_published", true).eq("is_active", true);
+      const liveProvinceIds = await listLiveDestinationProvinceIds();
+      if (liveProvinceIds.length === 0) return null;
+      query = query
+        .eq("is_published", true)
+        .eq("is_active", true)
+        .in("province_id", liveProvinceIds);
     }
 
     const { data, error } = await query.maybeSingle();
@@ -595,17 +616,26 @@ export async function listPublicStories(options?: { limit?: number; province?: s
   const limit = options?.limit ?? 12;
   try {
     const supabase = await createSupabaseServerClient();
+    const liveProvinces = await listLiveDestinationProvinces();
+    const liveProvinceIds = liveProvinces.map((province) => province.provinceId);
+    if (liveProvinceIds.length === 0) return [];
+    const provinceFilter = sanitizeDestinationProvinceFilter(
+      options?.province,
+      liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+    );
     let query = supabase
       .from("travel_stories")
-      .select(publicStorySelect(Boolean(options?.province), false))
+      .select(publicStorySelect(Boolean(provinceFilter), false))
       .eq("status", "published")
-      .eq("is_published", true);
+      .eq("is_published", true)
+      .eq("geographic_scope", "province")
+      .or(`province_id.is.null,province_id.in.(${liveProvinceIds.join(",")})`);
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       query = query.in("slug", options.featuredSlugs);
     } else {
-      if (options?.province) {
-        query = query.eq('provinces.province_name_en', options.province);
+      if (provinceFilter) {
+        query = query.eq('provinces.province_name_en', provinceFilter);
       }
       if (options?.authorType) {
         query = query.eq('author_type', options.authorType);
@@ -671,14 +701,32 @@ export async function listPublicStoryPage(
   const to = from + options.pageSize - 1;
   try {
     const supabase = await createSupabaseServerClient();
+    const liveProvinces = await listLiveDestinationProvinces();
+    const liveProvinceIds = liveProvinces.map((province) => province.provinceId);
+    if (liveProvinceIds.length === 0) {
+      return {
+        items: [],
+        total: 0,
+        page: options.page,
+        pageSize: options.pageSize,
+        totalPages: 0,
+        loadError: false,
+      };
+    }
+    const provinceFilter = sanitizeDestinationProvinceFilter(
+      options.province,
+      liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+    );
     let query = supabase
       .from("travel_stories")
       .select(
-        publicStorySelect(Boolean(options.province), Boolean(options.topic)),
+        publicStorySelect(Boolean(provinceFilter), Boolean(options.topic)),
         { count: "exact" }
       )
       .eq("status", "published")
-      .eq("is_published", true);
+      .eq("is_published", true)
+      .eq("geographic_scope", "province")
+      .or(`province_id.is.null,province_id.in.(${liveProvinceIds.join(",")})`);
 
     if (options.search) {
       const pattern = escapeIlikePattern(options.search);
@@ -686,10 +734,10 @@ export async function listPublicStoryPage(
         `title.ilike.%${pattern}%,excerpt.ilike.%${pattern}%`
       );
     }
-    if (options.province) {
+    if (provinceFilter) {
       query = query.eq(
         "provinces.province_name_en",
-        options.province
+        provinceFilter
       );
     }
     if (options.topic) {
@@ -816,6 +864,8 @@ async function listCuratedStoryRelations(
 export async function getPublicStory(slug: string): Promise<{ story: PublicStoryDetail; relatedStories: PublicStoryRecommendation[] } | null> {
   try {
     const supabase = await createSupabaseServerClient();
+    const liveProvinceIds = await listLiveDestinationProvinceIds();
+    if (liveProvinceIds.length === 0) return null;
     const { data, error } = await supabase
       .from("travel_stories")
       .select(`
@@ -852,6 +902,8 @@ export async function getPublicStory(slug: string): Promise<{ story: PublicStory
       .eq("slug", slug)
       .eq("status", "published")
       .eq("is_published", true)
+      .eq("geographic_scope", "province")
+      .or(`province_id.is.null,province_id.in.(${liveProvinceIds.join(",")})`)
       .maybeSingle();
 
     if (error || !data) return null;
@@ -983,6 +1035,13 @@ function mapRestaurantRow(row: DbRecord): PublicRestaurantCard {
 export async function listPublicRestaurants(options?: { search?: string; foodType?: string; province?: string; featuredSlugs?: string[] }): Promise<PublicRestaurantCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
+    const liveProvinces = await listLiveDestinationProvinces();
+    const liveProvinceIds = liveProvinces.map((province) => province.provinceId);
+    if (liveProvinceIds.length === 0) return [];
+    const provinceFilter = sanitizeDestinationProvinceFilter(
+      options?.province,
+      liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+    );
     let query = supabase
       .from("restaurants")
       .select(`
@@ -996,7 +1055,8 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
         content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
       `)
       .eq("is_published", true)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .in("province_id", liveProvinceIds);
 
     if (options?.search) {
       query = query.or(`name_th.ilike.%${options.search}%,name_en.ilike.%${options.search}%`);
@@ -1008,8 +1068,8 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       query = query.in("slug", options.featuredSlugs);
-    } else if (options?.province) {
-      query = query.eq('provinces.province_name_en', options.province);
+    } else if (provinceFilter) {
+      query = query.eq('provinces.province_name_en', provinceFilter);
     }
 
     const { data, error } = await query
@@ -1031,6 +1091,8 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
 export async function getPublicRestaurantDetail(slug: string): Promise<PublicRestaurantDetail | null> {
   try {
     const supabase = await createSupabaseServerClient();
+    const liveProvinceIds = await listLiveDestinationProvinceIds();
+    if (liveProvinceIds.length === 0) return null;
     const { data, error } = await supabase
       .from("restaurants")
       .select(`
@@ -1050,6 +1112,7 @@ export async function getPublicRestaurantDetail(slug: string): Promise<PublicRes
       .eq("slug", slug)
       .eq("is_published", true)
       .eq("is_active", true)
+      .in("province_id", liveProvinceIds)
       .maybeSingle();
 
     if (error || !data) return null;
@@ -1126,6 +1189,13 @@ function mapAccommodationRow(row: DbRecord): PublicAccommodationCard {
 export async function listPublicAccommodations(options?: { search?: string; province?: string; featuredSlugs?: string[] }): Promise<PublicAccommodationCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
+    const liveProvinces = await listLiveDestinationProvinces();
+    const liveProvinceIds = liveProvinces.map((province) => province.provinceId);
+    if (liveProvinceIds.length === 0) return [];
+    const provinceFilter = sanitizeDestinationProvinceFilter(
+      options?.province,
+      liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+    );
     let query = supabase
       .from("accommodations")
       .select(`
@@ -1140,7 +1210,8 @@ export async function listPublicAccommodations(options?: { search?: string; prov
         content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
       `)
       .eq("is_published", true)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .in("province_id", liveProvinceIds);
 
     if (options?.search) {
       query = query.or(`name_th.ilike.%${options.search}%,name_en.ilike.%${options.search}%`);
@@ -1148,8 +1219,8 @@ export async function listPublicAccommodations(options?: { search?: string; prov
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       query = query.in("slug", options.featuredSlugs);
-    } else if (options?.province) {
-      query = query.eq('provinces.province_name_en', options.province);
+    } else if (provinceFilter) {
+      query = query.eq('provinces.province_name_en', provinceFilter);
     }
 
     const { data, error } = await query
@@ -1193,6 +1264,8 @@ export type PublicAccommodationDetail = {
 export async function getPublicAccommodationDetail(slug: string): Promise<PublicAccommodationDetail | null> {
   try {
     const supabase = await createSupabaseServerClient();
+    const liveProvinceIds = await listLiveDestinationProvinceIds();
+    if (liveProvinceIds.length === 0) return null;
     const { data, error } = await supabase
       .from("accommodations")
       .select(`
@@ -1211,6 +1284,7 @@ export async function getPublicAccommodationDetail(slug: string): Promise<Public
       .eq("slug", slug)
       .eq("is_published", true)
       .eq("is_active", true)
+      .in("province_id", liveProvinceIds)
       .maybeSingle();
 
     if (error || !data) return null;
@@ -1268,19 +1342,53 @@ export type PublicRouteCard = {
 
 export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Promise<PublicRouteCard[]> {
   try {
-
     const supabase = await createSupabaseServerClient();
+    const liveProvinceIds = await listLiveDestinationProvinceIds();
+    if (liveProvinceIds.length === 0) return [];
+    const liveProvinceIdSet = new Set(liveProvinceIds);
+    const routeSelect = `
+      slug,
+      name_th,
+      name_en,
+      description_th,
+      description_en,
+      content_media (
+        storage_path,
+        is_cover,
+        is_active,
+        lifecycle_status
+      ),
+      suggested_route_stops (
+        day_number,
+        attractions (
+          is_active,
+          is_published,
+          provinces (
+            province_id,
+            is_active,
+            province_name_en
+          )
+        )
+      )
+    `;
 
     if (featuredSlugs && featuredSlugs.length > 0) {
       const { data: fd, error: fe } = await supabase
         .from("suggested_routes")
-        .select("slug, name_th, name_en, description_th, description_en, content_media (storage_path, is_cover, is_active, lifecycle_status), suggested_route_stops (day_number)")
+        .select(routeSelect)
         .in("slug", featuredSlugs)
         .eq("is_published", true)
         .eq("is_active", true)
         .limit(featuredSlugs.length);
       if (!fe && fd && fd.length > 0) {
-        const results = (fd as DbRecord[]).map(row => {
+        const results = (fd as DbRecord[])
+          .filter((row) =>
+            routeStopsArePublicForLaunch(
+              row.suggested_route_stops,
+              liveProvinceIdSet,
+            ),
+          )
+          .map(row => {
           const stops = Array.isArray(row.suggested_route_stops) ? row.suggested_route_stops as { day_number: number }[] : [];
           const days = stops.length > 0 ? Math.max(...stops.map(s => (s.day_number || 1))) : 1;
           return {
@@ -1298,7 +1406,7 @@ export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Pr
 
     const { data, error } = await supabase
       .from("suggested_routes")
-      .select("slug, name_th, name_en, description_th, description_en, content_media (storage_path, is_cover, is_active, lifecycle_status), suggested_route_stops (day_number)")
+      .select(routeSelect)
       .eq("is_published", true)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
@@ -1306,7 +1414,14 @@ export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Pr
 
     if (error || !data) return [];
 
-    return (data as DbRecord[]).map(row => {
+    return (data as DbRecord[])
+      .filter((row) =>
+        routeStopsArePublicForLaunch(
+          row.suggested_route_stops,
+          liveProvinceIdSet,
+        ),
+      )
+      .map(row => {
       const stops = Array.isArray(row.suggested_route_stops) ? row.suggested_route_stops as { day_number: number }[] : [];
       const days = stops.length > 0 ? Math.max(...stops.map(s => s.day_number || 1)) : 1;
 
@@ -1337,6 +1452,9 @@ export type PublicRouteDetail = PublicRouteCard & {
 export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDetail | null> {
   try {
     const supabase = await createSupabaseServerClient();
+    const liveProvinceIds = await listLiveDestinationProvinceIds();
+    if (liveProvinceIds.length === 0) return null;
+    const liveProvinceIdSet = new Set(liveProvinceIds);
     const { data, error } = await supabase
       .from("suggested_routes")
       .select(`
@@ -1351,21 +1469,30 @@ export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDet
           day_number,
           display_order,
           attractions (
+            is_active,
+            is_published,
             name_th,
             name_en,
             slug,
+            provinces (
+              province_id,
+              is_active,
+              province_name_en
+            ),
             content_media (storage_path, is_cover, is_active, lifecycle_status)
           )
         )
       `)
       .eq("slug", slug)
       .eq("is_published", true)
+      .eq("is_active", true)
       .maybeSingle();
 
     if (error || !data) return null;
 
     const row = data as DbRecord;
     const stopsArray = Array.isArray(row.suggested_route_stops) ? (row.suggested_route_stops as DbRecord[]) : [];
+    if (!routeStopsArePublicForLaunch(stopsArray, liveProvinceIdSet)) return null;
 
     // Process and sort stops
     const mappedStops = stopsArray.map(stop => {

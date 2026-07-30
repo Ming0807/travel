@@ -10,6 +10,7 @@ import {
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { RestaurantFilterBar } from "@/components/restaurants/RestaurantFilterBar";
 import { listPublicRestaurants } from "@/lib/repositories/public-content.repository";
+import { listLiveDestinationProvinces } from "@/lib/repositories/destination-scope.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 
 export const dynamic = "force-dynamic";
@@ -25,10 +26,10 @@ export default async function RestaurantsPage({
   const province = typeof resolvedParams.province === 'string' ? resolvedParams.province : undefined;
 
   const settingsService = new SettingsService();
-  const [restaurants, heroSettings, featureSettings, ctaSettings] = await Promise.all([
+  const [restaurants, heroSettings, featureSettings, ctaSettings, liveProvinces] = await Promise.all([
     listPublicRestaurants({ search, foodType, province }),
     settingsService.getSetting("restaurants_page_hero", {
-      title: "ค้นพบ <span class=\"text-coral\">รสชาติท้องถิ่น</span><br/>ใน 3 จังหวัดชายแดนใต้",
+      title: "ค้นพบ <span class=\"text-coral\">รสชาติท้องถิ่น</span><br/>ในจังหวัดยะลา",
       description: "จากร้านอาหารพื้นเมืองสูตรโบราณสู่คาเฟ่สุดชิค ค้นพบรสชาติที่แท้จริงของชายแดนใต้ ที่จะทำให้การเดินทางของคุณสมบูรณ์แบบยิ่งขึ้น"
     }),
     settingsService.getSetting("restaurants_page_feature", {
@@ -42,8 +43,13 @@ export default async function RestaurantsPage({
       linkText: "ลงทะเบียนร้านอาหาร",
       linkUrl: "/contact",
       image: ""
-    })
+    }),
+    listLiveDestinationProvinces(),
   ]);
+  const provinceOptions = liveProvinces.map((item) => ({
+    value: item.nameEn,
+    label: item.nameTh,
+  }));
 
 
   return (
@@ -87,7 +93,11 @@ export default async function RestaurantsPage({
 
             {/* Filters */}
             <div className="flex flex-wrap gap-3 items-center">
-              <RestaurantFilterBar foodType={foodType} province={province} />
+              <RestaurantFilterBar
+                foodType={foodType}
+                province={province}
+                provinces={provinceOptions}
+              />
               {(search || foodType || province) && (
                 <Link href="/restaurants" className="px-4 py-2 text-xs font-bold text-coral hover:underline transition-colors">
                   ดูร้านอาหารทั้งหมด &rarr;

@@ -54,9 +54,9 @@
 
 **Primary files**
 
-- Create `20260730020000_add_destination_launch_scope.sql`
-- Create `20260730021000_enforce_destination_launch_scope.sql`
-- Create `20260730022000_complete_thai_origin_and_yala_geography.sql` only after official-reference validation
+- Create `20260730110000_add_destination_launch_scope.sql`
+- Create `20260730111000_enforce_destination_launch_scope.sql`
+- Create `20260730112000_complete_thai_origin_and_yala_geography.sql` only after official-reference validation
 - Update public repositories, route filters, homepage selections, sitemap, and admin pickers
 - Add a real Yala content/relationship seed or import script separate from migrations
 - Update deployment, seed, data dictionary, and release documentation
@@ -220,9 +220,9 @@ Created locally, not yet applied:
 
 Planned, not yet created or applied:
 
-- `20260730020000_add_destination_launch_scope.sql`
-- `20260730021000_enforce_destination_launch_scope.sql`
-- `20260730022000_complete_thai_origin_and_yala_geography.sql`
+- `20260730110000_add_destination_launch_scope.sql`
+- `20260730111000_enforce_destination_launch_scope.sql`
+- `20260730112000_complete_thai_origin_and_yala_geography.sql`
 - Dashboard analytics RPC/summary migration, timestamp to be assigned after metric contract tests
 
 Never claim a migration is applied based only on a local file or successful build.

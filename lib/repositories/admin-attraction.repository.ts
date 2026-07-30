@@ -4,6 +4,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminAttractionFilters, AdminAttractionMutationInput } from "@/lib/validation/admin-attraction";
 import type { Json } from "@/types/database";
 import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
+import { assertLiveDestinationProvinceId } from "@/lib/repositories/destination-scope.repository";
 
 export type AdminAttractionRow = {
   attraction_id: number;
@@ -253,6 +254,7 @@ export async function findAttractionBySlug(slug: string, excludeAttractionId?: n
 }
 
 export async function createAdminAttraction(input: AdminAttractionMutationInput): Promise<AdminAttractionRow> {
+  await assertLiveDestinationProvinceId(input.provinceId);
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("attractions")
