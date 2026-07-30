@@ -7,6 +7,10 @@ import {
   storyDocumentSchema,
   type StoryDocument,
 } from "@/lib/content/story-document";
+import {
+  rankStoryRecommendations,
+  type StoryRecommendationReason,
+} from "@/lib/content/story-recommendation";
 import type { AttractionCard } from "@/types/tourism";
 
 type DbRecord = Record<string, unknown>;
@@ -61,12 +65,19 @@ export type PublicStoryTopicOption = {
   name: string;
 };
 
+export type PublicStoryRecommendation = {
+  story: PublicStoryCard;
+  reasonKey: StoryRecommendationReason;
+  reasonLabel: string;
+};
+
 export type PublicAttractionRelatedItem = {
   id: string;
   title: string;
   description: string;
   imageUrl: string | null;
   category?: string;
+  recommendationReason?: string;
   rating?: number;
   reviews?: string;
   price?: string;
@@ -564,7 +575,11 @@ export async function getPublicAttractionDetail(slug: string, options?: { previe
         title: s.title,
         description: s.excerpt,
         imageUrl: s.imageUrl,
-        category: s.category
+        category: s.category,
+        recommendationReason:
+          curatedStorySlugs.length > 0
+            ? "คัดเลือกให้เข้ากับสถานที่นี้"
+            : `เรื่องราวจาก${baseDetail.province}`,
       }));
 
     return baseDetail;
@@ -577,11 +592,11 @@ export async function listPublicStories(options?: { limit?: number; province?: s
   const limit = options?.limit ?? 12;
   try {
     const supabase = await createSupabaseServerClient();
-    const joinType = options?.province ? '!inner' : '';
     let query = supabase
       .from("travel_stories")
-      .select(`slug, title, excerpt, category, published_at, author_type, tourists (display_name), provinces${joinType} (province_name_th, province_name_en), content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)`)
-      .eq("status", "published");
+      .select(publicStorySelect(Boolean(options?.province), false))
+      .eq("status", "published")
+      .eq("is_published", true);
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       query = query.in("slug", options.featuredSlugs);
@@ -599,7 +614,9 @@ export async function listPublicStories(options?: { limit?: number; province?: s
       .limit(options?.featuredSlugs ? options.featuredSlugs.length : limit);
 
     if (error || !data || data.length === 0) return [];
-    const results = (data as DbRecord[]).map(mapStory).filter((item) => item.id);
+    const results = (data as unknown as DbRecord[])
+      .map(mapStory)
+      .filter((item) => item.id);
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       return results.sort((a, b) => options.featuredSlugs!.indexOf(a.id) - options.featuredSlugs!.indexOf(b.id));
@@ -761,12 +778,44 @@ export async function listMyStories(touristId: string, options?: { limit?: numbe
   }
 }
 
-export async function getPublicStory(slug: string): Promise<{ story: PublicStoryDetail; relatedStories: PublicStoryCard[] } | null> {
+async function listCuratedStoryRelations(
+  sourceStoryId: number
+): Promise<Array<{ slug: string; order: number; reason: string | null }>> {
+  if (!Number.isInteger(sourceStoryId) || sourceStoryId <= 0) return [];
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("story_recommendations")
+      .select(`
+        display_order,
+        reason,
+        target_story:travel_stories!story_recommendations_target_story_id_fkey (
+          slug
+        )
+      `)
+      .eq("source_story_id", sourceStoryId)
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+    if (error || !Array.isArray(data)) return [];
+    return (data as unknown as DbRecord[])
+      .map((row) => ({
+        slug: text(one(row.target_story)?.slug),
+        order: numberValue(row.display_order),
+        reason: text(row.reason) || null,
+      }))
+      .filter((relation) => relation.slug);
+  } catch {
+    return [];
+  }
+}
+
+export async function getPublicStory(slug: string): Promise<{ story: PublicStoryDetail; relatedStories: PublicStoryRecommendation[] } | null> {
   try {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("travel_stories")
       .select(`
+        story_id,
         slug,
         title,
         excerpt,
@@ -803,10 +852,65 @@ export async function getPublicStory(slug: string): Promise<{ story: PublicStory
 
     if (error || !data) return null;
 
-    const story = mapStoryDetail(data as DbRecord);
-    const relatedStories = (await listPublicStories({ limit: 8 }))
-      .filter((item) => item.id !== story.id)
-      .slice(0, 3);
+    const sourceRow = data as DbRecord;
+    const story = mapStoryDetail(sourceRow);
+    const curatedRelations = await listCuratedStoryRelations(
+      numberValue(sourceRow.story_id)
+    );
+    const [curatedStories, latestStories] = await Promise.all([
+      curatedRelations.length > 0
+        ? listPublicStories({
+            featuredSlugs: curatedRelations.map((relation) => relation.slug),
+            limit: curatedRelations.length,
+          })
+        : Promise.resolve([]),
+      listPublicStories({ limit: 24 }),
+    ]);
+    const curatedBySlug = new Map(
+      curatedRelations.map((relation) => [relation.slug, relation])
+    );
+    const candidates = [...curatedStories, ...latestStories];
+    const candidateBySlug = new Map(
+      candidates.map((candidate) => [candidate.id, candidate])
+    );
+    const ranked = rankStoryRecommendations(
+      {
+        id: story.id,
+        province: story.province,
+        topicKey: story.primaryTopic?.key ?? null,
+        publishedAt: story.publishedAt,
+        publicReady: true,
+      },
+      candidates.map((candidate) => {
+        const curated = curatedBySlug.get(candidate.id);
+        return {
+          id: candidate.id,
+          province: candidate.province,
+          topicKey: candidate.primaryTopic?.key ?? null,
+          publishedAt: candidate.publishedAt,
+          publicReady: Boolean(candidate.imageUrl),
+          ...(curated
+            ? {
+                curatedOrder: curated.order,
+                curatedReason: curated.reason,
+              }
+            : {}),
+        };
+      }),
+      { limit: 3 }
+    );
+    const relatedStories = ranked.flatMap((recommendation) => {
+      const candidate = candidateBySlug.get(recommendation.id);
+      return candidate
+        ? [
+            {
+              story: candidate,
+              reasonKey: recommendation.reasonKey,
+              reasonLabel: recommendation.reasonLabel,
+            },
+          ]
+        : [];
+    });
 
     return { story, relatedStories };
   } catch {

@@ -5,7 +5,12 @@ import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { requiredStoryEditorialPermission } from "@/lib/auth/story-editorial-permission";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { applyStoryEditorialChange, StoryEditorialServiceError } from "@/lib/services/story-editorial.service";
-import { adminStoryMutationSchema, storyEditorialChangeInputSchema } from "@/lib/validation/story";
+import {
+  adminStoryMutationSchema,
+  storyEditorialChangeInputSchema,
+  storyRecommendationMutationSchema,
+  storyRecommendationSearchSchema,
+} from "@/lib/validation/story";
 import { clearCoverMediaForEntity, linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminStory,
@@ -16,6 +21,13 @@ import {
   toStoryEditorialState,
 } from "@/lib/repositories/admin-story.repository";
 import { storyEditorialChangeStore } from "@/lib/repositories/story-revision.repository";
+import {
+  listAdminStoryRecommendations,
+  replaceStoryRecommendations,
+  searchStoryRecommendationCandidates,
+  type AdminStoryRecommendation,
+  type StoryRecommendationCandidate,
+} from "@/lib/repositories/story-recommendation.repository";
 
 type ActionResult<TData = unknown> = {
   success: boolean;
@@ -23,6 +35,12 @@ type ActionResult<TData = unknown> = {
   fieldErrors?: Record<string, string[] | undefined>;
   data?: TData;
 };
+
+function revalidatePublicStoryContent(slug?: string): void {
+  revalidatePath("/stories", "layout");
+  if (slug) revalidatePath(`/stories/${slug}`);
+  revalidatePath("/attractions", "layout");
+}
 
 function editorialErrorMessage(error: StoryEditorialServiceError): string {
   switch (error.code) {
@@ -89,7 +107,7 @@ export async function saveStoryEditorialChangeAction(
 
     revalidatePath("/admin/stories");
     revalidatePath(`/admin/stories/${parsed.data.storyId}/edit`);
-    revalidatePath(`/stories/${story.slug}`);
+    revalidatePublicStoryContent(story.slug);
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
@@ -130,6 +148,7 @@ export async function createStoryAction(_prevState: ActionResult<{ id: number; s
     });
 
     revalidatePath("/admin/stories");
+    revalidatePublicStoryContent(created.slug);
     return { success: true, data: { id: created.story_id, slug: created.slug } };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
@@ -187,6 +206,8 @@ export async function updateStoryAction(
     });
 
     revalidatePath("/admin/stories");
+    revalidatePublicStoryContent(old.slug);
+    if (updated.slug !== old.slug) revalidatePublicStoryContent(updated.slug);
     return {
       success: true,
       data: {
@@ -220,9 +241,92 @@ export async function changeStoryStatusAction(storyId: number, newStatus: string
     });
 
     revalidatePath("/admin/stories");
+    revalidatePublicStoryContent(current.slug);
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังเปลี่ยนสถานะไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
+export async function searchStoryRecommendationCandidatesAction(
+  input: unknown
+): Promise<ActionResult<StoryRecommendationCandidate[]>> {
+  const parsed = storyRecommendationSearchSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: "กรุณากรอกคำค้นหาให้ถูกต้อง" };
+  }
+
+  try {
+    await requirePermission("story.recommend_manage");
+    const data = await searchStoryRecommendationCandidates(parsed.data);
+    return { success: true, data };
+  } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return { success: false, error: error.message };
+    }
+    return {
+      success: false,
+      error: "ยังค้นหาบทความไม่ได้ กรุณาลองอีกครั้ง",
+    };
+  }
+}
+
+export async function saveStoryRecommendationsAction(
+  input: unknown
+): Promise<ActionResult<AdminStoryRecommendation[]>> {
+  const parsed = storyRecommendationMutationSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: "รายการบทความแนะนำไม่ถูกต้อง กรุณาตรวจสอบลำดับและลองอีกครั้ง",
+    };
+  }
+
+  try {
+    const guard = await requirePermission("story.recommend_manage");
+    const story = await getAdminStoryById(parsed.data.sourceStoryId);
+    if (!story) return { success: false, error: "ไม่พบบทความต้นทาง" };
+
+    const previous = await listAdminStoryRecommendations(
+      parsed.data.sourceStoryId
+    );
+    await replaceStoryRecommendations(parsed.data, guard.actor.adminId);
+    const updated = await listAdminStoryRecommendations(
+      parsed.data.sourceStoryId
+    );
+
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "story.recommendations.update",
+      entityType: "travel_story",
+      entityId: parsed.data.sourceStoryId,
+      oldValues: {
+        recommendations: previous.map((item) => ({
+          targetStoryId: item.targetStoryId,
+          displayOrder: item.displayOrder,
+          reason: item.reason,
+        })),
+      },
+      newValues: {
+        recommendations: updated.map((item) => ({
+          targetStoryId: item.targetStoryId,
+          displayOrder: item.displayOrder,
+          reason: item.reason,
+        })),
+      },
+    });
+
+    revalidatePath(`/admin/stories/${parsed.data.sourceStoryId}/edit`);
+    revalidatePublicStoryContent(story.slug);
+    return { success: true, data: updated };
+  } catch (error) {
+    if (error instanceof AdminAuthError) {
+      return { success: false, error: error.message };
+    }
+    return {
+      success: false,
+      error: "ยังบันทึกบทความแนะนำไม่ได้ กรุณาลองอีกครั้ง",
+    };
   }
 }

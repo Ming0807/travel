@@ -1443,6 +1443,13 @@ status is canonical; is_published is synchronized for compatibility
 
 `story_revisions` and `story_review_events` have RLS enabled without public policies. Permission-controlled server code owns their access.
 
+Curated recommendation changes use
+`replace_story_recommendations(bigint, jsonb, uuid)`. The service-role-only
+function validates the full ordered list before deleting the previous links, so
+the CMS cannot leave a partially updated recommendation set. Public rendering
+still applies canonical Story publication filters and managed-media readiness
+checks before a target is displayed.
+
 Legacy application writes using `pending` remain temporarily accepted by the publication-state trigger and are normalized to `submitted` for traveler stories or `in_review` for editorial stories before constraints are checked.
 
 The P2 Editorial Studio persists meaningful changes through the service-role-only

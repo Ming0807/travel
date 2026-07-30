@@ -6,9 +6,11 @@ import type { PublicStoryCard as PublicStoryCardData } from "@/lib/repositories/
 export function PublicStoryCard({
   story,
   featured = false,
+  reason,
 }: {
   story: PublicStoryCardData;
   featured?: boolean;
+  reason?: string;
 }) {
   return (
     <article
@@ -43,6 +45,11 @@ export function PublicStoryCard({
         )}
       </Link>
       <div className={featured ? "lg:order-1" : "pt-5"}>
+        {reason ? (
+          <p className="mb-3 text-xs font-bold leading-5 text-[#075E54]">
+            เหตุผลที่แนะนำ: {reason}
+          </p>
+        ) : null}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-bold text-slate-600">
           <span>{story.category}</span>
           {story.province ? (

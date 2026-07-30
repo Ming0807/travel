@@ -8,6 +8,8 @@ const {
   applyChange,
   logAdminMutation,
   revalidatePath,
+  listRecommendations,
+  replaceRecommendations,
 } = vi.hoisted(() => ({
   requirePermission: vi.fn(),
   getAdminStoryById: vi.fn(),
@@ -15,6 +17,8 @@ const {
   applyChange: vi.fn(),
   logAdminMutation: vi.fn(),
   revalidatePath: vi.fn(),
+  listRecommendations: vi.fn(),
+  replaceRecommendations: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath }));
@@ -39,8 +43,16 @@ vi.mock("@/lib/repositories/admin-story.repository", () => ({
 vi.mock("@/lib/repositories/story-revision.repository", () => ({
   storyEditorialChangeStore: { applyChange },
 }));
+vi.mock("@/lib/repositories/story-recommendation.repository", () => ({
+  listAdminStoryRecommendations: listRecommendations,
+  replaceStoryRecommendations: replaceRecommendations,
+  searchStoryRecommendationCandidates: vi.fn(),
+}));
 
-import { saveStoryEditorialChangeAction } from "@/app/actions/admin-story-actions";
+import {
+  saveStoryEditorialChangeAction,
+  saveStoryRecommendationsAction,
+} from "@/app/actions/admin-story-actions";
 
 const current: StoryEditorialState = {
   storyId: 12,
@@ -106,6 +118,9 @@ describe("saveStoryEditorialChangeAction", () => {
       })
     );
     expect(logAdminMutation.mock.calls[0]?.[0]).not.toHaveProperty("contentDocument");
+    expect(revalidatePath).toHaveBeenCalledWith("/stories", "layout");
+    expect(revalidatePath).toHaveBeenCalledWith("/stories/original-story");
+    expect(revalidatePath).toHaveBeenCalledWith("/attractions", "layout");
   });
 
   it("returns a stable validation error without reading the story", async () => {
@@ -114,5 +129,56 @@ describe("saveStoryEditorialChangeAction", () => {
     expect(result).toMatchObject({ success: false, error: "ข้อมูลการแก้ไขไม่ถูกต้อง" });
     expect(requirePermission).not.toHaveBeenCalled();
     expect(getAdminStoryById).not.toHaveBeenCalled();
+  });
+
+  it("protects and atomically replaces curated recommendations with an audit record", async () => {
+    const before = [
+      {
+        targetStoryId: 20,
+        title: "เรื่องเดิม",
+        slug: "old-story",
+        provinceName: "ยะลา",
+        displayOrder: 0,
+        reason: null,
+      },
+    ];
+    const after = [
+      {
+        targetStoryId: 21,
+        title: "เรื่องใหม่",
+        slug: "new-story",
+        provinceName: "ปัตตานี",
+        displayOrder: 0,
+        reason: "อ่านต่อในหัวข้อเดียวกัน",
+      },
+    ];
+    listRecommendations
+      .mockResolvedValueOnce(before)
+      .mockResolvedValueOnce(after);
+
+    const result = await saveStoryRecommendationsAction({
+      sourceStoryId: 12,
+      items: [
+        {
+          targetStoryId: 21,
+          displayOrder: 0,
+          reason: "อ่านต่อในหัวข้อเดียวกัน",
+        },
+      ],
+    });
+
+    expect(requirePermission).toHaveBeenCalledWith("story.recommend_manage");
+    expect(replaceRecommendations).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceStoryId: 12 }),
+      "admin-id"
+    );
+    expect(logAdminMutation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "story.recommendations.update",
+        entityId: 12,
+      })
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/stories", "layout");
+    expect(result).toEqual({ success: true, data: after });
   });
 });

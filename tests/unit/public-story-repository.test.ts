@@ -228,4 +228,75 @@ describe("public story repository pagination", () => {
       expect.objectContaining({ version: 2 })
     );
   });
+
+  it("prioritizes an active curated public story with its editorial reason", async () => {
+    const relationChain: Record<string, ReturnType<typeof vi.fn>> = {};
+    for (const method of ["select", "eq", "order"]) {
+      relationChain[method] = vi.fn().mockReturnValue(relationChain);
+    }
+    relationChain.order.mockResolvedValueOnce({
+      data: [
+        {
+          display_order: 0,
+          reason: "อ่านต่อเพื่อวางแผนเส้นทางวัฒนธรรม",
+          target_story: { slug: "curated-story" },
+        },
+      ],
+      error: null,
+    });
+    client.from.mockImplementation((table: string) =>
+      table === "story_recommendations" ? relationChain : chain
+    );
+    chain.maybeSingle.mockResolvedValueOnce({
+      data: {
+        story_id: 17,
+        slug: "source-story",
+        title: "เรื่องต้นทาง",
+        status: "published",
+        is_published: true,
+        author_type: "admin",
+        published_at: "2026-07-20T00:00:00.000Z",
+        provinces: { province_name_th: "ปัตตานี" },
+        content_media: [],
+        story_topic_links: [],
+      },
+      error: null,
+    });
+    chain.limit
+      .mockResolvedValueOnce({
+        data: [
+          {
+            slug: "curated-story",
+            title: "เรื่องที่กองบรรณาธิการเลือก",
+            status: "published",
+            is_published: true,
+            author_type: "admin",
+            published_at: "2026-07-18T00:00:00.000Z",
+            provinces: { province_name_th: "ยะลา" },
+            content_media: [
+              {
+                storage_path: "stories/curated.webp",
+                is_cover: true,
+                is_active: true,
+                lifecycle_status: "active",
+              },
+            ],
+            story_topic_links: [],
+          },
+        ],
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: [], error: null });
+
+    const result = await getPublicStory("source-story");
+
+    expect(result?.relatedStories).toEqual([
+      expect.objectContaining({
+        reasonKey: "curated",
+        reasonLabel: "อ่านต่อเพื่อวางแผนเส้นทางวัฒนธรรม",
+        story: expect.objectContaining({ id: "curated-story" }),
+      }),
+    ]);
+    expect(relationChain.eq).toHaveBeenCalledWith("is_active", true);
+  });
 });

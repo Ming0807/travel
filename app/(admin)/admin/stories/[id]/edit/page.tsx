@@ -7,6 +7,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 import { listStoryTopics } from "@/lib/repositories/story-taxonomy.repository";
 import { listStoryRevisions } from "@/lib/repositories/story-revision.repository";
+import { listAdminStoryRecommendations } from "@/lib/repositories/story-recommendation.repository";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -27,13 +28,20 @@ export default async function EditAdminStoryPage({
   }
 
   const canReadRevisions = hasPermission(guard.actor, "story.revision_read");
-  const [story, coverMedia, topics, revisionResult] = await Promise.all([
+  const canManageRecommendations = hasPermission(
+    guard.actor,
+    "story.recommend_manage"
+  );
+  const [story, coverMedia, topics, revisionResult, recommendations] = await Promise.all([
     getAdminStoryById(storyId),
     getCoverMediaForEntity("story", storyId),
     listStoryTopics(),
     canReadRevisions
       ? listStoryRevisions({ storyId, pageSize: 5 })
       : Promise.resolve({ items: [], total: 0, page: 1, pageSize: 5 }),
+    canManageRecommendations
+      ? listAdminStoryRecommendations(storyId)
+      : Promise.resolve([]),
   ]);
   if (!story) {
     notFound();
@@ -57,6 +65,8 @@ export default async function EditAdminStoryPage({
         changeSummary: revision.changeSummary,
         createdAt: revision.createdAt,
       }))}
+      recommendations={recommendations}
+      canManageRecommendations={canManageRecommendations}
       coverMediaId={coverMedia?.media_id ?? null}
       coverMediaUrl={adminMediaPreviewUrl(coverMedia?.storage_path)}
     />

@@ -195,8 +195,56 @@ export const storyEditorialChangeInputSchema = z.object({
   change: editorialChangeSchema,
 });
 
+export const storyRecommendationMutationSchema = z
+  .object({
+    sourceStoryId: requiredId,
+    items: z
+      .array(
+        z.object({
+          targetStoryId: requiredId,
+          displayOrder: z.number().int().min(0).max(11),
+          reason: z.string().trim().max(255).nullable(),
+        })
+      )
+      .max(12),
+  })
+  .superRefine((value, context) => {
+    const targetIds = value.items.map((item) => item.targetStoryId);
+    if (new Set(targetIds).size !== targetIds.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["items"],
+        message: "Recommended stories must be unique.",
+      });
+    }
+    if (targetIds.includes(value.sourceStoryId)) {
+      context.addIssue({
+        code: "custom",
+        path: ["items"],
+        message: "A story cannot recommend itself.",
+      });
+    }
+    if (
+      value.items.some((item, index) => item.displayOrder !== index)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["items"],
+        message: "Recommendation order must be contiguous.",
+      });
+    }
+  });
+
+export const storyRecommendationSearchSchema = z.object({
+  sourceStoryId: requiredId,
+  query: z.string().trim().min(1).max(120),
+});
+
 export type AdminStoryFilters = z.infer<typeof adminStoryFiltersSchema>;
 export type AdminStoryMutationInput = z.infer<typeof adminStoryMutationSchema>;
 export type StoryEditorialChangeInput = z.infer<
   typeof storyEditorialChangeInputSchema
+>;
+export type StoryRecommendationMutationInput = z.infer<
+  typeof storyRecommendationMutationSchema
 >;

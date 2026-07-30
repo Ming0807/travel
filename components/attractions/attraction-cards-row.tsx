@@ -7,6 +7,7 @@ type CardItem = {
   title: string;
   description: string;
   imageUrl: string | null;
+  recommendationReason?: string;
   rating?: number;
   reviews?: string;
   price?: string;
@@ -35,21 +36,26 @@ export function AttractionCardsRow({ id, title, items, viewAllText, linkPrefix }
       <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
         {items.map((item) => (
           <Link href={`${linkPrefix}/${item.id}`} key={item.id} className="min-w-[240px] max-w-[240px] flex-shrink-0 group cursor-pointer block">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl mb-4 bg-ink/5">
+            <div className="relative mb-4 aspect-[4/3] w-full overflow-hidden rounded-lg bg-ink/5">
               {item.imageUrl ? (
                 <Image
                   src={item.imageUrl}
                   alt={item.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  unoptimized
+                  sizes="240px"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs font-semibold text-muted">
-                  Image not added
+                  ยังไม่มีรูปภาพ
                 </div>
               )}
             </div>
+            {item.recommendationReason ? (
+              <p className="mb-2 text-xs font-bold leading-5 text-[#075E54]">
+                เหตุผลที่แนะนำ: {item.recommendationReason}
+              </p>
+            ) : null}
             <h3 className="text-base font-bold text-ink group-hover:text-coral transition-colors">{item.title}</h3>
             <p className="mt-1 text-sm text-muted line-clamp-2">{item.description}</p>
             
@@ -58,12 +64,12 @@ export function AttractionCardsRow({ id, title, items, viewAllText, linkPrefix }
                 {item.rating && (
                   <div className="flex items-center gap-1 text-xs font-semibold text-ink">
                     <Star size={14} weight="fill" className="text-gold" />
-                    {item.rating} <span className="text-muted font-normal">({item.reviews} reviews)</span>
+                    {item.rating} <span className="text-muted font-normal">({item.reviews} รีวิว)</span>
                   </div>
                 )}
                 {item.price && (
                   <div className="text-xs font-semibold text-ink">
-                    From ฿{item.price} / night
+                    เริ่มต้น ฿{item.price} / คืน
                   </div>
                 )}
               </div>

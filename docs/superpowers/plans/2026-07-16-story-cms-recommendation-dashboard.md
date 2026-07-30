@@ -183,12 +183,12 @@ New UI areas:
 - Create: `tests/unit/story-recommendation.test.ts`
 - Create repository integration tests with fixtures.
 
-- [ ] Write failing tests for exclusions, weights, curated priority, diversity, minimum sample, and fallback.
-- [ ] Implement candidate queries that return public-ready records only.
-- [ ] Return score components and reason keys internally.
-- [ ] Display one translated recommendation reason without exposing scores publicly.
-- [ ] Add cache keys and invalidation after publish/taxonomy/relation changes.
-- [ ] Commit: `feat: add explainable story recommendations`
+- [x] Write failing tests for exclusions, weights, curated priority, diversity, minimum sample, and fallback.
+- [x] Implement candidate queries that return public-ready records only.
+- [x] Return score components and reason keys internally.
+- [x] Display one translated recommendation reason without exposing scores publicly.
+- [x] Add route cache invalidation after publish, taxonomy, cover, and editorial changes.
+- [x] Commit: `feat: add explainable story recommendations`
 
 ## Task 9: Add Privacy-Safe Content Engagement
 

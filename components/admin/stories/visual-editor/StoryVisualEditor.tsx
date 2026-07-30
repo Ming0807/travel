@@ -3,7 +3,7 @@
 import { useCallback, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Export, BookmarkSimple, ClockCounterClockwise, Image as ImageIcon } from "@phosphor-icons/react";
+import { ArrowLeft, Export, BookmarkSimple, ClockCounterClockwise, Image as ImageIcon, LinkSimple } from "@phosphor-icons/react";
 import { EditableBlock } from "@/components/admin/forms/EditableBlock";
 import { AdminReadinessPanel } from "@/components/admin/forms/AdminFormUX";
 import { Drawer } from "@/components/admin/Drawer";
@@ -16,6 +16,8 @@ import {
 } from "@/lib/content/story-editorial-presentation";
 import { extractStoryOutline } from "@/lib/content/story-outline";
 import { getStoryStatusPresentation } from "@/lib/content/story-library";
+import { StoryRecommendationManager } from "@/components/admin/stories/editor/StoryRecommendationManager";
+import type { AdminStoryRecommendation } from "@/lib/repositories/story-recommendation.repository";
 
 type StoryRevisionSummary = {
   revisionId: string;
@@ -25,7 +27,13 @@ type StoryRevisionSummary = {
   createdAt: string;
 };
 
-type EditorSection = "header" | "content" | "settings" | "cover" | null;
+type EditorSection =
+  | "header"
+  | "content"
+  | "settings"
+  | "cover"
+  | "recommendations"
+  | null;
 
 interface StoryVisualEditorProps {
   story: AdminStoryRow;
@@ -37,6 +45,8 @@ interface StoryVisualEditorProps {
     nameEn: string | null;
   }[];
   revisions?: StoryRevisionSummary[];
+  recommendations?: AdminStoryRecommendation[];
+  canManageRecommendations?: boolean;
   coverMediaId?: number | null;
   coverMediaUrl?: string | null;
 }
@@ -58,11 +68,16 @@ export function StoryVisualEditor({
   provinces,
   topics = [],
   revisions = [],
+  recommendations = [],
+  canManageRecommendations = false,
   coverMediaId: initialCoverMediaId,
   coverMediaUrl: initialCoverMediaUrl,
 }: StoryVisualEditorProps) {
   const [activeSection, setActiveSection] = useState<EditorSection>(null);
   const [contentDirty, setContentDirty] = useState(false);
+  const [recommendationDirty, setRecommendationDirty] = useState(false);
+  const [editorRecommendations, setEditorRecommendations] =
+    useState(recommendations);
   const [editorStory, setEditorStory] = useState(story);
   const [editorialUpdatedAt, setEditorialUpdatedAt] = useState(
     story.updated_at ?? story.created_at
@@ -108,10 +123,33 @@ export function StoryVisualEditor({
     setActiveSection(null);
   }, [contentDirty]);
 
+  const closeRecommendationEditor = useCallback(
+    (force = false) => {
+      if (
+        !force &&
+        recommendationDirty &&
+        !window.confirm(
+          "มีการแก้ไขบทความแนะนำที่ยังไม่ได้บันทึก ต้องการปิดหน้าต่างหรือไม่"
+        )
+      ) {
+        return;
+      }
+      setRecommendationDirty(false);
+      setActiveSection(null);
+    },
+    [recommendationDirty]
+  );
+
   useEffect(() => {
     let hash = window.location.hash.replace("#", "");
     if (hash === "gallery") hash = "cover"; // content-health maps media to cover
-    const validSections: EditorSection[] = ["header", "content", "settings", "cover"];
+    const validSections: EditorSection[] = [
+      "header",
+      "content",
+      "settings",
+      "cover",
+      "recommendations",
+    ];
     if (validSections.includes(hash as EditorSection)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveSection(hash as EditorSection);
@@ -272,6 +310,33 @@ export function StoryVisualEditor({
                 items={getStoryReadinessAdminItems(readiness)}
               />
 
+              {canManageRecommendations ? (
+                <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <LinkSimple
+                      size={20}
+                      weight="duotone"
+                      className="mt-0.5 shrink-0 text-[#0A6B62]"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-black text-[#073F37]">
+                        บทความแนะนำ
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        เลือกและเรียงเรื่องที่ควรอ่านต่อ หรือปล่อยให้ระบบจัดให้
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection("recommendations")}
+                        className="mt-4 min-h-11 rounded-md border border-[#075E54] px-4 text-sm font-bold text-[#075E54] transition hover:bg-[#E6F4F1]"
+                      >
+                        จัดการ {editorRecommendations.length} เรื่อง
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
               <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-2">
                   <ClockCounterClockwise
@@ -400,6 +465,21 @@ export function StoryVisualEditor({
           expectedUpdatedAt={editorialUpdatedAt}
           onEditorialSaved={handleEditorialSaved}
           onClose={() => setActiveSection(null)}
+        />
+      </Drawer>
+      <Drawer
+        isOpen={activeSection === "recommendations"}
+        onClose={() => closeRecommendationEditor()}
+        title="บทความแนะนำ"
+        size="lg"
+        bodyClassName="p-0"
+      >
+        <StoryRecommendationManager
+          storyId={editorStory.story_id}
+          initialItems={editorRecommendations}
+          onDirtyChange={setRecommendationDirty}
+          onSaved={setEditorRecommendations}
+          onClose={() => closeRecommendationEditor(true)}
         />
       </Drawer>
 

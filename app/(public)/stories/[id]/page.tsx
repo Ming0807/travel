@@ -275,8 +275,12 @@ export default async function StoryDetailsPage({
               </Link>
             </div>
             <div className="mt-8 grid gap-8 md:grid-cols-3">
-              {relatedStories.map((related) => (
-                <PublicStoryCard key={related.id} story={related} />
+              {relatedStories.map((recommendation) => (
+                <PublicStoryCard
+                  key={recommendation.story.id}
+                  story={recommendation.story}
+                  reason={recommendation.reasonLabel}
+                />
               ))}
             </div>
           </section>

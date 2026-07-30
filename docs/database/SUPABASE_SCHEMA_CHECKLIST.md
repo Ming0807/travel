@@ -50,6 +50,9 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Migration `20260730000000_harden_public_story_search.sql`**: Apply after the Story editorial migrations.
 - [ ] **Story search indexes**: Confirm `idx_travel_stories_public_feed_stable`, `idx_travel_stories_public_title_trgm`, and `idx_travel_stories_public_excerpt_trgm` exist.
 - [ ] **Canonical public policy**: Confirm public Story SELECT requires both `status = 'published'` and `is_published = true`.
+- [ ] **Migration `20260730010000_replace_story_recommendations_rpc.sql`**: Apply after the Story editorial platform migration.
+- [ ] **Atomic recommendation RPC**: Confirm `replace_story_recommendations(bigint, jsonb, uuid)` exists and execute permission is limited to `service_role`.
+- [ ] **Recommendation constraints**: Confirm the RPC rejects self-links, duplicates, non-public targets, reasons over 255 characters, and more than 12 targets before replacing the list in one transaction.
 
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:

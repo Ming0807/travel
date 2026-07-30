@@ -45,6 +45,16 @@ Both workflows share Media Library, taxonomy, search, public rendering, and reco
 
 The editor will use hybrid structured content: TipTap JSON is the canonical editable document and sanitized HTML remains available for rendering and compatibility with existing stories. Public recommendations begin with curated relationships and deterministic relevance scoring. They must not be labeled AI.
 
+Recommendation behavior is deliberately explainable:
+
+- active editorial relationships appear first and may carry a short Thai reason;
+- automatic candidates are limited to records that are publicly published and have managed cover media;
+- province, shared destination, overlapping tags, primary topic, freshness, and content readiness contribute separate internal score components;
+- engagement contributes only after the configured minimum sample is reached, so early traffic cannot distort ordering;
+- diversity prevents one province or topic from filling every recommendation slot when alternatives exist;
+- public cards show one Thai explanation, never the score or an AI claim;
+- story create, edit, publish, unpublish, taxonomy, and cover changes invalidate Story and Attraction public surfaces.
+
 See:
 
 - `docs/superpowers/specs/2026-07-16-story-cms-recommendation-dashboard-design.md`
