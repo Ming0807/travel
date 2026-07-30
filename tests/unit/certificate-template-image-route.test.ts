@@ -42,6 +42,7 @@ function request(query = `visitId=${visitId}&templateId=7`) {
 describe("GET /api/certificate/template-image", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co");
     mocks.requireTouristVisitAccess.mockResolvedValue({ visit: { attraction_id: 12 } });
     mocks.resolveCertificateTemplate.mockResolvedValue({
       templateId: 7,
@@ -87,5 +88,61 @@ describe("GET /api/certificate/template-image", () => {
     const response = await GET(request());
     expect(response.status).toBe(403);
     expect(mocks.createPrivateFileSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the legacy public site-media object when private signing fails", async () => {
+    mocks.createPrivateFileSignedUrl.mockRejectedValueOnce(
+      new Error("SIGNED_URL_CREATE_FAILED")
+    );
+
+    const response = await GET(request());
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/webp");
+    expect(fetch).toHaveBeenCalledWith(
+      "https://project.supabase.co/storage/v1/object/public/site-media/certificate-templates/yala.webp",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+  });
+
+  it("falls back to site-media when a signed private object no longer exists", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(new Response(null, { status: 404 }))
+        .mockResolvedValueOnce(
+          new Response(new Uint8Array([4, 5, 6]), {
+            status: 200,
+            headers: { "content-type": "image/webp" },
+          })
+        )
+    );
+
+    const response = await GET(request());
+
+    expect(response.status).toBe(200);
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      "https://project.supabase.co/storage/v1/object/public/site-media/certificate-templates/yala.webp",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+  });
+
+  it("returns a safe transparent image when the configured background is unavailable", async () => {
+    mocks.createPrivateFileSignedUrl.mockRejectedValueOnce(
+      new Error("SIGNED_URL_CREATE_FAILED")
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(null, { status: 404 }))
+    );
+
+    const response = await GET(request());
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/png");
+    expect(response.headers.get("x-certificate-template-fallback")).toBe("1");
+    expect((await response.arrayBuffer()).byteLength).toBeGreaterThan(0);
   });
 });

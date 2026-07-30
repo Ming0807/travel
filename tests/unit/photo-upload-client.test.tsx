@@ -30,12 +30,35 @@ describe("PhotoUploadClient", () => {
     });
   });
 
+  it("offers separate mobile controls for the camera and photo library or files", () => {
+    render(<PhotoUploadClient visitId="550e8400-e29b-41d4-a716-446655440000" />);
+
+    expect(screen.getByRole("button", { name: "ถ่ายรูป" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "เลือกจากคลังรูปหรือไฟล์" })
+    ).toBeInTheDocument();
+
+    const libraryInput = screen.getByLabelText("เลือกจากคลังรูปหรือแอปไฟล์");
+    expect(libraryInput).toHaveAttribute(
+      "accept",
+      "image/jpeg,image/png,image/webp,image/heic,image/heif"
+    );
+    expect(libraryInput).not.toHaveAttribute("capture");
+
+    const cameraInput = screen.getByLabelText("ถ่ายรูปด้วยกล้อง");
+    expect(cameraInput).toHaveAttribute("capture", "environment");
+    expect(cameraInput).toHaveAttribute(
+      "accept",
+      "image/jpeg,image/png,image/webp,image/heic,image/heif"
+    );
+  });
+
   it("does not send the original file when client compression fails", async () => {
     mocks.prepare.mockRejectedValueOnce(new Error("ไม่สามารถย่อรูปนี้ได้ กรุณาเลือกรูปอื่น"));
     render(<PhotoUploadClient visitId="550e8400-e29b-41d4-a716-446655440000" />);
 
     const source = new File(["camera"], "camera.jpg", { type: "image/jpeg" });
-    fireEvent.change(screen.getByLabelText("เลือกรูปถ่าย"), { target: { files: [source] } });
+    fireEvent.change(screen.getByLabelText("เลือกจากคลังรูปหรือแอปไฟล์"), { target: { files: [source] } });
     await userEvent.click(screen.getByRole("button", { name: "อัปโหลดและไปต่อ" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("ไม่สามารถย่อรูปนี้ได้");
@@ -55,7 +78,7 @@ describe("PhotoUploadClient", () => {
     }));
 
     render(<PhotoUploadClient visitId="550e8400-e29b-41d4-a716-446655440000" />);
-    fireEvent.change(screen.getByLabelText("เลือกรูปถ่าย"), {
+    fireEvent.change(screen.getByLabelText("เลือกจากคลังรูปหรือแอปไฟล์"), {
       target: { files: [new File(["camera"], "camera.jpg", { type: "image/jpeg" })] },
     });
     await userEvent.click(screen.getByRole("button", { name: "อัปโหลดและไปต่อ" }));
@@ -76,7 +99,7 @@ describe("PhotoUploadClient", () => {
     vi.mocked(fetch).mockResolvedValueOnce(new Response("FUNCTION_PAYLOAD_TOO_LARGE", { status: 413 }));
 
     render(<PhotoUploadClient visitId="550e8400-e29b-41d4-a716-446655440000" />);
-    fireEvent.change(screen.getByLabelText("เลือกรูปถ่าย"), {
+    fireEvent.change(screen.getByLabelText("เลือกจากคลังรูปหรือแอปไฟล์"), {
       target: { files: [new File(["camera"], "camera.jpg", { type: "image/jpeg" })] },
     });
     await userEvent.click(screen.getByRole("button", { name: "อัปโหลดและไปต่อ" }));

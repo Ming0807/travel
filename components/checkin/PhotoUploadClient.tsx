@@ -166,7 +166,7 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
                 }}
                 className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/10 bg-white px-5 py-2.5 text-sm font-bold text-ink"
               >
-                <ImageIcon size={18} /> เลือกจากเครื่อง
+                <ImageIcon size={18} /> เลือกจากคลังรูปหรือไฟล์
               </button>
             </div>
           </>
@@ -175,7 +175,7 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
           ref={fileInputRef}
           type="file"
           name="photo"
-          aria-label="เลือกรูปถ่าย"
+          aria-label="เลือกจากคลังรูปหรือแอปไฟล์"
           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
           onChange={handleFileChange}
           className="hidden"
