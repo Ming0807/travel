@@ -146,13 +146,14 @@ New UI areas:
 - Modify: `components/admin/forms/FormRichText.tsx`
 - Create editor component tests.
 
-- [ ] Write failing tests for JSON output, legacy HTML loading, dirty state, save/cancel, and media insertion.
+- [x] Write failing tests for JSON output, legacy HTML loading, dirty state, save/cancel, and managed Media Library insertion.
 - [x] Add document outline and automatic table of contents in the editorial preview.
 - [x] Add metadata, taxonomy, SEO fields, schedule intent, readiness, workflow actions, and revision visibility.
 - [x] Add autosave recovery to local storage without treating it as a server save.
 - [x] Warn before leaving with unsaved changes.
 - [x] Preserve server-side sanitization and restricted UGC rendering.
 - [ ] Run Impeccable detection, accessibility checks, responsive screenshots, and tests (automated component checks complete; authenticated browser screenshots remain).
+- [x] Add managed inline images with required alt text, optional captions, stable storage references, and version 1 compatibility.
 - [ ] Commit: `feat: build structured story editorial studio`
 
 ## Task 7: Redesign the Public Blog and Story Experience

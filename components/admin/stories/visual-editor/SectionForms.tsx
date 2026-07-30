@@ -1,12 +1,28 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useRef, useState } from "react";
-import { saveStoryEditorialChangeAction, updateStoryAction } from "@/app/actions/admin-story-actions";
-import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  saveStoryEditorialChangeAction,
+  updateStoryAction,
+} from "@/app/actions/admin-story-actions";
+import {
+  AdminFormErrorSummary,
+  AdminSaveBar,
+  type AdminFormActionState,
+} from "@/components/admin/forms/AdminFormUX";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import type { AdminStoryRow } from "@/lib/repositories/admin-story.repository";
-import { storyDocumentSchema, type StoryDocument } from "@/lib/content/story-document";
+import {
+  storyDocumentSchema,
+  type StoryDocument,
+} from "@/lib/content/story-document";
 import { getStoryStatusPresentation } from "@/lib/content/story-library";
 import {
   getAllowedStoryTransitions,
@@ -99,34 +115,70 @@ export function HeaderForm({
     <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
         <AdminFormErrorSummary error={error} />
-        {isDirty ? <p className="text-sm font-bold text-amber-800">มีการแก้ไขที่ยังไม่ได้บันทึก</p> : null}
+        {isDirty ? (
+          <p className="text-sm font-bold text-amber-800">
+            มีการแก้ไขที่ยังไม่ได้บันทึก
+          </p>
+        ) : null}
 
         <div className="space-y-4">
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">ชื่อบทความ *</span>
-            <input className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" value={title} onChange={(event) => setTitle(event.target.value)} required />
+            <span className="text-sm font-bold text-slate-700">
+              ชื่อบทความ *
+            </span>
+            <input
+              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              required
+            />
           </label>
           <label className="block">
             <span className="text-sm font-bold text-slate-700">เกริ่นนำ</span>
-            <textarea className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" value={excerpt} onChange={(event) => setExcerpt(event.target.value)} rows={4} maxLength={2000} />
-            <span className="mt-1 block text-xs text-slate-500">{excerpt.length}/2,000 ตัวอักษร</span>
+            <textarea
+              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
+              value={excerpt}
+              onChange={(event) => setExcerpt(event.target.value)}
+              rows={4}
+              maxLength={2000}
+            />
+            <span className="mt-1 block text-xs text-slate-500">
+              {excerpt.length}/2,000 ตัวอักษร
+            </span>
           </label>
           <label className="block">
             <span className="text-sm font-bold text-slate-700">Slug *</span>
-            <input className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" value={slug} onChange={(event) => setSlug(event.target.value.toLowerCase())} required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" />
-            <span className="mt-1 block text-xs leading-5 text-slate-500">ใช้ตัวอักษรอังกฤษพิมพ์เล็ก ตัวเลข และขีดกลาง เช่น pattani-old-town</span>
+            <input
+              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
+              value={slug}
+              onChange={(event) => setSlug(event.target.value.toLowerCase())}
+              required
+              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+            />
+            <span className="mt-1 block text-xs leading-5 text-slate-500">
+              ใช้ตัวอักษรอังกฤษพิมพ์เล็ก ตัวเลข และขีดกลาง เช่น pattani-old-town
+            </span>
           </label>
         </div>
       </div>
       <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-4">
-        <AdminSaveBar isPending={isPending} disabled={!isDirty || !title.trim() || !slug.trim()} onCancel={onClose} onSubmit={handleSave} submitLabel="บันทึกข้อมูลหลัก" />
+        <AdminSaveBar
+          isPending={isPending}
+          disabled={!isDirty || !title.trim() || !slug.trim()}
+          onCancel={onClose}
+          onSubmit={handleSave}
+          submitLabel="บันทึกข้อมูลหลัก"
+        />
       </div>
     </div>
   );
 }
 
 function readingMinutesFromHtml(html: string): number | null {
-  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const text = html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!text) return null;
   return Math.max(1, Math.min(120, Math.ceil(text.split(" ").length / 220)));
 }
@@ -140,30 +192,43 @@ export function ContentForm({
   expectedUpdatedAt = story.updated_at ?? story.created_at,
 }: SectionFormProps) {
   const parsedDocument = storyDocumentSchema.safeParse(story.content_document);
-  const initialDocument = parsedDocument.success ? parsedDocument.data as StoryDocument : null;
+  const initialDocument = parsedDocument.success
+    ? (parsedDocument.data as StoryDocument)
+    : null;
   const initialHtml = story.content ?? "";
   const initialVersion = expectedUpdatedAt;
   const [html, setHtml] = useState(initialHtml);
-  const [document, setDocument] = useState<StoryDocument | null>(initialDocument);
+  const [document, setDocument] = useState<StoryDocument | null>(
+    initialDocument,
+  );
   const [savedHtml, setSavedHtml] = useState(initialHtml);
-  const [savedDocument, setSavedDocument] = useState<StoryDocument | null>(initialDocument);
+  const [savedDocument, setSavedDocument] = useState<StoryDocument | null>(
+    initialDocument,
+  );
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recovery, setRecovery] = useState<StoryDraftRecovery | null>(null);
   const [editorKey, setEditorKey] = useState(0);
   const editorInitializedRef = useRef(false);
-  const isDirty = html !== savedHtml || JSON.stringify(document) !== JSON.stringify(savedDocument);
+  const isDirty =
+    html !== savedHtml ||
+    JSON.stringify(document) !== JSON.stringify(savedDocument);
   const storageKey = storyDraftRecoveryKey(story.story_id);
 
   useEffect(() => {
     queueMicrotask(() => {
       try {
-        const candidate = parseStoryDraftRecovery(localStorage.getItem(storageKey));
-        if (shouldOfferStoryDraftRecovery(candidate, {
-          storyId: story.story_id,
-          updatedAt: initialVersion,
-          html: initialHtml,
-        })) setRecovery(candidate);
+        const candidate = parseStoryDraftRecovery(
+          localStorage.getItem(storageKey),
+        );
+        if (
+          shouldOfferStoryDraftRecovery(candidate, {
+            storyId: story.story_id,
+            updatedAt: initialVersion,
+            html: initialHtml,
+          })
+        )
+          setRecovery(candidate);
       } catch {
         // Local recovery is optional; storage failures must not block editing.
       }
@@ -174,13 +239,16 @@ export function ContentForm({
     if (!isDirty || !document) return;
     const timer = window.setTimeout(() => {
       try {
-        localStorage.setItem(storageKey, JSON.stringify({
-          storyId: story.story_id,
-          baseUpdatedAt: initialVersion,
-          html,
-          document,
-          savedAt: new Date().toISOString(),
-        }));
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({
+            storyId: story.story_id,
+            baseUpdatedAt: initialVersion,
+            html,
+            document,
+            savedAt: new Date().toISOString(),
+          }),
+        );
       } catch {
         // The server save remains available when browser storage is unavailable.
       }
@@ -190,7 +258,8 @@ export function ContentForm({
 
   useEffect(() => {
     if (!isDirty) return;
-    const warnBeforeLeave = (event: BeforeUnloadEvent) => event.preventDefault();
+    const warnBeforeLeave = (event: BeforeUnloadEvent) =>
+      event.preventDefault();
     window.addEventListener("beforeunload", warnBeforeLeave);
     return () => window.removeEventListener("beforeunload", warnBeforeLeave);
   }, [isDirty]);
@@ -200,24 +269,31 @@ export function ContentForm({
     return () => onDirtyChange?.(false);
   }, [isDirty, onDirtyChange]);
 
-  const handleEditorChange = useCallback((value: { html: string; document: StoryDocument | null }) => {
-    if (!editorInitializedRef.current) {
-      editorInitializedRef.current = true;
+  const handleEditorChange = useCallback(
+    (value: { html: string; document: StoryDocument | null }) => {
+      if (!editorInitializedRef.current) {
+        editorInitializedRef.current = true;
+        setHtml(value.html);
+        setDocument(value.document);
+        if (!initialDocument) {
+          setSavedHtml(value.html);
+          setSavedDocument(value.document);
+        }
+        return;
+      }
       setHtml(value.html);
       setDocument(value.document);
-      if (!initialDocument) {
-        setSavedHtml(value.html);
-        setSavedDocument(value.document);
-      }
-      return;
-    }
-    setHtml(value.html);
-    setDocument(value.document);
-    setError(null);
-  }, [initialDocument]);
+      setError(null);
+    },
+    [initialDocument],
+  );
 
   const discardRecovery = () => {
-    try { localStorage.removeItem(storageKey); } catch { /* optional browser storage */ }
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      /* optional browser storage */
+    }
     setRecovery(null);
   };
 
@@ -231,7 +307,7 @@ export function ContentForm({
       change: {
         legacyContent: html,
         contentDocument: document,
-        contentSchemaVersion: 1,
+        contentSchemaVersion: document.version,
         readingMinutes: readingMinutesFromHtml(html),
         changeSummary: "แก้ไขเนื้อหาบทความ",
       },
@@ -250,7 +326,7 @@ export function ContentForm({
       patch: {
         content: html,
         content_document: document,
-        content_schema_version: 1,
+        content_schema_version: document.version,
         reading_minutes: readingMinutesFromHtml(html),
         updated_at: result.data.updatedAt,
       },
@@ -259,7 +335,11 @@ export function ContentForm({
   };
 
   const handleCancel = () => {
-    if (isDirty && !window.confirm("มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการยกเลิกหรือไม่")) return;
+    if (
+      isDirty &&
+      !window.confirm("มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการยกเลิกหรือไม่")
+    )
+      return;
     onClose();
   };
 
@@ -270,7 +350,10 @@ export function ContentForm({
         {recovery ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
             <p className="font-black">พบเนื้อหาที่กู้คืนได้จากเครื่องนี้</p>
-            <p className="mt-1 leading-6">บันทึกอัตโนมัติเมื่อ {new Date(recovery.savedAt).toLocaleString("th-TH")}</p>
+            <p className="mt-1 leading-6">
+              บันทึกอัตโนมัติเมื่อ{" "}
+              {new Date(recovery.savedAt).toLocaleString("th-TH")}
+            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -284,13 +367,21 @@ export function ContentForm({
               >
                 กู้คืนเนื้อหา
               </button>
-              <button type="button" onClick={discardRecovery} className="min-h-11 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100">
+              <button
+                type="button"
+                onClick={discardRecovery}
+                className="min-h-11 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100"
+              >
                 ใช้ฉบับบนเซิร์ฟเวอร์
               </button>
             </div>
           </div>
         ) : null}
-        {isDirty ? <p className="text-sm font-bold text-amber-800">มีการแก้ไขที่ยังไม่ได้บันทึก</p> : null}
+        {isDirty ? (
+          <p className="text-sm font-bold text-amber-800">
+            มีการแก้ไขที่ยังไม่ได้บันทึก
+          </p>
+        ) : null}
         <FormRichText
           key={editorKey}
           label="เนื้อหาฉบับเต็ม"
@@ -310,7 +401,11 @@ export function ContentForm({
           onCancel={handleCancel}
           onSubmit={handleSave}
           submitLabel="บันทึกเนื้อหา"
-          secondary={<span className="text-xs font-semibold text-slate-500">บันทึกแต่ละครั้งจะสร้างประวัติการแก้ไข</span>}
+          secondary={
+            <span className="text-xs font-semibold text-slate-500">
+              บันทึกแต่ละครั้งจะสร้างประวัติการแก้ไข
+            </span>
+          }
         />
       </div>
     </div>
@@ -346,24 +441,37 @@ export function SettingsForm({
   onEditorialSaved,
 }: SectionFormProps) {
   const initialTopicIds = story.topic_ids ?? [];
-  const [geographicScope, setGeographicScope] = useState<"province" | "cross_province">(story.geographic_scope ?? "province");
-  const [provinceId, setProvinceId] = useState(story.province_id?.toString() ?? "");
+  const [geographicScope, setGeographicScope] = useState<
+    "province" | "cross_province"
+  >(story.geographic_scope ?? "province");
+  const [provinceId, setProvinceId] = useState(
+    story.province_id?.toString() ?? "",
+  );
   const [topicIds, setTopicIds] = useState<number[]>(initialTopicIds);
-  const [primaryLanguage, setPrimaryLanguage] = useState<"th" | "en" | "ms">(story.primary_language ?? "th");
+  const [primaryLanguage, setPrimaryLanguage] = useState<"th" | "en" | "ms">(
+    story.primary_language ?? "th",
+  );
   const [seoTitle, setSeoTitle] = useState(story.seo_title ?? "");
-  const [seoDescription, setSeoDescription] = useState(story.seo_description ?? "");
-  const [scheduledAt, setScheduledAt] = useState(toLocalDateTime(story.scheduled_at));
+  const [seoDescription, setSeoDescription] = useState(
+    story.seo_description ?? "",
+  );
+  const [scheduledAt, setScheduledAt] = useState(
+    toLocalDateTime(story.scheduled_at),
+  );
   const [isPending, setIsPending] = useState(false);
-  const [workflowPendingTarget, setWorkflowPendingTarget] = useState<StoryStatus | null>(null);
+  const [workflowPendingTarget, setWorkflowPendingTarget] =
+    useState<StoryStatus | null>(null);
   const [reviewNote, setReviewNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const status = getStoryStatusPresentation(story.status);
   const authorType = story.author_type === "tourist" ? "tourist" : "admin";
   const currentStatus = normalizeLegacyStoryStatus(authorType, story.status);
-  const allowedTransitions = getAllowedStoryTransitions(authorType, currentStatus);
+  const allowedTransitions = getAllowedStoryTransitions(
+    authorType,
+    currentStatus,
+  );
   const needsReviewNote =
-    authorType === "tourist" &&
-    currentStatus === "in_review";
+    authorType === "tourist" && currentStatus === "in_review";
   const comparable = JSON.stringify({
     geographicScope,
     provinceId: geographicScope === "cross_province" ? "" : provinceId,
@@ -375,7 +483,10 @@ export function SettingsForm({
   });
   const initialComparable = JSON.stringify({
     geographicScope: story.geographic_scope ?? "province",
-    provinceId: (story.geographic_scope ?? "province") === "cross_province" ? "" : story.province_id?.toString() ?? "",
+    provinceId:
+      (story.geographic_scope ?? "province") === "cross_province"
+        ? ""
+        : (story.province_id?.toString() ?? ""),
     topicIds: [...initialTopicIds].sort((a, b) => a - b),
     primaryLanguage: story.primary_language ?? "th",
     seoTitle: story.seo_title ?? "",
@@ -389,8 +500,12 @@ export function SettingsForm({
     setIsPending(true);
     setError(null);
     const normalizedProvinceId =
-      geographicScope === "cross_province" || !provinceId ? null : Number(provinceId);
-    const normalizedScheduledAt = scheduledAt ? new Date(scheduledAt).toISOString() : null;
+      geographicScope === "cross_province" || !provinceId
+        ? null
+        : Number(provinceId);
+    const normalizedScheduledAt = scheduledAt
+      ? new Date(scheduledAt).toISOString()
+      : null;
     const result = await saveStoryEditorialChangeAction({
       storyId: story.story_id,
       expectedUpdatedAt,
@@ -444,7 +559,7 @@ export function SettingsForm({
       !window.confirm(
         targetStatus === "published"
           ? "ยืนยันเผยแพร่บทความนี้ต่อสาธารณะหรือไม่"
-          : "ยืนยันเก็บบทความนี้ไว้ในคลังถาวรหรือไม่"
+          : "ยืนยันเก็บบทความนี้ไว้ในคลังถาวรหรือไม่",
       )
     ) {
       return;
@@ -467,7 +582,10 @@ export function SettingsForm({
     });
     setWorkflowPendingTarget(null);
     if (!result.success || !result.data) {
-      setError(result.error ?? "ยังเปลี่ยนสถานะไม่ได้ กรุณาตรวจความพร้อมแล้วลองอีกครั้ง");
+      setError(
+        result.error ??
+          "ยังเปลี่ยนสถานะไม่ได้ กรุณาตรวจความพร้อมแล้วลองอีกครั้ง",
+      );
       return;
     }
     onEditorialSaved?.({
@@ -488,10 +606,15 @@ export function SettingsForm({
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-bold text-slate-500">สถานะเวิร์กโฟลว์</p>
           <p className="mt-1 font-black text-[#073F37]">{status.label}</p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">การส่งตรวจ อนุมัติ ตั้งเวลา และเผยแพร่ใช้ปุ่มเวิร์กโฟลว์โดยเฉพาะ เพื่อป้องกันการข้ามขั้นตอน</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            การส่งตรวจ อนุมัติ ตั้งเวลา และเผยแพร่ใช้ปุ่มเวิร์กโฟลว์โดยเฉพาะ
+            เพื่อป้องกันการข้ามขั้นตอน
+          </p>
           {needsReviewNote ? (
             <label className="mt-4 block">
-              <span className="text-xs font-bold text-slate-700">เหตุผลประกอบการตรวจ</span>
+              <span className="text-xs font-bold text-slate-700">
+                เหตุผลประกอบการตรวจ
+              </span>
               <textarea
                 aria-label="เหตุผลประกอบการตรวจ"
                 className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm"
@@ -551,14 +674,28 @@ export function SettingsForm({
         </div>
 
         <fieldset className="space-y-3">
-          <legend className="text-sm font-black text-slate-800">ขอบเขตพื้นที่</legend>
+          <legend className="text-sm font-black text-slate-800">
+            ขอบเขตพื้นที่
+          </legend>
           <div className="grid grid-cols-2 gap-2">
-            {([
-              ["province", "จังหวัดเดียว"],
-              ["cross_province", "หลายจังหวัด"],
-            ] as const).map(([value, label]) => (
-              <label key={value} className={`flex min-h-11 cursor-pointer items-center justify-center rounded-lg border px-3 text-sm font-bold ${geographicScope === value ? "border-[#0A6B62] bg-[#E6F4EF] text-[#073F37]" : "border-slate-200 bg-white text-slate-600"}`}>
-                <input className="sr-only" type="radio" name="geographicScope" value={value} checked={geographicScope === value} onChange={() => setGeographicScope(value)} />
+            {(
+              [
+                ["province", "จังหวัดเดียว"],
+                ["cross_province", "หลายจังหวัด"],
+              ] as const
+            ).map(([value, label]) => (
+              <label
+                key={value}
+                className={`flex min-h-11 cursor-pointer items-center justify-center rounded-lg border px-3 text-sm font-bold ${geographicScope === value ? "border-[#0A6B62] bg-[#E6F4EF] text-[#073F37]" : "border-slate-200 bg-white text-slate-600"}`}
+              >
+                <input
+                  className="sr-only"
+                  type="radio"
+                  name="geographicScope"
+                  value={value}
+                  checked={geographicScope === value}
+                  onChange={() => setGeographicScope(value)}
+                />
                 {label}
               </label>
             ))}
@@ -567,35 +704,71 @@ export function SettingsForm({
 
         {geographicScope === "province" ? (
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">จังหวัดหลัก</span>
-            <select aria-label="จังหวัดหลัก" className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 px-3 text-sm" value={provinceId} onChange={(event) => setProvinceId(event.target.value)}>
+            <span className="text-sm font-bold text-slate-700">
+              จังหวัดหลัก
+            </span>
+            <select
+              aria-label="จังหวัดหลัก"
+              className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
+              value={provinceId}
+              onChange={(event) => setProvinceId(event.target.value)}
+            >
               <option value="">ยังไม่ระบุ</option>
-              {provinces.map((province) => <option key={province.province_id} value={province.province_id}>{province.province_name_th}</option>)}
+              {provinces.map((province) => (
+                <option key={province.province_id} value={province.province_id}>
+                  {province.province_name_th}
+                </option>
+              ))}
             </select>
           </label>
         ) : null}
 
         <fieldset>
-          <legend className="text-sm font-black text-slate-800">หัวข้อเนื้อหา</legend>
-          <p className="mt-1 text-xs leading-5 text-slate-500">เลือกได้หลายหัวข้อ เพื่อช่วยค้นหาและแนะนำบทความที่เกี่ยวข้อง</p>
+          <legend className="text-sm font-black text-slate-800">
+            หัวข้อเนื้อหา
+          </legend>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            เลือกได้หลายหัวข้อ เพื่อช่วยค้นหาและแนะนำบทความที่เกี่ยวข้อง
+          </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {topics.length ? topics.map((topic) => (
-              <label key={topic.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={topicIds.includes(topic.id)}
-                  onChange={(event) => setTopicIds((current) => event.target.checked ? [...current, topic.id] : current.filter((id) => id !== topic.id))}
-                  className="h-4 w-4 accent-[#0A6B62]"
-                />
-                {topic.nameTh}
-              </label>
-            )) : <p className="text-sm text-amber-800">ยังไม่มีหัวข้อที่เปิดใช้งาน</p>}
+            {topics.length ? (
+              topics.map((topic) => (
+                <label
+                  key={topic.id}
+                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700"
+                >
+                  <input
+                    type="checkbox"
+                    checked={topicIds.includes(topic.id)}
+                    onChange={(event) =>
+                      setTopicIds((current) =>
+                        event.target.checked
+                          ? [...current, topic.id]
+                          : current.filter((id) => id !== topic.id),
+                      )
+                    }
+                    className="h-4 w-4 accent-[#0A6B62]"
+                  />
+                  {topic.nameTh}
+                </label>
+              ))
+            ) : (
+              <p className="text-sm text-amber-800">
+                ยังไม่มีหัวข้อที่เปิดใช้งาน
+              </p>
+            )}
           </div>
         </fieldset>
 
         <label className="block">
           <span className="text-sm font-bold text-slate-700">ภาษาหลัก</span>
-          <select className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 px-3 text-sm" value={primaryLanguage} onChange={(event) => setPrimaryLanguage(event.target.value as "th" | "en" | "ms")}>
+          <select
+            className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
+            value={primaryLanguage}
+            onChange={(event) =>
+              setPrimaryLanguage(event.target.value as "th" | "en" | "ms")
+            }
+          >
             <option value="th">ไทย</option>
             <option value="en">อังกฤษ</option>
             <option value="ms">มลายู</option>
@@ -604,29 +777,72 @@ export function SettingsForm({
 
         <div className="space-y-4 border-t border-slate-200 pt-6">
           <div>
-            <h3 className="text-sm font-black text-slate-800">ข้อมูลสำหรับการค้นหา</h3>
-            <p className="mt-1 text-xs leading-5 text-slate-500">ข้อความนี้ใช้กับ search engine และการแชร์ลิงก์ ไม่เปลี่ยนเนื้อหาบนหน้าบทความ</p>
+            <h3 className="text-sm font-black text-slate-800">
+              ข้อมูลสำหรับการค้นหา
+            </h3>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              ข้อความนี้ใช้กับ search engine และการแชร์ลิงก์
+              ไม่เปลี่ยนเนื้อหาบนหน้าบทความ
+            </p>
           </div>
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">ชื่อสำหรับผลการค้นหา</span>
-            <input aria-label="ชื่อสำหรับผลการค้นหา" className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" value={seoTitle} onChange={(event) => setSeoTitle(event.target.value)} maxLength={255} placeholder={story.title} />
-            <span className="mt-1 block text-xs text-slate-500">{seoTitle.length}/255 ตัวอักษร</span>
+            <span className="text-sm font-bold text-slate-700">
+              ชื่อสำหรับผลการค้นหา
+            </span>
+            <input
+              aria-label="ชื่อสำหรับผลการค้นหา"
+              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
+              value={seoTitle}
+              onChange={(event) => setSeoTitle(event.target.value)}
+              maxLength={255}
+              placeholder={story.title}
+            />
+            <span className="mt-1 block text-xs text-slate-500">
+              {seoTitle.length}/255 ตัวอักษร
+            </span>
           </label>
           <label className="block">
-            <span className="text-sm font-bold text-slate-700">คำอธิบายสำหรับผลการค้นหา</span>
-            <textarea aria-label="คำอธิบายสำหรับผลการค้นหา" className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm" value={seoDescription} onChange={(event) => setSeoDescription(event.target.value)} rows={4} maxLength={500} />
-            <span className="mt-1 block text-xs text-slate-500">{seoDescription.length}/500 ตัวอักษร</span>
+            <span className="text-sm font-bold text-slate-700">
+              คำอธิบายสำหรับผลการค้นหา
+            </span>
+            <textarea
+              aria-label="คำอธิบายสำหรับผลการค้นหา"
+              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
+              value={seoDescription}
+              onChange={(event) => setSeoDescription(event.target.value)}
+              rows={4}
+              maxLength={500}
+            />
+            <span className="mt-1 block text-xs text-slate-500">
+              {seoDescription.length}/500 ตัวอักษร
+            </span>
           </label>
         </div>
 
         <label className="block border-t border-slate-200 pt-6">
-          <span className="text-sm font-bold text-slate-700">เวลาที่ต้องการเผยแพร่</span>
-          <input type="datetime-local" className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 px-3 text-sm" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} />
-          <span className="mt-1 block text-xs leading-5 text-slate-500">การกำหนดเวลานี้ยังไม่เปลี่ยนสถานะ ต้องใช้คำสั่ง “ตั้งเวลาเผยแพร่” ในขั้นตอนเวิร์กโฟลว์</span>
+          <span className="text-sm font-bold text-slate-700">
+            เวลาที่ต้องการเผยแพร่
+          </span>
+          <input
+            type="datetime-local"
+            className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 px-3 text-sm"
+            value={scheduledAt}
+            onChange={(event) => setScheduledAt(event.target.value)}
+          />
+          <span className="mt-1 block text-xs leading-5 text-slate-500">
+            การกำหนดเวลานี้ยังไม่เปลี่ยนสถานะ ต้องใช้คำสั่ง “ตั้งเวลาเผยแพร่”
+            ในขั้นตอนเวิร์กโฟลว์
+          </span>
         </label>
       </div>
       <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-4">
-        <AdminSaveBar isPending={isPending} disabled={!isDirty} onCancel={onClose} onSubmit={handleSave} submitLabel="บันทึกข้อมูลประกอบ" />
+        <AdminSaveBar
+          isPending={isPending}
+          disabled={!isDirty}
+          onCancel={onClose}
+          onSubmit={handleSave}
+          submitLabel="บันทึกข้อมูลประกอบ"
+        />
       </div>
     </div>
   );
@@ -641,13 +857,22 @@ export function CoverForm({
   onEditorialSaved,
 }: SectionFormProps) {
   const action = updateStoryAction.bind(null, story.story_id);
-  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string; updatedAt?: string }>, FormData>(action, { success: false });
+  const [state, formAction, isPending] = useActionState<
+    AdminFormActionState<{ id: number; slug: string; updatedAt?: string }>,
+    FormData
+  >(action, { success: false });
   const [imagePreviewUrl, setImagePreviewUrl] = useState(cmUrl ?? "");
-  const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
-  const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");
+  const [currentMediaId, setCurrentMediaId] = useState<number | null>(() =>
+    toFiniteMediaId(cmId),
+  );
+  const [coverMediaAction, setCoverMediaAction] = useState<
+    "none" | "set" | "clear"
+  >("none");
   const [coverStoragePath, setCoverStoragePath] = useState("");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const isDirty = currentMediaId !== toFiniteMediaId(cmId) || imagePreviewUrl !== (cmUrl ?? "");
+  const isDirty =
+    currentMediaId !== toFiniteMediaId(cmId) ||
+    imagePreviewUrl !== (cmUrl ?? "");
 
   useEffect(() => {
     if (state?.success) {
@@ -661,13 +886,24 @@ export function CoverForm({
       }
       onClose();
     }
-  }, [currentMediaId, imagePreviewUrl, onClose, onCoverChange, onEditorialSaved, state.data?.updatedAt, state?.success]);
+  }, [
+    currentMediaId,
+    imagePreviewUrl,
+    onClose,
+    onCoverChange,
+    onEditorialSaved,
+    state.data?.updatedAt,
+    state?.success,
+  ]);
 
   return (
     <form action={formAction} className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
-        <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
-        
+        <AdminFormErrorSummary
+          error={state?.error}
+          fieldErrors={state?.fieldErrors}
+        />
+
         {isDirty ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-800 flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
@@ -680,17 +916,29 @@ export function CoverForm({
         <input type="hidden" name="slug" value={story.slug ?? ""} />
         <input type="hidden" name="excerpt" value={story.excerpt ?? ""} />
         <input type="hidden" name="content" value={story.content ?? ""} />
-        <input type="hidden" name="isPublished" value={story.is_published ? "true" : "false"} />
+        <input
+          type="hidden"
+          name="isPublished"
+          value={story.is_published ? "true" : "false"}
+        />
         <input type="hidden" name="status" value={story.status} />
         <input type="hidden" name="category" value={story.category ?? ""} />
-        <input type="hidden" name="provinceId" value={story.province_id ?? ""} />
+        <input
+          type="hidden"
+          name="provinceId"
+          value={story.province_id ?? ""}
+        />
 
         <div className="space-y-4">
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
             <div className="aspect-video bg-slate-100">
               {imagePreviewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={imagePreviewUrl} alt="Cover preview" className="h-full w-full object-cover" />
+                <img
+                  src={imagePreviewUrl}
+                  alt="Cover preview"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
                   ยังไม่ได้เลือกรูปภาพ
@@ -722,15 +970,26 @@ export function CoverForm({
             </div>
           </div>
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-            ใช้ปุ่ม &ldquo;เลือกจาก Media Library&rdquo; ด้านบนเพื่อเลือกรูปภาพที่อัปโหลดไว้แล้ว หรืออัปโหลดรูปใหม่ผ่าน Media Library โดยตรง การวาง URL ด้วยตนเองไม่รองรับในระบบปัจจุบัน
+            ใช้ปุ่ม &ldquo;เลือกจาก Media Library&rdquo;
+            ด้านบนเพื่อเลือกรูปภาพที่อัปโหลดไว้แล้ว หรืออัปโหลดรูปใหม่ผ่าน Media
+            Library โดยตรง การวาง URL ด้วยตนเองไม่รองรับในระบบปัจจุบัน
           </div>
         </div>
       </div>
       <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
-        <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกรูปภาพ" />
+        <AdminSaveBar
+          cancelHref="#"
+          isPending={isPending}
+          onCancel={onClose}
+          submitLabel="บันทึกรูปภาพ"
+        />
       </div>
 
-      <input type="hidden" name="coverMediaId" value={currentMediaId ? String(currentMediaId) : ""} />
+      <input
+        type="hidden"
+        name="coverMediaId"
+        value={currentMediaId ? String(currentMediaId) : ""}
+      />
       <input type="hidden" name="coverMediaAction" value={coverMediaAction} />
       <input type="hidden" name="coverStoragePath" value={coverStoragePath} />
 

@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-export const STORY_DOCUMENT_SCHEMA_VERSION = 1 as const;
+export const STORY_DOCUMENT_SCHEMA_VERSION = 2 as const;
+export const LEGACY_STORY_DOCUMENT_SCHEMA_VERSION = 1 as const;
+export type StoryDocumentSchemaVersion =
+  | typeof LEGACY_STORY_DOCUMENT_SCHEMA_VERSION
+  | typeof STORY_DOCUMENT_SCHEMA_VERSION;
 const MAX_DOCUMENT_NODES = 2_000;
 const MAX_DOCUMENT_DEPTH = 12;
 const MAX_TEXT_LENGTH = 20_000;
@@ -30,7 +34,7 @@ export type StoryDocumentNode = {
 
 export type StoryDocument = {
   type: "doc";
-  version: typeof STORY_DOCUMENT_SCHEMA_VERSION;
+  version: StoryDocumentSchemaVersion;
   content: StoryDocumentNode[];
 };
 
@@ -38,12 +42,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function hasOnlyKeys(value: Record<string, unknown>, allowed: readonly string[]): boolean {
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+): boolean {
   return Object.keys(value).every((key) => allowed.includes(key));
 }
 
 function isSafeLink(value: unknown): value is string {
-  if (typeof value !== "string" || value.length === 0 || value.length > 2_048) return false;
+  if (typeof value !== "string" || value.length === 0 || value.length > 2_048)
+    return false;
   if (value.startsWith("/") && !value.startsWith("//")) return true;
   try {
     return new URL(value).protocol === "https:";
@@ -52,7 +60,36 @@ function isSafeLink(value: unknown): value is string {
   }
 }
 
-function validateMarks(marks: unknown, path: PropertyKey[], ctx: z.RefinementCtx): void {
+function isUuid(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value,
+    )
+  );
+}
+
+function isSafeStoragePath(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    value.length <= 2_048 &&
+    !value.startsWith("/") &&
+    !value.includes("..") &&
+    !value.includes("\\") &&
+    !value.includes(":") &&
+    !value.includes("?") &&
+    !value.includes("#") &&
+    !/[\x00-\x1f\x7f]/.test(value) &&
+    !/%2[ef]/i.test(value)
+  );
+}
+
+function validateMarks(
+  marks: unknown,
+  path: PropertyKey[],
+  ctx: z.RefinementCtx,
+): void {
   if (!Array.isArray(marks)) {
     ctx.addIssue({ code: "custom", message: "Marks must be an array.", path });
     return;
@@ -61,24 +98,43 @@ function validateMarks(marks: unknown, path: PropertyKey[], ctx: z.RefinementCtx
   for (const [index, mark] of marks.entries()) {
     const markPath = [...path, index];
     if (!isRecord(mark) || !hasOnlyKeys(mark, ["type", "attrs"])) {
-      ctx.addIssue({ code: "custom", message: "Invalid text mark.", path: markPath });
+      ctx.addIssue({
+        code: "custom",
+        message: "Invalid text mark.",
+        path: markPath,
+      });
       continue;
     }
-    if (!["bold", "italic", "strike", "code", "link"].includes(String(mark.type))) {
-      ctx.addIssue({ code: "custom", message: "Unsupported text mark.", path: [...markPath, "type"] });
+    if (
+      !["bold", "italic", "strike", "code", "link"].includes(String(mark.type))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Unsupported text mark.",
+        path: [...markPath, "type"],
+      });
       continue;
     }
     if (mark.type !== "link" && mark.attrs !== undefined) {
-      ctx.addIssue({ code: "custom", message: "This mark does not accept attributes.", path: [...markPath, "attrs"] });
+      ctx.addIssue({
+        code: "custom",
+        message: "This mark does not accept attributes.",
+        path: [...markPath, "attrs"],
+      });
     }
     if (mark.type === "link") {
       if (
         !isRecord(mark.attrs) ||
         !hasOnlyKeys(mark.attrs, ["href", "target"]) ||
         !isSafeLink(mark.attrs.href) ||
-        (mark.attrs.target !== undefined && !["_self", "_blank"].includes(String(mark.attrs.target)))
+        (mark.attrs.target !== undefined &&
+          !["_self", "_blank"].includes(String(mark.attrs.target)))
       ) {
-        ctx.addIssue({ code: "custom", message: "Invalid or unsafe link.", path: [...markPath, "attrs"] });
+        ctx.addIssue({
+          code: "custom",
+          message: "Invalid or unsafe link.",
+          path: [...markPath, "attrs"],
+        });
       }
     }
   }
@@ -97,20 +153,33 @@ function validateNode(
   node: unknown,
   path: PropertyKey[],
   depth: number,
+  schemaVersion: StoryDocumentSchemaVersion,
   state: { count: number },
-  ctx: z.RefinementCtx
+  ctx: z.RefinementCtx,
 ): void {
   state.count += 1;
   if (state.count > MAX_DOCUMENT_NODES) {
-    ctx.addIssue({ code: "custom", message: "Story document contains too many nodes.", path });
+    ctx.addIssue({
+      code: "custom",
+      message: "Story document contains too many nodes.",
+      path,
+    });
     return;
   }
   if (depth > MAX_DOCUMENT_DEPTH) {
-    ctx.addIssue({ code: "custom", message: "Story document is nested too deeply.", path });
+    ctx.addIssue({
+      code: "custom",
+      message: "Story document is nested too deeply.",
+      path,
+    });
     return;
   }
   if (!isRecord(node)) {
-    ctx.addIssue({ code: "custom", message: "Story node must be an object.", path });
+    ctx.addIssue({
+      code: "custom",
+      message: "Story node must be an object.",
+      path,
+    });
     return;
   }
 
@@ -128,20 +197,34 @@ function validateNode(
     "image",
   ];
   if (!supportedTypes.includes(type)) {
-    ctx.addIssue({ code: "custom", message: "Unsupported story node type.", path: [...path, "type"] });
+    ctx.addIssue({
+      code: "custom",
+      message: "Unsupported story node type.",
+      path: [...path, "type"],
+    });
     return;
   }
 
-  const allowedNodeKeys = type === "text" ? ["type", "text", "marks"] : ["type", "attrs", "content"];
+  const allowedNodeKeys =
+    type === "text" ? ["type", "text", "marks"] : ["type", "attrs", "content"];
   if (!hasOnlyKeys(node, allowedNodeKeys)) {
-    ctx.addIssue({ code: "custom", message: "Story node contains unsupported fields.", path });
+    ctx.addIssue({
+      code: "custom",
+      message: "Story node contains unsupported fields.",
+      path,
+    });
   }
 
   if (type === "text") {
     if (typeof node.text !== "string" || node.text.length > MAX_TEXT_LENGTH) {
-      ctx.addIssue({ code: "custom", message: "Invalid story text.", path: [...path, "text"] });
+      ctx.addIssue({
+        code: "custom",
+        message: "Invalid story text.",
+        path: [...path, "text"],
+      });
     }
-    if (node.marks !== undefined) validateMarks(node.marks, [...path, "marks"], ctx);
+    if (node.marks !== undefined)
+      validateMarks(node.marks, [...path, "marks"], ctx);
     return;
   }
 
@@ -151,36 +234,65 @@ function validateNode(
       !hasOnlyKeys(node.attrs, ["level"]) ||
       ![2, 3, 4].includes(Number(node.attrs.level))
     ) {
-      ctx.addIssue({ code: "custom", message: "Headings must use level 2, 3, or 4.", path: [...path, "attrs"] });
+      ctx.addIssue({
+        code: "custom",
+        message: "Headings must use level 2, 3, or 4.",
+        path: [...path, "attrs"],
+      });
     }
   } else if (type === "image") {
-    if (
-      !isRecord(node.attrs) ||
-      !hasOnlyKeys(node.attrs, ["mediaId", "alt", "caption"]) ||
-      !Number.isInteger(node.attrs.mediaId) ||
-      Number(node.attrs.mediaId) <= 0 ||
-      typeof node.attrs.alt !== "string" ||
-      node.attrs.alt.trim().length === 0 ||
-      node.attrs.alt.length > 255 ||
-      (node.attrs.caption !== undefined &&
-        (typeof node.attrs.caption !== "string" || node.attrs.caption.length > 500))
-    ) {
-      ctx.addIssue({ code: "custom", message: "Images must reference managed media and include alt text.", path: [...path, "attrs"] });
+    const attrs = isRecord(node.attrs) ? node.attrs : {};
+    const hasValidText =
+      typeof attrs.alt === "string" &&
+      attrs.alt.trim().length > 0 &&
+      attrs.alt.length <= 255 &&
+      (attrs.caption === undefined ||
+        (typeof attrs.caption === "string" && attrs.caption.length <= 500));
+    const legacyReference =
+      hasOnlyKeys(attrs, ["mediaId", "alt", "caption"]) &&
+      Number.isInteger(attrs.mediaId) &&
+      Number(attrs.mediaId) > 0;
+    const managedReference =
+      hasOnlyKeys(attrs, ["assetId", "storagePath", "alt", "caption"]) &&
+      isUuid(attrs.assetId) &&
+      isSafeStoragePath(attrs.storagePath);
+    const validReference =
+      schemaVersion === LEGACY_STORY_DOCUMENT_SCHEMA_VERSION
+        ? legacyReference
+        : managedReference || legacyReference;
+    if (!hasValidText || !validReference) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Images must reference managed media and include alt text.",
+        path: [...path, "attrs"],
+      });
     }
   } else if (node.attrs !== undefined) {
-    ctx.addIssue({ code: "custom", message: "This node does not accept attributes.", path: [...path, "attrs"] });
+    ctx.addIssue({
+      code: "custom",
+      message: "This node does not accept attributes.",
+      path: [...path, "attrs"],
+    });
   }
 
   const leaf = ["hardBreak", "horizontalRule", "image"].includes(type);
   if (leaf) {
     if (node.content !== undefined) {
-      ctx.addIssue({ code: "custom", message: "Leaf nodes cannot contain child nodes.", path: [...path, "content"] });
+      ctx.addIssue({
+        code: "custom",
+        message: "Leaf nodes cannot contain child nodes.",
+        path: [...path, "content"],
+      });
     }
     return;
   }
 
   if (!Array.isArray(node.content)) {
-    ctx.addIssue({ code: "custom", message: "This story node requires content.", path: [...path, "content"] });
+    ctx.addIssue({
+      code: "custom",
+      message: "This story node requires content.",
+      path: [...path, "content"],
+    });
     return;
   }
 
@@ -193,14 +305,24 @@ function validateNode(
         path: [...path, "content", index, "type"],
       });
     }
-    validateNode(child, [...path, "content", index], depth + 1, state, ctx);
+    validateNode(
+      child,
+      [...path, "content", index],
+      depth + 1,
+      schemaVersion,
+      state,
+      ctx,
+    );
   }
 }
 
 export const storyDocumentSchema = z
   .object({
     type: z.literal("doc"),
-    version: z.literal(STORY_DOCUMENT_SCHEMA_VERSION),
+    version: z.union([
+      z.literal(LEGACY_STORY_DOCUMENT_SCHEMA_VERSION),
+      z.literal(STORY_DOCUMENT_SCHEMA_VERSION),
+    ]),
     content: z.array(z.unknown()),
   })
   .strict()
@@ -223,7 +345,7 @@ export const storyDocumentSchema = z
           path: ["content", index, "type"],
         });
       }
-      validateNode(node, ["content", index], 1, state, ctx);
+      validateNode(node, ["content", index], 1, document.version, state, ctx);
     }
   });
 

@@ -4,11 +4,14 @@ import {
   type StoryDocument,
   type StoryDocumentNode,
 } from "@/lib/content/story-document";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 type UnknownRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): UnknownRecord {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as UnknownRecord : {};
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as UnknownRecord)
+    : {};
 }
 
 const supportedNodes = new Set([
@@ -32,13 +35,16 @@ function normalizeMarks(value: unknown): StoryDocumentNode["marks"] {
     if (!new Set(["bold", "italic", "strike", "code", "link"]).has(type)) {
       throw new Error("INVALID_STORY_DOCUMENT");
     }
-    if (type !== "link") return { type: type as "bold" | "italic" | "strike" | "code" };
+    if (type !== "link")
+      return { type: type as "bold" | "italic" | "strike" | "code" };
     const attrs = asRecord(mark.attrs);
     return {
       type: "link" as const,
       attrs: {
         href: typeof attrs.href === "string" ? attrs.href : "",
-        ...(attrs.target === "_self" || attrs.target === "_blank" ? { target: attrs.target } : {}),
+        ...(attrs.target === "_self" || attrs.target === "_blank"
+          ? { target: attrs.target }
+          : {}),
       },
     };
   });
@@ -66,18 +72,38 @@ function normalizeNode(value: unknown): StoryDocumentNode {
     return {
       type: "heading",
       attrs: { level: Number(attrs.level) },
-      content: Array.isArray(node.content) ? node.content.map(normalizeNode) : [],
+      content: Array.isArray(node.content)
+        ? node.content.map(normalizeNode)
+        : [],
     };
   }
 
   if (type === "image") {
     const attrs = asRecord(node.attrs);
+    if (
+      typeof attrs.assetId === "string" &&
+      typeof attrs.storagePath === "string"
+    ) {
+      return {
+        type: "image",
+        attrs: {
+          assetId: attrs.assetId,
+          storagePath: attrs.storagePath,
+          alt: typeof attrs.alt === "string" ? attrs.alt : "",
+          ...(typeof attrs.caption === "string"
+            ? { caption: attrs.caption }
+            : {}),
+        },
+      };
+    }
     return {
       type: "image",
       attrs: {
         mediaId: Number(attrs.mediaId),
         alt: typeof attrs.alt === "string" ? attrs.alt : "",
-        ...(typeof attrs.caption === "string" ? { caption: attrs.caption } : {}),
+        ...(typeof attrs.caption === "string"
+          ? { caption: attrs.caption }
+          : {}),
       },
     };
   }
@@ -85,7 +111,9 @@ function normalizeNode(value: unknown): StoryDocumentNode {
   if (type === "orderedList" && node.attrs) {
     const attrs = asRecord(node.attrs);
     const keys = Object.keys(attrs);
-    const hasOnlyTiptapDefaults = keys.every((key) => key === "start" || key === "type");
+    const hasOnlyTiptapDefaults = keys.every(
+      (key) => key === "start" || key === "type",
+    );
     if (
       !hasOnlyTiptapDefaults ||
       (attrs.start !== undefined && attrs.start !== 1) ||
@@ -105,7 +133,8 @@ function normalizeNode(value: unknown): StoryDocumentNode {
 
 export function fromTiptapJson(value: unknown): StoryDocument {
   const root = asRecord(value);
-  if (root.type !== "doc" || !Array.isArray(root.content)) throw new Error("INVALID_STORY_DOCUMENT");
+  if (root.type !== "doc" || !Array.isArray(root.content))
+    throw new Error("INVALID_STORY_DOCUMENT");
   const candidate = {
     type: "doc" as const,
     version: STORY_DOCUMENT_SCHEMA_VERSION,
@@ -116,6 +145,32 @@ export function fromTiptapJson(value: unknown): StoryDocument {
   return parsed.data as StoryDocument;
 }
 
-export function toTiptapJson(document: StoryDocument): { type: "doc"; content: StoryDocumentNode[] } {
-  return { type: "doc", content: document.content };
+export function toTiptapJson(document: StoryDocument): {
+  type: "doc";
+  content: StoryDocumentNode[];
+} {
+  const toTiptapNode = (node: StoryDocumentNode): StoryDocumentNode => {
+    if (node.type === "image") {
+      const attrs = asRecord(node.attrs);
+      if (typeof attrs.storagePath === "string") {
+        const title =
+          typeof attrs.caption === "string" && attrs.caption
+            ? { title: attrs.caption }
+            : {};
+        return {
+          ...node,
+          attrs: {
+            ...attrs,
+            src: siteMediaImageUrl(attrs.storagePath) ?? "",
+            ...title,
+          },
+        };
+      }
+      return node;
+    }
+    return node.content
+      ? { ...node, content: node.content.map(toTiptapNode) }
+      : node;
+  };
+  return { type: "doc", content: document.content.map(toTiptapNode) };
 }

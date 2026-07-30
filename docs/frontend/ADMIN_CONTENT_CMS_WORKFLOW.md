@@ -102,6 +102,7 @@ Implemented baseline:
 - Story metadata uses controlled topics instead of a free-text category for recommendation/search signals, and includes geography, primary language, SEO, and scheduling intent.
 - Story status changes use the domain workflow actions rather than a direct status dropdown. Server-side readiness and permission checks remain authoritative.
 - The editor sidebar derives a Thai publish-readiness checklist and document outline from saved structured content, and shows revision history only when the current admin has `story.revision_read`.
+- Inline story images are selected from Media Library, require accessible alt text, and store the media asset UUID plus normalized storage path instead of an external URL. Canonical document version 2 supports this managed reference while version 1 numeric media references remain readable during migration.
 - Main CMS image surfaces use saved media paths or missing-image states instead of Unsplash fallback images.
 - Public attraction detail sections now use a shared, content-aware section model so public navigation and the attraction visual editor use the same order and localized labels.
 - Public attraction mobile section navigation uses a jump selector instead of rows that look expandable but only scroll.
