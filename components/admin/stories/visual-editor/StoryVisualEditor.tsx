@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Export, BookmarkSimple, Image as ImageIcon } from "@phosphor-icons/react";
@@ -47,6 +47,19 @@ export function StoryVisualEditor({
   coverMediaUrl: initialCoverMediaUrl,
 }: StoryVisualEditorProps) {
   const [activeSection, setActiveSection] = useState<EditorSection>(null);
+  const [contentDirty, setContentDirty] = useState(false);
+
+  const closeContentEditor = useCallback((force = false) => {
+    if (
+      !force &&
+      contentDirty &&
+      !window.confirm("มีการแก้ไขเนื้อหาที่ยังไม่ได้บันทึก ต้องการปิดหน้าต่างแก้ไขหรือไม่")
+    ) {
+      return;
+    }
+    setContentDirty(false);
+    setActiveSection(null);
+  }, [contentDirty]);
 
   useEffect(() => {
     let hash = window.location.hash.replace("#", "");
@@ -62,6 +75,7 @@ export function StoryVisualEditor({
   const title = story.title || "ยังไม่มีชื่อเรื่อง";
   const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId ?? null);
   const [coverMediaUrl, setCoverMediaUrl] = useState(initialCoverMediaUrl ?? null);
+  const [contentHtml, setContentHtml] = useState(story.content ?? "");
   const coverImage = coverMediaUrl;
   const category = story.category || "บทความทั่วไป";
 
@@ -69,7 +83,7 @@ export function StoryVisualEditor({
   const dateStr = story.published_at 
     ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(story.published_at))
     : "Not published yet";
-  const contentWords = story.content?.trim() ? story.content.trim().split(/\s+/).length : 0;
+  const contentWords = contentHtml.trim() ? contentHtml.replace(/<[^>]*>/g, " ").trim().split(/\s+/).length : 0;
   const readTime = contentWords > 0 ? `Read ${Math.max(1, Math.ceil(contentWords / 220))} min` : "Add content for reading estimate";
 
   return (
@@ -163,14 +177,14 @@ export function StoryVisualEditor({
             </EditableBlock>
 
               <EditableBlock id="content" label="เนื้อหาบทความ" isActive={activeSection === "content"} onEdit={() => setActiveSection("content")}>
-                {story.content && story.author_type !== "tourist" && /<[a-z][\s\S]*>/i.test(story.content) ? (
+                {contentHtml && story.author_type !== "tourist" && /<[a-z][\s\S]*>/i.test(contentHtml) ? (
                   <article 
                     className="prose prose-lg max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-black prose-a:text-orange-500 pointer-events-none prose-img:rounded-2xl"
-                    dangerouslySetInnerHTML={{ __html: story.content }}
+                    dangerouslySetInnerHTML={{ __html: contentHtml }}
                   />
                 ) : (
                   <article className="prose prose-lg max-w-none text-slate-600 prose-headings:text-slate-800 prose-headings:font-black prose-a:text-orange-500 pointer-events-none whitespace-pre-wrap">
-                    {story.content || "Missing story body. Add real editorial content before publishing this story."}
+                    {contentHtml || "Missing story body. Add real editorial content before publishing this story."}
                   </article>
                 )}
               </EditableBlock>
@@ -227,8 +241,13 @@ export function StoryVisualEditor({
           }}
         />
       </Drawer>
-      <Drawer isOpen={activeSection === "content"} onClose={() => setActiveSection(null)} title="เนื้อหาบทความ (Content)" size="lg" bodyClassName="p-0">
-        <ContentForm story={story} onClose={() => setActiveSection(null)} />
+      <Drawer isOpen={activeSection === "content"} onClose={() => closeContentEditor()} title="เนื้อหาบทความ (Content)" size="lg" bodyClassName="p-0">
+        <ContentForm
+          story={story}
+          onClose={() => closeContentEditor(true)}
+          onDirtyChange={setContentDirty}
+          onContentSaved={(html) => setContentHtml(html)}
+        />
       </Drawer>
       <Drawer isOpen={activeSection === "settings"} onClose={() => setActiveSection(null)} title="ตั้งค่าหมวดหมู่และสถานะ" bodyClassName="p-0">
         <SettingsForm story={story} provinces={provinces} onClose={() => setActiveSection(null)} />

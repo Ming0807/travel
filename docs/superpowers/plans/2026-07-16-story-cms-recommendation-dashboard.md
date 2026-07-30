@@ -149,9 +149,9 @@ New UI areas:
 - [ ] Write failing tests for JSON output, legacy HTML loading, dirty state, save/cancel, and media insertion.
 - [ ] Add document outline and automatic table of contents.
 - [ ] Add metadata, taxonomy, SEO preview, schedule, readiness, and revision drawers.
-- [ ] Add autosave recovery to local storage without treating it as a server save.
-- [ ] Warn before leaving with unsaved changes.
-- [ ] Preserve server-side sanitization and restricted UGC rendering.
+- [x] Add autosave recovery to local storage without treating it as a server save.
+- [x] Warn before leaving with unsaved changes.
+- [x] Preserve server-side sanitization and restricted UGC rendering.
 - [ ] Run Impeccable detection, accessibility checks, responsive screenshots, and tests.
 - [ ] Commit: `feat: build structured story editorial studio`
 

@@ -61,6 +61,7 @@ Build a full editorial Story/Blog CMS, explainable content recommendations, a ta
 - [x] Story platform schema migration applied and verified by the project owner
 - [x] Atomic editorial-change RPC migration applied and confirmed by the project owner
 - [x] Editorial service, validation, RBAC policy, optimistic locking, and revision repository implemented
+- [x] Editorial content drawer migrated to canonical TipTap JSON plus compatible HTML, atomic revision saves, local recovery, and unsaved-change protection
 - [ ] Existing visual editor migrated from compatibility actions to the atomic editorial action
 - [x] Editorial library and traveler moderation queue implemented with server-side filters and pagination
 - [ ] Structured editor and revisions implemented

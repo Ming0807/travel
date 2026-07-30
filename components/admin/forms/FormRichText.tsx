@@ -9,6 +9,8 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
 import { useEffect, useRef, useCallback, useState } from "react";
+import type { StoryDocument } from "@/lib/content/story-document";
+import { fromTiptapJson, toTiptapJson } from "@/lib/content/tiptap-story-document";
 import {
   FormLabel,
   FormError,
@@ -308,6 +310,9 @@ interface FormRichTextProps {
   required?: boolean;
   placeholder?: string;
   minHeight?: number;
+  defaultDocument?: StoryDocument | null;
+  documentName?: string;
+  onValueChange?: (value: { html: string; document: StoryDocument | null }) => void;
 }
 
 export function FormRichText({
@@ -319,9 +324,14 @@ export function FormRichText({
   required,
   placeholder,
   minHeight = 300,
+  defaultDocument = null,
+  documentName,
+  onValueChange,
 }: FormRichTextProps) {
   const [mounted, setMounted] = useState(false);
   const [html, setHtml] = useState(defaultValue);
+  const [document, setDocument] = useState<StoryDocument | null>(defaultDocument);
+  const [documentError, setDocumentError] = useState<string | null>(null);
   const hiddenRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -329,9 +339,26 @@ export function FormRichText({
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  const updateEditorValue = useCallback((ed: Editor) => {
+    const updatedHtml = ed.getHTML();
+    setHtml(updatedHtml);
+    try {
+      const updatedDocument = fromTiptapJson(ed.getJSON());
+      setDocument(updatedDocument);
+      setDocumentError(null);
+      onValueChange?.({ html: updatedHtml, document: updatedDocument });
+    } catch {
+      setDocument(null);
+      setDocumentError("เนื้อหามีรูปแบบที่ระบบยังไม่รองรับ กรุณานำส่วนนั้นออกก่อนบันทึก");
+      onValueChange?.({ html: updatedHtml, document: null });
+    }
+    if (hiddenRef.current) hiddenRef.current.value = updatedHtml;
+  }, [onValueChange]);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
+        codeBlock: false,
         heading: {
           levels: [2, 3, 4],
         },
@@ -346,22 +373,25 @@ export function FormRichText({
         },
       }),
     ],
-    content: defaultValue,
-    onUpdate: ({ editor: ed }) => {
-      const updatedHtml = ed.getHTML();
-      setHtml(updatedHtml);
-      if (hiddenRef.current) {
-        hiddenRef.current.value = updatedHtml;
-      }
-    },
+    content: defaultDocument ? toTiptapJson(defaultDocument) : defaultValue,
+    onCreate: ({ editor: ed }) => updateEditorValue(ed),
+    onUpdate: ({ editor: ed }) => updateEditorValue(ed),
   });
 
   // Sync if defaultValue changes externally (e.g., form reset with new data)
   useEffect(() => {
-    if (editor && defaultValue !== editor.getHTML()) {
+    if (editor && !defaultDocument && defaultValue !== editor.getHTML()) {
       editor.commands.setContent(defaultValue, { emitUpdate: false });
     }
-  }, [defaultValue, editor]);
+  }, [defaultDocument, defaultValue, editor]);
+
+  useEffect(() => {
+    if (!editor || !defaultDocument) return;
+    const next = toTiptapJson(defaultDocument);
+    if (JSON.stringify(editor.getJSON()) !== JSON.stringify(next)) {
+      editor.commands.setContent(next, { emitUpdate: false });
+    }
+  }, [defaultDocument, editor]);
 
   if (!mounted) {
     // SSR fallback — render a static textarea so forms still work
@@ -376,6 +406,7 @@ export function FormRichText({
           readOnly
         />
         <FormError error={error} />
+        {documentName ? <input type="hidden" name={documentName} value={JSON.stringify(defaultDocument)} /> : null}
         {help ? <FormHelp>{help}</FormHelp> : null}
       </label>
     );
@@ -397,7 +428,8 @@ export function FormRichText({
         </div>
       </div>
       <input type="hidden" name={name} ref={hiddenRef} value={html} />
-      <FormError error={error} />
+      {documentName ? <input type="hidden" name={documentName} value={document ? JSON.stringify(document) : ""} /> : null}
+      <FormError error={error ?? documentError} />
       {help ? <FormHelp>{help}</FormHelp> : null}
     </div>
   );

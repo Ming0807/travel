@@ -1,11 +1,18 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { updateStoryAction } from "@/app/actions/admin-story-actions";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import { saveStoryEditorialChangeAction, updateStoryAction } from "@/app/actions/admin-story-actions";
 import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import type { AdminStoryRow } from "@/lib/repositories/admin-story.repository";
+import { storyDocumentSchema, type StoryDocument } from "@/lib/content/story-document";
+import {
+  parseStoryDraftRecovery,
+  shouldOfferStoryDraftRecovery,
+  storyDraftRecoveryKey,
+  type StoryDraftRecovery,
+} from "@/lib/content/story-draft-recovery";
 
 type SectionFormProps = {
   story: AdminStoryRow;
@@ -14,6 +21,8 @@ type SectionFormProps = {
   coverMediaId?: number | null;
   coverMediaUrl?: string | null;
   onCoverChange?: (mediaId: number | null, mediaUrl: string | null) => void;
+  onContentSaved?: (html: string, document: StoryDocument) => void;
+  onDirtyChange?: (isDirty: boolean) => void;
 };
 
 function toFiniteMediaId(value: unknown): number | null {
@@ -61,34 +70,180 @@ export function HeaderForm({ story, onClose }: SectionFormProps) {
   );
 }
 
-export function ContentForm({ story, onClose }: SectionFormProps) {
-  const action = updateStoryAction.bind(null, story.story_id);
-  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, { success: false });
+function readingMinutesFromHtml(html: string): number | null {
+  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  return Math.max(1, Math.min(120, Math.ceil(text.split(" ").length / 220)));
+}
 
-  useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
+export function ContentForm({ story, onClose, onContentSaved, onDirtyChange }: SectionFormProps) {
+  const parsedDocument = storyDocumentSchema.safeParse(story.content_document);
+  const initialDocument = parsedDocument.success ? parsedDocument.data as StoryDocument : null;
+  const initialHtml = story.content ?? "";
+  const initialVersion = story.updated_at ?? story.created_at;
+  const [html, setHtml] = useState(initialHtml);
+  const [document, setDocument] = useState<StoryDocument | null>(initialDocument);
+  const [savedHtml, setSavedHtml] = useState(initialHtml);
+  const [savedDocument, setSavedDocument] = useState<StoryDocument | null>(initialDocument);
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(initialVersion);
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [recovery, setRecovery] = useState<StoryDraftRecovery | null>(null);
+  const [editorKey, setEditorKey] = useState(0);
+  const editorInitializedRef = useRef(false);
+  const isDirty = html !== savedHtml || JSON.stringify(document) !== JSON.stringify(savedDocument);
+  const storageKey = storyDraftRecoveryKey(story.story_id);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const candidate = parseStoryDraftRecovery(localStorage.getItem(storageKey));
+        if (shouldOfferStoryDraftRecovery(candidate, {
+          storyId: story.story_id,
+          updatedAt: initialVersion,
+          html: initialHtml,
+        })) setRecovery(candidate);
+      } catch {
+        // Local recovery is optional; storage failures must not block editing.
+      }
+    });
+  }, [initialHtml, initialVersion, storageKey, story.story_id]);
+
+  useEffect(() => {
+    if (!isDirty || !document) return;
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({
+          storyId: story.story_id,
+          baseUpdatedAt: expectedUpdatedAt,
+          html,
+          document,
+          savedAt: new Date().toISOString(),
+        }));
+      } catch {
+        // The server save remains available when browser storage is unavailable.
+      }
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [document, expectedUpdatedAt, html, isDirty, storageKey, story.story_id]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const warnBeforeLeave = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warnBeforeLeave);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeave);
+  }, [isDirty]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+    return () => onDirtyChange?.(false);
+  }, [isDirty, onDirtyChange]);
+
+  const handleEditorChange = useCallback((value: { html: string; document: StoryDocument | null }) => {
+    if (!editorInitializedRef.current) {
+      editorInitializedRef.current = true;
+      setHtml(value.html);
+      setDocument(value.document);
+      if (!initialDocument) {
+        setSavedHtml(value.html);
+        setSavedDocument(value.document);
+      }
+      return;
+    }
+    setHtml(value.html);
+    setDocument(value.document);
+    setError(null);
+  }, [initialDocument]);
+
+  const discardRecovery = () => {
+    try { localStorage.removeItem(storageKey); } catch { /* optional browser storage */ }
+    setRecovery(null);
+  };
+
+  const handleSave = async () => {
+    if (!document || !isDirty) return;
+    setIsPending(true);
+    setError(null);
+    const result = await saveStoryEditorialChangeAction({
+      storyId: story.story_id,
+      expectedUpdatedAt,
+      change: {
+        legacyContent: html,
+        contentDocument: document,
+        contentSchemaVersion: 1,
+        readingMinutes: readingMinutesFromHtml(html),
+        changeSummary: "แก้ไขเนื้อหาบทความ",
+      },
+    });
+    setIsPending(false);
+    if (!result.success || !result.data) {
+      setError(result.error ?? "ยังบันทึกเนื้อหาไม่ได้ กรุณาลองอีกครั้ง");
+      return;
+    }
+    setExpectedUpdatedAt(result.data.updatedAt);
+    setSavedHtml(html);
+    setSavedDocument(document);
+    discardRecovery();
+    onContentSaved?.(html, document);
+    onClose();
+  };
+
+  const handleCancel = () => {
+    if (isDirty && !window.confirm("มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการยกเลิกหรือไม่")) return;
+    onClose();
+  };
 
   return (
-    <form action={formAction} className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
-        <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
-        
-        {/* Hidden required fields */}
-        <input type="hidden" name="title" value={story.title ?? ""} />
-        <input type="hidden" name="slug" value={story.slug ?? ""} />
-        <input type="hidden" name="excerpt" value={story.excerpt ?? ""} />
-        <input type="hidden" name="provinceId" value={story.province_id ?? ""} />
-        <input type="hidden" name="isPublished" value={story.is_published ? "true" : "false"} />
-        <input type="hidden" name="status" value={story.status} />
-        <input type="hidden" name="category" value={story.category ?? ""} />
-
-        <div className="space-y-4">
-          <FormRichText label="เนื้อหาฉบับเต็ม" name="content" defaultValue={story.content ?? ""} minHeight={400} placeholder="เริ่มเขียนเนื้อหาบทความ..." />
-        </div>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6">
+        <AdminFormErrorSummary error={error} />
+        {recovery ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+            <p className="font-black">พบเนื้อหาที่กู้คืนได้จากเครื่องนี้</p>
+            <p className="mt-1 leading-6">บันทึกอัตโนมัติเมื่อ {new Date(recovery.savedAt).toLocaleString("th-TH")}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setHtml(recovery.html);
+                  setDocument(recovery.document);
+                  setEditorKey((value) => value + 1);
+                  setRecovery(null);
+                }}
+                className="min-h-11 rounded-lg bg-amber-900 px-4 py-2 text-sm font-bold text-white hover:bg-amber-800"
+              >
+                กู้คืนเนื้อหา
+              </button>
+              <button type="button" onClick={discardRecovery} className="min-h-11 rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100">
+                ใช้ฉบับบนเซิร์ฟเวอร์
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {isDirty ? <p className="text-sm font-bold text-amber-800">มีการแก้ไขที่ยังไม่ได้บันทึก</p> : null}
+        <FormRichText
+          key={editorKey}
+          label="เนื้อหาฉบับเต็ม"
+          name="content"
+          defaultValue={html}
+          defaultDocument={document}
+          documentName="contentDocument"
+          minHeight={400}
+          placeholder="เริ่มเขียนเนื้อหาบทความ..."
+          onValueChange={handleEditorChange}
+        />
       </div>
-      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
-        <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกเนื้อหา" />
+      <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-4">
+        <AdminSaveBar
+          isPending={isPending}
+          disabled={!isDirty || !document}
+          onCancel={handleCancel}
+          onSubmit={handleSave}
+          submitLabel="บันทึกเนื้อหา"
+          secondary={<span className="text-xs font-semibold text-slate-500">บันทึกแต่ละครั้งจะสร้างประวัติการแก้ไข</span>}
+        />
       </div>
-    </form>
+    </div>
   );
 }
 

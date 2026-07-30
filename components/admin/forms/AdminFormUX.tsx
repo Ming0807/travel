@@ -33,6 +33,7 @@ type AdminSaveBarProps = {
   pendingLabel?: string;
   disabled?: boolean;
   secondary?: ReactNode;
+  onSubmit?: () => void;
 };
 
 type ReadinessItem = {
@@ -158,6 +159,7 @@ export function AdminSaveBar({
   pendingLabel = "กำลังบันทึก...",
   disabled = false,
   secondary,
+  onSubmit,
 }: AdminSaveBarProps) {
   return (
     <div className="sticky bottom-0 z-10 flex flex-col gap-3 border-t border-slate-200 bg-white/95 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-end">
@@ -180,8 +182,9 @@ export function AdminSaveBar({
       )}
       <button
         disabled={isPending || disabled}
+        onClick={onSubmit}
         className="min-h-11 rounded-lg bg-[#073F37] px-6 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50"
-        type="submit"
+        type={onSubmit ? "button" : "submit"}
       >
         {isPending ? pendingLabel : submitLabel}
       </button>

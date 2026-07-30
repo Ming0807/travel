@@ -96,6 +96,8 @@ Implemented baseline:
 - Story and route admin forms show public-page readiness panels and preview links after records are saved.
 - Story administration now separates team-authored articles at `/admin/stories` from traveler submissions at `/admin/stories/submissions`, while sharing URL-backed filters, pagination, taxonomy, and export behavior.
 - Story list actions open the editor or media workflow and no longer expose a quick-publish control that bypasses the editorial state machine.
+- The editorial story content drawer now writes canonical TipTap JSON and compatible HTML through the atomic editorial action, creates an immutable revision on each successful save, detects optimistic-lock conflicts, and keeps a browser-local recovery draft without presenting it as a server save.
+- Unsaved story content is protected when admins use Cancel, the drawer close button, backdrop click, Escape, or browser navigation. Legacy HTML stories are normalized into structured content only after an explicit edit and save.
 - Main CMS image surfaces use saved media paths or missing-image states instead of Unsplash fallback images.
 - Public attraction detail sections now use a shared, content-aware section model so public navigation and the attraction visual editor use the same order and localized labels.
 - Public attraction mobile section navigation uses a jump selector instead of rows that look expandable but only scroll.
