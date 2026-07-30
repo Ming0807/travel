@@ -1,13 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CoverForm } from "@/components/admin/stories/visual-editor/SectionForms";
 import type { AdminStoryRow } from "@/lib/repositories/admin-story.repository";
 
 // ── Mocks ──────────────────────────────────────────────────────────────────
 
+const mocks = vi.hoisted(() => ({
+  updateStory: vi.fn(),
+}));
+
 vi.mock("@/app/actions/admin-story-actions", () => ({
-  updateStoryAction: vi.fn(),
+  updateStoryAction: mocks.updateStory,
+  saveStoryEditorialChangeAction: vi.fn(),
 }));
 
 vi.mock("@/components/admin/forms/FormRichText", () => ({
@@ -71,6 +76,14 @@ const baseStory: AdminStoryRow = {
 describe("CoverForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.updateStory.mockResolvedValue({
+      success: true,
+      data: {
+        id: 1,
+        slug: "test-story",
+        updatedAt: "2026-07-18T00:00:00.000Z",
+      },
+    });
   });
 
   it("renders Save and Cancel buttons", () => {
@@ -210,5 +223,31 @@ describe("CoverForm", () => {
     expect(
       screen.getByText("มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก"),
     ).toBeInTheDocument();
+  });
+
+  it("reports the new server version after a cover save", async () => {
+    const onEditorialSaved = vi.fn();
+    render(
+      <CoverForm
+        story={baseStory}
+        onClose={vi.fn()}
+        onEditorialSaved={onEditorialSaved}
+      />
+    );
+
+    await userEvent.click(screen.getByText("เลือกจาก Media Library"));
+    await userEvent.click(screen.getByText("Pick Media Asset"));
+    await userEvent.click(screen.getByRole("button", { name: "บันทึกรูปภาพ" }));
+
+    await waitFor(() =>
+      expect(onEditorialSaved).toHaveBeenCalledWith(
+        expect.objectContaining({
+          updatedAt: "2026-07-18T00:00:00.000Z",
+          patch: expect.objectContaining({
+            updated_at: "2026-07-18T00:00:00.000Z",
+          }),
+        })
+      )
+    );
   });
 });

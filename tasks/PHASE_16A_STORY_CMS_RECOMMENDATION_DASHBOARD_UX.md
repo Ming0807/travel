@@ -62,9 +62,12 @@ Build a full editorial Story/Blog CMS, explainable content recommendations, a ta
 - [x] Atomic editorial-change RPC migration applied and confirmed by the project owner
 - [x] Editorial service, validation, RBAC policy, optimistic locking, and revision repository implemented
 - [x] Editorial content drawer migrated to canonical TipTap JSON plus compatible HTML, atomic revision saves, local recovery, and unsaved-change protection
+- [x] Header and metadata drawers migrated to field-scoped atomic saves with one shared optimistic editor version
+- [x] Metadata studio now manages geography, taxonomy, primary language, SEO, scheduling intent, readiness, and permission-checked workflow transitions
+- [x] Editor sidebar now shows structured-content outline, Thai publish readiness, and permission-scoped immutable revision history
 - [ ] Existing visual editor migrated from compatibility actions to the atomic editorial action
 - [x] Editorial library and traveler moderation queue implemented with server-side filters and pagination
-- [ ] Structured editor and revisions implemented
+- [ ] Structured editor and revisions implemented (managed inline media insertion and revision restore remain)
 - [ ] Public story experience implemented
 - [ ] Recommendation engine implemented
 - [ ] Operational dashboard implemented

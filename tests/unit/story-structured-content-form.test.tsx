@@ -108,13 +108,16 @@ describe("structured story content form", () => {
     const onClose = vi.fn();
     const onContentSaved = vi.fn();
     const onDirtyChange = vi.fn();
+    const onEditorialSaved = vi.fn();
 
     render(
       <ContentForm
         story={story}
+        expectedUpdatedAt="2026-07-17T00:30:00.000Z"
         onClose={onClose}
         onContentSaved={onContentSaved}
         onDirtyChange={onDirtyChange}
+        onEditorialSaved={onEditorialSaved}
       />
     );
 
@@ -130,7 +133,7 @@ describe("structured story content form", () => {
     await waitFor(() =>
       expect(mocks.saveEditorialChange).toHaveBeenCalledWith({
         storyId: 42,
-        expectedUpdatedAt: "2026-07-17T00:00:00.000Z",
+        expectedUpdatedAt: "2026-07-17T00:30:00.000Z",
         change: expect.objectContaining({
           legacyContent: "<h2>หัวข้อใหม่</h2>",
           contentDocument: updatedDocument,
@@ -143,6 +146,12 @@ describe("structured story content form", () => {
     expect(onContentSaved).toHaveBeenCalledWith(
       "<h2>หัวข้อใหม่</h2>",
       updatedDocument
+    );
+    expect(onEditorialSaved).toHaveBeenCalledWith(
+      expect.objectContaining({
+        updatedAt: "2026-07-17T01:00:00.000Z",
+        revisionNumber: 3,
+      })
     );
     expect(onClose).toHaveBeenCalledOnce();
   });

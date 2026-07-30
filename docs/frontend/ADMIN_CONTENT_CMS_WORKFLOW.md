@@ -98,6 +98,10 @@ Implemented baseline:
 - Story list actions open the editor or media workflow and no longer expose a quick-publish control that bypasses the editorial state machine.
 - The editorial story content drawer now writes canonical TipTap JSON and compatible HTML through the atomic editorial action, creates an immutable revision on each successful save, detects optimistic-lock conflicts, and keeps a browser-local recovery draft without presenting it as a server save.
 - Unsaved story content is protected when admins use Cancel, the drawer close button, backdrop click, Escape, or browser navigation. Legacy HTML stories are normalized into structured content only after an explicit edit and save.
+- Story header and metadata drawers save only their own changed fields through the same atomic editorial action. The editor shares the newest optimistic version across drawers so sequential saves do not create false conflicts.
+- Story metadata uses controlled topics instead of a free-text category for recommendation/search signals, and includes geography, primary language, SEO, and scheduling intent.
+- Story status changes use the domain workflow actions rather than a direct status dropdown. Server-side readiness and permission checks remain authoritative.
+- The editor sidebar derives a Thai publish-readiness checklist and document outline from saved structured content, and shows revision history only when the current admin has `story.revision_read`.
 - Main CMS image surfaces use saved media paths or missing-image states instead of Unsplash fallback images.
 - Public attraction detail sections now use a shared, content-aware section model so public navigation and the attraction visual editor use the same order and localized labels.
 - Public attraction mobile section navigation uses a jump selector instead of rows that look expandable but only scroll.

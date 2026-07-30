@@ -137,7 +137,11 @@ export async function createStoryAction(_prevState: ActionResult<{ id: number; s
   }
 }
 
-export async function updateStoryAction(storyId: number, _prevState: ActionResult<{ id: number; slug: string }>, formData: FormData): Promise<ActionResult<{ id: number; slug: string }>> {
+export async function updateStoryAction(
+  storyId: number,
+  _prevState: ActionResult<{ id: number; slug: string; updatedAt?: string }>,
+  formData: FormData
+): Promise<ActionResult<{ id: number; slug: string; updatedAt?: string }>> {
   try {
     const guard = await requirePermission("story.update");
     const parsed = adminStoryMutationSchema.safeParse(Object.fromEntries(formData));
@@ -183,7 +187,14 @@ export async function updateStoryAction(storyId: number, _prevState: ActionResul
     });
 
     revalidatePath("/admin/stories");
-    return { success: true };
+    return {
+      success: true,
+      data: {
+        id: updated.story_id,
+        slug: updated.slug,
+        updatedAt: updated.updated_at ?? undefined,
+      },
+    };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังบันทึกการแก้ไขเรื่องราวไม่ได้ กรุณาลองอีกครั้ง" };

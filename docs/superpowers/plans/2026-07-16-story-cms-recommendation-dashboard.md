@@ -147,12 +147,12 @@ New UI areas:
 - Create editor component tests.
 
 - [ ] Write failing tests for JSON output, legacy HTML loading, dirty state, save/cancel, and media insertion.
-- [ ] Add document outline and automatic table of contents.
-- [ ] Add metadata, taxonomy, SEO preview, schedule, readiness, and revision drawers.
+- [x] Add document outline and automatic table of contents in the editorial preview.
+- [x] Add metadata, taxonomy, SEO fields, schedule intent, readiness, workflow actions, and revision visibility.
 - [x] Add autosave recovery to local storage without treating it as a server save.
 - [x] Warn before leaving with unsaved changes.
 - [x] Preserve server-side sanitization and restricted UGC rendering.
-- [ ] Run Impeccable detection, accessibility checks, responsive screenshots, and tests.
+- [ ] Run Impeccable detection, accessibility checks, responsive screenshots, and tests (automated component checks complete; authenticated browser screenshots remain).
 - [ ] Commit: `feat: build structured story editorial studio`
 
 ## Task 7: Redesign the Public Blog and Story Experience
