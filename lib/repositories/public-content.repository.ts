@@ -2,6 +2,11 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import type { PublicStoryQuery } from "@/lib/content/public-story-query";
+import {
+  storyDocumentSchema,
+  type StoryDocument,
+} from "@/lib/content/story-document";
 import type { AttractionCard } from "@/types/tourism";
 
 type DbRecord = Record<string, unknown>;
@@ -23,15 +28,37 @@ export type PublicStoryCard = {
   excerpt: string;
   province: string;
   date: string;
+  publishedAt: string | null;
   imageUrl: string | null;
+  imageAlt: string;
   category: string;
   authorType: string;
   authorName: string;
+  readingMinutes: number;
+  primaryLanguage: string;
+  primaryTopic: { key: string; name: string } | null;
   status?: string;
 };
 
 export type PublicStoryDetail = PublicStoryCard & {
   content: string | null;
+  contentDocument: StoryDocument | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+};
+
+export type PublicStoryPage = {
+  items: PublicStoryCard[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  loadError: boolean;
+};
+
+export type PublicStoryTopicOption = {
+  key: string;
+  name: string;
 };
 
 export type PublicAttractionRelatedItem = {
@@ -117,6 +144,13 @@ function publicImage(row: DbRecord, thumbnailByStoragePath?: Map<string, string>
   if (!media) return null;
   const storagePath = storagePathFromMedia(media);
   return imageUrlFromStoragePath(thumbnailByStoragePath?.get(storagePath) ?? storagePath);
+}
+
+function publicManagedStoryImage(row: DbRecord): string | null {
+  const media = publicAttractionMedia(row);
+  const storagePath = storagePathFromMedia(media);
+  if (!storagePath || /^https?:\/\//i.test(storagePath)) return null;
+  return imageUrlFromStoragePath(storagePath);
 }
 
 function mapAttractionCard(row: DbRecord, thumbnailByStoragePath?: Map<string, string>): InternalAttractionCard {
@@ -237,21 +271,52 @@ async function loadMediaAssetThumbnails(
 function formatStoryDate(value: unknown) {
   const date = typeof value === "string" ? new Date(value) : null;
   if (!date || Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(date);
+  return new Intl.DateTimeFormat("th-TH", { dateStyle: "medium" }).format(date);
 }
 
 function mapStory(row: DbRecord): PublicStoryCard {
   const province = one(row.provinces);
+  const coverMedia = publicAttractionMedia(row);
+  const topicLinks = Array.isArray(row.story_topic_links)
+    ? (row.story_topic_links as DbRecord[])
+    : [];
+  const primaryLink =
+    topicLinks.find((link) => link.is_primary === true) ?? topicLinks[0] ?? null;
+  const primaryTopic = primaryLink ? one(primaryLink.story_topics) : null;
+  const primaryTopicName = primaryTopic
+    ? text(primaryTopic.name_th, text(primaryTopic.name_en))
+    : "";
   return {
     id: text(row.slug),
     title: text(row.title, "Untitled story"),
     excerpt: text(row.excerpt),
     province: text(province?.province_name_th, text(province?.province_name_en)),
     date: formatStoryDate(row.published_at || row.created_at),
-    imageUrl: publicImage(row),
-    category: text(row.category, "Story"),
+    publishedAt:
+      typeof row.published_at === "string"
+        ? row.published_at
+        : typeof row.created_at === "string"
+          ? row.created_at
+          : null,
+    imageUrl: publicManagedStoryImage(row),
+    imageAlt: text(
+      coverMedia?.alt_text_th,
+      text(coverMedia?.alt_text_en, text(row.title, "ภาพประกอบเรื่องราว"))
+    ),
+    category: primaryTopicName || text(row.category, "เรื่องราว"),
     authorType: text(row.author_type, "admin"),
-    authorName: row.author_type === 'tourist' ? text(one(row.tourists)?.display_name, "Tourist") : "Admin",
+    authorName:
+      row.author_type === "tourist"
+        ? text(one(row.tourists)?.display_name, "นักเดินทาง")
+        : "กองบรรณาธิการ",
+    readingMinutes: Math.max(1, numberValue(row.reading_minutes, 1)),
+    primaryLanguage: text(row.primary_language, "th"),
+    primaryTopic: primaryTopic
+      ? {
+          key: text(primaryTopic.topic_key),
+          name: primaryTopicName,
+        }
+      : null,
     status: text(row.status),
   };
 }
@@ -260,6 +325,12 @@ function mapStoryDetail(row: DbRecord): PublicStoryDetail {
   return {
     ...mapStory(row),
     content: text(row.content) || null,
+    contentDocument:
+      storyDocumentSchema.safeParse(row.content_document).success
+        ? (row.content_document as StoryDocument)
+        : null,
+    seoTitle: text(row.seo_title) || null,
+    seoDescription: text(row.seo_description) || null,
   };
 }
 
@@ -539,6 +610,137 @@ export async function listPublicStories(options?: { limit?: number; province?: s
   }
 }
 
+const publicStorySelect = (withProvinceFilter: boolean, withTopicFilter: boolean) => `
+  slug,
+  title,
+  excerpt,
+  category,
+  published_at,
+  author_type,
+  reading_minutes,
+  primary_language,
+  tourists (display_name),
+  provinces${withProvinceFilter ? "!inner" : ""} (province_name_th, province_name_en),
+  content_media (
+    storage_path,
+    alt_text_th,
+    alt_text_en,
+    is_cover,
+    is_active,
+    lifecycle_status,
+    display_order
+  ),
+  story_topic_links (
+    is_primary,
+    story_topics (
+      topic_key,
+      name_th,
+      name_en
+    )
+  )${withTopicFilter ? `,
+  topic_filter:story_topic_links!inner (
+    story_topics!inner (topic_key)
+  )` : ""}
+`;
+
+export async function listPublicStoryPage(
+  options: PublicStoryQuery
+): Promise<PublicStoryPage> {
+  const from = (options.page - 1) * options.pageSize;
+  const to = from + options.pageSize - 1;
+  try {
+    const supabase = await createSupabaseServerClient();
+    let query = supabase
+      .from("travel_stories")
+      .select(
+        publicStorySelect(Boolean(options.province), Boolean(options.topic)),
+        { count: "exact" }
+      )
+      .eq("status", "published")
+      .eq("is_published", true);
+
+    if (options.search) {
+      const pattern = escapeIlikePattern(options.search);
+      query = query.or(
+        `title.ilike.%${pattern}%,excerpt.ilike.%${pattern}%`
+      );
+    }
+    if (options.province) {
+      query = query.eq(
+        "provinces.province_name_en",
+        options.province
+      );
+    }
+    if (options.topic) {
+      query = query.eq(
+        "topic_filter.story_topics.topic_key",
+        options.topic
+      );
+    }
+    if (options.authorType) {
+      query = query.eq("author_type", options.authorType);
+    }
+
+    const { data, error, count } = await query
+      .order("published_at", { ascending: false })
+      .order("story_id", { ascending: false })
+      .range(from, to);
+    if (error || !Array.isArray(data)) {
+      return {
+        items: [],
+        total: 0,
+        page: options.page,
+        pageSize: options.pageSize,
+        totalPages: 0,
+        loadError: true,
+      };
+    }
+
+    const total = count ?? 0;
+    return {
+      items: (data as unknown as DbRecord[])
+        .map(mapStory)
+        .filter((item) => item.id),
+      total,
+      page: options.page,
+      pageSize: options.pageSize,
+      totalPages: total > 0 ? Math.ceil(total / options.pageSize) : 0,
+      loadError: false,
+    };
+  } catch {
+    return {
+      items: [],
+      total: 0,
+      page: options.page,
+      pageSize: options.pageSize,
+      totalPages: 0,
+      loadError: true,
+    };
+  }
+}
+
+export async function listPublicStoryTopics(): Promise<
+  PublicStoryTopicOption[]
+> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("story_topics")
+      .select("topic_key, name_th, name_en")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+    if (error || !Array.isArray(data)) return [];
+    return (data as DbRecord[])
+      .map((row) => ({
+        key: text(row.topic_key),
+        name: text(row.name_th, text(row.name_en)),
+      }))
+      .filter((topic) => topic.key && topic.name);
+  } catch {
+    return [];
+  }
+}
+
 export async function listMyStories(touristId: string, options?: { limit?: number }): Promise<PublicStoryCard[]> {
   const limit = options?.limit ?? 12;
   try {
@@ -564,9 +766,39 @@ export async function getPublicStory(slug: string): Promise<{ story: PublicStory
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("travel_stories")
-      .select("slug, title, excerpt, content, category, published_at, author_type, tourists (display_name), provinces (province_name_th, province_name_en), content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)")
+      .select(`
+        slug,
+        title,
+        excerpt,
+        content,
+        content_document,
+        content_schema_version,
+        category,
+        published_at,
+        author_type,
+        reading_minutes,
+        primary_language,
+        seo_title,
+        seo_description,
+        tourists (display_name),
+        provinces (province_name_th, province_name_en),
+        content_media (
+          storage_path,
+          alt_text_th,
+          alt_text_en,
+          is_cover,
+          is_active,
+          lifecycle_status,
+          display_order
+        ),
+        story_topic_links (
+          is_primary,
+          story_topics (topic_key, name_th, name_en)
+        )
+      `)
       .eq("slug", slug)
       .eq("status", "published")
+      .eq("is_published", true)
       .maybeSingle();
 
     if (error || !data) return null;

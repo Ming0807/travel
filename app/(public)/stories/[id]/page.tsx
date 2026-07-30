@@ -4,14 +4,26 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
   ArrowLeft,
-  ArrowUpRight,
   Clock,
   FileText,
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { PublicStoryCard } from "@/components/stories/PublicStoryCard";
+import {
+  StoryDocumentRenderer,
+  buildStoryTableOfContents,
+} from "@/components/stories/StoryDocumentRenderer";
+import { StoryShareActions } from "@/components/stories/StoryShareActions";
 import { getPublicStory } from "@/lib/repositories/public-content.repository";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+function publicUrl(path: string): string {
+  return new URL(
+    path,
+    process.env.NEXT_PUBLIC_APP_URL || "https://southernborder.app"
+  ).toString();
+}
 
 export async function generateMetadata({
   params,
@@ -22,12 +34,39 @@ export async function generateMetadata({
   const data = await getPublicStory(id);
 
   if (!data) {
-    return { title: "Story Not Found" };
+    return {
+      title: "ไม่พบเรื่องราว | ท่องเที่ยวชายแดนใต้",
+      robots: { index: false, follow: false },
+    };
   }
 
+  const { story } = data;
+  const title = story.seoTitle || story.title;
+  const description = story.seoDescription || story.excerpt;
+  const canonical = `/stories/${story.id}`;
+  const images = story.imageUrl
+    ? [{ url: story.imageUrl, alt: story.imageAlt }]
+    : undefined;
+
   return {
-    title: `${data.story.title} | Southern Border Tourism`,
-    description: data.story.excerpt,
+    title: `${title} | ท่องเที่ยวชายแดนใต้`,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "article",
+      locale: "th_TH",
+      url: canonical,
+      title,
+      description,
+      publishedTime: story.publishedAt ?? undefined,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: story.imageUrl ? [story.imageUrl] : undefined,
+    },
   };
 }
 
@@ -46,176 +85,202 @@ export default async function StoryDetailsPage({
 }) {
   const { id } = await params;
   const data = await getPublicStory(id);
-
-  if (!data) {
-    notFound();
-  }
+  if (!data) notFound();
 
   const { story, relatedStories } = data;
   const paragraphs = storyParagraphs(story.content, story.excerpt);
-
-  const readTimeWords = (story.content || story.excerpt || "").split(
-    /\s+/,
-  ).length;
-  const readTime =
-    readTimeWords > 0 ? Math.max(1, Math.ceil(readTimeWords / 220)) : 1;
+  const toc = story.contentDocument
+    ? buildStoryTableOfContents(story.contentDocument)
+    : [];
+  const storyUrl = publicUrl(`/stories/${story.id}`);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: story.title,
+    description: story.seoDescription || story.excerpt,
+    datePublished: story.publishedAt,
+    inLanguage: story.primaryLanguage,
+    image: story.imageUrl ? [publicUrl(story.imageUrl)] : undefined,
+    mainEntityOfPage: storyUrl,
+    author:
+      story.authorType === "tourist"
+        ? { "@type": "Person", name: story.authorName }
+        : {
+            "@type": "Organization",
+            name: "ท่องเที่ยวชายแดนใต้",
+          },
+  };
 
   return (
-    <div className="min-h-screen bg-white text-ink selection:bg-ink selection:text-white">
-      <main className="mx-auto max-w-5xl px-4 pt-16 pb-24 sm:px-6 lg:px-8">
-        <Link
-          href="/stories"
-          className="mb-12 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted transition-colors hover:text-coral"
-        >
-          <ArrowLeft size={16} weight="bold" />
-          <span>Back to stories</span>
-        </Link>
+    <div className="min-h-screen bg-white text-ink">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <main className="mx-auto max-w-6xl px-4 pb-24 pt-10 sm:px-6 lg:px-8">
+        <nav aria-label="เส้นทางนำทาง">
+          <Link
+            href="/stories"
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-700 hover:text-[#075E54]"
+          >
+            <ArrowLeft size={17} weight="bold" aria-hidden="true" />
+            กลับไปหน้ารวมเรื่องราว
+          </Link>
+        </nav>
 
-        {/* Hero Section */}
-        <header className="mx-auto max-w-4xl text-center mb-20 mt-8">
-          <div className="mb-10 flex flex-wrap items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-ink/50">
-            <span>{story.category || "Story"}</span>
-            {story.province && (
+        <header className="mx-auto max-w-4xl pb-10 pt-10 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-2 text-sm font-bold text-slate-600">
+            <span>{story.category}</span>
+            {story.province ? (
               <>
-                <span className="w-1 h-1 rounded-full bg-ink/20"></span>
-                <span className="text-ink">{story.province}</span>
+                <span aria-hidden="true">•</span>
+                <span>{story.province}</span>
               </>
-            )}
+            ) : null}
           </div>
-
-          <h1 className="text-5xl font-black leading-[1.05] text-ink md:text-6xl lg:text-7xl text-balance mb-8">
+          <h1 className="mt-5 text-4xl font-black leading-tight text-balance sm:text-5xl lg:text-6xl">
             {story.title}
           </h1>
-
-          {story.excerpt && (
-            <p className="mx-auto max-w-2xl text-xl leading-relaxed text-ink/70 font-medium text-pretty">
+          {story.excerpt ? (
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-700 text-pretty sm:text-lg">
               {story.excerpt}
             </p>
-          )}
-
-          <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-8 border-y border-ink/10 py-8">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-ink">
-                {story.authorType === "tourist"
-                  ? story.authorName.charAt(0).toUpperCase()
-                  : "A"}
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-black text-ink">
-                  {story.authorName}
-                </p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-ink/50">
-                  {story.authorType === "tourist" ? "Tourist UGC" : "Editorial"}
-                </p>
-              </div>
-            </div>
-            <div className="hidden sm:block h-8 w-px bg-ink/10"></div>
-            <div className="flex items-center gap-4 text-left">
-              <div>
-                <p className="text-sm font-black text-ink">
-                  {story.date || "Not specified"}
-                </p>
-                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-ink/50 mt-0.5">
-                  <Clock size={14} weight="bold" />
-                  {readTime} min read
-                </p>
-              </div>
-            </div>
+          ) : null}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-sm text-slate-600">
+            <span className="font-bold text-slate-800">{story.authorName}</span>
+            <span aria-hidden="true">•</span>
+            <span>
+              {story.authorType === "tourist"
+                ? "ประสบการณ์จากนักเดินทาง"
+                : "บทความจากกองบรรณาธิการ"}
+            </span>
+            <span aria-hidden="true">•</span>
+            <span>{story.date}</span>
+            <span className="inline-flex items-center gap-1">
+              <Clock size={15} weight="bold" aria-hidden="true" />
+              อ่านประมาณ {story.readingMinutes} นาที
+            </span>
+          </div>
+          <div className="mt-7 flex justify-center">
+            <StoryShareActions title={story.title} url={storyUrl} />
           </div>
         </header>
 
-        {/* Cover Image */}
-        <div className="relative mx-auto w-full h-[50vh] min-h-[400px] overflow-hidden bg-slate-100 md:h-[70vh] mb-24">
+        <div className="relative mx-auto aspect-[16/9] w-full max-w-5xl overflow-hidden rounded-lg bg-slate-100">
           {story.imageUrl ? (
             <Image
               src={story.imageUrl}
-              alt={story.title}
+              alt={story.imageAlt}
               fill
+              priority
+              sizes="(max-width: 1200px) 100vw, 1024px"
               className="object-cover"
-              unoptimized
             />
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-4 px-6 text-center text-sm font-semibold text-muted bg-ink/5">
-              <FileText size={32} />
-              No cover image
+            <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-sm font-semibold text-slate-600">
+              <FileText size={34} aria-hidden="true" />
+              เรื่องนี้ยังไม่มีภาพปก
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-12">
-          {/* Main Content */}
-          <article className="lg:col-span-8 lg:col-start-3">
-            {story.content && story.authorType !== "tourist" && /<[a-z][\s\S]*>/i.test(story.content) ? (
-              <div 
-                className="prose prose-lg md:prose-xl mx-auto max-w-[65ch] prose-headings:font-black prose-headings:text-ink prose-p:leading-relaxed prose-p:text-ink/80 prose-p:mb-8 prose-a:text-ink prose-a:font-bold prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-ink/70 prose-img:rounded-2xl prose-img:mx-auto prose-img:my-10"
+        {toc.length > 0 ? (
+          <details className="mx-auto mt-10 max-w-3xl rounded-lg border border-slate-200 bg-slate-50 p-4 lg:hidden">
+            <summary className="min-h-11 cursor-pointer py-2 text-sm font-black text-slate-900">
+              สารบัญเนื้อหา
+            </summary>
+            <ol className="mt-2 space-y-2 border-t border-slate-200 pt-3">
+              {toc.map((item) => (
+                <li key={item.id} className={item.level > 2 ? "pl-4" : ""}>
+                  <a
+                    href={`#${item.id}`}
+                    className="inline-flex min-h-10 items-center text-sm font-semibold text-slate-700 hover:text-[#075E54]"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </details>
+        ) : null}
+
+        <div className="mt-12 grid gap-12 lg:grid-cols-[220px_minmax(0,1fr)_120px] lg:items-start">
+          {toc.length > 0 ? (
+            <aside className="sticky top-24 hidden lg:block" aria-label="สารบัญเนื้อหา">
+              <h2 className="text-sm font-black text-slate-900">สารบัญ</h2>
+              <ol className="mt-3 space-y-1 border-t border-slate-200 pt-3">
+                {toc.map((item) => (
+                  <li key={item.id} className={item.level > 2 ? "pl-3" : ""}>
+                    <a
+                      href={`#${item.id}`}
+                      className="block py-2 text-sm font-semibold leading-5 text-slate-600 hover:text-[#075E54]"
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </aside>
+          ) : (
+            <span className="hidden lg:block" />
+          )}
+
+          <article>
+            {story.contentDocument ? (
+              <StoryDocumentRenderer document={story.contentDocument} />
+            ) : story.content &&
+              story.authorType !== "tourist" &&
+              /<[a-z][\s\S]*>/i.test(story.content) ? (
+              <div
+                className="prose prose-lg mx-auto max-w-[70ch] prose-headings:font-black prose-headings:text-ink prose-p:leading-8 prose-p:text-slate-800 prose-a:font-bold prose-a:text-[#075E54] prose-a:underline prose-a:underline-offset-4 md:prose-xl"
                 dangerouslySetInnerHTML={{ __html: story.content }}
               />
             ) : (
-              <div className="prose prose-lg md:prose-xl mx-auto max-w-[65ch] prose-headings:font-black prose-headings:text-ink prose-p:leading-relaxed prose-p:text-ink/80 prose-p:mb-8 prose-a:text-ink prose-a:font-bold prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-ink/70 prose-img:rounded-2xl">
+              <div className="prose prose-lg mx-auto max-w-[70ch] prose-p:leading-8 prose-p:text-slate-800 md:prose-xl">
                 {paragraphs.length > 0 ? (
                   paragraphs.map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
+                    <p key={`${index}-${paragraph.slice(0, 24)}`}>
+                      {paragraph}
+                    </p>
                   ))
                 ) : (
-                  <div className="border border-dashed border-ink/20 bg-slate-50 p-12 text-center text-sm font-bold text-ink/50">
-                    Full story content has not been added yet.
+                  <div className="border-y border-slate-200 py-12 text-center text-sm font-semibold text-slate-600">
+                    เรื่องนี้ยังไม่มีเนื้อหาฉบับเต็ม
                   </div>
                 )}
               </div>
             )}
           </article>
+          <span className="hidden lg:block" />
         </div>
 
-        {/* Related Stories */}
-        {relatedStories.length > 0 && (
-          <section className="mt-32 border-t border-ink/10 pt-20">
-            <div className="flex items-end justify-between mb-16">
-              <h2 className="text-3xl font-black text-ink">Read Next</h2>
+        {relatedStories.length > 0 ? (
+          <section className="mt-24 border-t border-slate-200 pt-12">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-black text-slate-900">
+                  เรื่องที่น่าอ่านต่อ
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  เนื้อหาเพิ่มเติมจากจังหวัดชายแดนใต้
+                </p>
+              </div>
               <Link
                 href="/stories"
-                className="hidden sm:inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ink hover:text-ink/70 transition-colors"
+                className="inline-flex min-h-11 items-center text-sm font-bold text-[#075E54] underline underline-offset-4"
               >
-                View all stories <ArrowUpRight size={16} weight="bold" />
+                ดูเรื่องราวทั้งหมด
               </Link>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-12">
+            <div className="mt-8 grid gap-8 md:grid-cols-3">
               {relatedStories.map((related) => (
-                <Link
-                  key={related.id}
-                  href={`/stories/${related.id}`}
-                  className="group block"
-                >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 mb-6">
-                    {related.imageUrl ? (
-                      <Image
-                        src={related.imageUrl}
-                        alt={related.title}
-                        fill
-                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-slate-100" />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-ink/50">
-                      {related.category}
-                    </span>
-                    <span className="text-ink/20">•</span>
-                    <span className="text-[10px] font-bold text-ink uppercase tracking-wide">
-                      {related.authorName}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-black leading-snug text-ink transition-colors group-hover:text-ink/70">
-                    {related.title}
-                  </h3>
-                </Link>
+                <PublicStoryCard key={related.id} story={related} />
               ))}
             </div>
           </section>
-        )}
+        ) : null}
       </main>
       <SiteFooter />
     </div>

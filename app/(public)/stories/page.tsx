@@ -1,256 +1,306 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, PenNib, Clock, LockKey } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowLeft,
+  ArrowRight,
+  MagnifyingGlass,
+  PenNib,
+} from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { listPublicStories, listMyStories } from "@/lib/repositories/public-content.repository";
-import { resolveCurrentTouristId } from "@/lib/auth/guards";
+import { PublicStoryCard } from "@/components/stories/PublicStoryCard";
+import {
+  listPublicStoryPage,
+  listPublicStoryTopics,
+} from "@/lib/repositories/public-content.repository";
+import {
+  buildPublicStoryHref,
+  parsePublicStorySearchParams,
+} from "@/lib/content/public-story-query";
+import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
 import { SettingsService } from "@/lib/services/settings.service";
 
 export const metadata: Metadata = {
-  title: "เรื่องราว | ท่องเที่ยวชายแดนใต้",
-  description: "เรื่องราวการเดินทางจากยะลา ปัตตานี และนราธิวาส",
+  title: "เรื่องราวการเดินทาง | ท่องเที่ยวชายแดนใต้",
+  description:
+    "บทความ คู่มือ และประสบการณ์จริงจากยะลา ปัตตานี และนราธิวาส",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
-export default async function StoriesPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
-  const searchParams = await props.searchParams;
-  const authorType = typeof searchParams.category === "string" ? searchParams.category : undefined;
-  const limit = typeof searchParams.limit === "string" ? parseInt(searchParams.limit) || 12 : 12;
+const provinceOptions = [
+  { value: "Yala", label: "ยะลา" },
+  { value: "Pattani", label: "ปัตตานี" },
+  { value: "Narathiwat", label: "นราธิวาส" },
+];
 
-  let touristId: string | undefined;
-  try {
-    touristId = await resolveCurrentTouristId();
-  } catch {
-    // Not logged in or no identity
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  const isAuthenticated = !!session?.user;
-
+export default async function StoriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const rawSearchParams = await searchParams;
+  const query = parsePublicStorySearchParams(rawSearchParams);
   const settingsService = new SettingsService();
-  const [allFetchedStories, heroSettings] = await Promise.all([
-    authorType === 'mine' && touristId
-      ? listMyStories(touristId, { limit: limit + 1 })
-      : listPublicStories({ limit: limit + 1, authorType: authorType === 'mine' ? undefined : authorType }),
+  const [storyPage, topics, heroSettings] = await Promise.all([
+    listPublicStoryPage(query),
+    listPublicStoryTopics(),
     settingsService.getSetting("stories_page_hero", {
       title: "เรื่องราวการเดินทาง",
       description:
-        "บทความและเรื่องราวที่ถูกกลั่นกรองผ่านประสบการณ์ของนักเดินทาง ท้องถิ่น และผู้มาเยือน",
+        "บทความ คู่มือ และประสบการณ์จริงจากผู้คนที่เดินทางในชายแดนใต้",
     }),
   ]);
 
-  const hasMore = allFetchedStories.length > limit;
-  const allStories = allFetchedStories.slice(0, limit);
-
-  const featuredStory = allStories[0];
-  const remainingStories = allStories.slice(1);
+  const hasFilters = Boolean(
+    query.search || query.province || query.topic || query.authorType
+  );
+  const showFeatured =
+    !hasFilters && query.page === 1 && storyPage.items.length > 0;
+  const featuredStory = showFeatured ? storyPage.items[0] : null;
+  const stories = showFeatured ? storyPage.items.slice(1) : storyPage.items;
+  const heroTitle = plainTextFromLegacyHtml(heroSettings.title);
+  const heroDescription = plainTextFromLegacyHtml(heroSettings.description);
 
   return (
-    <div className="min-h-screen bg-white text-ink selection:bg-ink selection:text-white">
-      <main className="mx-auto max-w-5xl px-4 pt-16 pb-24 sm:px-6 lg:px-8">
-        <header className="mb-20 grid grid-cols-1 gap-8 md:grid-cols-12 md:items-end border-b border-ink/10 pb-12">
-          <div className="md:col-span-8">
-            <h1
-              className="text-5xl md:text-7xl font-black tracking-tight text-ink leading-[1.05]"
-              dangerouslySetInnerHTML={{ __html: heroSettings.title }}
-            />
-            <p className="mt-6 max-w-xl text-lg md:text-xl leading-relaxed text-ink/70 font-medium text-pretty">
-              {heroSettings.description}
+    <div className="min-h-screen bg-white text-ink">
+      <main className="mx-auto max-w-6xl px-4 pb-24 pt-14 sm:px-6 lg:px-8">
+        <header className="flex flex-col gap-8 border-b border-slate-200 pb-10 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="max-w-4xl text-4xl font-black leading-tight text-balance sm:text-5xl lg:text-6xl">
+              {heroTitle}
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 text-pretty sm:text-lg">
+              {heroDescription}
             </p>
           </div>
-          <div className="md:col-span-4 flex md:justify-end">
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/profile"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-bold text-slate-800 hover:bg-slate-50"
+            >
+              เรื่องราวของฉัน
+            </Link>
             <Link
               href="/stories/share"
-              className="group inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-ink/80 hover:-translate-y-0.5 active:translate-y-0"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#075E54] px-5 text-sm font-bold text-white hover:bg-[#064C44]"
             >
-              {isAuthenticated ? (
-                <PenNib size={18} weight="fill" />
-              ) : (
-                <LockKey size={18} weight="fill" />
-              )}
-              <span>แบ่งปันเรื่องราว</span>
+              <PenNib size={18} weight="bold" aria-hidden="true" />
+              แบ่งปันเรื่องราว
             </Link>
           </div>
         </header>
 
-        {/* Category Filters (Aesthetic for MVP) */}
-        <div className="mb-16 flex flex-wrap gap-3">
-          <Link href="/stories" className={`rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${!authorType ? 'bg-ink text-white' : 'border border-ink/10 bg-transparent text-ink hover:border-ink/30'}`}>
-            เรื่องราวทั้งหมด
-          </Link>
-          <Link href="/stories?category=admin" className={`rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${authorType === 'admin' ? 'bg-ink text-white' : 'border border-ink/10 bg-transparent text-ink hover:border-ink/30'}`}>
-            ไกด์แนะนำ
-          </Link>
-          <Link href="/stories?category=tourist" className={`rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${authorType === 'tourist' ? 'bg-ink text-white' : 'border border-ink/10 bg-transparent text-ink hover:border-ink/30'}`}>
-            บันทึกนักเดินทาง
-          </Link>
-          {touristId && (
-            <Link href="/stories?category=mine" className={`rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${authorType === 'mine' ? 'bg-ink text-white' : 'border border-ink/10 bg-transparent text-ink hover:border-ink/30'}`}>
-              เรื่องราวของฉัน
-            </Link>
-          )}
+        <section className="border-b border-slate-200 py-7" aria-labelledby="story-filter-title">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="story-filter-title" className="text-base font-black text-slate-900">
+              ค้นหาเรื่องที่อยากอ่าน
+            </h2>
+            {hasFilters ? (
+              <Link
+                href="/stories"
+                className="inline-flex min-h-11 items-center text-sm font-bold text-[#075E54] underline underline-offset-4"
+              >
+                ล้างตัวกรองทั้งหมด
+              </Link>
+            ) : null}
+          </div>
+          <form action="/stories" method="get" className="mt-4 grid gap-3 md:grid-cols-12">
+            <label className="relative md:col-span-5">
+              <span className="sr-only">ค้นหาจากชื่อหรือเนื้อหาเรื่องราว</span>
+              <MagnifyingGlass
+                size={18}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                name="q"
+                defaultValue={query.search}
+                placeholder="ค้นหาชื่อเรื่องหรือคำสำคัญ"
+                className="min-h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 outline-none focus:border-[#075E54] focus:ring-2 focus:ring-[#075E54]/15"
+              />
+            </label>
+            <label className="md:col-span-3">
+              <span className="sr-only">เลือกจังหวัด</span>
+              <select
+                name="province"
+                defaultValue={query.province ?? ""}
+                className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#075E54] focus:ring-2 focus:ring-[#075E54]/15"
+              >
+                <option value="">ทุกจังหวัด</option>
+                {provinceOptions.map((province) => (
+                  <option key={province.value} value={province.value}>
+                    {province.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="md:col-span-3">
+              <span className="sr-only">เลือกหัวข้อ</span>
+              <select
+                name="topic"
+                defaultValue={query.topic ?? ""}
+                className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-[#075E54] focus:ring-2 focus:ring-[#075E54]/15"
+              >
+                <option value="">ทุกหัวข้อ</option>
+                {topics.map((topic) => (
+                  <option key={topic.key} value={topic.key}>
+                    {topic.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {query.authorType ? (
+              <input type="hidden" name="type" value={query.authorType} />
+            ) : null}
+            <button
+              type="submit"
+              className="min-h-11 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white hover:bg-slate-800 md:col-span-1"
+              aria-label="ค้นหาเรื่องราว"
+            >
+              ค้นหา
+            </button>
+          </form>
+
+          <nav
+            aria-label="กรองตามประเภทผู้เขียน"
+            className="mt-4 flex gap-2 overflow-x-auto pb-1"
+          >
+            {[
+              { value: undefined, label: "ทั้งหมด" },
+              { value: "admin" as const, label: "บทความจากกองบรรณาธิการ" },
+              { value: "tourist" as const, label: "เรื่องจากนักเดินทาง" },
+            ].map((item) => {
+              const active = query.authorType === item.value;
+              return (
+                <Link
+                  key={item.label}
+                  href={buildPublicStoryHref(query, {
+                    authorType: item.value,
+                  })}
+                  aria-current={active ? "page" : undefined}
+                  className={`inline-flex min-h-11 shrink-0 items-center rounded-lg px-4 text-sm font-bold ${
+                    active
+                      ? "bg-slate-900 text-white"
+                      : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </section>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 py-8">
+          <p className="text-sm font-semibold text-slate-700">
+            พบ {storyPage.total.toLocaleString("th-TH")} เรื่อง
+            {hasFilters ? " ตามตัวกรองที่เลือก" : ""}
+          </p>
+          {storyPage.totalPages > 1 ? (
+            <p className="text-sm text-slate-600">
+              หน้า {storyPage.page.toLocaleString("th-TH")} จาก{" "}
+              {storyPage.totalPages.toLocaleString("th-TH")}
+            </p>
+          ) : null}
         </div>
 
-        {allStories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-slate-100">
-              <PenNib size={48} weight="thin" className="text-ink/30" />
-            </div>
-            <h2 className="mb-3 text-2xl font-black text-ink">ยังไม่มีเรื่องราว</h2>
-            <p className="mb-8 max-w-md text-ink/60">
-              ร่วมเป็นคนแรกที่แบ่งปันประสบการณ์การเดินทางในจังหวัดชายแดนใต้ของคุณให้โลกได้รู้
+        {storyPage.loadError ? (
+          <section
+            className="border-y border-rose-200 bg-rose-50 py-14 text-center"
+            role="alert"
+          >
+            <h2 className="text-xl font-black text-rose-950">
+              ยังโหลดเรื่องราวไม่ได้
+            </h2>
+            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-rose-800">
+              ระบบเชื่อมต่อข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง โดยตัวกรองที่เลือกจะยังอยู่
+            </p>
+            <a
+              href={buildPublicStoryHref(query, { page: query.page })}
+              className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-rose-900 px-5 text-sm font-bold text-white hover:bg-rose-800"
+            >
+              ลองโหลดอีกครั้ง
+            </a>
+          </section>
+        ) : storyPage.items.length === 0 ? (
+          <section className="border-y border-slate-200 py-20 text-center">
+            <PenNib
+              size={42}
+              weight="light"
+              className="mx-auto text-slate-400"
+              aria-hidden="true"
+            />
+            <h2 className="mt-5 text-2xl font-black text-slate-900">
+              {hasFilters
+                ? "ยังไม่พบเรื่องราวตามตัวกรองนี้"
+                : "ยังไม่มีเรื่องราวที่เผยแพร่"}
+            </h2>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-700">
+              {hasFilters
+                ? "ลองเปลี่ยนคำค้น จังหวัด หัวข้อ หรือประเภทผู้เขียน"
+                : "คุณสามารถแบ่งปันประสบการณ์ เพื่อส่งให้ทีมงานตรวจสอบก่อนเผยแพร่"}
             </p>
             <Link
-              href="/stories/share"
-              className="rounded-full bg-ink px-6 py-3 text-sm font-bold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0"
+              href={hasFilters ? "/stories" : "/stories/share"}
+              className="mt-7 inline-flex min-h-11 items-center rounded-lg bg-[#075E54] px-5 text-sm font-bold text-white hover:bg-[#064C44]"
             >
-              เขียนเรื่องราวของคุณ
+              {hasFilters ? "ล้างตัวกรอง" : "เขียนเรื่องราว"}
             </Link>
-          </div>
+          </section>
         ) : (
           <>
-            {featuredStory && (
-              <section className="mb-24">
-                <Link href={`/stories/${featuredStory.id}`} className="group block">
-                  <article className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
-                    <div className="lg:col-span-7 order-2 lg:order-1 mt-6 lg:mt-0">
-                      <div className="flex flex-wrap items-center gap-3 mb-4">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-ink/50">
-                          {featuredStory.category}
-                        </span>
-                        <span className="w-1 h-1 rounded-full bg-ink/20"></span>
-                        <span className="text-xs font-bold text-ink uppercase tracking-wide">
-                          {featuredStory.authorName}
-                        </span>
-                        {authorType === 'mine' && featuredStory.status && (
-                          <>
-                            <span className="w-1 h-1 rounded-full bg-ink/20"></span>
-                            {featuredStory.status === 'published' ? (
-                              <span className="bg-leaf/10 text-leaf border border-leaf/20 px-2 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase">อนุมัติแล้ว</span>
-                            ) : featuredStory.status === 'rejected' ? (
-                              <span className="bg-coral/10 text-coral border border-coral/20 px-2 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase">ไม่อนุมัติ</span>
-                            ) : (
-                              <span className="bg-gold/10 text-amber-600 border border-gold/20 px-2 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase">รอตรวจสอบ</span>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      <h2 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] text-ink group-hover:text-ink/70 transition-colors duration-300 text-balance">
-                        {featuredStory.title}
-                      </h2>
-                      <p className="mt-6 md:mt-8 text-lg md:text-xl text-ink/70 leading-relaxed font-medium text-pretty">
-                        {featuredStory.excerpt}
-                      </p>
-                      <div className="mt-8 flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-ink">
-                        <span>อ่านเรื่องราว</span>
-                        <ArrowRight
-                          size={16}
-                          className="transition-transform duration-300 ease-out group-hover:translate-x-2"
-                        />
-                      </div>
-                    </div>
-                    <div className="lg:col-span-5 order-1 lg:order-2">
-                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100">
-                        {featuredStory.imageUrl ? (
-                          <Image
-                            src={featuredStory.imageUrl}
-                            alt={featuredStory.title}
-                            fill
-                            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-slate-100" />
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                </Link>
+            {featuredStory ? (
+              <section className="pb-14" aria-label="เรื่องแนะนำล่าสุด">
+                <PublicStoryCard story={featuredStory} featured />
               </section>
-            )}
-
-            {remainingStories.length > 0 && (
-              <section className="border-t border-ink/10 pt-16">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
-                  {remainingStories.map((story) => (
-                    <Link
-                      href={`/stories/${story.id}`}
-                      key={story.id}
-                      className="group flex flex-col h-full"
-                    >
-                      <article className="flex flex-col h-full">
-                        <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 mb-6">
-                          {story.imageUrl ? (
-                            <Image
-                              src={story.imageUrl}
-                              alt={story.title}
-                              fill
-                              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="absolute inset-0 bg-slate-100" />
-                          )}
-                        </div>
-                        <div className="flex flex-col flex-1">
-                          <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-ink/50">
-                              {story.category}
-                            </span>
-                            <span className="text-ink/20">•</span>
-                            <span className="text-[10px] font-bold text-ink uppercase tracking-wide">
-                              {story.authorName}
-                            </span>
-                            {authorType === 'mine' && story.status && (
-                              <>
-                                <span className="text-ink/20">•</span>
-                                {story.status === 'published' ? (
-                                  <span className="bg-leaf/10 text-leaf border border-leaf/20 px-2 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase">อนุมัติแล้ว</span>
-                                ) : story.status === 'rejected' ? (
-                                  <span className="bg-coral/10 text-coral border border-coral/20 px-2 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase">ไม่อนุมัติ</span>
-                                ) : (
-                                  <span className="bg-gold/10 text-amber-600 border border-gold/20 px-2 py-0.5 rounded text-[9px] font-bold tracking-widest uppercase">รอตรวจสอบ</span>
-                                )}
-                              </>
-                            )}
-                          </div>
-                          <h3 className="text-2xl font-black leading-snug text-ink mb-3 group-hover:text-ink/70 transition-colors text-balance">
-                            {story.title}
-                          </h3>
-                          <p className="text-sm text-ink/70 leading-relaxed line-clamp-3 mb-6 text-pretty">
-                            {story.excerpt}
-                          </p>
-                          <div className="mt-auto flex items-center gap-1.5 text-[11px] font-bold text-ink/50 uppercase tracking-widest">
-                            <Clock size={14} weight="bold" />
-                            <span>{story.date}</span>
-                          </div>
-                        </div>
-                      </article>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Load More Action */}
-                {hasMore && (
-                  <div className="mt-20 flex justify-center border-t border-ink/10 pt-16">
-                    <Link
-                      href={`/stories?limit=${limit + 12}${authorType ? `&category=${authorType}` : ''}`}
-                      className="group inline-flex items-center gap-2 rounded-full border border-ink/20 bg-transparent px-8 py-4 text-sm font-bold uppercase tracking-widest text-ink transition-all hover:border-ink hover:bg-ink hover:text-white"
-                      scroll={false}
-                    >
-                      <span>โหลดเรื่องราวเพิ่มเติม</span>
-                      <ArrowRight size={16} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
-                    </Link>
-                  </div>
-                )}
+            ) : null}
+            {stories.length > 0 ? (
+              <section
+                className="grid gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3"
+                aria-label="รายการเรื่องราว"
+              >
+                {stories.map((story) => (
+                  <PublicStoryCard key={story.id} story={story} />
+                ))}
               </section>
-            )}
+            ) : null}
           </>
         )}
+
+        {storyPage.totalPages > 1 ? (
+          <nav
+            aria-label="เปลี่ยนหน้ารายการเรื่องราว"
+            className="mt-14 flex items-center justify-between border-t border-slate-200 pt-7"
+          >
+            {storyPage.page > 1 ? (
+              <Link
+                href={buildPublicStoryHref(query, {
+                  page: storyPage.page - 1,
+                })}
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-bold text-slate-800 hover:bg-slate-50"
+              >
+                <ArrowLeft size={17} weight="bold" aria-hidden="true" />
+                หน้าก่อน
+              </Link>
+            ) : (
+              <span />
+            )}
+            {storyPage.page < storyPage.totalPages ? (
+              <Link
+                href={buildPublicStoryHref(query, {
+                  page: storyPage.page + 1,
+                })}
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white hover:bg-slate-800"
+              >
+                หน้าถัดไป
+                <ArrowRight size={17} weight="bold" aria-hidden="true" />
+              </Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        ) : null}
       </main>
       <SiteFooter />
     </div>

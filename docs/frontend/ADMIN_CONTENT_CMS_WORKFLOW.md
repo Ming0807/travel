@@ -103,6 +103,8 @@ Implemented baseline:
 - Story status changes use the domain workflow actions rather than a direct status dropdown. Server-side readiness and permission checks remain authoritative.
 - The editor sidebar derives a Thai publish-readiness checklist and document outline from saved structured content, and shows revision history only when the current admin has `story.revision_read`.
 - Inline story images are selected from Media Library, require accessible alt text, and store the media asset UUID plus normalized storage path instead of an external URL. Canonical document version 2 supports this managed reference while version 1 numeric media references remain readable during migration.
+- The public Story Hub uses URL-backed server filters and 12-item pagination for search, province, topic, and author type. Story detail prefers canonical structured content, generates a table of contents, preserves image dimensions and captions, and falls back to the legacy sanitized HTML path only when structured content is unavailable.
+- Public Story metadata includes canonical, Open Graph, Twitter, and Article JSON-LD fields. Legacy external cover URLs are intentionally excluded from public DTOs so editors must replace stock or unmanaged images through Media Library.
 - Main CMS image surfaces use saved media paths or missing-image states instead of Unsplash fallback images.
 - Public attraction detail sections now use a shared, content-aware section model so public navigation and the attraction visual editor use the same order and localized labels.
 - Public attraction mobile section navigation uses a jump selector instead of rows that look expandable but only scroll.

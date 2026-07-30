@@ -166,13 +166,13 @@ New UI areas:
 - Modify: `lib/repositories/public-content.repository.ts`
 - Create public DTO and component tests.
 
-- [ ] Write failing tests for pagination, filters, metadata, TOC, UGC safety, and missing media.
-- [ ] Build a searchable story hub with topic, province, and content-type filters.
-- [ ] Render structured content with stable image dimensions and accessible captions.
-- [ ] Add Thai-first breadcrumbs, author/content-type labels, read time, and share controls.
-- [ ] Add honest empty and not-found states.
-- [ ] Verify metadata, canonical URLs, Open Graph image, and structured data.
-- [ ] Commit: `feat: redesign public travel stories`
+- [x] Write failing tests for pagination, filters, metadata, TOC, UGC safety, and missing media.
+- [x] Build a searchable story hub with topic, province, and content-type filters.
+- [x] Render structured content with stable image dimensions and accessible captions.
+- [x] Add Thai-first breadcrumbs, author/content-type labels, read time, and share controls.
+- [x] Add honest empty, load-error, and not-found states.
+- [x] Verify metadata, canonical URLs, Open Graph image, structured data, and desktop/mobile smoke coverage.
+- [x] Commit: `feat: redesign public travel stories`
 
 ## Task 8: Add Explainable Story Recommendations
 

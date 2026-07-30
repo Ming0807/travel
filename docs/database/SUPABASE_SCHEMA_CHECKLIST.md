@@ -47,6 +47,9 @@ Before any production deployment or major testing cycle, verify that the followi
 - [x] **Atomic editorial RPC**: `apply_story_editorial_change(...)` is installed with execute permission limited to `service_role` by the migration.
 - [ ] **Atomic save behavior**: Confirm one call updates the story and topics, creates one immutable revision, and records a workflow event in the same transaction.
 - [ ] **Migration history**: If either file was run in SQL Editor, reconcile `supabase_migrations.schema_migrations` through the controlled repair process described below.
+- [ ] **Migration `20260730000000_harden_public_story_search.sql`**: Apply after the Story editorial migrations.
+- [ ] **Story search indexes**: Confirm `idx_travel_stories_public_feed_stable`, `idx_travel_stories_public_title_trgm`, and `idx_travel_stories_public_excerpt_trgm` exist.
+- [ ] **Canonical public policy**: Confirm public Story SELECT requires both `status = 'published'` and `is_published = true`.
 
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:
