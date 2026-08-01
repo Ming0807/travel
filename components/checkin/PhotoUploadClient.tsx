@@ -8,6 +8,7 @@ import {
   validateVisitPhotoSource,
   type PreparedVisitPhoto,
 } from "@/lib/media/client-photo-compression";
+import { CameraCaptureDialog } from "@/components/checkin/CameraCaptureDialog";
 import { Camera, Spinner, Image as ImageIcon, Trash, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 
 export function PhotoUploadClient({ visitId }: { visitId: string }) {
@@ -17,6 +18,7 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
   const [preparedPhoto, setPreparedPhoto] = useState<PreparedVisitPhoto | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<"idle" | "preparing" | "uploading">("idle");
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const isBusy = stage !== "idle";
@@ -27,23 +29,39 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
     };
   }, [previewUrl]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const validationError = validateVisitPhotoSource(file);
-      if (validationError) {
-        setError(validationError);
-        e.currentTarget.value = "";
-        return;
-      }
-
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setError(null);
-      setPreparedPhoto(null);
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+  const selectFile = (file: File) => {
+    const validationError = validateVisitPhotoSource(file);
+    if (validationError) {
+      setError(validationError);
+      return false;
     }
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setError(null);
+    setPreparedPhoto(null);
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    return true;
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && !selectFile(file)) {
+      event.currentTarget.value = "";
+    }
+  };
+
+  const openCamera = () => {
+    const supportsBrowserCamera =
+      window.isSecureContext !== false &&
+      typeof navigator.mediaDevices?.getUserMedia === "function";
+
+    if (supportsBrowserCamera) {
+      setIsCameraOpen(true);
+      return;
+    }
+
+    cameraInputRef.current?.click();
   };
 
   const handleRemove = () => {
@@ -152,7 +170,7 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  cameraInputRef.current?.click();
+                  openCamera();
                 }}
                 className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white"
               >
@@ -169,6 +187,9 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
                 <ImageIcon size={18} /> เลือกจากคลังรูปหรือไฟล์
               </button>
             </div>
+            <p className="mt-3 text-center text-xs text-ink/55">
+              เมื่อกดถ่ายรูป ระบบจะขอสิทธิ์ใช้กล้องหากคุณยังไม่เคยอนุญาต
+            </p>
           </>
         )}
         <input
@@ -184,7 +205,7 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
           ref={cameraInputRef}
           type="file"
           aria-label="ถ่ายรูปด้วยกล้อง"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+          accept="image/*"
           capture="environment"
           onChange={handleFileChange}
           className="hidden"
@@ -263,6 +284,16 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
           ข้ามขั้นตอนนี้ (ใบประกาศไม่มีรูป)
         </a>
       </div>
+
+      {isCameraOpen && (
+        <CameraCaptureDialog
+          onCapture={(file) => {
+            selectFile(file);
+          }}
+          onClose={() => setIsCameraOpen(false)}
+          onNativeFallback={() => cameraInputRef.current?.click()}
+        />
+      )}
     </form>
   );
 }

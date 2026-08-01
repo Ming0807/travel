@@ -993,3 +993,30 @@ This module is done when:
 [ ] Error handling is friendly.
 [ ] Documentation and tests are updated.
 ```
+
+---
+
+## 40. Mobile Camera and Gallery UX
+
+The visit photo step exposes two separate actions:
+
+```text
+Take photo
+    -> request browser camera permission after the user taps
+    -> open the rear camera by default
+    -> preview the captured image
+    -> retake or confirm before upload
+
+Choose from gallery or files
+    -> open the operating-system file picker
+    -> never request camera permission
+```
+
+Implementation rules:
+
+- Camera access uses `navigator.mediaDevices.getUserMedia` only after an explicit user action.
+- The camera stream is stopped when the dialog closes, the photo is confirmed, or the component unmounts.
+- `Permissions-Policy` allows camera access only for the same origin.
+- Browsers that do not support embedded camera capture fall back to a native `input` with `capture="environment"` and `accept="image/*"`.
+- Permission denial, missing hardware, and a busy camera show Thai recovery messages with a native-camera fallback.
+- Selecting a file remains independent from camera permission and supports JPEG, PNG, WebP, HEIC, and HEIF sources before client-side normalization.

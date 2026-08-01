@@ -28,6 +28,7 @@ describe("PhotoUploadClient", () => {
       createObjectURL: vi.fn(() => "blob:preview"),
       revokeObjectURL: vi.fn(),
     });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
   });
 
   it("offers separate mobile controls for the camera and photo library or files", () => {
@@ -47,10 +48,102 @@ describe("PhotoUploadClient", () => {
 
     const cameraInput = screen.getByLabelText("ถ่ายรูปด้วยกล้อง");
     expect(cameraInput).toHaveAttribute("capture", "environment");
-    expect(cameraInput).toHaveAttribute(
-      "accept",
-      "image/jpeg,image/png,image/webp,image/heic,image/heif"
+    expect(cameraInput).toHaveAttribute("accept", "image/*");
+  });
+
+  it("requests camera permission only after the tourist chooses to take a photo", async () => {
+    const stop = vi.fn();
+    const getUserMedia = vi.fn().mockResolvedValue({
+      getTracks: () => [{ stop }],
+    });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia },
+    });
+    Object.defineProperty(window, "isSecureContext", {
+      configurable: true,
+      value: true,
+    });
+
+    render(<PhotoUploadClient visitId="550e8400-e29b-41d4-a716-446655440000" />);
+
+    expect(getUserMedia).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "ถ่ายรูป" }));
+
+    expect(await screen.findByRole("dialog", { name: "ใช้กล้องถ่ายรูป" })).toBeInTheDocument();
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalledWith({
+      audio: false,
+      video: { facingMode: { ideal: "environment" } },
+    }));
+    expect(screen.getByText(/ระบบจะขอสิทธิ์ใช้กล้องเมื่อคุณกดปุ่มนี้เท่านั้น/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "ปิดกล้อง" }));
+    expect(stop).toHaveBeenCalledOnce();
+  });
+
+  it("offers the native camera fallback when browser camera permission is denied", async () => {
+    const permissionError = new DOMException("denied", "NotAllowedError");
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockRejectedValue(permissionError) },
+    });
+    Object.defineProperty(window, "isSecureContext", {
+      configurable: true,
+      value: true,
+    });
+
+    render(<PhotoUploadClient visitId="550e8400-e29b-41d4-a716-446655440000" />);
+    const nativeCameraInput = screen.getByLabelText("ถ่ายรูปด้วยกล้อง");
+    const nativeClick = vi.spyOn(nativeCameraInput, "click");
+
+    await userEvent.click(screen.getByRole("button", { name: "ถ่ายรูป" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "ยังไม่ได้อนุญาตให้ใช้กล้อง",
     );
+    await userEvent.click(screen.getByRole("button", { name: "เปิดกล้องของอุปกรณ์" }));
+    expect(nativeClick).toHaveBeenCalledOnce();
+  });
+
+  it("lets the tourist capture and confirm a photo before uploading", async () => {
+    const stop = vi.fn();
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop }],
+        }),
+      },
+    });
+    Object.defineProperty(window, "isSecureContext", {
+      configurable: true,
+      value: true,
+    });
+    const drawImage = vi.fn();
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      drawImage,
+    } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((callback) => {
+      callback(new Blob(["camera-photo"], { type: "image/jpeg" }));
+    });
+
+    const { container } = render(
+      <PhotoUploadClient visitId="550e8400-e29b-41d4-a716-446655440000" />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "ถ่ายรูป" }));
+    await screen.findByRole("dialog", { name: "ใช้กล้องถ่ายรูป" });
+
+    const video = container.querySelector("video");
+    expect(video).not.toBeNull();
+    Object.defineProperty(video, "videoWidth", { configurable: true, value: 1280 });
+    Object.defineProperty(video, "videoHeight", { configurable: true, value: 960 });
+    await userEvent.click(screen.getByRole("button", { name: "ถ่ายภาพ" }));
+
+    expect(drawImage).toHaveBeenCalledOnce();
+    await userEvent.click(screen.getByRole("button", { name: "ใช้ภาพนี้" }));
+    expect(screen.queryByRole("dialog", { name: "ใช้กล้องถ่ายรูป" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "อัปโหลดและไปต่อ" })).toBeEnabled();
+    expect(stop).toHaveBeenCalled();
   });
 
   it("does not send the original file when client compression fails", async () => {
