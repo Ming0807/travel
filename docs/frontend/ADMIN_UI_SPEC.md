@@ -1601,3 +1601,23 @@ Shared UI changes require unit coverage for navigation, account actions, focus
 management, and the visual contract, plus screenshots at 1440x900, 768x1024,
 and 390x844. Thai body copy must meet WCAG AA contrast and important chart or
 table information must not depend on hover.
+
+---
+
+## 44. Operational Command Center
+
+`/admin` is the daily work surface, while `/admin/dashboard` remains the analytical decision surface.
+The command center must not repeat analytical charts. Its reading order is:
+
+1. Work requiring action now
+2. Today operations
+3. Common creation actions
+4. Content readiness
+5. Recent permission-scoped activity
+6. Compact module directory
+
+Every metric and destination is permission-aware. Data reads use bounded count queries rather than
+loading raw lists. A failed metric shows a partial-data notice without blocking the other modules.
+Priority ordering is deterministic: unusable QR codes and incomplete traveler journeys precede
+editorial review, messages, and metadata cleanup. Mobile uses the same order in a single column with
+no horizontal overflow.

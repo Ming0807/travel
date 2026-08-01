@@ -120,11 +120,11 @@
 
 **Acceptance criteria**
 
-- [ ] No analytical chart duplication from `/admin/dashboard`.
-- [ ] Counts are permission-aware and have useful empty/error states.
-- [ ] Priority ordering is deterministic and tested.
-- [ ] Every queue item has a real destination and action.
-- [ ] Keyboard order and mobile layout are verified.
+- [x] No analytical chart duplication from `/admin/dashboard`.
+- [x] Counts are permission-aware and have useful empty/error states.
+- [x] Priority ordering is deterministic and tested.
+- [x] Every queue item has a real destination and action.
+- [x] Keyboard order and mobile layout are verified.
 
 ### Task 5: Analytics Query Contract
 
