@@ -87,18 +87,28 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   }
 
   return (
-    <section aria-labelledby="dashboard-filters-heading" className="rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#FFF0EA] text-[#B94727]"><FunnelSimple aria-hidden="true" size={17} weight="bold" /></span>
-          <h2 id="dashboard-filters-heading" className="text-sm font-bold text-slate-800">ตัวกรองข้อมูล</h2>
-        </div>
-        {activeFilters.length > 0 ? (
-          <Link className="text-xs font-semibold text-[#B94727] underline-offset-4 hover:underline" href={pathname}>ล้างตัวกรองทั้งหมด</Link>
-        ) : null}
-      </div>
+    <details className="group rounded-md border border-slate-200 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.05)]">
+      <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center gap-3 px-4 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#FFF0EA] text-[#B94727]"><FunnelSimple aria-hidden="true" size={17} weight="bold" /></span>
+        <span className="min-w-0">
+          <span id="dashboard-filters-heading" className="block text-sm font-bold text-slate-900">ตัวกรองข้อมูล</span>
+          <span className="block text-xs text-slate-500">{filters.dateFrom} ถึง {filters.dateTo}{activeFilters.length > 0 ? ` · ใช้อยู่ ${activeFilters.length} ตัวกรอง` : ""}</span>
+        </span>
+        <span className="ml-auto inline-flex min-h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 group-open:border-[#E8B8A8] group-open:text-[#B94727]">
+          ปรับตัวกรอง
+          <CaretDown aria-hidden="true" className="transition-transform group-open:rotate-180" size={14} weight="bold" />
+        </span>
+      </summary>
 
-      <form action={pathname} className="space-y-3">
+      <div className="border-t border-slate-200 p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-xs leading-5 text-slate-500">ตัวกรองจะมีผลกับทุกกราฟและการส่งออกข้อมูลในหน้านี้</p>
+          {activeFilters.length > 0 ? (
+            <Link className="shrink-0 text-xs font-semibold text-[#B94727] underline-offset-4 hover:underline" href={pathname}>ล้างทั้งหมด</Link>
+          ) : null}
+        </div>
+
+        <form action={pathname} className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <label className="block">
             <span className="text-xs font-semibold text-slate-600">ตั้งแต่วันที่</span>
@@ -127,18 +137,19 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
             <FilterSelect label="วัตถุประสงค์การเดินทาง" name="travel_purpose_id" options={options.travelPurposes} value={filters.travelPurposeId} />
           </div>
         </details>
-      </form>
+        </form>
 
-      {activeFilters.length > 0 ? (
-        <div aria-label="ตัวกรองที่ใช้อยู่" className="mt-3 flex flex-wrap gap-2">
-          {activeFilters.map(([key, label, value]) => (
-            <Link key={key} href={removeHref(key)} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-[#E8B8A8] bg-[#FFF7F3] px-3 text-xs font-semibold text-[#8F351F] hover:border-[#B94727]" aria-label={`ลบตัวกรอง ${label} ${value}`}>
-              {label}: {value}
-              <X aria-hidden="true" size={12} weight="bold" />
-            </Link>
-          ))}
-        </div>
-      ) : null}
-    </section>
+        {activeFilters.length > 0 ? (
+          <div aria-label="ตัวกรองที่ใช้อยู่" className="mt-3 flex flex-wrap gap-2">
+            {activeFilters.map(([key, label, value]) => (
+              <Link key={key} href={removeHref(key)} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-[#E8B8A8] bg-[#FFF7F3] px-3 text-xs font-semibold text-[#8F351F] hover:border-[#B94727]" aria-label={`ลบตัวกรอง ${label} ${value}`}>
+                {label}: {value}
+                <X aria-hidden="true" size={12} weight="bold" />
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </details>
   );
 }

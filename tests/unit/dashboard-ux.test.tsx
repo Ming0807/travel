@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { localizeDashboardKpi } from "@/components/dashboard/dashboard-localization";
@@ -9,6 +10,7 @@ import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/dashboard/expenses",
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 describe("Dashboard UX ภาษาไทย", () => {
@@ -16,6 +18,31 @@ describe("Dashboard UX ภาษาไทย", () => {
     render(<DashboardTabs />);
     expect(screen.getByRole("link", { name: "ค่าใช้จ่าย" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("navigation", { name: "หมวดการวิเคราะห์" })).toBeInTheDocument();
+  });
+
+  it("ยุบตัวกรองหลักไว้ในแถบกะทัดรัดและเปิดแก้ไขได้", () => {
+    render(
+      <DashboardFilters
+        filters={{ dateFrom: "2026-07-01", dateTo: "2026-07-31" }}
+        options={{
+          provinces: [{ value: "1", label: "ยะลา" }],
+          districts: [],
+          attractions: [],
+          attractionTypes: [],
+          originCountries: [],
+          originProvinces: [],
+          ageGroups: [],
+          transportModes: [],
+          travelPurposes: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("ปรับตัวกรอง")).toBeInTheDocument();
+    expect(screen.queryByLabelText("ตั้งแต่วันที่")).not.toBeVisible();
+    fireEvent.click(screen.getByText("ปรับตัวกรอง"));
+    expect(screen.getByLabelText("ตั้งแต่วันที่")).toBeVisible();
+    expect(screen.getByRole("button", { name: "นำตัวกรองไปใช้" })).toBeVisible();
   });
 
   it("แสดงกราฟแท่งพร้อมตารางข้อมูลที่เข้าถึงได้", () => {

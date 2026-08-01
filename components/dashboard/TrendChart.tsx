@@ -66,7 +66,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
 
   if (points.length === 0) {
     return (
-      <section className="rounded-md border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+      <section className="rounded-md border border-slate-200 bg-white p-5 shadow-[0_4px_8px_rgba(15,23,42,0.05)]">
         <h2 className="text-base font-bold text-slate-900">แนวโน้มการเข้าชม</h2>
         <p className="mt-1 text-sm text-slate-500">การเข้าชมที่บันทึกตามช่วงเวลา</p>
         <div className="mt-4">
@@ -100,7 +100,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
   const linePath = areaPath;
 
   return (
-    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-bold text-slate-900">แนวโน้มการเข้าชม</h2>

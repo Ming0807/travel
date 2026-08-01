@@ -115,14 +115,11 @@ Recommended structure:
 
 ```text
 Page Header
-Global Filter Bar
-Data Freshness Note
-Executive KPI Grid
-Visit Trend Section
-Province Comparison Section
-Top Attractions Section
-Engagement Funnel Summary
-Satisfaction and Spending Summary
+Compact Data Context Strip
+Collapsible Global Filter Bar
+Four Executive KPI Cards
+Visit Trend and Engagement Funnel
+Top Attractions and Experience Quality
 Planning Insight Cards
 Export Actions
 ```
@@ -131,9 +128,12 @@ Export Actions
 
 - Thai-first operational interface with near-black text, white surfaces, and brand orange for active states and priority actions.
 - Panels use a small `4-6px` corner radius and a restrained translucent shadow; no decorative gradients or oversized marketing composition.
-- The data-context strip shows date range, source, freshness, and analytical sample before any KPI.
-- Filters are URL-driven and presented as a compact analysis toolbar. Core filters stay visible; secondary dimensions remain expandable.
-- KPI cards use one metric per card. A visit sparkline must never be presented as the trend of tourist profiles or certificates.
+- The data-context strip shows date range, source, freshness, and analytical sample before any KPI. Method notes remain available in a disclosure instead of occupying the first viewport.
+- Filters are URL-driven and collapsed by default. Their summary always exposes the selected date range and active-filter count.
+- The executive band contains exactly four KPIs: tourist profiles, visits, generated certificates, and survey completion. Detailed metrics stay in their dedicated tabs.
+- A visit sparkline must never be presented as the trend of tourist profiles or certificates.
+- The main cockpit pairs visit trend with QR-to-certificate-to-survey conversion, then pairs top attractions with satisfaction, revisit intention, and recommendation intention.
+- Province comparison is omitted from the executive view while Yala is the only active rollout province; a one-bar comparison would imply analytical value that is not present. Province analysis remains available when multi-province data is activated.
 - Charts retain a readable table view so reviewers can validate values and assistive technology can access the same data.
 - Desktop layouts prioritize comparison; mobile layouts stack without horizontal page overflow while tabs remain horizontally scrollable.
 

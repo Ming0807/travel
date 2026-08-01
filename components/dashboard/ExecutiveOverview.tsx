@@ -1,8 +1,9 @@
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
+import { ExecutiveExperienceSummary } from "@/components/dashboard/ExecutiveExperienceSummary";
+import { ExecutiveFunnelSummary } from "@/components/dashboard/ExecutiveFunnelSummary";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { NoDataState } from "@/components/dashboard/NoDataState";
-import { StackedDistributionCard } from "@/components/dashboard/StackedDistributionCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import type { DashboardViewModel } from "@/types/dashboard";
 
@@ -11,7 +12,6 @@ const PRIMARY_KPIS = [
   "total_visits",
   "certificates_generated",
   "survey_completion_rate",
-  "average_satisfaction",
 ];
 
 export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
@@ -23,16 +23,16 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
   }));
 
   return (
-    <section className="space-y-5" aria-labelledby="executive-overview-heading">
+    <section className="space-y-4" aria-labelledby="executive-overview-heading">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id="executive-overview-heading" className="text-lg font-bold text-slate-900">ตัวชี้วัดสำคัญ</h2>
-          <p className="mt-1 text-sm text-slate-500">ภาพรวมสำหรับติดตามการมีส่วนร่วม คุณภาพข้อมูล และประสบการณ์นักท่องเที่ยว</p>
+          <h2 id="executive-overview-heading" className="text-lg font-bold text-slate-900">สรุปสำหรับผู้บริหาร</h2>
+          <p className="mt-1 text-sm text-slate-500">กิจกรรมล่าสุด ประสิทธิภาพการเก็บข้อมูล และคุณภาพประสบการณ์ในมุมมองเดียว</p>
         </div>
         <ExportCsvButton />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {primaryMetrics.map((metric) => (
           <KpiCard key={metric.key} metric={metric} sparklineData={metric.key === "total_visits" ? data.executive.visitTrend : undefined} />
         ))}
@@ -47,17 +47,14 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
         </details>
       ) : null}
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-3">
-        <div className="min-w-0 xl:col-span-2">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-8">
           <TrendChart points={data.executive.visitTrend} />
         </div>
-        <BarChartCard
-          data={data.executive.visitsByProvince}
-          definition="จำนวนรายการเข้าชม แยกตามจังหวัดของสถานที่ท่องเที่ยว ไม่ใช่จำนวนผู้เดินทางเข้าจังหวัดอย่างเป็นทางการ"
-          emptyDescription="ยังไม่มีรายการเข้าชมในจังหวัดสำหรับช่วงและตัวกรองที่เลือก"
-          title="การเข้าชมแยกตามจังหวัด"
-        />
-        <div className="min-w-0 xl:col-span-2">
+        <div className="min-w-0 xl:col-span-4">
+          <ExecutiveFunnelSummary stages={data.funnel.stages} />
+        </div>
+        <div className="min-w-0 xl:col-span-8">
           <BarChartCard
             data={topAttractions}
             definition="จัดอันดับสถานที่ตามจำนวนรายการเข้าชมที่บันทึกสำเร็จในระบบ"
@@ -65,12 +62,9 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
             title="สถานที่ที่มีการเข้าชมสูงสุด"
           />
         </div>
-        <StackedDistributionCard
-          data={data.satisfaction.distribution}
-          definition="การกระจายคะแนนความพึงพอใจโดยรวมจากคำตอบแบบสำรวจที่มีข้อมูล"
-          emptyDescription="ยังไม่มีคำตอบความพึงพอใจสำหรับช่วงและตัวกรองที่เลือก"
-          title="การกระจายความพึงพอใจ"
-        />
+        <div className="min-w-0 xl:col-span-4">
+          <ExecutiveExperienceSummary satisfaction={data.satisfaction} />
+        </div>
       </div>
     </section>
   );

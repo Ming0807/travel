@@ -45,7 +45,7 @@ export function KpiCard({
   const noData = metric.value === "No data" || metric.value === "N/A" || metric.value === "ยังไม่มีข้อมูล";
 
   return (
-    <article data-dashboard-kpi={metric.key} className={`relative min-w-0 overflow-hidden rounded-md border bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] ${noData ? "border-dashed border-slate-300" : "border-slate-200"}`}>
+    <article data-dashboard-kpi={metric.key} className={`relative min-w-0 overflow-hidden rounded-md border bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] ${noData ? "border-dashed border-slate-300" : "border-slate-200"}`}>
       {!noData ? <span aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-[#B94727]" /> : null}
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">

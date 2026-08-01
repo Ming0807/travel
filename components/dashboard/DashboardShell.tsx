@@ -25,12 +25,12 @@ export function DashboardShell({ data, children }: { data: DashboardViewModel; c
 
   return (
     <AdminShell admin={{ displayName: data.viewer.displayName, email: data.viewer.email }}>
-      <div className="min-w-0 space-y-5">
-        <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="min-w-0 space-y-4">
+        <header className="flex flex-col gap-3 border-b border-slate-200 pb-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-bold text-[#B94727]">ศูนย์วิเคราะห์ข้อมูล</p>
             <h1 className="mt-1 text-2xl font-black text-[#171717]">ภาพรวมการท่องเที่ยว</h1>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">
+            <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-600">
               ติดตามพฤติกรรม การเข้าชม และคุณภาพประสบการณ์ เพื่อวางแผนพื้นที่นำร่องจังหวัดยะลา
             </p>
           </div>
@@ -40,36 +40,37 @@ export function DashboardShell({ data, children }: { data: DashboardViewModel; c
           </div>
         </header>
 
-        <section aria-label="บริบทของข้อมูล" className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-          <dl className="grid sm:grid-cols-2 xl:grid-cols-4">
-            <div className="border-b border-slate-200 p-3 sm:border-r xl:border-b-0">
+        <section aria-label="บริบทของข้อมูล" className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.05)] xl:flex">
+          <dl className="grid min-w-0 flex-1 grid-cols-2 xl:grid-cols-4">
+            <div className="border-b border-r border-slate-200 px-3 py-2.5 xl:border-b-0">
               <dt className="flex items-center gap-2 text-xs font-semibold text-slate-500"><CalendarBlank aria-hidden="true" size={16} />ช่วงข้อมูล</dt>
-              <dd className="mt-1 text-sm font-bold text-slate-900">{formatDate(data.filters.dateFrom)} - {formatDate(data.filters.dateTo)}</dd>
+              <dd className="mt-0.5 text-sm font-bold text-slate-900">{formatDate(data.filters.dateFrom)} - {formatDate(data.filters.dateTo)}</dd>
             </div>
-            <div className="border-b border-slate-200 p-3 xl:border-b-0 xl:border-r">
+            <div className="border-b border-slate-200 px-3 py-2.5 xl:border-b-0 xl:border-r">
               <dt className="flex items-center gap-2 text-xs font-semibold text-slate-500"><Database aria-hidden="true" size={16} />แหล่งข้อมูล</dt>
-              <dd className="mt-1 text-sm font-bold text-slate-900">{sourceLabel}</dd>
+              <dd className="mt-0.5 text-sm font-bold text-slate-900">{sourceLabel}</dd>
             </div>
-            <div className="border-b border-slate-200 p-3 sm:border-r xl:border-b-0">
+            <div className="border-b border-r border-slate-200 px-3 py-2.5 xl:border-b-0">
               <dt className="flex items-center gap-2 text-xs font-semibold text-slate-500"><Clock aria-hidden="true" size={16} />อัปเดตล่าสุด</dt>
-              <dd className="mt-1 text-sm font-bold text-slate-900">{new Date(updatedAt).toLocaleString("th-TH")}</dd>
+              <dd className="mt-0.5 text-sm font-bold text-slate-900">{new Date(updatedAt).toLocaleString("th-TH")}</dd>
             </div>
-            <div className="p-3">
+            <div className="px-3 py-2.5">
               <dt className="text-xs font-semibold text-slate-500">ฐานข้อมูลที่นำมาวิเคราะห์</dt>
-              <dd className="mt-1 text-sm font-bold tabular-nums text-slate-900">{visitCount !== null && visitCount !== undefined ? `${visitCount.toLocaleString("th-TH")} รายการเข้าชม` : "ยังไม่มีข้อมูล"}</dd>
+              <dd className="mt-0.5 text-sm font-bold tabular-nums text-slate-900">{visitCount !== null && visitCount !== undefined ? `${visitCount.toLocaleString("th-TH")} รายการเข้าชม` : "ยังไม่มีข้อมูล"}</dd>
             </div>
           </dl>
-          <p className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
-            ข้อมูลนี้ไม่ใช่สถิตินักท่องเที่ยวทางการ การสแกน QR เพียงอย่างเดียวยังไม่นับเป็นการเข้าชม และค่าใช้จ่ายเป็นค่าประมาณจากแบบสำรวจ
-          </p>
+          <details className="min-w-44 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 xl:border-l xl:border-t-0">
+            <summary className="flex min-h-9 cursor-pointer items-center font-semibold text-slate-700">วิธีอ่านข้อมูล</summary>
+            <p className="pb-1 leading-5 xl:max-w-64">ข้อมูลนี้ไม่ใช่สถิตินักท่องเที่ยวทางการ การสแกน QR เพียงอย่างเดียวยังไม่นับเป็นการเข้าชม และค่าใช้จ่ายเป็นค่าประมาณจากแบบสำรวจ</p>
+          </details>
         </section>
 
         <DashboardFilters filters={data.filters} options={data.referenceOptions} />
         <DashboardTabs />
+        {children}
         {data.dashboardAlerts.length > 0 ? (
           <DashboardAlertBar alerts={data.dashboardAlerts} filtersSig={filtersSig(data.filters)} />
         ) : null}
-        {children}
       </div>
     </AdminShell>
   );
