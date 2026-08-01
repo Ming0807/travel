@@ -13,15 +13,15 @@ export function AdminSidebar() {
   const visibleGroups = getVisibleNavGroups(navGroups, access.permissions, access.resolved);
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-slate-200/60 bg-slate-50 lg:flex lg:flex-col sticky top-0 h-screen">
-      <div className="flex flex-col h-full px-4 py-6 overflow-hidden">
-        <Link className="flex items-center gap-2 mb-8 px-2 shrink-0" href="/admin">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
+      <div className="flex h-full flex-col overflow-hidden px-3 py-5">
+        <Link className="mb-6 flex shrink-0 items-center gap-3 rounded-[4px] px-2 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E77455]" href="/admin">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[4px] bg-[#202020] text-[#E77455]">
             <MapPin size={20} weight="fill" />
           </div>
-          <span className="text-base font-black text-slate-800">ท่องเที่ยวชายแดนใต้</span>
+          <span className="text-sm font-black leading-5 text-[#202020]">ท่องเที่ยวชายแดนใต้</span>
         </Link>
-        <nav aria-label="Admin navigation" className="flex-1 space-y-6 pb-20 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-track]:bg-transparent" style={{ scrollbarWidth: "thin" }}>
+        <nav aria-label="เมนูผู้ดูแลระบบ" className="flex-1 space-y-4 overflow-y-auto overscroll-contain pb-16">
           {visibleGroups.map((group) => (
             <NavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} />
           ))}
@@ -37,7 +37,7 @@ function NavGroup({ group, pathname }: { group: NavGroupType; pathname: string }
 
   return (
     <details className="group" open={isOpen} onToggle={(e) => setIsOpen((e.target as HTMLDetailsElement).open)}>
-      <summary className="flex cursor-pointer items-center justify-between px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 select-none hover:text-slate-600 transition-colors">
+      <summary className="mb-1.5 flex min-h-8 cursor-pointer select-none items-center justify-between rounded-[4px] px-3 text-xs font-bold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800">
         {group.group}
         <CaretDown size={12} weight="bold" className="transition-transform group-open:-rotate-180" />
       </summary>
@@ -48,10 +48,10 @@ function NavGroup({ group, pathname }: { group: NavGroupType; pathname: string }
 
           return (
             <Link
-              className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+              className={`flex min-h-10 items-center justify-between rounded-[4px] px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#E77455] ${
                 isActive
-                  ? "bg-[#FFEBE5] text-[#F3704C]"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  ? "bg-[#FFF0EA] text-[#B94727]"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#202020]"
               }`}
               href={item.href}
               key={item.href}
@@ -61,7 +61,7 @@ function NavGroup({ group, pathname }: { group: NavGroupType; pathname: string }
                 {item.label}
               </div>
               {item.badge && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F3704C] text-xs font-bold text-white">
+                <span className="flex min-h-5 min-w-5 items-center justify-center rounded-[4px] bg-[#C84F2D] px-1 text-xs font-bold text-white">
                   {item.badge}
                 </span>
               )}

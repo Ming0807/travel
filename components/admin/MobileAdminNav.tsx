@@ -66,7 +66,7 @@ export function MobileAdminNav() {
         <div className="fixed inset-0 z-[70] lg:hidden">
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/55"
             onClick={closeDrawer}
           />
           <div
@@ -76,11 +76,11 @@ export function MobileAdminNav() {
             aria-modal="true"
             aria-label="เมนูผู้ดูแลระบบ"
             onKeyDown={handleFocusTrap}
-            className="relative h-dvh w-[min(18rem,calc(100vw-1.5rem))] overflow-y-auto bg-slate-50 shadow-2xl"
+            className="relative h-dvh w-[min(18rem,calc(100vw-1.5rem))] overflow-y-auto bg-white shadow-[8px_0_24px_rgba(15,23,42,0.18)]"
           >
             <div className="flex min-h-16 items-center gap-2 border-b border-slate-200/60 px-3 py-3">
-              <Link className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1" href="/admin" onClick={closeDrawer}>
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+              <Link className="flex min-w-0 flex-1 items-center gap-2 rounded-[4px] px-2 py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E77455]" href="/admin" onClick={closeDrawer}>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] bg-[#202020] text-[#E77455]">
                   <MapPin aria-hidden="true" size={20} weight="fill" />
                 </span>
                 <span className="truncate text-base font-black tracking-tight text-slate-800">ระบบจัดการท่องเที่ยว</span>
@@ -89,7 +89,7 @@ export function MobileAdminNav() {
                 ref={closeRef}
                 type="button"
                 onClick={closeDrawer}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62]"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E77455]"
                 aria-label="ปิดเมนูผู้ดูแลระบบ"
               >
                 <X aria-hidden="true" size={24} weight="bold" />
@@ -113,7 +113,7 @@ export function MobileAdminNav() {
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
-        className="relative z-10 -ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62] lg:hidden"
+        className="relative z-10 -ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E77455] lg:hidden"
         aria-label="เปิดเมนูผู้ดูแลระบบ"
         aria-expanded={isOpen}
         aria-controls="mobile-admin-drawer"
@@ -131,7 +131,7 @@ function MobileNavGroup({ group, pathname, closeDrawer }: { group: NavGroupType;
 
   return (
     <details className="group" open={isGroupOpen} onToggle={(e) => setIsGroupOpen((e.target as HTMLDetailsElement).open)}>
-      <summary className="flex cursor-pointer items-center justify-between px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 select-none hover:text-slate-600 transition-colors">
+      <summary className="mb-1.5 flex min-h-8 cursor-pointer select-none items-center justify-between rounded-[4px] px-3 text-xs font-bold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800">
         {group.group}
         <CaretDown size={12} weight="bold" className="transition-transform group-open:-rotate-180" />
       </summary>
@@ -145,10 +145,10 @@ function MobileNavGroup({ group, pathname, closeDrawer }: { group: NavGroupType;
               key={item.href}
               href={item.href}
               onClick={closeDrawer}
-              className={`flex items-center justify-between rounded-xl px-3 py-3 text-sm font-semibold transition ${
+              className={`flex min-h-11 items-center justify-between rounded-[4px] px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#E77455] ${
                 isActive
-                  ? "bg-[#FFEBE5] text-[#F3704C]"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  ? "bg-[#FFF0EA] text-[#B94727]"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#202020]"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -156,7 +156,7 @@ function MobileNavGroup({ group, pathname, closeDrawer }: { group: NavGroupType;
                 {item.label}
               </div>
               {item.badge && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#F3704C] text-xs font-bold text-white">
+                <span className="flex min-h-5 min-w-5 items-center justify-center rounded-[4px] bg-[#C84F2D] px-1 text-xs font-bold text-white">
                   {item.badge}
                 </span>
               )}

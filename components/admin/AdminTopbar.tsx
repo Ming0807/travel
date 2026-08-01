@@ -103,7 +103,7 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:px-6 lg:px-8 xl:px-10">
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-4 py-3 md:px-6 lg:px-8">
       <div className="flex min-h-11 items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="lg:hidden">
@@ -123,13 +123,13 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
               setErrorMessage(null);
               setIsOpen((current) => !current);
             }}
-            className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-left shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62] sm:px-3"
+            className="flex min-h-11 items-center gap-2 rounded-[4px] border border-slate-300 bg-white px-2.5 py-1.5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E77455] sm:px-3"
             aria-haspopup="menu"
             aria-expanded={isOpen}
             aria-controls="admin-account-menu"
             aria-label="เปิดเมนูบัญชีผู้ดูแลระบบ"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-50 text-[#0A6B62]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] bg-[#202020] text-white">
               <UserCircle size={30} weight="fill" aria-hidden="true" />
             </span>
             <span className="hidden min-w-0 sm:block">
@@ -150,12 +150,12 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
               role="menu"
               aria-label="เมนูบัญชีผู้ดูแลระบบ"
               onKeyDown={handleMenuKeyDown}
-              className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl"
+              className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-[6px] border border-slate-300 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.12)]"
             >
               <div className="border-b border-slate-100 px-4 py-4">
                 <p className="truncate text-sm font-bold text-slate-900">{currentName}</p>
                 {currentEmail ? <p className="mt-1 truncate text-xs text-slate-500">{currentEmail}</p> : null}
-                <p className="mt-2 text-xs font-medium text-[#0A6B62]">{roleLabel}</p>
+                <p className="mt-2 text-xs font-bold text-[#B94727]">{roleLabel}</p>
               </div>
 
               <div className="p-2">
@@ -163,7 +163,7 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
                   href="/admin/profile"
                   role="menuitem"
                   onClick={() => setIsOpen(false)}
-                  className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0A6B62]"
+                  className="flex min-h-11 items-center gap-3 rounded-[4px] px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E77455]"
                 >
                   <IdentificationCard size={20} aria-hidden="true" />
                   โปรไฟล์ผู้ดูแลระบบ
@@ -174,7 +174,7 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
                   rel="noopener noreferrer"
                   role="menuitem"
                   onClick={() => setIsOpen(false)}
-                  className="flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0A6B62]"
+                  className="flex min-h-11 items-center gap-3 rounded-[4px] px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E77455]"
                 >
                   <ArrowSquareOut size={20} aria-hidden="true" />
                   ไปยังเว็บไซต์หน้าบ้าน
@@ -183,7 +183,7 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
 
               <div className="border-t border-slate-100 p-2">
                 {errorMessage ? (
-                  <p className="mb-2 rounded-md bg-rose-50 px-3 py-2 text-xs leading-5 text-rose-700" role="alert">
+                  <p className="mb-2 rounded-[4px] bg-rose-50 px-3 py-2 text-xs leading-5 text-rose-700" role="alert">
                     {errorMessage}
                   </p>
                 ) : null}
@@ -192,7 +192,7 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
                   role="menuitem"
                   onClick={handleLogout}
                   disabled={isPending}
-                  className="flex min-h-11 w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-600 disabled:cursor-wait disabled:opacity-60"
+                  className="flex min-h-11 w-full items-center gap-3 rounded-[4px] px-3 py-2 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-600 disabled:cursor-wait disabled:opacity-60"
                 >
                   {isPending ? (
                     <SpinnerGap size={20} className="animate-spin" aria-hidden="true" />

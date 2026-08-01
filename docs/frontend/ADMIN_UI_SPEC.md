@@ -1566,3 +1566,38 @@ advanced search
 The admin UI protects the quality of the entire platform.
 
 Bad admin UX creates bad data, and bad data creates bad planning decisions.
+
+---
+
+## 43. Shared Visual Foundation (2026)
+
+The shared admin shell uses a restrained product palette aligned with the public brand:
+
+```text
+canvas: neutral off-white
+surface: white
+text: ink/black
+accent: coral-orange
+status: semantic green, amber, and red only
+```
+
+Admin tokens are scoped by `.admin-app` in `app/globals.css`. Controls use a
+4 px radius, bounded work surfaces use a 6 px radius, and touch controls are at
+least 44 px high. Tables and panels use clear borders rather than decorative
+shadows. Gradients, glass effects, ornamental patterns, nested cards, and
+oversized headings are not part of the admin visual system.
+
+The shared component contract is:
+
+- `AdminPageHeader` owns the single page heading, context, description, and actions.
+- `ListPageShell` owns create actions, filters, empty states, and pagination.
+- `DataTable` is a bordered, horizontally contained desktop work surface.
+- `StatusBadge` uses color only for real state meaning and keeps a text label.
+- `LoadingState`, `EmptyState`, and `ErrorState` preserve layout and explain recovery.
+- `Drawer` uses a body-level dialog, focus trap, Escape close, body scroll lock, and focus return.
+- Desktop navigation remains persistent; mobile navigation uses a body-level dialog.
+
+Shared UI changes require unit coverage for navigation, account actions, focus
+management, and the visual contract, plus screenshots at 1440x900, 768x1024,
+and 390x844. Thai body copy must meet WCAG AA contrast and important chart or
+table information must not depend on hover.

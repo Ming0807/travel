@@ -31,6 +31,24 @@
   --ink: #17212B;
 }
 
+.admin-app {
+  --admin-canvas: #F6F6F5;
+  --admin-surface: #FFFFFF;
+  --admin-surface-muted: #F1F1EF;
+  --admin-ink: #202020;
+  --admin-muted: #5F6368;
+  --admin-border: #D8D8D5;
+  --admin-accent: #E77455;
+  --admin-accent-strong: #B94727;
+  --admin-accent-soft: #FFF0EA;
+  --admin-success: #15803D;
+  --admin-warning: #B45309;
+  --admin-danger: #BE123C;
+  --admin-radius-control: 4px;
+  --admin-radius-panel: 6px;
+  --admin-control-height: 44px;
+}
+
 * {
   box-sizing: border-box;
 }

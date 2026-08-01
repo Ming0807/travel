@@ -41,26 +41,32 @@ export function ListPageShell({
   emptyDescription,
   admin,
 }: ListPageShellProps) {
+  const createAction = !hideCreateButton ? (
+    <Link
+      href={createHref}
+      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[4px] bg-[#C84F2D] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#A83E23] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E77455]"
+    >
+      <Plus size={20} weight="bold" aria-hidden="true" />
+      {createLabel}
+    </Link>
+  ) : null;
+
   return (
     <AdminShell admin={admin}>
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <AdminPageHeader
-            eyebrow={eyebrow}
-            title={title}
-            description={description}
-            actions={headerActions}
-          />
-          {!hideCreateButton && (
-            <Link
-              href={createHref}
-              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#075049] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62]"
-            >
-              <Plus size={20} weight="bold" />
-              {createLabel}
-            </Link>
-          )}
-        </div>
+        <AdminPageHeader
+          eyebrow={eyebrow}
+          title={title}
+          description={description}
+          actions={
+            headerActions || createAction ? (
+              <>
+                {headerActions}
+                {createAction}
+              </>
+            ) : null
+          }
+        />
 
         {filters ? filters : null}
 
@@ -74,9 +80,9 @@ export function ListPageShell({
               !hideCreateButton ? (
                 <Link
                   href={createHref}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#0A6B62] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#075049]"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-[4px] bg-[#C84F2D] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#A83E23] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E77455]"
                 >
-                  <Plus size={16} weight="bold" />
+                  <Plus size={16} weight="bold" aria-hidden="true" />
                   {createLabel}
                 </Link>
               ) : null

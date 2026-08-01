@@ -13,10 +13,10 @@ type DataTableProps = {
 
 export function DataTable({ columns, children }: DataTableProps) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+    <div className="overflow-hidden rounded-[6px] border border-slate-300 bg-white">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+          <thead className="bg-slate-100/80 text-left text-xs font-bold text-slate-600">
             <tr>
               {columns.map((column) => (
                 <th className={`px-4 py-3 ${column.className ?? ""}`} key={column.key} scope="col">
