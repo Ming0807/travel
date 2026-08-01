@@ -1165,3 +1165,27 @@ backgrounds.
 The admin Studio and tourist preview both render through `CertificateArtwork`. Layout JSON is
 normalized before rendering and strictly validated before save. The server rejects positions that
 overlap or leave the configured safe zone, even if a client bypasses the Studio controls.
+
+## 40. Tourist Template Selection and Photo Crop (Implemented 2026-08-01)
+
+The preview loads the complete eligible selection through the same server-side template service:
+
+```text
+active templates
+  -> visit attraction or global scope only
+  -> requested language, with Thai fallback for English requests
+  -> deterministic attraction/default ordering
+```
+
+Only a same-origin `template-image` URL and normalized layout data cross the server/client boundary;
+private storage paths are never sent to the browser. Selecting another template updates the live
+preview and the submitted `templateId`. The generation API resolves that ID again against the owned
+visit before it stores a file or writes a certificate record.
+
+Photo customization is intentionally bounded to zoom `1-2` and crop position `0-100` on each axis.
+The normalized adjustment is applied to the browser-rendered artifact. The database does not need a
+new customization column because the generated PNG is the immutable output for that generation.
+
+Background files are decorative full-bleed artwork only. Photo shape, border, accent outline, text,
+date, and stamp are rendered by `CertificateArtwork`, allowing one layout contract to work with many
+background styles without a baked-in placeholder becoming misaligned.

@@ -35,6 +35,23 @@ function languageRank(language: string, preferredLanguage: "th" | "en") {
   return 2;
 }
 
+function compareTemplates(
+  left: CertificateTemplateCandidate,
+  right: CertificateTemplateCandidate,
+  preferredLanguage: "th" | "en",
+) {
+  const languageDifference =
+    languageRank(left.language, preferredLanguage) - languageRank(right.language, preferredLanguage);
+  if (languageDifference !== 0) return languageDifference;
+
+  const scopeDifference = Number(left.attractionId === null) - Number(right.attractionId === null);
+  if (scopeDifference !== 0) return scopeDifference;
+
+  const defaultDifference = Number(!left.isDefault) - Number(!right.isDefault);
+  if (defaultDifference !== 0) return defaultDifference;
+  return left.templateId - right.templateId;
+}
+
 export function selectCertificateTemplate(
   candidates: CertificateTemplateCandidate[],
   params: ResolveTemplateParams
@@ -52,25 +69,39 @@ export function selectCertificateTemplate(
   }
 
   const selected = [...eligible].sort((left, right) => {
-    const languageDifference =
-      languageRank(left.language, params.language) - languageRank(right.language, params.language);
-    if (languageDifference !== 0) return languageDifference;
-
-    const scopeDifference = Number(left.attractionId === null) - Number(right.attractionId === null);
-    if (scopeDifference !== 0) return scopeDifference;
-
-    const defaultDifference = Number(!left.isDefault) - Number(!right.isDefault);
-    if (defaultDifference !== 0) return defaultDifference;
-    return left.templateId - right.templateId;
+    return compareTemplates(left, right, params.language);
   })[0];
 
   if (!selected) throw new CertificateTemplateResolutionError();
   return selected;
 }
 
+export function buildCertificateTemplateSelection(
+  candidates: CertificateTemplateCandidate[],
+  params: ResolveTemplateParams,
+) {
+  const selected = selectCertificateTemplate(candidates, params);
+  const options = candidates
+    .filter(
+      (template) =>
+        (template.attractionId === null || template.attractionId === params.attractionId) &&
+        (template.language === params.language || (params.language === "en" && template.language === "th")),
+    )
+    .sort((left, right) => compareTemplates(left, right, params.language));
+
+  return {
+    selected,
+    options: [selected, ...options.filter((template) => template.templateId !== selected.templateId)],
+  };
+}
+
+export async function getCertificateTemplateSelection(params: ResolveTemplateParams) {
+  const templates = await listActiveCertificateTemplatesForAttraction(params.attractionId);
+  return buildCertificateTemplateSelection(templates, params);
+}
+
 export async function resolveCertificateTemplate(
   params: ResolveTemplateParams
 ): Promise<CertificateTemplateCandidate> {
-  const templates = await listActiveCertificateTemplatesForAttraction(params.attractionId);
-  return selectCertificateTemplate(templates, params);
+  return (await getCertificateTemplateSelection(params)).selected;
 }

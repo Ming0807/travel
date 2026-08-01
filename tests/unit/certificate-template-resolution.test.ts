@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildCertificateTemplateSelection,
   CertificateTemplateResolutionError,
   selectCertificateTemplate,
   type CertificateTemplateCandidate,
@@ -76,5 +77,34 @@ describe("selectCertificateTemplate", () => {
   it("fails explicitly when no active eligible template exists", () => {
     expect(() => selectCertificateTemplate([], { attractionId: 12, language: "th" }))
       .toThrow("CERTIFICATE_TEMPLATE_NOT_FOUND");
+  });
+});
+
+describe("buildCertificateTemplateSelection", () => {
+  it("returns the selected template first and excludes an unrelated attraction", () => {
+    const unrelated: CertificateTemplateCandidate = {
+      ...candidates[1],
+      templateId: 4,
+      templateName: "Other attraction",
+      attractionId: 99,
+    };
+
+    const result = buildCertificateTemplateSelection([...candidates, unrelated], {
+      attractionId: 12,
+      language: "th",
+    });
+
+    expect(result.selected.templateId).toBe(2);
+    expect(result.options.map((template) => template.templateId)).toEqual([2, 1]);
+  });
+
+  it("shows requested-language templates before Thai fallback templates", () => {
+    const result = buildCertificateTemplateSelection(candidates, {
+      attractionId: 12,
+      language: "en",
+    });
+
+    expect(result.selected.templateId).toBe(3);
+    expect(result.options.map((template) => template.templateId)).toEqual([3, 2, 1]);
   });
 });

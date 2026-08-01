@@ -29,9 +29,9 @@ describe("CertificateArtwork", () => {
       />
     );
 
-    const photo = screen.getByAltText("รูปความทรงจำของนักท่องเที่ยว").parentElement;
-    expect(photo).toHaveClass("rounded-lg");
-    expect(photo).toHaveStyle({ left: "31%", top: "58%", width: "28%" });
+    const photoFrame = container.querySelector("[data-certificate-photo-frame]");
+    expect(photoFrame).toHaveClass("rounded-lg");
+    expect(photoFrame).toHaveStyle({ left: "31%", top: "58%", width: "28%" });
     expect(container.querySelector('[data-orientation="landscape"]')).toHaveStyle({
       color: "#112233",
     });

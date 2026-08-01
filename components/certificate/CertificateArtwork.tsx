@@ -1,5 +1,9 @@
 import { Stamp } from "@phosphor-icons/react/dist/ssr";
 import type { CertificateTemplateLayout } from "@/lib/certificate/certificate-template-layout";
+import {
+  normalizePhotoAdjustment,
+  type PhotoAdjustment,
+} from "@/lib/certificate/certificate-customization";
 
 type CertificateArtworkProps = {
   layout: CertificateTemplateLayout;
@@ -10,6 +14,7 @@ type CertificateArtworkProps = {
   provinceName: string;
   visitDate: string;
   showSafeZone?: boolean;
+  photoAdjustment?: PhotoAdjustment;
 };
 
 const photoShapeClasses = {
@@ -27,8 +32,10 @@ export function CertificateArtwork({
   provinceName,
   visitDate,
   showSafeZone = false,
+  photoAdjustment,
 }: CertificateArtworkProps) {
   const titleSize = `clamp(14px, ${layout.titleScale * 0.04}cqw, 32px)`;
+  const adjustedPhoto = normalizePhotoAdjustment(photoAdjustment);
 
   return (
     <div
@@ -74,26 +81,36 @@ export function CertificateArtwork({
       </header>
 
       <div
-        className={`absolute flex aspect-square -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden border-[3px] border-white bg-[#E6F4EF] shadow-md ${photoShapeClasses[layout.photoShape]}`}
+        data-certificate-photo-frame
+        className={`absolute aspect-square -translate-x-1/2 -translate-y-1/2 border border-white bg-white p-[0.7%] shadow-[0_3px_8px_rgba(15,23,42,0.18)] ${photoShapeClasses[layout.photoShape]}`}
         style={{
           left: `${layout.photoX}%`,
           top: `${layout.photoY}%`,
           width: `${layout.photoSize}%`,
+          outline: `clamp(1px, 0.3cqw, 3px) solid ${layout.accentColor}`,
+          outlineOffset: "clamp(1px, 0.25cqw, 2px)",
         }}
       >
-        {previewUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={previewUrl}
-            alt="รูปความทรงจำของนักท่องเที่ยว"
-            className="h-full w-full object-cover"
-            crossOrigin="anonymous"
-          />
-        ) : (
-          <span className="px-2 text-center text-[clamp(8px,2.2cqw,12px)] font-semibold text-[#35665E]">
-            ยังไม่มีรูปภาพ
-          </span>
-        )}
+        <div className={`flex h-full w-full items-center justify-center overflow-hidden border border-white bg-[#E6F4EF] ${photoShapeClasses[layout.photoShape]}`}>
+          {previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewUrl}
+              alt="รูปความทรงจำของนักท่องเที่ยว"
+              className="h-full w-full object-cover"
+              crossOrigin="anonymous"
+              style={{
+                objectPosition: `${adjustedPhoto.x}% ${adjustedPhoto.y}%`,
+                transform: `scale(${adjustedPhoto.zoom})`,
+                transformOrigin: "center",
+              }}
+            />
+          ) : (
+            <span className="px-2 text-center text-[clamp(8px,2.2cqw,12px)] font-semibold text-[#35665E]">
+              ยังไม่มีรูปภาพ
+            </span>
+          )}
+        </div>
       </div>
 
       <section

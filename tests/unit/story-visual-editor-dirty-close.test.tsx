@@ -89,7 +89,7 @@ describe("StoryVisualEditor dirty drawer protection", () => {
     );
     await userEvent.click(
       screen.getByRole("button", {
-        name: "Close เนื้อหาบทความ",
+        name: "ปิด เนื้อหาบทความ",
       })
     );
 

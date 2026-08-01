@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   CertificateTemplateResolutionError,
-  resolveCertificateTemplate,
+  getCertificateTemplateSelection,
 } from "@/lib/services/certificate-template.service";
 
 export const metadata: Metadata = {
@@ -82,18 +82,12 @@ export default async function CertificatePreviewPage({
   }
 
   const language = resolvedSearchParams?.lang === "en" ? "en" : "th";
-  let template: Awaited<ReturnType<typeof resolveCertificateTemplate>>;
-  let templateBackgroundUrl = "";
+  let selection: Awaited<ReturnType<typeof getCertificateTemplateSelection>>;
   try {
-    template = await resolveCertificateTemplate({
+    selection = await getCertificateTemplateSelection({
       attractionId: Number(v.attraction_id),
       language,
     });
-    if (template.backgroundPath) {
-      templateBackgroundUrl = `/api/certificate/template-image?visitId=${encodeURIComponent(
-        visitId
-      )}&templateId=${template.templateId}`;
-    }
   } catch (error) {
     if (!(error instanceof CertificateTemplateResolutionError)) {
       console.error(
@@ -103,6 +97,21 @@ export default async function CertificatePreviewPage({
     }
     return <CertificateTemplateUnavailable visitId={visitId} />;
   }
+
+  const template = selection.selected;
+  const templateOptions = selection.options.map((option) => ({
+    templateId: option.templateId,
+    templateName: option.templateName,
+    attractionId: option.attractionId,
+    backgroundUrl: option.backgroundPath
+      ? `/api/certificate/template-image?visitId=${encodeURIComponent(visitId)}&templateId=${option.templateId}`
+      : "",
+    language: option.language,
+    orientation: option.orientation,
+    layout: option.layoutConfig,
+  }));
+  const templateBackgroundUrl =
+    templateOptions.find((option) => option.templateId === template.templateId)?.backgroundUrl ?? "";
 
   const touristName = v.tourists?.display_name || "ผู้เยี่ยมชม";
   const attractionName = v.attractions?.name_th || "สถานที่ท่องเที่ยว";
@@ -133,8 +142,8 @@ export default async function CertificatePreviewPage({
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-24 flex flex-col items-center overflow-hidden">
-      <div className="relative z-10 w-full max-w-2xl px-4 pt-8 md:pt-16">
+    <main className="flex min-h-screen flex-col items-center overflow-hidden bg-slate-50 pb-24">
+      <div className="relative z-10 w-full max-w-2xl px-4 pt-8 md:pt-12">
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="w-2.5 h-2.5 rounded-full bg-teal" />
@@ -145,7 +154,7 @@ export default async function CertificatePreviewPage({
         </div>
 
         {/* Header */}
-        <div className="text-center mb-8 animate-fade-in-up">
+        <div className="mb-8 text-center">
           <h1 className="text-3xl font-black text-ink tracking-tight">ใบประกาศดิจิทัล</h1>
           <p className="text-muted text-sm font-medium mt-2 max-w-xs mx-auto">
             ตรวจสอบใบประกาศและกดสร้างเพื่อบันทึก
@@ -166,6 +175,7 @@ export default async function CertificatePreviewPage({
           templateBackgroundUrl={templateBackgroundUrl}
           language={language}
           layout={template.layoutConfig}
+          templates={templateOptions}
         />
       </div>
     </main>

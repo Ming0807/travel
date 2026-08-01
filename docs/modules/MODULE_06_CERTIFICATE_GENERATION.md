@@ -1158,9 +1158,18 @@ Implemented:
 [x] Certificate Template Studio with shared live renderer
 [x] Guided photo/text positioning, shape, colors, visibility, and safe-zone checks
 [x] Draft save/cancel behavior with server-side overlap validation
-[x] Production landscape art direction for Yala (`yala-mist-heritage-v1.webp`)
+[x] Production landscape art direction for Yala (`yala-mist-heritage-v2.webp`)
 [x] Generated backgrounds are imported as managed template records and selected through the existing default-template workflow; rendering code does not hardcode a background
+[x] Tourist can choose from active attraction/global templates that match the visit and language
+[x] Tourist can safely zoom and reposition the uploaded photo before generation
+[x] Photo frame is rendered independently from the background, so background art does not contain a fixed photo placeholder
+[x] Generated PNG records the selected template after the server revalidates visit ownership and scope
 ```
 
+Background artwork should be full-bleed and must not contain a baked-in photo circle, tourist name,
+attraction name, seal, or QR code. The shared renderer owns these dynamic elements. Tourist controls
+remain bounded to template selection and photo crop adjustment; freeform canvas editing is a future
+advanced feature so the result stays legible and brand-safe.
+
 Future advanced studio work remains separate: custom font upload, freeform photo masks, campaign
-variants, reusable design presets, and tourist-selectable variants.
+variants, reusable design presets, and controlled freeform composition.

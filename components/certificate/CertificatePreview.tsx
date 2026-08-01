@@ -6,7 +6,13 @@ import { toPng } from "html-to-image";
 import { DownloadSimple, ArrowLeft, Spinner } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { CertificateArtwork } from "@/components/certificate/CertificateArtwork";
+import { CertificateCustomizer } from "@/components/certificate/CertificateCustomizer";
 import type { CertificateTemplateLayout } from "@/lib/certificate/certificate-template-layout";
+import {
+  DEFAULT_PHOTO_ADJUSTMENT,
+  normalizePhotoAdjustment,
+  type CertificateTemplatePreviewOption,
+} from "@/lib/certificate/certificate-customization";
 
 interface CertificatePreviewProps {
   visitId: string;
@@ -21,6 +27,7 @@ interface CertificatePreviewProps {
   templateBackgroundUrl: string;
   language: "th" | "en";
   layout: CertificateTemplateLayout;
+  templates?: CertificateTemplatePreviewOption[];
 }
 
 export function CertificatePreview({
@@ -36,11 +43,28 @@ export function CertificatePreview({
   templateBackgroundUrl,
   language,
   layout,
+  templates,
 }: CertificatePreviewProps) {
   const router = useRouter();
   const certRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(templateId);
+  const [photoAdjustment, setPhotoAdjustment] = useState(DEFAULT_PHOTO_ADJUSTMENT);
+  const availableTemplates: CertificateTemplatePreviewOption[] = templates?.length
+    ? templates
+    : [{
+        templateId,
+        templateName,
+        attractionId: null,
+        backgroundUrl: templateBackgroundUrl,
+        language,
+        orientation: layout.orientation,
+        layout,
+      }];
+  const selectedTemplate =
+    availableTemplates.find((template) => template.templateId === selectedTemplateId) ??
+    availableTemplates[0];
 
   const handleGenerate = async () => {
     if (!certRef.current) return;
@@ -62,7 +86,7 @@ export function CertificatePreview({
         body: JSON.stringify({
           visitId,
           photoId,
-          templateId,
+          templateId: selectedTemplate.templateId,
           language,
           base64Image: dataUrl,
         }),
@@ -84,10 +108,10 @@ export function CertificatePreview({
   };
 
   return (
-    <div className="flex w-full max-w-xl flex-col items-center gap-6 mx-auto animate-in fade-in duration-500">
+    <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-5">
       
       {/* Action Bar */}
-      <div className="w-full flex justify-between items-center px-2 animate-in fade-in slide-in-from-top-2 duration-500 delay-100 fill-mode-both">
+      <div className="flex w-full items-center justify-between px-1">
         <Link 
           href={`/visit/${visitId}/photo`} 
           className="text-ink-light flex items-center gap-1 hover:text-ink transition-colors"
@@ -98,46 +122,51 @@ export function CertificatePreview({
       </div>
 
       {error && (
-        <div className="w-full bg-red-50 text-red-600 p-3 rounded-xl text-sm animate-in fade-in duration-300">
+        <div className="w-full rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
           {error}
         </div>
       )}
 
       {/* Certificate DOM to Capture */}
       <div
-        className={`relative w-full overflow-hidden rounded-2xl border-4 border-white shadow-lg animate-in fade-in zoom-in-95 duration-700 delay-200 fill-mode-both ${
-          layout.orientation === "landscape" ? "aspect-[1.414/1] max-w-[560px]" : "aspect-[4/5] max-w-[400px]"
+        className={`relative w-full overflow-hidden rounded-lg border border-ink/10 bg-white shadow-sm ${
+          selectedTemplate.layout.orientation === "landscape" ? "aspect-[1.414/1] max-w-[560px]" : "aspect-[4/5] max-w-[400px]"
         }`}
       >
         <div ref={certRef} className="absolute inset-0">
           <CertificateArtwork
-            layout={layout}
-            templateBackgroundUrl={templateBackgroundUrl}
+            layout={selectedTemplate.layout}
+            templateBackgroundUrl={selectedTemplate.backgroundUrl}
             previewUrl={previewUrl}
             touristName={touristName}
             attractionName={attractionName}
             provinceName={provinceName}
             visitDate={visitDate}
+            photoAdjustment={photoAdjustment}
           />
         </div>
 
-        {/* Loading Shimmer Overlay */}
+        {/* Keep the preview stable while the browser captures the final artifact. */}
         {isGenerating && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="flex flex-col items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-r from-teal/30 via-teal/60 to-teal/30 animate-pulse" />
-              <div className="space-y-2 text-center">
-                <div className="h-4 w-48 rounded-full bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 animate-pulse mx-auto" />
-                <div className="h-3 w-32 rounded-full bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 animate-pulse mx-auto" />
-              </div>
-            </div>
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-white/90 text-ink" aria-live="polite">
+            <Spinner className="animate-spin text-[#E77455]" size={36} aria-hidden="true" />
+            <p className="text-sm font-bold">กำลังจัดทำใบประกาศ...</p>
           </div>
         )}
       </div>
 
-      <div className="w-full bg-white p-6 rounded-2xl border border-ink/5 mt-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
+      <CertificateCustomizer
+        templates={availableTemplates}
+        selectedTemplateId={selectedTemplate.templateId}
+        adjustment={photoAdjustment}
+        disabled={isGenerating}
+        onSelectTemplate={setSelectedTemplateId}
+        onAdjustmentChange={(value) => setPhotoAdjustment(normalizePhotoAdjustment(value))}
+      />
+
+      <div className="w-full rounded-lg border border-ink/10 bg-white p-5 text-center">
         <p className="mb-2 text-xs font-semibold text-[#0A6B62]">
-          รูปแบบ: {templateName}
+          รูปแบบ: {selectedTemplate.templateName}
         </p>
         <h3 className="font-bold text-lg text-ink mb-2">ยืนยันและสร้างใบประกาศ</h3>
         <p className="text-sm text-muted mb-6">
@@ -146,7 +175,7 @@ export function CertificatePreview({
         <button
           onClick={handleGenerate}
           disabled={isGenerating}
-          className="w-full py-4 rounded-full bg-[#E18868] text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 transition-all hover:bg-[#D07757] hover:scale-[1.01] active:scale-[0.99] shadow-sm"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#E77455] px-5 py-3 font-bold text-white transition-colors hover:bg-[#C8553A] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isGenerating ? (
             <><Spinner className="animate-spin" size={20} /> กำลังสร้างใบประกาศ...</>
