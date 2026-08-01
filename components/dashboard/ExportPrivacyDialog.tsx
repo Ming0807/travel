@@ -43,7 +43,7 @@ export function ExportPrivacyDialog({ endpoint, exportType, label, searchParams 
       <button type="button" onClick={() => setOpen(true)} className="inline-flex min-h-10 items-center gap-2 rounded-md px-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"><DownloadSimple aria-hidden="true" size={16} />{label}</button>
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
-          <div role="dialog" aria-modal="true" aria-labelledby={`export-${exportType}-title`} className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-5 shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-labelledby={`export-${exportType}-title`} className="w-full max-w-lg rounded-md border border-slate-200 bg-white p-5 shadow-[0_16px_48px_rgba(15,23,42,0.14)]">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-md bg-amber-50 text-amber-700">
@@ -60,7 +60,7 @@ export function ExportPrivacyDialog({ endpoint, exportType, label, searchParams 
               <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-rose-900"><strong>ข้อมูลที่ไม่ส่งออก:</strong> {details.excludes}</div>
               <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-slate-700">โปรไฟล์ไม่ใช่จำนวนบุคคลจริง การสแกน QR แยกจากการเข้าชม ค่าใช้จ่ายไม่ใช่รายได้ และช่องว่างไม่ได้หมายถึงศูนย์</div>
             </div>
-            <div className="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" onClick={() => setOpen(false)} className="min-h-10 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700">ยกเลิก</button><button type="button" onClick={download} className="inline-flex min-h-10 items-center gap-2 rounded-md bg-[#073F37] px-4 text-sm font-bold text-white hover:bg-[#0A6B62]"><DownloadSimple aria-hidden="true" size={16} />ดาวน์โหลด</button></div>
+            <div className="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" onClick={() => setOpen(false)} className="min-h-10 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700">ยกเลิก</button><button type="button" onClick={download} className="inline-flex min-h-10 items-center gap-2 rounded-md bg-[#171717] px-4 text-sm font-bold text-white hover:bg-[#B94727]"><DownloadSimple aria-hidden="true" size={16} />ดาวน์โหลด</button></div>
           </div>
         </div>
       ) : null}

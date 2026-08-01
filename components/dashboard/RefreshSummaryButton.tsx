@@ -25,7 +25,7 @@ export function RefreshSummaryButton() {
   const label = state === "refreshing" ? "กำลังประมวลผล..." : state === "done" ? "อัปเดตแล้ว" : state === "error" ? "ไม่สำเร็จ ลองอีกครั้ง" : "ประมวลผลข้อมูลสรุปใหม่";
 
   return (
-    <button type="button" onClick={refresh} disabled={state === "refreshing"} className={`inline-flex min-h-10 items-center gap-2 rounded-md px-4 text-sm font-bold transition-colors disabled:cursor-wait ${state === "error" ? "bg-rose-50 text-rose-700" : state === "done" ? "bg-emerald-50 text-emerald-700" : "bg-[#0A6B62] text-white hover:bg-[#08564E]"}`}>
+    <button type="button" onClick={refresh} disabled={state === "refreshing"} className={`inline-flex min-h-10 items-center gap-2 rounded-md px-4 text-sm font-bold transition-colors disabled:cursor-wait ${state === "error" ? "bg-rose-50 text-rose-700" : state === "done" ? "bg-emerald-50 text-emerald-700" : "bg-[#171717] text-white hover:bg-[#B94727]"}`}>
       {state === "refreshing" ? <Spinner aria-hidden="true" className="animate-spin" size={18} /> : state === "done" ? <CheckCircle aria-hidden="true" size={18} weight="fill" /> : <ArrowClockwise aria-hidden="true" size={18} weight="bold" />}
       {label}
     </button>

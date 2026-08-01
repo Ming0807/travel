@@ -4,7 +4,7 @@
 
 This document defines the Executive Dashboard for the **Southern Border Tourism Data & Intelligence Platform**.
 
-The Executive Dashboard is the first dashboard view for administrators, instructors, researchers, and tourism planners. It summarizes the most important tourism participation metrics across Yala, Pattani, and Narathiwat.
+The Executive Dashboard is the first dashboard view for administrators, instructors, researchers, and tourism planners. The current rollout focuses on Yala while the data model and filters remain ready for Pattani and Narathiwat when those provinces are activated.
 
 The dashboard must provide a high-level view without misleading users about what the data represents.
 
@@ -126,6 +126,16 @@ Satisfaction and Spending Summary
 Planning Insight Cards
 Export Actions
 ```
+
+### 6.1 Current visual system
+
+- Thai-first operational interface with near-black text, white surfaces, and brand orange for active states and priority actions.
+- Panels use a small `4-6px` corner radius and a restrained translucent shadow; no decorative gradients or oversized marketing composition.
+- The data-context strip shows date range, source, freshness, and analytical sample before any KPI.
+- Filters are URL-driven and presented as a compact analysis toolbar. Core filters stay visible; secondary dimensions remain expandable.
+- KPI cards use one metric per card. A visit sparkline must never be presented as the trend of tourist profiles or certificates.
+- Charts retain a readable table view so reviewers can validate values and assistive technology can access the same data.
+- Desktop layouts prioritize comparison; mobile layouts stack without horizontal page overflow while tabs remain horizontally scrollable.
 
 ---
 

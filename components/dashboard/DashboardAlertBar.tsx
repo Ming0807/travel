@@ -24,7 +24,7 @@ export function DashboardAlertBar({ alerts, filtersSig }: { alerts: DashboardAle
       <button
         type="button"
         onClick={() => setExpanded((current) => !current)}
-        className="alert-bar-toggle flex min-h-12 w-full items-center gap-3 px-4 text-left hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0A6B62]"
+        className="alert-bar-toggle flex min-h-12 w-full items-center gap-3 px-4 text-left hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]"
         aria-expanded={expanded}
         aria-controls="dashboard-alert-list"
       >
@@ -37,7 +37,7 @@ export function DashboardAlertBar({ alerts, filtersSig }: { alerts: DashboardAle
         <span className="alert-bar-breakdown hidden text-xs text-slate-500 sm:inline">
           {[counts.critical > 0 && `เร่งด่วน ${counts.critical}`, counts.warning > 0 && `เฝ้าระวัง ${counts.warning}`, counts.info > 0 && `ข้อมูล ${counts.info}`].filter(Boolean).join(" · ")}
         </span>
-        <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#0A6B62]">
+        <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[#B94727]">
           <span className="alert-bar-action-label">{expanded ? "ยุบ" : "ดูรายการ"}</span>
           {expanded ? <CaretUp aria-hidden="true" size={14} /> : <CaretDown aria-hidden="true" size={14} />}
         </span>

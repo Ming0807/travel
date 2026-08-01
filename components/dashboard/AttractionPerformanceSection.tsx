@@ -18,14 +18,14 @@ export function AttractionPerformanceSection({ data }: { data: DashboardViewMode
 
       <dl className="grid gap-3 sm:grid-cols-3">
         {[["การเข้าชมในอันดับ", visits], ["ใบประกาศที่สร้าง", certificates], ["คำตอบแบบสำรวจ", responses]].map(([label, value]) => (
-          <div key={String(label)} className="rounded-lg border border-slate-200 bg-white p-4"><dt className="text-xs font-semibold text-slate-600">{label}</dt><dd className="mt-1 text-2xl font-black tabular-nums text-[#073F37]">{Number(value).toLocaleString("th-TH")}</dd></div>
+          <div key={String(label)} className="relative overflow-hidden rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"><span aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-[#B94727]" /><dt className="text-xs font-semibold text-slate-600">{label}</dt><dd className="mt-1 text-2xl font-black tabular-nums text-slate-900">{Number(value).toLocaleString("th-TH")}</dd></div>
         ))}
       </dl>
 
       <BarChartCard data={ranking} definition="อันดับตามจำนวนรายการเข้าชมที่บันทึกสำเร็จภายใต้ตัวกรองที่เลือก" emptyDescription="ยังไม่มีข้อมูลการเข้าชมสถานที่" title="อันดับการเข้าชมสถานที่" />
 
       {attractions.length === 0 ? <NoDataState description="ยังไม่มีข้อมูลสถานที่สำหรับช่วงและตัวกรองที่เลือก" /> : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-sm">
               <caption className="px-4 py-3 text-left text-base font-bold text-slate-900">รายละเอียดรายสถานที่</caption>

@@ -66,7 +66,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
 
   if (points.length === 0) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-md border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
         <h2 className="text-base font-bold text-slate-900">แนวโน้มการเข้าชม</h2>
         <p className="mt-1 text-sm text-slate-500">การเข้าชมที่บันทึกตามช่วงเวลา</p>
         <div className="mt-4">
@@ -100,15 +100,15 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
   const linePath = areaPath;
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4">
-      <div className="flex items-center justify-between gap-3">
+    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-bold text-slate-900">แนวโน้มการเข้าชม</h2>
           <p className="mt-1 text-sm text-slate-500">
             นับเฉพาะรายการเข้าชมที่บันทึกสำเร็จ ไม่รวมการสแกน QR
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg bg-tealSoft px-3 py-1.5 text-sm font-bold text-teal">
+        <div className="flex min-h-9 items-center gap-2 rounded-md border border-[#E8B8A8] bg-[#FFF7F3] px-3 text-sm font-bold text-[#8F351F]">
           <ChartLineUp size={18} weight="bold" />
           รวม {points.reduce((s, p) => s + p.value, 0).toLocaleString("th-TH")} ครั้ง
         </div>
@@ -122,20 +122,6 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           role="img"
           aria-label="กราฟแนวโน้มการเข้าชม"
         >
-          <defs>
-            <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0A6B62" stopOpacity={0.25} />
-              <stop offset="100%" stopColor="#0A6B62" stopOpacity={0.02} />
-            </linearGradient>
-            <linearGradient id="trendLine" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#0A6B62" />
-              <stop offset="100%" stopColor="#F3704C" />
-            </linearGradient>
-            <filter id="dotGlow">
-              <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#0A6B62" floodOpacity="0.3" />
-            </filter>
-          </defs>
-
           {/* Grid lines */}
           {yTicks.map((tick) => {
             const y = PADDING.top + innerH - (tick / (yTicks[yTicks.length - 1] || 1)) * innerH;
@@ -165,7 +151,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           {mapped.length > 1 && (
             <path
               d={`${areaPath} L ${mapped[mapped.length - 1].x},${yBase} L ${mapped[0].x},${yBase} Z`}
-              fill="url(#trendFill)"
+              fill="#FFF0EA"
             />
           )}
 
@@ -173,7 +159,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           <path
             d={linePath}
             fill="none"
-            stroke="url(#trendLine)"
+            stroke="#B94727"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -213,11 +199,10 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
                 cx={pt.x}
                 cy={pt.y}
                 r={hoveredIndex === i ? 6 : 3.5}
-                fill={hoveredIndex === i ? "#F3704C" : "#0A6B62"}
+                fill={hoveredIndex === i ? "#171717" : "#B94727"}
                 stroke="white"
                 strokeWidth="2"
                 style={{ transition: "r 0.15s ease, fill 0.15s ease" }}
-                filter={hoveredIndex === i ? "url(#dotGlow)" : undefined}
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 className="cursor-pointer"
@@ -230,7 +215,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
                     y1={PADDING.top}
                     x2={pt.x}
                     y2={yBase}
-                    stroke="#F3704C"
+                    stroke="#B94727"
                     strokeWidth="1"
                     strokeDasharray="4 3"
                     opacity={0.5}
@@ -246,7 +231,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
                       <p className="text-xs font-bold text-slate-500">
                         {formatDateFull(pt.label)}
                       </p>
-                      <p className="text-sm font-black text-[#073F37]">
+                      <p className="text-sm font-black text-[#B94727]">
                         {pt.value.toLocaleString("th-TH")} ครั้ง
                       </p>
                     </div>
@@ -277,6 +262,25 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
             ))}
         </svg>
       </div>
+
+      <details className="mt-3 border-t border-slate-100 pt-3">
+        <summary className="cursor-pointer text-xs font-semibold text-[#B94727]">ดูตารางแนวโน้ม</summary>
+        <div className="mt-2 max-h-56 overflow-auto">
+          <table aria-label="ข้อมูลแนวโน้มการเข้าชม" className="w-full min-w-80 text-sm">
+            <thead className="sticky top-0 bg-white text-left text-xs text-slate-500">
+              <tr className="border-b border-slate-200"><th className="py-2 pr-4">วันที่</th><th className="py-2 text-right">การเข้าชม</th></tr>
+            </thead>
+            <tbody>
+              {points.map((point) => (
+                <tr key={`trend-row-${point.label}`} className="border-b border-slate-100">
+                  <td className="py-2 pr-4 text-slate-700">{formatDateFull(point.label)}</td>
+                  <td className="py-2 text-right font-semibold tabular-nums text-slate-900">{point.value.toLocaleString("th-TH")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
     </section>
   );
 }

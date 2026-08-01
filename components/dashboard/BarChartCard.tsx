@@ -19,7 +19,7 @@ export function BarChartCard({ title, definition, data, emptyDescription, sample
   const max = Math.max(...visible.map((item) => item.value), 0);
 
   return (
-    <section className="min-w-0 rounded-lg border border-slate-200 bg-white p-4">
+    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-base font-bold text-slate-900">{title}</h2>
         <MetricTooltip definition={definition} />
@@ -38,15 +38,15 @@ export function BarChartCard({ title, definition, data, emptyDescription, sample
                     <span className="min-w-0 break-words font-medium text-slate-700">{localizeDashboardLabel(item.label)}</span>
                     <span className="shrink-0 font-bold tabular-nums text-slate-900">{item.value.toLocaleString("th-TH")}{item.percent !== null ? ` (${Math.round(item.percent * 100)}%)` : ""}</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`${localizeDashboardLabel(item.label)} ${item.value.toLocaleString("th-TH")}`}>
-                    <div className={`h-full rounded-full ${index === 0 ? "bg-[#0A6B62]" : "bg-[#5A9B91]"}`} style={{ width: `${width}%` }} />
+                  <div className="h-2 overflow-hidden rounded-sm bg-slate-100" role="img" aria-label={`${localizeDashboardLabel(item.label)} ${item.value.toLocaleString("th-TH")}`}>
+                    <div className={`h-full rounded-sm ${index === 0 ? "bg-[#B94727]" : "bg-[#475569]"}`} style={{ width: `${width}%` }} />
                   </div>
                 </div>
               );
             })}
           </div>
           <details className="mt-4 border-t border-slate-100 pt-3">
-            <summary className="cursor-pointer text-xs font-semibold text-[#0A6B62]">ดูเป็นตารางข้อมูล</summary>
+            <summary className="cursor-pointer text-xs font-semibold text-[#B94727]">ดูเป็นตารางข้อมูล</summary>
             <div className="mt-2 overflow-x-auto">
               <table className="w-full min-w-80 text-sm">
                 <thead><tr className="border-b border-slate-200 text-left text-xs text-slate-500"><th className="py-2 pr-4">รายการ</th><th className="py-2 text-right">จำนวน</th></tr></thead>

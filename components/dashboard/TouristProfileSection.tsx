@@ -23,9 +23,10 @@ export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
           ["จังหวัดต้นทางในไทย", data.touristProfile.originProvinces.length],
           ["ช่วงอายุที่มีข้อมูล", data.touristProfile.ageGroups.length],
         ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-lg border border-slate-200 bg-white p-4">
+          <div key={String(label)} className="relative overflow-hidden rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+            <span aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-[#B94727]" />
             <dt className="text-xs font-semibold text-slate-600">{label}</dt>
-            <dd className="mt-1 text-2xl font-black tabular-nums text-[#073F37]">{Number(value).toLocaleString("th-TH")}</dd>
+            <dd className="mt-1 text-2xl font-black tabular-nums text-slate-900">{Number(value).toLocaleString("th-TH")}</dd>
           </div>
         ))}
       </dl>

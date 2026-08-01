@@ -32,7 +32,7 @@ function FilterSelect({
     <label className="block min-w-0">
       <span className="text-xs font-semibold text-slate-600">{label}</span>
       <select
-        className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+        className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15"
         defaultValue={value === undefined ? "" : String(value)}
         name={name}
       >
@@ -87,14 +87,14 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   }
 
   return (
-    <section aria-labelledby="dashboard-filters-heading" className="border-b border-slate-200 pb-4">
+    <section aria-labelledby="dashboard-filters-heading" className="rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <FunnelSimple aria-hidden="true" className="text-[#0A6B62]" size={18} weight="bold" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#FFF0EA] text-[#B94727]"><FunnelSimple aria-hidden="true" size={17} weight="bold" /></span>
           <h2 id="dashboard-filters-heading" className="text-sm font-bold text-slate-800">ตัวกรองข้อมูล</h2>
         </div>
         {activeFilters.length > 0 ? (
-          <Link className="text-xs font-semibold text-[#0A6B62] underline-offset-4 hover:underline" href={pathname}>ล้างตัวกรองทั้งหมด</Link>
+          <Link className="text-xs font-semibold text-[#B94727] underline-offset-4 hover:underline" href={pathname}>ล้างตัวกรองทั้งหมด</Link>
         ) : null}
       </div>
 
@@ -102,19 +102,19 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <label className="block">
             <span className="text-xs font-semibold text-slate-600">ตั้งแต่วันที่</span>
-            <input className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-800 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={filters.dateFrom} name="date_from" type="date" />
+            <input className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-800 outline-none focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15" defaultValue={filters.dateFrom} name="date_from" type="date" />
           </label>
           <label className="block">
             <span className="text-xs font-semibold text-slate-600">ถึงวันที่</span>
-            <input className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-800 outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" defaultValue={filters.dateTo} name="date_to" type="date" />
+            <input className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-800 outline-none focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15" defaultValue={filters.dateTo} name="date_to" type="date" />
           </label>
           <FilterSelect label="จังหวัดปลายทาง" name="province_id" options={options.provinces} value={filters.provinceId} />
           <FilterSelect label="สถานที่ท่องเที่ยว" name="attraction_id" options={options.attractions} value={filters.attractionId} />
-          <button className="min-h-11 self-end rounded-md bg-[#073F37] px-5 text-sm font-bold text-white transition-colors hover:bg-[#0A6B62] focus:outline-none focus:ring-2 focus:ring-[#0A6B62] focus:ring-offset-2" type="submit">แสดงผล</button>
+          <button className="min-h-11 self-end rounded-md bg-[#171717] px-5 text-sm font-bold text-white transition-colors hover:bg-[#B94727] focus:outline-none focus:ring-2 focus:ring-[#B94727] focus:ring-offset-2" type="submit">นำตัวกรองไปใช้</button>
         </div>
 
         <details className="group">
-          <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#073F37] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A6B62]">
+          <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#171717] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727]">
             ตัวกรองเพิ่มเติม
             <CaretDown aria-hidden="true" className="transition-transform group-open:rotate-180" size={16} weight="bold" />
           </summary>
@@ -132,7 +132,7 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
       {activeFilters.length > 0 ? (
         <div aria-label="ตัวกรองที่ใช้อยู่" className="mt-3 flex flex-wrap gap-2">
           {activeFilters.map(([key, label, value]) => (
-            <Link key={key} href={removeHref(key)} className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[#0A6B62]/20 bg-[#E6F4EF] px-3 text-xs font-semibold text-[#073F37] hover:border-[#0A6B62]/40" aria-label={`ลบตัวกรอง ${label} ${value}`}>
+            <Link key={key} href={removeHref(key)} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-[#E8B8A8] bg-[#FFF7F3] px-3 text-xs font-semibold text-[#8F351F] hover:border-[#B94727]" aria-label={`ลบตัวกรอง ${label} ${value}`}>
               {label}: {value}
               <X aria-hidden="true" size={12} weight="bold" />
             </Link>

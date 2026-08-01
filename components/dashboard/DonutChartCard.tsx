@@ -8,12 +8,12 @@ import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 
 const DONUT_COLORS = [
-  "#0A6B62", // teal
-  "#F3704C", // coral
+  "#B94727", // brand orange
+  "#171717", // ink
   "#D6A13D", // gold
+  "#0A6B62", // teal
+  "#3B82F6", // blue
   "#3E7A4F", // leaf
-  "#E77455", // coral alt
-  "#073F37", // dark teal
   "#6B7280", // muted
   "#94A3B8", // slate-400
   "#A8D5BA", // light green
@@ -48,7 +48,7 @@ export function DonutChartCard({
 
   if (data.length === 0) {
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+      <section className="rounded-md border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-black text-slate-800">{title}</h2>
           <MetricTooltip definition={definition} />
@@ -85,7 +85,7 @@ export function DonutChartCard({
   const sorted = [...segments].sort((a, b) => b.value - a.value);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+    <section className="rounded-md border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-lg font-black text-slate-800">{title}</h2>
         <MetricTooltip definition={definition} />
@@ -161,11 +161,11 @@ export function DonutChartCard({
               x={CENTER}
               y={CENTER + 16}
               textAnchor="middle"
-              className="fill-slate-400 text-[11px] font-bold"
+              className="fill-slate-500 text-xs font-bold"
             >
               {hoveredSegment
                 ? `${(hoveredSegment.percent * 100).toFixed(1)}%`
-                : "total"}
+                : "รวมทั้งหมด"}
             </text>
           </svg>
         </div>
@@ -177,7 +177,7 @@ export function DonutChartCard({
             return (
               <div
                 key={seg.label}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2 transition-colors ${
+                className={`flex items-center gap-3 rounded-md px-3 py-2 transition-colors ${
                   isHovered ? "bg-slate-50" : ""
                 }`}
                 onMouseEnter={() => setHoveredLabel(seg.label)}

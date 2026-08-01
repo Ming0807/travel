@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { TrendChart } from "@/components/dashboard/TrendChart";
 import { localizeDashboardKpi } from "@/components/dashboard/dashboard-localization";
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 
@@ -29,6 +30,21 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(screen.getByRole("heading", { name: "การเข้าชมแยกตามจังหวัด" })).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getAllByText("12").length).toBeGreaterThan(0);
+  });
+
+  it("แสดงกราฟแนวโน้มพร้อมผลรวมและตารางข้อมูลที่ตรวจสอบได้", () => {
+    render(
+      <TrendChart
+        points={[
+          { label: "2026-07-01", value: 4 },
+          { label: "2026-07-02", value: 7 },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("รวม 11 ครั้ง")).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "ข้อมูลแนวโน้มการเข้าชม" })).toBeInTheDocument();
+    expect(screen.getByText("7")).toBeInTheDocument();
   });
 
   it("ยุบการแจ้งเตือนเป็นค่าเริ่มต้นและจำกัดข้อความบนหน้าหลัก", () => {

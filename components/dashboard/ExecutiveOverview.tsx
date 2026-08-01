@@ -34,7 +34,7 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {primaryMetrics.map((metric) => (
-          <KpiCard key={metric.key} metric={metric} sparklineData={["tourist_profiles", "total_visits", "certificates_generated"].includes(metric.key) ? data.executive.visitTrend : undefined} />
+          <KpiCard key={metric.key} metric={metric} sparklineData={metric.key === "total_visits" ? data.executive.visitTrend : undefined} />
         ))}
       </div>
 
@@ -47,20 +47,24 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
         </details>
       ) : null}
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-        <TrendChart points={data.executive.visitTrend} />
+      <div className="grid min-w-0 gap-4 xl:grid-cols-3">
+        <div className="min-w-0 xl:col-span-2">
+          <TrendChart points={data.executive.visitTrend} />
+        </div>
         <BarChartCard
           data={data.executive.visitsByProvince}
           definition="จำนวนรายการเข้าชม แยกตามจังหวัดของสถานที่ท่องเที่ยว ไม่ใช่จำนวนผู้เดินทางเข้าจังหวัดอย่างเป็นทางการ"
           emptyDescription="ยังไม่มีรายการเข้าชมในจังหวัดสำหรับช่วงและตัวกรองที่เลือก"
           title="การเข้าชมแยกตามจังหวัด"
         />
-        <BarChartCard
-          data={topAttractions}
-          definition="จัดอันดับสถานที่ตามจำนวนรายการเข้าชมที่บันทึกสำเร็จในระบบ"
-          emptyDescription="ยังไม่มีข้อมูลสถานที่ท่องเที่ยวสำหรับช่วงและตัวกรองที่เลือก"
-          title="สถานที่ที่มีการเข้าชมสูงสุด"
-        />
+        <div className="min-w-0 xl:col-span-2">
+          <BarChartCard
+            data={topAttractions}
+            definition="จัดอันดับสถานที่ตามจำนวนรายการเข้าชมที่บันทึกสำเร็จในระบบ"
+            emptyDescription="ยังไม่มีข้อมูลสถานที่ท่องเที่ยวสำหรับช่วงและตัวกรองที่เลือก"
+            title="สถานที่ที่มีการเข้าชมสูงสุด"
+          />
+        </div>
         <StackedDistributionCard
           data={data.satisfaction.distribution}
           definition="การกระจายคะแนนความพึงพอใจโดยรวมจากคำตอบแบบสำรวจที่มีข้อมูล"

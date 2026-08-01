@@ -24,7 +24,7 @@ function Sparkline({ data }: { data: TrendPoint[] }) {
   const points = data.map((point, index) => `${(index / (data.length - 1)) * 100},${30 - ((point.value - min) / range) * 26}`).join(" ");
   return (
     <svg className="h-8 w-full" viewBox="0 0 100 32" preserveAspectRatio="none" role="img" aria-label="แนวโน้มย่อของตัวชี้วัด">
-      <polyline points={points} fill="none" stroke="#0A6B62" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <polyline points={points} fill="none" stroke="#B94727" strokeWidth="2" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
@@ -45,10 +45,11 @@ export function KpiCard({
   const noData = metric.value === "No data" || metric.value === "N/A" || metric.value === "ยังไม่มีข้อมูล";
 
   return (
-    <article className={`min-w-0 rounded-lg border bg-white p-4 ${noData ? "border-dashed border-slate-300" : "border-slate-200"}`}>
+    <article data-dashboard-kpi={metric.key} className={`relative min-w-0 overflow-hidden rounded-md border bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] ${noData ? "border-dashed border-slate-300" : "border-slate-200"}`}>
+      {!noData ? <span aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-[#B94727]" /> : null}
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#E6F4EF] text-[#0A6B62]">{metricIcon(metric.key)}</span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#F0C8BB] bg-[#FFF7F3] text-[#B94727]">{metricIcon(metric.key)}</span>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <h3 className="truncate text-xs font-semibold text-slate-600">{localized.label}</h3>

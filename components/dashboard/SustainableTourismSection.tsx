@@ -24,7 +24,7 @@ export function SustainableTourismSection({ data }: { data: DashboardViewModel }
           <div className="divide-y divide-slate-200">
             {data.insights.map(localizeDashboardInsight).map((insight, index) => (
               <article key={`${insight.title}-${index}`} className="grid gap-3 p-4 lg:grid-cols-[160px_1fr_1fr]">
-                <div><span className="inline-flex rounded-full bg-[#E6F4EF] px-2.5 py-1 text-xs font-bold text-[#073F37]">{CATEGORY[insight.category]}</span><p className="mt-2 text-xs text-slate-500">{CONFIDENCE[insight.confidence]}</p></div>
+                <div><span className="inline-flex rounded-md border border-[#E8B8A8] bg-[#FFF7F3] px-2.5 py-1 text-xs font-bold text-[#8F351F]">{CATEGORY[insight.category]}</span><p className="mt-2 text-xs text-slate-500">{CONFIDENCE[insight.confidence]}</p></div>
                 <div><h3 className="font-bold text-slate-900">{insight.title}</h3><p className="mt-1 text-sm leading-6 text-slate-600">{insight.description}</p><p className="mt-2 text-xs leading-5 text-slate-500"><strong>หลักฐาน:</strong> {insight.evidence}</p></div>
                 <div className="border-l-0 border-slate-200 lg:border-l lg:pl-4"><p className="text-xs font-semibold text-slate-500">แนวทางพิจารณา</p><p className="mt-1 text-sm leading-6 text-slate-700">{insight.suggestedAction}</p></div>
               </article>

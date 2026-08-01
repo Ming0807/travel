@@ -42,7 +42,7 @@ export default async function AdminDashboardFunnelPage({ searchParams = {} }: Da
 
   return (
     <DashboardShell data={data}>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
         <div>
           <p className="text-sm font-semibold text-slate-700">
             ข้อมูลสรุป:{" "}
