@@ -1158,6 +1158,8 @@ Implemented:
 [x] Certificate Template Studio with shared live renderer
 [x] Guided photo/text positioning, shape, colors, visibility, and safe-zone checks
 [x] Draft save/cancel behavior with server-side overlap validation
+[x] Production landscape art direction for Yala (`yala-mist-heritage-v1.webp`)
+[x] Generated backgrounds are imported as managed template records and selected through the existing default-template workflow; rendering code does not hardcode a background
 ```
 
 Future advanced studio work remains separate: custom font upload, freeform photo masks, campaign
