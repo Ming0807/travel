@@ -70,7 +70,9 @@ describe("PhotoUploadClient", () => {
     expect(getUserMedia).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("button", { name: "ถ่ายรูป" }));
 
-    expect(await screen.findByRole("dialog", { name: "ใช้กล้องถ่ายรูป" })).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "ใช้กล้องถ่ายรูป" });
+    expect(dialog).toBeInTheDocument();
+    expect(dialog.parentElement).toBe(document.body);
     await waitFor(() => expect(getUserMedia).toHaveBeenCalledWith({
       audio: false,
       video: { facingMode: { ideal: "environment" } },
@@ -101,7 +103,30 @@ describe("PhotoUploadClient", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "ยังไม่ได้อนุญาตให้ใช้กล้อง",
     );
-    await userEvent.click(screen.getByRole("button", { name: "เปิดกล้องของอุปกรณ์" }));
+    await userEvent.click(screen.getByRole("button", { name: "เปิดแอปกล้อง" }));
+    expect(nativeClick).toHaveBeenCalledOnce();
+  });
+
+  it("does not silently open the gallery when embedded camera capture is unavailable", async () => {
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(window, "isSecureContext", {
+      configurable: true,
+      value: true,
+    });
+
+    render(<PhotoUploadClient visitId="550e8400-e29b-41d4-a716-446655440000" />);
+    const nativeCameraInput = screen.getByLabelText("ถ่ายรูปด้วยกล้อง");
+    const nativeClick = vi.spyOn(nativeCameraInput, "click");
+
+    await userEvent.click(screen.getByRole("button", { name: "ถ่ายรูป" }));
+
+    expect(nativeClick).not.toHaveBeenCalled();
+    expect(await screen.findByRole("dialog", { name: "ใช้กล้องถ่ายรูป" })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("เบราว์เซอร์นี้เปิดกล้องในหน้าเว็บไม่ได้");
+    await userEvent.click(screen.getByRole("button", { name: "เปิดแอปกล้อง" }));
     expect(nativeClick).toHaveBeenCalledOnce();
   });
 
@@ -127,13 +152,13 @@ describe("PhotoUploadClient", () => {
       callback(new Blob(["camera-photo"], { type: "image/jpeg" }));
     });
 
-    const { container } = render(
+    render(
       <PhotoUploadClient visitId="550e8400-e29b-41d4-a716-446655440000" />,
     );
     await userEvent.click(screen.getByRole("button", { name: "ถ่ายรูป" }));
     await screen.findByRole("dialog", { name: "ใช้กล้องถ่ายรูป" });
 
-    const video = container.querySelector("video");
+    const video = document.querySelector("video");
     expect(video).not.toBeNull();
     Object.defineProperty(video, "videoWidth", { configurable: true, value: 1280 });
     Object.defineProperty(video, "videoHeight", { configurable: true, value: 960 });

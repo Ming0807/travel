@@ -52,16 +52,7 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
   };
 
   const openCamera = () => {
-    const supportsBrowserCamera =
-      window.isSecureContext !== false &&
-      typeof navigator.mediaDevices?.getUserMedia === "function";
-
-    if (supportsBrowserCamera) {
-      setIsCameraOpen(true);
-      return;
-    }
-
-    cameraInputRef.current?.click();
+    setIsCameraOpen(true);
   };
 
   const handleRemove = () => {

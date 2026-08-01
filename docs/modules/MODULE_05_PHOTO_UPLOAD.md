@@ -1017,6 +1017,8 @@ Implementation rules:
 - Camera access uses `navigator.mediaDevices.getUserMedia` only after an explicit user action.
 - The camera stream is stopped when the dialog closes, the photo is confirmed, or the component unmounts.
 - `Permissions-Policy` allows camera access only for the same origin.
-- Browsers that do not support embedded camera capture fall back to a native `input` with `capture="environment"` and `accept="image/*"`.
+- The camera dialog is rendered through a portal at `document.body` and is constrained to `100dvh`, so transformed page containers and mobile browser chrome cannot push the controls below the viewport.
+- Browsers that do not support embedded camera capture show an explicit `Open device camera` recovery action before invoking a native `input` with `capture="environment"` and `accept="image/*"`; the system never opens a file picker silently from the primary camera action.
+- Android vendors may still present an operating-system app chooser for the native fallback. This behavior is controlled by the device, while the embedded Camera API path remains the preferred deterministic flow.
 - Permission denial, missing hardware, and a busy camera show Thai recovery messages with a native-camera fallback.
 - Selecting a file remains independent from camera permission and supports JPEG, PNG, WebP, HEIC, and HEIF sources before client-side normalization.

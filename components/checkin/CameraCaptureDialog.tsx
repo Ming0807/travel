@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Camera, Check, Spinner, X } from "@phosphor-icons/react/dist/ssr";
 
 type FacingMode = "environment" | "user";
@@ -32,9 +33,18 @@ export function CameraCaptureDialog({
   onClose,
   onNativeFallback,
 }: CameraCaptureDialogProps) {
+  const supportsBrowserCamera =
+    typeof navigator !== "undefined" &&
+    typeof navigator.mediaDevices?.getUserMedia === "function";
   const [facingMode, setFacingMode] = useState<FacingMode>("environment");
-  const [status, setStatus] = useState<"requesting" | "ready" | "error">("requesting");
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<"requesting" | "ready" | "error">(
+    supportsBrowserCamera ? "requesting" : "error",
+  );
+  const [error, setError] = useState<string | null>(
+    supportsBrowserCamera
+      ? null
+      : "เบราว์เซอร์นี้เปิดกล้องในหน้าเว็บไม่ได้ กรุณาเปิดแอปกล้องของอุปกรณ์แทน",
+  );
   const [capturedFile, setCapturedFile] = useState<File | null>(null);
   const [capturedPreview, setCapturedPreview] = useState<string | null>(null);
   const [captureError, setCaptureError] = useState<string | null>(null);
@@ -59,6 +69,8 @@ export function CameraCaptureDialog({
   }, [onClose]);
 
   useEffect(() => {
+    if (!supportsBrowserCamera) return;
+
     let cancelled = false;
 
     navigator.mediaDevices
@@ -90,7 +102,7 @@ export function CameraCaptureDialog({
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     };
-  }, [facingMode]);
+  }, [facingMode, supportsBrowserCamera]);
 
   useEffect(() => {
     return () => {
@@ -150,14 +162,14 @@ export function CameraCaptureDialog({
     window.setTimeout(onNativeFallback, 0);
   };
 
-  return (
+  const dialog = (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="camera-dialog-title"
-      className="fixed inset-0 z-[100] flex flex-col bg-black text-white"
+      className="fixed inset-0 z-[100] flex h-[100dvh] max-h-[100dvh] w-screen flex-col overflow-hidden bg-black text-white"
     >
-      <header className="flex min-h-16 items-center justify-between border-b border-white/15 px-4">
+      <header className="flex min-h-16 shrink-0 items-center justify-between border-b border-white/15 px-4">
         <div>
           <h2 id="camera-dialog-title" className="text-base font-bold">ใช้กล้องถ่ายรูป</h2>
           <p className="mt-0.5 text-xs text-white/70">
@@ -175,7 +187,7 @@ export function CameraCaptureDialog({
         </button>
       </header>
 
-      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-black">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-black">
         {capturedPreview ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={capturedPreview} alt="ภาพที่เพิ่งถ่าย" className="h-full w-full object-contain" />
@@ -206,13 +218,18 @@ export function CameraCaptureDialog({
               className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-md bg-white px-5 py-2.5 text-sm font-bold text-black"
             >
               <Camera size={18} weight="fill" aria-hidden="true" />
-              เปิดกล้องของอุปกรณ์
+              เปิดแอปกล้อง
             </button>
+            {!supportsBrowserCamera && (
+              <p className="mt-3 max-w-sm text-xs leading-5 text-white/60">
+                อุปกรณ์บางรุ่นอาจให้เลือกแอปกล้องก่อนเปิดใช้งาน
+              </p>
+            )}
           </div>
         )}
       </div>
 
-      <footer className="border-t border-white/15 bg-black px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
+      <footer className="shrink-0 border-t border-white/15 bg-black px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
         {captureError && <p role="alert" className="mb-3 text-center text-sm text-red-300">{captureError}</p>}
         {capturedFile ? (
           <div className="mx-auto grid w-full max-w-md grid-cols-2 gap-3">
@@ -261,4 +278,6 @@ export function CameraCaptureDialog({
       </footer>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 }
