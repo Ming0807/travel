@@ -1,93 +1,47 @@
+import { funnelStageLabel } from "@/components/dashboard/FunnelChart";
 import type { FunnelStage } from "@/types/dashboard";
 
-function pct(value: number | null): string {
-  if (value === null) return "—";
-  return `${(value * 100).toFixed(1)}%`;
+function validRate(value: number | null): number | null {
+  return value !== null && Number.isFinite(value) && value >= 0 && value <= 1 ? value : null;
 }
 
-function fmt(n: number): string {
-  return n.toLocaleString("th-TH");
+function formatPercent(value: number | null): string {
+  const safeValue = validRate(value);
+  return safeValue === null ? "ยังคำนวณไม่ได้" : `${(safeValue * 100).toFixed(1)}%`;
 }
 
 export function FunnelDetailTable({ stages }: { stages: FunnelStage[] }) {
-  if (stages.length === 0) return null;
-
-  const maxCount = Math.max(...stages.map((s) => s.count), 1);
+  const peakCount = Math.max(...stages.map((stage) => stage.count), 0);
 
   return (
-    <section className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-      <h2 className="mb-4 text-lg font-black text-slate-800">Stage details</h2>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-              <th className="pb-3 pr-4">Stage</th>
-              <th className="pb-3 pr-4 text-right">Events</th>
-              <th className="pb-3 pr-4 text-right">% of peak</th>
-              <th className="pb-3 pr-4 text-right">Conversion</th>
-              <th className="pb-3 pr-4 text-right">Drop-off</th>
-              <th className="pb-3 text-xs font-normal text-slate-400 max-w-xs">Definition</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stages.map((stage, i) => {
-              const pctOfPeak = maxCount > 0 ? (stage.count / maxCount) * 100 : 0;
-              return (
-                <tr
-                  key={stage.key}
-                  className="border-b border-slate-50 transition-colors hover:bg-slate-50/80"
-                >
-                  <td className="py-3 pr-4">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#073F37]/10 text-[11px] font-black text-[#073F37]">
-                        {i + 1}
-                      </span>
-                      <span className="font-semibold text-slate-800">{stage.label}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 pr-4 text-right font-mono font-bold text-slate-900 tabular-nums">
-                    {fmt(stage.count)}
-                  </td>
-                  <td className="py-3 pr-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-100">
-                        <div
-                          className="h-full rounded-full bg-[#0A6B62] transition-all"
-                          style={{ width: `${Math.min(pctOfPeak, 100)}%` }}
-                        />
-                      </div>
-                      <span className="w-12 text-right font-mono text-xs text-slate-500 tabular-nums">
-                        {pctOfPeak.toFixed(0)}%
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3 pr-4 text-right font-mono tabular-nums">
-                    {i === 0 ? (
-                      <span className="text-slate-400">—</span>
-                    ) : (
-                      <span className="font-semibold text-emerald-600">
-                        {pct(stage.conversionFromPrevious)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 pr-4 text-right font-mono tabular-nums">
-                    {i === 0 ? (
-                      <span className="text-slate-400">—</span>
-                    ) : (
-                      <span className="font-semibold text-rose-500">
-                        {pct(stage.dropOffFromPrevious)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 text-xs text-slate-400 max-w-xs">
-                    {stage.definition}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <section aria-labelledby="funnel-detail-heading" className="space-y-3">
+      <div>
+        <h3 className="text-base font-bold text-slate-900" id="funnel-detail-heading">ตารางตรวจสอบเส้นทางการใช้งาน</h3>
+        <p className="mt-1 text-sm text-slate-600">ใช้ตรวจจำนวนเหตุการณ์ นิยาม และอัตราระหว่างขั้น โดยไม่อนุมานว่าเป็นจำนวนผู้ใช้ไม่ซ้ำ</p>
+      </div>
+      <div className="min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white">
+        <div className="overflow-x-auto">
+          <table aria-label="รายละเอียดเหตุการณ์แต่ละขั้น" className="w-full min-w-[760px] text-sm">
+            <thead><tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600"><th className="px-4 py-3">ขั้นตอน</th><th className="px-4 py-3 text-right">เหตุการณ์</th><th className="px-4 py-3 text-right">เทียบขั้นสูงสุด</th><th className="px-4 py-3 text-right">อัตราผ่าน</th><th className="px-4 py-3 text-right">อัตราออก</th><th className="px-4 py-3">นิยาม</th></tr></thead>
+            <tbody>
+              {stages.length === 0 ? (
+                <tr><td className="px-4 py-8 text-center text-slate-600" colSpan={6}>ยังไม่มีเหตุการณ์สำหรับตัวกรองที่เลือก</td></tr>
+              ) : stages.map((stage, index) => {
+                const shareOfPeak = peakCount > 0 ? stage.count / peakCount : null;
+                return (
+                  <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50" key={stage.key}>
+                    <td className="px-4 py-3"><div className="flex items-center gap-2"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#FFF0EA] text-xs font-bold text-[#B94727]">{index + 1}</span><span className="font-semibold text-slate-800">{funnelStageLabel(stage)}</span></div></td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums text-slate-900">{stage.count.toLocaleString("th-TH")}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-slate-600">{formatPercent(shareOfPeak)}</td>
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-emerald-700">{index === 0 ? "ยังคำนวณไม่ได้" : formatPercent(stage.conversionFromPrevious)}</td>
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-rose-700">{index === 0 ? "ยังคำนวณไม่ได้" : formatPercent(stage.dropOffFromPrevious)}</td>
+                    <td className="max-w-xs px-4 py-3 text-xs leading-5 text-slate-600">{stage.definition}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   );
