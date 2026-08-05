@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ArrowClockwise, ChatCircleText, Star } from "@phosphor-icons/react/dist/ssr";
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
@@ -11,8 +12,21 @@ const SCORE_COLORS: Record<number, string> = {
   5: "#0A6B62",
 };
 
+type Satisfaction = DashboardViewModel["satisfaction"];
+
+type ExperienceDimension = {
+  label: string;
+  average: number | null;
+  responses: number;
+};
+
 function rateLabel(value: number | null): string {
   return value === null ? "ยังไม่มีข้อมูล" : `${Math.round(value * 100)}%`;
+}
+
+function validScore(value: number | null): number | null {
+  if (value === null || value < 1 || value > 5) return null;
+  return value;
 }
 
 function scoreFromLabel(label: string): number {
@@ -20,60 +34,196 @@ function scoreFromLabel(label: string): number {
   return score >= 1 && score <= 5 ? score : 3;
 }
 
-export function ExecutiveExperienceSummary({ satisfaction }: { satisfaction: DashboardViewModel["satisfaction"] }) {
+function dimensionsFor(satisfaction: Satisfaction): ExperienceDimension[] {
+  return [
+    { label: "ความปลอดภัย", average: validScore(satisfaction.safetyAverage), responses: satisfaction.safetyResponseCount },
+    { label: "ความสะอาด", average: validScore(satisfaction.cleanlinessAverage), responses: satisfaction.cleanlinessResponseCount },
+    { label: "การเข้าถึง", average: validScore(satisfaction.accessibilityAverage), responses: satisfaction.accessibilityResponseCount },
+    { label: "ข้อมูลและป้าย", average: validScore(satisfaction.informationAverage), responses: satisfaction.informationResponseCount },
+    { label: "ความคุ้มค่า", average: validScore(satisfaction.valueAverage), responses: satisfaction.valueResponseCount },
+  ];
+}
+
+export function ExecutiveExperienceSummary({ satisfaction }: { satisfaction: Satisfaction }) {
+  const average = validScore(satisfaction.averageOverall);
+  const dimensions = dimensionsFor(satisfaction);
   const distribution = satisfaction.distribution.filter((item) => item.value > 0);
   const total = distribution.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <section aria-labelledby="executive-experience-heading" className="h-full rounded-md border border-slate-200 bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)]">
-      <div className="flex items-start justify-between gap-3">
+    <section
+      aria-labelledby="executive-experience-heading"
+      className="h-full min-w-0 rounded-md border border-slate-200 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.05)]"
+    >
+      <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
         <div>
-          <h2 id="executive-experience-heading" className="text-base font-bold text-slate-900">คุณภาพประสบการณ์</h2>
-          <p className="mt-1 text-xs leading-5 text-slate-500">คะแนนจากแบบสำรวจที่สมัครใจ</p>
+          <h2 id="executive-experience-heading" className="text-base font-bold text-slate-950">
+            คุณภาพประสบการณ์
+          </h2>
+          <p className="mt-1 text-xs leading-5 text-slate-600">คะแนนจากแบบสำรวจที่นักท่องเที่ยวตอบโดยสมัครใจ</p>
         </div>
-        <Star aria-hidden="true" className="text-[#D6A13D]" size={20} weight="fill" />
+        <span className="shrink-0 rounded-sm bg-slate-100 px-2 py-1 text-xs font-bold tabular-nums text-slate-700">
+          {satisfaction.responseCount.toLocaleString("th-TH")} คำตอบ
+        </span>
       </div>
 
-      <div className="mt-4 flex items-end justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <p className="text-xs font-semibold text-slate-500">คะแนนเฉลี่ย</p>
-          <p className="mt-1 text-3xl font-black tabular-nums text-slate-950">{satisfaction.averageOverall === null ? "ยังไม่มีข้อมูล" : `${satisfaction.averageOverall.toFixed(1)} / 5`}</p>
+      <div className="grid gap-4 border-b border-slate-200 px-4 py-4 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:px-5">
+        <ScoreRing value={average} />
+        <div className="grid grid-cols-2 divide-x divide-slate-200 self-center">
+          <IntentMetric
+            icon={<ArrowClockwise aria-hidden="true" size={15} />}
+            label="กลับมาเที่ยวซ้ำ"
+            responses={satisfaction.revisitAnsweredCount}
+            value={satisfaction.revisitIntentionRate}
+          />
+          <IntentMetric
+            icon={<ChatCircleText aria-hidden="true" size={15} />}
+            label="แนะนำต่อ"
+            responses={satisfaction.recommendAnsweredCount}
+            value={satisfaction.recommendIntentionRate}
+          />
         </div>
-        <p className="shrink-0 text-xs font-semibold tabular-nums text-slate-500">{satisfaction.responseCount.toLocaleString("th-TH")} คำตอบ</p>
       </div>
 
-      <div className="grid grid-cols-2 divide-x divide-slate-200 border-b border-slate-200 py-3">
-        <div className="pr-3">
-          <p className="flex items-center gap-1.5 text-xs text-slate-500"><ArrowClockwise aria-hidden="true" size={14} />กลับมาเที่ยวซ้ำ</p>
-          <strong className="mt-1 block text-lg tabular-nums text-slate-900">{rateLabel(satisfaction.revisitIntentionRate)}</strong>
+      <div className="px-4 py-4 sm:px-5">
+        <h3 className="text-xs font-bold text-slate-700">คะแนนรายมิติ</h3>
+        <div role="group" aria-label="แผนภูมิคะแนนประสบการณ์รายมิติ" className="mt-3 space-y-3">
+          {dimensions.map((dimension) => (
+            <DimensionRow key={dimension.label} dimension={dimension} />
+          ))}
         </div>
-        <div className="pl-3">
-          <p className="flex items-center gap-1.5 text-xs text-slate-500"><ChatCircleText aria-hidden="true" size={14} />แนะนำต่อ</p>
-          <strong className="mt-1 block text-lg tabular-nums text-slate-900">{rateLabel(satisfaction.recommendIntentionRate)}</strong>
-        </div>
+
+        {total > 0 ? (
+          <div className="mt-4 border-t border-slate-100 pt-3">
+            <p className="text-xs font-semibold text-slate-600">การกระจายคะแนนรวม</p>
+            <div
+              className="mt-2 flex h-2 overflow-hidden rounded-sm bg-slate-100"
+              role="img"
+              aria-label="การกระจายคะแนนความพึงพอใจ"
+            >
+              {distribution.map((item) => (
+                <span
+                  key={item.label}
+                  style={{
+                    width: `${(item.value / total) * 100}%`,
+                    backgroundColor: SCORE_COLORS[scoreFromLabel(item.label)],
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="mt-4 border-t border-slate-100 pt-3 text-sm font-semibold text-slate-600">ยังไม่มีข้อมูล</p>
+        )}
+
+        {satisfaction.responseCount > 0 && satisfaction.responseCount < DASHBOARD_MIN_SAMPLE_SIZE ? (
+          <div className="mt-3">
+            <SmallSampleWarning count={satisfaction.responseCount} label="คำตอบความพึงพอใจ" />
+          </div>
+        ) : null}
       </div>
 
-      {total > 0 ? (
-        <div className="mt-4">
-          <div className="flex h-3 overflow-hidden rounded-sm bg-slate-100" role="img" aria-label="การกระจายคะแนนความพึงพอใจ">
-            {distribution.map((item) => (
-              <span key={item.label} style={{ width: `${(item.value / total) * 100}%`, backgroundColor: SCORE_COLORS[scoreFromLabel(item.label)] }} />
+      <div className="sr-only">
+        <table aria-label="คะแนนประสบการณ์รายมิติ">
+          <thead><tr><th>มิติ</th><th>คะแนนเฉลี่ย</th><th>จำนวนคำตอบ</th></tr></thead>
+          <tbody>
+            {dimensions.map((dimension) => (
+              <tr key={`dimension-table-${dimension.label}`}>
+                <td>{dimension.label}</td>
+                <td>{dimension.average === null ? "ยังไม่มีข้อมูล" : dimension.average.toFixed(1)}</td>
+                <td>{dimension.responses}</td>
+              </tr>
             ))}
-          </div>
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-            {distribution.map((item) => <span key={`legend-${item.label}`}><strong className="text-slate-700">{item.label}</strong> {Math.round((item.value / total) * 100)}%</span>)}
-          </div>
-        </div>
-      ) : <p className="mt-4 text-sm text-slate-500">ยังไม่มีข้อมูล</p>}
+          </tbody>
+        </table>
 
-      {satisfaction.responseCount > 0 && satisfaction.responseCount < DASHBOARD_MIN_SAMPLE_SIZE ? (
-        <div className="mt-3"><SmallSampleWarning count={satisfaction.responseCount} label="คำตอบความพึงพอใจ" /></div>
-      ) : null}
-
-      <table aria-label="การกระจายคะแนนความพึงพอใจ" className="sr-only">
-        <thead><tr><th>คะแนน</th><th>จำนวนคำตอบ</th></tr></thead>
-        <tbody>{distribution.map((item) => <tr key={`score-${item.label}`}><td>{item.label}</td><td>{item.value}</td></tr>)}</tbody>
-      </table>
+        <table aria-label="การกระจายคะแนนความพึงพอใจ">
+          <thead><tr><th>คะแนน</th><th>จำนวนคำตอบ</th></tr></thead>
+          <tbody>
+            {distribution.map((item) => (
+              <tr key={`score-${item.label}`}><td>{item.label}</td><td>{item.value}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
+  );
+}
+
+function ScoreRing({ value }: { value: number | null }) {
+  const radius = 43;
+  const circumference = 2 * Math.PI * radius;
+  const progress = value === null ? 0 : value / 5;
+  const dashOffset = circumference * (1 - progress);
+
+  return (
+    <div className="relative mx-auto h-32 w-32 shrink-0">
+      <svg
+        className="h-full w-full -rotate-90"
+        viewBox="0 0 104 104"
+        role="img"
+        aria-label={value === null ? "ยังไม่มีคะแนนเฉลี่ย" : `คะแนนเฉลี่ย ${value.toFixed(1)} จาก 5`}
+      >
+        <circle cx="52" cy="52" r={radius} fill="none" stroke="#E5E7EB" strokeWidth="8" />
+        <circle
+          cx="52"
+          cy="52"
+          r={radius}
+          fill="none"
+          stroke="#B94727"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          strokeLinecap="round"
+          strokeWidth="8"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <Star aria-hidden="true" className="text-[#D6A13D]" size={16} weight="fill" />
+        <strong className={`mt-1 tabular-nums ${value === null ? "max-w-20 text-xs leading-4 text-slate-600" : "text-xl text-slate-950"}`}>
+          {value === null ? "ยังไม่มีข้อมูล" : `${value.toFixed(1)} / 5`}
+        </strong>
+      </div>
+    </div>
+  );
+}
+
+function IntentMetric({
+  icon,
+  label,
+  responses,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  responses: number;
+  value: number | null;
+}) {
+  return (
+    <div className="min-w-0 px-3 first:pl-0 last:pr-0">
+      <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">{icon}{label}</p>
+      <strong className={`mt-1 block tabular-nums ${value === null ? "text-sm text-slate-600" : "text-xl text-slate-950"}`}>
+        {rateLabel(value)}
+      </strong>
+      <span className="mt-1 block text-xs tabular-nums text-slate-600">ฐาน {responses.toLocaleString("th-TH")}</span>
+    </div>
+  );
+}
+
+function DimensionRow({ dimension }: { dimension: ExperienceDimension }) {
+  const width = dimension.average === null ? 0 : (dimension.average / 5) * 100;
+
+  return (
+    <div className="grid grid-cols-[minmax(6.5rem,1fr)_3rem] items-center gap-x-3 gap-y-1">
+      <div className="flex min-w-0 items-center justify-between gap-2 text-xs">
+        <span className="break-words font-semibold text-slate-700">{dimension.label}</span>
+        <span className="shrink-0 tabular-nums text-slate-500">n={dimension.responses.toLocaleString("th-TH")}</span>
+      </div>
+      <strong className="row-span-2 text-right text-sm tabular-nums text-slate-900">
+        {dimension.average === null ? "—" : dimension.average.toFixed(1)}
+      </strong>
+      <div className="h-1.5 overflow-hidden rounded-sm bg-slate-100" aria-hidden="true">
+        <div className="h-full rounded-sm bg-[#0A6B62]" style={{ width: `${width}%` }} />
+      </div>
+    </div>
   );
 }
