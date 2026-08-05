@@ -9,7 +9,7 @@ export function StackedDistributionCard({ title, definition, data, emptyDescript
   const visible = data.filter((item) => item.value > 0).slice(0, 6);
   const total = visible.reduce((sum, item) => sum + item.value, 0);
   return (
-    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3"><h2 className="text-base font-bold text-slate-900">{title}</h2><MetricTooltip definition={definition} /></div>
       {total === 0 ? <div className="mt-4"><NoDataState description={emptyDescription} /></div> : (
         <>

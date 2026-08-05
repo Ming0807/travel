@@ -1,4 +1,5 @@
 import { ArrowDown, Certificate, CheckCircle, QrCode, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { FunnelChart, funnelStageLabel } from "@/components/dashboard/FunnelChart";
 import { FunnelDetailTable } from "@/components/dashboard/FunnelDetailTable";
 import type { DashboardViewModel, FunnelStage } from "@/types/dashboard";
@@ -40,10 +41,11 @@ export function FunnelSection({ data }: { data: DashboardViewModel }) {
 
   return (
     <section aria-labelledby="funnel-heading" className="space-y-5">
-      <header>
-        <h2 className="text-xl font-bold text-slate-950" id="funnel-heading">เส้นทางการใช้งาน</h2>
-        <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">ค้นหาขั้นตอนที่มีเหตุการณ์ออกจากกระบวนการ ตั้งแต่สแกน QR ถึงรับใบประกาศและตอบแบบสำรวจ</p>
-      </header>
+      <AnalyticsSectionHeader
+        description="ค้นหาขั้นตอนที่มีเหตุการณ์ออกจากกระบวนการ ตั้งแต่สแกน QR ถึงรับใบประกาศและตอบแบบสำรวจ"
+        headingId="funnel-heading"
+        title="เส้นทางการใช้งาน"
+      />
 
       <dl className="grid overflow-hidden rounded-md border border-slate-200 bg-white sm:grid-cols-2 xl:grid-cols-4">
         {[

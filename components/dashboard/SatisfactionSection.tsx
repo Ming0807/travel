@@ -1,4 +1,5 @@
 import { ArrowClockwise, ChartBar, Star, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { KpiCard } from "@/components/dashboard/KpiCard";
@@ -6,6 +7,7 @@ import { SatisfactionDetailTable } from "@/components/dashboard/SatisfactionDeta
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import { StackedDistributionCard } from "@/components/dashboard/StackedDistributionCard";
 import { SurveyRecordsLink } from "@/components/dashboard/SurveyRecordsLink";
+import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import type { DashboardViewModel, DistributionItem } from "@/types/dashboard";
 
 function formatPercent(value: number | null): string {
@@ -29,22 +31,37 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
   const chartDimensions: DistributionItem[] = dimensions
     .filter((dimension): dimension is SatisfactionDimension & { value: number } => dimension.value !== null)
     .map((dimension) => ({ label: dimension.label, value: dimension.value, percent: dimension.value / 5, note: `${dimension.responseCount.toLocaleString("th-TH")} คำตอบ` }));
-  const weakestDimension = chartDimensions.reduce<DistributionItem | null>((current, item) => (
-    current === null || item.value < current.value ? item : current
-  ), null);
+  const weakestDimension = dimensions
+    .filter((dimension): dimension is SatisfactionDimension & { value: number } => (
+      dimension.value !== null && dimension.responseCount >= DASHBOARD_MIN_SAMPLE_SIZE
+    ))
+    .reduce<(SatisfactionDimension & { value: number }) | null>((current, item) => (
+      current === null || item.value < current.value ? item : current
+    ), null);
+  const weakestDimensionSummary = weakestDimension
+    ? `${weakestDimension.label} ${weakestDimension.value.toFixed(1)} / 5 จาก ${weakestDimension.responseCount.toLocaleString("th-TH")} คำตอบ`
+    : chartDimensions.length > 0
+      ? `ข้อมูลรายมิติยังไม่ถึง ${DASHBOARD_MIN_SAMPLE_SIZE.toLocaleString("th-TH")} คำตอบต่อมิติ จึงยังไม่สรุปประเด็นที่ควรปรับปรุง`
+      : "ยังไม่มีข้อมูล";
   const byAttraction = data.satisfaction.byAttraction
     .filter((item) => item.averageSatisfaction !== null)
-    .map((item) => ({ label: item.attractionName, value: item.averageSatisfaction as number, percent: (item.averageSatisfaction as number) / 5, note: `${item.surveyResponseCount.toLocaleString("th-TH")} คำตอบ` }));
+    .map((item) => ({
+      label: item.attractionName,
+      value: item.averageSatisfaction as number,
+      percent: (item.averageSatisfaction as number) / 5,
+      note: item.surveyResponseCount < DASHBOARD_MIN_SAMPLE_SIZE
+        ? `ข้อมูลยังไม่พอ: ${item.surveyResponseCount.toLocaleString("th-TH")} คำตอบ`
+        : `${item.surveyResponseCount.toLocaleString("th-TH")} คำตอบ`,
+    }));
 
   return (
     <section aria-labelledby="satisfaction-heading" className="space-y-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-slate-950" id="satisfaction-heading">ความพึงพอใจของนักท่องเที่ยว</h2>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">สรุปเฉพาะแบบสำรวจที่สมัครใจ พร้อมฐานคำตอบของแต่ละตัวชี้วัด</p>
-        </div>
-        <div className="flex flex-wrap gap-2"><SurveyRecordsLink data={data} /><ExportCsvButton /></div>
-      </header>
+      <AnalyticsSectionHeader
+        actions={<><SurveyRecordsLink data={data} /><ExportCsvButton /></>}
+        description="สรุปเฉพาะแบบสำรวจที่สมัครใจ พร้อมฐานคำตอบของแต่ละตัวชี้วัด"
+        headingId="satisfaction-heading"
+        title="ความพึงพอใจของนักท่องเที่ยว"
+      />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <KpiCard metric={{ key: "satisfaction_avg", label: "คะแนนเฉลี่ยโดยรวม", value: data.satisfaction.averageOverall === null ? "ยังไม่มีข้อมูล" : `${data.satisfaction.averageOverall.toFixed(1)} / 5`, rawValue: data.satisfaction.averageOverall, valueType: "rating", definition: "คะแนนความพึงพอใจโดยรวมเฉลี่ยจากคำตอบที่มีข้อมูล", note: `จากผู้ตอบ ${data.satisfaction.responseCount.toLocaleString("th-TH")} รายการ` }} sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" />
@@ -66,7 +83,7 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
           <dl className="mt-4 divide-y divide-slate-100 border-y border-slate-100">
             <div className="grid grid-cols-[32px_1fr] gap-3 py-3">
               <ChartBar aria-hidden="true" className="mt-0.5 text-[#B94727]" size={20} />
-              <div><dt className="text-xs font-semibold text-slate-600">มิติที่ได้คะแนนต่ำสุด</dt><dd className="mt-1 font-bold text-slate-900">{weakestDimension ? `${weakestDimension.label} ${weakestDimension.value.toFixed(1)} / 5` : "ยังไม่มีข้อมูล"}</dd></div>
+              <div><dt className="text-xs font-semibold text-slate-600">มิติที่ควรติดตาม</dt><dd className="mt-1 font-bold leading-6 text-slate-900">{weakestDimensionSummary}</dd></div>
             </div>
             <div className="grid grid-cols-[32px_1fr] gap-3 py-3">
               <ArrowClockwise aria-hidden="true" className="mt-0.5 text-[#0A6B62]" size={20} />
@@ -83,7 +100,7 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-2">
         <StackedDistributionCard data={data.satisfaction.distribution} definition="สัดส่วนการให้คะแนนความพึงพอใจโดยรวมในแต่ละระดับ" emptyDescription="ยังไม่มีการกระจายคะแนนความพึงพอใจ" title="การกระจายคะแนนโดยรวม" />
-        <BarChartCard data={byAttraction} definition="คะแนนเฉลี่ยแยกตามสถานที่ ควรพิจารณาควบคู่กับจำนวนผู้ตอบ" emptyDescription="ยังไม่มีคะแนนที่แยกตามสถานที่" title="ความพึงพอใจแยกตามสถานที่" sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" />
+        <BarChartCard data={byAttraction} definition="คะแนนเฉลี่ยแยกตามสถานที่ ควรพิจารณาควบคู่กับจำนวนผู้ตอบ และยังไม่ใช้สรุปเชิงแนะนำเมื่อสถานที่นั้นมีคำตอบต่ำกว่า 30 รายการ" emptyDescription="ยังไม่มีคะแนนที่แยกตามสถานที่" title="ความพึงพอใจแยกตามสถานที่" />
       </div>
 
       <SatisfactionDetailTable
@@ -105,6 +122,7 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
           facilityAverage: data.satisfaction.facilityAverage,
         }}
         overallAverage={data.satisfaction.averageOverall}
+        overallResponseCount={data.satisfaction.responseCount}
       />
     </section>
   );

@@ -1,4 +1,5 @@
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
+import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { localizeDashboardLabel } from "@/components/dashboard/dashboard-localization";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { TouristDetailTable } from "@/components/dashboard/TouristDetailTable";
@@ -20,31 +21,32 @@ function kpiDivider(index: number): string {
 function IdentityContext({ items }: { items: DistributionItem[] }) {
   const positive = items.filter((item) => item.value > 0);
   const visible = positive.slice(0, 5);
-  const identityCount = total(positive);
 
   return (
     <section className="h-full rounded-md border border-slate-200 bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)]">
       <h2 className="text-base font-bold text-slate-900">บริบทวิธีเข้าใช้งาน</h2>
       <p className="mt-1 text-sm leading-6 text-slate-500">ใช้ดูช่องทางที่โปรไฟล์เชื่อมกับระบบ หนึ่งโปรไฟล์อาจมีมากกว่าหนึ่งวิธีเข้าใช้งาน</p>
-      {identityCount === 0 ? (
+      {positive.length === 0 ? (
         <p className="mt-4 rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">ยังไม่มีข้อมูลวิธีเข้าใช้งาน</p>
       ) : (
         <>
-          <div className="mt-5 flex h-3 overflow-hidden rounded-sm bg-slate-100" role="img" aria-label="สัดส่วนวิธีเข้าใช้งาน">
-            {visible.map((item, index) => <span key={item.label} style={{ width: `${(item.value / identityCount) * 100}%`, backgroundColor: CONTEXT_COLORS[index] }} />)}
-          </div>
-          <ul className="mt-4 space-y-2">
+          <ul className="mt-5 space-y-3">
             {visible.map((item, index) => (
-              <li key={item.label} className="flex items-center justify-between gap-3 text-sm">
-                <span className="flex min-w-0 items-center gap-2 text-slate-700"><span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: CONTEXT_COLORS[index] }} />{localizeDashboardLabel(item.label)}</span>
-                <strong className="shrink-0 tabular-nums text-slate-900">{Math.round((item.value / identityCount) * 100)}%</strong>
+              <li key={item.label} className="text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex min-w-0 items-center gap-2 text-slate-700"><span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: CONTEXT_COLORS[index] }} />{localizeDashboardLabel(item.label)}</span>
+                  <strong className="shrink-0 tabular-nums text-slate-900">{item.value.toLocaleString("th-TH")} โปรไฟล์ · {Math.round((item.percent ?? 0) * 100)}%</strong>
+                </div>
+                <div className="mt-1.5 h-2 overflow-hidden rounded-sm bg-slate-100" role="img" aria-label={`${localizeDashboardLabel(item.label)} ${Math.round((item.percent ?? 0) * 100)}% ของโปรไฟล์`}>
+                  <div className="h-full rounded-sm" style={{ width: `${Math.min((item.percent ?? 0) * 100, 100)}%`, backgroundColor: CONTEXT_COLORS[index] }} />
+                </div>
               </li>
             ))}
           </ul>
           {positive.length > visible.length ? <p className="mt-3 text-xs text-slate-500">แสดง 5 วิธีแรกจากทั้งหมด {positive.length.toLocaleString("th-TH")} วิธี</p> : null}
         </>
       )}
-      <p className="mt-5 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500">โปรไฟล์ระบบ ไม่ใช่จำนวนบุคคลจริงที่ยืนยันแล้ว และไม่ใช้ข้อมูลผู้ให้บริการเพื่อระบุตัวบุคคลในหน้านี้</p>
+      <p className="mt-5 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500">คิดสัดส่วนต่อจำนวนโปรไฟล์ หนึ่งโปรไฟล์อาจมีหลายช่องทางจึงรวมเกิน 100% ได้ โปรไฟล์ระบบไม่ใช่จำนวนบุคคลจริงที่ยืนยันแล้ว และไม่ใช้ข้อมูลผู้ให้บริการเพื่อระบุตัวบุคคลในหน้านี้</p>
     </section>
   );
 }
@@ -65,13 +67,12 @@ export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
 
   return (
     <section className="space-y-5" aria-labelledby="tourist-profile-heading">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 id="tourist-profile-heading" className="text-lg font-bold text-slate-900">ลักษณะนักท่องเที่ยว</h2>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">สำรวจพื้นที่ต้นทาง ช่วงอายุ และภาษาจากโปรไฟล์ที่มีรายการเข้าชม โดยแสดงเฉพาะข้อมูลสรุปที่ไม่ระบุตัวบุคคล</p>
-        </div>
-        <ExportCsvButton />
-      </div>
+      <AnalyticsSectionHeader
+        actions={<ExportCsvButton />}
+        description="สำรวจพื้นที่ต้นทาง ช่วงอายุ และภาษาจากโปรไฟล์ที่มีรายการเข้าชม โดยแสดงเฉพาะข้อมูลสรุปที่ไม่ระบุตัวบุคคล"
+        headingId="tourist-profile-heading"
+        title="ลักษณะนักท่องเที่ยว"
+      />
 
       <dl role="group" aria-label="ตัวชี้วัดลักษณะนักท่องเที่ยว" className="grid overflow-hidden rounded-md border border-slate-200 bg-white sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map(([label, value], index) => (

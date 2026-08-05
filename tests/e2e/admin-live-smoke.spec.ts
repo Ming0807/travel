@@ -4,9 +4,20 @@ const adminUsername = process.env.E2E_ADMIN_USERNAME?.trim();
 const adminPassword = process.env.E2E_ADMIN_PASSWORD;
 const hasCredentials = Boolean(adminUsername && adminPassword);
 
+const analyticsRoutes = [
+  "/admin/dashboard",
+  "/admin/dashboard/tourists",
+  "/admin/dashboard/visits",
+  "/admin/dashboard/attractions",
+  "/admin/dashboard/expenses",
+  "/admin/dashboard/satisfaction",
+  "/admin/dashboard/funnel",
+  "/admin/dashboard/sustainability",
+] as const;
+
 const desktopRoutes = [
   "/admin",
-  "/admin/dashboard",
+  ...analyticsRoutes,
   "/admin/attractions",
   "/admin/checkin-codes",
   "/admin/tourists",
@@ -75,6 +86,10 @@ test.describe("Authenticated admin production smoke", () => {
     }
 
     await page.setViewportSize({ width: 375, height: 812 });
+    for (const route of analyticsRoutes) {
+      await expectHealthyAdminPage(page, route);
+    }
+
     await expectHealthyAdminPage(page, "/admin/tourists");
     const menuButton = page.getByRole("button", { name: "เปิดเมนูผู้ดูแลระบบ" });
     await expect(menuButton).toBeVisible();

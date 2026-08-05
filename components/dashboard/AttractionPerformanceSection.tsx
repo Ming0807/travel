@@ -1,4 +1,5 @@
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
+import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { NoDataState } from "@/components/dashboard/NoDataState";
 import type { DashboardViewModel, RankedAttraction } from "@/types/dashboard";
 
@@ -57,10 +58,11 @@ export function AttractionPerformanceSection({ data }: { data: DashboardViewMode
 
   return (
     <section className="space-y-5" aria-labelledby="attraction-performance-heading">
-      <div>
-        <h2 id="attraction-performance-heading" className="text-lg font-bold text-slate-900">ผลงานสถานที่ท่องเที่ยว</h2>
-        <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">เปรียบเทียบการเข้าชม ใบประกาศ และเสียงตอบรับ เพื่อพิจารณาการกระจายความสนใจโดยไม่สรุปเกินฐานข้อมูลที่มี</p>
-      </div>
+      <AnalyticsSectionHeader
+        description="เปรียบเทียบการเข้าชม ใบประกาศ และเสียงตอบรับ เพื่อพิจารณาการกระจายความสนใจโดยไม่สรุปเกินฐานข้อมูลที่มี"
+        headingId="attraction-performance-heading"
+        title="ผลงานสถานที่ท่องเที่ยว"
+      />
 
       <dl role="group" aria-label="ตัวชี้วัดผลงานสถานที่" className="grid overflow-hidden rounded-md border border-slate-200 bg-white sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map(([label, value], index) => (

@@ -48,7 +48,7 @@ export function DonutChartCard({
 
   if (data.length === 0) {
     return (
-      <section className="rounded-md border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+      <section className="rounded-md border border-slate-200 bg-white p-5">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-black text-slate-800">{title}</h2>
           <MetricTooltip definition={definition} />
@@ -85,7 +85,7 @@ export function DonutChartCard({
   const sorted = [...segments].sort((a, b) => b.value - a.value);
 
   return (
-    <section className="rounded-md border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+    <section className="rounded-md border border-slate-200 bg-white p-5">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-lg font-black text-slate-800">{title}</h2>
         <MetricTooltip definition={definition} />

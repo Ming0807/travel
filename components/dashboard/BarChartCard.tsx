@@ -19,7 +19,7 @@ export function BarChartCard({ title, definition, data, emptyDescription, sample
   const max = Math.max(...visible.map((item) => item.value), 0);
 
   return (
-    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)]">
+    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-base font-bold text-slate-900">{title}</h2>
         <MetricTooltip definition={definition} />
@@ -35,7 +35,10 @@ export function BarChartCard({ title, definition, data, emptyDescription, sample
               return (
                 <div key={`${item.label}-${index}`}>
                   <div className="mb-1 flex items-start justify-between gap-3 text-sm">
-                    <span className="min-w-0 break-words font-medium text-slate-700">{localizeDashboardLabel(item.label)}</span>
+                    <span className="min-w-0 break-words font-medium text-slate-700">
+                      <span className="block">{localizeDashboardLabel(item.label)}</span>
+                      {item.note ? <span className="mt-0.5 block text-xs font-normal text-slate-500">{item.note}</span> : null}
+                    </span>
                     <span className="shrink-0 font-bold tabular-nums text-slate-900">{item.value.toLocaleString("th-TH")}{item.percent !== null ? ` (${Math.round(item.percent * 100)}%)` : ""}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-sm bg-slate-100" role="img" aria-label={`${localizeDashboardLabel(item.label)} ${item.value.toLocaleString("th-TH")}`}>

@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Wrench,
 } from "@phosphor-icons/react/dist/ssr";
+import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { NoDataState } from "@/components/dashboard/NoDataState";
 import { localizeDashboardInsight } from "@/components/dashboard/dashboard-localization";
 import type { DashboardViewModel, InsightCardData } from "@/types/dashboard";
@@ -49,13 +50,12 @@ export function SustainableTourismSection({ data }: { data: DashboardViewModel }
 
   return (
     <section aria-labelledby="sustainability-heading" className="space-y-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-slate-950" id="sustainability-heading">ข้อสังเกตเพื่อการท่องเที่ยวยั่งยืน</h2>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">ข้อสังเกตสร้างจากกติกาและข้อมูลที่มี ไม่ใช่การคาดการณ์จาก AI หรือสถิติทางการ</p>
-        </div>
-        <div className="flex items-center gap-2 rounded-md bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700"><CheckCircle aria-hidden="true" className="text-emerald-700" size={17} weight="fill" />ตรวจสอบหลักฐานย้อนหลังได้</div>
-      </header>
+      <AnalyticsSectionHeader
+        actions={<div className="flex items-center gap-2 rounded-md bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700"><CheckCircle aria-hidden="true" className="text-emerald-700" size={17} weight="fill" />ตรวจสอบหลักฐานย้อนหลังได้</div>}
+        description="ข้อสังเกตสร้างจากกติกาและข้อมูลที่มี ไม่ใช่การคาดการณ์จาก AI หรือสถิติทางการ"
+        headingId="sustainability-heading"
+        title="ข้อสังเกตเพื่อการท่องเที่ยวยั่งยืน"
+      />
 
       {insights.length === 0 ? (
         <NoDataState description="ยังไม่มีข้อมูลเพียงพอสำหรับสร้างข้อสังเกตเชิงวางแผน" />

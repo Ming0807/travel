@@ -88,6 +88,8 @@ function healthyViewModel(overrides?: Partial<DashboardViewModel>): DashboardVie
       estimatedMax: null,
       hasOpenEndedRange: false,
       responseCount: 40,
+      spendingRangeResponseCount: 40,
+      expenseCategoryResponseCount: 40,
       methodologyNote: "Self-reported range data.",
     },
     satisfaction: {
@@ -728,9 +730,9 @@ describe("buildDashboardAlerts — expense", () => {
     expect(expenseAlerts).toHaveLength(0);
   });
 
-  it("produces info alert when responseCount is 0", () => {
+  it("produces info alert when spendingRangeResponseCount is 0", () => {
     const vm = healthyViewModel({
-      expense: { ...healthyViewModel().expense, responseCount: 0 },
+      expense: { ...healthyViewModel().expense, responseCount: 40, spendingRangeResponseCount: 0 },
     });
     const result = buildDashboardAlerts(vm);
     const expenseAlerts = bySource(result, "expense");
@@ -740,9 +742,9 @@ describe("buildDashboardAlerts — expense", () => {
     expect(expenseAlerts[0].id).toBe("expense_no_data");
   });
 
-  it("produces info alert when responseCount is 0 (and does not also produce low sample)", () => {
+  it("produces info alert when spendingRangeResponseCount is 0 (and does not also produce low sample)", () => {
     const vm = healthyViewModel({
-      expense: { ...healthyViewModel().expense, responseCount: 0 },
+      expense: { ...healthyViewModel().expense, responseCount: 40, spendingRangeResponseCount: 0 },
     });
     const result = buildDashboardAlerts(vm);
     const expenseAlerts = bySource(result, "expense");
@@ -751,9 +753,9 @@ describe("buildDashboardAlerts — expense", () => {
     expect(expenseAlerts[0].id).toBe("expense_no_data");
   });
 
-  it("produces info alert when responseCount is between 1 and 4 (low sample)", () => {
+  it("produces info alert when spendingRangeResponseCount is between 1 and 4 (low sample)", () => {
     const vm = healthyViewModel({
-      expense: { ...healthyViewModel().expense, responseCount: 3 },
+      expense: { ...healthyViewModel().expense, responseCount: 40, spendingRangeResponseCount: 3 },
     });
     const result = buildDashboardAlerts(vm);
     const expenseAlerts = bySource(result, "expense");
@@ -763,18 +765,18 @@ describe("buildDashboardAlerts — expense", () => {
     expect(expenseAlerts[0].message).toContain("3");
   });
 
-  it("produces info alert when responseCount is 4 (edge of low sample range)", () => {
+  it("produces info alert when spendingRangeResponseCount is 4 (edge of low sample range)", () => {
     const vm = healthyViewModel({
-      expense: { ...healthyViewModel().expense, responseCount: 4 },
+      expense: { ...healthyViewModel().expense, responseCount: 40, spendingRangeResponseCount: 4 },
     });
     const result = buildDashboardAlerts(vm);
     expect(bySource(result, "expense")).toHaveLength(1);
     expect(bySource(result, "expense")[0].id).toBe("expense_low_sample");
   });
 
-  it("does NOT produce info alert when responseCount is exactly 30", () => {
+  it("does NOT produce info alert when spendingRangeResponseCount is exactly 30", () => {
     const vm = healthyViewModel({
-      expense: { ...healthyViewModel().expense, responseCount: 30 },
+      expense: { ...healthyViewModel().expense, responseCount: 40, spendingRangeResponseCount: 30 },
     });
     const result = buildDashboardAlerts(vm);
     expect(bySource(result, "expense")).toHaveLength(0);
@@ -810,7 +812,7 @@ describe("buildDashboardAlerts — sorting", () => {
       },
       funnel: { stages, largestDropOffStage: formStage },
       kpis,
-      expense: { ...healthyViewModel().expense, responseCount: 0 },
+      expense: { ...healthyViewModel().expense, responseCount: 0, spendingRangeResponseCount: 0 },
     });
 
     const result = buildDashboardAlerts(vm);
@@ -869,7 +871,7 @@ describe("buildDashboardAlerts — integration scenarios", () => {
       },
       funnel: { stages: emptyStages, largestDropOffStage: null },
       kpis,
-      expense: { ...healthyViewModel().expense, responseCount: 0 },
+      expense: { ...healthyViewModel().expense, responseCount: 0, spendingRangeResponseCount: 0 },
     });
 
     const result = buildDashboardAlerts(vm);
@@ -903,7 +905,7 @@ describe("buildDashboardAlerts — integration scenarios", () => {
       },
       funnel: { stages, largestDropOffStage: certStage },
       kpis,
-      expense: { ...healthyViewModel().expense, responseCount: 2 },
+      expense: { ...healthyViewModel().expense, responseCount: 2, spendingRangeResponseCount: 2 },
     });
 
     const result = buildDashboardAlerts(vm);

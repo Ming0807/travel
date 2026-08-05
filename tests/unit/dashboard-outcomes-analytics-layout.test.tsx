@@ -71,6 +71,8 @@ function dashboardData(): DashboardViewModel {
       estimatedMax: 42_000,
       hasOpenEndedRange: false,
       responseCount: 30,
+      spendingRangeResponseCount: 30,
+      expenseCategoryResponseCount: 30,
       methodologyNote: "ประมาณจากช่วงค่าใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง",
     },
     satisfaction: {
@@ -157,6 +159,25 @@ describe("Outcome analytics detailed layouts", () => {
     expect(screen.queryByText(/0(?:\.0)? \/ 5/)).not.toBeInTheDocument();
     expect(screen.getByRole("table", { name: "คะแนนประสบการณ์รายมิติ" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ความพึงพอใจแยกตามสถานที่" })).toBeInTheDocument();
+  });
+
+  it("ไม่สรุปมิติที่ควรปรับปรุงจากตัวอย่างต่ำกว่าเกณฑ์และแสดงจำนวนคำตอบรายมิติ", () => {
+    render(<SatisfactionSection data={dashboardData()} />);
+
+    expect(screen.getByText("ข้อมูลรายมิติยังไม่ถึง 30 คำตอบต่อมิติ จึงยังไม่สรุปประเด็นที่ควรปรับปรุง")).toBeInTheDocument();
+    expect(screen.queryByText("การเข้าถึง 3.7 / 5")).not.toBeInTheDocument();
+    expect(screen.getAllByText("22 คำตอบ").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("ข้อมูลยังไม่พอ").length).toBeGreaterThan(0);
+  });
+
+  it("เตือนตัวอย่างรายสถานที่แม้จำนวนคำตอบรวมเกินเกณฑ์", () => {
+    const data = dashboardData();
+    data.satisfaction.responseCount = 100;
+    data.satisfaction.byAttraction[0].surveyResponseCount = 1;
+
+    render(<SatisfactionSection data={data} />);
+
+    expect(screen.getByText("ข้อมูลยังไม่พอ: 1 คำตอบ")).toBeInTheDocument();
   });
 
   it("อธิบาย funnel เป็นจำนวนเหตุการณ์และแสดงจุดออกที่ตรวจสอบได้", () => {

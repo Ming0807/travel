@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CaretDown, FunnelSimple, X } from "@phosphor-icons/react/dist/ssr";
@@ -9,6 +10,21 @@ type DashboardFiltersProps = {
   filters: DashboardFilters;
   options: DashboardReferenceOptions;
 };
+
+const DESKTOP_FILTER_QUERY = "(min-width: 1024px)";
+
+function subscribeToDesktopFilter(callback: () => void): () => void {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return () => undefined;
+  const media = window.matchMedia(DESKTOP_FILTER_QUERY);
+  media.addEventListener?.("change", callback);
+  return () => media.removeEventListener?.("change", callback);
+}
+
+function getDesktopFilterSnapshot(): boolean {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia(DESKTOP_FILTER_QUERY).matches
+    : false;
+}
 
 function FilterSelect({
   name,
@@ -68,6 +84,9 @@ function optionLabel(options: DashboardReferenceOption[], value: number | string
 export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const desktopDefaultOpen = useSyncExternalStore(subscribeToDesktopFilter, getDesktopFilterSnapshot, () => false);
+  const [manualOpen, setManualOpen] = useState<boolean | null>(null);
+  const isOpen = manualOpen ?? desktopDefaultOpen;
   const activeFilters = [
     ["province_id", "จังหวัด", optionLabel(options.provinces, filters.provinceId)],
     ["attraction_id", "สถานที่", optionLabel(options.attractions, filters.attractionId)],
@@ -87,14 +106,23 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   }
 
   return (
-    <details className="group rounded-md border border-slate-200 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.05)]">
-      <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center gap-3 px-4 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]">
+    <details
+      className="group rounded-md border border-slate-200 bg-white"
+      open={isOpen}
+    >
+      <summary
+        className="flex min-h-12 cursor-pointer list-none flex-wrap items-center gap-3 px-4 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]"
+        onClick={(event) => {
+          event.preventDefault();
+          setManualOpen(!isOpen);
+        }}
+      >
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#FFF0EA] text-[#B94727]"><FunnelSimple aria-hidden="true" size={17} weight="bold" /></span>
         <span className="min-w-0">
           <span id="dashboard-filters-heading" className="block text-sm font-bold text-slate-900">ตัวกรองข้อมูล</span>
           <span className="block text-xs text-slate-500">{filters.dateFrom} ถึง {filters.dateTo}{activeFilters.length > 0 ? ` · ใช้อยู่ ${activeFilters.length} ตัวกรอง` : ""}</span>
         </span>
-        <span className="ml-auto inline-flex min-h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 group-open:border-[#E8B8A8] group-open:text-[#B94727]">
+        <span className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 group-open:border-[#E8B8A8] group-open:text-[#B94727]">
           ปรับตัวกรอง
           <CaretDown aria-hidden="true" className="transition-transform group-open:rotate-180" size={14} weight="bold" />
         </span>
@@ -128,7 +156,7 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
             ตัวกรองเพิ่มเติม
             <CaretDown aria-hidden="true" className="transition-transform group-open:rotate-180" size={16} weight="bold" />
           </summary>
-          <div className="mt-2 grid gap-3 border-l-2 border-slate-200 pl-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-2 grid gap-3 border-t border-slate-200 pt-3 sm:grid-cols-2 xl:grid-cols-4">
             <FilterSelect label="ประเภทสถานที่" name="attraction_type_id" options={options.attractionTypes} value={filters.attractionTypeId} />
             <FilterSelect label="ประเทศต้นทาง" name="origin_country_id" options={options.originCountries} value={filters.originCountryId} />
             <FilterSelect label="จังหวัดต้นทาง" name="origin_province_id" options={options.originProvinces} value={filters.originProvinceId} />

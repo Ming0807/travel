@@ -1,4 +1,5 @@
 import { CurrencyCircleDollar, Info, Receipt, TrendUp } from "@phosphor-icons/react/dist/ssr";
+import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { ExpenseDetailTable } from "@/components/dashboard/ExpenseDetailTable";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
@@ -16,26 +17,26 @@ function highest(items: DistributionItem[]): DistributionItem | null {
 export function ExpenseSection({ data }: { data: DashboardViewModel }) {
   const topRange = highest(data.expense.spendingRanges);
   const topCategory = highest(data.expense.expenseCategories);
+  const spendingRangeResponseCount = data.expense.spendingRangeResponseCount;
 
   return (
     <section aria-labelledby="expense-heading" className="space-y-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-slate-950" id="expense-heading">ค่าใช้จ่ายโดยประมาณ</h2>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">สำรวจรูปแบบการใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง เพื่อประกอบการวางแผนเศรษฐกิจท้องถิ่น</p>
-        </div>
-        <div className="flex flex-wrap gap-2"><SurveyRecordsLink data={data} /><ExportCsvButton /></div>
-      </header>
+      <AnalyticsSectionHeader
+        actions={<><SurveyRecordsLink data={data} /><ExportCsvButton /></>}
+        description="สำรวจรูปแบบการใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง เพื่อประกอบการวางแผนเศรษฐกิจท้องถิ่น"
+        headingId="expense-heading"
+        title="ค่าใช้จ่ายโดยประมาณ"
+      />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <KpiCard metric={{ key: "expense_estimate", label: "ช่วงค่าใช้จ่ายรวมโดยประมาณ", value: formatEstimatedSpending(data.expense.estimatedMin, data.expense.estimatedMax, data.expense.hasOpenEndedRange), rawValue: data.expense.estimatedMin, valueType: "currency_range", definition: "ผลรวมค่าต่ำสุดและสูงสุดจากช่วงค่าใช้จ่ายที่ผู้ตอบเลือก", note: `จากคำตอบ ${data.expense.responseCount.toLocaleString("th-TH")} รายการ` }} sampleCount={data.expense.responseCount} sampleLabel="คำตอบค่าใช้จ่าย" />
-        <KpiCard metric={{ key: "expense_min", label: "ค่าประมาณต่ำสุด", value: data.expense.estimatedMin === null ? "ยังไม่มีข้อมูล" : `${data.expense.estimatedMin.toLocaleString("th-TH")} บาท`, rawValue: data.expense.estimatedMin, valueType: "currency_range", definition: "ผลรวมค่าต่ำสุดของช่วงค่าใช้จ่ายที่เลือก" }} sampleCount={data.expense.responseCount} sampleLabel="คำตอบค่าใช้จ่าย" />
-        <KpiCard metric={{ key: "expense_max", label: "ค่าประมาณสูงสุด", value: data.expense.estimatedMax === null ? (data.expense.hasOpenEndedRange ? "ไม่กำหนดเพดาน" : "ยังไม่มีข้อมูล") : `${data.expense.estimatedMax.toLocaleString("th-TH")} บาท`, rawValue: data.expense.estimatedMax, valueType: "currency_range", definition: "ผลรวมค่าสูงสุดของช่วงค่าใช้จ่าย ช่วงปลายเปิดจะไม่ถูกกำหนดเพดานเทียม" }} sampleCount={data.expense.responseCount} sampleLabel="คำตอบค่าใช้จ่าย" />
+        <KpiCard metric={{ key: "expense_estimate", label: "ช่วงค่าใช้จ่ายรวมโดยประมาณ", value: formatEstimatedSpending(data.expense.estimatedMin, data.expense.estimatedMax, data.expense.hasOpenEndedRange), rawValue: data.expense.estimatedMin, valueType: "currency_range", definition: "ผลรวมค่าต่ำสุดและสูงสุดจากช่วงค่าใช้จ่ายที่ผู้ตอบเลือก", note: `จากคำตอบช่วงค่าใช้จ่าย ${spendingRangeResponseCount.toLocaleString("th-TH")} รายการ` }} sampleCount={spendingRangeResponseCount} sampleLabel="คำตอบช่วงค่าใช้จ่าย" />
+        <KpiCard metric={{ key: "expense_min", label: "ค่าประมาณต่ำสุด", value: data.expense.estimatedMin === null ? "ยังไม่มีข้อมูล" : `${data.expense.estimatedMin.toLocaleString("th-TH")} บาท`, rawValue: data.expense.estimatedMin, valueType: "currency_range", definition: "ผลรวมค่าต่ำสุดของช่วงค่าใช้จ่ายที่เลือก" }} sampleCount={spendingRangeResponseCount} sampleLabel="คำตอบช่วงค่าใช้จ่าย" />
+        <KpiCard metric={{ key: "expense_max", label: "ค่าประมาณสูงสุด", value: data.expense.estimatedMax === null ? (data.expense.hasOpenEndedRange ? "ไม่กำหนดเพดาน" : "ยังไม่มีข้อมูล") : `${data.expense.estimatedMax.toLocaleString("th-TH")} บาท`, rawValue: data.expense.estimatedMax, valueType: "currency_range", definition: "ผลรวมค่าสูงสุดของช่วงค่าใช้จ่าย ช่วงปลายเปิดจะไม่ถูกกำหนดเพดานเทียม" }} sampleCount={spendingRangeResponseCount} sampleLabel="คำตอบช่วงค่าใช้จ่าย" />
       </div>
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-12">
         <div aria-label="หลักฐานค่าใช้จ่ายโดยประมาณ" className="min-w-0 xl:col-span-8" role="region">
-          <BarChartCard data={data.expense.spendingRanges} definition="การกระจายช่วงค่าใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง ไม่ใช่ยอดธุรกรรมจริง" emptyDescription="ยังไม่มีคำตอบช่วงค่าใช้จ่ายสำหรับตัวกรองที่เลือก" title="ช่วงค่าใช้จ่ายที่รายงาน" sampleCount={data.expense.responseCount} sampleLabel="คำตอบค่าใช้จ่าย" />
+          <BarChartCard data={data.expense.spendingRanges} definition="การกระจายช่วงค่าใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง ไม่ใช่ยอดธุรกรรมจริง" emptyDescription="ยังไม่มีคำตอบช่วงค่าใช้จ่ายสำหรับตัวกรองที่เลือก" title="ช่วงค่าใช้จ่ายที่รายงาน" sampleCount={spendingRangeResponseCount} sampleLabel="คำตอบช่วงค่าใช้จ่าย" />
         </div>
 
         <aside aria-label="การตีความค่าใช้จ่าย" className="min-w-0 rounded-md border border-slate-200 bg-white p-4 xl:col-span-4" role="region">
@@ -69,7 +70,8 @@ export function ExpenseSection({ data }: { data: DashboardViewModel }) {
         estimatedMax={data.expense.estimatedMax}
         estimatedMin={data.expense.estimatedMin}
         expenseCategories={data.expense.expenseCategories}
-        responseCount={data.expense.responseCount}
+        expenseCategoryResponseCount={data.expense.expenseCategoryResponseCount}
+        spendingRangeResponseCount={spendingRangeResponseCount}
         spendingRanges={data.expense.spendingRanges}
       />
     </section>

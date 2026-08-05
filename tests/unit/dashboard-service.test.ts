@@ -549,6 +549,53 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     expect(result.touristProfile.originCountries[0].value).toBe(3);
   });
 
+  it("uses real identity providers and keeps missing language separate from Thai", async () => {
+    mockPayload.current = makePayload({
+      visits: [
+        visitRow({
+          tourist_id: "t1",
+          tourists: [{
+            preferred_language: null,
+            tourist_identities: [
+              { provider: "anonymous_device", provider_user_id: "private-device-token" },
+              { provider: "google", provider_user_id: "private-google-id" },
+            ],
+          }],
+        }),
+        visitRow({
+          visit_id: 2,
+          tourist_id: "t2",
+          tourists: [{ preferred_language: "th", tourist_identities: [] }],
+        }),
+        visitRow({
+          visit_id: 3,
+          tourist_id: "t3",
+          tourists: [{
+            preferred_language: "zz",
+            tourist_identities: [{ provider: "future_provider" }],
+          }],
+        }),
+      ],
+    });
+
+    const result = await getDashboardAnalytics({});
+
+    expect(result.touristProfile.preferredLanguages).toEqual(expect.arrayContaining([
+      expect.objectContaining({ label: "th", value: 1 }),
+      expect.objectContaining({ label: "ไม่ระบุภาษา", value: 1 }),
+      expect.objectContaining({ label: "ภาษาอื่น / ไม่ทราบ", value: 1 }),
+    ]));
+    expect(result.touristProfile.identityProviders).toEqual(expect.arrayContaining([
+      expect.objectContaining({ label: "anonymous_device", value: 1 }),
+      expect.objectContaining({ label: "google", value: 1 }),
+      expect.objectContaining({ label: "ไม่ระบุช่องทาง", value: 1 }),
+      expect.objectContaining({ label: "ช่องทางอื่น / ไม่ทราบ", value: 1 }),
+    ]));
+    expect(result.touristProfile.identityProviders.reduce((sum, item) => sum + (item.percent ?? 0), 0)).toBeCloseTo(4 / 3);
+    expect(JSON.stringify(result.touristProfile)).not.toContain("private-device-token");
+    expect(JSON.stringify(result.touristProfile)).not.toContain("private-google-id");
+  });
+
   // ── 6f. Travel behavior ─────────────────────
 
   it("aggregates travel behavior with averages", async () => {
@@ -583,7 +630,7 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
           visit_id: 3,
           tourist_id: "t3",
           group_size: null, // skipped in average
-          overnight_status: null, // "No data" category
+          overnight_status: null,
           nights: null,
           travel_companions: null,
           transport_modes: null,
@@ -602,15 +649,17 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     expect(result.travelBehavior.averageNights).toBe(1);
     expect(result.travelBehavior.answeredNightsCount).toBe(2);
 
-    // Companion types: 2 with data, 1 null → "No data"
-    expect(result.travelBehavior.companionTypes).toHaveLength(3);
+    // Missing answers are excluded from both the distribution and denominator.
+    expect(result.travelBehavior.companionTypes).toHaveLength(2);
     const companionLabels = result.travelBehavior.companionTypes.map((c) => c.label);
     expect(companionLabels).toContain("ครอบครัว");
     expect(companionLabels).toContain("คู่รัก");
-    expect(companionLabels).toContain("No data");
+    expect(companionLabels).not.toContain("No data");
+    expect(result.travelBehavior.companionTypes.every((item) => item.percent === 0.5)).toBe(true);
 
-    // Overnight status: "yes", "no", "No data"
-    expect(result.travelBehavior.overnightStatus).toHaveLength(3);
+    expect(result.travelBehavior.overnightStatus).toHaveLength(2);
+    expect(result.travelBehavior.overnightStatus.every((item) => item.percent === 0.5)).toBe(true);
+    expect(result.dataQualityWarnings.some((warning) => warning.includes("พฤติกรรมการเดินทาง") && warning.includes("เว้นว่าง"))).toBe(true);
   });
 
   // ── 6g. Expenses ────────────────────────────
@@ -632,13 +681,44 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     expect(result.expense.estimatedMax).toBe(8000);
     expect(result.expense.hasOpenEndedRange).toBe(false);
     expect(result.expense.responseCount).toBe(2);
+    expect(result.expense.spendingRangeResponseCount).toBe(2);
+    expect(result.expense.expenseCategoryResponseCount).toBe(2);
 
     // 2 spending range labels
     expect(result.expense.spendingRanges).toHaveLength(2);
 
-    // Methodology note present
-    expect(result.expense.methodologyNote).toContain("self-reported");
-    expect(result.expense.methodologyNote).toContain("not revenue");
+    expect(result.expense.methodologyNote).toContain("ผู้ตอบแบบสำรวจรายงานด้วยตนเอง");
+    expect(result.expense.methodologyNote).toContain("ไม่ใช่รายได้");
+  });
+
+  it("excludes missing expense answers from each distribution denominator", async () => {
+    mockPayload.current = makePayload({
+      expenses: [
+        expenseRow({ expense_id: 1 }),
+        expenseRow({ expense_id: 2, spending_range_id: null, spending_ranges: null }),
+        expenseRow({
+          expense_id: 3,
+          spending_range_id: null,
+          expense_category_id: null,
+          spending_ranges: null,
+          expense_categories: null,
+        }),
+      ],
+      visits: [visitRow()],
+    });
+
+    const result = await getDashboardAnalytics({});
+
+    expect(result.expense.spendingRanges).toHaveLength(1);
+    expect(result.expense.spendingRanges[0]).toMatchObject({ value: 1, percent: 1 });
+    expect(result.expense.expenseCategories).toHaveLength(1);
+    expect(result.expense.expenseCategories[0]).toMatchObject({ value: 2, percent: 1 });
+    expect(result.expense.responseCount).toBe(3);
+    expect(result.expense.spendingRangeResponseCount).toBe(1);
+    expect(result.expense.expenseCategoryResponseCount).toBe(2);
+    expect(result.expense.spendingRanges.some((item) => item.label === "No data")).toBe(false);
+    expect(result.expense.expenseCategories.some((item) => item.label === "No data")).toBe(false);
+    expect(result.dataQualityWarnings.some((warning) => warning.includes("ค่าใช้จ่าย") && warning.includes("เว้นว่าง"))).toBe(true);
   });
 
   it("handles open-ended spending ranges (null max_value)", async () => {

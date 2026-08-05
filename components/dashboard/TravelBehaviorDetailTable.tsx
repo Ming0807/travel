@@ -76,7 +76,7 @@ export function TravelBehaviorDetailTable({
       <h2 id="travel-detail-table-heading" className="text-base font-bold text-slate-900">ตารางรายละเอียดพฤติกรรมการเดินทาง</h2>
       <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">ข้อมูลมาจากคำตอบแบบสำรวจที่สมัครใจ ค่าเฉลี่ยไม่รวมช่องที่เว้นว่างและไม่แทนค่าที่หายด้วยศูนย์</p>
       <p className="mt-2 text-xs text-slate-500">ฐานค่าเฉลี่ย: ขนาดกลุ่ม {answeredGroupSizeCount.toLocaleString("th-TH")} คำตอบ{averageGroupSize === null ? " (ยังคำนวณไม่ได้)" : ""} · จำนวนคืน {answeredNightsCount.toLocaleString("th-TH")} คำตอบ{averageNights === null ? " (ยังคำนวณไม่ได้)" : ""}</p>
-      <div className="mt-4 grid gap-5 xl:grid-cols-2">
+      <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-2">
         <BehaviorDetailSection title="พาหนะที่ใช้เดินทาง" description="พาหนะหลักที่ผู้ตอบแบบสำรวจเลือก" items={transportModes} emptyMessage="ยังไม่มีข้อมูลพาหนะที่ใช้เดินทาง" />
         <BehaviorDetailSection title="วัตถุประสงค์การเดินทาง" description="เหตุผลหลักของการเดินทางจากคำตอบที่สมัครใจ" items={travelPurposes} emptyMessage="ยังไม่มีข้อมูลวัตถุประสงค์การเดินทาง" />
         <BehaviorDetailSection title="ผู้ร่วมเดินทาง" description="รูปแบบผู้ร่วมเดินทางจากคำตอบที่สมัครใจ" items={companionTypes} emptyMessage="ยังไม่มีข้อมูลผู้ร่วมเดินทาง" />

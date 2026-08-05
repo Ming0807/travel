@@ -73,7 +73,7 @@ export function TouristDetailTable({
     <section className="border-t border-slate-200 pt-5" aria-labelledby="tourist-detail-table-heading">
       <h2 id="tourist-detail-table-heading" className="text-base font-bold text-slate-900">ตารางรายละเอียดลักษณะนักท่องเที่ยว</h2>
       <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">ใช้ตรวจสอบค่าที่แสดงในกราฟแบบรวม โดยไม่แสดงชื่อ ข้อมูลติดต่อ หรือรหัสบัญชีของนักท่องเที่ยว</p>
-      <div className="mt-4 grid gap-5 xl:grid-cols-2">
+      <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-2">
         <DetailSection title="ประเทศต้นทาง" items={originCountries} emptyMessage="ยังไม่มีข้อมูลประเทศต้นทาง" />
         <DetailSection title="จังหวัดต้นทางในประเทศไทย" items={originProvinces} emptyMessage="ยังไม่มีข้อมูลจังหวัดต้นทางในประเทศไทย" />
         <DetailSection title="ช่วงอายุ" items={ageGroups} emptyMessage="ยังไม่มีข้อมูลช่วงอายุ" />

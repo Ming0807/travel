@@ -36,7 +36,7 @@ function dashboardData(): DashboardViewModel {
       originProvinces: [item("สงขลา", 50, 0.625), item("ยะลา", 30, 0.375)],
       ageGroups: [item("25-34", 55, 0.55), item("35-44", 45, 0.45)],
       preferredLanguages: [item("ไทย", 85, 0.85), item("English", 15, 0.15)],
-      identityProviders: [item("anonymous_device", 70, 0.7), item("google", 30, 0.3)],
+      identityProviders: [item("anonymous_device", 70, 0.7), item("google", 50, 0.5)],
     },
     travelBehavior: {
       companionTypes: [item("ครอบครัว", 35, 0.7), item("เพื่อน", 15, 0.3)],
@@ -48,7 +48,7 @@ function dashboardData(): DashboardViewModel {
       answeredGroupSizeCount: 48,
       answeredNightsCount: 42,
     },
-    expense: { spendingRanges: [], expenseCategories: [], estimatedMin: null, estimatedMax: null, hasOpenEndedRange: false, responseCount: 0, methodologyNote: "" },
+    expense: { spendingRanges: [], expenseCategories: [], estimatedMin: null, estimatedMax: null, hasOpenEndedRange: false, responseCount: 0, spendingRangeResponseCount: 0, expenseCategoryResponseCount: 0, methodologyNote: "" },
     satisfaction: {
       averageOverall: null, responseCount: 0, distribution: [], byAttraction: [],
       safetyAverage: null, safetyResponseCount: 0, cleanlinessAverage: null, cleanlinessResponseCount: 0,
@@ -72,7 +72,10 @@ describe("Audience and attraction analytics layouts", () => {
     expect(screen.getByRole("region", { name: "หลักฐานประเทศต้นทาง" })).toHaveClass("xl:col-span-8");
     expect(screen.getByRole("region", { name: "บริบทวิธีเข้าใช้งาน" })).toHaveClass("xl:col-span-4");
     expect(screen.getByRole("table", { name: "รายละเอียดประเทศต้นทาง" })).toBeInTheDocument();
-    expect(screen.getByText(/โปรไฟล์ระบบ ไม่ใช่จำนวนบุคคลจริงที่ยืนยันแล้ว/)).toBeInTheDocument();
+    expect(screen.getByText("70 โปรไฟล์ · 70%")).toBeInTheDocument();
+    expect(screen.getByText("50 โปรไฟล์ · 50%")).toBeInTheDocument();
+    expect(screen.getByText(/รวมเกิน 100% ได้/)).toBeInTheDocument();
+    expect(screen.getByText(/ไม่ใช่จำนวนบุคคลจริงที่ยืนยันแล้ว/)).toBeInTheDocument();
   });
 
   it("จัดหน้าพฤติกรรมพร้อมฐานคำตอบ และไม่แปลงข้อมูลที่หายเป็นศูนย์", () => {

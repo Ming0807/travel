@@ -1,6 +1,7 @@
 import { ExecutiveAttractionRanking } from "@/components/dashboard/ExecutiveAttractionRanking";
 import { ExecutiveExperienceSummary } from "@/components/dashboard/ExecutiveExperienceSummary";
 import { ExecutiveFunnelSummary } from "@/components/dashboard/ExecutiveFunnelSummary";
+import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { NoDataState } from "@/components/dashboard/NoDataState";
@@ -19,13 +20,12 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
 
   return (
     <section className="space-y-5" aria-labelledby="executive-overview-heading">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="max-w-2xl">
-          <h2 id="executive-overview-heading" className="text-xl font-black text-slate-950">ภาพรวมสำหรับผู้บริหาร</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600">ติดตามรายการเข้าชม ประสิทธิภาพการเก็บข้อมูล และคุณภาพประสบการณ์ในช่วงที่เลือก</p>
-        </div>
-        <ExportCsvButton />
-      </div>
+      <AnalyticsSectionHeader
+        actions={<ExportCsvButton />}
+        description="ติดตามรายการเข้าชม ประสิทธิภาพการเก็บข้อมูล และคุณภาพประสบการณ์ในช่วงที่เลือก"
+        headingId="executive-overview-heading"
+        title="ภาพรวมสำหรับผู้บริหาร"
+      />
 
       <div className="grid overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.05)] sm:grid-cols-2 xl:grid-cols-4">
         {primaryMetrics.map((metric, index) => (

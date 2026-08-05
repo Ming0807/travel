@@ -41,6 +41,8 @@ Approved P2 design:
 
 - `docs/superpowers/specs/2026-07-16-story-cms-recommendation-dashboard-design.md`
 - `docs/superpowers/plans/2026-07-16-story-cms-recommendation-dashboard.md`
+- `docs/superpowers/specs/2026-08-05-admin-analytics-visual-system-design.md`
+- `docs/superpowers/plans/2026-08-05-admin-analytics-visual-redesign.md`
 
 ---
 
@@ -153,26 +155,56 @@ Data source
 Filter range
 ```
 
+## 4.6 Current Production Visual System
+
+The analytics workspace uses a restrained editorial operations style aligned with the public product:
+
+```text
+base: white and near-black
+brand accent: warm orange
+supporting data colors: teal, gold, blue, and semantic status colors
+corner radius: 4-6px
+border: 1px neutral gray
+shadow: none or subtle, maximum 8px blur on primary surfaces
+```
+
+Do not use gradients, glass effects, floating decorative sections, nested cards, oversized headings, or a different color theme per route.
+
+Every detailed analytics route follows this hierarchy:
+
+```text
+shared context and filters
+route title with actions
+compact KPI strip
+primary evidence (8 columns)
+interpretation or planning context (4 columns)
+supporting distributions
+auditable detail tables
+limitations and sample-size guidance
+```
+
+Desktop filters are open by default. Mobile filters are collapsed by default. Wide tables scroll only inside their own bounded container and must never create page-level horizontal overflow.
+
 ---
 
 ## 5. Dashboard Route Structure
 
-MVP route:
+Implemented protected routes:
 
 ```text
 /admin/dashboard
+/admin/dashboard/tourists
+/admin/dashboard/visits
+/admin/dashboard/attractions
+/admin/dashboard/expenses
+/admin/dashboard/satisfaction
+/admin/dashboard/funnel
+/admin/dashboard/sustainability
 ```
 
 Future routes:
 
 ```text
-/admin/dashboard/executive
-/admin/dashboard/tourists
-/admin/dashboard/visits
-/admin/dashboard/expenses
-/admin/dashboard/satisfaction
-/admin/dashboard/funnel
-/admin/dashboard/sustainability
 /admin/dashboard/official-comparison
 ```
 

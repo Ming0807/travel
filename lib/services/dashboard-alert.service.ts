@@ -296,7 +296,7 @@ function buildExpenseAlerts(data: DashboardViewModel): DashboardAlert[] {
   const alerts: DashboardAlert[] = [];
   const e = data.expense;
 
-  if (e.responseCount === 0) {
+  if (e.spendingRangeResponseCount === 0) {
     alerts.push(
       alert(
         "expense_no_data",
@@ -306,13 +306,13 @@ function buildExpenseAlerts(data: DashboardViewModel): DashboardAlert[] {
         "expense",
       ),
     );
-  } else if (e.responseCount < DASHBOARD_MIN_SAMPLE_SIZE) {
+  } else if (e.spendingRangeResponseCount < DASHBOARD_MIN_SAMPLE_SIZE) {
     alerts.push(
       alert(
         "expense_low_sample",
         "info",
         "Limited expense data",
-        `Only ${e.responseCount} expense responses are available. At least ${DASHBOARD_MIN_SAMPLE_SIZE} are required before treating spending patterns as decision-support evidence.`,
+        `Only ${e.spendingRangeResponseCount} spending-range responses are available. At least ${DASHBOARD_MIN_SAMPLE_SIZE} are required before treating spending patterns as decision-support evidence.`,
         "expense",
       ),
     );

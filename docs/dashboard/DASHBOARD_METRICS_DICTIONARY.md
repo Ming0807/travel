@@ -1274,6 +1274,7 @@ Possible providers:
 anonymous_device
 line
 email
+google
 ```
 
 ## 21.5 Date Field
@@ -1293,6 +1294,8 @@ table
 
 ```text
 A tourist may have multiple identities.
+Percentages describe provider links and may sum beyond 100% when a profile has multiple providers.
+Profiles without a linked provider are reported separately as missing; unknown provider values are not merged into a known provider.
 Do not expose provider_user_id.
 ```
 
@@ -1351,6 +1354,7 @@ table
 
 ```text
 Only includes tourists who answered travel behavior questions.
+Blank transport answers are excluded from the denominator and reported as a data-quality warning.
 ```
 
 ## 22.8 Service
@@ -1572,6 +1576,8 @@ table
 ```text
 Self-reported range.
 Not verified spending.
+Blank spending-range answers are excluded from the distribution denominator and reported as a data-quality warning.
+The dashboard keeps separate answered counts for spending range and expense category; estimated totals use only spending-range answers.
 ```
 
 ## 26.8 Service

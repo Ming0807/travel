@@ -14,7 +14,8 @@ type ExpenseDetailTableProps = {
   expenseCategories: DistributionItem[];
   estimatedMin: number | null;
   estimatedMax: number | null;
-  responseCount: number;
+  spendingRangeResponseCount: number;
+  expenseCategoryResponseCount: number;
 };
 
 function DistributionTable({
@@ -77,7 +78,8 @@ export function ExpenseDetailTable({
   expenseCategories,
   estimatedMin,
   estimatedMax,
-  responseCount,
+  spendingRangeResponseCount,
+  expenseCategoryResponseCount,
 }: ExpenseDetailTableProps) {
   const estimate = estimatedMin === null
     ? "ยังไม่มีข้อมูล"
@@ -90,12 +92,12 @@ export function ExpenseDetailTable({
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h3 className="text-base font-bold text-slate-900" id="expense-detail-heading">ตารางตรวจสอบข้อมูลค่าใช้จ่าย</h3>
-          <p className="mt-1 text-sm text-slate-600">ข้อมูล {responseCount.toLocaleString("th-TH")} คำตอบ ช่วงรวมโดยประมาณ {estimate}</p>
+          <p className="mt-1 text-sm text-slate-600">ช่วงค่าใช้จ่าย {spendingRangeResponseCount.toLocaleString("th-TH")} คำตอบ · หมวดค่าใช้จ่าย {expenseCategoryResponseCount.toLocaleString("th-TH")} คำตอบ · ช่วงรวมโดยประมาณ {estimate}</p>
         </div>
         <p className="text-xs text-slate-500">ตารางแสดงข้อมูลสรุป ไม่มีข้อมูลระบุตัวบุคคล</p>
       </div>
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2">
         <DistributionTable ariaLabel="รายละเอียดช่วงค่าใช้จ่าย" color="orange" firstColumn="ช่วงค่าใช้จ่าย" items={spendingRanges} />
         <DistributionTable ariaLabel="รายละเอียดหมวดค่าใช้จ่าย" color="teal" firstColumn="หมวดค่าใช้จ่าย" items={expenseCategories} />
       </div>

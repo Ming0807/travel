@@ -149,7 +149,7 @@ export async function GET(request: Request) {
         {
           Section: "Estimated Range",
           Label: "Estimated minimum",
-          Responses: data.expense.responseCount,
+          Responses: data.expense.spendingRangeResponseCount,
           Percentage: "",
           "Min Range (THB)": data.expense.estimatedMin ?? "",
           "Max Range (THB)": data.expense.estimatedMax ?? "",

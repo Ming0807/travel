@@ -1,4 +1,5 @@
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
+import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { localizeDashboardLabel } from "@/components/dashboard/dashboard-localization";
 import { SurveyRecordsLink } from "@/components/dashboard/SurveyRecordsLink";
 import { TravelBehaviorDetailTable } from "@/components/dashboard/TravelBehaviorDetailTable";
@@ -63,13 +64,12 @@ export function TravelBehaviorSection({ data }: { data: DashboardViewModel }) {
 
   return (
     <section className="space-y-5" aria-labelledby="travel-behavior-heading">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 id="travel-behavior-heading" className="text-lg font-bold text-slate-900">พฤติกรรมการเดินทาง</h2>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">อ่านรูปแบบการเดินทางจากแบบสำรวจที่สมัครใจ พร้อมแสดงฐานคำตอบเพื่อไม่ให้ตีความข้อมูลที่เว้นว่างเป็นศูนย์</p>
-        </div>
-        <SurveyRecordsLink data={data} />
-      </div>
+      <AnalyticsSectionHeader
+        actions={<SurveyRecordsLink data={data} />}
+        description="อ่านรูปแบบการเดินทางจากแบบสำรวจที่สมัครใจ พร้อมแสดงฐานคำตอบเพื่อไม่ให้ตีความข้อมูลที่เว้นว่างเป็นศูนย์"
+        headingId="travel-behavior-heading"
+        title="พฤติกรรมการเดินทาง"
+      />
 
       <dl role="group" aria-label="ตัวชี้วัดพฤติกรรมการเดินทาง" className="grid overflow-hidden rounded-md border border-slate-200 bg-white sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map(([label, value], index) => (

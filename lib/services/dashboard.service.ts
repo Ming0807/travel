@@ -61,6 +61,11 @@ function relation(row: Row, key: string) {
   return isRecord(value) ? value : null;
 }
 
+function relations(row: Row, key: string): Row[] {
+  const value = row[key];
+  return Array.isArray(value) ? value.filter(isRecord) : [];
+}
+
 function numberValue(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string" && value.trim() !== "") {
@@ -77,6 +82,28 @@ function stringValue(value: unknown): string | null {
 function increment(map: Map<string, number>, label: string | null | undefined) {
   const safeLabel = label && label.trim() !== "" ? label : "No data";
   map.set(safeLabel, (map.get(safeLabel) ?? 0) + 1);
+}
+
+function incrementAnswered(map: Map<string, number>, label: string | null | undefined): boolean {
+  if (!label || label.trim() === "") return false;
+  map.set(label, (map.get(label) ?? 0) + 1);
+  return true;
+}
+
+function preferredLanguageLabel(value: unknown): string {
+  const normalized = stringValue(value)?.trim().toLowerCase();
+  if (!normalized) return "ไม่ระบุภาษา";
+  if (["th", "thai", "th-th"].includes(normalized)) return "th";
+  if (["en", "english", "en-us", "en-gb"].includes(normalized)) return "en";
+  if (["ms", "malay", "ms-my"].includes(normalized)) return "ms";
+  return "ภาษาอื่น / ไม่ทราบ";
+}
+
+function identityProviderLabel(value: unknown): string {
+  const normalized = stringValue(value)?.trim().toLowerCase();
+  if (!normalized) return "ไม่ระบุช่องทาง";
+  if (["anonymous_device", "line", "google", "email"].includes(normalized)) return normalized;
+  return "ช่องทางอื่น / ไม่ทราบ";
 }
 
 function tourist(row: Row) {
@@ -208,8 +235,16 @@ function buildTouristProfileSection(visits: Row[]) {
     increment(countryMap, stringValue(country?.country_name_th) || stringValue(country?.country_name_en));
     increment(provinceMap, stringValue(originProvince?.province_name_th) || stringValue(originProvince?.province_name_en));
     increment(ageMap, stringValue(touristRow?.age_group));
-    increment(languageMap, stringValue(touristRow?.preferred_language) || "th");
-    increment(identityMap, "Guest/anonymous profile");
+    increment(languageMap, preferredLanguageLabel(touristRow?.preferred_language));
+
+    const providers = touristRow
+      ? new Set(relations(touristRow, "tourist_identities").map((identity) => identityProviderLabel(identity.provider)))
+      : new Set<string>();
+    if (providers.size === 0) {
+      increment(identityMap, "ไม่ระบุช่องทาง");
+    } else {
+      providers.forEach((provider) => increment(identityMap, provider));
+    }
   });
 
   return {
@@ -228,15 +263,21 @@ function buildTravelBehaviorSection(visits: Row[]) {
   const overnightMap = new Map<string, number>();
   const groupSizes: number[] = [];
   const nights: number[] = [];
+  const missing = {
+    companion: 0,
+    transport: 0,
+    purpose: 0,
+    overnight: 0
+  };
 
   visits.forEach((visit) => {
     const companion = relation(visit, "travel_companions");
     const transport = relation(visit, "transport_modes");
     const purpose = relation(visit, "travel_purposes");
-    increment(companionMap, stringValue(companion?.name_th) || stringValue(companion?.name_en));
-    increment(transportMap, stringValue(transport?.name_th) || stringValue(transport?.name_en));
-    increment(purposeMap, stringValue(purpose?.name_th) || stringValue(purpose?.name_en));
-    increment(overnightMap, stringValue(visit.overnight_status));
+    if (!incrementAnswered(companionMap, stringValue(companion?.name_th) || stringValue(companion?.name_en))) missing.companion += 1;
+    if (!incrementAnswered(transportMap, stringValue(transport?.name_th) || stringValue(transport?.name_en))) missing.transport += 1;
+    if (!incrementAnswered(purposeMap, stringValue(purpose?.name_th) || stringValue(purpose?.name_en))) missing.purpose += 1;
+    if (!incrementAnswered(overnightMap, stringValue(visit.overnight_status))) missing.overnight += 1;
 
     const groupSize = numberValue(visit.group_size);
     if (groupSize !== null) groupSizes.push(groupSize);
@@ -245,14 +286,17 @@ function buildTravelBehaviorSection(visits: Row[]) {
   });
 
   return {
-    companionTypes: buildDistribution(companionMap, visits.length),
-    transportModes: buildDistribution(transportMap, visits.length),
-    travelPurposes: buildDistribution(purposeMap, visits.length),
-    overnightStatus: buildDistribution(overnightMap, visits.length),
-    averageGroupSize: averageNullable(groupSizes),
-    averageNights: averageNullable(nights),
-    answeredGroupSizeCount: groupSizes.length,
-    answeredNightsCount: nights.length
+    section: {
+      companionTypes: buildDistribution(companionMap),
+      transportModes: buildDistribution(transportMap),
+      travelPurposes: buildDistribution(purposeMap),
+      overnightStatus: buildDistribution(overnightMap),
+      averageGroupSize: averageNullable(groupSizes),
+      averageNights: averageNullable(nights),
+      answeredGroupSizeCount: groupSizes.length,
+      answeredNightsCount: nights.length
+    },
+    missing
   };
 }
 
@@ -263,12 +307,18 @@ function buildExpenseSection(expenses: Row[]) {
   let estimatedMax = 0;
   let hasEstimate = false;
   let hasOpenEndedRange = false;
+  let missingSpendingRangeCount = 0;
+  let missingExpenseCategoryCount = 0;
 
   expenses.forEach((expense) => {
     const spendingRange = relation(expense, "spending_ranges");
     const expenseCategory = relation(expense, "expense_categories");
-    increment(spendingMap, stringValue(spendingRange?.range_label_th) || stringValue(spendingRange?.range_label_en));
-    increment(categoryMap, stringValue(expenseCategory?.name_th) || stringValue(expenseCategory?.name_en));
+    if (!incrementAnswered(spendingMap, stringValue(spendingRange?.range_label_th) || stringValue(spendingRange?.range_label_en))) {
+      missingSpendingRangeCount += 1;
+    }
+    if (!incrementAnswered(categoryMap, stringValue(expenseCategory?.name_th) || stringValue(expenseCategory?.name_en))) {
+      missingExpenseCategoryCount += 1;
+    }
 
     const min = numberValue(spendingRange?.min_value);
     const max = numberValue(spendingRange?.max_value);
@@ -284,14 +334,22 @@ function buildExpenseSection(expenses: Row[]) {
   });
 
   return {
-    spendingRanges: buildDistribution(spendingMap, expenses.length),
-    expenseCategories: buildDistribution(categoryMap, expenses.length),
-    estimatedMin: hasEstimate ? estimatedMin : null,
-    estimatedMax: hasEstimate && !hasOpenEndedRange ? estimatedMax : null,
-    hasOpenEndedRange,
-    responseCount: expenses.length,
-    methodologyNote:
-      "Range-based self-reported estimate from optional survey responses. This is not revenue or official economic impact."
+    section: {
+      spendingRanges: buildDistribution(spendingMap),
+      expenseCategories: buildDistribution(categoryMap),
+      estimatedMin: hasEstimate ? estimatedMin : null,
+      estimatedMax: hasEstimate && !hasOpenEndedRange ? estimatedMax : null,
+      hasOpenEndedRange,
+      responseCount: expenses.length,
+      spendingRangeResponseCount: expenses.length - missingSpendingRangeCount,
+      expenseCategoryResponseCount: expenses.length - missingExpenseCategoryCount,
+      methodologyNote:
+        "ค่าประมาณจากช่วงค่าใช้จ่ายในแบบสำรวจภาคสมัครใจที่ผู้ตอบแบบสำรวจรายงานด้วยตนเอง ไม่ใช่รายได้หรือผลกระทบทางเศรษฐกิจที่ผ่านการตรวจสอบอย่างเป็นทางการ"
+    },
+    missing: {
+      spendingRange: missingSpendingRangeCount,
+      expenseCategory: missingExpenseCategoryCount
+    }
   };
 }
 
@@ -612,7 +670,9 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
   const visits = getVisitRows(payload);
   const topAttractions = buildTopAttractions(visits, payload.certificates, payload.surveys);
   const visitsByProvince = buildVisitsByProvince(visits);
-  const expenseSection = buildExpenseSection(payload.expenses);
+  const travelBehaviorResult = buildTravelBehaviorSection(visits);
+  const expenseResult = buildExpenseSection(payload.expenses);
+  const expenseSection = expenseResult.section;
   const satisfactionSection = buildSatisfactionSection(payload.surveys, topAttractions);
 
   // Funnel events before visit creation cannot be segmented by tourist profile or
@@ -663,6 +723,16 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
   if (expenseSection.responseCount === 0) {
     dataQualityWarnings.push("ยังไม่มีคำตอบด้านค่าใช้จ่ายสำหรับตัวกรองนี้ จึงยังไม่สามารถประมาณค่าใช้จ่ายได้");
   }
+  if (Object.values(travelBehaviorResult.missing).some((count) => count > 0)) {
+    dataQualityWarnings.push(
+      `ข้อมูลพฤติกรรมการเดินทางมีคำตอบเว้นว่าง: ผู้ร่วมเดินทาง ${travelBehaviorResult.missing.companion.toLocaleString("th-TH")} รายการ, การเดินทาง ${travelBehaviorResult.missing.transport.toLocaleString("th-TH")} รายการ, วัตถุประสงค์ ${travelBehaviorResult.missing.purpose.toLocaleString("th-TH")} รายการ และการค้างคืน ${travelBehaviorResult.missing.overnight.toLocaleString("th-TH")} รายการ โดยสัดส่วนคำนวณจากคำตอบที่ระบุเท่านั้น`
+    );
+  }
+  if (expenseResult.missing.spendingRange > 0 || expenseResult.missing.expenseCategory > 0) {
+    dataQualityWarnings.push(
+      `ข้อมูลค่าใช้จ่ายมีคำตอบเว้นว่าง: ช่วงค่าใช้จ่าย ${expenseResult.missing.spendingRange.toLocaleString("th-TH")} รายการ และหมวดค่าใช้จ่าย ${expenseResult.missing.expenseCategory.toLocaleString("th-TH")} รายการ โดยสัดส่วนคำนวณจากคำตอบที่ระบุเท่านั้น`
+    );
+  }
 
   const viewModel: Omit<DashboardViewModel, 'dashboardAlerts'> = {
     filters,
@@ -678,7 +748,7 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
       topAttractions
     },
     touristProfile: buildTouristProfileSection(visits),
-    travelBehavior: buildTravelBehaviorSection(visits),
+    travelBehavior: travelBehaviorResult.section,
     expense: expenseSection,
     satisfaction: satisfactionSection,
     funnel: {

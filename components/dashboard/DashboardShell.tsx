@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { CalendarBlank, Clock, Database, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AnalyticsPanel } from "@/components/dashboard/AnalyticsPanel";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
@@ -25,11 +26,10 @@ export function DashboardShell({ data, children }: { data: DashboardViewModel; c
 
   return (
     <AdminShell admin={{ displayName: data.viewer.displayName, email: data.viewer.email }}>
-      <div className="min-w-0 space-y-4">
+      <div className="min-w-0 space-y-3">
         <header className="flex flex-col gap-3 border-b border-slate-200 pb-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-bold text-[#B94727]">ศูนย์วิเคราะห์ข้อมูล</p>
-            <h1 className="mt-1 text-2xl font-black text-[#171717]">ภาพรวมการท่องเที่ยว</h1>
+            <h1 className="text-2xl font-black text-[#171717]">ภาพรวมการท่องเที่ยว</h1>
             <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-600">
               ติดตามพฤติกรรม การเข้าชม และคุณภาพประสบการณ์ เพื่อวางแผนพื้นที่นำร่องจังหวัดยะลา
             </p>
@@ -40,7 +40,7 @@ export function DashboardShell({ data, children }: { data: DashboardViewModel; c
           </div>
         </header>
 
-        <section aria-label="บริบทของข้อมูล" className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.05)] xl:flex">
+        <AnalyticsPanel aria-label="บริบทของข้อมูล" className="overflow-hidden xl:flex">
           <dl className="grid min-w-0 flex-1 grid-cols-2 xl:grid-cols-4">
             <div className="border-b border-r border-slate-200 px-3 py-2.5 xl:border-b-0">
               <dt className="flex items-center gap-2 text-xs font-semibold text-slate-500"><CalendarBlank aria-hidden="true" size={16} />ช่วงข้อมูล</dt>
@@ -63,7 +63,7 @@ export function DashboardShell({ data, children }: { data: DashboardViewModel; c
             <summary className="flex min-h-9 cursor-pointer items-center font-semibold text-slate-700">วิธีอ่านข้อมูล</summary>
             <p className="pb-1 leading-5 xl:max-w-64">ข้อมูลนี้ไม่ใช่สถิตินักท่องเที่ยวทางการ การสแกน QR เพียงอย่างเดียวยังไม่นับเป็นการเข้าชม และค่าใช้จ่ายเป็นค่าประมาณจากแบบสำรวจ</p>
           </details>
-        </section>
+        </AnalyticsPanel>
 
         <DashboardFilters filters={data.filters} options={data.referenceOptions} />
         <DashboardTabs />

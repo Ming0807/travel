@@ -193,6 +193,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
           origin_province_id,
           age_group,
           preferred_language,
+          tourist_identities (provider),
           countries (country_name_th, country_name_en),
           provinces (province_name_th, province_name_en)
         ),

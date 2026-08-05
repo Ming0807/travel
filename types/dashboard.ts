@@ -137,6 +137,8 @@ export type DashboardViewModel = {
     estimatedMax: number | null;
     hasOpenEndedRange: boolean;
     responseCount: number;
+    spendingRangeResponseCount: number;
+    expenseCategoryResponseCount: number;
     methodologyNote: string;
   };
   satisfaction: {
