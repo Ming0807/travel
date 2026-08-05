@@ -46,36 +46,57 @@ export function KpiCard({
 }) {
   const localized = localizeDashboardKpi(metric);
   const noData = metric.value === "No data" || metric.value === "N/A" || metric.value === "ยังไม่มีข้อมูล";
-  const bandDivider = [
-    "border-b border-slate-200 sm:border-r xl:border-b-0",
-    "border-b border-slate-200 xl:border-r xl:border-b-0",
-    "border-b border-slate-200 sm:border-b-0 sm:border-r",
-    "",
-  ][index] ?? "border-b border-slate-200 xl:border-b-0 xl:border-r";
+  const bandTheme = [
+    {
+      border: "border-[#EDC7BA]",
+      icon: "border-[#F0C8BB] bg-[#FFF0EA] text-[#B94727]",
+      rule: "bg-[#B94727]",
+    },
+    {
+      border: "border-slate-300",
+      icon: "border-slate-950 bg-slate-950 text-white",
+      rule: "bg-slate-950",
+    },
+    {
+      border: "border-[#B7D9D5]",
+      icon: "border-[#B7D9D5] bg-[#EAF6F4] text-[#0A6B62]",
+      rule: "bg-[#0A6B62]",
+    },
+    {
+      border: "border-[#E8D5A5]",
+      icon: "border-[#E8D5A5] bg-[#FFF8E6] text-[#8B6515]",
+      rule: "bg-[#D6A13D]",
+    },
+  ][index % 4];
   const containerClass = variant === "band"
-    ? `relative min-w-0 overflow-hidden bg-white p-4 sm:p-5 ${bandDivider}`
+    ? `relative min-h-36 min-w-0 overflow-hidden rounded-md border bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] sm:p-5 ${bandTheme.border}`
     : `relative min-w-0 overflow-hidden rounded-md border bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] ${noData ? "border-dashed border-slate-300" : "border-slate-200"}`;
 
   return (
     <article data-dashboard-kpi={metric.key} className={containerClass}>
-      {!noData && variant === "card" ? <span aria-hidden="true" className="absolute inset-x-0 top-0 h-0.5 bg-[#B94727]" /> : null}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#F0C8BB] bg-[#FFF7F3] text-[#B94727]">{metricIcon(metric.key)}</span>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-xs font-semibold leading-5 text-slate-600">{localized.label}</h3>
-              <MetricTooltip definition={localized.definition} />
-            </div>
-            {noData ? (
-              <p className="mt-1 flex items-center gap-1.5 text-sm font-bold text-slate-500"><WarningCircle aria-hidden="true" size={16} />ยังไม่มีข้อมูล</p>
-            ) : (
-              <p className="mt-1 break-words text-2xl font-black tabular-nums text-slate-950">{localized.value}</p>
-            )}
+      {!noData ? (
+        <span
+          aria-hidden="true"
+          className={`absolute inset-x-0 top-0 h-0.5 ${variant === "band" ? bandTheme.rule : "bg-[#B94727]"}`}
+        />
+      ) : null}
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm font-bold leading-5 text-slate-700">{localized.label}</h3>
+            <MetricTooltip definition={localized.definition} />
           </div>
+          {noData ? (
+            <p className="mt-3 flex items-center gap-1.5 text-sm font-bold text-slate-600"><WarningCircle aria-hidden="true" size={16} />ยังไม่มีข้อมูล</p>
+          ) : (
+            <p className="mt-3 break-words text-3xl font-black leading-none tabular-nums text-slate-950">{localized.value}</p>
+          )}
         </div>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${variant === "band" ? bandTheme.icon : "border-[#F0C8BB] bg-[#FFF7F3] text-[#B94727]"}`}>
+          {metricIcon(metric.key)}
+        </span>
       </div>
-      {metric.note && !noData ? <p className="mt-2 text-xs leading-5 text-slate-500">{metric.note}</p> : null}
+      {metric.note && !noData ? <p className="mt-3 text-xs leading-5 text-slate-600">{metric.note}</p> : null}
       {sampleCount !== undefined && sampleCount < DASHBOARD_MIN_SAMPLE_SIZE && !noData ? <div className="mt-3"><SmallSampleWarning count={sampleCount} label={sampleLabel} /></div> : null}
       {sparklineData && !noData ? <div className="mt-3 border-t border-slate-100 pt-2"><Sparkline data={sparklineData} /></div> : null}
     </article>

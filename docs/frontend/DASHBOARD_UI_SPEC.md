@@ -135,13 +135,15 @@ attraction
 
 ## 4.5 First-Viewport Hierarchy
 
-The executive dashboard first viewport should present, in order:
+The executive dashboard first viewport must present, in order:
 
 1. data freshness, export, and active filter context
-2. four decision-oriented KPIs
+2. four decision-oriented KPIs as distinct surfaces
 3. the primary visit trend with comparison
-4. province or attraction distribution
-5. prioritized analytical alerts and recommended actions
+4. the participation funnel beside the trend on desktop
+5. ranked attractions and experience quality immediately below
+
+The desktop viewport must show the complete KPI row and the beginning of the primary chart without scrolling. A large introductory context card, an expanded multi-row filter form, or duplicate desktop navigation is not allowed above the KPIs.
 
 Secondary topics remain available as drill-down pages. Do not give every chart equal visual weight.
 
@@ -173,9 +175,11 @@ Do not use gradients, glass effects, floating decorative sections, nested cards,
 Every detailed analytics route follows this hierarchy:
 
 ```text
-shared context and filters
-route title with actions
-compact KPI strip
+desktop analytics navigation in the sidebar
+compact route title and action row
+single-row global filter command bar
+one-line data source and freshness context
+compact KPI card grid
 primary evidence (8 columns)
 interpretation or planning context (4 columns)
 supporting distributions
@@ -183,7 +187,9 @@ auditable detail tables
 limitations and sample-size guidance
 ```
 
-Desktop filters are open by default. Mobile filters are collapsed by default. Wide tables scroll only inside their own bounded container and must never create page-level horizontal overflow.
+Desktop filters are visible in one compact command row. Secondary filters open progressively without expanding the initial viewport. Mobile filters are collapsed into one summary control by default. Wide tables scroll only inside their own bounded container and must never create page-level horizontal overflow.
+
+Desktop uses the analytics routes in the main sidebar and must not repeat the same eight destinations in a second horizontal tab bar. Mobile and tablet use the horizontally scrollable analytics route switcher because the sidebar is unavailable.
 
 ---
 
@@ -214,16 +220,16 @@ MVP can implement one page with sections.
 
 ## 6. Dashboard Layout
 
-Recommended layout:
+Production layout:
 
 ```text
 Admin layout shell
     |
-Dashboard page header
+Analytics route navigation
     |
-Global filter bar
+Compact global filter command bar
     |
-Data freshness note
+One-line data freshness and interpretation note
     |
 Executive KPI grid
     |

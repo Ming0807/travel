@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CaretDown, FunnelSimple, X } from "@phosphor-icons/react/dist/ssr";
@@ -10,21 +10,6 @@ type DashboardFiltersProps = {
   filters: DashboardFilters;
   options: DashboardReferenceOptions;
 };
-
-const DESKTOP_FILTER_QUERY = "(min-width: 1024px)";
-
-function subscribeToDesktopFilter(callback: () => void): () => void {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return () => undefined;
-  const media = window.matchMedia(DESKTOP_FILTER_QUERY);
-  media.addEventListener?.("change", callback);
-  return () => media.removeEventListener?.("change", callback);
-}
-
-function getDesktopFilterSnapshot(): boolean {
-  return typeof window !== "undefined" && typeof window.matchMedia === "function"
-    ? window.matchMedia(DESKTOP_FILTER_QUERY).matches
-    : false;
-}
 
 function FilterSelect({
   name,
@@ -48,7 +33,7 @@ function FilterSelect({
     <label className="block min-w-0">
       <span className="text-xs font-semibold text-slate-600">{label}</span>
       <select
-        className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15"
+        className="mt-1.5 min-h-11 w-full rounded-[5px] border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15"
         defaultValue={value === undefined ? "" : String(value)}
         name={name}
       >
@@ -84,9 +69,7 @@ function optionLabel(options: DashboardReferenceOption[], value: number | string
 export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const desktopDefaultOpen = useSyncExternalStore(subscribeToDesktopFilter, getDesktopFilterSnapshot, () => false);
-  const [manualOpen, setManualOpen] = useState<boolean | null>(null);
-  const isOpen = manualOpen ?? desktopDefaultOpen;
+  const [isOpen, setIsOpen] = useState(false);
   const activeFilters = [
     ["province_id", "จังหวัด", optionLabel(options.provinces, filters.provinceId)],
     ["attraction_id", "สถานที่", optionLabel(options.attractions, filters.attractionId)],
@@ -106,78 +89,78 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   }
 
   return (
-    <details
-      className="group rounded-md border border-slate-200 bg-white"
-      open={isOpen}
-    >
-      <summary
-        className="flex min-h-12 cursor-pointer list-none flex-wrap items-center gap-3 px-4 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]"
-        onClick={(event) => {
-          event.preventDefault();
-          setManualOpen(!isOpen);
-        }}
-      >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#FFF0EA] text-[#B94727]"><FunnelSimple aria-hidden="true" size={17} weight="bold" /></span>
-        <span className="min-w-0">
-          <span id="dashboard-filters-heading" className="block text-sm font-bold text-slate-900">ตัวกรองข้อมูล</span>
-          <span className="block text-xs text-slate-500">{filters.dateFrom} ถึง {filters.dateTo}{activeFilters.length > 0 ? ` · ใช้อยู่ ${activeFilters.length} ตัวกรอง` : ""}</span>
-        </span>
-        <span className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 group-open:border-[#E8B8A8] group-open:text-[#B94727]">
+    <section aria-labelledby="dashboard-filters-heading" className="border-y border-slate-200 bg-white">
+      <div className="flex flex-wrap items-center gap-3 px-3 py-2.5 sm:px-4 lg:flex-nowrap lg:gap-4">
+        <div className="flex min-w-0 shrink-0 items-center gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[5px] bg-[#FFF0EA] text-[#B94727]">
+            <FunnelSimple aria-hidden="true" size={17} weight="bold" />
+          </span>
+          <div className="min-w-0">
+            <h2 id="dashboard-filters-heading" className="text-sm font-bold text-slate-900">ตัวกรองข้อมูล</h2>
+            <p className="truncate text-xs text-slate-500">
+              {filters.dateFrom} ถึง {filters.dateTo}{activeFilters.length > 0 ? ` · ใช้อยู่ ${activeFilters.length} ตัวกรอง` : ""}
+            </p>
+          </div>
+        </div>
+
+        <button
+          aria-controls="dashboard-filter-form"
+          aria-expanded={isOpen}
+          className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-[5px] border border-slate-300 px-3 text-xs font-bold text-slate-700 transition-colors hover:border-[#E8B8A8] hover:text-[#B94727] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727] focus-visible:ring-offset-2 lg:hidden"
+          onClick={() => setIsOpen((current) => !current)}
+          type="button"
+        >
           ปรับตัวกรอง
-          <CaretDown aria-hidden="true" className="transition-transform group-open:rotate-180" size={14} weight="bold" />
-        </span>
-      </summary>
+          <CaretDown aria-hidden="true" className={`transition-transform ${isOpen ? "rotate-180" : ""}`} size={14} weight="bold" />
+        </button>
 
-      <div className="border-t border-slate-200 p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-xs leading-5 text-slate-500">ตัวกรองจะมีผลกับทุกกราฟและการส่งออกข้อมูลในหน้านี้</p>
-          {activeFilters.length > 0 ? (
-            <Link className="shrink-0 text-xs font-semibold text-[#B94727] underline-offset-4 hover:underline" href={pathname}>ล้างทั้งหมด</Link>
-          ) : null}
+        <div className={`${isOpen ? "block" : "hidden"} w-full min-w-0 lg:block lg:flex-1`} id="dashboard-filter-form">
+          <form action={pathname} className="space-y-3 lg:flex lg:items-end lg:gap-2 lg:space-y-0">
+            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-0 lg:flex-1 lg:grid-cols-4">
+              <label className="block min-w-0">
+                <span className="text-xs font-semibold text-slate-600">ตั้งแต่วันที่</span>
+                <input className="mt-1.5 min-h-11 w-full rounded-[5px] border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15" defaultValue={filters.dateFrom} name="date_from" type="date" />
+              </label>
+              <label className="block min-w-0">
+                <span className="text-xs font-semibold text-slate-600">ถึงวันที่</span>
+                <input className="mt-1.5 min-h-11 w-full rounded-[5px] border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15" defaultValue={filters.dateTo} name="date_to" type="date" />
+              </label>
+              <FilterSelect label="จังหวัดปลายทาง" name="province_id" options={options.provinces} value={filters.provinceId} />
+              <FilterSelect label="สถานที่ท่องเที่ยว" name="attraction_id" options={options.attractions} value={filters.attractionId} />
+            </div>
+
+            <button className="min-h-11 shrink-0 rounded-[5px] bg-[#171717] px-5 text-sm font-bold text-white transition-colors hover:bg-[#B94727] focus:outline-none focus:ring-2 focus:ring-[#B94727] focus:ring-offset-2" type="submit">นำตัวกรองไปใช้</button>
+
+            <details className="group relative shrink-0">
+              <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-[5px] border border-slate-300 px-3 text-xs font-bold text-slate-700 transition-colors hover:border-slate-500 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727] focus-visible:ring-offset-2">
+                เพิ่มเติม
+                <CaretDown aria-hidden="true" className="transition-transform group-open:rotate-180" size={14} weight="bold" />
+              </summary>
+              <div className="mt-2 grid gap-3 border-t border-slate-200 bg-white pt-3 sm:grid-cols-2 lg:absolute lg:right-0 lg:top-full lg:z-20 lg:mt-1 lg:w-[min(52rem,calc(100vw-2rem))] lg:border lg:border-slate-200 lg:p-3 lg:shadow-[0_4px_8px_rgba(23,23,23,0.08)]">
+                <FilterSelect label="ประเภทสถานที่" name="attraction_type_id" options={options.attractionTypes} value={filters.attractionTypeId} />
+                <FilterSelect label="ประเทศต้นทาง" name="origin_country_id" options={options.originCountries} value={filters.originCountryId} />
+                <FilterSelect label="จังหวัดต้นทาง" name="origin_province_id" options={options.originProvinces} value={filters.originProvinceId} />
+                <FilterSelect label="ช่วงอายุ" name="age_group" options={options.ageGroups} value={filters.ageGroup} />
+                <FilterSelect label="พาหนะ" name="transport_mode_id" options={options.transportModes} value={filters.transportModeId} />
+                <FilterSelect label="วัตถุประสงค์การเดินทาง" name="travel_purpose_id" options={options.travelPurposes} value={filters.travelPurposeId} />
+              </div>
+            </details>
+          </form>
         </div>
-
-        <form action={pathname} className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <label className="block">
-            <span className="text-xs font-semibold text-slate-600">ตั้งแต่วันที่</span>
-            <input className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-800 outline-none focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15" defaultValue={filters.dateFrom} name="date_from" type="date" />
-          </label>
-          <label className="block">
-            <span className="text-xs font-semibold text-slate-600">ถึงวันที่</span>
-            <input className="mt-1.5 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-800 outline-none focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15" defaultValue={filters.dateTo} name="date_to" type="date" />
-          </label>
-          <FilterSelect label="จังหวัดปลายทาง" name="province_id" options={options.provinces} value={filters.provinceId} />
-          <FilterSelect label="สถานที่ท่องเที่ยว" name="attraction_id" options={options.attractions} value={filters.attractionId} />
-          <button className="min-h-11 self-end rounded-md bg-[#171717] px-5 text-sm font-bold text-white transition-colors hover:bg-[#B94727] focus:outline-none focus:ring-2 focus:ring-[#B94727] focus:ring-offset-2" type="submit">นำตัวกรองไปใช้</button>
-        </div>
-
-        <details className="group">
-          <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#171717] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727]">
-            ตัวกรองเพิ่มเติม
-            <CaretDown aria-hidden="true" className="transition-transform group-open:rotate-180" size={16} weight="bold" />
-          </summary>
-          <div className="mt-2 grid gap-3 border-t border-slate-200 pt-3 sm:grid-cols-2 xl:grid-cols-4">
-            <FilterSelect label="ประเภทสถานที่" name="attraction_type_id" options={options.attractionTypes} value={filters.attractionTypeId} />
-            <FilterSelect label="ประเทศต้นทาง" name="origin_country_id" options={options.originCountries} value={filters.originCountryId} />
-            <FilterSelect label="จังหวัดต้นทาง" name="origin_province_id" options={options.originProvinces} value={filters.originProvinceId} />
-            <FilterSelect label="ช่วงอายุ" name="age_group" options={options.ageGroups} value={filters.ageGroup} />
-            <FilterSelect label="พาหนะ" name="transport_mode_id" options={options.transportModes} value={filters.transportModeId} />
-            <FilterSelect label="วัตถุประสงค์การเดินทาง" name="travel_purpose_id" options={options.travelPurposes} value={filters.travelPurposeId} />
-          </div>
-        </details>
-        </form>
-
-        {activeFilters.length > 0 ? (
-          <div aria-label="ตัวกรองที่ใช้อยู่" className="mt-3 flex flex-wrap gap-2">
-            {activeFilters.map(([key, label, value]) => (
-              <Link key={key} href={removeHref(key)} className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-[#E8B8A8] bg-[#FFF7F3] px-3 text-xs font-semibold text-[#8F351F] hover:border-[#B94727]" aria-label={`ลบตัวกรอง ${label} ${value}`}>
-                {label}: {value}
-                <X aria-hidden="true" size={12} weight="bold" />
-              </Link>
-            ))}
-          </div>
-        ) : null}
       </div>
-    </details>
+
+      {activeFilters.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 px-3 py-2 sm:px-4" aria-label="ตัวกรองที่ใช้อยู่">
+          <span className="mr-1 text-xs font-semibold text-slate-500">กำลังใช้</span>
+          {activeFilters.map(([key, label, value]) => (
+            <Link key={key} href={removeHref(key)} className="inline-flex min-h-8 items-center gap-1.5 rounded-[5px] border border-[#E8B8A8] bg-[#FFF7F3] px-3 text-xs font-semibold text-[#8F351F] hover:border-[#B94727] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727]" aria-label={`ลบตัวกรอง ${label} ${value}`}>
+              {label}: {value}
+              <X aria-hidden="true" size={12} weight="bold" />
+            </Link>
+          ))}
+          <Link className="ml-auto min-h-8 px-2 text-xs font-semibold text-[#B94727] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727]" href={pathname}>ล้างทั้งหมด</Link>
+        </div>
+      ) : null}
+    </section>
   );
 }

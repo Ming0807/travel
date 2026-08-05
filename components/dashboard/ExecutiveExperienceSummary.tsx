@@ -55,9 +55,9 @@ export function ExecutiveExperienceSummary({ satisfaction }: { satisfaction: Sat
       aria-labelledby="executive-experience-heading"
       className="h-full min-w-0 rounded-md border border-slate-200 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.05)]"
     >
-      <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3.5 sm:px-5">
         <div>
-          <h2 id="executive-experience-heading" className="text-base font-bold text-slate-950">
+          <h2 id="executive-experience-heading" className="text-lg font-black text-slate-950">
             คุณภาพประสบการณ์
           </h2>
           <p className="mt-1 text-xs leading-5 text-slate-600">คะแนนจากแบบสำรวจที่นักท่องเที่ยวตอบโดยสมัครใจ</p>
@@ -67,61 +67,63 @@ export function ExecutiveExperienceSummary({ satisfaction }: { satisfaction: Sat
         </span>
       </div>
 
-      <div className="grid gap-4 border-b border-slate-200 px-4 py-4 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:px-5">
-        <ScoreRing value={average} />
-        <div className="grid grid-cols-2 divide-x divide-slate-200 self-center">
-          <IntentMetric
-            icon={<ArrowClockwise aria-hidden="true" size={15} />}
-            label="กลับมาเที่ยวซ้ำ"
-            responses={satisfaction.revisitAnsweredCount}
-            value={satisfaction.revisitIntentionRate}
-          />
-          <IntentMetric
-            icon={<ChatCircleText aria-hidden="true" size={15} />}
-            label="แนะนำต่อ"
-            responses={satisfaction.recommendAnsweredCount}
-            value={satisfaction.recommendIntentionRate}
-          />
+      <div className="grid gap-4 px-4 py-4 sm:grid-cols-[7.25rem_minmax(0,1fr)] sm:px-5">
+        <div className="self-center">
+          <ScoreRing value={average} />
         </div>
-      </div>
+        <div className="min-w-0">
+          <h3 className="text-xs font-bold text-slate-700">คะแนนรายมิติ</h3>
+          <div role="group" aria-label="แผนภูมิคะแนนประสบการณ์รายมิติ" className="mt-2.5 space-y-2.5">
+            {dimensions.map((dimension) => (
+              <DimensionRow key={dimension.label} dimension={dimension} />
+            ))}
+          </div>
 
-      <div className="px-4 py-4 sm:px-5">
-        <h3 className="text-xs font-bold text-slate-700">คะแนนรายมิติ</h3>
-        <div role="group" aria-label="แผนภูมิคะแนนประสบการณ์รายมิติ" className="mt-3 space-y-3">
-          {dimensions.map((dimension) => (
-            <DimensionRow key={dimension.label} dimension={dimension} />
-          ))}
-        </div>
-
-        {total > 0 ? (
-          <div className="mt-4 border-t border-slate-100 pt-3">
-            <p className="text-xs font-semibold text-slate-600">การกระจายคะแนนรวม</p>
-            <div
-              className="mt-2 flex h-2 overflow-hidden rounded-sm bg-slate-100"
-              role="img"
-              aria-label="การกระจายคะแนนความพึงพอใจ"
-            >
-              {distribution.map((item) => (
-                <span
-                  key={item.label}
-                  style={{
-                    width: `${(item.value / total) * 100}%`,
-                    backgroundColor: SCORE_COLORS[scoreFromLabel(item.label)],
-                  }}
-                />
-              ))}
+          {total > 0 ? (
+            <div className="mt-3 border-t border-slate-100 pt-2.5">
+              <p className="text-xs font-semibold text-slate-600">การกระจายคะแนนรวม</p>
+              <div
+                className="mt-1.5 flex h-2 overflow-hidden rounded-sm bg-slate-100"
+                role="img"
+                aria-label="การกระจายคะแนนความพึงพอใจ"
+              >
+                {distribution.map((item) => (
+                  <span
+                    key={item.label}
+                    style={{
+                      width: `${(item.value / total) * 100}%`,
+                      backgroundColor: SCORE_COLORS[scoreFromLabel(item.label)],
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ) : (
-          <p className="mt-4 border-t border-slate-100 pt-3 text-sm font-semibold text-slate-600">ยังไม่มีข้อมูล</p>
-        )}
-
-        {satisfaction.responseCount > 0 && satisfaction.responseCount < DASHBOARD_MIN_SAMPLE_SIZE ? (
-          <div className="mt-3">
-            <SmallSampleWarning count={satisfaction.responseCount} label="คำตอบความพึงพอใจ" />
-          </div>
-        ) : null}
+          ) : (
+            <p className="mt-3 border-t border-slate-100 pt-2.5 text-sm font-semibold text-slate-600">ยังไม่มีข้อมูล</p>
+          )}
+        </div>
       </div>
+
+      <div className="grid grid-cols-2 divide-x divide-slate-200 border-t border-slate-200 bg-slate-50 px-4 py-3 sm:px-5">
+        <IntentMetric
+          icon={<ArrowClockwise aria-hidden="true" size={15} />}
+          label="กลับมาเที่ยวซ้ำ"
+          responses={satisfaction.revisitAnsweredCount}
+          value={satisfaction.revisitIntentionRate}
+        />
+        <IntentMetric
+          icon={<ChatCircleText aria-hidden="true" size={15} />}
+          label="แนะนำต่อ"
+          responses={satisfaction.recommendAnsweredCount}
+          value={satisfaction.recommendIntentionRate}
+        />
+      </div>
+
+      {satisfaction.responseCount > 0 && satisfaction.responseCount < DASHBOARD_MIN_SAMPLE_SIZE ? (
+        <div className="border-t border-slate-200 px-4 py-3 sm:px-5">
+          <SmallSampleWarning count={satisfaction.responseCount} label="คำตอบความพึงพอใจ" />
+        </div>
+      ) : null}
 
       <div className="sr-only">
         <table aria-label="คะแนนประสบการณ์รายมิติ">
@@ -157,7 +159,7 @@ function ScoreRing({ value }: { value: number | null }) {
   const dashOffset = circumference * (1 - progress);
 
   return (
-    <div className="relative mx-auto h-32 w-32 shrink-0">
+    <div className="relative mx-auto h-28 w-28 shrink-0">
       <svg
         className="h-full w-full -rotate-90"
         viewBox="0 0 104 104"
@@ -174,7 +176,7 @@ function ScoreRing({ value }: { value: number | null }) {
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
           strokeLinecap="round"
-          strokeWidth="8"
+          strokeWidth="7"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
@@ -201,7 +203,7 @@ function IntentMetric({
   return (
     <div className="min-w-0 px-3 first:pl-0 last:pr-0">
       <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">{icon}{label}</p>
-      <strong className={`mt-1 block tabular-nums ${value === null ? "text-sm text-slate-600" : "text-xl text-slate-950"}`}>
+      <strong className={`mt-1 block tabular-nums ${value === null ? "text-sm text-slate-600" : "text-lg text-slate-950"}`}>
         {rateLabel(value)}
       </strong>
       <span className="mt-1 block text-xs tabular-nums text-slate-600">ฐาน {responses.toLocaleString("th-TH")}</span>
@@ -213,7 +215,7 @@ function DimensionRow({ dimension }: { dimension: ExperienceDimension }) {
   const width = dimension.average === null ? 0 : (dimension.average / 5) * 100;
 
   return (
-    <div className="grid grid-cols-[minmax(6.5rem,1fr)_3rem] items-center gap-x-3 gap-y-1">
+    <div className="grid grid-cols-[minmax(6rem,1fr)_2.5rem] items-center gap-x-2 gap-y-1">
       <div className="flex min-w-0 items-center justify-between gap-2 text-xs">
         <span className="break-words font-semibold text-slate-700">{dimension.label}</span>
         <span className="shrink-0 tabular-nums text-slate-500">n={dimension.responses.toLocaleString("th-TH")}</span>

@@ -64,7 +64,7 @@ function dashboardData(): DashboardViewModel {
 }
 
 describe("Audience and attraction analytics layouts", () => {
-  it("จัดหน้านักท่องเที่ยวเป็น KPI strip หลักฐานกว้าง และบริบทวิธีเข้าใช้งาน", () => {
+  it("จัดหน้านักท่องเที่ยวเป็น KPI cards หลักฐานกว้าง และบริบทวิธีเข้าใช้งาน", () => {
     render(<TouristProfileSection data={dashboardData()} />);
 
     const kpis = screen.getByRole("group", { name: "ตัวชี้วัดลักษณะนักท่องเที่ยว" });

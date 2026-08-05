@@ -13,16 +13,17 @@ export function ExecutiveAttractionRanking({
 }: {
   attractions: DashboardViewModel["executive"]["topAttractions"];
 }) {
-  const visible = attractions.slice(0, 6);
+  const visible = attractions.slice(0, 5);
+  const maxVisits = Math.max(...visible.map((attraction) => attraction.visitCount), 0);
 
   return (
     <section
       aria-labelledby="executive-attraction-ranking-heading"
       className="h-full min-w-0 rounded-md border border-slate-200 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.05)]"
     >
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-3.5 sm:px-5">
         <div>
-          <h2 id="executive-attraction-ranking-heading" className="text-base font-bold text-slate-950">
+          <h2 id="executive-attraction-ranking-heading" className="text-lg font-black text-slate-950">
             อันดับสถานที่ท่องเที่ยว
           </h2>
           <p className="mt-1 text-xs leading-5 text-slate-600">
@@ -39,23 +40,28 @@ export function ExecutiveAttractionRanking({
           <NoDataState description="ยังไม่มีข้อมูลสถานที่ท่องเที่ยวสำหรับช่วงและตัวกรองที่เลือก" />
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div>
           <table
             aria-label="อันดับสถานที่ท่องเที่ยวตามรายการเข้าชม"
-            className="w-full min-w-[680px] border-collapse text-sm"
+            className="w-full table-fixed border-collapse text-sm"
           >
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600">
-                <th scope="col" className="w-14 px-4 py-3 text-center">อันดับ</th>
-                <th scope="col" className="px-3 py-3">สถานที่</th>
-                <th scope="col" className="px-3 py-3 text-right">เข้าชม</th>
-                <th scope="col" className="px-3 py-3 text-right">ใบประกาศ</th>
-                <th scope="col" className="px-4 py-3 text-right">ความพึงพอใจ</th>
+                <th scope="col" className="w-12 px-3 py-2.5 text-center">อันดับ</th>
+                <th scope="col" className="px-2 py-2.5">สถานที่</th>
+                <th scope="col" className="w-28 px-2 py-2.5 text-right sm:w-36">เข้าชม</th>
+                <th scope="col" className="hidden w-24 px-2 py-2.5 text-right sm:table-cell">ใบประกาศ</th>
+                <th scope="col" className="hidden w-28 px-4 py-2.5 text-right lg:table-cell">ความพึงพอใจ</th>
               </tr>
             </thead>
             <tbody>
               {visible.map((attraction, index) => (
-                <AttractionRow key={`${attraction.rank}-${attraction.attractionName}`} attraction={attraction} index={index} />
+                <AttractionRow
+                  key={`${attraction.rank}-${attraction.attractionName}`}
+                  attraction={attraction}
+                  index={index}
+                  maxVisits={maxVisits}
+                />
               ))}
             </tbody>
           </table>
@@ -65,32 +71,37 @@ export function ExecutiveAttractionRanking({
   );
 }
 
-function AttractionRow({ attraction, index }: { attraction: RankedAttraction; index: number }) {
+function AttractionRow({ attraction, index, maxVisits }: { attraction: RankedAttraction; index: number; maxVisits: number }) {
+  const visitWidth = maxVisits > 0 ? (attraction.visitCount / maxVisits) * 100 : 0;
+
   return (
     <tr className="border-b border-slate-100 last:border-b-0 hover:bg-[#FFF9F6]">
-      <td className="px-4 py-3 text-center">
+      <td className="px-3 py-2.5 text-center">
         <span
           className={`inline-flex h-7 w-7 items-center justify-center rounded-sm text-xs font-black tabular-nums ${
-            index === 0 ? "bg-[#B94727] text-white" : "bg-slate-100 text-slate-700"
+            index === 0 ? "bg-[#B94727] text-white" : "border border-slate-200 bg-white text-slate-700"
           }`}
         >
           {attraction.rank}
         </span>
       </td>
-      <th scope="row" className="px-3 py-3 text-left font-normal">
-        <span className="block font-bold text-slate-900">{attraction.attractionName}</span>
-        <span className="mt-1 flex items-center gap-1 text-xs text-slate-600">
+      <th scope="row" className="px-2 py-2.5 text-left font-normal">
+        <span className="block truncate font-bold text-slate-900" title={attraction.attractionName}>{attraction.attractionName}</span>
+        <span className="mt-0.5 flex items-center gap-1 text-xs text-slate-600">
           <MapPin aria-hidden="true" size={13} weight="fill" />
           {attraction.provinceName}
         </span>
       </th>
-      <td className="px-3 py-3 text-right font-black tabular-nums text-slate-950">
-        {attraction.visitCount.toLocaleString("th-TH")}
+      <td className="px-2 py-2.5 text-right">
+        <strong className="font-black tabular-nums text-slate-950">{attraction.visitCount.toLocaleString("th-TH")}</strong>
+        <span className="mt-1 block h-1 overflow-hidden rounded-sm bg-slate-100" aria-hidden="true">
+          <span className="block h-full rounded-sm bg-[#B94727]" style={{ width: `${visitWidth}%` }} />
+        </span>
       </td>
-      <td className="px-3 py-3 text-right font-semibold tabular-nums text-slate-700">
+      <td className="hidden px-2 py-2.5 text-right font-semibold tabular-nums text-slate-700 sm:table-cell">
         {attraction.certificateCount.toLocaleString("th-TH")}
       </td>
-      <td className="px-4 py-3 text-right">
+      <td className="hidden px-4 py-2.5 text-right lg:table-cell">
         {attraction.averageSatisfaction === null ? (
           <span className="text-xs font-semibold text-slate-600">ยังไม่มีข้อมูล</span>
         ) : (

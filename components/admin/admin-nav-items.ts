@@ -1,6 +1,7 @@
 import {
   SquaresFour,
   ChartLineUp,
+  FunnelSimple,
   Users,
   CalendarBlank,
   Star,
@@ -19,6 +20,9 @@ import {
   Scroll,
   EnvelopeSimple,
   Gear,
+  Smiley,
+  TreeEvergreen,
+  Wallet,
 } from "@phosphor-icons/react/dist/ssr";
 
 type AdminNavIcon = typeof SquaresFour;
@@ -29,6 +33,7 @@ export type NavItem = {
   icon: AdminNavIcon;
   badge?: number | string;
   requiredAny?: string[];
+  exact?: boolean;
 };
 
 export type NavGroup = {
@@ -40,8 +45,15 @@ export const navGroups: NavGroup[] = [
   {
     group: "ภาพรวม",
     items: [
-      { href: "/admin", label: "หน้าหลัก", icon: SquaresFour },
-      { href: "/admin/dashboard", label: "การวิเคราะห์", icon: ChartLineUp },
+      { href: "/admin", label: "ศูนย์ปฏิบัติการ", icon: SquaresFour, exact: true },
+      { href: "/admin/dashboard", label: "ภาพรวมการท่องเที่ยว", icon: ChartLineUp, exact: true },
+      { href: "/admin/dashboard/tourists", label: "โปรไฟล์นักท่องเที่ยว", icon: Users },
+      { href: "/admin/dashboard/visits", label: "พฤติกรรมการเดินทาง", icon: MapPinLine },
+      { href: "/admin/dashboard/attractions", label: "ประสิทธิภาพสถานที่", icon: MapPin },
+      { href: "/admin/dashboard/expenses", label: "เศรษฐกิจการท่องเที่ยว", icon: Wallet },
+      { href: "/admin/dashboard/satisfaction", label: "ความพึงพอใจ", icon: Smiley },
+      { href: "/admin/dashboard/funnel", label: "เส้นทางผู้ใช้งาน", icon: FunnelSimple },
+      { href: "/admin/dashboard/sustainability", label: "ความยั่งยืน", icon: TreeEvergreen },
     ]
   },
   {

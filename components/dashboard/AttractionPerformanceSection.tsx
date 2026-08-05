@@ -1,3 +1,5 @@
+import { Certificate, ChatCircleText, MapPin, PersonSimpleWalk } from "@phosphor-icons/react/dist/ssr";
+import { AnalyticsMetricGrid } from "@/components/dashboard/AnalyticsMetricGrid";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { NoDataState } from "@/components/dashboard/NoDataState";
@@ -5,13 +7,6 @@ import type { DashboardViewModel, RankedAttraction } from "@/types/dashboard";
 
 function formatCount(value: number): string {
   return value.toLocaleString("th-TH");
-}
-
-function kpiDivider(index: number): string {
-  if (index === 0) return "";
-  if (index === 1) return "border-t border-slate-200 sm:border-l sm:border-t-0";
-  if (index === 2) return "border-t border-slate-200 xl:border-l xl:border-t-0";
-  return "border-t border-slate-200 sm:border-l xl:border-t-0";
 }
 
 function ConcentrationContext({ attractions, visitCount }: { attractions: RankedAttraction[]; visitCount: number }) {
@@ -50,11 +45,11 @@ export function AttractionPerformanceSection({ data }: { data: DashboardViewMode
   const responses = attractions.reduce((sum, item) => sum + item.surveyResponseCount, 0);
   const ranking = attractions.map((item) => ({ label: item.attractionName, value: item.visitCount, percent: visits > 0 ? item.visitCount / visits : null }));
   const kpis = [
-    ["การเข้าชมในอันดับ", visits],
-    ["ใบประกาศที่สร้าง", certificates],
-    ["คำตอบแบบสำรวจ", responses],
-    ["สถานที่ที่มีข้อมูล", attractions.length],
-  ] as const;
+    { label: "การเข้าชมในอันดับ", value: formatCount(visits), icon: <PersonSimpleWalk aria-hidden="true" size={20} weight="fill" /> },
+    { label: "ใบประกาศที่สร้าง", value: formatCount(certificates), icon: <Certificate aria-hidden="true" size={20} weight="fill" /> },
+    { label: "คำตอบแบบสำรวจ", value: formatCount(responses), icon: <ChatCircleText aria-hidden="true" size={20} weight="fill" /> },
+    { label: "สถานที่ที่มีข้อมูล", value: formatCount(attractions.length), icon: <MapPin aria-hidden="true" size={20} weight="fill" /> },
+  ];
 
   return (
     <section className="space-y-5" aria-labelledby="attraction-performance-heading">
@@ -64,14 +59,7 @@ export function AttractionPerformanceSection({ data }: { data: DashboardViewMode
         title="ผลงานสถานที่ท่องเที่ยว"
       />
 
-      <dl role="group" aria-label="ตัวชี้วัดผลงานสถานที่" className="grid overflow-hidden rounded-md border border-slate-200 bg-white sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map(([label, value], index) => (
-          <div key={label} className={`min-w-0 p-3.5 ${kpiDivider(index)}`}>
-            <dt className="text-xs font-semibold text-slate-600">{label}</dt>
-            <dd className="mt-1 text-xl font-black tabular-nums text-slate-900">{formatCount(value)}</dd>
-          </div>
-        ))}
-      </dl>
+      <AnalyticsMetricGrid items={kpis} label="ตัวชี้วัดผลงานสถานที่" />
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-12">
         <div role="region" aria-label="หลักฐานอันดับสถานที่" className="min-w-0 xl:col-span-8">

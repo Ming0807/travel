@@ -111,7 +111,8 @@ describe("Dashboard UX ภาษาไทย", () => {
   it("แสดงแท็บภาษาไทยและระบุหน้าปัจจุบัน", () => {
     render(<DashboardTabs />);
     expect(screen.getByRole("link", { name: "ค่าใช้จ่าย" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("navigation", { name: "หมวดการวิเคราะห์" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ค่าใช้จ่าย" })).toHaveClass("bg-[#171717]");
+    expect(screen.getByRole("navigation", { name: "หมวดการวิเคราะห์" })).toHaveClass("lg:hidden");
   });
 
   it("ยุบตัวกรองหลักไว้ในแถบกะทัดรัดและเปิดแก้ไขได้", () => {
@@ -132,9 +133,12 @@ describe("Dashboard UX ภาษาไทย", () => {
       />,
     );
 
-    expect(screen.getByText("ปรับตัวกรอง")).toBeInTheDocument();
-    expect(screen.queryByLabelText("ตั้งแต่วันที่")).not.toBeVisible();
-    fireEvent.click(screen.getByText("ปรับตัวกรอง"));
+    const toggle = screen.getByRole("button", { name: "ปรับตัวกรอง" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByLabelText("ตั้งแต่วันที่").closest("#dashboard-filter-form")).toHaveClass("hidden");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("ตั้งแต่วันที่").closest("#dashboard-filter-form")).toHaveClass("block");
     expect(screen.getByLabelText("ตั้งแต่วันที่")).toBeVisible();
     expect(screen.getByRole("button", { name: "นำตัวกรองไปใช้" })).toBeVisible();
   });
@@ -190,7 +194,8 @@ describe("Dashboard UX ภาษาไทย", () => {
       />,
     );
 
-    expect(screen.getByText("รวม 11 ครั้ง")).toBeInTheDocument();
+    expect(screen.getByText("รวมในช่วงที่เลือก")).toBeInTheDocument();
+    expect(screen.getByText("11 ครั้ง")).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ข้อมูลแนวโน้มรายการเข้าชม" })).toBeInTheDocument();
     expect(screen.getAllByText("7").length).toBeGreaterThan(0);
   });

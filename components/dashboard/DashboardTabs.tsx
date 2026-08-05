@@ -28,8 +28,8 @@ export function DashboardTabs() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="หมวดการวิเคราะห์" className="min-w-0 border-b border-slate-200 bg-white">
-      <div className="hide-scrollbar flex max-w-full gap-0 overflow-x-auto px-1 pb-px">
+    <nav aria-label="หมวดการวิเคราะห์" className="min-w-0 border-y border-slate-200 bg-[#F7F7F5] lg:hidden">
+      <div className="hide-scrollbar flex max-w-full gap-1 overflow-x-auto px-2 py-1.5 sm:px-3">
         {tabs.map((tab) => {
           const isActive = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
           const Icon = tab.icon;
@@ -38,10 +38,10 @@ export function DashboardTabs() {
               key={tab.name}
               href={tab.href}
               aria-current={isActive ? "page" : undefined}
-              className={`relative flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
+              className={`flex min-h-11 shrink-0 items-center gap-2 rounded-[5px] border px-3 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727] focus-visible:ring-offset-1 ${
                 isActive
-                  ? "border-[#B94727] text-[#A33E23]"
-                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-900"
+                  ? "border-[#171717] bg-[#171717] text-white"
+                  : "border-transparent text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900"
               }`}
             >
               <Icon className="h-4 w-4" weight={isActive ? "fill" : "regular"} aria-hidden="true" />

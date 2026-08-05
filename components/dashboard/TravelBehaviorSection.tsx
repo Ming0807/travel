@@ -1,3 +1,5 @@
+import { Bed, ClipboardText, ListChecks, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { AnalyticsMetricGrid } from "@/components/dashboard/AnalyticsMetricGrid";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { localizeDashboardLabel } from "@/components/dashboard/dashboard-localization";
@@ -9,13 +11,6 @@ const CONTEXT_COLORS = ["#B94727", "#171717", "#D6A13D", "#0A6B62"];
 
 function total(items: DistributionItem[]): number {
   return items.reduce((sum, item) => sum + item.value, 0);
-}
-
-function kpiDivider(index: number): string {
-  if (index === 0) return "";
-  if (index === 1) return "border-t border-slate-200 sm:border-l sm:border-t-0";
-  if (index === 2) return "border-t border-slate-200 xl:border-l xl:border-t-0";
-  return "border-t border-slate-200 sm:border-l xl:border-t-0";
 }
 
 function OvernightContext({ items }: { items: DistributionItem[] }) {
@@ -53,11 +48,11 @@ function OvernightContext({ items }: { items: DistributionItem[] }) {
 export function TravelBehaviorSection({ data }: { data: DashboardViewModel }) {
   const behavior = data.travelBehavior;
   const kpis = [
-    ["ขนาดกลุ่มเฉลี่ย", behavior.averageGroupSize === null ? "ยังไม่มีข้อมูล" : `${behavior.averageGroupSize.toFixed(1)} คน`],
-    ["ฐานคำตอบขนาดกลุ่ม", `${behavior.answeredGroupSizeCount.toLocaleString("th-TH")} รายการ`],
-    ["จำนวนคืนเฉลี่ย", behavior.averageNights === null ? "ยังไม่มีข้อมูล" : `${behavior.averageNights.toFixed(1)} คืน`],
-    ["ฐานคำตอบจำนวนคืน", `${behavior.answeredNightsCount.toLocaleString("th-TH")} รายการ`],
-  ] as const;
+    { label: "ขนาดกลุ่มเฉลี่ย", value: behavior.averageGroupSize === null ? "ยังไม่มีข้อมูล" : `${behavior.averageGroupSize.toFixed(1)} คน`, icon: <UsersThree aria-hidden="true" size={20} weight="fill" /> },
+    { label: "ฐานคำตอบขนาดกลุ่ม", value: `${behavior.answeredGroupSizeCount.toLocaleString("th-TH")} รายการ`, icon: <ClipboardText aria-hidden="true" size={20} weight="fill" /> },
+    { label: "จำนวนคืนเฉลี่ย", value: behavior.averageNights === null ? "ยังไม่มีข้อมูล" : `${behavior.averageNights.toFixed(1)} คืน`, icon: <Bed aria-hidden="true" size={20} weight="fill" /> },
+    { label: "ฐานคำตอบจำนวนคืน", value: `${behavior.answeredNightsCount.toLocaleString("th-TH")} รายการ`, icon: <ListChecks aria-hidden="true" size={20} weight="fill" /> },
+  ];
   const transportResponses = total(behavior.transportModes);
   const purposeResponses = total(behavior.travelPurposes);
   const companionResponses = total(behavior.companionTypes);
@@ -71,14 +66,7 @@ export function TravelBehaviorSection({ data }: { data: DashboardViewModel }) {
         title="พฤติกรรมการเดินทาง"
       />
 
-      <dl role="group" aria-label="ตัวชี้วัดพฤติกรรมการเดินทาง" className="grid overflow-hidden rounded-md border border-slate-200 bg-white sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map(([label, value], index) => (
-          <div key={label} className={`min-w-0 p-3.5 ${kpiDivider(index)}`}>
-            <dt className="text-xs font-semibold text-slate-600">{label}</dt>
-            <dd className="mt-1 text-xl font-black tabular-nums text-slate-900">{value}</dd>
-          </div>
-        ))}
-      </dl>
+      <AnalyticsMetricGrid items={kpis} label="ตัวชี้วัดพฤติกรรมการเดินทาง" />
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-12">
         <div role="region" aria-label="หลักฐานรูปแบบการเดินทาง" className="min-w-0 xl:col-span-8">

@@ -30,7 +30,7 @@ export function AdminShell({ children, admin }: AdminShellProps) {
           <AdminSidebar />
           <div className="flex min-w-0 flex-1 flex-col">
             <AdminTopbar displayName={admin?.displayName} email={admin?.email} />
-            <main id="admin-main-content" className="flex-1 px-4 py-5 outline-none md:px-6 md:py-6 lg:px-8">
+            <main id="admin-main-content" className="flex-1 px-4 py-5 outline-none md:px-5 lg:px-6 xl:px-7">
               {children}
             </main>
           </div>

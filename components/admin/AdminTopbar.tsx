@@ -103,15 +103,15 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-4 py-3 md:px-6 lg:px-8">
-      <div className="flex min-h-11 items-center justify-between gap-4">
+    <header className="sticky top-0 z-30 border-b border-[var(--admin-border)] bg-white px-4 md:px-5 lg:px-6 xl:px-7">
+      <div className="flex min-h-16 items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="lg:hidden">
             <MobileAdminNav />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-slate-900 sm:text-base">ระบบจัดการท่องเที่ยว</p>
-            <p className="hidden text-xs text-slate-500 sm:block">ข้อมูล เนื้อหา และการดำเนินงาน</p>
+            <p className="truncate text-sm font-black text-slate-950 sm:text-[15px]">Southern Border Tourism Data &amp; Intelligence Platform</p>
+            <p className="hidden text-[11px] font-semibold text-slate-500 sm:block">ระบบข้อมูลและการวิเคราะห์เพื่อการวางแผนท่องเที่ยว</p>
           </div>
         </div>
 
@@ -123,13 +123,13 @@ export function AdminTopbar({ displayName, email }: AdminTopbarProps) {
               setErrorMessage(null);
               setIsOpen((current) => !current);
             }}
-            className="flex min-h-11 items-center gap-2 rounded-[4px] border border-slate-300 bg-white px-2.5 py-1.5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E77455] sm:px-3"
+            className="flex min-h-11 items-center gap-2 rounded-[4px] border border-transparent bg-white px-2 py-1 text-left transition-colors hover:border-slate-200 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E77455] sm:px-2.5"
             aria-haspopup="menu"
             aria-expanded={isOpen}
             aria-controls="admin-account-menu"
             aria-label="เปิดเมนูบัญชีผู้ดูแลระบบ"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] bg-[#202020] text-white">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#D94717] text-white">
               <UserCircle size={30} weight="fill" aria-hidden="true" />
             </span>
             <span className="hidden min-w-0 sm:block">

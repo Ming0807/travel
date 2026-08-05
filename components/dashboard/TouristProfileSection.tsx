@@ -1,3 +1,5 @@
+import { GlobeHemisphereWest, IdentificationCard, MapPin, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { AnalyticsMetricGrid } from "@/components/dashboard/AnalyticsMetricGrid";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { localizeDashboardLabel } from "@/components/dashboard/dashboard-localization";
@@ -9,13 +11,6 @@ const CONTEXT_COLORS = ["#B94727", "#171717", "#D6A13D", "#0A6B62", "#3B82F6"];
 
 function total(items: DistributionItem[]): number {
   return items.reduce((sum, item) => sum + item.value, 0);
-}
-
-function kpiDivider(index: number): string {
-  if (index === 0) return "";
-  if (index === 1) return "border-t border-slate-200 sm:border-l sm:border-t-0";
-  if (index === 2) return "border-t border-slate-200 xl:border-l xl:border-t-0";
-  return "border-t border-slate-200 sm:border-l xl:border-t-0";
 }
 
 function IdentityContext({ items }: { items: DistributionItem[] }) {
@@ -59,11 +54,11 @@ export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
   const ageResponseCount = total(data.touristProfile.ageGroups);
   const languageResponseCount = total(data.touristProfile.preferredLanguages);
   const kpis = [
-    ["โปรไฟล์ที่มีรายการเข้าชม", profileCount],
-    ["ประเทศต้นทางที่พบ", data.touristProfile.originCountries.length],
-    ["จังหวัดต้นทางในไทย", data.touristProfile.originProvinces.length],
-    ["ช่วงอายุที่มีข้อมูล", data.touristProfile.ageGroups.length],
-  ] as const;
+    { label: "โปรไฟล์ที่มีรายการเข้าชม", value: profileCount.toLocaleString("th-TH"), icon: <UsersThree aria-hidden="true" size={20} weight="fill" />, note: "โปรไฟล์ระบบ ไม่ใช่จำนวนบุคคลที่ยืนยันตัวตนแล้ว" },
+    { label: "ประเทศต้นทางที่พบ", value: data.touristProfile.originCountries.length.toLocaleString("th-TH"), icon: <GlobeHemisphereWest aria-hidden="true" size={20} weight="fill" /> },
+    { label: "จังหวัดต้นทางในไทย", value: data.touristProfile.originProvinces.length.toLocaleString("th-TH"), icon: <MapPin aria-hidden="true" size={20} weight="fill" /> },
+    { label: "ช่วงอายุที่มีข้อมูล", value: data.touristProfile.ageGroups.length.toLocaleString("th-TH"), icon: <IdentificationCard aria-hidden="true" size={20} weight="fill" /> },
+  ];
 
   return (
     <section className="space-y-5" aria-labelledby="tourist-profile-heading">
@@ -74,14 +69,7 @@ export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
         title="ลักษณะนักท่องเที่ยว"
       />
 
-      <dl role="group" aria-label="ตัวชี้วัดลักษณะนักท่องเที่ยว" className="grid overflow-hidden rounded-md border border-slate-200 bg-white sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map(([label, value], index) => (
-          <div key={label} className={`min-w-0 p-3.5 ${kpiDivider(index)}`}>
-            <dt className="text-xs font-semibold text-slate-600">{label}</dt>
-            <dd className="mt-1 text-xl font-black tabular-nums text-slate-900">{value.toLocaleString("th-TH")}</dd>
-          </div>
-        ))}
-      </dl>
+      <AnalyticsMetricGrid items={kpis} label="ตัวชี้วัดลักษณะนักท่องเที่ยว" />
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-12">
         <div role="region" aria-label="หลักฐานประเทศต้นทาง" className="min-w-0 xl:col-span-8">

@@ -1,4 +1,5 @@
 import { ArrowDown, Certificate, CheckCircle, QrCode, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { AnalyticsMetricGrid } from "@/components/dashboard/AnalyticsMetricGrid";
 import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { FunnelChart, funnelStageLabel } from "@/components/dashboard/FunnelChart";
 import { FunnelDetailTable } from "@/components/dashboard/FunnelDetailTable";
@@ -38,6 +39,12 @@ export function FunnelSection({ data }: { data: DashboardViewModel }) {
     ? validRate(largest.dropOffFromPrevious)
     : null;
   const lostEvents = largestRate !== null && previousStage && largest ? previousStage.count - largest.count : null;
+  const kpis = [
+    { label: "สแกน QR", value: qrStage?.count === undefined ? "ยังไม่มีข้อมูล" : qrStage.count.toLocaleString("th-TH"), icon: <QrCode aria-hidden="true" size={20} weight="bold" /> },
+    { label: "รายการเข้าชมที่บันทึก", value: visitKpi?.rawValue === null || visitKpi?.rawValue === undefined ? "ยังไม่มีข้อมูล" : visitKpi.rawValue.toLocaleString("th-TH"), icon: <CheckCircle aria-hidden="true" size={20} weight="fill" /> },
+    { label: "สร้างใบประกาศ", value: certificateStage?.count === undefined ? "ยังไม่มีข้อมูล" : certificateStage.count.toLocaleString("th-TH"), icon: <Certificate aria-hidden="true" size={20} weight="fill" /> },
+    { label: "ส่งแบบสำรวจ", value: surveyStage?.count === undefined ? "ยังไม่มีข้อมูล" : surveyStage.count.toLocaleString("th-TH"), icon: <CheckCircle aria-hidden="true" size={20} weight="fill" /> },
+  ];
 
   return (
     <section aria-labelledby="funnel-heading" className="space-y-5">
@@ -47,17 +54,7 @@ export function FunnelSection({ data }: { data: DashboardViewModel }) {
         title="เส้นทางการใช้งาน"
       />
 
-      <dl className="grid overflow-hidden rounded-md border border-slate-200 bg-white sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: "สแกน QR", value: qrStage?.count, icon: QrCode },
-          { label: "รายการเข้าชมที่บันทึก", value: visitKpi?.rawValue, icon: CheckCircle },
-          { label: "สร้างใบประกาศ", value: certificateStage?.count, icon: Certificate },
-          { label: "ส่งแบบสำรวจ", value: surveyStage?.count, icon: CheckCircle },
-        ].map((item, index) => {
-          const Icon = item.icon;
-          return <div className={`flex min-w-0 items-center gap-3 p-4 ${index > 0 ? "border-t border-slate-200 sm:border-l sm:border-t-0" : ""} ${index === 2 ? "sm:border-l-0 xl:border-l" : ""}`} key={item.label}><Icon aria-hidden="true" className="shrink-0 text-[#B94727]" size={20} weight="bold" /><div className="min-w-0"><dt className="truncate text-xs font-semibold text-slate-600">{item.label}</dt><dd className="mt-1 text-xl font-bold tabular-nums text-slate-950">{item.value === null || item.value === undefined ? "ยังไม่มีข้อมูล" : item.value.toLocaleString("th-TH")}</dd></div></div>;
-        })}
-      </dl>
+      <AnalyticsMetricGrid items={kpis} label="ตัวชี้วัดเส้นทางการใช้งาน" />
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-12">
         <div aria-label="หลักฐานเส้นทางการใช้งาน" className="min-w-0 xl:col-span-8" role="region"><FunnelChart stages={data.funnel.stages} /></div>

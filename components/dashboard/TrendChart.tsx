@@ -29,6 +29,9 @@ function linePath(points: { x: number; y: number }[]): string {
 export function TrendChart({ points }: { points: TrendPoint[] }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const total = useMemo(() => points.reduce((sum, point) => sum + point.value, 0), [points]);
+  const peak = useMemo(() => points.reduce<TrendPoint | null>((best, point) => (
+    best === null || point.value > best.value ? point : best
+  ), null), [points]);
   const rawMax = useMemo(() => Math.max(...points.map((point) => point.value), 0), [points]);
   const tickStep = rawMax <= 0 ? 0 : Math.max(1, Math.ceil(rawMax / 4));
   const scaleMax = tickStep * 4;
@@ -36,7 +39,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
 
   if (points.length === 0) {
     return (
-      <section className="h-full rounded-md border border-slate-200 bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] sm:p-5">
+      <section className="h-full rounded-md border border-[#EDC7BA] bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] sm:p-5">
         <h2 className="text-base font-bold text-slate-950">แนวโน้มรายการเข้าชม</h2>
         <p className="mt-1 text-xs leading-5 text-slate-600">นับเฉพาะรายการเข้าชมที่บันทึกสำเร็จ ไม่รวมการสแกน QR</p>
         <div className="mt-4"><NoDataState description="ยังไม่มีรายการเข้าชมในช่วงวันที่ที่เลือก" /></div>
@@ -58,19 +61,33 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
   const path = linePath(mapped);
 
   return (
-    <section className="h-full min-w-0 rounded-md border border-slate-200 bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+    <section className="h-full min-w-0 rounded-md border border-[#EDC7BA] bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-base font-bold text-slate-950">แนวโน้มรายการเข้าชม</h2>
-          <p className="mt-1 text-xs leading-5 text-slate-600">นับเฉพาะรายการเข้าชมที่บันทึกสำเร็จ ไม่รวมการสแกน QR</p>
+          <div className="flex items-center gap-2">
+            <span aria-hidden="true" className="h-2.5 w-2.5 rounded-sm bg-[#B94727]" />
+            <h2 className="text-lg font-black text-slate-950">แนวโน้มรายการเข้าชม</h2>
+          </div>
+          <p className="mt-1.5 text-xs leading-5 text-slate-600">รายการเข้าชมที่บันทึกสำเร็จตามวัน ไม่รวมจำนวนการสแกน QR</p>
         </div>
-        <div className="flex min-h-10 items-center gap-2 rounded-sm bg-[#FFF0EA] px-3 text-sm font-bold text-[#8F351F]">
-          <ChartLineUp aria-hidden="true" size={18} weight="bold" />
-          รวม {total.toLocaleString("th-TH")} ครั้ง
+        <div className="flex divide-x divide-[#EDC7BA] rounded-sm border border-[#EDC7BA] bg-[#FFF9F6]">
+          <div className="flex min-h-12 items-center gap-2 px-3 text-[#8F351F]">
+            <ChartLineUp aria-hidden="true" size={18} weight="bold" />
+            <span>
+              <span className="block text-xs font-semibold">รวมในช่วงที่เลือก</span>
+              <strong className="block text-base font-black tabular-nums">{total.toLocaleString("th-TH")} ครั้ง</strong>
+            </span>
+          </div>
+          {peak ? (
+            <div className="min-h-12 px-3 py-1.5">
+              <span className="block text-xs font-semibold text-slate-600">สูงสุดต่อวัน</span>
+              <strong className="block text-base font-black tabular-nums text-slate-950">{peak.value.toLocaleString("th-TH")} ครั้ง</strong>
+            </div>
+          ) : null}
         </div>
       </div>
 
-      <div className="mt-4 hidden sm:block">
+      <div className="mt-3 hidden sm:block">
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="h-auto w-full"
@@ -186,26 +203,41 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
 }
 
 function MobileTrend({ points, max }: { points: TrendPoint[]; max: number }) {
+  const width = 320;
+  const height = 160;
+  const padding = { top: 16, right: 10, bottom: 32, left: 12 };
+  const innerWidth = width - padding.left - padding.right;
+  const innerHeight = height - padding.top - padding.bottom;
+  const yBase = padding.top + innerHeight;
+  const mapped = points.map((point, index) => ({
+    ...point,
+    x: padding.left + (points.length > 1 ? (index / (points.length - 1)) * innerWidth : innerWidth / 2),
+    y: max > 0 ? padding.top + innerHeight - (point.value / max) * innerHeight : yBase,
+  }));
+
   return (
-    <div className="mt-5 sm:hidden" aria-label="แนวโน้มรายการเข้าชมเจ็ดช่วงล่าสุด">
-      <div className="flex h-36 items-end gap-2 border-b border-slate-200">
-        {points.map((point) => {
-          const height = max > 0 ? Math.max((point.value / max) * 100, point.value > 0 ? 4 : 0) : 0;
-          return (
-            <div key={`mobile-${point.label}`} className="flex h-full min-w-0 flex-1 flex-col justify-end">
-              <span className="mb-1 text-center text-xs font-bold tabular-nums text-slate-700">{point.value}</span>
-              <span className="w-full rounded-t-sm bg-[#B94727]" style={{ height: `${height}%` }} />
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-2 flex gap-2">
-        {points.map((point) => (
-          <span key={`mobile-label-${point.label}`} className="min-w-0 flex-1 truncate text-center text-xs font-semibold text-slate-600">
-            {formatDateLabel(point.label)}
-          </span>
+    <div className="mt-4 sm:hidden">
+      <svg
+        aria-label="แนวโน้มรายการเข้าชมเจ็ดช่วงล่าสุด"
+        className="h-auto w-full"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        viewBox={`0 0 ${width} ${height}`}
+      >
+        <line x1={padding.left} y1={yBase} x2={width - padding.right} y2={yBase} stroke="#CBD5E1" />
+        {mapped.length > 1 ? (
+          <path d={`${linePath(mapped)} L ${mapped[mapped.length - 1].x},${yBase} L ${mapped[0].x},${yBase} Z`} fill="#FFF0EA" />
+        ) : null}
+        <path d={linePath(mapped)} fill="none" stroke="#B94727" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+        {mapped.map((point) => (
+          <g key={`mobile-${point.label}`}>
+            <circle cx={point.x} cy={point.y} r="4" fill="#B94727" stroke="white" strokeWidth="2" />
+            <text x={point.x} y={height - 9} textAnchor="middle" className="fill-slate-600 text-[9px] font-semibold">
+              {formatDateLabel(point.label)}
+            </text>
+          </g>
         ))}
-      </div>
+      </svg>
     </div>
   );
 }
