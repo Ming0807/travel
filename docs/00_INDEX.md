@@ -806,6 +806,31 @@ DASHBOARD_REPORT.md
 
 These files should help convert the system into a complete academic project report.
 
+### 15.1 Research Methodology and Evaluation
+
+Folder:
+
+```text
+docs/research/
+```
+
+Current source of truth:
+
+```text
+RESEARCH_BLUEPRINT.md
+```
+
+Purpose:
+
+- Define the research title, contribution, objectives, RQs, and optional hypotheses.
+- Separate operational tourism data from research evaluation data.
+- Define participant groups, units of analysis, instruments, consent, and collection modes.
+- Map the research design to the existing system, database, funnel, dashboard, and export architecture.
+- Prevent simulated usability records from contaminating real-tourist findings.
+- Define feasibility, decision gates, and the Phase 18 implementation boundary.
+
+Read this file before creating research tables, questionnaires, exports, or collecting final research data.
+
 ---
 
 ## 16. Prompts Folder

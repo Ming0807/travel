@@ -25,6 +25,7 @@
 | `PHASE_13A_CLOUDINARY_STORAGE_DEPLOYMENT.md` | Completed | Cloudinary-first Vercel storage with future university-storage path |
 | `PHASE_16A_STORY_CMS_RECOMMENDATION_DASHBOARD_UX.md` | In progress (P2) | Full Story CMS, explainable recommendations, operational admin home, and analytical dashboard UX |
 | `PHASE_16B_YALA_ADMIN_ANALYTICS_PRODUCTION.md` | In progress (P2) | Yala-first launch scope, privacy-safe engagement, command center, and production analytics |
+| `PHASE_18_RESEARCH_EVALUATION_LAYER.md` | Planned / advisor approval required (P0 before field collection) | Versioned research consent, real-vs-simulated separation, system evaluation, operator decision tasks, and de-identified research analytics |
 
 ## Immediate Priority
 
@@ -45,3 +46,11 @@ Phase 16A is active and its Story CMS/recommendation foundation is implemented t
 - `docs/superpowers/specs/2026-07-16-story-cms-recommendation-dashboard-design.md`
 - `docs/superpowers/plans/2026-07-16-story-cms-recommendation-dashboard.md`
 - `docs/superpowers/plans/2026-07-30-yala-admin-analytics-production.md`
+
+## Research Readiness
+
+Phase 18 is planned but must not begin implementation or final field collection until the advisor approves the research scope, instruments, sampling/power approach, consent procedure, and analysis plan.
+
+- `docs/research/RESEARCH_BLUEPRINT.md`
+- `docs/superpowers/specs/2026-08-08-research-evaluation-layer-design.md`
+- `tasks/PHASE_18_RESEARCH_EVALUATION_LAYER.md`
