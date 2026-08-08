@@ -15,6 +15,7 @@ import {
   type ProvinceOption,
 } from "@/components/checkin/SearchableProvinceField";
 import { AGE_GROUP_OPTIONS, normalizeAgeGroup } from "@/lib/validation/checkin";
+import type { PreferredLanguage, PreferredLanguageSource } from "@/lib/validation/language";
 
 export type CountryOption = {
   id: number;
@@ -28,6 +29,8 @@ export type CheckinProfileDefaults = {
   originCountryId: number | null;
   originProvinceId: number | null;
   ageGroup: string | null;
+  preferredLanguage?: PreferredLanguage;
+  preferredLanguageSource?: PreferredLanguageSource;
   hasCurrentConsent: boolean;
 };
 
@@ -36,6 +39,7 @@ type MinimalFormProps = {
   countries: CountryOption[];
   provinces: ProvinceOption[];
   initialProfile?: CheckinProfileDefaults | null;
+  detectedLanguage?: PreferredLanguage;
 };
 
 const initialFormState: MinimalFormState = {};
@@ -45,6 +49,7 @@ export function MinimalForm({
   countries,
   provinces,
   initialProfile,
+  detectedLanguage = null,
 }: MinimalFormProps) {
   const [state, formAction, isPending] = useActionState(
     initiateCheckin.bind(null, checkinCode),
@@ -57,6 +62,11 @@ export function MinimalForm({
   const [isEditing, setIsEditing] = useState(!initialProfile);
   const [countryId, setCountryId] = useState<number | null>(defaultCountryId);
   const [provinceId, setProvinceId] = useState<number | null>(initialProfile?.originProvinceId ?? null);
+  const initialLanguage = initialProfile?.preferredLanguage ?? detectedLanguage;
+  const [preferredLanguage, setPreferredLanguage] = useState<PreferredLanguage>(initialLanguage);
+  const [preferredLanguageSource, setPreferredLanguageSource] = useState<PreferredLanguageSource>(
+    initialProfile?.preferredLanguageSource ?? (initialProfile?.preferredLanguage ? null : detectedLanguage ? "detected" : null),
+  );
   const selectedCountry = countries.find((country) => country.id === countryId) ?? null;
   const isThailand = selectedCountry?.iso2Code === "TH";
   const currentProvince = provinces.find((province) => province.id === provinceId) ?? null;
@@ -135,6 +145,8 @@ export function MinimalForm({
           <input type="hidden" name="originCountryId" value={countryId ?? ""} />
           <input type="hidden" name="originProvinceId" value={provinceId ?? ""} />
           <input type="hidden" name="ageGroup" value={normalizedInitialAgeGroup ?? ""} />
+          <input type="hidden" name="preferredLanguage" value={preferredLanguage ?? ""} />
+          <input type="hidden" name="preferredLanguageSource" value={preferredLanguageSource ?? ""} />
           {consentField}
 
           <button
@@ -168,6 +180,8 @@ export function MinimalForm({
                 onClick={() => {
                   setCountryId(initialProfile.originCountryId ?? defaultCountryId);
                   setProvinceId(initialProfile.originProvinceId);
+                  setPreferredLanguage(initialProfile.preferredLanguage ?? detectedLanguage);
+                  setPreferredLanguageSource(initialProfile.preferredLanguageSource ?? (initialProfile.preferredLanguage ? null : detectedLanguage ? "detected" : null));
                   setIsEditing(false);
                 }}
               >
@@ -255,6 +269,37 @@ export function MinimalForm({
               ))}
             </div>
             {state.errors?.ageGroup?.[0] ? <p className="text-xs font-medium text-rose-600">{state.errors.ageGroup[0]}</p> : null}
+          </fieldset>
+
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-bold text-ink">à¸ à¸²à¸©à¸²à¸—à¸µà¹ˆà¸•à¹‰à¸­à¸‡à¸à¸²à¸£ (Preferred language)</legend>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                ["th", "à¹„à¸—à¸¢"],
+                ["en", "English"],
+                ["ms", "Bahasa Melayu"],
+              ] as const).map(([value, label]) => (
+                <label
+                  key={value}
+                  className="flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-semibold text-slate-700 transition-colors has-[:checked]:border-teal has-[:checked]:bg-teal/8 has-[:checked]:text-teal hover:border-slate-300"
+                >
+                  <input
+                    className="sr-only"
+                    type="radio"
+                    name="preferredLanguage"
+                    value={value}
+                    checked={preferredLanguage === value}
+                    onChange={() => {
+                      setPreferredLanguage(value);
+                      setPreferredLanguageSource("selected");
+                    }}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            {preferredLanguage === null ? <input type="hidden" name="preferredLanguage" value="" /> : null}
+            <input type="hidden" name="preferredLanguageSource" value={preferredLanguageSource ?? ""} />
           </fieldset>
 
           {consentField}

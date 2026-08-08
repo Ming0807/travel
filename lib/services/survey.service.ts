@@ -5,6 +5,7 @@ import { getCertificateByVisitId } from "@/lib/repositories/certificate.reposito
 import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
 import {
   SurveyReferenceError,
+  SurveyValidationError,
   getSurveyOptions,
   getSatisfactionSurveyByVisitId,
   savePostCertificateSurveyTransaction
@@ -18,6 +19,7 @@ export class SurveyFlowError extends Error {
       | "VISIT_ACCESS_DENIED"
       | "CERTIFICATE_REQUIRED"
       | "SURVEY_REFERENCE_INVALID"
+      | "SURVEY_VALIDATION_FAILED"
       | "SURVEY_SAVE_FAILED",
     message: string
   ) {
@@ -89,6 +91,10 @@ export async function submitPostCertificateSurvey(input: PostCertificateSurveyIn
   } catch (error) {
     if (error instanceof SurveyReferenceError) {
       throw new SurveyFlowError("SURVEY_REFERENCE_INVALID", "ตัวเลือกแบบสอบถามไม่ถูกต้องหรือไม่ได้เปิดใช้งาน");
+    }
+
+    if (error instanceof SurveyValidationError) {
+      throw new SurveyFlowError("SURVEY_VALIDATION_FAILED", "คะแนนแบบสอบถามไม่ถูกต้อง");
     }
 
     console.error("Survey submit failed:", error);

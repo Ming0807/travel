@@ -8,6 +8,7 @@ import { createConsentRecord } from "@/lib/repositories/consent.repository";
 import { getCheckinOriginSelection } from "@/lib/repositories/geography.repository";
 import { getTouristStampByAttraction, awardTouristStamp } from "@/lib/repositories/stamp.repository";
 import { getVisitById } from "@/lib/repositories/visit.repository";
+import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
 import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
 import { assignStampForVisit } from "@/lib/services/stamp.service";
 import { initiateVisit } from "@/lib/services/visit.service";
@@ -250,6 +251,38 @@ describe("QR Check-in Flow Hardening", () => {
       });
 
       expect(res.success).toBe(true);
+    });
+
+    it("keeps missing language null and accepts detected or selected provenance", () => {
+      expect(minimalFormSchema.parse({
+        displayName: "John",
+        originCountryId: "1",
+        originProvinceId: "10",
+        ageGroup: "25_34",
+        hasConsented: true,
+        preferredLanguage: null,
+        preferredLanguageSource: null,
+      })).toMatchObject({ preferredLanguage: null, preferredLanguageSource: null });
+
+      expect(minimalFormSchema.parse({
+        displayName: "John",
+        originCountryId: "1",
+        originProvinceId: "10",
+        ageGroup: "25_34",
+        hasConsented: true,
+        preferredLanguage: "en",
+        preferredLanguageSource: "detected",
+      })).toMatchObject({ preferredLanguage: "en", preferredLanguageSource: "detected" });
+
+      expect(minimalFormSchema.parse({
+        displayName: "John",
+        originCountryId: "1",
+        originProvinceId: "10",
+        ageGroup: "25_34",
+        hasConsented: true,
+        preferredLanguage: "ms",
+        preferredLanguageSource: "selected",
+      })).toMatchObject({ preferredLanguage: "ms", preferredLanguageSource: "selected" });
     });
   });
 
@@ -499,6 +532,7 @@ describe("QR Check-in Flow Hardening", () => {
         consentVersion: "1.0",
         purposeKey: "checkin_profile_creation",
       }));
+      expect(vi.mocked(recordFunnelEvent).mock.calls.map(([event]) => event.eventName)).not.toContain("minimal_form_completed");
       expect(tableCalls().slice(0, 4)).toEqual(["tourist_identities", "tourists", "tourist_identities", "consent_records"]);
       expect(revalidatePath).toHaveBeenCalledWith("/checkin/test");
       expect(redirect).toHaveBeenCalledWith("/visit/mock-visit-id/photo");

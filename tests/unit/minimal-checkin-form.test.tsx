@@ -85,6 +85,34 @@ describe("MinimalForm", () => {
     expect(screen.getByRole("combobox", { name: "จังหวัดที่เดินทางมา" })).toHaveValue("ปัตตานี");
   });
 
+  it("prefills detected language and marks an explicit change as selected", async () => {
+    const user = userEvent.setup();
+    render(
+      <MinimalForm
+        checkinCode="PTN001"
+        countries={countries}
+        provinces={provinces}
+        detectedLanguage="en"
+      />,
+    );
+
+    const languageGroup = screen.getByRole("group", { name: /preferred language/i });
+    expect(within(languageGroup).getByRole("radio", { name: "English" })).toBeChecked();
+    expect(document.querySelector('input[name="preferredLanguageSource"]')).toHaveValue("detected");
+
+    await user.click(within(languageGroup).getByRole("radio", { name: "Bahasa Melayu" }));
+
+    expect(document.querySelector('input[type="radio"][name="preferredLanguage"][value="ms"]')).toBeChecked();
+    expect(document.querySelector('input[type="hidden"][name="preferredLanguageSource"]')).toHaveValue("selected");
+  });
+
+  it("leaves language and provenance empty when detection is unavailable", () => {
+    render(<MinimalForm checkinCode="PTN001" countries={countries} provinces={provinces} />);
+
+    expect(document.querySelector('input[type="hidden"][name="preferredLanguage"]')).toHaveValue("");
+    expect(document.querySelector('input[type="hidden"][name="preferredLanguageSource"]')).toHaveValue("");
+  });
+
   it("restores saved location when a returning tourist cancels editing", async () => {
     const user = userEvent.setup();
     render(

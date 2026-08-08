@@ -39,6 +39,7 @@ export async function submitPostCertificateSurveyAction(formData: FormData) {
     accessibilityScore: formData.get("accessibilityScore"),
     informationScore: formData.get("informationScore"),
     valueScore: formData.get("valueScore"),
+    facilityScore: formData.get("facilityScore"),
     revisitIntention: formData.get("revisitIntention"),
     recommendIntention: formData.get("recommendIntention"),
     optionalComment: formData.get("optionalComment")

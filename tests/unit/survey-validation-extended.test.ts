@@ -66,6 +66,7 @@ describe("postCertificateSurveySchema", () => {
       accessibilityScore: "",
       informationScore: "",
       valueScore: "",
+      facilityScore: "",
       revisitIntention: "",
       recommendIntention: "",
       optionalComment: "",
@@ -89,6 +90,38 @@ describe("postCertificateSurveySchema", () => {
       overallSatisfaction: 4,
     });
     expect(result.overallSatisfaction).toBe(4);
+  });
+
+  it("accepts facilityScore as a current optional 1-5 dimension and preserves null", () => {
+    expect(
+      postCertificateSurveySchema.parse({
+        visitId: validVisitId,
+        facilityScore: 1,
+      }).facilityScore,
+    ).toBe(1);
+
+    expect(
+      postCertificateSurveySchema.parse({
+        visitId: validVisitId,
+        facilityScore: null,
+        overallSatisfaction: 4,
+      }).facilityScore,
+    ).toBeNull();
+  });
+
+  it("rejects facilityScore outside the shared satisfaction range", () => {
+    expect(
+      postCertificateSurveySchema.safeParse({
+        visitId: validVisitId,
+        facilityScore: 0,
+      }).success,
+    ).toBe(false);
+    expect(
+      postCertificateSurveySchema.safeParse({
+        visitId: validVisitId,
+        facilityScore: 6,
+      }).success,
+    ).toBe(false);
   });
 
   it("accepts single optional field: optionalComment", () => {

@@ -456,7 +456,8 @@ This table should not store visit-specific information.
 | origin_country_id | bigint | no | Origin country |
 | origin_province_id | bigint | no | Origin province for Thai tourists |
 | age_group | varchar(50) | no | Age group |
-| preferred_language | varchar(10) | no | th, en, ms, etc. |
+| preferred_language | varchar(10) | no | Nullable controlled value: th, en, or ms. Missing detection remains null. |
+| preferred_language_source | varchar(20) | no | Nullable provenance: detected or selected. |
 | profile_completed_at | timestamptz | no | When minimal profile was completed |
 | created_at | timestamptz | yes | Record creation time |
 | updated_at | timestamptz | no | Last update time |
@@ -1082,7 +1083,7 @@ Stores structured satisfaction data.
 | tourist_id | uuid | yes | Foreign key to tourists |
 | attraction_id | bigint | no | Denormalized attraction for dashboard filtering |
 | overall_score | integer | no | Overall satisfaction score 1-5 |
-| facility_score | integer | no | Legacy facility score 1-5 |
+| facility_score | integer | no | Current optional facility score 1-5 |
 | safety_score | integer | no | Safety score 1-5 |
 | cleanliness_score | integer | no | Cleanliness score 1-5 |
 | accessibility_score | integer | no | Accessibility score 1-5 |
@@ -1093,6 +1094,7 @@ Stores structured satisfaction data.
 | comments | text | no | Optional comment |
 | submitted_at | timestamptz | yes | Submitted timestamp |
 | completed_at | timestamptz | no | Preferred survey completion timestamp |
+| survey_instrument_version | varchar(50) | no | Nullable non-empty version marker for the tourism survey instrument; final research instruments remain separate |
 
 ## 27.3 Constraints
 

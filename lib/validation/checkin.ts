@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { preferredLanguageSchema, preferredLanguageSourceSchema } from "@/lib/validation/language";
 
 export const resolveCheckinCodeSchema = z.object({
   code: z.string().min(1, "Check-in code is required").max(100, "Code too long"),
@@ -41,12 +42,30 @@ const optionalPositiveId = z.preprocess(
   z.coerce.number().int().positive().nullable(),
 );
 
-export const minimalFormSchema = z.object({
+const optionalPreferredLanguage = z.preprocess(
+  (value) => (value === "" || value === undefined ? null : value),
+  preferredLanguageSchema,
+);
+
+const optionalPreferredLanguageSource = z.preprocess(
+  (value) => (value === "" || value === undefined ? null : value),
+  preferredLanguageSourceSchema,
+);
+
+const baseMinimalFormSchema = z.object({
   displayName: z.string().min(1, "กรุณากรอกชื่อของคุณ").max(100),
   originCountryId: requiredPositiveId,
   originProvinceId: optionalPositiveId,
   ageGroup: z.enum(AGE_GROUP_OPTIONS.map((option) => option.value) as [AgeGroupValue, ...AgeGroupValue[]]),
   hasConsented: z.boolean().refine((v) => v === true, { message: "กรุณายอมรับข้อตกลง" }),
 });
+
+export const minimalFormSchema = baseMinimalFormSchema.extend({
+  preferredLanguage: optionalPreferredLanguage,
+  preferredLanguageSource: optionalPreferredLanguageSource,
+}).refine(
+  (data) => data.preferredLanguage !== null || data.preferredLanguageSource === null,
+  { message: "Preferred language provenance requires a language.", path: ["preferredLanguageSource"] },
+);
 
 export type MinimalFormInput = z.infer<typeof minimalFormSchema>;

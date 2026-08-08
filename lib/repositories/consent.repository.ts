@@ -10,7 +10,7 @@ export async function createConsentRecord(params: {
   purposeKey?: string;
   hasConsented: boolean;
   source?: string;
-  language?: string;
+  language?: string | null;
   metadata?: Record<string, unknown>;
 }) {
   const supabase = createSupabaseServiceRoleClient();

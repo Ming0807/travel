@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 const surveyErrorMessages: Record<string, string> = {
+  survey_validation_failed: "คะแนนแบบสอบถามไม่ถูกต้อง กรุณาตรวจสอบแล้วลองใหม่",
   invalid: "ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง หรือเลือกข้ามแบบสอบถาม",
   survey_reference_invalid: "ตัวเลือกบางรายการไม่พร้อมใช้งานแล้ว กรุณาเลือกคำตอบใหม่อีกครั้ง",
   certificate_required: "กรุณาสร้างใบประกาศก่อนตอบแบบสอบถาม",

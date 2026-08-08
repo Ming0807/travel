@@ -555,7 +555,7 @@ describe("Dashboard export row mappers (privacy)", () => {
    * - "Submitted At", "Visit Date", "Attraction", "Province",
    *   "Overall Score", "Safety Score", "Cleanliness Score",
    *   "Accessibility Score", "Information Score", "Value Score",
-   *   "Facility Score (Legacy)", "Revisit Intention", "Recommend Intention"
+   *   "Facility Score", "Revisit Intention", "Recommend Intention"
    */
   it("surveys export type excludes identifiers and comments", () => {
     const mockSurveys = [
@@ -595,7 +595,7 @@ describe("Dashboard export row mappers (privacy)", () => {
         "Accessibility Score": String(s.accessibility_score),
         "Information Score": String(s.information_score),
         "Value Score": String(s.value_score),
-        "Facility Score (Legacy)": String(s.facility_score),
+        "Facility Score": String(s.facility_score),
         "Revisit Intention": String(s.revisit_intention),
         "Recommend Intention": String(s.recommend_intention),
       };

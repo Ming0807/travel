@@ -9,6 +9,8 @@ export async function setupGuestTouristProfile(params: {
   originCountryId?: number | null;
   originProvinceId?: number | null;
   hasConsented: boolean;
+  preferredLanguage?: import("@/lib/validation/language").PreferredLanguage;
+  preferredLanguageSource?: import("@/lib/validation/language").PreferredLanguageSource;
 }): Promise<string> {
   // 1. Check if the tourist already exists for this guest token
   let touristId = await findTouristByIdentity("anonymous_device", params.guestToken);
@@ -20,6 +22,8 @@ export async function setupGuestTouristProfile(params: {
       ageGroup: params.ageGroup,
       originCountryId: params.originCountryId,
       originProvinceId: params.originProvinceId,
+      preferredLanguage: params.preferredLanguage,
+      preferredLanguageSource: params.preferredLanguageSource,
     });
 
     // 3. Link the anonymous device identity to the new profile

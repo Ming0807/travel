@@ -6,6 +6,8 @@ import { ArrowLeft, Compass, MapPin, ShieldCheck } from "@phosphor-icons/react/d
 import { getGuestIdentity } from "@/lib/auth/guest";
 import { listCheckinCountries, listCheckinProvinces } from "@/lib/repositories/geography.repository";
 import { getGuestCheckinProfile } from "@/lib/repositories/tourist.repository";
+import { detectPreferredLanguage } from "@/lib/validation/language";
+import { headers } from "next/headers";
 
 export default async function StartCheckinPage({
   params,
@@ -21,6 +23,8 @@ export default async function StartCheckinPage({
 
   const { attraction, photo_spot } = context.details;
   const guestToken = await getGuestIdentity();
+  const requestHeaders = await headers();
+  const detectedLanguage = detectPreferredLanguage(requestHeaders.get("accept-language"));
 
   let countries;
   let provinces;
@@ -72,6 +76,7 @@ export default async function StartCheckinPage({
             countries={countries}
             provinces={provinces}
             initialProfile={initialProfile}
+            detectedLanguage={detectedLanguage}
           />
         </div>
 

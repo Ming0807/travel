@@ -1,12 +1,15 @@
 import "server-only";
 import { CHECKIN_CONSENT_PURPOSE_KEY, CHECKIN_CONSENT_VERSION } from "@/lib/config/checkin";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import type { PreferredLanguage, PreferredLanguageSource } from "@/lib/validation/language";
 
 export type GuestCheckinProfile = {
   displayName: string;
   originCountryId: number | null;
   originProvinceId: number | null;
   ageGroup: string | null;
+  preferredLanguage: PreferredLanguage;
+  preferredLanguageSource: PreferredLanguageSource;
   hasCurrentConsent: boolean;
 };
 
@@ -14,7 +17,7 @@ export async function getGuestCheckinProfile(guestToken: string): Promise<GuestC
   const supabase = createSupabaseServiceRoleClient();
   const { data: identity, error } = await supabase
     .from("tourist_identities")
-    .select("tourist_id, tourists!inner(display_name, origin_country_id, origin_province_id, age_group)")
+    .select("tourist_id, tourists!inner(display_name, origin_country_id, origin_province_id, age_group, preferred_language, preferred_language_source)")
     .eq("provider", "anonymous_device")
     .eq("provider_user_id", guestToken)
     .maybeSingle();
@@ -41,6 +44,8 @@ export async function getGuestCheckinProfile(guestToken: string): Promise<GuestC
     originCountryId: tourist.origin_country_id ? Number(tourist.origin_country_id) : null,
     originProvinceId: tourist.origin_province_id ? Number(tourist.origin_province_id) : null,
     ageGroup: tourist.age_group,
+    preferredLanguage: tourist.preferred_language ?? null,
+    preferredLanguageSource: tourist.preferred_language_source ?? null,
     hasCurrentConsent: Boolean(consent),
   };
 }
@@ -61,7 +66,8 @@ export async function findTouristByIdentity(provider: string, providerUserId: st
 export async function createTouristProfile(params: {
   displayName: string;
   ageGroup: string;
-  preferredLanguage?: string;
+  preferredLanguage?: PreferredLanguage;
+  preferredLanguageSource?: PreferredLanguageSource;
   originCountryId?: number | null;
   originProvinceId?: number | null;
 }) {
@@ -71,7 +77,8 @@ export async function createTouristProfile(params: {
     .insert({
       display_name: params.displayName,
       age_group: params.ageGroup,
-      preferred_language: params.preferredLanguage || "th",
+      preferred_language: params.preferredLanguage ?? null,
+      preferred_language_source: params.preferredLanguageSource ?? null,
       origin_country_id: params.originCountryId || null,
       origin_province_id: params.originProvinceId || null,
     })
@@ -112,6 +119,7 @@ export async function getTouristById(touristId: string) {
       origin_province_id,
       age_group,
       preferred_language,
+      preferred_language_source,
       countries (
         country_name_th,
         country_name_en

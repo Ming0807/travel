@@ -610,7 +610,7 @@ type RecordConsentInput = {
   purposeKey: string;
   hasConsented: boolean;
   source: string;
-  language: "th" | "en";
+  language: "th" | "en" | "ms" | null;
   metadata?: Record<string, unknown>;
 };
 ```

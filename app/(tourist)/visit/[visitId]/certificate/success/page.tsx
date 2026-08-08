@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { CertificateSuccessActions } from "@/components/certificate/CertificateSuccessActions";
 import { requireTouristVisitAccess } from "@/lib/auth/guards";
 import { getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
-import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
 import { notFound } from "next/navigation";
 import { CheckCircle, Sparkle } from "@phosphor-icons/react/dist/ssr";
 
@@ -19,30 +18,12 @@ export default async function CertificateSuccessPage({
 }) {
   const { visitId } = await params;
   const resolvedSearchParams = await searchParams;
-  let access: Awaited<ReturnType<typeof requireTouristVisitAccess>>;
   try {
-    access = await requireTouristVisitAccess(visitId);
+    await requireTouristVisitAccess(visitId);
   } catch {
     notFound();
   }
 
-  // Track passport_saved funnel event (fire-and-forget)
-  try {
-    const v = access.visit as {
-      checkin_code_id?: number | null;
-      attraction_id?: number | null;
-      tourist_id?: string | null;
-    };
-    await recordFunnelEvent({
-      eventName: "passport_saved",
-      checkinCodeId: v.checkin_code_id || undefined,
-      attractionId: v.attraction_id || undefined,
-      touristId: v.tourist_id || undefined,
-      visitId,
-    });
-  } catch {
-    // Funnel tracking is non-critical
-  }
   const rawStamp = Array.isArray(resolvedSearchParams?.stamp)
     ? resolvedSearchParams?.stamp[0]
     : resolvedSearchParams?.stamp;

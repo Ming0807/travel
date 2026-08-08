@@ -65,7 +65,7 @@ function buildSatisfactionAlerts(data: DashboardViewModel): DashboardAlert[] {
     { key: "accessibility", label: "Accessibility", value: s.accessibilityAverage, responseCount: s.accessibilityResponseCount },
     { key: "information", label: "Information", value: s.informationAverage, responseCount: s.informationResponseCount },
     { key: "value", label: "Value", value: s.valueAverage, responseCount: s.valueResponseCount },
-    { key: "facility", label: "Facility (legacy)", value: s.facilityAverage, responseCount: s.facilityResponseCount },
+    { key: "facility", label: "Facility", value: s.facilityAverage, responseCount: s.facilityResponseCount },
   ];
 
   for (const dim of dimensions) {

@@ -265,7 +265,7 @@ export async function GET(request: Request) {
         "Accessibility Score": safeString(s.accessibility_score),
         "Information Score": safeString(s.information_score),
         "Value Score": safeString(s.value_score),
-        "Facility Score (Legacy)": safeString(s.facility_score),
+        "Facility Score": safeString(s.facility_score),
         "Revisit Intention": safeString(s.revisit_intention),
         "Recommend Intention": safeString(s.recommend_intention),
       };

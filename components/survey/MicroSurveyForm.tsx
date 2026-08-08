@@ -189,6 +189,8 @@ export function MicroSurveyForm({
           <RatingGroup name="informationScore" label="ข้อมูลและป้ายบอกทาง" />
           <RatingGroup name="valueScore" label="ความคุ้มค่า" />
 
+          <RatingGroup name="facilityScore" label="à¸ªà¸´à¹ˆà¸‡à¸­à¸³à¸™à¸§à¸¢à¸„à¸§à¸²à¸¡à¸ªà¸°à¸”à¸§à¸ (Facility)" />
+
           <div className="grid gap-3 sm:grid-cols-2">
             {[
               ["revisitIntention", "อยากกลับมาอีกไหม"],

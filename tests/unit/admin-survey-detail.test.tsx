@@ -74,6 +74,7 @@ describe("admin survey detail route", () => {
   it("shows respondent, visit, voluntary-data sections, and a profile link", () => {
     render(<SurveyDetailView survey={survey} canReadComments canReadTourist />);
 
+    expect(screen.getByText(/Facility/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "รายละเอียดคำตอบแบบสมัครใจ" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "พฤติกรรมการเดินทาง" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "ค่าใช้จ่ายโดยประมาณ" })).toBeInTheDocument();

@@ -58,6 +58,7 @@ export const postCertificateSurveySchema = z
     accessibilityScore: optionalScoreFromForm,
     informationScore: optionalScoreFromForm,
     valueScore: optionalScoreFromForm,
+    facilityScore: optionalScoreFromForm,
     revisitIntention: z.preprocess(
       (value) => (value === "" || value === undefined ? null : value),
       intentionSchema
@@ -92,6 +93,7 @@ export const postCertificateSurveySchema = z
       data.accessibilityScore !== null ||
       data.informationScore !== null ||
       data.valueScore !== null ||
+      data.facilityScore !== null ||
       data.revisitIntention !== null ||
       data.recommendIntention !== null ||
       data.optionalComment !== null,

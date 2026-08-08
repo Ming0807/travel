@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PostCertificateSurveyInput } from "@/lib/validation/survey";
+import { CURRENT_TOURISM_SURVEY_INSTRUMENT_VERSION } from "@/lib/config/survey";
 
 const serviceRoleMocks = vi.hoisted(() => ({
   rpc: vi.fn(),
@@ -30,6 +31,7 @@ const input: PostCertificateSurveyInput = {
   accessibilityScore: 4,
   informationScore: 5,
   valueScore: 4,
+  facilityScore: 3,
   revisitIntention: "yes",
   recommendIntention: "maybe",
   optionalComment: "Synthetic survey comment",
@@ -62,6 +64,8 @@ describe("survey transaction repository", () => {
       p_accessibility_score: 4,
       p_information_score: 5,
       p_value_score: 4,
+      p_facility_score: 3,
+      p_survey_instrument_version: CURRENT_TOURISM_SURVEY_INSTRUMENT_VERSION,
       p_revisit_intention: "yes",
       p_recommend_intention: "maybe",
       p_comment: "Synthetic survey comment",
@@ -82,6 +86,17 @@ describe("survey transaction repository", () => {
     await expect(
       savePostCertificateSurveyTransaction({ touristId: "tourist-test", input })
     ).rejects.toBeInstanceOf(SurveyReferenceError);
+  });
+
+  it("maps the RPC facility validation result to SurveyValidationError", async () => {
+    serviceRoleMocks.rpc.mockResolvedValueOnce({
+      data: { success: false, error_code: "SURVEY_VALIDATION_FAILED", field: "facilityScore" },
+      error: null,
+    });
+
+    await expect(
+      savePostCertificateSurveyTransaction({ touristId: "tourist-test", input }),
+    ).rejects.toMatchObject({ field: "facilityScore" });
   });
 
   it("does not expose a raw RPC error in its stable error code", async () => {

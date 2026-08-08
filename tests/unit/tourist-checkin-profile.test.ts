@@ -51,6 +51,8 @@ describe("returning guest check-in profile", () => {
           origin_country_id: 1,
           origin_province_id: 10,
           age_group: "25_34",
+          preferred_language: "en",
+          preferred_language_source: "selected",
         },
       },
       error: null,
@@ -64,6 +66,8 @@ describe("returning guest check-in profile", () => {
       originCountryId: 1,
       originProvinceId: 10,
       ageGroup: "25_34",
+      preferredLanguage: "en",
+      preferredLanguageSource: "selected",
       hasCurrentConsent: true,
     });
     expect(result).not.toHaveProperty("touristId");

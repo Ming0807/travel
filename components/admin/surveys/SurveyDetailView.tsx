@@ -194,6 +194,7 @@ export function SurveyDetailView({
           <div><h2 id="satisfaction-heading" className="text-lg font-bold text-slate-900">ความพึงพอใจ</h2><p className="mt-0.5 text-sm text-slate-600">ช่องที่ไม่ได้ตอบแสดงเป็น “ไม่ได้ตอบ” และไม่ถูกคำนวณเป็นศูนย์</p></div>
         </div>
         <AnswerGrid items={[
+          { label: "สิ่งอำนวยความสะดวก (Facility)", value: score(survey.satisfaction.facilityScore), highlight: survey.satisfaction.facilityScore !== null },
           { label: "โดยรวม", value: score(survey.satisfaction.overallScore), highlight: survey.satisfaction.overallScore !== null },
           { label: "ความปลอดภัย", value: score(survey.satisfaction.safetyScore) },
           { label: "ความสะอาด", value: score(survey.satisfaction.cleanlinessScore) },

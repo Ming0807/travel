@@ -29,7 +29,8 @@ export async function getCurrentTouristProfileSummary() {
       touristCountry?.country_name_en ||
       "ไม่ระบุ",
     ageGroup: tourist?.age_group || "prefer_not_to_answer",
-    preferredLanguage: tourist?.preferred_language || "th",
+    preferredLanguage: tourist?.preferred_language ?? null,
+    preferredLanguageSource: tourist?.preferred_language_source ?? null,
     isGuest: linkedProviders.length === 0,
     linkedProviders,
     passportSummary: {

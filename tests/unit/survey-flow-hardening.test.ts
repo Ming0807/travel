@@ -22,9 +22,17 @@ const mocks = vi.hoisted(() => {
     }
   }
 
+  class MockSurveyValidationError extends Error {
+    constructor(public readonly field: string) {
+      super("SURVEY_VALIDATION_FAILED");
+      this.name = "SurveyValidationError";
+    }
+  }
+
   return {
     TouristAccessError: MockTouristAccessError,
     SurveyReferenceError: MockSurveyReferenceError,
+    SurveyValidationError: MockSurveyValidationError,
     requireTouristVisitAccess: vi.fn(),
     getCertificateByVisitId: vi.fn(),
     savePostCertificateSurveyTransaction: vi.fn(),
@@ -54,6 +62,7 @@ vi.mock("@/lib/repositories/funnel.repository", () => ({
 
 vi.mock("@/lib/repositories/survey.repository", () => ({
   SurveyReferenceError: mocks.SurveyReferenceError,
+  SurveyValidationError: mocks.SurveyValidationError,
   getSurveyOptions: mocks.getSurveyOptions,
   getSatisfactionSurveyByVisitId: mocks.getSatisfactionSurveyByVisitId,
   savePostCertificateSurveyTransaction: mocks.savePostCertificateSurveyTransaction,
@@ -83,6 +92,7 @@ const validSurveyInput: PostCertificateSurveyInput = {
   accessibilityScore: 4,
   informationScore: 5,
   valueScore: 4,
+  facilityScore: 3,
   revisitIntention: "yes",
   recommendIntention: "maybe",
   optionalComment: "Nice trip",
@@ -158,6 +168,16 @@ describe("survey flow hardening", () => {
       code: "SURVEY_REFERENCE_INVALID",
     });
     expect(mocks.savePostCertificateSurveyTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("maps transaction validation failures to a stable survey validation error", async () => {
+    mocks.savePostCertificateSurveyTransaction.mockRejectedValueOnce(
+      new mocks.SurveyValidationError("facilityScore"),
+    );
+
+    await expect(submitPostCertificateSurvey(validSurveyInput)).rejects.toMatchObject({
+      code: "SURVEY_VALIDATION_FAILED",
+    });
   });
 
   it("requires a generated certificate before accepting survey data", async () => {

@@ -69,6 +69,8 @@ export async function initiateCheckin(
       originProvinceId: formData.get("originProvinceId"),
       ageGroup: formData.get("ageGroup"),
       hasConsented: formData.get("hasConsented") === "true",
+      preferredLanguage: formData.get("preferredLanguage"),
+      preferredLanguageSource: formData.get("preferredLanguageSource"),
     };
 
     const parsed = minimalFormSchema.safeParse(raw);
@@ -107,7 +109,7 @@ export async function initiateCheckin(
     // Check if guest already has a tourist profile
     const { data: existingIdentity, error: identityLookupError } = await supabase
       .from("tourist_identities")
-      .select("tourist_id, tourists!inner(display_name, origin_country_id, origin_province_id, age_group)")
+      .select("tourist_id, tourists!inner(display_name, origin_country_id, origin_province_id, age_group, preferred_language, preferred_language_source)")
       .eq("provider", "anonymous_device")
       .eq("provider_user_id", guestToken)
       .maybeSingle();
@@ -135,6 +137,8 @@ export async function initiateCheckin(
           origin_country_id: number;
           origin_province_id: number | null;
           age_group: string;
+          preferred_language: string | null;
+          preferred_language_source: string | null;
           updated_at: string;
         }> = {};
         if (t.display_name !== parsed.data.displayName) updates.display_name = parsed.data.displayName;
@@ -146,6 +150,10 @@ export async function initiateCheckin(
           updates.origin_province_id = originSelection.provinceId;
         }
         if (t.age_group !== parsed.data.ageGroup) updates.age_group = parsed.data.ageGroup;
+        if (parsed.data.preferredLanguage !== null && t.preferred_language !== parsed.data.preferredLanguage) {
+          updates.preferred_language = parsed.data.preferredLanguage;
+          updates.preferred_language_source = parsed.data.preferredLanguageSource;
+        }
 
         if (Object.keys(updates).length > 0) {
           updates.updated_at = new Date().toISOString();
@@ -165,6 +173,8 @@ export async function initiateCheckin(
           age_group: parsed.data.ageGroup,
           origin_country_id: originSelection.countryId,
           origin_province_id: originSelection.provinceId,
+          preferred_language: parsed.data.preferredLanguage,
+          preferred_language_source: parsed.data.preferredLanguageSource,
           profile_completed_at: new Date().toISOString(),
         })
         .select("tourist_id")
@@ -220,7 +230,7 @@ export async function initiateCheckin(
             purposeKey: CHECKIN_CONSENT_PURPOSE_KEY,
             hasConsented: true,
             source: "checkin_form",
-            language: "th"
+            language: parsed.data.preferredLanguage
           });
         } catch {
           if (isNewTourist) await cleanupNewTourist(supabase, touristId);
@@ -240,14 +250,7 @@ export async function initiateCheckin(
       checkinCodeId: context.details.checkin_code_id,
     });
 
-    // 7. Track minimal form completed funnel event
-    try {
-      await trackCheckinFunnelEvent("minimal_form_completed", context.details, { touristId, visitId });
-    } catch {
-      // Funnel tracking is non-critical
-    }
-
-    // 8. Award XP for checkin
+    // 7. Award XP for checkin
     try {
       await awardXP(touristId, "qr_checkin", { attraction_id: context.details.attraction.attraction_id }, visitId);
     } catch {

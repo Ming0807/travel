@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { CURRENT_TOURISM_SURVEY_INSTRUMENT_VERSION } from "@/lib/config/survey";
 import type { PostCertificateSurveyInput } from "@/lib/validation/survey";
 
 export class SurveyReferenceError extends Error {
@@ -9,6 +10,13 @@ export class SurveyReferenceError extends Error {
   ) {
     super("SURVEY_REFERENCE_INVALID");
     this.name = "SurveyReferenceError";
+  }
+}
+
+export class SurveyValidationError extends Error {
+  constructor(public readonly field: string) {
+    super("SURVEY_VALIDATION_FAILED");
+    this.name = "SurveyValidationError";
   }
 }
 
@@ -72,9 +80,11 @@ export async function savePostCertificateSurveyTransaction(params: {
     p_accessibility_score: input.accessibilityScore,
     p_information_score: input.informationScore,
     p_value_score: input.valueScore,
+    p_facility_score: input.facilityScore,
     p_revisit_intention: input.revisitIntention,
     p_recommend_intention: input.recommendIntention,
     p_comment: input.optionalComment,
+    p_survey_instrument_version: CURRENT_TOURISM_SURVEY_INSTRUMENT_VERSION,
   });
 
   if (error) {
@@ -86,6 +96,10 @@ export async function savePostCertificateSurveyTransaction(params: {
 
   if (result?.error_code === "SURVEY_REFERENCE_INVALID") {
     throw new SurveyReferenceError(result.field ?? "unknown", result.table ?? "unknown");
+  }
+
+  if (result?.error_code === "SURVEY_VALIDATION_FAILED") {
+    throw new SurveyValidationError(result.field ?? "unknown");
   }
 
   throw new Error(result?.error_code ?? "SURVEY_TRANSACTION_FAILED");
