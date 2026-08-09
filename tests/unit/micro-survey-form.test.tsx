@@ -25,5 +25,7 @@ describe("current satisfaction dimensions", () => {
     const facility = screen.getByRole("group", { name: /facility/i });
     expect(within(facility).getAllByRole("radio")).toHaveLength(5);
     expect(facility.querySelector('input[name="facilityScore"]')).toBeInTheDocument();
+    expect(screen.getByText("สิ่งอำนวยความสะดวก (Facility)")).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/à¸|à¹/);
   });
 });

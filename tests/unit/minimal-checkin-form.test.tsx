@@ -20,6 +20,14 @@ const provinces = [
 ];
 
 describe("MinimalForm", () => {
+  it("renders preferred-language controls without mojibake", () => {
+    render(<MinimalForm checkinCode="PTN001" countries={countries} provinces={provinces} />);
+
+    expect(screen.getByText("ภาษาที่ต้องการ (Preferred language)")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "ไทย" })).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/à¸|à¹/);
+  });
+
   it("opens the province list on focus and filters Thai or English names", async () => {
     const user = userEvent.setup();
     render(<MinimalForm checkinCode="PTN001" countries={countries} provinces={provinces} />);

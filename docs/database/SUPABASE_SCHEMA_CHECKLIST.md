@@ -75,6 +75,17 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Post-apply verification**: Run `npm run db:destination-scope:verify`. This command is read-only and requires `SUPABASE_DATABASE_URL`.
 - [ ] **Official Yala import**: Do not run `supabase/seed.sql` in production. Prepare a separate provenance-checked import only after official geography/content validation.
 
+### 10. Research Evaluation Layer (Phase 18)
+- [ ] **Migration `20260808000000_add_research_core.sql`**: Apply only after advisor/ethics requirements are confirmed for the target environment.
+- [ ] **Migration `20260808001000_harden_research_data_quality.sql`**: Apply after core research; verify nullable preferred language/source and facility score round-trip.
+- [ ] **Migration `20260808002000_add_attraction_improvement_workflow.sql`**: Apply after data-quality hardening.
+- [ ] **Approval gate**: Confirm a study cannot activate without advisor approval, ethics status, approval reference, and recorder.
+- [ ] **Immutable versions**: Confirm active protocol, notice, consent, instrument items, tasks, and deployments cannot be edited.
+- [ ] **Server-only RPCs**: Confirm accept/link/save/withdraw operator and tourist research functions are executable only by `service_role`.
+- [ ] **Collection modes**: Confirm `field_observation`, `simulated_usability`, and `pilot_internal` remain separable in analytics and exports.
+- [ ] **Privacy**: Confirm RLS is enabled, public policies are absent, withdrawn/excluded sessions are omitted, and microdata export rejects `n < 10`.
+- [ ] **Field gate**: Do not create/activate the final production study or begin recruitment until Workstream 18A and pilot/freeze approvals are signed off.
+
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:
 

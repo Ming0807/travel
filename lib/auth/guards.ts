@@ -21,6 +21,11 @@ export type PermissionKey =
   | "attraction.deactivate"
   | "attraction.delete"
   | "attraction.manage"
+  | "attraction_feedback.read"
+  | "attraction_feedback.evidence_read"
+  | "attraction_feedback.issue_review"
+  | "attraction_improvement.manage"
+  | "attraction_improvement.verify"
   | "photo_spot.read"
   | "photo_spot.create"
   | "photo_spot.update"
@@ -104,6 +109,9 @@ export type PermissionKey =
   | "survey.comment_read"
   | "survey.export"
   | "survey.delete"
+  | "research.read"
+  | "research.manage"
+  | "research.export"
   | "certificate.read"
   | "certificate.detail"
   | "certificate.revoke"
@@ -114,6 +122,7 @@ export type PermissionKey =
   | "stamp.revoke"
   | "stamp.award_manual"
   | "export.attractions"
+  | "export.attraction_improvements"
   | "export.badges"
   | "export.photo_spots"
   | "export.checkin_codes"
@@ -178,6 +187,11 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   "attraction.deactivate",
   "attraction.delete",
   "attraction.manage",
+  "attraction_feedback.read",
+  "attraction_feedback.evidence_read",
+  "attraction_feedback.issue_review",
+  "attraction_improvement.manage",
+  "attraction_improvement.verify",
   "photo_spot.read",
   "photo_spot.create",
   "photo_spot.update",
@@ -261,6 +275,9 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   "survey.comment_read",
   "survey.export",
   "survey.delete",
+  "research.read",
+  "research.manage",
+  "research.export",
   "certificate.read",
   "certificate.detail",
   "certificate.revoke",
@@ -271,6 +288,7 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   "stamp.revoke",
   "stamp.award_manual",
   "export.attractions",
+  "export.attraction_improvements",
   "export.badges",
   "export.photo_spots",
   "export.checkin_codes",

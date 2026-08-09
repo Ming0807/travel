@@ -1129,3 +1129,19 @@ Privacy controls:
 - Engagement affects recommendations only after at least 100 deduplicated
   Story opens.
 - Small-sample engagement values are not shown publicly.
+
+---
+
+## 35. Research Privacy and Reproducibility
+
+Phase 18 follows data minimization and purpose separation:
+
+- Normal visits have no research session unless the user separately consents.
+- `field_observation`, `simulated_usability`, and `pilot_internal` are structurally separated and filters default to real field observation.
+- Stakeholder sessions do not require tourist profiles and cannot link to tourist, visit, or check-in identity fields.
+- Direct email, phone, and URL patterns are redacted from optional research text before storage. Raw short/long-text answers are never included in a research microdata export; exports contain only a response-present flag for restricted human review.
+- Research microdata export is rejected when the study is not frozen and approved, when the result is truncated, when fewer than 10 eligible sessions exist, or when any released participant/mode/instrument/item/event/attraction/task subgroup has fewer than 10 distinct sessions.
+- Exports replace internal IDs with study participant codes and exclude display names, identity providers, photos, storage paths, signed URLs, IP/user-agent hashes, rationale, and reviewer coded notes.
+- Dashboard cells below `n = 10` show “ปกปิด”; missing values remain missing, never zero.
+- Analytics are descriptive/associational. The system must not label the pilot as causal evidence or province-wide population estimates.
+- AI/LLM processing of raw participant or visitor feedback is outside Phase 18.

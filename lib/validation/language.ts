@@ -16,16 +16,24 @@ function normalizeLanguageTag(value: string) {
 export function detectPreferredLanguage(acceptLanguage: string | null | undefined): PreferredLanguage {
   if (!acceptLanguage) return null;
 
-  for (const entry of acceptLanguage.split(",")) {
+  const candidates: Array<{ language: Exclude<PreferredLanguage, null>; quality: number; order: number }> = [];
+
+  for (const [order, entry] of acceptLanguage.split(",").entries()) {
     const [tag, ...parameters] = entry.split(";");
     const quality = parameters.find((parameter) => parameter.trim().startsWith("q="));
-    if (quality && Number(quality.trim().slice(2)) === 0) continue;
+    const weight = quality ? Number(quality.trim().slice(2)) : 1;
+    if (!Number.isFinite(weight) || weight <= 0 || weight > 1) continue;
 
     const language = normalizeLanguageTag(tag);
     if (PREFERRED_LANGUAGES.includes(language as (typeof PREFERRED_LANGUAGES)[number])) {
-      return language as PreferredLanguage;
+      candidates.push({
+        language: language as Exclude<PreferredLanguage, null>,
+        quality: weight,
+        order,
+      });
     }
   }
 
-  return null;
+  candidates.sort((left, right) => right.quality - left.quality || left.order - right.order);
+  return candidates[0]?.language ?? null;
 }

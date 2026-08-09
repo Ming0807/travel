@@ -55,6 +55,8 @@ describe("ALL_PERMISSION_KEYS", () => {
     const categories = [
       "dashboard",
       "attraction",
+      "attraction_feedback",
+      "attraction_improvement",
       "photo_spot",
       "checkin_code",
       "media",
@@ -67,6 +69,7 @@ describe("ALL_PERMISSION_KEYS", () => {
       "visit",
       "tourist",
       "survey",
+      "research",
       "certificate",
       "stamp",
       "export",

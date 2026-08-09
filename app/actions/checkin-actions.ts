@@ -10,6 +10,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { getCheckinOriginSelection } from "@/lib/repositories/geography.repository";
 import { createConsentRecord } from "@/lib/repositories/consent.repository";
 import { CHECKIN_CONSENT_PURPOSE_KEY, CHECKIN_CONSENT_VERSION } from "@/lib/config/checkin";
+import { linkCurrentResearchSessionVisitIfPresent } from "@/lib/services/research.service";
 
 import { minimalFormSchema } from "@/lib/validation/checkin";
 
@@ -249,6 +250,12 @@ export async function initiateCheckin(
       photoSpotId: context.details.photo_spot?.photo_spot_id || null,
       checkinCodeId: context.details.checkin_code_id,
     });
+
+    try {
+      await linkCurrentResearchSessionVisitIfPresent({ visitId });
+    } catch {
+      // Research is voluntary and must never block the certificate flow.
+    }
 
     // 7. Award XP for checkin
     try {

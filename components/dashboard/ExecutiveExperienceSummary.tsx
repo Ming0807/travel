@@ -206,7 +206,7 @@ function IntentMetric({
       <strong className={`mt-1 block tabular-nums ${value === null ? "text-sm text-slate-600" : "text-lg text-slate-950"}`}>
         {rateLabel(value)}
       </strong>
-      <span className="mt-1 block text-xs tabular-nums text-slate-600">ฐาน {responses.toLocaleString("th-TH")}</span>
+      <span className="mt-1 block text-xs tabular-nums text-slate-600">ฐาน {responses.toLocaleString("th-TH")} คำตอบ</span>
     </div>
   );
 }
@@ -218,7 +218,12 @@ function DimensionRow({ dimension }: { dimension: ExperienceDimension }) {
     <div className="grid grid-cols-[minmax(6rem,1fr)_2.5rem] items-center gap-x-2 gap-y-1">
       <div className="flex min-w-0 items-center justify-between gap-2 text-xs">
         <span className="break-words font-semibold text-slate-700">{dimension.label}</span>
-        <span className="shrink-0 tabular-nums text-slate-500">n={dimension.responses.toLocaleString("th-TH")}</span>
+        <span
+          className="shrink-0 tabular-nums text-slate-500"
+          title="จำนวนคำตอบที่ใช้คำนวณมิตินี้"
+        >
+          {dimension.responses.toLocaleString("th-TH")} คำตอบ
+        </span>
       </div>
       <strong className="row-span-2 text-right text-sm tabular-nums text-slate-900">
         {dimension.average === null ? "—" : dimension.average.toFixed(1)}

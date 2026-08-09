@@ -13,6 +13,12 @@ describe("preferred language contract", () => {
     expect(detectPreferredLanguage(null)).toBeNull();
   });
 
+  it("honors quality weights and ignores disabled or malformed preferences", () => {
+    expect(detectPreferredLanguage("en;q=0.2, th-TH;q=0.9")).toBe("th");
+    expect(detectPreferredLanguage("ms;q=0, en;q=0.8")).toBe("en");
+    expect(detectPreferredLanguage("th;q=broken, en;q=0.7")).toBe("en");
+  });
+
   it("accepts only controlled language and provenance values", () => {
     expect(preferredLanguageSchema.parse("th")).toBe("th");
     expect(preferredLanguageSchema.parse(null)).toBeNull();

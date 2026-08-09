@@ -8,6 +8,8 @@ import { listCheckinCountries, listCheckinProvinces } from "@/lib/repositories/g
 import { getGuestCheckinProfile } from "@/lib/repositories/tourist.repository";
 import { detectPreferredLanguage } from "@/lib/validation/language";
 import { headers } from "next/headers";
+import { getOptionalResearchInvitationForCheckin } from "@/lib/services/research.service";
+import { ResearchInvitePrompt } from "@/components/research/ResearchInvitePrompt";
 
 export default async function StartCheckinPage({
   params,
@@ -29,11 +31,13 @@ export default async function StartCheckinPage({
   let countries;
   let provinces;
   let initialProfile = null;
+  let researchInvitation = null;
   try {
-    [countries, provinces, initialProfile] = await Promise.all([
+    [countries, provinces, initialProfile, researchInvitation] = await Promise.all([
       listCheckinCountries(),
       listCheckinProvinces(),
       guestToken ? getGuestCheckinProfile(guestToken) : Promise.resolve(null),
+      getOptionalResearchInvitationForCheckin(code).catch(() => null),
     ]);
   } catch {
     return <CheckinUnavailable status="unavailable" />;
@@ -69,6 +73,13 @@ export default async function StartCheckinPage({
             ใช้เวลาไม่ถึง 1 นาที แล้วไปเลือกรูปสำหรับใบประกาศดิจิทัล
           </p>
         </div>
+
+        {researchInvitation ? (
+          <ResearchInvitePrompt
+            invitation={researchInvitation}
+            checkinCode={code}
+          />
+        ) : null}
 
         <div className="animate-scale-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
           <MinimalForm

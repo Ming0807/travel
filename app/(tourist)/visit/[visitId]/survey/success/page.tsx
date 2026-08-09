@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SurveySuccessCard } from "@/components/survey/SurveySuccessCard";
+import { getCurrentResearchEvaluation } from "@/lib/services/research.service";
 
 export const metadata: Metadata = {
   title: "ขอบคุณสำหรับคำตอบ | Southern Border Tourism",
@@ -18,6 +19,14 @@ export default async function SurveySuccessPage({
     ? resolvedSearchParams?.skipped[0] === "1"
     : resolvedSearchParams?.skipped === "1";
 
+  let researchEvaluationAvailable = false;
+  try {
+    const evaluation = await getCurrentResearchEvaluation();
+    researchEvaluationAvailable = evaluation.visitId === visitId && evaluation.status !== "submitted";
+  } catch {
+    // Most tourists are not enrolled in research. The normal success flow stays unchanged.
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 relative overflow-hidden">
       {/* Premium Background */}
@@ -25,7 +34,11 @@ export default async function SurveySuccessPage({
       <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-teal/5 rounded-full blur-[150px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
       <div className="relative z-10 flex min-h-screen items-center">
-        <SurveySuccessCard visitId={visitId} skipped={skipped} />
+        <SurveySuccessCard
+          visitId={visitId}
+          skipped={skipped}
+          researchEvaluationAvailable={researchEvaluationAvailable}
+        />
       </div>
     </main>
   );

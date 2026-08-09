@@ -1,6 +1,6 @@
 # Phase 18: Research Evaluation and Decision-Support Evidence
 
-Status: Planned; blocked on advisor approval of the Research Blueprint
+Status: Core technical implementation complete; final instrument/task content, authenticated mobile E2E, pilot, freeze, and field collection remain gated
 
 Priority: P0 before final research data collection
 
@@ -42,22 +42,22 @@ Add a privacy-aware, versioned research layer that evaluates the real Smart Tour
 - [ ] Research notice, consent, withdrawal, retention, and exclusion rules are approved.
 - [ ] Instrument version 1 and consent version 1 are frozen before final collection.
 
-Exit gate: no migration or field collection before all items above are signed off.
+Exit gate: generic additive/versioned infrastructure may be built and tested, but no final instrument may be published, no production study may be activated, and no field collection may begin before all items above are signed off.
 
 ## Workstream 18B: Research Database Contract
 
-- [ ] Create one additive migration for `research_studies`.
-- [ ] Create versioned `research_instruments` and `research_items`.
-- [ ] Create `research_sessions` with participant type, collection mode, visit link, status, and inclusion flag.
-- [ ] Create research-specific consent and withdrawal records.
-- [ ] Create response and item-answer tables with strict scale/type constraints.
-- [ ] Create versioned operator-task and task-attempt tables.
-- [ ] Add study-to-check-in-code relation with foreign keys; do not rely on the orphan campaign placeholder.
-- [ ] Add typed research-session funnel correlation where approved.
-- [ ] Add unique constraints for one instrument response per session/version.
-- [ ] Add indexes for study, collection mode, status, submitted time, visit, and instrument.
-- [ ] Enable RLS and restrict writes/reads to approved server/admin boundaries.
-- [ ] Update data dictionary, ERD, privacy docs, and migration ledger.
+- [x] Create one additive migration for `research_studies`.
+- [x] Create versioned `research_instruments` and `research_items`.
+- [x] Create `research_sessions` with participant type, collection mode, visit link, status, and inclusion flag.
+- [x] Create research-specific consent and withdrawal records.
+- [x] Create response and item-answer tables with strict scale/type constraints.
+- [x] Create versioned operator-task and task-attempt tables.
+- [x] Add study-to-check-in-code relation with foreign keys; do not rely on the orphan campaign placeholder.
+- [x] Add typed research-session funnel correlation where approved.
+- [x] Add unique constraints for one instrument response per session/version.
+- [x] Add indexes for study, collection mode, status, submitted time, visit, and instrument.
+- [x] Enable RLS and restrict writes/reads to approved server/admin boundaries.
+- [x] Update data dictionary, ERD, privacy docs, and migration ledger.
 
 Likely files:
 
@@ -69,14 +69,14 @@ Likely files:
 
 ## Workstream 18C: Operational Data-Quality Corrections
 
-- [ ] Add a facility-score decision that matches schema, survey UI, transaction, exports, and dashboards.
-- [ ] Remove silent `th` measurement bias for preferred language.
-- [ ] Auto-detect browser/request language and allow an explicit change.
-- [ ] Record whether language was detected or selected if the approved schema needs provenance.
-- [ ] Keep expense-range labels explicitly self-reported and non-revenue.
+- [x] Add a facility-score decision that matches schema, survey UI, transaction, exports, and dashboards.
+- [x] Remove silent `th` measurement bias for preferred language.
+- [x] Auto-detect browser/request language and allow an explicit change.
+- [x] Record whether language was detected or selected if the approved schema needs provenance.
+- [x] Keep expense-range labels explicitly self-reported and non-revenue.
 - [ ] If approved, add normalized multi-category expense selection with one primary and at most three categories.
-- [ ] Version tourism survey fields used during research collection.
-- [ ] Add regression tests proving missing values remain `null`, not zero or a fabricated default.
+- [x] Version tourism survey fields used during research collection.
+- [x] Add regression tests proving missing values remain `null`, not zero or a fabricated default.
 
 Likely files:
 
@@ -90,18 +90,18 @@ Likely files:
 
 ## Workstream 18D: Tourist Research UX
 
-- [ ] Add an optional Thai-first research invitation for active study-linked check-ins.
-- [ ] Declining invitation continues the normal flow with no research session.
-- [ ] Add clear consent summary, full notice, contact, retention, and withdrawal links.
-- [ ] Create a research session only after valid consent.
-- [ ] Preserve the existing minimal check-in, photo, certificate, stamp, and tourism-survey value sequence.
-- [ ] Display realistic time estimates and progress for both optional forms.
-- [ ] Do not require tourism survey and research evaluation in one uninterrupted session.
-- [ ] Show research evaluation only to eligible consented sessions.
-- [ ] Render 5-point agreement controls with construct-neutral grouping and progress feedback.
-- [ ] Prevent duplicate submissions and preserve an already-completed state.
-- [ ] Handle weak network, refresh, back navigation, and expired/inactive studies.
-- [ ] Meet keyboard, screen-reader, focus, touch-target, and mobile safe-area requirements.
+- [x] Add an optional Thai-first research invitation for active study-linked check-ins.
+- [x] Declining invitation continues the normal flow with no research session.
+- [x] Add clear consent summary, full notice, contact, retention, and withdrawal links.
+- [x] Create a research session only after valid consent.
+- [x] Preserve the existing minimal check-in, photo, certificate, stamp, and tourism-survey value sequence.
+- [x] Display realistic time estimates and progress for both optional forms.
+- [x] Do not require tourism survey and research evaluation in one uninterrupted session.
+- [x] Show research evaluation only to eligible consented sessions.
+- [x] Render 5-point agreement controls with construct-neutral grouping and progress feedback.
+- [x] Prevent duplicate submissions and preserve an already-completed state.
+- [x] Handle weak network, refresh, back navigation, and expired/inactive studies.
+- [x] Meet keyboard, screen-reader, focus, touch-target, and mobile safe-area requirements.
 - [ ] Add unit, integration, and mobile E2E tests for accept, decline, submit, retry, and withdrawal paths.
 
 Proposed routes:
@@ -112,43 +112,43 @@ Proposed routes:
 
 ## Workstream 18E: Operator and Attraction-Manager Evaluation UX
 
-- [ ] Add admin/researcher controls to open an operator evaluation session.
-- [ ] Present fixed dashboard tasks without revealing the expected answer.
-- [ ] Capture task start/end, outcome, confidence, and coded notes.
-- [ ] Provide an operator evaluation instrument and interview-note workflow.
-- [ ] Ensure operator records do not require a tourist profile.
-- [ ] Include a site-manager task that identifies evidence, creates an improvement action, and selects a follow-up measure.
+- [x] Add admin/researcher controls to open an operator evaluation session.
+- [x] Present fixed dashboard tasks without revealing the expected answer.
+- [x] Capture task start/end, outcome, confidence, and coded notes.
+- [x] Provide an operator evaluation instrument and interview-note workflow.
+- [x] Ensure operator records do not require a tourist profile.
+- [x] Provide the production site-manager workflow needed to inspect evidence, create an improvement action, and select a follow-up measure; final task wording remains an 18A approval item.
 - [ ] Add tests for task ordering, timer persistence, completion, and role permissions.
 
 ## Workstream 18F: Research Analytics Workspace
 
-- [ ] Add `/admin/research` study list and readiness status.
-- [ ] Add study detail with collection-mode and date filters.
-- [ ] Add recruitment, consent, completion, withdrawal, exclusion, and missingness metrics.
-- [ ] Add unique-session funnel conversion, drop-off, and elapsed-time analysis.
-- [ ] Add construct/item distributions and reliability-ready output.
-- [ ] Add real-field tourism analysis with simulated/pilot data excluded by default.
-- [ ] Add incentive engagement and optional-data completion analysis.
-- [ ] Add operator task success, time, confidence, and theme summary.
-- [ ] Add attraction feedback dimensions, coverage, trends, controlled issue categories, and anonymized evidence drill-down.
-- [ ] Add reviewed improvement issues with transparent qualification rules and no opaque score.
-- [ ] Add action owner, priority, due date, status, baseline period, completion evidence, and follow-up period.
-- [ ] Implement `attraction_feedback_issues` and `attraction_improvement_actions` as production records, not research responses.
-- [ ] Keep issue categorization human-reviewed and rule-based for this phase.
-- [ ] Show before/after results as descriptive monitoring, not causal proof.
-- [ ] Display denominator, collection mode, instrument version, and date scope on every metric.
-- [ ] Apply small-sample suppression and no-data states.
-- [ ] Update dashboard metric dictionary with formulas and interpretation limits.
+- [x] Add `/admin/research` study list and readiness status.
+- [x] Add study detail with collection-mode and date filters.
+- [x] Add recruitment, consent, completion, withdrawal, exclusion, and missingness metrics.
+- [x] Add unique-session funnel conversion, drop-off, and elapsed-time analysis.
+- [x] Add construct/item distributions and reliability-ready output.
+- [x] Add real-field tourism analysis with simulated/pilot data excluded by default.
+- [x] Add incentive engagement and optional-data completion analysis using Certificate as the observable value-delivery denominator, with no causal claim.
+- [x] Add operator task success, time, confidence, and theme summary.
+- [x] Add attraction feedback dimensions, coverage, trends, controlled issue categories, and anonymized evidence drill-down.
+- [x] Add reviewed improvement issues with transparent qualification rules and no opaque score.
+- [x] Add action owner, priority, due date, status, baseline period, completion evidence, and follow-up period.
+- [x] Implement `attraction_feedback_issues` and `attraction_improvement_actions` as production records, not research responses.
+- [x] Keep issue categorization human-reviewed and rule-based for this phase.
+- [x] Show before/after results as descriptive monitoring, not causal proof.
+- [x] Display denominator, collection mode, submitted instrument versions, and date scope at metric or workspace level.
+- [x] Apply small-sample suppression and no-data states.
+- [x] Update dashboard metric dictionary with formulas and interpretation limits.
 
 ## Workstream 18G: Research Export and Reproducibility
 
-- [ ] Export study-scoped participant, response, answer, funnel, tourism, and operator-task datasets.
-- [ ] Replace tourist IDs with study participant codes.
-- [ ] Exclude display names, identity providers, user identifiers, photos, signed URLs, IP/user-agent hashes, and private paths.
-- [ ] Include study code, protocol version, consent version, instrument version, collection mode, inclusion status, and export timestamp.
-- [ ] Suppress or reject unsafe small-group exports according to policy.
-- [ ] Generate a data dictionary and analysis-ready codebook with each export.
-- [ ] Add export permission, audit-log, injection, formula-injection, and privacy regression tests.
+- [x] Export study-scoped participant, response, answer, funnel, tourism, and operator-task datasets.
+- [x] Replace tourist IDs with study participant codes.
+- [x] Exclude display names, identity providers, user identifiers, photos, signed URLs, IP/user-agent hashes, and private paths.
+- [x] Include study code, protocol version, consent version, instrument version, collection mode, inclusion status, and export timestamp.
+- [x] Suppress or reject unsafe small-group exports according to policy.
+- [x] Generate a data dictionary and analysis-ready codebook with each export.
+- [x] Add export permission, audit-log, injection, formula-injection, and privacy regression tests.
 
 ## Workstream 18H: Pilot, Freeze, and Field Release
 

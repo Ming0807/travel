@@ -1371,3 +1371,30 @@ Planning analytics
 Privacy and governance
 Production operation
 ```
+
+---
+
+## 23. Phase 18 Research and Improvement ERD
+
+```mermaid
+erDiagram
+  research_studies ||--o{ research_instruments : versions
+  research_instruments ||--o{ research_items : contains
+  research_studies ||--o{ research_checkin_codes : deploys
+  checkin_codes ||--o{ research_checkin_codes : scopes
+  research_studies ||--o{ research_sessions : recruits
+  research_sessions ||--o{ research_consents : records
+  research_sessions ||--o{ research_responses : submits
+  research_instruments ||--o{ research_responses : measures
+  research_responses ||--o{ research_answers : contains
+  research_items ||--o{ research_answers : answers
+  research_studies ||--o{ research_operator_tasks : defines
+  research_sessions ||--o{ research_operator_task_attempts : performs
+  research_operator_tasks ||--o{ research_operator_task_attempts : measures
+  attractions ||--o{ attraction_feedback_issues : receives
+  attraction_feedback_issues ||--o{ attraction_improvement_actions : creates
+  attraction_feedback_issues ||--o{ attraction_improvement_events : audits
+  attraction_improvement_actions ||--o{ attraction_improvement_events : audits
+```
+
+`research_session` is the research unit and is not interchangeable with `tourist`, `visit`, or `funnel_event`. Tourist sessions may link to one authorized visit; stakeholder sessions must not link to tourist/visit/check-in identity fields. Production improvement issues/actions are operational management records, not research responses.

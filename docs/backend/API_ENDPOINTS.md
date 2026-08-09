@@ -125,3 +125,11 @@ identity_id
 raw LINE profile payload
 LINE token
 ```
+
+## Phase 18 Research Export Endpoint
+
+| Method | Path | Purpose | Permission | Privacy controls |
+|---|---|---|---|---|
+| `GET` | `/api/admin/export/research` | Study-scoped CSV/XLSX datasets and codebook | `research.export` | Requires a frozen/approved study and explicit scope; participant codes replace internal IDs; every released subgroup must have at least 10 eligible sessions; raw free text is omitted and represented only by a presence/review flag; spreadsheet cells are protected; every success, denial, and failure is audited |
+
+Research participant mutations use server actions backed by service-role-only PostgreSQL functions. The browser never receives access-token hashes, withdrawal-token hashes, internal response IDs, tourist IDs, or visit IDs from these operations.

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 import { usePathname } from "next/navigation";
 import {
   Compass,
@@ -160,12 +161,11 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
 
             <UserNavMenu />
 
-            <Link
-              href="/checkin/demo-code"
+            <PublicCheckinEntryLink
               className="ml-2 whitespace-nowrap rounded-full bg-coral px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-coral/90 transition-colors"
             >
               รับใบประกาศ
-            </Link>
+            </PublicCheckinEntryLink>
           </div>
         </div>
       </header>
@@ -250,13 +250,12 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               </li>
               <UserNavMenu mobile={true} />
               <li>
-                <Link
-                  href="/checkin/demo-code"
+                <PublicCheckinEntryLink
                   className="mt-2 block rounded-xl bg-coral px-4 py-3 text-center text-sm font-bold text-white shadow-sm"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   สแกนรับใบประกาศ
-                </Link>
+                </PublicCheckinEntryLink>
               </li>
             </ul>
           </nav>

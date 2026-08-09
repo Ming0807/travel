@@ -8,7 +8,7 @@ export const PUBLIC_ROUTES = {
 } as const;
 
 export const TOURIST_ROUTES = {
-  checkin: "/checkin/demo-code",
+  checkin: "/checkin/try",
   shortCheckin: "/c/demo-code",
   passport: "/passport",
   profile: "/profile"

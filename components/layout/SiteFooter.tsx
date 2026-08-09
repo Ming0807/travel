@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 import { Compass, FacebookLogo, InstagramLogo } from "@phosphor-icons/react/dist/ssr";
 import { SettingsService } from "@/lib/services/settings.service";
 
@@ -71,7 +72,7 @@ export async function SiteFooter() {
           <div>
             <h4 className="font-bold mb-4">แพลตฟอร์ม</h4>
             <ul className="space-y-3">
-              <li><Link href="/checkin/demo-code" className="hover:text-coral">ใบประกาศดิจิทัล</Link></li>
+              <li><PublicCheckinEntryLink className="hover:text-coral">ใบประกาศดิจิทัล</PublicCheckinEntryLink></li>
               <li><Link href="/admin" className="hover:text-coral">แดชบอร์ด</Link></li>
               <li><Link href="/admin/login" className="hover:text-coral">เข้าสู่ระบบแอดมิน</Link></li>
             </ul>

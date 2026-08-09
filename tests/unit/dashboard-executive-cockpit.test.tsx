@@ -141,7 +141,7 @@ describe("Executive analytics cockpit", () => {
   it("สรุปคุณภาพประสบการณ์พร้อมฐานคำตอบ", () => {
     render(<ExecutiveExperienceSummary satisfaction={satisfaction} />);
     expect(screen.getByText("4.5 / 5")).toBeInTheDocument();
-    expect(screen.getByText("40 คำตอบ")).toBeInTheDocument();
+    expect(screen.getAllByText("40 คำตอบ").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("80%")).toBeInTheDocument();
     expect(screen.getByText("90%")).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "การกระจายคะแนนความพึงพอใจ" })).toBeInTheDocument();
@@ -156,6 +156,8 @@ describe("Executive analytics cockpit", () => {
     expect(within(dimensions).getByText("การเข้าถึง")).toBeInTheDocument();
     expect(within(dimensions).getByText("ข้อมูลและป้าย")).toBeInTheDocument();
     expect(within(dimensions).getByText("ความคุ้มค่า")).toBeInTheDocument();
+    expect(within(dimensions).getAllByText("40 คำตอบ")).toHaveLength(5);
+    expect(within(dimensions).queryByText(/n=/)).not.toBeInTheDocument();
     expect(screen.getByRole("table", { name: "คะแนนประสบการณ์รายมิติ" })).toBeInTheDocument();
   });
 

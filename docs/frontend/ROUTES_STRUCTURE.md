@@ -65,6 +65,8 @@ Good:
 
 The application should detect context after opening.
 
+Public buttons that offer a production-like trial use `/checkin/try`. That route resolves only an active code labelled `Demo QR:`, validates it with the same rules as a physical scan, and then redirects through `/c/[code]`. It must not link directly to `/checkin/[code]`, because the canonical QR route establishes the check-in session used by funnel tracking.
+
 ## 2.4 Use Slugs for Public Attractions
 
 Public attraction details should use slug.
@@ -1238,3 +1240,21 @@ Routes should make the product structure obvious.
 A developer should understand the system by reading the route tree.
 
 A tourist should never feel lost after scanning a QR code.
+
+---
+
+## 29. Phase 18 Research Routes
+
+| Route | Audience | Purpose |
+|---|---|---|
+| `/research/[studyCode]/invite` | Tourist | Optional research notice and consent before normal QR flow |
+| `/visit/[visitId]/evaluation` | Eligible tourist participant | Versioned system evaluation with draft recovery |
+| `/research/withdraw/current` | Current participant | Separate authenticated withdrawal path |
+| `/research/operator/tasks` | Facilitated stakeholder | Fixed decision-support tasks with explicit start timer |
+| `/research/operator/evaluation` | Facilitated stakeholder | Stakeholder system evaluation after tasks |
+| `/admin/research` | `research.read` | Study list and readiness status |
+| `/admin/research/[id]` | `research.read`; management controls require `research.manage` | Protocol, analytics, deployments, instruments, tasks, assessment queue and export |
+| `/admin/research/[id]/operator/start` | `research.manage` | Clean participant-facing notice used during a facilitated session |
+| `/admin/attractions/[id]/improvements` | Approved attraction/admin permission | Review feedback issue, create action, record completion and follow-up |
+
+Public participant routes never accept internal research IDs or secret tokens in the URL. Ownership is carried in an HttpOnly same-site cookie; stakeholder routes do not create tourist profiles.

@@ -1,5 +1,6 @@
 import { QrCode, DeviceMobile, Certificate, Stamp, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 
 const steps = [
   {
@@ -57,13 +58,12 @@ export function HomepageHowItWorks({ title = "ใช้งานง่ายเ�
           </p>
         </div>
 
-        <Link 
-          href="/checkin/demo-code"
+        <PublicCheckinEntryLink
           className="group self-end rounded-full bg-white border border-coral/20 px-8 py-4 text-sm font-bold text-ink shadow-md transition-all hover:shadow-lg hover:border-coral/50 hover:bg-cream hover:text-coral inline-flex items-center gap-2"
         >
           ทดลองใช้งาน
           <ArrowRight className="transition-transform group-hover:translate-x-1" weight="bold" />
-        </Link>
+        </PublicCheckinEntryLink>
       </div>
 
       {/* Steps — horizontal timeline */}

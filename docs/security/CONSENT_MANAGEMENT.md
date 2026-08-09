@@ -963,3 +963,17 @@ admin consent dashboard
 Consent should be clear, specific, recorded, and respectful.
 
 The tourist should understand why data is collected and should never be forced into optional tracking, communication, or public sharing.
+
+---
+
+## 37. Research Consent Boundary
+
+Research consent is independent from operational check-in, certificate, stamp, tourism survey, account linking, public sharing, and communication consent.
+
+- Declining research never removes normal tourist value or blocks the certificate flow.
+- A `research_session` is created only after an affirmative participant action against a frozen notice and consent version.
+- Tourist research uses `research_evaluation`; facilitated stakeholder evaluation uses `operator_evaluation`.
+- Operator/attraction-manager consent must be clicked by the participant on the notice screen; the facilitator must not consent on their behalf.
+- Withdrawal authenticates with a separate withdrawal token, marks the session excluded, and removes it from analytics, assessment queues, and exports.
+- Operational visit data remains governed by its separately disclosed purpose; withdrawing research does not silently delete legally retained operational records.
+- Activation of a production study is blocked until advisor/ethics evidence and immutable instrument/task versions are recorded.

@@ -2342,3 +2342,32 @@ referrer is available in this metric.
 
 **Limitations:** Session deduplication is approximate, privacy controls can
 reduce counts, and completion does not equal satisfaction.
+
+---
+
+## 44. Research Evaluation Metrics
+
+All metrics require an explicit `research_study`, date range, participant type, and collection mode. Default collection mode is `field_observation`. Unit is `research_session` unless stated otherwise.
+
+| Metric | Definition | Source | Privacy/interpretation |
+|---|---|---|---|
+| Consented sessions | Count of research sessions in scope | `research_sessions` | Not unique tourists |
+| Eligible sessions | Sessions not withdrawn, excluded, or expired | `research_sessions` | Denominator for completion |
+| Evaluation completion rate | Sessions with submitted audience instrument / eligible sessions | `research_responses`, `research_sessions` | Descriptive; not system effectiveness by itself |
+| Median evaluation duration | Median submitted response duration | `research_responses.duration_seconds` | Missing duration excluded |
+| Required-answer completeness | Present required answers / expected required answers | `research_items`, `research_answers` | Missing is not zero |
+| Construct mean | Mean valid 1–5 answers after reverse scoring | items/answers/responses | Suppress when distinct sessions `< 10` |
+| Funnel conversion | Distinct sessions reaching each approved event / eligible sessions | `funnel_events.research_session_id` | Never count events as people |
+| Optional tourism-survey follow-through | Sessions with `survey_completed` after `certificate_generated` / sessions with `certificate_generated` | correlated `funnel_events` | Descriptive association only; suppress when certificate denominator `< 10` |
+| Research-evaluation follow-through | Sessions with submitted evaluation after `certificate_generated` / sessions with `certificate_generated` | `research_responses`, correlated `funnel_events` | Descriptive association only; suppress when certificate denominator `< 10` |
+| Passport-save follow-through | Sessions with `passport_saved` after `certificate_generated` / sessions with `certificate_generated` | correlated `funnel_events` | Does not prove Certificate, Stamp, or Leaderboard caused the action; suppress denominator `< 10` |
+| Operator task completion | Completed task attempts | `research_operator_task_attempts` | Unit is attempt |
+| Operator assessed success | Passed assessed attempts / assessed attempts | task attempts | `not_assessed` excluded; suppress when assessed n `< 10` |
+| Operator confidence | Mean confidence among completed attempts with a confidence value | task attempts | Suppress when confidence n `< 10`; no `NaN`/zero fill |
+| Operator task duration | Median `completed_at - started_at` | task attempts | Timer begins on explicit Start; suppress n `< 10` |
+
+The workspace must display date scope, collection mode, participant type, analysis unit, instrument versions present in submitted responses, denominators, and small-cell policy. It must state that associations between rewards, engagement, optional-data completion, and system evaluation do not establish causation. Perceptions of Certificate, Stamp, and Leaderboard are reported only from approved `incentive_engagement` instrument items; operational follow-through uses Certificate as the observable value-delivery boundary and must not be described as a randomized incentive effect.
+
+## 45. Attraction Improvement Monitoring
+
+Feedback issue qualification is transparent and human-reviewed. Issue/action metrics include evidence count, denominator, baseline window, owner, priority, due date, status, follow-up metric, and follow-up window. Before/after display is operational monitoring only; it must not claim the action caused an observed change without an appropriate research design.

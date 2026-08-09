@@ -55,6 +55,25 @@ export interface CheckinCodeDetails {
   } | null;
 }
 
+export async function listPublicDemoCheckinCodes(): Promise<string[]> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("checkin_codes")
+    .select("code")
+    .eq("is_active", true)
+    .ilike("label", "Demo QR:%")
+    .order("checkin_code_id", { ascending: true })
+    .limit(5);
+
+  if (error) {
+    throw new Error("DEMO_CHECKIN_LOOKUP_FAILED", { cause: error });
+  }
+
+  return (data ?? [])
+    .map((row) => text(row.code))
+    .filter((code): code is string => code !== null);
+}
+
 export async function getCheckinCodeByCode(code: string): Promise<CheckinCodeDetails | null> {
   const supabase = createSupabaseServiceRoleClient();
   const liveProvinceIds = new Set(await listLiveDestinationProvinceIds());

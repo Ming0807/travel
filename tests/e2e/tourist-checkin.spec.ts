@@ -21,7 +21,8 @@ test.describe('Tourist Check-in Flow', () => {
     });
 
     // 1. Visit the QR Check-in Landing Page
-    await page.goto(`/checkin/${checkinCode}`);
+    await page.goto(`/c/${checkinCode}`);
+    await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}$`));
     await expect(page.locator('text=สร้างใบประกาศดิจิทัลฟรี')).toBeVisible();
     await page.click('text=สร้างใบประกาศของฉัน');
 

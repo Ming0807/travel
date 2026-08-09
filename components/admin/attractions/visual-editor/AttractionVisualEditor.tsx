@@ -14,7 +14,7 @@ import { RelatedContentForm } from "./RelatedContentForm";
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
 import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 import type { AdminSelectOption } from "@/components/admin/attractions/AttractionForm";
-import { MapPinLine, ArrowLeft, PencilSimple, Image as ImageIcon, Eye, QrCode, CheckCircle, WarningCircle } from "@phosphor-icons/react";
+import { MapPinLine, ArrowLeft, PencilSimple, Image as ImageIcon, Eye, QrCode, CheckCircle, WarningCircle, ChartLine } from "@phosphor-icons/react";
 import Link from "next/link";
 import { AttractionCardsRow } from "@/components/attractions/attraction-cards-row";
 import { AttractionReviews } from "@/components/attractions/attraction-reviews";
@@ -373,6 +373,13 @@ export function AttractionVisualEditor({
           >
             <QrCode size={16} weight="bold" />
             QR
+          </Link>
+          <Link
+            href={`/admin/attractions/${attraction.attraction_id}/improvements`}
+            className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 xl:inline-flex"
+          >
+            <ChartLine size={16} weight="bold" />
+            แผนปรับปรุง
           </Link>
           <div className="hidden sm:block rounded-lg bg-teal/10 px-3 py-1.5 text-xs font-bold text-teal">
             สถานะ: {attraction.is_published ? "เผยแพร่แล้ว" : "ยังไม่เผยแพร่"}

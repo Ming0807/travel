@@ -23,6 +23,7 @@ import {
   Smiley,
   TreeEvergreen,
   Wallet,
+  Flask,
 } from "@phosphor-icons/react/dist/ssr";
 
 type AdminNavIcon = typeof SquaresFour;
@@ -54,6 +55,7 @@ export const navGroups: NavGroup[] = [
       { href: "/admin/dashboard/satisfaction", label: "ความพึงพอใจ", icon: Smiley },
       { href: "/admin/dashboard/funnel", label: "เส้นทางผู้ใช้งาน", icon: FunnelSimple },
       { href: "/admin/dashboard/sustainability", label: "ความยั่งยืน", icon: TreeEvergreen },
+      { href: "/admin/research", label: "ศูนย์งานวิจัย", icon: Flask, requiredAny: ["research.read"] },
     ]
   },
   {

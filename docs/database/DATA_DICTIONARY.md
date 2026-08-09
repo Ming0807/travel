@@ -1686,3 +1686,33 @@ never stores a raw IP address or origin.
 
 All four tables use RLS with no public policies. Only service-role RPCs may
 write or maintain them.
+
+---
+
+## 45. Research Evaluation and Attraction Improvement Tables
+
+Phase 18 adds a versioned research boundary without changing normal tourist records into research data.
+
+| Table | Purpose | Important constraints |
+|---|---|---|
+| `research_studies` | Protocol, notice, consent versions, geographic scope, approval gate, retention, lifecycle | Activation requires recorded advisor/ethics gate and freezes protocol fields |
+| `research_instruments` | Versioned instrument per participant audience | Published versions are immutable and must be frozen |
+| `research_items` | Typed items and construct mapping | One typed answer format; item code unique inside instrument |
+| `research_checkin_codes` | Explicit study-to-QR deployment and collection mode | One active study per check-in code |
+| `research_sessions` | One consented participation episode | Separates tourist, operator, attraction manager and field/simulated/pilot modes |
+| `research_consents` | Research-specific consent and withdrawal evidence | Purpose/version/notice/language/source are retained; one purpose per session |
+| `research_responses` | One response for a frozen instrument and session | Final submissions are immutable |
+| `research_answers` | Typed item answer | Exactly one of integer, text, or boolean is non-null |
+| `research_operator_tasks` | Versioned dashboard decision task | Published task and scoring rule are immutable |
+| `research_operator_task_attempts` | Start/end, rationale, confidence, reviewer outcome and evidence quality | One attempt per session and task; completed attempts require outcome |
+| `attraction_feedback_issues` | Human-reviewed production feedback issue | Unique attraction/dimension/category/baseline evidence bundle |
+| `attraction_improvement_actions` | Owned improvement work with due date and follow-up metric | One active action per issue; status transitions are controlled |
+| `attraction_improvement_events` | Immutable workflow audit trail | Links issue/action events without tourist identity |
+
+Research text is server-redacted for direct email, phone, and URL patterns before persistence. Research exports use participant codes and must never expose tourist, visit, identity-provider, photo, signed URL, or private storage identifiers.
+
+Migrations, in order:
+
+1. `20260808000000_add_research_core.sql`
+2. `20260808001000_harden_research_data_quality.sql`
+3. `20260808002000_add_attraction_improvement_workflow.sql`

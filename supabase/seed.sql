@@ -210,6 +210,7 @@ VALUES
   ('admin', 'Content and operations administrator', true),
   ('province_admin', 'Manage data within an assigned province', true),
   ('attraction_manager', 'Manage assigned attraction content and QR points', true),
+  ('researcher', 'Read and export approved de-identified research data', true),
   ('viewer', 'Read-only dashboard and report viewer', true)
 ON CONFLICT (role_name) DO UPDATE
 SET description = EXCLUDED.description,
@@ -274,6 +275,9 @@ VALUES
   ('survey.comment_read', 'Read optional survey comments'),
   ('survey.export', 'Export survey data'),
   ('survey.delete', 'Delete survey records when policy allows'),
+  ('research.read', 'Read approved research study records and aggregate evidence'),
+  ('research.manage', 'Manage research studies, versions, sessions, and exclusions'),
+  ('research.export', 'Create de-identified research exports'),
   ('certificate.read', 'Read certificate records'),
   ('certificate.detail', 'Read certificate detail'),
   ('certificate.revoke', 'Revoke certificates'),
@@ -344,6 +348,13 @@ JOIN public.permissions p ON p.permission_name IN (
   'export.messages'
 )
 WHERE r.role_name IN ('super_admin', 'admin')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.role_permissions (role_id, permission_id)
+SELECT r.role_id, p.permission_id
+FROM public.roles r
+JOIN public.permissions p ON p.permission_name IN ('research.read', 'research.export')
+WHERE r.role_name = 'researcher'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.role_permissions (role_id, permission_id)

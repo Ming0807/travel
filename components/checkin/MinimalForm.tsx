@@ -254,7 +254,7 @@ export function MinimalForm({
               {AGE_GROUP_OPTIONS.map((age) => (
                 <label
                   key={age.value}
-                  className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-sm font-semibold text-slate-700 transition-colors has-[:checked]:border-teal has-[:checked]:bg-teal/8 has-[:checked]:text-teal hover:border-slate-300"
+                  className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-sm font-semibold text-slate-700 transition-colors has-[:checked]:border-teal has-[:checked]:bg-teal/8 has-[:checked]:text-teal has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal has-[:focus-visible]:ring-offset-2 hover:border-slate-300"
                 >
                   <input
                     type="radio"
@@ -272,16 +272,16 @@ export function MinimalForm({
           </fieldset>
 
           <fieldset className="space-y-2">
-            <legend className="text-sm font-bold text-ink">à¸ à¸²à¸©à¸²à¸—à¸µà¹ˆà¸•à¹‰à¸­à¸‡à¸à¸²à¸£ (Preferred language)</legend>
+            <legend className="text-sm font-bold text-ink">ภาษาที่ต้องการ (Preferred language)</legend>
             <div className="grid grid-cols-3 gap-2">
               {([
-                ["th", "à¹„à¸—à¸¢"],
+                ["th", "ไทย"],
                 ["en", "English"],
                 ["ms", "Bahasa Melayu"],
               ] as const).map(([value, label]) => (
                 <label
                   key={value}
-                  className="flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-semibold text-slate-700 transition-colors has-[:checked]:border-teal has-[:checked]:bg-teal/8 has-[:checked]:text-teal hover:border-slate-300"
+                  className="flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-semibold text-slate-700 transition-colors has-[:checked]:border-teal has-[:checked]:bg-teal/8 has-[:checked]:text-teal has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal has-[:focus-visible]:ring-offset-2 hover:border-slate-300"
                 >
                   <input
                     className="sr-only"

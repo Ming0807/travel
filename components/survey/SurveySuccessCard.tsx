@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { CheckCircle, Compass, Stamp } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle, ClipboardText, Compass, Stamp } from "@phosphor-icons/react/dist/ssr";
 
-export function SurveySuccessCard({ visitId, skipped }: { visitId: string; skipped: boolean }) {
+export function SurveySuccessCard({
+  visitId,
+  skipped,
+  researchEvaluationAvailable = false,
+}: {
+  visitId: string;
+  skipped: boolean;
+  researchEvaluationAvailable?: boolean;
+}) {
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col justify-center px-4 py-8">
       <div className="rounded-2xl bg-white p-6 text-center shadow-card">
@@ -21,6 +29,14 @@ export function SurveySuccessCard({ visitId, skipped }: { visitId: string; skipp
         </p>
 
         <div className="mt-6 grid gap-3">
+          {researchEvaluationAvailable ? (
+            <Link
+              href={`/visit/${visitId}/evaluation`}
+              className="flex min-h-12 items-center justify-center gap-2 bg-coral px-5 py-3 font-black text-white"
+            >
+              <ClipboardText aria-hidden="true" weight="fill" /> ตอบแบบประเมินการวิจัย
+            </Link>
+          ) : null}
           <Link
             href="/passport"
             className="flex items-center justify-center gap-2 rounded-full bg-teal px-5 py-4 font-black text-white"

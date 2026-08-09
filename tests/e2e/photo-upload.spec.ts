@@ -9,7 +9,8 @@ test.describe('Tourist Photo Upload Flow', () => {
     test.setTimeout(90000);
 
     // 1. Visit the QR Check-in Landing Page
-    await page.goto(`/checkin/${checkinCode}`);
+    await page.goto(`/c/${checkinCode}`);
+    await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}$`));
     await expect(page.getByRole('link', { name: 'สร้างใบประกาศของฉัน' })).toBeVisible();
     await page.getByRole('link', { name: 'สร้างใบประกาศของฉัน' }).click();
 
@@ -75,7 +76,8 @@ test.describe('Tourist Photo Upload Flow', () => {
     test.setTimeout(90000);
 
     // To speed up, we can just hit the checkin flow again
-    await page.goto(`/checkin/${checkinCode}`);
+    await page.goto(`/c/${checkinCode}`);
+    await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}$`));
     await page.getByRole('link', { name: 'สร้างใบประกาศของฉัน' }).click();
 
     await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}/start`));

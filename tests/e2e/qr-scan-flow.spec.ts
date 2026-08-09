@@ -5,6 +5,8 @@ test.describe("QR Scan Flow", () => {
     await page.goto("/c/demo-valid-qr");
 
     await expect(page).toHaveURL(/\/checkin\/demo-valid-qr/);
+    const cookies = await page.context().cookies();
+    expect(cookies.some((cookie) => cookie.name === "sbtp_checkin_session" && cookie.httpOnly)).toBe(true);
   });
 
   test("renders the valid QR landing contract with a start CTA", async ({ page }) => {
