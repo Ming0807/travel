@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 import { usePathname } from "next/navigation";
@@ -12,6 +12,7 @@ import {
   CaretDown
 } from "@phosphor-icons/react/dist/ssr";
 import { UserNavMenu } from "@/components/account/UserNavMenu";
+import { shouldHidePublicChrome } from "@/lib/navigation/public-route-mode";
 
 type SiteHeaderProps = {
   appName: string;
@@ -46,8 +47,28 @@ const navGroups = [
 
 export function SiteHeader({ appName }: SiteHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const dropdownTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const dropdownPanelRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const dropdownItemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const closeDropdown = useCallback((restoreFocus = false) => {
+    const dropdown = openDropdown;
+    if (restoreFocus && dropdown) {
+      dropdownTriggerRefs.current[dropdown]?.focus();
+    }
+    setOpenDropdown(null);
+  }, [openDropdown]);
+
+  const closeMobileMenu = useCallback((restoreFocus = false) => {
+    if (restoreFocus) {
+      mobileMenuTriggerRef.current?.focus();
+    }
+    setMobileMenuOpen(false);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,6 +79,55 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!openDropdown) return;
+
+    const handleOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      const trigger = dropdownTriggerRefs.current[openDropdown];
+      const panel = dropdownPanelRefs.current[openDropdown];
+      if (!trigger?.contains(target) && !panel?.contains(target)) {
+        closeDropdown();
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeDropdown(true);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsidePointer);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [closeDropdown, openDropdown]);
+
+  useEffect(() => {
+    if (openDropdown) {
+      dropdownItemRefs.current[openDropdown]?.focus();
+    }
+  }, [openDropdown]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    document.querySelector<HTMLAnchorElement>("#public-mobile-menu a")?.focus();
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMobileMenu(true);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [closeMobileMenu, mobileMenuOpen]);
+
   const desktopHeaderClass = scrolled
     ? "bg-cream/90 backdrop-blur-md border-ink/5 shadow-sm"
     : "bg-transparent border-transparent shadow-none";
@@ -66,8 +136,8 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
     ? "bg-cream/90 backdrop-blur-md border-ink/5 shadow-sm"
     : "bg-transparent border-transparent shadow-none";
 
-  // Prevent rendering on admin routes
-  if (pathname.startsWith("/admin")) {
+  // Keep all hooks above this route guard so navigation can change safely.
+  if (shouldHidePublicChrome(pathname)) {
     return null;
   }
 
@@ -83,7 +153,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           {/* Logo */}
           <div className="flex-1 flex justify-start">
             <Link href="/" className="flex items-center gap-3 group" aria-label={`${appName} home`}>
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-ink group-hover:bg-coral transition-colors">
+              <div className="grid h-10 w-10 place-items-center rounded-[6px] bg-ink group-hover:bg-coral transition-colors">
                 <Compass weight="fill" size={20} className="text-white" />
               </div>
               <div className="leading-tight">
@@ -113,25 +183,51 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
                 // Dropdown
                 const isActive = group.items?.some(item => pathname === item.href);
                 return (
-                  <div key={group.label} className="group relative">
+                  <div key={group.label} className="relative">
                     <button
-                      className={`flex items-center gap-1 text-sm font-semibold transition-colors ${
+                      type="button"
+                      ref={(element) => { dropdownTriggerRefs.current[group.label] = element; }}
+                      aria-label={`${group.label} menu`}
+                      aria-haspopup="menu"
+                      aria-expanded={openDropdown === group.label}
+                      aria-controls={`public-dropdown-${group.label}`}
+                      onClick={() => setOpenDropdown((current) => current === group.label ? null : group.label)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setOpenDropdown((current) => current === group.label ? null : group.label);
+                        }
+                        if (event.key === "ArrowDown") {
+                          event.preventDefault();
+                          setOpenDropdown(group.label);
+                        }
+                        if (event.key === "Escape") {
+                          event.preventDefault();
+                          closeDropdown(true);
+                        }
+                      }}
+                      className={`flex items-center gap-1 rounded-[6px] text-sm font-semibold transition-colors ${
                         isActive ? "text-coral border-b-2 border-coral pb-1" : "text-ink hover:text-coral pb-1 border-b-2 border-transparent"
                       }`}
                     >
                       {group.label}
-                      <CaretDown weight="bold" className="transition-transform group-hover:rotate-180" />
+                      <CaretDown weight="bold" className={openDropdown === group.label ? "rotate-180" : undefined} />
                     </button>
-                    {/* Dropdown Menu */}
-                    <div className="absolute left-0 top-full hidden pt-6 group-hover:block">
-                      <div className="flex w-48 flex-col overflow-hidden rounded-2xl border border-ink/5 bg-white p-2 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                        {group.items?.map(item => {
+                    {openDropdown === group.label && <div
+                      ref={(element) => { dropdownPanelRefs.current[group.label] = element; }}
+                      className="absolute left-0 top-full z-10 pt-2"
+                    >
+                      <div id={`public-dropdown-${group.label}`} role="menu" className="flex w-48 flex-col overflow-hidden rounded-[8px] border border-ink/5 bg-white p-2 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                        {group.items?.map((item, index) => {
                           const isItemActive = pathname === item.href;
                           return (
                             <Link
                               key={item.href}
                               href={item.href}
-                              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                              ref={(element) => { if (index === 0) dropdownItemRefs.current[group.label] = element; }}
+                              role="menuitem"
+                              onClick={() => closeDropdown()}
+                              className={`rounded-[6px] px-4 py-2.5 text-sm font-semibold transition-colors ${
                                 isItemActive ? "bg-coral/10 text-coral" : "text-ink hover:bg-ink/5 hover:text-coral"
                               }`}
                             >
@@ -140,7 +236,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
                           );
                         })}
                       </div>
-                    </div>
+                    </div>}
                   </div>
                 );
               }
@@ -178,7 +274,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
       >
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 shrink-0" aria-label={`${appName} home`}>
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] bg-ink">
               <Compass weight="fill" size={20} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -190,8 +286,11 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           <div className="flex items-center gap-3">
             <button
               type="button"
+              ref={mobileMenuTriggerRef}
+              id="public-mobile-menu-trigger"
+              aria-controls="public-mobile-menu"
               className="grid h-11 w-11 place-items-center rounded-[6px] text-ink hover:bg-ink/5"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => mobileMenuOpen ? closeMobileMenu(true) : setMobileMenuOpen(true)}
               aria-expanded={mobileMenuOpen}
               aria-label={mobileMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
             >
@@ -202,7 +301,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
 
         {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <nav className="absolute left-0 right-0 top-full border-b border-ink/5 bg-cream px-4 py-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+          <nav id="public-mobile-menu" aria-labelledby="public-mobile-menu-trigger" className="absolute left-0 right-0 top-full border-b border-ink/5 bg-cream px-4 py-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
             <ul className="flex flex-col gap-2">
               {navGroups.map((group) => {
                 if (group.type === "link") {
@@ -210,10 +309,10 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
                     <li key={group.href}>
                       <Link
                         href={group.href!}
-                        className={`block rounded-xl px-4 py-3 text-sm font-bold ${
+                        className={`block rounded-[6px] px-4 py-3 text-sm font-bold ${
                           pathname === group.href ? "bg-coral/10 text-coral" : "text-ink hover:bg-ink/5"
                         }`}
-                        onClick={() => setMobileMenuOpen(false)}
+                        onClick={() => closeMobileMenu()}
                       >
                         {group.label}
                       </Link>
@@ -230,10 +329,10 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
                           <li key={item.href}>
                             <Link
                               href={item.href}
-                              className={`block rounded-xl px-4 py-2.5 text-sm font-bold ${
+                              className={`block rounded-[6px] px-4 py-2.5 text-sm font-bold ${
                                 pathname === item.href ? "bg-coral/10 text-coral" : "text-ink hover:bg-ink/5"
                               }`}
-                              onClick={() => setMobileMenuOpen(false)}
+                              onClick={() => closeMobileMenu()}
                             >
                               {item.label}
                             </Link>
@@ -251,8 +350,8 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               <UserNavMenu mobile={true} />
               <li>
                 <PublicCheckinEntryLink
-                  className="mt-2 block rounded-xl bg-coral px-4 py-3 text-center text-sm font-bold text-white shadow-sm"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="mt-2 block rounded-[6px] bg-coral px-4 py-3 text-center text-sm font-bold text-white shadow-sm"
+                  onClick={() => closeMobileMenu()}
                 >
                   สแกนรับใบประกาศ
                 </PublicCheckinEntryLink>

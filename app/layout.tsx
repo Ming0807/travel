@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Kanit, Noto_Sans_Thai, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { APP_NAME } from "@/constants/product";
-import { SiteHeader } from "@/components/layout/site-header";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { PublicChrome } from "@/components/layout/public-chrome";
 
 const kanit = Kanit({
   subsets: ["thai", "latin"],
@@ -85,9 +84,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="th" className={`${playfair.variable}`} data-scroll-behavior="smooth">
       <body className={`${notoSansThai.variable} ${kanit.variable} bg-[var(--background)] text-ink antialiased`}>
-        <SiteHeader appName={appName} />
-        <main className="phone-safe-bottom lg:pb-0">{children}</main>
-        <MobileBottomNav />
+        <PublicChrome appName={appName}>{children}</PublicChrome>
       </body>
     </html>
   );

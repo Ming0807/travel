@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { shouldHidePublicChrome } from "@/lib/navigation/public-route-mode";
 import {
   House,
   MagnifyingGlass,
@@ -21,13 +22,13 @@ const items = [
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const isAdminRoute = pathname.startsWith("/admin");
+  const isHiddenRoute = shouldHidePublicChrome(pathname);
   const activeIndex = items.findIndex((item) => item.href === "/" ? pathname === "/" : pathname.startsWith(item.href));
   const [indicatorStyle, setIndicatorStyle] = useState({ left: "0%", width: "20%" });
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   useEffect(() => {
-    if (isAdminRoute) return;
+    if (isHiddenRoute) return;
 
     const el = itemRefs.current[activeIndex >= 0 ? activeIndex : 0];
     if (el) {
@@ -40,10 +41,10 @@ export function MobileBottomNav() {
         setIndicatorStyle({ left: `${left}%`, width: `${width}%` });
       }
     }
-  }, [pathname, activeIndex, isAdminRoute]);
+  }, [pathname, activeIndex, isHiddenRoute]);
 
   // Prevent rendering on admin routes after all hooks have run.
-  if (isAdminRoute) {
+  if (isHiddenRoute) {
     return null;
   }
 

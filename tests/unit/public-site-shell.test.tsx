@@ -4,8 +4,9 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
 const getSetting = vi.fn();
+const mockUsePathname = vi.fn(() => "/");
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
+vi.mock("next/navigation", () => ({ usePathname: () => mockUsePathname() }));
 vi.mock("@/components/account/UserNavMenu", () => ({ UserNavMenu: () => <span>บัญชี</span> }));
 vi.mock("@/lib/services/settings.service", () => ({
   SettingsService: class {
@@ -15,6 +16,7 @@ vi.mock("@/lib/services/settings.service", () => ({
 
 describe("public site shell", () => {
   beforeEach(() => {
+    mockUsePathname.mockReturnValue("/");
     getSetting.mockImplementation((_key: string, fallback: unknown) => Promise.resolve(fallback));
   });
 

@@ -19,4 +19,13 @@ describe("MobileBottomNav", () => {
     expect(() => rerender(<MobileBottomNav />)).not.toThrow();
     expect(screen.queryByLabelText("Mobile navigation")).not.toBeInTheDocument();
   });
+
+  it("hides the bottom navigation for focused public flows", () => {
+    mockUsePathname.mockReturnValue("/");
+    const { rerender } = render(<MobileBottomNav />);
+
+    mockUsePathname.mockReturnValue("/visit/123/certificate");
+    expect(() => rerender(<MobileBottomNav />)).not.toThrow();
+    expect(screen.queryByLabelText("Mobile navigation")).not.toBeInTheDocument();
+  });
 });
