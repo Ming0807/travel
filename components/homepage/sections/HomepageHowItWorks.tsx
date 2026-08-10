@@ -1,116 +1,72 @@
-import { QrCode, DeviceMobile, Certificate, Stamp, ArrowRight } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
+import {
+  ArrowRight,
+  Camera,
+  QrCode,
+  Stamp,
+} from "@phosphor-icons/react/dist/ssr";
 import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 
-const steps = [
+const STEPS = [
   {
-    num: "01",
+    number: "01",
+    title: "สแกน QR ที่สถานที่",
+    description: "เปิดหน้าเช็กอินและกรอกข้อมูลสั้น ๆ เท่าที่จำเป็น ไม่ต้องติดตั้งแอป",
     icon: QrCode,
-    label: "สแกนคิวอาร์ (Scan QR)",
-    desc: "สแกน QR ที่จุดถ่ายรูป ระบบรู้ทันทีว่าอยู่จังหวัด สถานที่ และจุดเช็กอินใด",
-    accent: "bg-coral text-white",
-    iconBg: "bg-white/20",
   },
   {
-    num: "02",
-    icon: DeviceMobile,
-    label: "อัปโหลดรูปภาพ",
-    desc: "กรอกชื่อที่ต้องการแสดง จังหวัด/ประเทศ ช่วงอายุ และอัปโหลดรูปสำหรับบัตรที่ระลึก",
-    accent: "bg-ink text-white",
-    iconBg: "bg-white/20",
+    number: "02",
+    title: "ถ่ายหรือเลือกรูป",
+    description: "เลือกรูปความทรงจำ ปรับใบประกาศ แล้วดาวน์โหลดเก็บไว้ได้ทันที",
+    icon: Camera,
   },
   {
-    num: "03",
-    icon: Certificate,
-    label: "รับใบประกาศ",
-    desc: "ระบบสร้างใบประกาศดิจิทัลให้ดาวน์โหลดและแชร์ได้ โดยไม่บังคับ Login ก่อน",
-    accent: "bg-teal text-white",
-    iconBg: "bg-white/20",
-  },
-  {
-    num: "04",
+    number: "03",
+    title: "สะสมตราและคะแนน",
+    description: "รับตราประจำสถานที่ ดู Digital Passport และเลือกให้ข้อมูลเพิ่มเติมได้โดยสมัครใจ",
     icon: Stamp,
-    label: "สะสมตราประทับ",
-    desc: "รับตราประทับในพาสปอร์ต แล้วเลือกตอบแบบสอบถามสั้นๆ เพื่อช่วยพัฒนาพื้นที่",
-    accent: "bg-coral text-white",
-    iconBg: "bg-white/20",
   },
-];
+] as const;
 
-export function HomepageHowItWorks({ title = "ใช้งานง่ายเหมือนแอป", subtitle = "แต่ไม่ต้องโหลดแอป", description = "ระบบออกแบบให้เริ่มจากการให้คุณค่าก่อน — นักท่องเที่ยวกรอกน้อยที่สุด รับใบประกาศก่อน แล้วค่อยให้ข้อมูลเพิ่มเติมแบบสมัครใจ" }: { title?: string, subtitle?: string, description?: string }) {
+type HomepageHowItWorksProps = {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+};
+
+export function HomepageHowItWorks({
+  title = "เริ่มบันทึกการเดินทางได้ใน 3 ขั้นตอน",
+  subtitle,
+  description = "รับคุณค่าก่อน แล้วค่อยเลือกแบ่งปันข้อมูลเพื่อช่วยพัฒนาการท่องเที่ยวยะลา",
+}: HomepageHowItWorksProps) {
   return (
-    <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24 bg-background my-8">
+    <section id="how-it-works" aria-labelledby="homepage-journey-heading" className="border-y border-ink/10 bg-cream px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.65fr)] lg:items-end">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-coral">Digital Passport</p>
+            <h2 id="homepage-journey-heading" className="mt-2 text-2xl font-black leading-tight text-ink sm:text-3xl">
+              {title}
+            </h2>
+            {subtitle ? <p className="mt-2 text-base font-black text-teal">{subtitle}</p> : null}
+            <p className="mt-4 max-w-xl text-sm leading-6 text-muted">{description}</p>
+            <PublicCheckinEntryLink className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[6px] bg-coral px-5 text-sm font-black text-white transition-colors hover:bg-coral/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2">
+              เริ่มเช็กอิน <ArrowRight aria-hidden="true" weight="bold" />
+            </PublicCheckinEntryLink>
+          </div>
 
-      {/* Header — asymmetric layout */}
-      <div className="mb-16 grid lg:grid-cols-[1fr_auto] lg:items-end gap-8">
-        <div>
-          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-coral mb-4">
-            <span className="block h-px w-8 bg-coral" />
-            Digital Passport
-          </p>
-          <h2 className="text-4xl font-black leading-[1.1] lg:text-5xl text-ink">
-            {title}
-            <br />
-            {subtitle && <span className="text-coral font-['Playfair_Display'] italic font-normal">{subtitle}</span>}
-          </h2>
-          <p className="mt-6 max-w-lg text-base leading-relaxed text-muted font-medium">
-            {description}
-          </p>
-        </div>
-
-        <PublicCheckinEntryLink
-          className="group self-end rounded-full bg-white border border-coral/20 px-8 py-4 text-sm font-bold text-ink shadow-md transition-all hover:shadow-lg hover:border-coral/50 hover:bg-cream hover:text-coral inline-flex items-center gap-2"
-        >
-          ทดลองใช้งาน
-          <ArrowRight className="transition-transform group-hover:translate-x-1" weight="bold" />
-        </PublicCheckinEntryLink>
-      </div>
-
-      {/* Steps — horizontal timeline */}
-      <div className="relative">
-        <div className="absolute top-8 left-0 right-0 mx-auto hidden h-px lg:block"
-          style={{
-            left: "12.5%",
-            right: "12.5%",
-            background: "linear-gradient(to right, var(--color-coral, #E77455), transparent 100%)",
-            opacity: 0.3,
-          }}
-        />
-
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map(({ num, icon: Icon, label, desc, accent }) => (
-            <div key={num} className="group relative flex flex-col bg-white p-8 rounded-2xl border border-ink/5 hover:shadow-md transition-all">
-              {/* Icon */}
-              <div className="mb-8">
-                <div
-                  className={`relative z-10 flex h-16 w-16 items-center justify-center rounded-xl ${accent} shadow-md transition-transform duration-500 group-hover:scale-110`}
-                >
-                  <Icon size={32} weight="fill" />
+          <ol className="grid overflow-hidden rounded-[8px] border border-ink/10 bg-white sm:grid-cols-3">
+            {STEPS.map(({ number, title: stepTitle, description: stepDescription, icon: Icon }, index) => (
+              <li key={number} className={`relative p-5 sm:p-6 ${index > 0 ? "border-t border-ink/10 sm:border-l sm:border-t-0" : ""}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-coral">{number}</span>
+                  <Icon aria-hidden="true" size={24} weight="duotone" className="text-teal" />
                 </div>
-              </div>
-
-              {/* Content */}
-              <div className="flex-1">
-                <h3 className="text-xl font-black text-ink mb-3"><span className="text-coral/50 mr-1">{num}.</span> {label}</h3>
-                <p className="text-sm leading-relaxed text-muted">{desc}</p>
-              </div>
-            </div>
-          ))}
+                <h3 className="mt-6 text-base font-black text-ink">{stepTitle}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted">{stepDescription}</p>
+              </li>
+            ))}
+          </ol>
         </div>
-      </div>
-
-      {/* Bottom CTA strip */}
-      <div className="mt-16 flex flex-col md:flex-row items-center justify-between rounded-2xl border border-coral/20 bg-white px-10 py-8 shadow-sm">
-        <div>
-          <h4 className="text-xl font-black text-ink mb-1">ครบ 4 จุดเช็กอิน รับรางวัลพิเศษประจำจังหวัด 🎁</h4>
-          <p className="text-sm text-muted">สะสมตราประทับให้ครบเพื่อปลดล็อกของรางวัลสุดพิเศษในแต่ละพื้นที่</p>
-        </div>
-        <Link 
-          href="/passport"
-          className="mt-6 md:mt-0 rounded-full bg-coral px-8 py-4 text-sm font-bold text-white shadow-md hover:-translate-y-0.5 hover:shadow-lg hover:shadow-coral/30 hover:bg-coral/90 transition-all whitespace-nowrap"
-        >
-          เปิดสมุดพาสปอร์ต
-        </Link>
       </div>
     </section>
   );

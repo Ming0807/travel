@@ -1,80 +1,50 @@
 import Link from "next/link";
-import { UsersThree, MapPinLine, Certificate, Star, ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowRight,
+  Certificate,
+  MapPinLine,
+  Star,
+  UsersThree,
+} from "@phosphor-icons/react/dist/ssr";
 import { getPublicDashboardAnalytics } from "@/lib/services/dashboard.service";
+
+const KPI_DEFINITIONS = [
+  { key: "tourist_profiles", label: "โปรไฟล์นักท่องเที่ยว", hint: "ผู้ใช้ที่ระบบบันทึกแล้ว", icon: UsersThree, accent: "text-teal" },
+  { key: "total_visits", label: "รายการเช็กอิน", hint: "การเข้าชมสถานที่ที่บันทึกแล้ว", icon: MapPinLine, accent: "text-coral" },
+  { key: "certificates_generated", label: "ใบประกาศดิจิทัล", hint: "ใบประกาศที่สร้างสำเร็จ", icon: Certificate, accent: "text-gold" },
+  { key: "average_satisfaction", label: "ความพึงพอใจเฉลี่ย", hint: "จากแบบสำรวจที่สมัครใจตอบ", icon: Star, accent: "text-teal" },
+] as const;
 
 export async function HomepageDashboardPreview() {
   const analytics = await getPublicDashboardAnalytics({});
-  
-  const touristKpi = analytics.kpis.find(k => k.key === "tourist_profiles")?.value || "0";
-  const visitsKpi = analytics.kpis.find(k => k.key === "total_visits")?.value || "0";
-  const certKpi = analytics.kpis.find(k => k.key === "certificates_generated")?.value || "0";
-  const satisfactionKpi = analytics.kpis.find(k => k.key === "average_satisfaction")?.value || "0.0";
+  const values = new Map(analytics.kpis.map((kpi) => [kpi.key, kpi.value]));
 
   return (
-    <section id="dashboard" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-      <div className="mb-12 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-        <div>
-          <div className="flex items-center gap-3">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-coral">
-              ข้อมูลเชิงลึกการท่องเที่ยวแบบเรียลไทม์
-            </p>
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Live Data
-            </span>
+    <section id="dashboard" aria-labelledby="homepage-statistics-heading" className="bg-ink px-4 py-10 text-white sm:px-6 lg:px-8 lg:py-14">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-col gap-5 border-b border-white/15 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-coral">ข้อมูลสาธารณะจากระบบ</p>
+            <h2 id="homepage-statistics-heading" className="mt-2 text-2xl font-black sm:text-3xl">ภาพรวมการท่องเที่ยวที่บันทึกแล้ว</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">ตัวเลขสรุปจากการเช็กอิน การสร้างใบประกาศ และแบบสำรวจที่ผู้ใช้สมัครใจตอบ ไม่ใช่จำนวนผู้เข้าชมเว็บไซต์</p>
           </div>
-          <h2 className="mt-3 text-4xl font-bold leading-tight lg:text-5xl text-ink">
-            ข้อมูลอินไซต์สำหรับการวางแผน
-          </h2>
-          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted">
-            ตัวเลขสถิติสาธารณะแบบเรียลไทม์จากระบบเช็คอิน ช่วยให้ผู้ประกอบการและนักท่องเที่ยว
-            เห็นภาพรวมความนิยม รูปแบบการเดินทาง และระดับความพึงพอใจ
-          </p>
+          <Link href="/dashboard" className="inline-flex min-h-11 items-center gap-2 text-sm font-black text-white transition-colors hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
+            ดูสถิติฉบับเต็ม <ArrowRight aria-hidden="true" weight="bold" />
+          </Link>
         </div>
-        <Link
-          href="/dashboard"
-          className="group inline-flex items-center gap-2 rounded-full border-2 border-ink/10 px-6 py-3 text-sm font-bold text-ink hover:border-ink hover:bg-ink hover:text-white transition-all"
-        >
-          ดูหน้าแดชบอร์ดสถิติ
-          <ArrowRight className="transition-transform group-hover:translate-x-1" />
-        </Link>
-      </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl bg-white p-6 border border-ink/5 hover:border-teal/30 hover:shadow-md transition-all group">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 group-hover:bg-teal group-hover:text-white transition-colors">
-            <UsersThree size={24} weight="fill" className="text-teal group-hover:text-white" />
-          </div>
-          <p className="mt-6 text-sm font-bold text-muted">นักท่องเที่ยวที่ลงทะเบียน</p>
-          <h3 className="mt-2 text-3xl font-black text-ink">{touristKpi}</h3>
-          <p className="mt-2 text-xs font-medium text-muted/70 uppercase tracking-wider">โปรไฟล์ทั้งหมด</p>
-        </div>
-        
-        <div className="rounded-2xl bg-white p-6 border border-ink/5 hover:border-coral/30 hover:shadow-md transition-all group">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 group-hover:bg-coral group-hover:text-white transition-colors">
-            <MapPinLine size={24} weight="fill" className="text-coral group-hover:text-white" />
-          </div>
-          <p className="mt-6 text-sm font-bold text-muted">จำนวนการเช็คอินทั้งหมด</p>
-          <h3 className="mt-2 text-3xl font-black text-ink">{visitsKpi}</h3>
-          <p className="mt-2 text-xs font-medium text-muted/70 uppercase tracking-wider">จุดเช็คอินที่บันทึกแล้ว</p>
-        </div>
-        
-        <div className="rounded-2xl bg-white p-6 border border-ink/5 hover:border-gold/30 hover:shadow-md transition-all group">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 group-hover:bg-gold group-hover:text-white transition-colors">
-            <Certificate size={24} weight="fill" className="text-gold group-hover:text-white" />
-          </div>
-          <p className="mt-6 text-sm font-bold text-muted">ใบประกาศที่ถูกสร้าง</p>
-          <h3 className="mt-2 text-3xl font-black text-ink">{certKpi}</h3>
-          <p className="mt-2 text-xs font-medium text-muted/70 uppercase tracking-wider">รางวัลแห่งการเดินทาง</p>
-        </div>
-        
-        <div className="rounded-2xl bg-white p-6 border border-ink/5 hover:border-leaf/30 hover:shadow-md transition-all group">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 group-hover:bg-leaf group-hover:text-white transition-colors">
-            <Star size={24} weight="fill" className="text-leaf group-hover:text-white" />
-          </div>
-          <p className="mt-6 text-sm font-bold text-muted">ความพึงพอใจเฉลี่ย</p>
-          <h3 className="mt-2 text-3xl font-black text-ink">{satisfactionKpi}</h3>
-          <p className="mt-2 text-xs font-medium text-muted/70 uppercase tracking-wider">จากแบบประเมินผู้ใช้จริง</p>
-        </div>
+        <dl className="grid sm:grid-cols-2 lg:grid-cols-4">
+          {KPI_DEFINITIONS.map(({ key, label, hint, icon: Icon, accent }, index) => (
+            <div key={key} className={`py-6 sm:p-6 ${index > 0 ? "border-t border-white/15 sm:border-l sm:border-t-0" : "sm:pl-0"}`}>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-sm font-bold text-white/70">{label}</dt>
+                <Icon aria-hidden="true" size={22} weight="duotone" className={accent} />
+              </div>
+              <dd className="mt-3 text-3xl font-black tabular-nums">{values.get(key) ?? (key === "average_satisfaction" ? "0.0" : "0")}</dd>
+              <p className="mt-2 text-xs leading-5 text-white/50">{hint}</p>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );
