@@ -35,6 +35,27 @@ type PublicAttractionListOptions = {
   featuredSlugs?: string[];
 };
 
+export type PublicAttractionCard = Omit<AttractionCard, "rating" | "reviewCount"> & {
+  rating: number | null;
+  reviewCount: number | null;
+  reviewState: "available" | "empty" | "unavailable";
+};
+
+export type PublicAttractionPageInput = {
+  query?: string;
+  province?: "Yala";
+  type?: string;
+  page: number;
+  pageSize: number;
+};
+
+export type PublicAttractionPage = {
+  items: PublicAttractionCard[];
+  total: number;
+  page: number;
+  pageCount: number;
+};
+
 export type PublicStoryCard = {
   storyId: number;
   id: string;
@@ -258,6 +279,71 @@ async function withReviewSummaries(
   });
 }
 
+async function withNullableReviewSummaries(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  cards: InternalAttractionCard[],
+): Promise<PublicAttractionCard[]> {
+  const attractionIds = cards
+    .map((card) => card.attractionId)
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  if (attractionIds.length === 0) {
+    return cards.map((card) => ({
+      ...toPublicAttractionCard(card),
+      rating: null,
+      reviewCount: null,
+      reviewState: "empty",
+    }));
+  }
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("attraction_id, rating")
+    .in("attraction_id", attractionIds)
+    .eq("is_approved", true)
+    .eq("is_published", true)
+    .is("deleted_at", null);
+
+  if (error) {
+    return cards.map((card) => ({
+      ...toPublicAttractionCard(card),
+      rating: null,
+      reviewCount: null,
+      reviewState: "unavailable",
+    }));
+  }
+
+  const stats = new Map<number, { total: number; sum: number }>();
+  (data ?? []).forEach((row) => {
+    const attractionId = numberValue((row as DbRecord).attraction_id);
+    const rating = numberValue((row as DbRecord).rating);
+    if (!attractionId || rating < 1 || rating > 5) return;
+    const current = stats.get(attractionId) ?? { total: 0, sum: 0 };
+    current.total += 1;
+    current.sum += rating;
+    stats.set(attractionId, current);
+  });
+
+  return cards.map((card) => {
+    const summary = stats.get(card.attractionId);
+    if (!summary || summary.total === 0) {
+      return {
+        ...toPublicAttractionCard(card),
+        rating: null,
+        reviewCount: null,
+        reviewState: "empty" as const,
+      };
+    }
+
+    return {
+      ...toPublicAttractionCard(card),
+      rating: Number((summary.sum / summary.total).toFixed(1)),
+      reviewCount: summary.total,
+      reviewState: "available" as const,
+    };
+  });
+}
+
 async function loadMediaAssetThumbnails(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   rows: DbRecord[]
@@ -448,6 +534,85 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
   } catch {
     return [];
   }
+}
+
+export async function listPublicAttractionPage(
+  input: PublicAttractionPageInput,
+): Promise<PublicAttractionPage> {
+  const page = Number.isSafeInteger(input.page) && input.page > 0 ? input.page : 1;
+  const pageSize = Number.isInteger(input.pageSize) && input.pageSize > 0
+    ? Math.min(input.pageSize, 48)
+    : 12;
+  const supabase = await createSupabaseServerClient();
+  const liveProvinces = await listLiveDestinationProvinces();
+  const liveProvinceIds = liveProvinces.map((province) => province.provinceId);
+
+  if (liveProvinceIds.length === 0) {
+    return { items: [], total: 0, page, pageCount: 0 };
+  }
+
+  const provinceFilter = sanitizeDestinationProvinceFilter(
+    input.province,
+    liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+  );
+  const attractionTypesRelation = input.type ? "attraction_types!inner" : "attraction_types";
+  let query = supabase
+    .from("attractions")
+    .select(`
+      attraction_id,
+      slug,
+      name_th,
+      name_en,
+      short_description_th,
+      short_description_en,
+      latitude,
+      longitude,
+      provinces!inner (province_name_th, province_name_en),
+      ${attractionTypesRelation} (type_name_th, type_name_en),
+      content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
+    `, { count: "exact" })
+    .eq("is_published", true)
+    .eq("is_active", true)
+    .in("province_id", liveProvinceIds);
+
+  const search = input.query ? escapeIlikePattern(input.query) : "";
+  if (search) {
+    query = query.or(
+      `name_th.ilike.%${search}%,name_en.ilike.%${search}%,slug.ilike.%${search}%`,
+    );
+  }
+
+  if (provinceFilter) {
+    query = query.eq("provinces.province_name_en", provinceFilter);
+  }
+
+  if (input.type) {
+    query = query.eq("attraction_types.type_name_en", input.type);
+  }
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await query
+    .order("created_at", { ascending: false })
+    .order("attraction_id", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw new Error("PUBLIC_ATTRACTION_LIST_FAILED");
+  }
+
+  const rows = (data ?? []) as DbRecord[];
+  const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, rows);
+  const cards = rows.map((row) => mapAttractionCard(row, thumbnailByStoragePath));
+  const items = await withNullableReviewSummaries(supabase, cards);
+  const total = typeof count === "number" ? count : 0;
+
+  return {
+    items,
+    total,
+    page,
+    pageCount: total > 0 ? Math.ceil(total / pageSize) : 0,
+  };
 }
 
 export async function getPublicAttractionDetail(slug: string, options?: { previewMode?: boolean }): Promise<PublicAttractionDetail | null> {

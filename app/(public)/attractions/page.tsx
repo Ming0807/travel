@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   ArrowRight,
@@ -14,11 +15,14 @@ import {
   Users,
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { listPublicAttractionCards } from "@/lib/repositories/public-content.repository";
+import { PublicPagination } from "@/components/public/PublicPagination";
+import {
+  listPublicAttractionPage,
+  type PublicAttractionCard,
+} from "@/lib/repositories/public-content.repository";
 import { listLiveDestinationProvinces } from "@/lib/repositories/destination-scope.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { AttractionCard } from "@/types/tourism";
 
 export const dynamic = "force-dynamic";
 
@@ -39,8 +43,16 @@ function getParam(params: SearchParams, key: string) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
-function formatReviewSummary(attraction: AttractionCard) {
-  if (!attraction.reviewCount || !attraction.rating) return "ยังไม่มีรีวิว";
+function getPageParam(params: SearchParams) {
+  const value = getParam(params, "page");
+  const parsed = value ? Number(value) : 1;
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function formatReviewSummary(attraction: PublicAttractionCard) {
+  if (attraction.reviewState === "unavailable") return "คะแนนยังไม่พร้อมใช้งาน";
+  if (attraction.reviewState === "empty") return "ยังไม่มีคะแนนรีวิว";
+  if (!attraction.reviewCount || !attraction.rating) return "ยังไม่มีข้อมูลคะแนน";
   return `${attraction.rating.toFixed(1)} (${attraction.reviewCount.toLocaleString("th-TH")} รีวิว)`;
 }
 
@@ -53,12 +65,19 @@ export default async function AttractionsPage({
   const search = getParam(resolvedParams, "q");
   const province = getParam(resolvedParams, "province");
   const type = getParam(resolvedParams, "type");
+  const page = getPageParam(resolvedParams);
 
   const settingsService = new SettingsService();
   const supabase = await createSupabaseServerClient();
 
-  const [attractions, heroSettings, bannerSettings, liveProvinces, typesRes] = await Promise.all([
-    listPublicAttractionCards(24, { search, province, type }),
+  const [attractionPage, heroSettings, bannerSettings, liveProvinces, typesRes] = await Promise.all([
+    listPublicAttractionPage({
+      query: search,
+      province: province === "Yala" ? "Yala" : undefined,
+      type,
+      page,
+      pageSize: 12,
+    }),
     settingsService.getSetting("attractions_page_hero", {
       title: "สำรวจ <span class=\"text-coral\">สถานที่ท่องเที่ยว</span><br/>ในจังหวัดยะลา",
       description:
@@ -97,7 +116,21 @@ export default async function AttractionsPage({
       label: item.type_name_th,
     })) ?? [];
 
-  const buildAttractionsHref = (updates: Partial<{ q: string; province: string; type: string }>) => {
+  if (page > Math.max(attractionPage.pageCount, 1)) {
+    const canonicalParams = new URLSearchParams();
+    if (search) canonicalParams.set("q", search);
+    if (selectedProvince) canonicalParams.set("province", selectedProvince);
+    if (type) canonicalParams.set("type", type);
+    if (attractionPage.pageCount > 1) {
+      canonicalParams.set("page", String(attractionPage.pageCount));
+    }
+    const canonicalQuery = canonicalParams.toString();
+    redirect(canonicalQuery ? `/attractions?${canonicalQuery}` : "/attractions");
+  }
+
+  const attractions = attractionPage.items;
+
+  const buildAttractionsHref = (updates: Partial<{ q: string; province: string; type: string; page: string }>) => {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (selectedProvince) params.set("province", selectedProvince);
@@ -299,7 +332,7 @@ export default async function AttractionsPage({
               <div>
                 <h2 className="text-2xl font-black text-ink">สถานที่ทั้งหมด</h2>
                 <p className="mt-1 text-sm text-muted">
-                  พบ {attractions.length.toLocaleString("th-TH")} รายการที่พร้อมแสดงผล
+                  พบ {attractionPage.total.toLocaleString("th-TH")} รายการที่พร้อมแสดงผล
                 </p>
               </div>
               <Link href="/attractions" className="inline-flex items-center gap-2 text-sm font-black text-coral hover:underline">
@@ -308,11 +341,18 @@ export default async function AttractionsPage({
             </div>
 
             {attractions.length > 0 ? (
-              <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
-                {attractions.map((attraction) => (
-                  <AttractionListCard key={attraction.slug} attraction={attraction} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
+                  {attractions.map((attraction) => (
+                    <AttractionListCard key={attraction.slug} attraction={attraction} />
+                  ))}
+                </div>
+                <PublicPagination
+                  page={attractionPage.page}
+                  pageCount={attractionPage.pageCount}
+                  createHref={(nextPage) => buildAttractionsHref({ page: String(nextPage) })}
+                />
+              </>
             ) : (
               <div className="rounded-3xl border border-dashed border-ink/10 bg-white p-10 text-center">
                 <p className="text-sm font-bold text-muted">{emptyMessage}</p>
@@ -397,7 +437,7 @@ export default async function AttractionsPage({
   );
 }
 
-function AttractionListCard({ attraction }: { attraction: AttractionCard }) {
+function AttractionListCard({ attraction }: { attraction: PublicAttractionCard }) {
   return (
     <Link href={`/attractions/${attraction.slug}`} className="group block rounded-3xl border border-ink/5 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-cream">
