@@ -1,67 +1,56 @@
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Medal, Stamp } from "@phosphor-icons/react/dist/ssr";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
+const DEFAULT_TITLE = "ทุกการเดินทางมีเรื่องให้สะสม";
+const DEFAULT_DESCRIPTION = "เก็บตราประจำสถานที่ไว้ใน Digital Passport ดูคะแนนของคุณ และกลับมาค้นพบยะลาในมุมใหม่ได้ทุกครั้ง";
+
+function safeContent(value: string | undefined, fallback: string) {
+  if (!value || /สมัคร|ข่าวสาร|อีเมล|newsletter/i.test(value)) return fallback;
+  return value;
+}
+
 export function HomepageCertificateCta({
-  title = "รับแรงบันดาลใจการเดินทาง",
-  subtitle = "ส่งตรงถึงคุณ",
-  description = "สมัครรับข่าวสารเพื่อค้นพบสถานที่ใหม่ๆ โปรโมชั่นพิเศษ และเรื่องเล่าสุดเอ็กซ์คลูซีฟจากชายแดนใต้",
-  bgImage = ""
+  title,
+  subtitle,
+  description,
+  bgImage = "",
 }: {
   title?: string;
   subtitle?: string;
   description?: string;
   bgImage?: string;
 }) {
-  const getImageUrl = (path?: string | null) => {
-    return siteMediaImageUrl(path) ?? "";
-  };
-
-  const imgSrc = getImageUrl(bgImage);
+  const imageSrc = siteMediaImageUrl(bgImage);
+  const displayTitle = safeContent(title, DEFAULT_TITLE);
+  const displayDescription = safeContent(description, DEFAULT_DESCRIPTION);
+  const displaySubtitle = subtitle && !/สมัคร|ข่าวสาร|อีเมล|newsletter/i.test(subtitle) ? subtitle : "Digital Passport";
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="relative overflow-hidden rounded-2xl bg-ink shadow-xl w-full h-[450px] flex items-center justify-center text-center px-4">
-        {/* Background Image */}
-        {imgSrc && (
-          <Image
-            className="absolute inset-0 h-full w-full object-cover opacity-50 mix-blend-overlay"
-            src={imgSrc}
-            alt=""
-            fill
-            sizes="(max-width: 1280px) 100vw, 1280px"
-          />
-        )}
-
-        {/* Decorative Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-transparent opacity-80"></div>
-
-        <div className="relative z-10 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold uppercase tracking-widest mb-6">
-            <span className="text-coral">✦</span> จดหมายข่าวสาร
+    <section aria-labelledby="homepage-passport-heading" className="bg-cream px-4 py-10 pb-24 sm:px-6 lg:px-8 lg:py-14">
+      <div className="relative mx-auto grid max-w-7xl overflow-hidden rounded-[8px] bg-coral text-white lg:grid-cols-[minmax(0,1fr)_340px]">
+        {imageSrc ? (
+          <Image src={imageSrc} alt="" fill className="object-cover opacity-15" sizes="(max-width: 1280px) 100vw, 1280px" />
+        ) : null}
+        <div className="relative p-6 sm:p-8 lg:p-10">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-white/75">{displaySubtitle}</p>
+          <h2 id="homepage-passport-heading" className="mt-3 max-w-2xl text-2xl font-black leading-tight sm:text-3xl">{displayTitle}</h2>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-white/85">{displayDescription}</p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Link href="/passport" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] bg-white px-5 text-sm font-black text-ink transition-colors hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-coral">
+              <Stamp aria-hidden="true" weight="duotone" /> เปิด Digital Passport
+            </Link>
+            <Link href="/leaderboard" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] border border-white/50 px-5 text-sm font-black text-white transition-colors hover:bg-white hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              <Medal aria-hidden="true" weight="duotone" /> ดูกระดานผู้นำ
+            </Link>
           </div>
-
-          <h2 className="text-4xl font-black text-white sm:text-5xl leading-[1.1] mb-6">
-            {title}<br />
-            {subtitle && <span className="font-['Playfair_Display'] italic font-normal text-coral">{subtitle}</span>}
-          </h2>
-          <p className="text-white/80 text-sm md:text-base mb-10 max-w-lg mx-auto leading-relaxed">
-            {description}
-          </p>
-
-          <form className="flex flex-col sm:flex-row items-center justify-center w-full max-w-md mx-auto gap-3 bg-white/10 backdrop-blur-md p-2 rounded-full border border-white/20 shadow-2xl">
-            <input
-              type="email"
-              placeholder="กรอกอีเมลของคุณ"
-              className="flex-1 w-full bg-white rounded-full px-6 py-3.5 text-sm text-ink outline-none border-none placeholder:text-muted/70 focus:ring-2 focus:ring-coral/50"
-              required
-            />
-            <button
-              type="submit"
-              className="w-full sm:w-auto rounded-full bg-coral px-8 py-3.5 text-sm font-bold text-white hover:bg-coral/90 transition-all shadow-md hover:-translate-y-0.5"
-            >
-              ติดตามเลย
-            </button>
-          </form>
+        </div>
+        <div className="relative hidden border-l border-white/20 p-10 lg:flex lg:flex-col lg:justify-between">
+          <Stamp aria-hidden="true" size={72} weight="duotone" className="text-white/75" />
+          <Link href="/passport" className="inline-flex min-h-11 items-center justify-between border-t border-white/35 pt-4 text-sm font-black text-white hover:text-ink">
+            ดูตราที่สะสมไว้ <ArrowRight aria-hidden="true" weight="bold" />
+          </Link>
         </div>
       </div>
     </section>

@@ -1,108 +1,89 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import type { PublicStoryCard } from "@/lib/repositories/public-content.repository";
 
 function storyImageAlt(title: string) {
-  return `${title} story image`;
+  return `ภาพประกอบเรื่อง ${title}`;
 }
 
 export function HomepageStories({
   stories,
-  title = "ประสบการณ์จากนักเดินทาง",
-  subtitle = "อ่านเรื่องราวแห่งแรงบันดาลใจจากผู้ที่ได้สัมผัสมนต์เสน่ห์ของปลายด้ามขวาน",
-  buttonText = "อ่านบทความทั้งหมด",
+  title = "เรื่องราวจากยะลา",
+  subtitle = "มองพื้นที่ผ่านอาหาร ผู้คน วัฒนธรรม และบันทึกจากนักเดินทาง",
+  buttonText = "อ่านเรื่องราวทั้งหมด",
 }: {
   stories?: PublicStoryCard[];
   title?: string;
   subtitle?: string;
   buttonText?: string;
 }) {
-  const storyCards = stories ?? [];
+  const storyCards = (stories ?? []).slice(0, 4);
   const featuredStory = storyCards[0];
-  const sideStories = storyCards.slice(1, 4);
+  const sideStories = storyCards.slice(1);
 
   return (
-    <section id="stories" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 bg-white rounded-2xl my-8 border border-ink/5">
-      <div className="mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <h2 className="text-4xl font-black text-ink tracking-tight">{title}</h2>
-          <p className="mt-4 text-muted text-sm md:text-base font-medium max-w-lg">{subtitle}</p>
-        </div>
-        <Link
-          href="/stories"
-          className="inline-flex rounded-full border border-ink/10 px-6 py-3 text-sm font-bold text-ink hover:bg-cream hover:text-coral transition-colors"
-        >
-          {buttonText} &rarr;
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-        {featuredStory ? (
-          <Link href={`/stories/${featuredStory.id}`} className="group block">
-            <div className="relative mb-6 aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-card bg-cream">
-              {featuredStory.imageUrl ? (
-                <Image
-                  src={featuredStory.imageUrl}
-                  alt={storyImageAlt(featuredStory.title)}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm font-semibold text-muted">
-                  ยังไม่มีรูปภาพ
-                </div>
-              )}
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold text-coral shadow-sm">
-                เรื่องเด่น (Featured)
-              </div>
-            </div>
-            <p className="mb-3 text-xs font-bold text-coral uppercase tracking-widest">{featuredStory.category} · {featuredStory.province}</p>
-            <h3 className="text-3xl font-black leading-tight text-ink transition-colors group-hover:text-coral">
-              {featuredStory.title}
-            </h3>
-            <p className="body-text mt-4 text-base text-muted font-medium leading-relaxed">
-              {featuredStory.excerpt ||
-                `ร่วมสำรวจวัฒนธรรม อาหาร และเรื่องราวท้องถิ่นที่ซ่อนเร้น รอให้คุณได้สัมผัสใน${featuredStory.province}`}
-            </p>
-            <p className="mt-5 text-sm font-bold text-ink/40">{featuredStory.date || "เผยแพร่ล่าสุด"} · ใช้เวลาอ่าน 4 นาที</p>
-          </Link>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-ink/10 bg-cream p-8 text-center text-sm font-semibold text-muted">
-            เรื่องราวที่เผยแพร่แล้วจะปรากฏที่นี่หลังจากเพิ่มเนื้อหาในฐานข้อมูล
+    <section id="stories" aria-labelledby="homepage-stories-heading" className="bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-col gap-4 border-b border-ink/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-coral">Story &amp; Blog</p>
+            <h2 id="homepage-stories-heading" className="mt-2 text-2xl font-black text-ink sm:text-3xl">{title}</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">{subtitle}</p>
           </div>
-        )}
+          <Link href="/stories" className="inline-flex min-h-11 items-center gap-2 text-sm font-black text-teal transition-colors hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
+            {buttonText} <ArrowRight aria-hidden="true" weight="bold" />
+          </Link>
+        </div>
 
-        <div className="flex flex-col gap-8">
-          {sideStories.map((story, index) => (
-            <Link href={`/stories/${story.id}`} key={story.id} className="group flex flex-col sm:flex-row items-center sm:items-start gap-6 border-b border-ink/5 pb-8 last:border-0 last:pb-0">
-              <div className="relative h-48 sm:h-36 w-full sm:w-36 shrink-0 overflow-hidden rounded-2xl shadow-sm bg-cream">
-                {story.imageUrl ? (
-                  <Image
-                    src={story.imageUrl}
-                    alt={storyImageAlt(story.title)}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    sizes="(max-width: 640px) 100vw, 144px"
-                  />
+        {featuredStory ? (
+          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
+            <Link href={`/stories/${featuredStory.id}`} className="group grid overflow-hidden rounded-[8px] border border-ink/10 bg-cream sm:grid-cols-[minmax(0,1.15fr)_minmax(240px,0.85fr)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
+              <div className="relative aspect-[16/10] min-h-56 bg-white sm:aspect-auto">
+                {featuredStory.imageUrl ? (
+                  <Image src={featuredStory.imageUrl} alt={storyImageAlt(featuredStory.title)} fill className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" sizes="(max-width: 640px) 100vw, (max-width: 1280px) 55vw, 600px" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs font-semibold text-muted">
-                    ยังไม่มีรูปภาพ
-                  </div>
+                  <div className="flex h-full items-center justify-center px-5 text-center text-sm font-bold text-muted">ยังไม่มีภาพจาก CMS</div>
                 )}
               </div>
-              <div className="flex-1 mt-2 sm:mt-0">
-                <p className="mb-2 text-[10px] font-black text-coral uppercase tracking-widest">{story.category}</p>
-                <h3 className="text-xl font-bold leading-snug text-ink transition-colors group-hover:text-coral line-clamp-2">
-                  {story.title}
-                </h3>
-                <p className="mt-4 text-xs font-bold text-ink/40">
-                  {story.date || `เรื่องราวแนะนำ ${index + 1}`} · ใช้เวลาอ่าน {3 + index} นาที
-                </p>
+              <div className="flex flex-col justify-between p-5 sm:p-6">
+                <div>
+                  <p className="text-xs font-black text-coral">เรื่องเด่น · {featuredStory.category}</p>
+                  <h3 className="mt-3 text-xl font-black leading-snug text-ink transition-colors group-hover:text-coral sm:text-2xl">{featuredStory.title}</h3>
+                  {featuredStory.excerpt ? <p className="mt-4 line-clamp-4 text-sm leading-6 text-muted">{featuredStory.excerpt}</p> : null}
+                </div>
+                <div className="mt-6 flex items-center justify-between gap-3 text-xs font-bold text-muted">
+                  <span>{featuredStory.province || "ยะลา"}</span>
+                  {featuredStory.date ? <time>{featuredStory.date}</time> : null}
+                </div>
               </div>
             </Link>
-          ))}
-        </div>
+
+            <div className="divide-y divide-ink/10 border-y border-ink/10 lg:border-y-0">
+              {sideStories.map((story) => (
+                <Link key={story.id} href={`/stories/${story.id}`} className="group grid min-h-32 grid-cols-[104px_minmax(0,1fr)] gap-4 py-4 first:pt-0 last:pb-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral lg:first:pt-0">
+                  <div className="relative overflow-hidden rounded-[6px] bg-cream">
+                    {story.imageUrl ? (
+                      <Image src={story.imageUrl} alt={storyImageAlt(story.title)} fill className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" sizes="104px" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center px-2 text-center text-[11px] font-bold text-muted">ไม่มีภาพ</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 py-1">
+                    <p className="text-[11px] font-black text-coral">{story.category}</p>
+                    <h3 className="mt-2 line-clamp-3 text-sm font-black leading-5 text-ink transition-colors group-hover:text-coral sm:text-base">{story.title}</h3>
+                    <p className="mt-3 text-xs font-bold text-muted">{story.province || "ยะลา"}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 border border-dashed border-ink/20 bg-cream p-8 text-center">
+            <p className="text-sm font-bold text-muted">เรื่องที่เผยแพร่จาก CMS จะปรากฏที่นี่</p>
+            <Link href="/stories" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-black text-teal hover:text-coral">เปิดหน้ารวมเรื่องราว <ArrowRight aria-hidden="true" /></Link>
+          </div>
+        )}
       </div>
     </section>
   );
