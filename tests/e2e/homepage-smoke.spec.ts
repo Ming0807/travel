@@ -1,9 +1,4 @@
 import { expect, test } from "@playwright/test";
-import fs from "node:fs";
-import path from "node:path";
-
-const SCREENSHOT_DIR = path.resolve(__dirname, "screenshots");
-fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
 const VIEWPORTS = [
   { name: "desktop", width: 1440, height: 900 },
@@ -14,7 +9,7 @@ const VIEWPORTS = [
 
 test.describe("Homepage", () => {
   for (const viewport of VIEWPORTS) {
-    test(`renders the full discovery flow at ${viewport.width}px`, async ({ page }) => {
+    test(`renders the full discovery flow at ${viewport.width}px`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto("/");
       await page.waitForLoadState("networkidle");
@@ -30,7 +25,7 @@ test.describe("Homepage", () => {
 
       if (viewport.name === "desktop" || viewport.name === "mobile-390") {
         await page.screenshot({
-          path: path.join(SCREENSHOT_DIR, `homepage-${viewport.name}.png`),
+          path: testInfo.outputPath(`homepage-${viewport.name}.png`),
           fullPage: true,
         });
       }

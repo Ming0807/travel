@@ -49,7 +49,7 @@ export function HomepageHowItWorks({
             </h2>
             {subtitle ? <p className="mt-2 text-base font-black text-teal">{subtitle}</p> : null}
             <p className="mt-4 max-w-xl text-sm leading-6 text-muted">{description}</p>
-            <PublicCheckinEntryLink className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[6px] bg-coral px-5 text-sm font-black text-white transition-colors hover:bg-coral/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2">
+            <PublicCheckinEntryLink aria-label="ทดลองใช้งานเช็กอิน" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[6px] bg-coral px-5 text-sm font-black text-white transition-colors hover:bg-coral/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2">
               เริ่มเช็กอิน <ArrowRight aria-hidden="true" weight="bold" />
             </PublicCheckinEntryLink>
           </div>
