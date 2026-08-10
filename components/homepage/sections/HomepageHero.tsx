@@ -48,9 +48,16 @@ export function HomepageHero({
     <section className="bg-background px-3 pb-8 pt-4 text-ink sm:px-6 sm:pt-8 lg:px-8 lg:pb-10">
       <div className="mx-auto max-w-7xl">
         <div className="relative min-h-[420px] overflow-hidden border border-ink/10 bg-ink shadow-soft lg:grid lg:min-h-[410px] lg:grid-cols-[0.92fr_1.08fr] lg:bg-white">
-          <div className="absolute inset-0 lg:static lg:hidden">
+          <div className="absolute inset-0 lg:hidden">
             {img0 ? (
-              <Image src={img0} alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา" fill priority className="object-cover" sizes="100vw" />
+              <Image
+                src={img0}
+                alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา"
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 0px"
+              />
             ) : (
               <div className="flex h-full items-center justify-center bg-teal text-white"><ImageSquare size={52} aria-hidden="true" /></div>
             )}
