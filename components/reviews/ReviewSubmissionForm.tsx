@@ -56,8 +56,8 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
 
   if (success) {
     return (
-      <div className="rounded-3xl border border-green-100 bg-green-50 p-6 text-center shadow-sm">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+      <div role="status" className="rounded-[var(--public-radius-panel)] border border-green-200 bg-green-50 p-6 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[var(--public-radius-control)] bg-green-100">
           <Star size={24} weight="fill" className="text-green-500" />
         </div>
         <h3 className="text-lg font-black text-green-800 mb-1">ขอบคุณสำหรับรีวิว</h3>
@@ -69,24 +69,25 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-3xl border border-ink/5 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-black text-ink mb-2">แบ่งปันประสบการณ์ของคุณ</h3>
-      <p className="mb-6 text-sm font-semibold text-muted">
-        รีวิวจะถูกส่งเข้าระบบตรวจสอบก่อนแสดงบนหน้าเว็บ
+    <form onSubmit={handleSubmit} className="rounded-[var(--public-radius-panel)] border border-slate-200 bg-white p-5 sm:p-6">
+      <h3 className="mb-2 text-lg font-bold text-ink">แบ่งปันประสบการณ์ของคุณ</h3>
+      <p className="mb-6 text-sm leading-6 text-slate-600">
+        รีวิวจะแสดงหลังผ่านการตรวจสอบจากผู้ดูแล
       </p>
 
-      {/* Star Rating */}
-      <div className="mb-5">
-        <p className="mb-2 text-sm font-bold text-ink">คะแนนของคุณ</p>
+      <fieldset className="mb-5">
+        <legend className="mb-2 text-sm font-bold text-ink">คะแนนรีวิว</legend>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
               type="button"
+              aria-label={`ให้ ${star} ดาว`}
+              aria-pressed={rating === star}
               onClick={() => setRating(star)}
               onMouseEnter={() => setHoveredRating(star)}
               onMouseLeave={() => setHoveredRating(0)}
-              className="transition-transform hover:scale-110"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--public-radius-control)] transition-colors hover:bg-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]"
             >
               <Star
                 size={28}
@@ -100,7 +101,7 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
             </button>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       {/* Title */}
       <div className="mb-4">
@@ -114,7 +115,7 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
           onChange={(e) => setTitle(e.target.value)}
           placeholder="สรุปประสบการณ์สั้น ๆ"
           maxLength={255}
-          className="w-full rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-sm font-semibold text-ink placeholder:text-muted/50 focus:border-coral/30 focus:outline-none focus:ring-2 focus:ring-coral/10"
+          className="min-h-11 w-full rounded-[var(--public-radius-control)] border border-slate-300 bg-white px-4 py-2.5 text-sm text-ink placeholder:text-slate-500 focus:border-[var(--public-teal)] focus:outline-none focus:ring-2 focus:ring-[var(--public-teal)]/20"
         />
       </div>
 
@@ -130,20 +131,20 @@ export function ReviewSubmissionForm({ attractionId, restaurantId, onSuccess }: 
           placeholder="เล่าประสบการณ์ที่อยากบอกนักเดินทางคนอื่น"
           rows={4}
           maxLength={5000}
-          className="w-full resize-none rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-sm font-semibold text-ink placeholder:text-muted/50 focus:border-coral/30 focus:outline-none focus:ring-2 focus:ring-coral/10"
+          className="w-full resize-y rounded-[var(--public-radius-control)] border border-slate-300 bg-white px-4 py-2.5 text-sm text-ink placeholder:text-slate-500 focus:border-[var(--public-teal)] focus:outline-none focus:ring-2 focus:ring-[var(--public-teal)]/20"
         />
       </div>
 
       {/* Error */}
       {error && (
-        <p className="mb-4 text-sm font-bold text-red-500">{error}</p>
+        <p role="alert" className="mb-4 text-sm font-bold text-red-700">{error}</p>
       )}
 
       {/* Submit */}
       <button
         type="submit"
         disabled={submitting || rating === 0 || (!attractionId && !restaurantId)}
-        className="w-full rounded-xl bg-coral py-3 text-sm font-black text-white transition-all hover:bg-coral/90 disabled:opacity-50"
+        className="min-h-11 w-full rounded-[var(--public-radius-control)] bg-[var(--public-coral)] px-4 py-3 text-sm font-bold text-[var(--public-ink)] transition-colors hover:bg-[#d86548] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting ? "กำลังส่ง..." : "ส่งรีวิว"}
       </button>

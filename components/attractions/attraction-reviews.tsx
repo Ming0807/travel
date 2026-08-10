@@ -1,59 +1,109 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Star, X } from "@phosphor-icons/react";
-import type { ReviewCard, ReviewStats } from "@/types/tourism";
+import type { ReviewStats } from "@/types/tourism";
+import type { PublicReviewCard } from "@/lib/repositories/public-review.repository";
+
+type CompatibleReviewCard = PublicReviewCard | {
+  reviewId: number;
+  touristName: string;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  createdAt: string;
+};
 
 type AttractionReviewsProps = {
-  rating: number;
-  reviewsCount: string;
-  stats?: ReviewStats;
-  reviews?: ReviewCard[];
+  state?: "available" | "empty" | "unavailable";
+  stats: ReviewStats | null;
+  reviews: CompatibleReviewCard[];
   title?: string;
   children?: React.ReactNode;
 };
 
-export function AttractionReviews({ rating, reviewsCount, stats, reviews, title = "Reviews", children }: AttractionReviewsProps) {
+export function AttractionReviews({ state, stats, reviews, title = "รีวิวจากนักเดินทาง", children }: AttractionReviewsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const hasRealData = stats && stats.totalReviews > 0;
-  const displayRating = hasRealData ? stats.averageRating : rating;
-  const displayReviewsCount = hasRealData ? stats.totalReviews : Number.parseInt(reviewsCount, 10) || 0;
+  const openButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const resolvedState = state ?? (stats && stats.totalReviews > 0 ? "available" : "empty");
+  const hasRealData = resolvedState === "available" && stats !== null && stats.totalReviews > 0;
 
   // Sort reviews: 5-stars first, then by date descending
-  const sortedReviews = reviews ? [...reviews].sort((a, b) => {
+  const sortedReviews = [...reviews].sort((a, b) => {
     if (b.rating !== a.rating) {
       return b.rating - a.rating; // Highest rating first
     }
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // Newest first
-  }) : [];
+  });
 
   const displayReviews = sortedReviews.slice(0, 3); // Show top 3 initially
 
+  useEffect(() => {
+    if (!isModalOpen) return;
+    closeButtonRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsModalOpen(false);
+        requestAnimationFrame(() => openButtonRef.current?.focus());
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isModalOpen]);
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    requestAnimationFrame(() => openButtonRef.current?.focus());
+  };
+
+  const keepFocusInsideDialog = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Tab") return;
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      "button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])",
+    );
+    if (!focusable || focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   return (
-    <div id="reviews" className="scroll-mt-24 pt-8">
+    <section id="reviews" className="scroll-mt-36">
       <h2 className="mb-6 text-2xl font-bold text-ink">{title}</h2>
 
-      {/* Rating Summary */}
-      <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-16">
+      {hasRealData ? <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-16">
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold text-ink">{displayRating}</span>
+            <span className="text-5xl font-bold text-ink">{stats.averageRating}</span>
             <span className="text-xl font-bold text-muted">/ 5</span>
           </div>
           <div className="flex text-amber-400">
             {[1, 2, 3, 4, 5].map((star) => (
-              <Star key={star} size={20} weight={star <= Math.round(displayRating) ? "fill" : "regular"} />
+              <Star key={star} size={20} weight={star <= Math.round(stats.averageRating) ? "fill" : "regular"} />
             ))}
           </div>
           <p className="text-sm font-semibold text-muted">
-            ({displayReviewsCount.toLocaleString("th-TH")} reviews)
+            {stats.totalReviews.toLocaleString("th-TH")} รีวิว
           </p>
         </div>
 
         {/* Rating Distribution */}
         <div className="flex flex-1 flex-col gap-2">
           {[5, 4, 3, 2, 1].map((star) => {
-            const pct = hasRealData && stats.totalReviews > 0
+            const pct = stats.totalReviews > 0
               ? Math.round(((stats.distribution[star] ?? 0) / stats.totalReviews) * 100)
               : 0;
             return (
@@ -68,10 +118,10 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
             );
           })}
         </div>
-      </div>
+      </div> : null}
 
       {/* Real Reviews */}
-      {hasRealData && displayReviews && displayReviews.length > 0 && (
+      {hasRealData && displayReviews.length > 0 && (
         <div className="mt-8 space-y-4">
           {displayReviews.map((review) => (
             <ReviewItem key={review.reviewId} review={review} />
@@ -79,20 +129,28 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
 
           {sortedReviews.length > 3 && (
             <button
+              ref={openButtonRef}
               onClick={() => setIsModalOpen(true)}
-              className="mt-4 flex w-full items-center justify-center rounded-2xl border border-ink/10 bg-white py-3 text-sm font-bold text-ink transition-colors hover:bg-slate-50"
+              className="mt-4 flex min-h-11 w-full items-center justify-center border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-ink transition-colors hover:border-[var(--public-teal)] hover:text-[var(--public-teal)]"
             >
-              ดูรีวิวทั้งหมด ({sortedReviews.length})
+              ดูรีวิวทั้งหมด {sortedReviews.length.toLocaleString("th-TH")} รีวิว
             </button>
           )}
         </div>
       )}
 
-      {!hasRealData ? (
-        <div className="mt-8 rounded-2xl border border-dashed border-ink/10 bg-slate-50 p-6 text-center">
+      {resolvedState === "empty" ? (
+        <div className="mt-8 border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
           <p className="text-sm font-bold text-muted">
-            ยังไม่มีรีวิวที่ผ่านการอนุมัติสำหรับสถานที่นี้
+            ยังไม่มีรีวิวที่เผยแพร่
           </p>
+        </div>
+      ) : null}
+
+      {resolvedState === "unavailable" ? (
+        <div className="mt-8 border border-amber-200 bg-amber-50 p-6 text-center text-amber-950">
+          <p className="text-sm font-bold">โหลดรีวิวไม่ได้ในขณะนี้</p>
+          <p className="mt-1 text-sm">คุณยังส่งรีวิวได้ตามปกติ หรือลองเปิดหน้านี้อีกครั้งภายหลัง</p>
         </div>
       ) : null}
 
@@ -101,17 +159,26 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
 
       {/* View All Reviews Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm sm:p-6">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4 sm:p-6">
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="all-reviews-title"
+            onKeyDown={keepFocusInsideDialog}
+            className="relative flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden bg-white"
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-ink/5 p-6">
               <div>
-                <h3 className="text-xl font-bold text-ink">รีวิวทั้งหมด</h3>
+                <h3 id="all-reviews-title" className="text-xl font-bold text-ink">รีวิวทั้งหมด</h3>
                 <p className="text-sm text-muted">จากผู้เยี่ยมชม {sortedReviews.length} คน</p>
               </div>
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-muted hover:bg-slate-200 transition-colors"
+                ref={closeButtonRef}
+                onClick={closeModal}
+                aria-label="ปิดรีวิวทั้งหมด"
+                className="flex h-11 w-11 items-center justify-center border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-100"
               >
                 <X size={20} weight="bold" />
               </button>
@@ -126,16 +193,17 @@ export function AttractionReviews({ rating, reviewsCount, stats, reviews, title 
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
-function ReviewItem({ review }: { review: ReviewCard }) {
+function ReviewItem({ review }: { review: CompatibleReviewCard }) {
+  const authorLabel = "authorLabel" in review ? review.authorLabel : review.touristName;
   return (
-    <div className="rounded-2xl border border-ink/5 bg-white p-6 shadow-sm">
+    <article className="border border-slate-200 bg-white p-5">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <p className="text-sm font-bold text-ink">{review.touristName}</p>
+          <p className="text-sm font-bold text-ink">{authorLabel}</p>
           <p className="text-xs font-semibold text-muted">
             {new Date(review.createdAt).toLocaleDateString("th-TH", {
               day: "numeric",
@@ -161,6 +229,6 @@ function ReviewItem({ review }: { review: ReviewCard }) {
       {review.comment && (
         <p className="text-sm leading-relaxed text-muted">&ldquo;{review.comment}&rdquo;</p>
       )}
-    </div>
+    </article>
   );
 }

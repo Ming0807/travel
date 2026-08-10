@@ -237,12 +237,18 @@ export function AttractionVisualEditor({
   const shortDescription = attraction.short_description_th ?? "";
 
   // Derive media
-  const sortedMedia = [...media].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
-  const images = sortedMedia
-    .filter(m => m.media_type === "image" || m.media_type === "panorama" || m.media_type === "external_url")
-    .map(m => adminMediaPreviewUrl(m.storage_path) ?? "")
-    .filter(Boolean);
-  const hasGalleryImages = images.length > 0;
+  const sortedMedia = [...media]
+    .filter((item) => item.is_active && item.lifecycle_status === "active")
+    .filter((item) => item.media_type === "image" || item.media_type === "panorama")
+    .sort((a, b) => {
+      if (a.is_cover !== b.is_cover) return a.is_cover ? -1 : 1;
+      return (a.display_order ?? 0) - (b.display_order ?? 0);
+    });
+  const previewImages = sortedMedia.flatMap((item) => {
+    const url = adminMediaPreviewUrl(item.storage_path);
+    return url ? [{ url, alt: item.alt_text_th || item.alt_text_en || name }] : [];
+  });
+  const hasGalleryImages = previewImages.length > 0;
   const relatedAttractionCount = relatedContent?.attractions?.length ?? 0;
   const relatedAccommodationCount = relatedContent?.accommodations?.length ?? 0;
   const relatedRestaurantCount = relatedContent?.restaurants?.length ?? 0;
@@ -286,7 +292,7 @@ export function AttractionVisualEditor({
       label: "รูปภาพ (Gallery)",
       publicSection: "รูปหน้าปก และ แกลเลอรี",
       complete: hasGalleryImages,
-      help: hasGalleryImages ? `เชื่อมโยงรูปภาพแล้ว ${images.length} รูป` : "เพิ่มรูปหน้าปกหรือแกลเลอรี เพื่อให้หน้าเว็บน่าสนใจ",
+      help: hasGalleryImages ? `เชื่อมโยงรูปภาพแล้ว ${previewImages.length} รูป` : "เพิ่มรูปหน้าปกหรือแกลเลอรี เพื่อให้หน้าเว็บน่าสนใจ",
       actionLabel: "จัดการรูปภาพ",
       targetSection: "gallery",
     },
@@ -404,9 +410,10 @@ export function AttractionVisualEditor({
           <AttractionHeader
             name={name}
             province={provinceName}
-            rating={0}
-            reviewsCount="0"
-            bestTimeToVisit="ตลอดปี"
+            attractionType={attractionTypes.find((type) => type.id === attraction.attraction_type_id)?.label ?? ""}
+            reviewState={reviewStats && reviewStats.totalReviews > 0 ? "available" : "empty"}
+            rating={reviewStats?.averageRating ?? null}
+            reviewCount={reviewStats?.totalReviews ?? null}
           />
         </EditableBlock>
 
@@ -415,8 +422,9 @@ export function AttractionVisualEditor({
           <div className="mt-6 pointer-events-none">
             {hasGalleryImages ? (
               <AttractionGallery
-                mainImage={images[0]}
-                gallery={images.slice(0, 4)}
+                mainImage={previewImages[0] ?? null}
+                gallery={previewImages}
+                attractionName={name}
               />
             ) : (
               <MissingImageState
@@ -600,10 +608,9 @@ export function AttractionVisualEditor({
               <div className="relative group">
                 <div className="pointer-events-none">
                   <AttractionReviews
-                    rating={reviewStats?.averageRating || 0}
-                    reviewsCount={reviewStats?.totalReviews?.toString() || "0"}
-                    stats={reviewStats ?? undefined}
-                    reviews={publicReviews ?? undefined}
+                    state={reviewStats && reviewStats.totalReviews > 0 ? "available" : "empty"}
+                    stats={reviewStats ?? null}
+                    reviews={publicReviews ?? []}
                     title={sectionLabel("reviews")}
                   />
                 </div>
@@ -691,22 +698,12 @@ export function AttractionVisualEditor({
             <EditableBlock id="sidebar" label="ตั้งค่า / สถานะ" isActive={activeSection === "settings"} onEdit={() => setActiveSection("settings")}>
               <div className="pointer-events-none sticky top-24">
                 <AttractionInfoSidebar
-                  info={{
-                    region: attraction.sustainability_category || "ไม่ระบุ",
-                    population: attraction.estimated_capacity_per_day ? `~${attraction.estimated_capacity_per_day} คน/วัน` : "ไม่ระบุ",
-                    language: "Thai, English",
-                    currency: "THB",
-                    timeZone: attraction.opening_hours || "GMT+7",
-                  }}
+                  province={provinceName}
+                  attractionType={attractionTypes.find((type) => type.id === attraction.attraction_type_id)?.label ?? ""}
+                  address={attraction.address_text}
+                  openingHours={attraction.opening_hours}
+                  contactInfo={attraction.contact_info}
                 />
-
-                {/* Contact Info Preview */}
-                {attraction.contact_info && (
-                  <div className="mt-6 rounded-3xl bg-slate-50 p-6 text-sm text-slate-600 border border-slate-100">
-                    <h3 className="font-bold text-slate-800 mb-2">ข้อมูลการติดต่อ</h3>
-                    <p>{attraction.contact_info}</p>
-                  </div>
-                )}
               </div>
             </EditableBlock>
           </aside>

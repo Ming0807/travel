@@ -104,6 +104,12 @@ Recommended:
 
 Do not use raw database IDs in public attraction URLs unless necessary.
 
+The public detail route renders only published attraction data. It hides
+unconfigured 360 media and optional sections, limits recommendations to curated
+relations, distinguishes unavailable reviews from an empty review set, and
+uses a privacy-safe public review DTO. Admin draft preview uses a separate
+repository entry point and must not weaken the public publication boundary.
+
 ## 2.5 Use IDs for Admin Routes
 
 Admin routes may use IDs.

@@ -7,18 +7,18 @@ type AttractionTipsProps = {
 
 export function AttractionTips({ tips, title = "Travel Tips" }: AttractionTipsProps) {
   return (
-    <div id="tips" className="scroll-mt-24 pt-8">
-      <h2 className="mb-6 text-2xl font-bold text-ink">{title}</h2>
-      <div className="rounded-2xl bg-slate-50 p-8">
-        <ul className="flex flex-col gap-4">
+    <section id="tips" className="scroll-mt-36">
+      <h2 className="text-2xl font-bold text-[var(--public-ink)]">{title}</h2>
+      <div className="mt-5 border-y border-slate-200 py-2">
+        <ul className="divide-y divide-slate-200">
           {tips.map((tip, index) => (
-            <li key={index} className="flex items-start gap-3">
-              <CheckCircle size={24} weight="fill" className="text-coral shrink-0 mt-0.5" />
-              <p className="text-sm font-semibold text-ink leading-relaxed">{tip}</p>
+            <li key={index} className="flex items-start gap-3 py-4">
+              <CheckCircle aria-hidden="true" size={22} weight="fill" className="mt-0.5 shrink-0 text-[var(--public-teal)]" />
+              <p className="text-sm font-medium leading-7 text-slate-700">{tip}</p>
             </li>
           ))}
         </ul>
       </div>
-    </div>
+    </section>
   );
 }

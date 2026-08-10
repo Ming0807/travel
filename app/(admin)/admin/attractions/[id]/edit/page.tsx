@@ -3,7 +3,7 @@ import { AttractionVisualEditor } from "@/components/admin/attractions/visual-ed
 import { requirePermission } from "@/lib/auth/guards";
 import { getAdminAttractionById, getAdminProvinces, getAdminAttractionTypes, getAdminDistricts, getAdminAllContentList, getAdminAttractionRelatedContent } from "@/lib/repositories/admin-attraction.repository";
 import { listAdminMedia } from "@/lib/repositories/admin-media.repository";
-import { getPublicAttractionDetail } from "@/lib/repositories/public-content.repository";
+import { getAdminAttractionPreview } from "@/lib/repositories/public-content.repository";
 import { getReviewStatsByAttraction, listPublicReviewsByAttraction } from "@/lib/repositories/admin-review.repository";
 import { notFound } from "next/navigation";
 
@@ -38,7 +38,7 @@ export default async function EditAdminAttractionPage({
 
   // Fetch contextual public data for the Visual Editor preview
   const [publicDetail, reviewStats, publicReviews, allContent, relatedContent] = await Promise.all([
-    getPublicAttractionDetail(attraction.slug, { previewMode: true }),
+    getAdminAttractionPreview(attraction.slug),
     getReviewStatsByAttraction(attractionId),
     listPublicReviewsByAttraction(attractionId),
     getAdminAllContentList(),

@@ -23,26 +23,26 @@ type AttractionCardsRowProps = {
 
 export function AttractionCardsRow({ id, title, items, viewAllText, linkPrefix }: AttractionCardsRowProps) {
   return (
-    <div id={id} className="scroll-mt-24 pt-8">
+    <section id={id} className="scroll-mt-36">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-ink">{title}</h2>
         {viewAllText && (
-          <Link href={linkPrefix} className="hidden rounded-full border border-ink/10 px-4 py-2 text-xs font-bold text-ink hover:bg-cream transition-colors sm:block">
+          <Link href={linkPrefix} className="hidden min-h-10 items-center rounded-[var(--public-radius-control)] border border-slate-300 px-4 py-2 text-sm font-semibold text-[var(--public-ink)] transition-colors hover:border-[var(--public-teal)] hover:text-[var(--public-teal)] sm:inline-flex">
             {viewAllText}
           </Link>
         )}
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
         {items.map((item) => (
           <Link href={`${linkPrefix}/${item.id}`} key={item.id} className="min-w-[240px] max-w-[240px] flex-shrink-0 group cursor-pointer block">
-            <div className="relative mb-4 aspect-[4/3] w-full overflow-hidden rounded-lg bg-ink/5">
+            <div className="relative mb-4 aspect-[4/3] w-full overflow-hidden rounded-[var(--public-radius-panel)] bg-slate-100">
               {item.imageUrl ? (
                 <Image
                   src={item.imageUrl}
                   alt={item.title}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                   sizes="240px"
                 />
               ) : (
@@ -56,7 +56,7 @@ export function AttractionCardsRow({ id, title, items, viewAllText, linkPrefix }
                 เหตุผลที่แนะนำ: {item.recommendationReason}
               </p>
             ) : null}
-            <h3 className="text-base font-bold text-ink group-hover:text-coral transition-colors">{item.title}</h3>
+            <h3 className="text-base font-bold text-ink transition-colors group-hover:text-[var(--public-teal)]">{item.title}</h3>
             <p className="mt-1 text-sm text-muted line-clamp-2">{item.description}</p>
             
             {(item.rating || item.price) && (
@@ -79,10 +79,10 @@ export function AttractionCardsRow({ id, title, items, viewAllText, linkPrefix }
       </div>
       
       {viewAllText && (
-        <Link href={linkPrefix} className="mt-4 w-full rounded-full border border-ink/10 py-3 text-sm font-bold text-ink hover:bg-cream transition-colors sm:hidden text-center block">
+        <Link href={linkPrefix} className="mt-4 block min-h-11 w-full rounded-[var(--public-radius-control)] border border-slate-300 py-3 text-center text-sm font-semibold text-[var(--public-ink)] transition-colors hover:border-[var(--public-teal)] hover:text-[var(--public-teal)] sm:hidden">
           {viewAllText}
         </Link>
       )}
-    </div>
+    </section>
   );
 }

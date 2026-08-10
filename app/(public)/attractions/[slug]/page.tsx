@@ -1,107 +1,111 @@
-import { AttractionHeader } from "@/components/attractions/attraction-header";
-import { AttractionGallery } from "@/components/attractions/attraction-gallery";
-import { AttractionTabs } from "@/components/attractions/attraction-tabs";
-import { AttractionInfoSidebar } from "@/components/attractions/attraction-info-sidebar";
-import { AttractionCardsRow } from "@/components/attractions/attraction-cards-row";
-import { AttractionTips } from "@/components/attractions/attraction-tips";
-import { AttractionReviews } from "@/components/attractions/attraction-reviews";
-import { AttractionCTA } from "@/components/attractions/attraction-cta";
-import { getPublicAttractionDetail } from "@/lib/repositories/public-content.repository";
-import { SiteFooter } from "@/components/layout/SiteFooter";
+import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
-import {
-  getReviewStatsByAttraction,
-  listPublicReviewsByAttraction,
-} from "@/lib/repositories/admin-review.repository";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ReviewSubmissionForm } from "@/components/reviews/ReviewSubmissionForm";
-import { VISTA_360_EXTERNAL_URL } from "@/constants/product";
-import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
 import { Compass, MapPinLine } from "@phosphor-icons/react/dist/ssr";
+import { AttractionCardsRow } from "@/components/attractions/attraction-cards-row";
+import { AttractionCTA } from "@/components/attractions/attraction-cta";
+import { AttractionGallery } from "@/components/attractions/attraction-gallery";
+import { AttractionHeader } from "@/components/attractions/attraction-header";
+import { AttractionInfoSidebar } from "@/components/attractions/attraction-info-sidebar";
+import { AttractionReviews } from "@/components/attractions/attraction-reviews";
+import { AttractionTabs } from "@/components/attractions/attraction-tabs";
+import { AttractionTips } from "@/components/attractions/attraction-tips";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { PublicButton } from "@/components/public/PublicButton";
+import { PublicPageFrame } from "@/components/public/PublicPageFrame";
+import { ReviewSubmissionForm } from "@/components/reviews/ReviewSubmissionForm";
+import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
+import { getPublicAttractionDetail } from "@/lib/repositories/public-content.repository";
+import { getPublicAttractionReviews } from "@/lib/repositories/public-review.repository";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
-export default async function AttractionDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+const loadAttraction = cache(getPublicAttractionDetail);
+
+type AttractionDetailPageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({ params }: AttractionDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const data = await getPublicAttractionDetail(slug);
+  const attraction = await loadAttraction(slug);
+  if (!attraction) return { title: "ไม่พบสถานที่ท่องเที่ยว" };
 
-  if (!data) {
-    notFound();
-  }
+  const description = attraction.description || `ข้อมูลการเดินทางและรีวิวของ ${attraction.name} จังหวัด${attraction.province}`;
+  return {
+    title: attraction.name,
+    description: description.slice(0, 160),
+    alternates: { canonical: `/attractions/${attraction.slug}` },
+    openGraph: {
+      title: attraction.name,
+      description: description.slice(0, 160),
+      type: "article",
+      images: attraction.mainImage ? [{ url: attraction.mainImage.url, alt: attraction.mainImage.alt || attraction.name }] : undefined,
+    },
+  };
+}
 
-  // Fetch real reviews from the database
-  const client = await createSupabaseServerClient();
-  const { data: attractionRow } = await client
-    .from("attractions")
-    .select("attraction_id")
-    .eq("slug", slug)
-    .maybeSingle();
+export default async function AttractionDetailPage({ params }: AttractionDetailPageProps) {
+  const { slug } = await params;
+  const data = await loadAttraction(slug);
+  if (!data) notFound();
 
-  const attractionId = attractionRow?.attraction_id ? Number(attractionRow.attraction_id) : undefined;
-  const reviewStats = attractionId ? await getReviewStatsByAttraction(attractionId) : null;
-  const publicReviews = attractionId ? await listPublicReviewsByAttraction(attractionId) : [];
-  const displayRating = reviewStats && reviewStats.totalReviews > 0 ? reviewStats.averageRating : data.rating;
-  const displayReviewsCount = reviewStats && reviewStats.totalReviews > 0 ? String(reviewStats.totalReviews) : data.reviewsCount;
-  const locale = "th";
-  const sections = buildAttractionSectionNavigation(data, { locale, includeReviews: true });
+  const reviewBundle = await getPublicAttractionReviews(data.attractionId);
+  const sections = buildAttractionSectionNavigation(data, {
+    locale: "th",
+    includeReviews: true,
+    includeMissingRequired: false,
+  });
   const sectionLabel = (key: Parameters<typeof getAttractionSectionLabel>[0]) =>
-    getAttractionSectionLabel(key, locale);
+    getAttractionSectionLabel(key, "th");
   const hasCoordinates = data.latitude !== null && data.longitude !== null;
   const mapsUrl = hasCoordinates
     ? `https://www.google.com/maps?q=${data.latitude},${data.longitude}`
     : null;
 
   return (
-    <main className="bg-white min-h-screen pb-24 lg:pb-12">
-      {/*
-        We don't use PageShell here because the layout is edge-to-edge for the gallery
-        on mobile, and has specific max-width constraints matching the design.
-      */}
-      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8 lg:pt-10">
-
+    <>
+      <PublicPageFrame variant="detail" className="py-6 sm:py-10">
         <AttractionHeader
           name={data.name}
           province={data.province}
-          rating={displayRating}
-          reviewsCount={displayReviewsCount}
-          bestTimeToVisit={data.bestTimeToVisit}
+          attractionType={data.attractionType}
+          reviewState={reviewBundle.state}
+          rating={reviewBundle.stats?.averageRating ?? null}
+          reviewCount={reviewBundle.stats?.totalReviews ?? null}
         />
 
         <AttractionGallery
           mainImage={data.mainImage}
           gallery={data.gallery}
+          attractionName={data.name}
         />
 
-        {/* Main Content Area - Grid Layout */}
-        <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+          <div className="order-2 min-w-0 lg:order-1">
+            <AttractionTabs sections={sections} mobileLabel="ไปยังส่วนของหน้านี้" />
 
-          {/* Left Column (Main Content) */}
-          <div className="min-w-0">
-            <AttractionTabs sections={sections} mobileLabel="เลือกส่วนของหน้า" />
+            <div className="space-y-14">
+              {data.description ? (
+                <section id="overview" className="scroll-mt-36">
+                  <h2 className="text-2xl font-bold text-[var(--public-ink)]">{sectionLabel("overview")}</h2>
+                  <p className="mt-4 max-w-[72ch] whitespace-pre-wrap text-base leading-8 text-slate-700">
+                    {data.description}
+                  </p>
+                </section>
+              ) : null}
 
-            {/* Sections */}
-            <div className="flex flex-col gap-12">
-              {/* Overview */}
-              <section id="overview" className="scroll-mt-28">
-                <h2 className="mb-4 text-2xl font-bold text-ink">{sectionLabel("overview")}</h2>
-                <p className="text-base leading-relaxed text-muted">
-                  {data.description || "ยังไม่ได้เพิ่มคำอธิบายสำหรับสถานที่นี้"}
-                </p>
-              </section>
-
-              {/* Things to Do */}
-              {data.thingsToDo.length > 0 && (
+              {data.thingsToDo.length > 0 ? (
                 <AttractionCardsRow
                   id="things-to-do"
                   title={sectionLabel("things_to_do")}
                   items={data.thingsToDo}
-                  viewAllText="ดูกิจกรรมทั้งหมด"
+                  viewAllText="ดูสถานที่ทั้งหมด"
                   linkPrefix="/attractions"
                 />
-              )}
+              ) : null}
 
-              {/* Where to Stay - Hidden until module is ready */}
-              {data.whereToStay.length > 0 && (
+              {data.whereToStay.length > 0 ? (
                 <AttractionCardsRow
                   id="where-to-stay"
                   title={sectionLabel("where_to_stay")}
@@ -109,10 +113,9 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                   viewAllText="ดูที่พักทั้งหมด"
                   linkPrefix="/accommodations"
                 />
-              )}
+              ) : null}
 
-              {/* Food & Drink */}
-              {data.foodAndDrink.length > 0 && (
+              {data.foodAndDrink.length > 0 ? (
                 <AttractionCardsRow
                   id="food"
                   title={sectionLabel("food_drink")}
@@ -120,125 +123,97 @@ export default async function AttractionDetailPage({ params }: { params: Promise
                   viewAllText="ดูร้านอาหารทั้งหมด"
                   linkPrefix="/restaurants"
                 />
-              )}
+              ) : null}
 
-              {/* Tips */}
-              {data.travelTips.length > 0 && <AttractionTips tips={data.travelTips} title={sectionLabel("travel_tips")} />}
+              {data.travelTips.length > 0 ? (
+                <AttractionTips tips={data.travelTips} title={sectionLabel("travel_tips")} />
+              ) : null}
 
-              {/* How to Get There */}
-              <section id="how-to-get-there" className="scroll-mt-28 pt-8">
-                <h2 className="mb-4 text-2xl font-bold text-ink">{sectionLabel("how_to_get_there")}</h2>
-                <p className="mb-6 text-sm leading-relaxed text-muted whitespace-pre-wrap">
-                  {data.howToGetThere || "ยังไม่ได้เพิ่มรายละเอียดการเดินทาง"}
-                </p>
-                {hasCoordinates ? (
-                  <div className="rounded-2xl border border-ink/10 bg-slate-50 p-5">
+              {data.howToGetThere ? (
+                <section id="how-to-get-there" className="scroll-mt-36">
+                  <h2 className="text-2xl font-bold text-[var(--public-ink)]">{sectionLabel("how_to_get_there")}</h2>
+                  <p className="mt-4 max-w-[72ch] whitespace-pre-wrap text-base leading-8 text-slate-700">
+                    {data.howToGetThere}
+                  </p>
+                  <div className="mt-5 border border-slate-200 bg-white p-5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-coral text-white">
-                          <MapPinLine size={22} weight="bold" />
-                        </div>
+                        <MapPinLine aria-hidden="true" className="mt-0.5 shrink-0 text-[var(--public-coral)]" size={24} weight="fill" />
                         <div>
-                          <p className="text-sm font-bold text-ink">พิกัดสถานที่</p>
-                          <p className="mt-1 text-sm leading-6 text-muted">
-                            {data.addressText || `${data.latitude!.toFixed(5)}, ${data.longitude!.toFixed(5)}`}
-                          </p>
-                          <p className="mt-1 font-mono text-xs text-muted">
-                            {data.latitude!.toFixed(5)}, {data.longitude!.toFixed(5)}
+                          <p className="font-semibold text-[var(--public-ink)]">ตำแหน่งสถานที่</p>
+                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                            {data.addressText || (hasCoordinates ? `${data.latitude}, ${data.longitude}` : "ยังไม่มีพิกัดสำหรับเปิดแผนที่")}
                           </p>
                         </div>
                       </div>
-                      <a
-                        href={mapsUrl ?? "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-5 py-2 text-sm font-bold text-white transition hover:bg-coral"
-                      >
-                        เปิดแผนที่
-                      </a>
+                      {mapsUrl ? (
+                        <PublicButton href={mapsUrl} target="_blank" rel="noopener noreferrer" variant="secondary">
+                          เปิดใน Google Maps
+                        </PublicButton>
+                      ) : null}
                     </div>
                   </div>
-                ) : (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
-                    <div className="flex items-start gap-3">
-                      <MapPinLine className="mt-0.5 shrink-0 text-amber-700" size={22} weight="duotone" />
-                      <div>
-                        <p className="text-sm font-black">ยังไม่ได้เพิ่มพิกัด</p>
-                        <p className="mt-1 text-sm leading-6">
-                          หน้านี้จะแสดงแผนที่จริงได้หลังจากแอดมินเพิ่ม latitude และ longitude ใน CMS
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </section>
+                </section>
+              ) : null}
 
-              {/* Reviews */}
               <AttractionReviews
-                rating={displayRating}
-                reviewsCount={displayReviewsCount}
-                stats={reviewStats ?? undefined}
-                reviews={publicReviews.length > 0 ? publicReviews : undefined}
+                state={reviewBundle.state}
+                stats={reviewBundle.stats}
+                reviews={reviewBundle.items}
                 title={sectionLabel("reviews")}
               >
                 <div className="mt-8">
-                  <ReviewSubmissionForm attractionId={attractionId ?? undefined} />
+                  <ReviewSubmissionForm attractionId={data.attractionId} />
                 </div>
               </AttractionReviews>
 
-              {/* Articles (Re-using Cards Row) */}
-              {data.articles && data.articles.length > 0 && (
+              {data.articles.length > 0 ? (
                 <AttractionCardsRow
                   id="articles"
                   title={sectionLabel("articles")}
                   items={data.articles}
-                  viewAllText="ดูบทความทั้งหมด"
+                  viewAllText="ดูเรื่องราวทั้งหมด"
                   linkPrefix="/stories"
                 />
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* Right Column (Sidebar) */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-24">
-              <AttractionInfoSidebar info={data.info} />
-
-              {/* 360 Vista — แสดงเฉพาะสถานที่ในยะลา */}
-              {data.province === "ยะลา" || data.province === "Yala" ? (
-                <div className="mt-6 rounded-2xl border border-ink/5 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                      <Compass size={16} weight="fill" />
-                    </div>
-                    <h3 className="font-bold text-sm text-ink">360° Virtual Tour</h3>
-                  </div>
-                  <p className="text-xs text-muted mb-4 leading-relaxed">
-                    ชมบรรยากาศสถานที่ท่องเที่ยวในจังหวัดยะลาแบบ 360 องศา เสมือนจริง
-                  </p>
-                  <a
-                    href={VISTA_360_EXTERNAL_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
-                  >
-                    <Compass size={14} weight="fill" />
-                    ดู 360° Virtual Tour
-                  </a>
-                  <p className="mt-2 text-[10px] text-muted text-center">
-                    ระบบภายนอกโดย 360 Vista
-                  </p>
+          <aside className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-24">
+            <AttractionInfoSidebar
+              province={data.province}
+              attractionType={data.attractionType}
+              address={data.addressText}
+              openingHours={data.openingHours}
+              contactInfo={data.contactInfo}
+            />
+            {data.virtualTour ? (
+              <section className="border border-slate-200 bg-white p-5">
+                <div className="flex items-center gap-2">
+                  <Compass aria-hidden="true" size={22} weight="fill" className="text-[var(--public-teal)]" />
+                  <h2 className="font-bold text-[var(--public-ink)]">ชมมุมมอง 360°</h2>
                 </div>
-              ) : null}
-            </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  เปิดสื่อพาโนรามาหรือทัวร์เสมือนจริงที่แอดมินเผยแพร่สำหรับสถานที่นี้
+                </p>
+                <PublicButton
+                  href={data.virtualTour.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="secondary"
+                  className="mt-4 w-full"
+                >
+                  เปิดมุมมอง 360°
+                </PublicButton>
+              </section>
+            ) : null}
           </aside>
         </div>
 
-        {/* Call to Action */}
         <AttractionCTA name={data.name} />
-      </div>
+      </PublicPageFrame>
 
       <SiteFooter />
-    </main>
+    </>
   );
 }

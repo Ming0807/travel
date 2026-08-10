@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { PublicButton } from "@/components/public/PublicButton";
 
 type AttractionCTAProps = {
   name: string;
@@ -6,24 +7,19 @@ type AttractionCTAProps = {
 
 export function AttractionCTA({ name }: AttractionCTAProps) {
   return (
-    <div className="relative mt-16 overflow-hidden rounded-2xl bg-ink px-6 py-16 text-center text-white shadow-xl sm:px-12 sm:py-20 lg:mt-24">
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,#173F37_0%,#2F6559_52%,#E18868_100%)]"></div>
-        <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(90deg,rgba(255,255,255,.28)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.28)_1px,transparent_1px)] [background-size:44px_44px]"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-transparent"></div>
+    <section className="mt-16 border border-slate-800 bg-[var(--public-ink)] px-5 py-9 text-white sm:px-8 sm:py-10 lg:mt-20">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="max-w-2xl">
+          <h2 className="text-balance text-2xl font-bold sm:text-3xl">วางแผนเที่ยวต่อจาก {name}</h2>
+          <p className="mt-3 max-w-[65ch] text-sm leading-7 text-slate-200 sm:text-base">
+            ดูเส้นทางแนะนำเพื่อเชื่อมสถานที่ ร้านอาหาร และจุดแวะที่จัดการผ่านระบบจริง
+          </p>
+        </div>
+        <PublicButton href="/routes" className="shrink-0 gap-2">
+          ดูเส้นทางแนะนำ
+          <ArrowRight aria-hidden="true" size={18} />
+        </PublicButton>
       </div>
-      
-      <div className="relative z-10 mx-auto max-w-2xl">
-        <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-          พร้อมจะไปเที่ยว {name} หรือยัง?
-        </h2>
-        <p className="mb-8 text-base font-medium text-white/80 sm:text-lg">
-          วางแผนการเดินทางของคุณวันนี้ และสัมผัสความงามของชายแดนใต้
-        </p>
-        <Link href="/routes" className="inline-flex rounded-full bg-white px-8 py-3.5 text-sm font-bold text-ink shadow-lg transition-colors hover:bg-cream">
-          วางแผนการเดินทาง
-        </Link>
-      </div>
-    </div>
+    </section>
   );
 }

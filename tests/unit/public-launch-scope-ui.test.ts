@@ -7,14 +7,21 @@ function source(path: string) {
 }
 
 describe("Public Yala launch scope UI", () => {
-  it("loads destination options from the launch-scope repository", () => {
+  it("loads destination options where public flows still expose province choice", () => {
     for (const path of [
-      "app/(public)/attractions/page.tsx",
       "app/(public)/stories/page.tsx",
       "app/(public)/stories/share/page.tsx",
     ]) {
       expect(source(path)).toContain("listLiveDestinationProvinces");
     }
+  });
+
+  it("locks attraction discovery to Yala and removes stale province queries", () => {
+    const content = source("app/(public)/attractions/page.tsx");
+
+    expect(content).toContain("requestedProvince");
+    expect(content).toContain("พื้นที่ให้บริการ: จังหวัดยะลา");
+    expect(content).not.toContain("listLiveDestinationProvinces");
   });
 
   it("does not hardcode hidden destination options in public filters", () => {
@@ -31,8 +38,8 @@ describe("Public Yala launch scope UI", () => {
   });
 
   it("hides the province selector when only one destination is live", () => {
-    expect(source("app/(public)/attractions/page.tsx")).toContain(
-      "provinceOptions.length > 1",
+    expect(source("components/attractions/AttractionDiscoveryFilters.tsx")).not.toContain(
+      'name="province"',
     );
     expect(source("app/(public)/stories/page.tsx")).toContain(
       "provinceOptions.length > 1",

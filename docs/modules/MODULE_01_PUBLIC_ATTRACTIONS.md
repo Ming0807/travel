@@ -281,6 +281,10 @@ photo spots or certificate CTA
 related actions
 ```
 
+Only sections backed by published data may render. The public page must not
+invent ratings, visit facts, best-time guidance, 360 media, or related places.
+Related attractions are limited to explicit curated relations.
+
 ## 10.3 Required Call-to-Action
 
 The page must include a clear CTA:
@@ -310,22 +314,29 @@ The page must not break if optional data is missing.
 Rules:
 
 - If no image exists, show placeholder.
+- If an active media record resolves to a failed or 1x1 fallback image, remove
+  it from the visible gallery and the displayed image count.
 - If no 360 media exists, hide section.
 - If no coordinates exist, hide map or show "Location coming soon."
 - If no English text exists, fallback to Thai or show available language.
 - If no photo spot exists, show attraction-level certificate entry if available.
+- If reviews cannot be queried, show an unavailable state instead of a zero
+  score or an empty-review claim.
+- Public reviews use a neutral author label and must not expose the tourist
+  profile display name without review-specific publication consent.
 
 ## 10.5 Acceptance Criteria
 
 ```text
-[ ] Page loads by slug.
-[ ] Page shows attraction name.
-[ ] Page shows province/district.
-[ ] Page shows description or history when available.
-[ ] Page shows gallery or placeholder.
-[ ] Page shows certificate/check-in CTA.
-[ ] Page does not crash when optional media is missing.
-[ ] Page is mobile-first and readable.
+[x] Page loads by slug.
+[x] Page shows attraction name.
+[x] Page shows province/district when available.
+[x] Page shows description or history when available.
+[x] Page shows a truthful gallery or placeholder.
+[x] Page shows certificate/check-in CTA when configured.
+[x] Page does not crash when optional media is missing.
+[x] Review empty and unavailable states are distinct.
+[x] Page is mobile-first and readable.
 ```
 
 ---

@@ -2,6 +2,12 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import {
+  selectPublicAttractionMedia,
+  type PublicAttractionImage,
+  type PublicAttractionMediaRow,
+  type PublicAttractionVirtualTour,
+} from "@/lib/attractions/public-detail";
 import type { PublicStoryQuery } from "@/lib/content/public-story-query";
 import {
   storyDocumentSchema,
@@ -119,22 +125,15 @@ export type PublicAttractionRelatedItem = {
 };
 
 export type PublicAttractionDetail = {
+  attractionId: number;
   slug: string;
   name: string;
   province: string;
-  rating: number;
-  reviewsCount: string;
-  bestTimeToVisit: string;
+  attractionType: string;
   description: string;
-  mainImage: string | null;
-  gallery: string[];
-  info: {
-    region: string;
-    population: string;
-    language: string;
-    currency: string;
-    timeZone: string;
-  };
+  mainImage: PublicAttractionImage | null;
+  gallery: PublicAttractionImage[];
+  virtualTour: PublicAttractionVirtualTour | null;
   thingsToDo: PublicAttractionRelatedItem[];
   whereToStay: PublicAttractionRelatedItem[];
   foodAndDrink: PublicAttractionRelatedItem[];
@@ -143,6 +142,8 @@ export type PublicAttractionDetail = {
   addressText: string | null;
   latitude: number | null;
   longitude: number | null;
+  openingHours: string | null;
+  contactInfo: string | null;
   articles: PublicAttractionRelatedItem[];
 };
 
@@ -630,8 +631,10 @@ export async function listPublicAttractionPage(
   };
 }
 
-export async function getPublicAttractionDetail(slug: string, options?: { previewMode?: boolean }): Promise<PublicAttractionDetail | null> {
-  try {
+async function loadAttractionDetail(
+  slug: string,
+  visibility: "public" | "admin-preview",
+): Promise<PublicAttractionDetail | null> {
     const supabase = await createSupabaseServerClient();
     let query = supabase
       .from("attractions")
@@ -648,15 +651,16 @@ export async function getPublicAttractionDetail(slug: string, options?: { previe
         how_to_get_there_th,
         address_text,
         opening_hours,
+        contact_info,
         latitude,
         longitude,
         provinces (province_name_th, province_name_en),
         attraction_types (type_name_th, type_name_en),
-        content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
+        content_media (storage_path, media_type, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
       `)
       .eq("slug", slug);
 
-    if (!options?.previewMode) {
+    if (visibility === "public") {
       const liveProvinceIds = await listLiveDestinationProvinceIds();
       if (liveProvinceIds.length === 0) return null;
       query = query
@@ -667,28 +671,29 @@ export async function getPublicAttractionDetail(slug: string, options?: { previe
 
     const { data, error } = await query.maybeSingle();
 
-    if (error || !data) return null;
+    if (error) throw new Error("PUBLIC_ATTRACTION_DETAIL_FAILED");
+    if (!data) return null;
 
     const row = data as DbRecord;
     const province = one(row.provinces);
     const name = text(row.name_th, text(row.name_en, "Untitled attraction"));
-    const media = Array.isArray(row.content_media) ? (row.content_media as DbRecord[]) : [];
-    const sortedMedia = [...media].sort((a, b) => numberValue(a.display_order) - numberValue(b.display_order));
-    const images = sortedMedia
-      .filter((item) => item.is_active !== false && text(item.lifecycle_status, "active") === "active")
-      .map((item) => imageUrlFromStoragePath(item.storage_path))
-      .filter(Boolean) as string[];
+    const media = Array.isArray(row.content_media)
+      ? (row.content_media as PublicAttractionMediaRow[])
+      : [];
+    const publicMedia = selectPublicAttractionMedia(media);
+    const attractionType = one(row.attraction_types);
+    const attractionId = numberValue(row.attraction_id);
 
     const baseDetail: PublicAttractionDetail = {
+      attractionId,
       slug: text(row.slug, slug),
       name,
       province: text(province?.province_name_th, text(province?.province_name_en)),
-      rating: 0,
-      reviewsCount: "0",
-      bestTimeToVisit: "Not specified",
+      attractionType: text(attractionType?.type_name_th, text(attractionType?.type_name_en)),
       description: text(row.description_th, text(row.description_en, text(row.short_description_th, text(row.short_description_en)))),
-      mainImage: images[0] ?? null,
-      gallery: images.slice(0, 4),
+      mainImage: publicMedia.mainImage,
+      gallery: publicMedia.gallery,
+      virtualTour: publicMedia.virtualTour,
       travelTips: row.travel_tips_th
         ? String(row.travel_tips_th).split('\n').map(s => s.trim()).filter(Boolean)
         : [],
@@ -696,20 +701,13 @@ export async function getPublicAttractionDetail(slug: string, options?: { previe
       addressText: text(row.address_text) || null,
       latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
       longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),
-      info: {
-        region: text(province?.province_name_en),
-        population: "Not collected",
-        language: "Thai, English, Malay future",
-        currency: "Thai Baht (THB)",
-        timeZone: "GMT+7"
-      },
+      openingHours: text(row.opening_hours) || null,
+      contactInfo: text(row.contact_info) || null,
       thingsToDo: [],
       whereToStay: [],
       foodAndDrink: [],
       articles: []
     };
-
-    const attractionId = numberValue(row.attraction_id);
 
     // 1. Fetch curated relations
     const [curatedAttractions, curatedRestaurants, curatedAccommodations, curatedStories] = await Promise.all([
@@ -728,23 +726,26 @@ export async function getPublicAttractionDetail(slug: string, options?: { previe
     const curatedRestaurantSlugs = extractSlugs(curatedRestaurants.data, "restaurants");
     const curatedAccommodationSlugs = extractSlugs(curatedAccommodations.data, "accommodations");
     const curatedStorySlugs = extractSlugs(curatedStories.data, "travel_stories");
+    const relationError = curatedAttractions.error
+      ?? curatedRestaurants.error
+      ?? curatedAccommodations.error
+      ?? curatedStories.error;
+    if (relationError) throw new Error("PUBLIC_ATTRACTION_DETAIL_FAILED");
 
-    const provinceEn = text(province?.province_name_en, "");
-
-    // 2. Fetch actual items using curated slugs, or fallback to province
+    // Only explicitly curated relationships appear on the detail page.
     const [attractionsRes, restaurantsRes, accommodationsRes, storiesRes] = await Promise.all([
       curatedAttractionSlugs.length > 0
         ? listPublicAttractionCards(curatedAttractionSlugs.length, { featuredSlugs: curatedAttractionSlugs })
-        : listPublicAttractionCards(5, { province: provinceEn }),
+        : Promise.resolve([]),
       curatedRestaurantSlugs.length > 0
         ? listPublicRestaurants({ featuredSlugs: curatedRestaurantSlugs })
-        : listPublicRestaurants({ province: provinceEn }),
+        : Promise.resolve([]),
       curatedAccommodationSlugs.length > 0
         ? listPublicAccommodations({ featuredSlugs: curatedAccommodationSlugs })
-        : listPublicAccommodations({ province: provinceEn }),
+        : Promise.resolve([]),
       curatedStorySlugs.length > 0
         ? listPublicStories({ limit: curatedStorySlugs.length, featuredSlugs: curatedStorySlugs })
-        : listPublicStories({ limit: 4, province: provinceEn })
+        : Promise.resolve([]),
     ]);
 
     baseDetail.thingsToDo = attractionsRes
@@ -765,7 +766,7 @@ export async function getPublicAttractionDetail(slug: string, options?: { previe
         title: r.name,
         description: r.description,
         imageUrl: r.imageUrl,
-        category: r.foodType || "Restaurant"
+        category: r.foodType || "ร้านอาหาร"
       }));
 
     baseDetail.whereToStay = accommodationsRes
@@ -775,7 +776,7 @@ export async function getPublicAttractionDetail(slug: string, options?: { previe
         title: a.name,
         description: a.description,
         imageUrl: a.imageUrl,
-        category: a.accommodationType || "Accommodation"
+        category: a.accommodationType || "ที่พัก"
       }));
 
     baseDetail.articles = storiesRes
@@ -786,16 +787,18 @@ export async function getPublicAttractionDetail(slug: string, options?: { previe
         description: s.excerpt,
         imageUrl: s.imageUrl,
         category: s.category,
-        recommendationReason:
-          curatedStorySlugs.length > 0
-            ? "คัดเลือกให้เข้ากับสถานที่นี้"
-            : `เรื่องราวจาก${baseDetail.province}`,
+        recommendationReason: "คัดเลือกให้เข้ากับสถานที่นี้",
       }));
 
     return baseDetail;
-  } catch {
-    return null;
-  }
+}
+
+export async function getPublicAttractionDetail(slug: string): Promise<PublicAttractionDetail | null> {
+  return loadAttractionDetail(slug, "public");
+}
+
+export async function getAdminAttractionPreview(slug: string): Promise<PublicAttractionDetail | null> {
+  return loadAttractionDetail(slug, "admin-preview");
 }
 
 export async function listPublicStories(options?: { limit?: number; province?: string; featuredSlugs?: string[]; authorType?: string }): Promise<PublicStoryCard[]> {
