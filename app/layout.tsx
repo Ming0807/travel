@@ -8,7 +8,7 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 const kanit = Kanit({
   subsets: ["thai", "latin"],
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-sans",
+  variable: "--font-heading",
   display: "swap",
   preload: false
 });
@@ -83,8 +83,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const appName = seoSettings.metaTitle?.split('|')[0]?.trim() || APP_NAME;
 
   return (
-    <html lang="th" className={`${kanit.variable} ${notoSansThai.variable} ${playfair.variable}`} data-scroll-behavior="smooth">
-      <body className="bg-[var(--background)] text-ink antialiased">
+    <html lang="th" className={`${playfair.variable}`} data-scroll-behavior="smooth">
+      <body className={`${notoSansThai.variable} ${kanit.variable} bg-[var(--background)] text-ink antialiased`}>
         <SiteHeader appName={appName} />
         <main className="phone-safe-bottom lg:pb-0">{children}</main>
         <MobileBottomNav />
