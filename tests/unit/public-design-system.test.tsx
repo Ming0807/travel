@@ -32,6 +32,7 @@ describe("public design system contract", () => {
 
     expect(reducedMotion).toMatch(/scroll-behavior:\s*auto/);
     expect(reducedMotion).toMatch(/animation-duration:\s*0\.01ms/);
+    expect(reducedMotion).toMatch(/animation-delay:\s*0ms/);
     expect(reducedMotion).toMatch(/transition-duration:\s*0\.01ms/);
   });
 
