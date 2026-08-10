@@ -1,14 +1,16 @@
+import { HomepageQuickActions } from "./HomepageQuickActions";
+import { HomepageCertificateCta } from "./sections/HomepageCertificateCta";
+import { HomepageDashboardPreview } from "./sections/HomepageDashboardPreview";
+import { HomepageDiscoveryWorkspace } from "./sections/HomepageDiscoveryWorkspace";
 import { HomepageHero } from "./sections/HomepageHero";
-import { HomepageAttractionsFeed } from "./sections/HomepageAttractionsFeed";
 import { HomepageHowItWorks } from "./sections/HomepageHowItWorks";
 import { HomepageStories } from "./sections/HomepageStories";
-import { HomepageHighlights } from "./sections/HomepageHighlights";
-import { HomepageDashboardPreview } from "./sections/HomepageDashboardPreview";
-import { HomepageCertificateCta } from "./sections/HomepageCertificateCta";
-import { HomepageSuggestedRoutes } from "./sections/HomepageSuggestedRoutes";
 import { SiteFooter as HomepageFooter } from "../layout/SiteFooter";
-import { listPublicAttractionCards, listPublicStories, listPublicRoutes } from "@/lib/repositories/public-content.repository";
-import { RevealOnScroll } from "@/components/ui/reveal-on-scroll";
+import {
+  listPublicAttractionCards,
+  listPublicRoutes,
+  listPublicStories,
+} from "@/lib/repositories/public-content.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 
 type HomepageStoriesSetting = {
@@ -20,68 +22,61 @@ type HomepageStoriesSetting = {
 
 export async function Homepage() {
   const settingsService = new SettingsService();
-
-  // First fetch the featured attractions slugs
-  const featuredAttractionsSetting = await settingsService.getSetting("homepage_featured_attractions", { slugs: [] });
-  const featuredSlugs = featuredAttractionsSetting?.slugs || [];
-
-  // Fetch the homepage_stories setting first to get the limit
-  const rawStoriesSettings = await settingsService.getSetting<HomepageStoriesSetting>("homepage_stories", { limit: 4 });
-  const storiesLimit = Math.max(1, Math.min(8, rawStoriesSettings.limit ?? 4));
-
-  const [attractions, stories, routes, heroSettings, routesSettings, howItWorksSettings, highlightsSettings, ctaSettings] = await Promise.all([
-    listPublicAttractionCards(8, { featuredSlugs }),
-    listPublicStories({ limit: storiesLimit }),
-    listPublicRoutes(3),
+  const [featuredAttractionsSetting, storiesSettings, heroSettings, routesSettings, howItWorksSettings, ctaSettings] = await Promise.all([
+    settingsService.getSetting("homepage_featured_attractions", { slugs: [] as string[] }),
+    settingsService.getSetting<HomepageStoriesSetting>("homepage_stories", { limit: 4 }),
     settingsService.getSetting("homepage_hero", {
-      title: "ค้นพบ<br/>ความมหัศจรรย์<br/>ที่ซ่อนเร้น",
-      subtitle: "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์",
-      description: "ตามหาช่วงเวลาสุดพิเศษและสถานที่ที่ซ่อนเร้นเพื่อจุดประกายประสบการณ์ที่ไม่มีวันลืม ในยะลา ปัตตานี และนราธิวาส",
-      images: ["", "", ""]
+      title: "เที่ยวยะลาให้ลึกกว่าเดิม",
+      subtitle: "วางแผนการเดินทางในจังหวัดยะลา",
+      description: "ค้นพบสถานที่ท่องเที่ยว อาหารท้องถิ่น เส้นทางน่าสนใจ และเรื่องราวจากผู้คนในพื้นที่ เพื่อให้ทุกการเดินทางมีความหมายมากขึ้น",
+      images: ["", "", ""],
     }),
     settingsService.getSetting("homepage_featured_routes", {
       slugs: [] as string[],
       title: "เส้นทางแนะนำ",
-      subtitle: "ออกเดินทางสัมผัสประสบการณ์ใหม่ในแบบที่คุณเลือก",
+      subtitle: "ออกเดินทางในยะลาตามจังหวะที่คุณเลือก",
       limit: 3,
     }),
     settingsService.getSetting("homepage_how_it_works", {
-      title: "ใช้งานง่ายเหมือนแอป",
-      subtitle: "แต่ไม่ต้องโหลดแอป",
-      description: "ระบบออกแบบให้เริ่มจากการให้คุณค่าก่อน — นักท่องเที่ยวกรอกน้อยที่สุด รับใบประกาศก่อน แล้วค่อยให้ข้อมูลเพิ่มเติมแบบสมัครใจ"
-    }),
-    settingsService.getSetting("homepage_highlights", {
-      title: "ประสบการณ์จากนักเดินทาง",
-      authorName: "Maria Angelica",
-      location: "มะนิลา, ฟิลิปปินส์",
-      quote: "ฉันไม่เคยคาดคิดเลยว่าชายแดนใต้จะสวยงามขนาดนี้ ทะเลหมอกที่อัยเยอร์เวงนั้นน่าทึ่งมาก ใบประกาศดิจิทัลที่ได้ก็เป็นสิ่งที่ช่วยให้ความทรงจำครั้งนี้พิเศษยิ่งขึ้น แนะนำสุดๆ สำหรับคนที่ชอบการผจญภัย!",
-      videoCover: "",
-      imageCover: "",
-      imageTitle: "ตลาดน้ำเมืองปัตตานี"
+      title: "เริ่มบันทึกการเดินทางได้ใน 3 ขั้นตอน",
+      subtitle: "ไม่ต้องติดตั้งแอป",
+      description: "รับคุณค่าก่อน แล้วค่อยเลือกแบ่งปันข้อมูลเพื่อช่วยพัฒนาการท่องเที่ยวยะลา",
     }),
     settingsService.getSetting("homepage_cta", {
-      title: "รับแรงบันดาลใจการเดินทาง",
-      subtitle: "ส่งตรงถึงคุณ",
-      description: "สมัครรับข่าวสารเพื่อค้นพบสถานที่ใหม่ๆ โปรโมชั่นพิเศษ และเรื่องเล่าสุดเอ็กซ์คลูซีฟจากชายแดนใต้",
-      bgImage: ""
-    })
+      title: "ทุกการเดินทางมีเรื่องให้สะสม",
+      subtitle: "Digital Passport",
+      description: "เก็บตราประจำสถานที่ไว้ใน Digital Passport ดูคะแนนของคุณ และกลับมาค้นพบยะลาในมุมใหม่ได้ทุกครั้ง",
+      bgImage: "",
+    }),
   ]);
 
+  const storiesLimit = Math.max(1, Math.min(8, storiesSettings.limit ?? 4));
+  const routeLimit = Math.max(1, Math.min(12, routesSettings.limit ?? 3));
+  const featuredSlugs = featuredAttractionsSetting.slugs ?? [];
   const featuredRouteSlugs = routesSettings.slugs ?? [];
-  const displayRoutes = featuredRouteSlugs.length > 0
-    ? await listPublicRoutes(featuredRouteSlugs.length, featuredRouteSlugs)
-    : routes;
+
+  const [attractions, stories, routes] = await Promise.all([
+    listPublicAttractionCards(8, { featuredSlugs }),
+    listPublicStories({ limit: storiesLimit }),
+    featuredRouteSlugs.length > 0
+      ? listPublicRoutes(routeLimit, featuredRouteSlugs)
+      : listPublicRoutes(routeLimit),
+  ]);
 
   return (
     <>
       <HomepageHero {...heroSettings} />
-      <RevealOnScroll delay={100}><HomepageAttractionsFeed attractions={attractions} /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageHowItWorks {...howItWorksSettings} /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageStories stories={stories} title={rawStoriesSettings.title} subtitle={rawStoriesSettings.subtitle} buttonText={rawStoriesSettings.buttonText} /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageSuggestedRoutes routes={displayRoutes.slice(0, routesSettings.limit)} title={routesSettings.title} subtitle={routesSettings.subtitle} /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageHighlights {...highlightsSettings} /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageDashboardPreview /></RevealOnScroll>
-      <RevealOnScroll delay={100}><HomepageCertificateCta {...ctaSettings} /></RevealOnScroll>
+      <HomepageQuickActions />
+      <HomepageDiscoveryWorkspace attractions={attractions} routes={routes} />
+      <HomepageHowItWorks {...howItWorksSettings} />
+      <HomepageStories
+        stories={stories}
+        title={storiesSettings.title}
+        subtitle={storiesSettings.subtitle}
+        buttonText={storiesSettings.buttonText}
+      />
+      <HomepageDashboardPreview />
+      <HomepageCertificateCta {...ctaSettings} />
       <HomepageFooter />
     </>
   );

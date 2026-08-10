@@ -4,6 +4,20 @@
 
 This document defines the admin CMS workflow for managing the content that appears on the public website, QR landing pages, attraction details, stories, routes, and homepage highlight sections.
 
+## Current Homepage Contract
+
+The redesigned homepage reuses published CMS records instead of maintaining duplicate card content:
+
+- Featured attractions provide card text, cover image, category, rating, review count, and map coordinates.
+- Featured routes provide the recommended route list and retain the order selected in Settings.
+- Published stories provide the editorial section; unpublished or missing records are never replaced with mock stories.
+- Hero and section-level presentation text remain Settings-owned metadata.
+- Statistics retain their existing analytics definitions and are labelled as recorded system data, not website traffic or real-time data.
+- The old newsletter-looking CTA is retired because no subscription backend exists. The final CTA links to the working Digital Passport and leaderboard flows.
+- The previous testimonial highlight section is not rendered on the homepage until it has a dedicated, verifiable content source.
+
+For the Yala pilot, remove references to Pattani and Narathiwat from public presentation settings. The components also guard stale multi-province hero copy, but Settings should still be corrected at the source.
+
 The goal is simple:
 
 ```text

@@ -18,6 +18,22 @@ The route structure must support:
 
 This document should be used before implementing pages, layouts, navigation, proxy-based route protection, or route guards.
 
+### Public Homepage Discovery Flow
+
+The public homepage is a working discovery surface, not a marketing-only landing page. Its stable order is:
+
+```text
+Hero and search
+Quick category actions
+Attraction discovery with real CMS records
+Three-step QR / certificate journey
+Published stories
+Recorded tourism statistics
+Digital Passport and leaderboard call-to-action
+```
+
+Homepage search routes to the matching public directory and preserves the query parameter. Map content is shown only when a published attraction has valid coordinates. The current pilot scope is Yala; public navigation must not advertise Pattani or Narathiwat until those destinations are activated again.
+
 ---
 
 ## 2. Route Design Principles

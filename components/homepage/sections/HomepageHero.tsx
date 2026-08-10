@@ -34,8 +34,12 @@ export function HomepageHero({
   };
 
   const img0 = getImageUrl(images?.[0]);
-  const cleanTitle = stripMarkup(title) || "เที่ยวยะลาให้ลึกกว่าเดิม";
-  const cleanSubtitle = stripMarkup(subtitle);
+  const cleanTitle = /ปัตตานี|นราธิวาส/.test(title)
+    ? "เที่ยวยะลาให้ลึกกว่าเดิม"
+    : stripMarkup(title) || "เที่ยวยะลาให้ลึกกว่าเดิม";
+  const cleanSubtitle = /ปัตตานี|นราธิวาส/.test(subtitle)
+    ? "วางแผนการเดินทางในจังหวัดยะลา"
+    : stripMarkup(subtitle);
   const cleanDescription = /ปัตตานี|นราธิวาส/.test(description)
     ? "ค้นพบสถานที่ท่องเที่ยว อาหารท้องถิ่น เส้นทางน่าสนใจ และเรื่องราวจากผู้คนในยะลา เพื่อให้ทุกการเดินทางมีความหมายมากขึ้น"
     : stripMarkup(description);
