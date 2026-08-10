@@ -34,6 +34,15 @@ Digital Passport and leaderboard call-to-action
 
 Homepage search routes to the matching public directory and preserves the query parameter. Map content is shown only when a published attraction has valid coordinates. The current pilot scope is Yala; public navigation must not advertise Pattani or Narathiwat until those destinations are activated again.
 
+### Public Frontend Redesign Contract
+
+The route-family UX/UI contract and executable migration order are maintained in:
+
+- `docs/superpowers/specs/2026-08-11-public-frontend-system-redesign.md`
+- `docs/superpowers/plans/2026-08-11-public-frontend-system-redesign.md`
+
+Public routes are grouped by user job rather than forced into one layout: discovery listings, place/route details, editorial, reward/identity, focused QR/visit flow, and trust/legal/evidence. Focused QR, visit, account-linking, and research tasks hide global discovery navigation. All active public copy and filters use the Yala pilot scope.
+
 ---
 
 ## 2. Route Design Principles
@@ -324,7 +333,7 @@ This page may be skipped if QR route directly renders landing/start UI.
 Purpose:
 
 - collect minimal tourist profile
-- collect visit date
+- record the visit time on the server
 - record consent
 - create or reuse tourist profile
 - create visit record or prepare creation
@@ -863,6 +872,9 @@ Recommended:
 ```text
 Home
 Attractions
+Food and Stay
+Routes and Stories
+Passport
 About
 Language
 ```
@@ -875,7 +887,7 @@ Use:
 
 ```text
 back button
-progress indicator
+truthful step progress
 language switch
 ```
 
