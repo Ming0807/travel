@@ -39,6 +39,6 @@ test.describe("public navigation shell", () => {
 
     await expect(page.locator("header")).toHaveCount(0);
     await expect(page.locator("#public-mobile-menu-trigger")).toHaveCount(0);
-    await expect(page.locator("nav[aria-label='Mobile navigation']")).toHaveCount(0);
+    await expect(page.locator("nav[aria-label='เมนูนำทางมือถือ']")).toHaveCount(0);
   });
 });

@@ -13,11 +13,11 @@ describe("MobileBottomNav", () => {
     mockUsePathname.mockReturnValue("/");
     const { rerender } = render(<MobileBottomNav />);
 
-    expect(screen.getByLabelText("Mobile navigation")).toBeInTheDocument();
+    expect(screen.getByLabelText("เมนูนำทางมือถือ")).toBeInTheDocument();
 
     mockUsePathname.mockReturnValue("/admin/checkin-codes");
     expect(() => rerender(<MobileBottomNav />)).not.toThrow();
-    expect(screen.queryByLabelText("Mobile navigation")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("เมนูนำทางมือถือ")).not.toBeInTheDocument();
   });
 
   it("hides the bottom navigation for focused public flows", () => {
@@ -26,6 +26,6 @@ describe("MobileBottomNav", () => {
 
     mockUsePathname.mockReturnValue("/visit/123/certificate");
     expect(() => rerender(<MobileBottomNav />)).not.toThrow();
-    expect(screen.queryByLabelText("Mobile navigation")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("เมนูนำทางมือถือ")).not.toBeInTheDocument();
   });
 });

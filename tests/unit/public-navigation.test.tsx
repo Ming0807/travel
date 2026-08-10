@@ -9,6 +9,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { isFocusedPublicRoute, shouldHidePublicChrome } from "@/lib/navigation/public-route-mode";
 
 const mockPathname = vi.hoisted(() => vi.fn());
+const mobileNavigationLabel = "เมนูนำทางมือถือ";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname(),
@@ -62,7 +63,7 @@ describe("public navigation", () => {
       );
 
       expect(screen.queryByRole("banner")).not.toBeInTheDocument();
-      expect(screen.queryByLabelText("Mobile navigation")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(mobileNavigationLabel)).not.toBeInTheDocument();
       expect(screen.queryByRole("main")).not.toBeInTheDocument();
       expect(screen.getByText("route content")).toBeInTheDocument();
     },
@@ -80,7 +81,8 @@ describe("public navigation", () => {
       );
 
       expect(screen.getAllByRole("banner")).toHaveLength(2);
-      expect(screen.getByLabelText("Mobile navigation")).toBeInTheDocument();
+      expect(screen.getByRole("navigation", { name: "เมนูหลัก" })).toBeInTheDocument();
+      expect(screen.getByLabelText(mobileNavigationLabel)).toBeInTheDocument();
       expect(screen.getByRole("main")).toHaveClass("phone-safe-bottom");
     },
   );
@@ -89,7 +91,7 @@ describe("public navigation", () => {
     const user = userEvent.setup();
     render(<SiteHeader appName="ท่องเที่ยวยะลา" />);
 
-    const trigger = screen.getAllByRole("button", { name: /menu/i })[0];
+    const trigger = screen.getAllByRole("button", { name: /^เมนู/ })[0];
     const menuId = trigger.getAttribute("aria-controls");
     expect(trigger).toHaveAttribute("aria-haspopup", "menu");
     expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -110,16 +112,38 @@ describe("public navigation", () => {
     await user.click(document.body);
     expect(document.getElementById(menuId!)).not.toBeInTheDocument();
 
-    fireEvent.keyDown(trigger, { key: "Enter" });
-    expect(document.getElementById(menuId!)).toBeVisible();
-    fireEvent.keyDown(trigger, { key: "Escape" });
-    fireEvent.keyDown(trigger, { key: " " });
-    expect(document.getElementById(menuId!)).toBeVisible();
+    let keyboardClickCount = 0;
+    trigger.addEventListener("click", () => { keyboardClickCount += 1; });
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    expect(keyboardClickCount).toBe(1);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getAllByRole("menu")).toHaveLength(1);
+    await user.keyboard("{Escape}");
+
+    keyboardClickCount = 0;
+    await user.keyboard(" ");
+    expect(keyboardClickCount).toBe(1);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getAllByRole("menu")).toHaveLength(1);
     await user.keyboard("{Escape}");
 
     await user.click(trigger);
     await user.click(document.getElementById(menuId!)!.querySelector("a")!);
     expect(document.getElementById(menuId!)).not.toBeInTheDocument();
+  });
+
+  it("uses approved ink text for both coral check-in actions", async () => {
+    const user = userEvent.setup();
+    render(<SiteHeader appName="ท่องเที่ยวยะลา" />);
+    await user.click(document.querySelector<HTMLButtonElement>("#public-mobile-menu-trigger")!);
+
+    const checkinActions = screen.getAllByRole("link", { name: /ใบประกาศ/ });
+    expect(checkinActions).toHaveLength(2);
+    checkinActions.forEach((action) => {
+      expect(action).toHaveClass("text-[var(--public-ink)]");
+      expect(action).not.toHaveClass("text-white");
+    });
   });
 
   it("opens the mobile menu, focuses its first link, and restores focus after Escape", async () => {
@@ -157,6 +181,6 @@ describe("public navigation", () => {
 
     mockPathname.mockReturnValue("/checkin/demo-code");
     expect(() => rerender(<MobileBottomNav />)).not.toThrow();
-    expect(screen.queryByLabelText("Mobile navigation")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(mobileNavigationLabel)).not.toBeInTheDocument();
   });
 });

@@ -164,7 +164,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex items-center justify-center gap-6" aria-label="Primary">
+          <nav className="flex items-center justify-center gap-6" aria-label="เมนูหลัก">
             {navGroups.map((group) => {
               if (group.type === "link") {
                 const isActive = pathname === group.href;
@@ -187,16 +187,12 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
                     <button
                       type="button"
                       ref={(element) => { dropdownTriggerRefs.current[group.label] = element; }}
-                      aria-label={`${group.label} menu`}
+                      aria-label={`เมนู${group.label}`}
                       aria-haspopup="menu"
                       aria-expanded={openDropdown === group.label}
                       aria-controls={`public-dropdown-${group.label}`}
                       onClick={() => setOpenDropdown((current) => current === group.label ? null : group.label)}
                       onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          setOpenDropdown((current) => current === group.label ? null : group.label);
-                        }
                         if (event.key === "ArrowDown") {
                           event.preventDefault();
                           setOpenDropdown(group.label);
@@ -258,7 +254,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
             <UserNavMenu />
 
             <PublicCheckinEntryLink
-              className="ml-2 inline-flex min-h-11 items-center whitespace-nowrap rounded-[6px] bg-coral px-5 text-sm font-bold text-white transition-colors hover:bg-coral/90"
+              className="ml-2 inline-flex min-h-11 items-center whitespace-nowrap rounded-[6px] bg-coral px-5 text-sm font-bold text-[var(--public-ink)] transition-colors hover:bg-coral/90"
             >
               รับใบประกาศ
             </PublicCheckinEntryLink>
@@ -350,7 +346,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               <UserNavMenu mobile={true} />
               <li>
                 <PublicCheckinEntryLink
-                  className="mt-2 block rounded-[6px] bg-coral px-4 py-3 text-center text-sm font-bold text-white shadow-sm"
+                  className="mt-2 block rounded-[6px] bg-coral px-4 py-3 text-center text-sm font-bold text-[var(--public-ink)] shadow-sm"
                   onClick={() => closeMobileMenu()}
                 >
                   สแกนรับใบประกาศ

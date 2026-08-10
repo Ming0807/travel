@@ -51,7 +51,7 @@ export function MobileBottomNav() {
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 border-t border-white/80 bg-white/92 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_35px_rgba(15,23,42,0.10)] backdrop-blur-xl lg:hidden"
-      aria-label="Mobile navigation"
+      aria-label="เมนูนำทางมือถือ"
     >
       <div className="relative mx-auto grid max-w-md grid-cols-5 text-center">
         {/* Sliding Indicator */}
