@@ -10,7 +10,7 @@ type PublicFieldBaseProps = {
 };
 
 const controlClasses =
-  "min-h-11 w-full rounded-[var(--public-radius-control)] border border-black/20 bg-white px-3 text-base text-[var(--public-ink)] outline-none transition-colors placeholder:text-black/45 focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/20";
+  "min-h-11 w-full rounded-[var(--public-radius-control)] border border-black/20 bg-white px-3 text-base text-[var(--public-ink)] outline-none transition-colors placeholder:text-black/70 focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/20";
 
 function fieldDescriptionId(id: string, suffix: "hint" | "error") {
   return `${id}-${suffix}`;

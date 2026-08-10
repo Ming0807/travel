@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const layoutSource = readFileSync(resolve(process.cwd(), "app/layout.tsx"), "utf8");
 const globalStyles = readFileSync(resolve(process.cwd(), "app/globals.css"), "utf8");

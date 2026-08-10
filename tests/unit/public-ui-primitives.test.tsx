@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ImgHTMLAttributes, type ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/image", () => ({
   default: ({ priority, fill: _fill, ...props }: ImgHTMLAttributes<HTMLImageElement> & { priority?: boolean; fill?: boolean }) =>
@@ -45,7 +46,34 @@ describe("public UI primitives", () => {
     expect(button).toBeDisabled();
     await user.click(button);
     expect(onClick).not.toHaveBeenCalled();
-    expect(button.className).toContain("min-h-11");
+  });
+
+  it("keeps primary text and search placeholders contrast-safe", () => {
+    render(
+      <div>
+        <PublicButton>Get started</PublicButton>
+        <PublicSearchField label="Search places" name="query" placeholder="Try a place" />
+      </div>,
+    );
+
+    const primaryButton = screen.getByRole("button", { name: "Get started" });
+    const search = screen.getByRole("searchbox", { name: "Search places" });
+
+    expect(primaryButton).toHaveClass("text-[var(--public-ink)]");
+    expect(primaryButton).not.toHaveClass("text-white");
+    expect(search).toHaveClass("placeholder:text-black/70");
+    expect(search).not.toHaveClass("placeholder:text-black/45");
+  });
+
+  it("keeps an empty href in the anchor branch", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { container } = render(<PublicButton href="">Empty destination</PublicButton>);
+    const anchor = container.querySelector("a");
+
+    expect(anchor).toHaveTextContent("Empty destination");
+    expect(anchor).toHaveAttribute("href", "");
+    expect(screen.queryByRole("button", { name: "Empty destination" })).not.toBeInTheDocument();
+    consoleError.mockRestore();
   });
 
   it("keeps search and select fields visibly labeled and native", () => {
@@ -114,15 +142,16 @@ describe("public UI primitives", () => {
     expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
   });
 
-  it("uses generated pagination links, marks the current page, and suppresses one-page results", () => {
+  it("uses Thai-first labels, generated links, current-page semantics, and one-page suppression", () => {
     const createHref = (page: number) => `/attractions?page=${page}`;
 
     const { rerender } = render(<PublicPagination page={2} pageCount={3} createHref={createHref} />);
 
-    expect(screen.getByRole("link", { name: "Previous page" })).toHaveAttribute("href", "/attractions?page=1");
-    expect(screen.getByRole("link", { name: "Next page" })).toHaveAttribute("href", "/attractions?page=3");
-    expect(screen.getByRole("link", { name: "Page 2" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Page 2" })).toHaveAttribute("href", "/attractions?page=2");
+    expect(screen.getByRole("navigation", { name: "การแบ่งหน้า" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "หน้าก่อนหน้า" })).toHaveAttribute("href", "/attractions?page=1");
+    expect(screen.getByRole("link", { name: "หน้าถัดไป" })).toHaveAttribute("href", "/attractions?page=3");
+    expect(screen.getByRole("link", { name: "หน้า 2" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "หน้า 2" })).toHaveAttribute("href", "/attractions?page=2");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
 
     rerender(<PublicPagination page={1} pageCount={1} createHref={createHref} />);
@@ -132,32 +161,77 @@ describe("public UI primitives", () => {
   it("disables impossible pagination directions without nested interactive controls", () => {
     render(<PublicPagination page={1} pageCount={2} createHref={(page) => `/page/${page}`} />);
 
-    const previous = screen.getByText("Previous page");
+    const previous = screen.getByText("หน้าก่อนหน้า");
     expect(previous.tagName).toBe("SPAN");
     expect(previous).toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByRole("link", { name: "Next page" })).toHaveAttribute("href", "/page/2");
+    expect(screen.getByRole("link", { name: "หน้าถัดไป" })).toHaveAttribute("href", "/page/2");
     expect(screen.getAllByRole("link").every((link) => link.querySelector("a,button") === null)).toBe(true);
+  });
+
+  it("normalizes malformed page values and suppresses invalid page counts", () => {
+    const createHref = (page: number) => `/attractions?page=${page}`;
+    const { rerender } = render(<PublicPagination page={2.8} pageCount={3.9} createHref={createHref} />);
+
+    expect(screen.getByRole("link", { name: "หน้า 2" })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("link", { name: "หน้า 4" })).not.toBeInTheDocument();
+
+    rerender(<PublicPagination page={99} pageCount={3} createHref={createHref} />);
+    expect(screen.getByRole("link", { name: "หน้า 3" })).toHaveAttribute("aria-current", "page");
+
+    rerender(<PublicPagination page={Number.NaN} pageCount={Number.POSITIVE_INFINITY} createHref={createHref} />);
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+
+    rerender(<PublicPagination page={Number.NEGATIVE_INFINITY} pageCount={1.9} createHref={createHref} />);
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+  });
+
+  it("bounds numeric page links for first, middle, and final pages", () => {
+    const createHref = (page: number) => `/attractions?page=${page}`;
+    const numericLinks = () => screen.getAllByRole("link").filter((link) => link.getAttribute("aria-label")?.startsWith("หน้า "));
+
+    const { rerender } = render(<PublicPagination page={1} pageCount={1000} createHref={createHref} />);
+    expect(numericLinks().map((link) => link.getAttribute("aria-label"))).toEqual(["หน้า 1", "หน้า 2", "หน้า 3", "หน้า 1000"]);
+    expect(numericLinks().map((link) => link.getAttribute("href"))).toEqual([
+      "/attractions?page=1",
+      "/attractions?page=2",
+      "/attractions?page=3",
+      "/attractions?page=1000",
+    ]);
+    expect(screen.getAllByText("…")).toHaveLength(1);
+
+    rerender(<PublicPagination page={500} pageCount={1000} createHref={createHref} />);
+    expect(numericLinks().map((link) => link.getAttribute("aria-label"))).toEqual([
+      "หน้า 1",
+      "หน้า 498",
+      "หน้า 499",
+      "หน้า 500",
+      "หน้า 501",
+      "หน้า 502",
+      "หน้า 1000",
+    ]);
+    expect(screen.getAllByText("…")).toHaveLength(2);
+    expect(numericLinks()).toHaveLength(7);
+
+    rerender(<PublicPagination page={1000} pageCount={1000} createHref={createHref} />);
+    expect(numericLinks().map((link) => link.getAttribute("aria-label"))).toEqual(["หน้า 1", "หน้า 998", "หน้า 999", "หน้า 1000"]);
+    expect(screen.getAllByText("…")).toHaveLength(1);
+    expect(screen.queryByRole("link", { name: "…" })).not.toBeInTheDocument();
   });
 
   it("maps frame variants to distinct widths while preserving semantic children", () => {
     const variants = ["listing", "detail", "reading", "legal"] as const;
-    const classes = variants.map((variant) => {
+    const widthClasses = variants.map((variant) => {
       const { container, unmount } = render(
         <PublicPageFrame variant={variant}>
           <h1>Shared heading</h1>
         </PublicPageFrame>,
       );
       const frame = container.firstElementChild as HTMLElement;
-      const className = frame.className;
       expect(frame.querySelector("h1")).toHaveTextContent("Shared heading");
       unmount();
-      return className;
+      return frame.className.split(" ").find((className) => className.startsWith("max-w-"));
     });
 
-    expect(new Set(classes).size).toBe(4);
-    expect(classes[0]).toContain("max-w-7xl");
-    expect(classes[1]).toContain("max-w-6xl");
-    expect(classes[2]).toContain("max-w-[70ch]");
-    expect(classes[3]).toContain("max-w-3xl");
+    expect(widthClasses).toEqual(["max-w-7xl", "max-w-6xl", "max-w-[70ch]", "max-w-3xl"]);
   });
 });

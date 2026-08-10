@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
 const variantClasses = {
-  primary: "bg-[var(--public-coral)] text-white hover:bg-[#d86548]",
+  primary: "bg-[var(--public-coral)] text-[var(--public-ink)] hover:bg-[#d86548]",
   secondary: "border border-[var(--public-teal)] bg-white text-[var(--public-teal)] hover:bg-[#edf7f5]",
   quiet: "text-[var(--public-ink)] hover:bg-black/5",
   danger: "bg-[#b42318] text-white hover:bg-[#991b1b]",
@@ -25,7 +25,7 @@ export type PublicButtonProps =
       });
 
 function isInternalHref(href: string) {
-  return href.startsWith("/") && !href.startsWith("//");
+  return (href.startsWith("/") && !href.startsWith("//")) || href.startsWith("#");
 }
 
 function buttonClasses(variant: keyof typeof variantClasses, className?: string) {
@@ -39,18 +39,19 @@ function buttonClasses(variant: keyof typeof variantClasses, className?: string)
 }
 
 export function PublicButton(props: PublicButtonProps) {
-  const { variant = "primary", className, children, ...rest } = props;
+  const { variant = "primary", className, children, href, ...rest } = props;
+  const hasHrefProp = "href" in props;
 
-  if ("href" in props && props.href) {
+  if (hasHrefProp && href !== undefined) {
     const linkProps = rest as Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "className" | "children" | "href">;
     const classes = buttonClasses(variant, className);
 
-    return isInternalHref(props.href) ? (
-      <Link href={props.href} className={classes} {...linkProps}>
+    return isInternalHref(href) ? (
+      <Link href={href} className={classes} {...linkProps}>
         {children}
       </Link>
     ) : (
-      <a href={props.href} className={classes} {...linkProps}>
+      <a href={href} className={classes} {...linkProps}>
         {children}
       </a>
     );
