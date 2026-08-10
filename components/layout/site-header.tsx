@@ -149,20 +149,20 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
 
           {/* Right Actions */}
           <div className="flex-1 flex items-center justify-end gap-4">
-            <button
-              type="button"
-              className="text-ink hover:text-coral transition-colors"
-              aria-label="Search"
+            <Link
+              href="/#homepage-search"
+              className="grid h-11 w-11 place-items-center rounded-[6px] text-ink transition-colors hover:bg-cream hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+              aria-label="ไปที่ช่องค้นหา"
             >
               <MagnifyingGlass size={20} weight="bold" />
-            </button>
+            </Link>
             
             <div className="h-4 w-px bg-ink/10"></div>
 
             <UserNavMenu />
 
             <PublicCheckinEntryLink
-              className="ml-2 whitespace-nowrap rounded-full bg-coral px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-coral/90 transition-colors"
+              className="ml-2 inline-flex min-h-11 items-center whitespace-nowrap rounded-[6px] bg-coral px-5 text-sm font-bold text-white transition-colors hover:bg-coral/90"
             >
               รับใบประกาศ
             </PublicCheckinEntryLink>
@@ -190,10 +190,10 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className="grid h-10 w-10 place-items-center rounded-full text-ink hover:bg-ink/5"
+              className="grid h-11 w-11 place-items-center rounded-[6px] text-ink hover:bg-ink/5"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
-              aria-label="Toggle menu"
+              aria-label={mobileMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
             >
               {mobileMenuOpen ? <X size={24} /> : <List size={24} />}
             </button>

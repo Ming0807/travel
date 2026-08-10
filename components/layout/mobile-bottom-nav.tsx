@@ -6,23 +6,23 @@ import { usePathname } from "next/navigation";
 import {
   House,
   MagnifyingGlass,
-  MapTrifold,
+  BookOpenText,
   Info,
-  UserCircle
+  IdentificationCard
 } from "@phosphor-icons/react/dist/ssr";
 
 const items = [
   { href: "/", label: "หน้าแรก", Icon: House },
   { href: "/attractions", label: "สถานที่", Icon: MagnifyingGlass },
-  { href: "/stories", label: "เรื่องราว", Icon: MapTrifold },
+  { href: "/stories", label: "เรื่องราว", Icon: BookOpenText },
   { href: "/about", label: "เกี่ยวกับ", Icon: Info },
-  { href: "/passport", label: "โปรไฟล์", Icon: UserCircle }
+  { href: "/passport", label: "พาสปอร์ต", Icon: IdentificationCard }
 ];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const isAdminRoute = pathname.startsWith("/admin");
-  const activeIndex = items.findIndex((item) => pathname === item.href);
+  const activeIndex = items.findIndex((item) => item.href === "/" ? pathname === "/" : pathname.startsWith(item.href));
   const [indicatorStyle, setIndicatorStyle] = useState({ left: "0%", width: "20%" });
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
@@ -61,18 +61,19 @@ export function MobileBottomNav() {
 
         {items.map((item, i) => {
           const Icon = item.Icon;
-          const isActive = pathname === item.href;
+          const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
             <Link
               key={item.label}
               href={item.href}
               ref={(el) => { itemRefs.current[i] = el; }}
-              className={`flex flex-col items-center justify-center gap-0.5 transition-all duration-200 ${
-                isActive ? "text-coral scale-105" : "text-muted hover:text-ink"
+              aria-current={isActive ? "page" : undefined}
+              className={`min-h-12 min-w-0 flex flex-col items-center justify-center gap-0.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral ${
+                isActive ? "text-coral" : "text-muted hover:text-ink"
               }`}
             >
               <Icon size={24} weight={isActive ? "fill" : "regular"} />
-              <p className="mt-1 text-[11px] font-bold transition-colors duration-200">{item.label}</p>
+              <p className="mt-1 max-w-full truncate text-[11px] font-bold transition-colors duration-200">{item.label}</p>
             </Link>
           );
         })}
