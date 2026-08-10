@@ -13,6 +13,8 @@ export type AttractionCard = {
   tags: string[];
   rating?: number;
   reviewCount?: number;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export type RestaurantCard = {

@@ -191,7 +191,9 @@ function mapAttractionCard(row: DbRecord, thumbnailByStoragePath?: Map<string, s
     description: text(row.short_description_th, text(row.short_description_en)),
     imageUrl: publicImage(row, thumbnailByStoragePath),
     imageAlt: text(media?.alt_text_th, text(media?.alt_text_en, `${name} destination image`)),
-    tags: [category, provinceName].filter(Boolean)
+    tags: [category, provinceName].filter(Boolean),
+    latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
+    longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),
   };
 }
 
@@ -205,6 +207,8 @@ function toPublicAttractionCard(card: InternalAttractionCard, summary?: { rating
     imageUrl: card.imageUrl,
     imageAlt: card.imageAlt,
     tags: card.tags,
+    latitude: card.latitude,
+    longitude: card.longitude,
     ...(summary ? { rating: summary.rating, reviewCount: summary.reviewCount } : {}),
   };
 }
@@ -377,6 +381,8 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
           name_en,
           short_description_th,
           short_description_en,
+          latitude,
+          longitude,
           provinces!inner (province_name_th, province_name_en),
           ${attractionTypesRelation} (type_name_th, type_name_en),
           content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
