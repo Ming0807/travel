@@ -1,12 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Play, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, ImageSquare, MapTrifold } from "@phosphor-icons/react/dist/ssr";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { HomepageSearch } from "@/components/homepage/HomepageSearch";
+
+function stripMarkup(value: string) {
+  return value.replace(/<br\s*\/?\s*>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function HeroTitle({ title }: { title: string }) {
+  const [before, after] = title.split("ยะลา", 2);
+  if (after === undefined) return <>{title}</>;
+  return <>{before}<span className="text-coral">ยะลา</span>{after}</>;
+}
 
 export function HomepageHero({
-  title = "ค้นพบ ความมหัศจรรย์ ที่ซ่อนเร้น",
-  subtitle = "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์",
-  description = "ตามหาช่วงเวลาสุดพิเศษและสถานที่ที่ซ่อนเร้นเพื่อจุดประกายประสบการณ์ที่ไม่มีวันลืม ในยะลา ปัตตานี และนราธิวาส",
+  title = "เที่ยวยะลาให้ลึกกว่าเดิม",
+  subtitle = "วางแผนการเดินทางในจังหวัดยะลา",
+  description = "ค้นพบสถานที่ท่องเที่ยว อาหารท้องถิ่น เส้นทางน่าสนใจ และเรื่องราวจากผู้คนในพื้นที่ เพื่อให้ทุกการเดินทางมีความหมายมากขึ้น",
   images = [
     "",
     "",
@@ -23,136 +34,57 @@ export function HomepageHero({
   };
 
   const img0 = getImageUrl(images?.[0]);
-  const img1 = getImageUrl(images?.[1]);
-  const img2 = getImageUrl(images?.[2]);
+  const cleanTitle = stripMarkup(title) || "เที่ยวยะลาให้ลึกกว่าเดิม";
+  const cleanSubtitle = stripMarkup(subtitle);
+  const cleanDescription = /ปัตตานี|นราธิวาส/.test(description)
+    ? "ค้นพบสถานที่ท่องเที่ยว อาหารท้องถิ่น เส้นทางน่าสนใจ และเรื่องราวจากผู้คนในยะลา เพื่อให้ทุกการเดินทางมีความหมายมากขึ้น"
+    : stripMarkup(description);
 
   return (
-    <section className="relative overflow-hidden bg-background pt-16 pb-24 sm:pt-24 sm:pb-32 lg:pb-40 text-ink">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-1/2 w-[800px] h-[600px] -translate-x-1/2 -translate-y-1/2 bg-slate-50 rounded-full blur-[100px] -z-10 opacity-70"></div>
-      
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Mobile Hero Image — visible below sm breakpoint */}
-        {img0 && (
-          <div className="relative w-full aspect-[4/3] max-h-[360px] sm:hidden mb-8 rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-cream">
-            <Image
-              src={img0}
-              alt="Southern Border Tourism"
-              fill
-              priority
-              className="object-cover"
-              sizes="100vw"
-            />
-            <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
-              📍 จุดเช็กอินยอดฮิต
-            </div>
+    <section className="bg-background px-3 pb-8 pt-4 text-ink sm:px-6 sm:pt-8 lg:px-8 lg:pb-10">
+      <div className="mx-auto max-w-7xl">
+        <div className="relative min-h-[420px] overflow-hidden border border-ink/10 bg-ink shadow-soft lg:grid lg:min-h-[410px] lg:grid-cols-[0.92fr_1.08fr] lg:bg-white">
+          <div className="absolute inset-0 lg:static lg:hidden">
+            {img0 ? (
+              <Image src={img0} alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา" fill priority className="object-cover" sizes="100vw" />
+            ) : (
+              <div className="flex h-full items-center justify-center bg-teal text-white"><ImageSquare size={52} aria-hidden="true" /></div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/75 to-ink/15" />
           </div>
-        )}
 
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-8 items-center">
-          
-          {/* Left: Text Content (Col 1-6) */}
-          <div className="lg:col-span-6 lg:pr-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-coral/20 text-coral text-xs font-bold uppercase tracking-widest mb-6 sm:mb-8 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-coral animate-pulse"></span>
-              {subtitle}
-            </div>
-            
-            <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-[5.5rem] font-black tracking-tight leading-[1.05] text-ink mb-6" dangerouslySetInnerHTML={{ __html: title.replace('ความมหัศจรรย์', `<span class="font-['Playfair_Display'] italic text-coral font-light">ความมหัศจรรย์</span>`).replace('\n', '<br />') }} />
-            
-            <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl leading-relaxed text-muted max-w-lg font-medium">
-              {description}
+          <div className="relative z-10 flex flex-col justify-center px-6 py-10 text-white sm:px-10 lg:px-14 lg:text-ink">
+            {cleanSubtitle ? <p className="mb-4 text-xs font-black uppercase tracking-[0.16em] text-coral">{cleanSubtitle}</p> : null}
+            <h1 className="max-w-xl text-[2rem] font-black leading-[1.22] sm:text-4xl lg:text-5xl">
+              <HeroTitle title={cleanTitle} />
+            </h1>
+            <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-white/85 sm:text-base lg:text-muted">
+              {cleanDescription}
             </p>
-            
-            <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-3 sm:gap-4">
-              <Link
-                href="/attractions"
-                className="group flex items-center justify-center gap-2 rounded-full bg-coral px-6 sm:px-8 py-3 sm:py-4 text-sm font-bold text-white shadow-lg shadow-coral/30 hover:bg-coral/90 hover:-translate-y-1 transition-all duration-300"
-              >
-                เริ่มวางแผนทริป
-                <ArrowRight weight="bold" className="group-hover:translate-x-1 transition-transform" />
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="/attractions" className="inline-flex min-h-11 items-center gap-2 bg-coral px-5 text-sm font-bold text-white transition-colors hover:bg-[#C95C3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-coral">
+                ค้นหาสถานที่ <ArrowRight aria-hidden="true" weight="bold" />
               </Link>
-              
-              <Link
-                href="/360-vista"
-                className="flex items-center gap-3 rounded-full bg-white px-5 sm:px-6 py-3 sm:py-4 text-sm font-bold text-ink border border-ink/5 hover:bg-cream transition-colors duration-300"
-              >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-ink/5 flex items-center justify-center text-ink">
-                  <Play weight="fill" size={12} />
-                </div>
-                ชมบรรยากาศ 360°
+              <Link href="/routes" className="inline-flex min-h-11 items-center gap-2 border border-white/60 bg-white/10 px-5 text-sm font-bold text-white transition-colors hover:bg-white hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral lg:border-ink/20 lg:bg-transparent lg:text-ink">
+                <MapTrifold aria-hidden="true" size={20} /> ดูเส้นทางแนะนำ
               </Link>
-            </div>
-            
-            <div className="mt-8 sm:mt-12 flex items-center gap-4 sm:gap-6 text-sm font-bold text-muted">
-              <div className="flex items-center gap-2">
-                <MapPin weight="fill" className="text-teal" size={18} />
-                <span>ยะลา</span>
-              </div>
-              <div className="w-1.5 h-1.5 rounded-full bg-ink/20"></div>
-              <div className="flex items-center gap-2">
-                <MapPin weight="fill" className="text-coral" size={18} />
-                <span>ปัตตานี</span>
-              </div>
-              <div className="w-1.5 h-1.5 rounded-full bg-ink/20"></div>
-              <div className="flex items-center gap-2">
-                <MapPin weight="fill" className="text-gold" size={18} />
-                <span>นราธิวาส</span>
-              </div>
             </div>
           </div>
 
-          {/* Right: Premium Image Collage (Col 7-12) — desktop only */}
-          <div className="hidden lg:block lg:col-span-6 relative h-[500px] md:h-[600px] w-full">
-            {/* Main Center Image */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[80%] rounded-2xl overflow-hidden shadow-2xl border-8 border-white z-20 bg-cream">
-              {img0 ? (
-                <Image
-                  src={img0}
-                  alt="Highlight 1"
-                  fill
-                  priority
-                  className="object-cover scale-105"
-                  sizes="(max-width: 1024px) 0px, 50vw"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-sand text-center text-xs font-bold uppercase tracking-widest text-muted">
-                  ยังไม่มีรูปภาพ
-                </div>
-              )}
-              <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold shadow-sm">
-                📍 จุดเช็กอินยอดฮิต
+          <div className="relative hidden min-h-[410px] bg-cream lg:block">
+            {img0 ? (
+              <Image src={img0} alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา" fill priority className="object-cover" sizes="(max-width: 1024px) 0px, 54vw" />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-3 bg-tealSoft text-teal">
+                <ImageSquare size={52} aria-hidden="true" />
+                <p className="text-sm font-bold">เพิ่มภาพ Hero ผ่านหน้า Settings</p>
               </div>
-            </div>
-            
-            {/* Top Right Floating Image */}
-            <div className="absolute top-0 right-0 w-[40%] h-[45%] rounded-2xl overflow-hidden shadow-xl border-4 border-white z-10 hidden md:block bg-cream">
-              {img1 && <Image
-                src={img1}
-                alt="Highlight 2"
-                fill
-                priority
-                className="object-cover"
-                sizes="(max-width: 1024px) 0px, 20vw"
-              />}
-            </div>
-            
-            {/* Bottom Left Floating Image */}
-            <div className="absolute bottom-0 left-0 w-[45%] h-[40%] rounded-2xl overflow-hidden shadow-xl border-4 border-white z-30 hidden md:block bg-cream">
-              {img2 && <Image
-                src={img2}
-                alt="Highlight 3"
-                fill
-                priority
-                className="object-cover"
-                sizes="(max-width: 1024px) 0px, 22vw"
-              />}
-            </div>
-            
-            {/* Decorative Element */}
-            <div className="absolute top-1/4 -right-4 w-24 h-24 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNFMTg4NjgiIGZpbGwtb3BhY2l0eT0iMC4zIi8+PC9zdmc+')] z-0 hidden lg:block opacity-60"></div>
+            )}
           </div>
-          
+        </div>
+
+        <div className="relative z-20 mx-auto -mt-7 w-[calc(100%-1.5rem)] max-w-5xl sm:-mt-8">
+          <HomepageSearch />
         </div>
       </div>
     </section>
