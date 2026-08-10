@@ -1,72 +1,42 @@
+import { PublicPageFrame } from "@/components/public/PublicPageFrame";
+
+function Skeleton({ className }: { className: string }) {
+  return <div className={`animate-pulse bg-black/10 ${className}`} />;
+}
+
 export default function AttractionsLoading() {
   return (
-    <div className="bg-background min-h-screen text-ink pb-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
-        {/* Breadcrumb */}
-        <div className="flex gap-2 mb-6">
-          <div className="h-3 w-12 rounded-full bg-slate-200 animate-pulse" />
-          <div className="h-3 w-3 rounded-full bg-slate-200 animate-pulse" />
-          <div className="h-3 w-20 rounded-full bg-slate-200 animate-pulse" />
-        </div>
-
-        {/* Hero Section Skeleton */}
-        <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-20">
-          <div className="lg:w-1/2 pt-4 space-y-6">
-            <div className="h-12 w-3/4 rounded-2xl bg-slate-200 animate-pulse" />
-            <div className="h-12 w-1/2 rounded-2xl bg-slate-200 animate-pulse" />
-            <div className="h-4 w-2/3 rounded-full bg-slate-100 animate-pulse" />
-            <div className="h-4 w-1/2 rounded-full bg-slate-100 animate-pulse" />
-            <div className="h-14 w-full max-w-xl rounded-full bg-slate-200 animate-pulse" />
-            <div className="flex gap-3">
-              <div className="h-10 w-28 rounded-full bg-slate-100 animate-pulse" />
-              <div className="h-10 w-28 rounded-full bg-slate-100 animate-pulse" />
-              <div className="h-10 w-28 rounded-full bg-slate-100 animate-pulse" />
-            </div>
-          </div>
-          <div className="lg:w-1/2 w-full">
-            <div className="w-full h-[350px] rounded-2xl bg-slate-200 animate-pulse" />
-          </div>
-        </section>
-
-        {/* Popular Provinces Skeleton */}
-        <section className="mb-20">
-          <div className="h-8 w-64 rounded-2xl bg-slate-200 animate-pulse mb-6" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-40 md:h-48 rounded-xl bg-slate-200 animate-pulse" />
-            ))}
-          </div>
-        </section>
-
-        {/* Main Grid Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20">
-          <div className="lg:col-span-8 space-y-16">
-            <section>
-              <div className="h-8 w-48 rounded-2xl bg-slate-200 animate-pulse mb-6" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="space-y-4">
-                    <div className="h-56 w-full rounded-xl bg-slate-200 animate-pulse" />
-                    <div className="h-5 w-3/4 rounded-full bg-slate-200 animate-pulse" />
-                    <div className="h-3 w-1/3 rounded-full bg-slate-100 animate-pulse" />
-                    <div className="flex gap-2">
-                      <div className="h-6 w-16 rounded-full bg-slate-100 animate-pulse" />
-                      <div className="h-6 w-16 rounded-full bg-slate-100 animate-pulse" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          {/* Sidebar Skeleton */}
-          <div className="lg:col-span-4 space-y-8">
-            <div className="h-64 rounded-2xl bg-slate-200 animate-pulse" />
-            <div className="h-48 rounded-2xl bg-slate-200 animate-pulse" />
-            <div className="h-72 rounded-2xl bg-slate-200 animate-pulse" />
-          </div>
+    <PublicPageFrame variant="listing" className="pb-16 pt-8 sm:pt-10" >
+      <span className="sr-only">กำลังโหลดสถานที่ท่องเที่ยว</span>
+      <Skeleton className="h-4 w-36 rounded-[var(--public-radius-control)]" />
+      <div className="mt-7 border-b border-black/10 pb-7">
+        <Skeleton className="h-11 w-full max-w-2xl rounded-[var(--public-radius-panel)]" />
+        <Skeleton className="mt-4 h-5 w-full max-w-xl rounded-[var(--public-radius-control)]" />
+      </div>
+      <div className="mt-7 rounded-[var(--public-radius-panel)] border border-black/10 bg-white p-5">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(220px,0.75fr)_auto] md:items-end">
+          <Skeleton className="h-16 rounded-[var(--public-radius-control)]" />
+          <Skeleton className="h-16 rounded-[var(--public-radius-control)]" />
+          <Skeleton className="h-11 w-36 rounded-[var(--public-radius-control)]" />
         </div>
       </div>
-    </div>
+      <div className="mt-10 border-b border-black/10 pb-4">
+        <Skeleton className="h-8 w-48 rounded-[var(--public-radius-control)]" />
+        <Skeleton className="mt-2 h-4 w-40 rounded-[var(--public-radius-control)]" />
+      </div>
+      <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="rounded-[var(--public-radius-panel)] border border-black/10 bg-white p-2">
+            <Skeleton className="aspect-[4/3] rounded-[var(--public-radius-panel)]" />
+            <div className="px-3 pb-4 pt-4">
+              <Skeleton className="h-4 w-2/5 rounded-[var(--public-radius-control)]" />
+              <Skeleton className="mt-3 h-7 w-4/5 rounded-[var(--public-radius-control)]" />
+              <Skeleton className="mt-3 h-4 w-full rounded-[var(--public-radius-control)]" />
+              <Skeleton className="mt-2 h-4 w-3/4 rounded-[var(--public-radius-control)]" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </PublicPageFrame>
   );
 }

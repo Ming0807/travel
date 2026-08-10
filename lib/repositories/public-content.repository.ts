@@ -26,6 +26,7 @@ type DbRecord = Record<string, unknown>;
 
 type InternalAttractionCard = AttractionCard & {
   attractionId: number;
+  district: string | null;
 };
 
 type PublicAttractionListOptions = {
@@ -35,7 +36,10 @@ type PublicAttractionListOptions = {
   featuredSlugs?: string[];
 };
 
+export const PUBLIC_ATTRACTION_MAX_PAGE = 10_000;
+
 export type PublicAttractionCard = Omit<AttractionCard, "rating" | "reviewCount"> & {
+  district: string | null;
   rating: number | null;
   reviewCount: number | null;
   reviewState: "available" | "empty" | "unavailable";
@@ -198,6 +202,7 @@ function publicManagedStoryImage(row: DbRecord): string | null {
 function mapAttractionCard(row: DbRecord, thumbnailByStoragePath?: Map<string, string>): InternalAttractionCard {
   const province = one(row.provinces);
   const attractionType = one(row.attraction_types);
+  const district = one(row.districts);
   const media = publicAttractionMedia(row);
   const name = text(row.name_th, text(row.name_en, "Untitled attraction"));
   const category = text(attractionType?.type_name_th, text(attractionType?.type_name_en, "Uncategorized"));
@@ -205,6 +210,7 @@ function mapAttractionCard(row: DbRecord, thumbnailByStoragePath?: Map<string, s
 
   return {
     attractionId: numberValue(row.attraction_id),
+    district: text(district?.district_name_th, text(district?.district_name_en)) || null,
     slug: text(row.slug),
     name,
     province: provinceName,
@@ -290,6 +296,7 @@ async function withNullableReviewSummaries(
   if (attractionIds.length === 0) {
     return cards.map((card) => ({
       ...toPublicAttractionCard(card),
+      district: card.district,
       rating: null,
       reviewCount: null,
       reviewState: "empty",
@@ -307,6 +314,7 @@ async function withNullableReviewSummaries(
   if (error) {
     return cards.map((card) => ({
       ...toPublicAttractionCard(card),
+      district: card.district,
       rating: null,
       reviewCount: null,
       reviewState: "unavailable",
@@ -329,6 +337,7 @@ async function withNullableReviewSummaries(
     if (!summary || summary.total === 0) {
       return {
         ...toPublicAttractionCard(card),
+        district: card.district,
         rating: null,
         reviewCount: null,
         reviewState: "empty" as const,
@@ -337,6 +346,7 @@ async function withNullableReviewSummaries(
 
     return {
       ...toPublicAttractionCard(card),
+      district: card.district,
       rating: Number((summary.sum / summary.total).toFixed(1)),
       reviewCount: summary.total,
       reviewState: "available" as const,
@@ -539,7 +549,11 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
 export async function listPublicAttractionPage(
   input: PublicAttractionPageInput,
 ): Promise<PublicAttractionPage> {
-  const page = Number.isSafeInteger(input.page) && input.page > 0 ? input.page : 1;
+  const page = Number.isSafeInteger(input.page)
+    && input.page > 0
+    && input.page <= PUBLIC_ATTRACTION_MAX_PAGE
+    ? input.page
+    : 1;
   const pageSize = Number.isInteger(input.pageSize) && input.pageSize > 0
     ? Math.min(input.pageSize, 48)
     : 12;
@@ -568,6 +582,7 @@ export async function listPublicAttractionPage(
       latitude,
       longitude,
       provinces!inner (province_name_th, province_name_en),
+      districts (district_name_th, district_name_en),
       ${attractionTypesRelation} (type_name_th, type_name_en),
       content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
     `, { count: "exact" })

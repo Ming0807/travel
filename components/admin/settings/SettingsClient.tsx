@@ -660,16 +660,16 @@ function PublicPageSettings({
 }) {
   return (
     <>
-      <SettingsSection title="หน้าสถานที่ท่องเที่ยว" description="ข้อความหัวและ banner ของหน้ารวมสถานที่">
-        <TextInput label="หัวข้อ Hero" value={settings.attractions_page_hero.title} onChange={(value) => updateSettingObject("attractions_page_hero", { title: value })} />
-        <TextArea label="คำอธิบาย Hero" value={settings.attractions_page_hero.description} onChange={(value) => updateSettingObject("attractions_page_hero", { description: value })} rows={3} />
+      <SettingsSection title="หน้าสถานที่ท่องเที่ยว" description="ข้อความหัวหน้าและส่วนวางแผนต่อท้ายรายการ">
+        <TextInput label="หัวข้อหน้า" value={settings.attractions_page_hero.title} onChange={(value) => updateSettingObject("attractions_page_hero", { title: value })} />
+        <TextArea label="คำอธิบายหน้า" value={settings.attractions_page_hero.description} onChange={(value) => updateSettingObject("attractions_page_hero", { description: value })} rows={3} />
         <div className="grid gap-4 md:grid-cols-2">
-          <TextInput label="หัวข้อ Banner" value={settings.attractions_page_banner.title} onChange={(value) => updateSettingObject("attractions_page_banner", { title: value })} />
-          <TextInput label="หัวข้อย่อย Banner" value={settings.attractions_page_banner.subtitle} onChange={(value) => updateSettingObject("attractions_page_banner", { subtitle: value })} />
+          <TextInput label="หัวข้อส่วนวางแผนต่อ" value={settings.attractions_page_banner.title} onChange={(value) => updateSettingObject("attractions_page_banner", { title: value })} />
+          <TextInput label="คำอธิบายส่วนวางแผนต่อ" value={settings.attractions_page_banner.subtitle} onChange={(value) => updateSettingObject("attractions_page_banner", { subtitle: value })} />
           <TextInput label="ข้อความปุ่ม" value={settings.attractions_page_banner.linkText} onChange={(value) => updateSettingObject("attractions_page_banner", { linkText: value })} />
           <TextInput label="URL ปุ่ม" value={settings.attractions_page_banner.linkUrl} onChange={(value) => updateSettingObject("attractions_page_banner", { linkUrl: value })} />
         </div>
-        <ImageField label="ภาพ Banner" value={settings.attractions_page_banner.image} onRemove={() => updateSettingObject("attractions_page_banner", { image: "" })} onPick={() => openPicker({ key: "attractions_page_banner", field: "image" })} />
+        <ImageField label="ภาพส่วนวางแผนต่อ" value={settings.attractions_page_banner.image} onRemove={() => updateSettingObject("attractions_page_banner", { image: "" })} onPick={() => openPicker({ key: "attractions_page_banner", field: "image" })} />
       </SettingsSection>
 
       <SettingsSection title="หน้าบทความ" description="ข้อความหัวและ CTA ของหน้าบทความ">

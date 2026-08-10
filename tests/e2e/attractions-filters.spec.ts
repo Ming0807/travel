@@ -1,37 +1,63 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-test.describe("Attractions Filters Smoke Test", () => {
-  test("can search, filter by province and type, and clear filters", async ({ page }) => {
+test.describe("Public attraction discovery", () => {
+  test("searches, filters by type, and clears without exposing a province selector", async ({ page }) => {
     await page.goto("/attractions");
-    await page.waitForLoadState("networkidle");
 
-    const heading = page.locator("h1:has-text('สถานที่ท่องเที่ยว')").first();
-    await expect(heading).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("สถานที่ท่องเที่ยว");
+    await expect(page.getByRole("heading", { level: 1 })).not.toContainText("3 จังหวัด");
+    await expect(page.locator("main")).toHaveCount(1);
+    await expect(page.getByLabel("ค้นหาสถานที่")).toBeVisible();
+    await expect(page.getByLabel("ประเภทสถานที่")).toBeVisible();
+    await expect(page.locator('select[name="province"]')).toHaveCount(0);
 
-    // 2. Search
-    const searchInput = page.locator('input[name="q"]');
-    await expect(searchInput).toBeVisible();
-    await searchInput.fill("ยะลา");
-
-    // 3. Filter by Province
-    const provinceSelect = page.locator('select[name="province"]');
-    await provinceSelect.selectOption({ value: "Pattani" });
-
-    // Filter by Type
-    const typeSelect = page.locator('select[name="type"]');
-    // Select the first valid option (index 1, skipping the default "ทั้งหมด" option)
+    await page.getByLabel("ค้นหาสถานที่").fill("ยะลา");
+    const typeSelect = page.getByLabel("ประเภทสถานที่");
+    const optionCount = await typeSelect.locator("option").count();
+    expect(optionCount).toBeGreaterThan(1);
+    const selectedType = await typeSelect.locator("option").nth(1).getAttribute("value");
+    expect(selectedType).toBeTruthy();
     await typeSelect.selectOption({ index: 1 });
 
-    const submitButton = page.locator('button[type="submit"]:has-text("ค้นหา")');
-    await submitButton.click();
+    await page.getByRole("button", { name: "ค้นหาสถานที่" }).click();
+    await expect(page).toHaveURL(/\/attractions\?q=/);
+    expect(new URL(page.url()).searchParams.get("type")).toBe(selectedType);
+    await expect(page.getByRole("status")).toContainText("ตัวกรองที่ใช้");
+    await expect(page.getByRole("link", { name: "ล้างตัวกรอง" }).first()).toBeVisible();
 
-    // 4. Wait for URL
-    await page.waitForURL(/province=Pattani/);
+    await page.getByRole("link", { name: "ล้างตัวกรอง" }).first().click();
+    await expect(page).toHaveURL(/\/attractions$/);
+  });
 
-    // 5. Clear filters
-    const clearButton = page.locator('a:has-text("ล้างตัวกรอง")').first();
-    await expect(clearButton).toBeVisible();
-    await clearButton.click();
-    await page.waitForURL(/\/attractions(?!\?.*q=)/);
+  test("canonicalizes stale province parameters to the Yala-only discovery URL", async ({ page }) => {
+    await page.goto("/attractions?province=Pattani");
+
+    await expect(page).toHaveURL(/\/attractions$/);
+    await expect(page.getByText("พื้นที่ให้บริการ: จังหวัดยะลา")).toBeVisible();
+  });
+
+  test("canonicalizes an out-of-range page while preserving valid filters", async ({ page }) => {
+    await page.goto("/attractions?q=ยะลา&page=999999");
+
+    await expect(page).toHaveURL(/\/attractions\?q=/);
+    await expect(page).not.toHaveURL(/page=999999/);
+    await expect(page.getByLabel("ค้นหาสถานที่")).toHaveValue("ยะลา");
+  });
+
+  test("keeps the discovery workspace inside a 390px mobile viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/attractions");
+
+    const dimensions = await page.evaluate(() => ({
+      viewport: window.innerWidth,
+      document: document.documentElement.scrollWidth,
+    }));
+
+    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      if (await page.getByLabel("ค้นหาสถานที่").evaluate((element) => element === document.activeElement)) break;
+      await page.keyboard.press("Tab");
+    }
+    await expect(page.getByLabel("ค้นหาสถานที่")).toBeFocused();
   });
 });

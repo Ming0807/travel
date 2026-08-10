@@ -59,6 +59,7 @@ const attractionRow = {
   latitude: 5.94,
   longitude: 101.18,
   provinces: { province_name_th: "ยะลา", province_name_en: "Yala" },
+  districts: { district_name_th: "เบตง", district_name_en: "Betong" },
   attraction_types: { type_name_th: "ธรรมชาติ", type_name_en: "Nature" },
   content_media: [
     {
@@ -121,6 +122,7 @@ describe("listPublicAttractionPage", () => {
     expect(result).toMatchObject({ total: 11, page: 2, pageCount: 2 });
     expect(result.items[0]).toMatchObject({
       slug: "aiyerweng-skywalk",
+      district: "เบตง",
       rating: null,
       reviewCount: null,
       reviewState: "empty",
@@ -135,9 +137,9 @@ describe("listPublicAttractionPage", () => {
     expect(result).toEqual({ items: [], total: 0, page: 1, pageCount: 0 });
   });
 
-  it("rejects page numbers outside the safe integer range", async () => {
+  it("rejects page numbers outside the supported public range", async () => {
     const result = await listPublicAttractionPage({
-      page: Number.MAX_SAFE_INTEGER + 1,
+      page: Number.MAX_SAFE_INTEGER,
       pageSize: 12,
     });
 
