@@ -367,11 +367,15 @@ export async function getTouristBadges(touristId: string): Promise<TouristBadge[
   });
 }
 
-export async function getLeaderboard(
+export type LeaderboardResult =
+  | { kind: "ready"; entries: LeaderboardEntry[] }
+  | { kind: "unavailable"; reason: "privacy_migration" | "service" };
+
+export async function getLeaderboardResult(
   period: "weekly" | "monthly" | "all_time" = "all_time",
   limit: number = 50,
   currentTouristId?: string,
-): Promise<LeaderboardEntry[]> {
+): Promise<LeaderboardResult> {
   const supabase = createSupabaseServiceRoleClient();
   const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
 
@@ -397,8 +401,10 @@ export async function getLeaderboard(
 
   if (error) {
     // Until the privacy migration is applied, fail closed instead of exposing legacy names.
-    if (/leaderboard_visibility|schema cache/i.test(error.message)) return [];
-    throw new Error(`Failed to fetch leaderboard: ${error.message}`);
+    if (/leaderboard_visibility|schema cache/i.test(error.message)) {
+      return { kind: "unavailable", reason: "privacy_migration" };
+    }
+    return { kind: "unavailable", reason: "service" };
   }
 
   // Aggregate XP per tourist
@@ -429,7 +435,7 @@ export async function getLeaderboard(
     })
     .slice(0, safeLimit);
 
-  if (sorted.length === 0) return [];
+  if (sorted.length === 0) return { kind: "ready", entries: [] };
 
   // Batch queries: one query per statistic for ALL leaderboard tourist IDs
   const touristIds = sorted.map(([id]) => id);
@@ -466,7 +472,18 @@ export async function getLeaderboard(
     };
   });
 
-  return entries;
+  return { kind: "ready", entries };
+}
+
+export async function getLeaderboard(
+  period: "weekly" | "monthly" | "all_time" = "all_time",
+  limit: number = 50,
+  currentTouristId?: string,
+): Promise<LeaderboardEntry[]> {
+  const result = await getLeaderboardResult(period, limit, currentTouristId);
+  if (result.kind === "ready") return result.entries;
+  if (result.reason === "privacy_migration") return [];
+  throw new Error("Failed to fetch leaderboard");
 }
 
 /**

@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, LockKey, Sparkle, Trophy } from "@phosphor-icons/react/dist/ssr";
-import { getLeaderboard } from "@/lib/services/xp.service";
+import { getLeaderboardResult } from "@/lib/services/xp.service";
 import { getTouristLeaderboardPreference } from "@/lib/repositories/tourist.repository";
 import { resolveCurrentTouristId, TouristAccessError } from "@/lib/auth/guards";
 import { LeaderboardContent } from "@/components/badges/LeaderboardContent";
@@ -29,20 +29,23 @@ async function resolveOptionalTouristId() {
 async function LeaderboardData() {
   const currentTouristId = await resolveOptionalTouristId();
   const [allTime, monthly, weekly, preference] = await Promise.all([
-    getLeaderboard("all_time", 100, currentTouristId),
-    getLeaderboard("monthly", 100, currentTouristId),
-    getLeaderboard("weekly", 100, currentTouristId),
+    getLeaderboardResult("all_time", 100, currentTouristId),
+    getLeaderboardResult("monthly", 100, currentTouristId),
+    getLeaderboardResult("weekly", 100, currentTouristId),
     currentTouristId
       ? getTouristLeaderboardPreference(currentTouristId).catch(() => ({ visibility: "private" as const, alias: null }))
       : Promise.resolve(null),
   ]);
 
+  const unavailable = [allTime, monthly, weekly].find((result) => result.kind === "unavailable");
+
   return (
     <LeaderboardContent
-      allTime={allTime}
-      monthly={monthly}
-      weekly={weekly}
+      allTime={allTime.kind === "ready" ? allTime.entries : []}
+      monthly={monthly.kind === "ready" ? monthly.entries : []}
+      weekly={weekly.kind === "ready" ? weekly.entries : []}
       currentVisibility={preference?.visibility}
+      availability={unavailable?.kind === "unavailable" ? unavailable.reason : "ready"}
     />
   );
 }

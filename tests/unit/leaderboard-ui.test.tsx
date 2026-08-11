@@ -42,4 +42,20 @@ describe("LeaderboardContent", () => {
       "/profile#leaderboard-privacy",
     );
   });
+
+  it("shows a retryable service state instead of pretending there are no public entries", () => {
+    render(
+      <LeaderboardContent
+        allTime={[]}
+        monthly={[]}
+        weekly={[]}
+        currentVisibility="private"
+        availability="privacy_migration"
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent("ระบบอันดับสาธารณะยังไม่พร้อม");
+    expect(screen.getByRole("link", { name: "ลองโหลดอีกครั้ง" })).toHaveAttribute("href", "/leaderboard");
+    expect(screen.queryByText("ยังไม่มีอันดับในช่วงเวลานี้")).not.toBeInTheDocument();
+  });
 });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, LockKey, TrendUp } from "@phosphor-icons/react";
+import { ArrowRight, LockKey, TrendUp, WarningCircle } from "@phosphor-icons/react";
 import { LeaderboardTable } from "./LeaderboardTable";
 import type { LeaderboardEntry } from "@/types/tourism";
 
@@ -14,12 +14,34 @@ type LeaderboardContentProps = {
   monthly: LeaderboardEntry[];
   weekly: LeaderboardEntry[];
   currentVisibility?: LeaderboardVisibility;
+  availability?: "ready" | "privacy_migration" | "service";
 };
 
-export function LeaderboardContent({ allTime, monthly, weekly, currentVisibility }: LeaderboardContentProps) {
+export function LeaderboardContent({ allTime, monthly, weekly, currentVisibility, availability = "ready" }: LeaderboardContentProps) {
   const [period, setPeriod] = useState<LeaderboardPeriod>("all_time");
   const entries = period === "all_time" ? allTime : period === "monthly" ? monthly : weekly;
   const currentEntry = entries.find((entry) => entry.isCurrentTourist);
+
+  if (availability !== "ready") {
+    return (
+      <section role="alert" className="border border-amber-300 bg-amber-50 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <WarningCircle aria-hidden="true" size={24} weight="fill" className="mt-0.5 shrink-0 text-amber-700" />
+          <div>
+            <h2 className="text-lg font-black text-ink">ระบบอันดับสาธารณะยังไม่พร้อม</h2>
+            <p className="mt-2 text-sm leading-6 text-amber-950/80">
+              {availability === "privacy_migration"
+                ? "ระบบกำลังรอการตั้งค่าความเป็นส่วนตัวของฐานข้อมูล จึงปิดการแสดงรายชื่อไว้ก่อนเพื่อป้องกันข้อมูลส่วนบุคคล"
+                : "ยังเชื่อมต่อข้อมูลคะแนนไม่ได้ในขณะนี้ คะแนนและความคืบหน้าของคุณไม่ได้สูญหาย"}
+            </p>
+            <Link href="/leaderboard" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-md border border-amber-700 px-4 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100">
+              ลองโหลดอีกครั้ง <ArrowRight aria-hidden="true" size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div>

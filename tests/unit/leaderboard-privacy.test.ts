@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getLeaderboard } from "@/lib/services/xp.service";
+import { getLeaderboard, getLeaderboardResult } from "@/lib/services/xp.service";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
 vi.mock("@/lib/supabase/service-role", () => ({ createSupabaseServiceRoleClient: vi.fn() }));
@@ -64,5 +64,21 @@ describe("public leaderboard privacy", () => {
     } as never);
 
     await expect(getLeaderboard("all_time", 100)).resolves.toEqual([]);
+    await expect(getLeaderboardResult("all_time", 100)).resolves.toEqual({
+      kind: "unavailable",
+      reason: "privacy_migration",
+    });
+  });
+
+  it("distinguishes backend failure from an honestly empty public ranking", async () => {
+    const backendFailure = queryResult([], { message: "connection terminated" });
+    vi.mocked(createSupabaseServiceRoleClient).mockReturnValue({
+      from: vi.fn(() => backendFailure),
+    } as never);
+
+    await expect(getLeaderboardResult("weekly", 100)).resolves.toEqual({
+      kind: "unavailable",
+      reason: "service",
+    });
   });
 });
