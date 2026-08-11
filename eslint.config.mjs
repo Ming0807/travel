@@ -24,6 +24,8 @@ export default defineConfig([
     "node_modules/**",
     "out/**",
     "coverage/**",
+    ".tmp-tests/**",
+    ".superpowers/**",
     "playwright-report/**",
     "test-results/**",
     ".agents/**",

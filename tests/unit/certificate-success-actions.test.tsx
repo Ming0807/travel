@@ -12,6 +12,13 @@ function defineNavigatorProperty(name: "share" | "canShare" | "clipboard", value
   });
 }
 
+function createImageResponse(): Response {
+  return {
+    ok: true,
+    blob: vi.fn().mockResolvedValue(new Blob(["certificate"], { type: "image/png" })),
+  } as unknown as Response;
+}
+
 describe("CertificateSuccessActions download and share contracts", () => {
   let originalCreateObjectUrl: typeof URL.createObjectURL | undefined;
   let originalRevokeObjectUrl: typeof URL.revokeObjectURL | undefined;
@@ -45,12 +52,7 @@ describe("CertificateSuccessActions download and share contracts", () => {
   });
 
   it("downloads the generated certificate blob with a stable filename", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(new Blob(["certificate"], { type: "image/png" }), {
-        status: 200,
-        headers: { "Content-Type": "image/png" },
-      }),
-    );
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(createImageResponse());
     const createObjectUrl = vi.fn(() => "blob:certificate");
     const revokeObjectUrl = vi.fn();
     Object.defineProperty(URL, "createObjectURL", { configurable: true, value: createObjectUrl });
@@ -69,12 +71,7 @@ describe("CertificateSuccessActions download and share contracts", () => {
   it("shares the generated File only when file sharing is supported", async () => {
     const share = vi.fn().mockResolvedValue(undefined);
     const canShare = vi.fn().mockReturnValue(true);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(new Blob(["certificate"], { type: "image/png" }), {
-        status: 200,
-        headers: { "Content-Type": "image/png" },
-      }),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(createImageResponse());
     defineNavigatorProperty("share", share);
     defineNavigatorProperty("canShare", canShare);
 
@@ -94,12 +91,7 @@ describe("CertificateSuccessActions download and share contracts", () => {
     const share = vi.fn().mockResolvedValue(undefined);
     const canShare = vi.fn().mockReturnValue(true);
     const currentUrl = window.location.href;
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(new Blob(["certificate"], { type: "image/png" }), {
-        status: 200,
-        headers: { "Content-Type": "image/png" },
-      }),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(createImageResponse());
     defineNavigatorProperty("share", share);
     defineNavigatorProperty("canShare", canShare);
 
@@ -114,12 +106,7 @@ describe("CertificateSuccessActions download and share contracts", () => {
 
   it("shows fallback download instructions when file sharing is unavailable", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(new Blob(["certificate"], { type: "image/png" }), {
-        status: 200,
-        headers: { "Content-Type": "image/png" },
-      }),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(createImageResponse());
     defineNavigatorProperty("share", undefined);
     defineNavigatorProperty("canShare", vi.fn().mockReturnValue(false));
     defineNavigatorProperty("clipboard", { writeText });
@@ -139,6 +126,9 @@ describe("CertificateSuccessActions download and share contracts", () => {
     expect(screen.getByText("ยังไม่พบไฟล์ใบประกาศ")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "บันทึกรูปภาพ" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "แชร์ให้เพื่อน" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "ลองสร้างใบประกาศอีกครั้ง" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: "ลองสร้างใบประกาศอีกครั้ง" })).toHaveAttribute(
+      "href",
+      `/visit/${visitId}/certificate/preview`,
+    );
   });
 });

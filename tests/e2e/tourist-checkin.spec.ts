@@ -43,7 +43,7 @@ test.describe('Tourist Check-in Flow', () => {
 
     // 3. Photo Upload (We will mock the file upload or just skip it if it's too complex to mock in E2E without an actual file, but Playwright can upload files)
     // Bypass flaky UI file upload in headless mode by calling the API directly
-    await page.evaluate(async () => {
+    const previewUrl = await page.evaluate(async () => {
       const visitId = window.location.pathname.split('/')[2];
       const base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
       const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
@@ -54,8 +54,9 @@ test.describe('Tourist Check-in Flow', () => {
       const res = await fetch('/api/upload/photo', { method: 'POST', body: form });
       const data = await res.json();
       
-      window.location.href = `/visit/${visitId}/certificate/preview?photoId=${data.photoId}`;
+      return `/visit/${visitId}/certificate/preview?photoId=${data.photoId}`;
     });
+    await page.goto(previewUrl);
     
     // 4. Certificate Preview
     await page.waitForURL(/\/visit\/[^/]+\/certificate\/preview/);

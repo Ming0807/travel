@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function GlobalError({
   error,
   reset,
@@ -76,11 +78,8 @@ export default function GlobalError({
               >
                 ลองอีกครั้ง
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = "/";
-                }}
+              <Link
+                href="/"
                 style={{
                   display: "inline-flex",
                   borderRadius: "9999px",
@@ -90,11 +89,11 @@ export default function GlobalError({
                   fontWeight: 700,
                   color: "#334155",
                   background: "white",
-                  cursor: "pointer",
+                  textDecoration: "none",
                 }}
               >
                 กลับหน้าแรก
-              </button>
+              </Link>
             </div>
           </div>
         </div>

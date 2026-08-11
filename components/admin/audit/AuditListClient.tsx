@@ -157,7 +157,7 @@ export function AuditListClient({ initialData, adminUsers, initialFilters, canEx
     router.push(pathname);
   };
 
-  const handleExport = async () => {
+  const handleExport = () => {
     try {
       setIsExporting(true);
       const params = new URLSearchParams();
@@ -165,8 +165,11 @@ export function AuditListClient({ initialData, adminUsers, initialFilters, canEx
         if (value) params.set(key, value);
       });
 
-      // Just redirecting to an API endpoint that streams the CSV
-      window.location.href = `/api/admin/audit/export?${params.toString()}`;
+      const link = document.createElement("a");
+      link.href = `/api/admin/audit/export?${params.toString()}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     } finally {
       setTimeout(() => setIsExporting(false), 1000);
     }

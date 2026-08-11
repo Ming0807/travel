@@ -115,13 +115,12 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
             แชร์ให้เพื่อน
           </button>
         </div>
-        <button
-          type="button"
-          onClick={() => window.location.assign(`/visit/${visitId}/certificate/preview`)}
-          className="mt-4 min-h-12 w-full bg-[#E77455] px-5 py-3 font-bold text-white hover:bg-[#C8553A]"
+        <Link
+          href={`/visit/${visitId}/certificate/preview`}
+          className="mt-4 inline-flex min-h-12 w-full items-center justify-center bg-[#E77455] px-5 py-3 font-bold text-white hover:bg-[#C8553A]"
         >
           ลองสร้างใบประกาศอีกครั้ง
-        </button>
+        </Link>
       </div>
     );
   }
