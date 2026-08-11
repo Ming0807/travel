@@ -1,12 +1,14 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { Compass, QrCode, Warning } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Compass, QrCode, Warning } from "@phosphor-icons/react/dist/ssr";
 import { PassportSummary } from "@/components/passport/PassportSummary";
 import { ProvinceProgress } from "@/components/passport/ProvinceProgress";
 import { StampGrid } from "@/components/passport/StampGrid";
+import { RecentPassportVisits } from "@/components/passport/RecentPassportVisits";
 import { AccountLinkingTeaser } from "@/components/passport/AccountLinkingTeaser";
 import { LineRecoveryPanel } from "@/components/account/LineRecoveryPanel";
+import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { getCurrentTouristPassport, type PassportViewModel } from "@/lib/services/passport.service";
 import { TouristAccessError } from "@/lib/auth/guards";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -33,75 +35,84 @@ export default async function PassportPage() {
 
   if (result.kind === "no_identity") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
-        <div className="max-w-md w-full rounded-2xl bg-white p-8 md:p-10 text-center border border-ink/5">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-cream text-coral">
-            <Compass size={40} weight="fill" />
-          </div>
-          <h1 className="text-3xl font-black text-ink">เริ่มต้นการเดินทาง</h1>
-          <p className="mt-3 text-sm leading-relaxed text-muted">
-            สแกน QR Code ที่สถานที่ท่องเที่ยวเพื่อเริ่มสะสมตราประทับดิจิทัลของคุณ
-          </p>
-          <div className="mt-8 grid gap-4">
-            <Link
-              href="/attractions"
-              className="flex items-center justify-center gap-2 rounded-full bg-coral px-6 py-4 font-bold text-white shadow-sm transition-colors hover:bg-coral/90"
-            >
-              <QrCode weight="fill" size={20} /> สำรวจสถานที่ท่องเที่ยว
-            </Link>
-            <Link
-              href="/"
-              className="rounded-full bg-background border border-ink/5 px-6 py-4 text-center font-bold text-ink transition-colors hover:bg-white"
-            >
-              กลับหน้าหลัก
-            </Link>
-          </div>
-          
-          <LineRecoveryPanel />
-        </div>
+      <main className="min-h-[70vh] bg-background pb-32 pt-2 sm:py-10">
+        <PublicPageFrame variant="reading">
+          <section className="rounded-lg border border-ink/10 bg-white p-6 sm:p-8">
+            <span className="grid h-12 w-12 place-items-center rounded-md bg-coral/10 text-coral">
+              <Compass size={27} weight="fill" aria-hidden="true" />
+            </span>
+            <p className="mt-6 text-xs font-bold text-coral">พาสปอร์ตท่องเที่ยวดิจิทัล</p>
+            <h1 className="mt-2 text-2xl font-black text-ink sm:text-3xl">เริ่มสะสมความทรงจำจากยะลา</h1>
+            <p className="mt-3 text-sm leading-7 text-muted">
+              สแกน QR ที่จุดท่องเที่ยวที่เข้าร่วมเพื่อบันทึกการเดินทาง รับตราประทับ และสร้างใบประกาศของคุณ
+            </p>
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              <Link
+                href="/attractions"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-coral px-5 py-3 text-sm font-bold text-white hover:bg-coral/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+              >
+                <QrCode weight="fill" size={19} aria-hidden="true" /> ดูจุดท่องเที่ยว
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-ink/15 px-5 py-3 text-sm font-bold text-ink hover:border-ink/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+              >
+                กลับหน้าหลัก <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            </div>
+            <LineRecoveryPanel />
+          </section>
+        </PublicPageFrame>
       </main>
     );
   }
 
   if (result.kind === "error") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full rounded-2xl bg-white p-8 text-center border border-ink/5">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
-            <Warning size={32} weight="fill" />
-          </div>
-          <h1 className="text-2xl font-black text-ink">เกิดข้อผิดพลาด</h1>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            ไม่สามารถโหลดพาสปอร์ตได้ กรุณาลองใหม่อีกครั้ง
-          </p>
-          <Link
-            href="/"
-            className="mt-6 inline-flex w-full justify-center rounded-full bg-ink px-6 py-4 font-bold text-white transition-colors hover:bg-ink/80"
-          >
-            กลับหน้าหลัก
-          </Link>
-        </div>
+      <main className="min-h-[70vh] bg-background pb-32 pt-2 sm:py-10">
+        <PublicPageFrame variant="reading">
+          <section className="rounded-lg border border-ink/10 bg-white p-6 sm:p-8">
+            <span className="grid h-12 w-12 place-items-center rounded-md bg-red-50 text-red-600">
+              <Warning size={26} weight="fill" aria-hidden="true" />
+            </span>
+            <h1 className="mt-5 text-2xl font-black text-ink">ยังเปิดพาสปอร์ตไม่ได้</h1>
+            <p className="mt-3 text-sm leading-6 text-muted">ระบบอาจขัดข้องชั่วคราว กรุณาลองเปิดหน้านี้ใหม่อีกครั้ง</p>
+            <Link
+              href="/"
+              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-md bg-ink px-5 py-3 text-sm font-bold text-white hover:bg-ink/90"
+            >
+              กลับหน้าหลัก
+            </Link>
+          </section>
+        </PublicPageFrame>
       </main>
     );
   }
 
   return (
     <>
-      <main className="min-h-[calc(100vh-200px)] bg-background px-4 pb-28 pt-12 md:pt-20 relative overflow-hidden text-ink">
-        {/* Premium Background Elements */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-coral/5 rounded-full blur-[120px] -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-teal/5 rounded-full blur-[150px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
-        
-        <div className="mx-auto max-w-xl space-y-8 relative z-10">
-          <div className="mb-4">
-            <h1 className="text-4xl md:text-5xl font-black text-ink tracking-tight">My Passport</h1>
-            <p className="text-muted text-base mt-3 max-w-sm">สะสมตราประทับและบันทึกการเดินทางของคุณในดินแดนใต้</p>
+      <main className="bg-background pb-20 pt-8 text-ink sm:pt-12">
+        <PublicPageFrame variant="detail">
+          <header className="mb-7 max-w-2xl">
+            <p className="text-xs font-bold text-coral">Digital Passport</p>
+            <h1 className="mt-2 text-3xl font-black text-ink sm:text-4xl">พาสปอร์ตการเดินทางของฉัน</h1>
+            <p className="mt-3 text-sm leading-7 text-muted">
+              ดูตราที่สะสมแล้ว วางแผนจุดหมายถัดไป และย้อนดูการเดินทางที่สร้างใบประกาศสำเร็จ
+            </p>
+          </header>
+
+          <div className="space-y-7">
+            <PassportSummary passport={result.passport} />
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+              <StampGrid passport={result.passport} />
+              <aside className="space-y-6">
+                <ProvinceProgress progress={result.passport.provinceProgress} />
+                <RecentPassportVisits visits={result.passport.recentVisits} />
+              </aside>
+            </div>
+            <AccountLinkingTeaser isGuest={result.passport.isGuest} />
           </div>
-          <PassportSummary passport={result.passport} />
-          <ProvinceProgress progress={result.passport.provinceProgress} />
-          <StampGrid passport={result.passport} />
-          <AccountLinkingTeaser isGuest={result.passport.isGuest} />
-        </div>
+        </PublicPageFrame>
       </main>
       <SiteFooter />
     </>

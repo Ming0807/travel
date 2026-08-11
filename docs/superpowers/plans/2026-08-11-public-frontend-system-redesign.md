@@ -301,11 +301,19 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Modify: `components/passport/ProvinceProgress.tsx`
 - Modify: `components/passport/StampGrid.tsx`
 - Modify: `components/passport/StampCard.tsx`
-- Test: `tests/unit/passport-page.test.tsx`
+- Create: `components/passport/RecentPassportVisits.tsx`
+- Modify: `components/account/LineRecoveryPanel.tsx`
+- Modify: `lib/services/passport.service.ts`
+- Modify: `lib/repositories/passport.repository.ts`
+- Test: `tests/unit/passport-ui.test.tsx`
+- Test: `tests/unit/passport-service.test.ts`
+- Test: `tests/unit/line-recovery-panel.test.tsx`
 
-- [ ] Write failing tests for earned/missing states, recent visits, empty Passport, account recovery CTA, and removal of gradient text.
-- [ ] Implement accessible progress and responsive stamp layout without invented percentages.
-- [ ] Run targeted gates and commit as `feat: redesign tourist passport`.
+- [x] Write failing tests for earned/missing states, empty Passport, account recovery consent, and truthful zero progress.
+- [x] Implement accessible progress and responsive stamp layout without invented percentages.
+- [x] Show active stamp targets, preserve inactive earned stamps, and list only completed-certificate visits as recent travel history.
+- [x] Require explicit LINE recovery consent and keep guest behavior available.
+- [x] Run targeted gates and commit as `feat: redesign tourist passport`.
 
 ### Task 13: Enforce privacy-first leaderboard identities
 

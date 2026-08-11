@@ -1,56 +1,59 @@
 import Link from "next/link";
-import { MapPin, SealCheck } from "@phosphor-icons/react/dist/ssr";
-import type { SafePassportStamp } from "@/lib/services/passport.service";
+import { CheckCircle, MapPin, SealCheck } from "@phosphor-icons/react/dist/ssr";
+import type { SafePassportStampTarget } from "@/lib/services/passport.service";
 
-export function StampCard({ stamp }: { stamp: SafePassportStamp }) {
-  const earnedDate = new Date(stamp.earnedAt).toLocaleDateString("th-TH", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-
-  // Randomize rotation slightly for a more natural stamp look
-  // Using hash of string to ensure consistent rotation per stamp
-  const hash = stamp.attractionSlug ? stamp.attractionSlug.length % 5 : 0;
-  const rotations = ["-rotate-3", "rotate-2", "-rotate-1", "rotate-3", "-rotate-2"];
-  const rotationClass = rotations[hash];
+export function StampCard({ target }: { target: SafePassportStampTarget }) {
+  const earnedDate = target.earnedAt
+    ? new Date(target.earnedAt).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })
+    : null;
 
   const content = (
-    <article className="relative rounded-xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 group border-2 border-dashed border-ink/10 hover:border-[#E18868]/30 overflow-hidden">
-      {/* Decorative watermark / stamp effect */}
-      <div className={`absolute -right-6 -bottom-6 opacity-[0.03] text-[#E18868] pointer-events-none transform ${rotationClass} transition-all duration-500 group-hover:opacity-[0.08] group-hover:scale-110`}>
-        <SealCheck size={140} weight="fill" />
-      </div>
-      
-      {/* Hover glow effect */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-[#E18868]/0 via-[#E18868]/5 to-[#E18868]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none rounded-xl" />
-
-      <div className="absolute top-4 right-4 rotate-[15deg] opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:rotate-[10deg]">
-        <span className="border-2 border-[#E18868] text-[#E18868] px-2 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-md shadow-sm bg-white/80 backdrop-blur-sm">
-          VISITED
+    <article
+      className={`h-full rounded-lg border p-4 transition-colors sm:p-5 ${
+        target.isEarned
+          ? "border-teal/25 bg-white hover:border-teal/50"
+          : "border-ink/10 bg-white hover:border-coral/40"
+      }`}
+    >
+      <div className="flex items-start gap-4">
+        <span
+          className={`grid h-14 w-14 shrink-0 place-items-center rounded-md border ${
+            target.isEarned ? "border-teal/20 bg-teal/10 text-teal" : "border-ink/10 bg-background text-ink/35"
+          }`}
+        >
+          <SealCheck size={30} weight={target.isEarned ? "fill" : "regular"} aria-hidden="true" />
         </span>
-      </div>
-
-      <div className="relative z-10 flex items-start gap-4">
-        <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[#E18868] ring-4 ring-white shadow-inner transform ${rotationClass} group-hover:scale-110 group-hover:rotate-0 group-hover:shadow-[#E18868]/20 group-hover:shadow-lg transition-all duration-500`}>
-          <SealCheck size={36} weight="fill" />
-        </div>
-        <div className="min-w-0 pt-1">
-          <h3 className="line-clamp-2 text-base font-black text-ink group-hover:text-[#E18868] transition-colors">{stamp.stampName}</h3>
-          <p className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-muted uppercase tracking-wider">
-            <MapPin weight="fill" size={12} className="text-[#E18868]" /> {stamp.provinceName}
-          </p>
-          <p className="mt-1 text-sm text-ink/80 line-clamp-1">{stamp.attractionName}</p>
-          
-          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-ink/5 px-2.5 py-1 text-[10px] font-bold text-ink/70">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E18868]"></span>
-            {earnedDate}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h3 className="text-base font-black leading-6 text-ink">{target.stampName}</h3>
+            <span
+              className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-bold ${
+                target.isEarned ? "bg-teal/10 text-teal" : "bg-ink/[0.06] text-muted"
+              }`}
+            >
+              {target.isEarned && <CheckCircle size={14} weight="fill" aria-hidden="true" />}
+              {target.isEarned ? "ได้รับแล้ว" : "ยังไม่ได้รับ"}
+            </span>
           </div>
+          <p className="mt-2 text-sm leading-6 text-ink/75">{target.attractionName}</p>
+          <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-muted">
+            <MapPin size={14} weight="fill" className="text-coral" aria-hidden="true" />
+            {target.provinceName}
+          </p>
+          {earnedDate && <p className="mt-3 text-xs font-semibold text-teal">ได้รับเมื่อ {earnedDate}</p>}
         </div>
       </div>
     </article>
   );
 
-  if (!stamp.attractionSlug) return content;
-  return <Link href={`/attractions/${stamp.attractionSlug}`}>{content}</Link>;
+  if (!target.attractionSlug) return content;
+  return (
+    <Link
+      href={`/attractions/${target.attractionSlug}`}
+      aria-label={`${target.attractionName} ${target.isEarned ? "ได้รับตราแล้ว" : "ยังไม่ได้รับตรา"}`}
+      className="block h-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+    >
+      {content}
+    </Link>
+  );
 }

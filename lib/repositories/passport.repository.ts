@@ -52,6 +52,9 @@ export async function listPublishedAttractionStampTargets() {
       ),
       stamp_definitions!inner (
         stamp_definition_id,
+        stamp_name_th,
+        stamp_name_en,
+        stamp_image_path,
         is_active
       )
     `)
@@ -62,6 +65,37 @@ export async function listPublishedAttractionStampTargets() {
 
   if (error) {
     throw new Error(`Failed to fetch stamp targets: ${error.message}`);
+  }
+
+  return data || [];
+}
+
+export async function listRecentPassportVisits(touristId: string, limit = 5) {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("visits")
+    .select(`
+      visit_date,
+      visited_at,
+      created_at,
+      attractions (
+        slug,
+        name_th,
+        name_en,
+        provinces (
+          province_name_th,
+          province_name_en
+        )
+      )
+    `)
+    .eq("tourist_id", touristId)
+    .in("completion_status", ["certificate_generated", "survey_completed"])
+    .order("visit_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(Math.max(1, Math.min(10, limit)));
+
+  if (error) {
+    throw new Error(`Failed to fetch recent passport visits: ${error.message}`);
   }
 
   return data || [];

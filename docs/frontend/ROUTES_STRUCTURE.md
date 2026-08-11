@@ -450,10 +450,11 @@ Purpose:
 
 Purpose:
 
-- show tourist's earned stamps
-- show guest warning
-- offer save with Google/LINE
-- show certificate links if available
+- show earned and available stamp targets without inventing progress
+- show recent visits that reached certificate completion
+- explain guest storage limitations without blocking use
+- offer optional LINE linking and consent-based recovery
+- keep passport ownership resolved from the current server-side tourist identity
 
 ## 7.2 Passport Stamp Detail
 
