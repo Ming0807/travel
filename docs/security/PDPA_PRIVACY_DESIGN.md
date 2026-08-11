@@ -10,6 +10,24 @@ Because the system may collect personal data such as display name, photo, visit 
 
 This document is not legal advice. It is a technical and product design guide to support responsible privacy practices.
 
+### 1.1 Public Notice Implementation Status (11 August 2026)
+
+The public `/privacy` page is an evidence-led product notice for the current Yala pilot. It documents implemented behavior rather than copying every target rule from this design guide.
+
+Implemented public-notice facts include:
+
+- Required check-in fields, optional tourism survey fields, optional UGC, contact data, and separately consented research data.
+- `sbtp_guest_id` (one year), `sbtp_checkin_session` (two hours), Supabase Auth sessions, and `sbtp_research_session` (30 days).
+- Private tourist photo and certificate delivery through ownership-checked application routes.
+- Vercel, Supabase, conditional Cloudinary storage, and optional Google/LINE identity providers.
+- Private-by-default leaderboard visibility with explicit alias/display-name opt-in.
+- No configured third-party general website analytics integration in the current code.
+- No facial recognition, continuous GPS collection, targeted advertising, or personal-data sale feature.
+
+The public notice must not claim an official operator, DPO address, statutory response deadline, encryption-at-rest guarantee, fixed five-year photo retention, Google Analytics usage, or complete PDPA compliance unless those facts are formally verified and implemented.
+
+The target requirements later in this document remain design requirements. They are not evidence that automation or organizational governance already exists.
+
 ---
 
 ## 2. Privacy Design Mission

@@ -455,10 +455,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Modify: relevant privacy/security documentation
 - Test: `tests/unit/public-legal-copy.test.tsx`
 
-- [ ] Inventory actual fields, purposes, optionality, storage, retention, cookies, providers, UGC, rewards, and withdrawal paths.
-- [ ] Add failing tests against known false claims such as unconfigured Google Analytics or unsupported operator identity.
-- [ ] Implement plain-language summaries followed by complete, versioned Thai-first detail.
-- [ ] Run targeted privacy review and commit as `docs: align public privacy and terms with production`.
+  - [x] Inventory actual fields, purposes, optionality, storage, retention, cookies, providers, UGC, rewards, and withdrawal paths.
+  - [x] Add failing tests against known false claims such as unconfigured Google Analytics or unsupported operator identity.
+  - [x] Implement plain-language summaries followed by complete, versioned Thai-first detail.
+  - [x] Run targeted privacy review and commit as `docs: align public privacy and terms with production`.
 
 ### Task 21: Turn `/dashboard` into an honest public evidence report
 

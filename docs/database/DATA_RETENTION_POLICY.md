@@ -26,6 +26,19 @@ It is not legal advice.
 
 Before production use with real tourists, the project owner should review the policy with the responsible organization, university, or legal/privacy officer.
 
+### 2.1 Current Enforcement Status (11 August 2026)
+
+This file describes the target retention policy. The core tourism service does not yet enforce one approved automatic retention schedule across all operational tables and private files.
+
+Current implemented boundaries are:
+
+- Browser-cookie expiry is enforced by each cookie and does not delete database records.
+- Research studies require a study-specific `retention_until` value and expose a participant withdrawal flow.
+- CMS records may be archived, and authorized admin workflows can anonymize or correct selected records.
+- Private photo/certificate access is ownership-controlled, but automatic age-based deletion is not complete.
+
+Until an owner approves the schedule and deletion/anonymization jobs are deployed, public notices must state this limitation instead of publishing planned durations as current guarantees.
+
 ---
 
 ## 3. Retention Principles
