@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { requireTouristVisitAccess } from "@/lib/auth/guards";
 import { getPhotoById } from "@/lib/repositories/visit-photo.repository";
 import { CertificatePreview } from "@/components/certificate/CertificatePreview";
-import { createPrivateFileSignedUrl } from "@/lib/storage/private-files";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -135,7 +134,7 @@ export default async function CertificatePreviewPage({
   if (rawPhotoId) {
     const photo = await getPhotoById(rawPhotoId as string);
     if (photo?.storage_path && photo.visit_id === visitId) {
-      previewUrl = await createPrivateFileSignedUrl("visit-photos", photo.storage_path, 60 * 60);
+      previewUrl = `/api/media/image?bucket=visit-photos&path=${encodeURIComponent(photo.storage_path)}`;
     } else {
       photoId = "";
     }

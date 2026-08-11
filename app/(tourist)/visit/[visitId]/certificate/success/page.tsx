@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { CheckCircle, Sparkle } from "@phosphor-icons/react/dist/ssr";
 import { CertificateSuccessActions } from "@/components/certificate/CertificateSuccessActions";
 import { requireTouristVisitAccess } from "@/lib/auth/guards";
 import { getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
-import { notFound } from "next/navigation";
-import { CheckCircle, Sparkle } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = {
   title: "ใบประกาศพร้อมแล้ว | Southern Border Tourism",
 };
+
+type StampStatus = "earned" | "already_earned" | "no_active_stamp_definition" | "none";
 
 export default async function CertificateSuccessPage({
   params,
@@ -18,6 +20,7 @@ export default async function CertificateSuccessPage({
 }) {
   const { visitId } = await params;
   const resolvedSearchParams = await searchParams;
+
   try {
     await requireTouristVisitAccess(visitId);
   } catch {
@@ -25,57 +28,73 @@ export default async function CertificateSuccessPage({
   }
 
   const rawStamp = Array.isArray(resolvedSearchParams?.stamp)
-    ? resolvedSearchParams?.stamp[0]
+    ? resolvedSearchParams.stamp[0]
     : resolvedSearchParams?.stamp;
-  let certUrl = "";
-  const cert = await getCertificateByVisitId(visitId);
-  if (cert) {
-    certUrl = `/api/media/image?bucket=certificate-files&path=${encodeURIComponent(cert.certificate_path)}`;
-  }
+  const allowedStampStatuses: StampStatus[] = [
+    "earned",
+    "already_earned",
+    "no_active_stamp_definition",
+    "none",
+  ];
+  const stampStatus = allowedStampStatuses.includes(rawStamp as StampStatus)
+    ? (rawStamp as StampStatus)
+    : "none";
 
-  const stampStatus = (rawStamp as "earned" | "already_earned" | "no_active_stamp_definition" | "none" | undefined) || "earned";
+  const certificate = await getCertificateByVisitId(visitId);
+  const previewUrl = certificate
+    ? `/api/media/image?bucket=certificate-files&path=${encodeURIComponent(certificate.certificate_path)}`
+    : "";
+  const downloadUrl = certificate
+    ? `/api/certificate/download?visitId=${encodeURIComponent(visitId)}`
+    : "";
 
   return (
-    <main className="min-h-screen bg-slate-50 relative overflow-hidden">
-      {/* Premium Background */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-coral/5 rounded-full blur-[120px] -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-teal/5 rounded-full blur-[150px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
-
-      <div className="relative z-10 mx-auto max-w-lg px-4 pt-12 md:pt-20 pb-24">
-        {/* Success Header */}
-        <div className="text-center mb-8 animate-fade-in-up">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-teal to-emerald text-white shadow-md shadow-teal/20 rotate-6 hover:rotate-0 transition-transform duration-500">
-            <CheckCircle size={48} weight="fill" />
+    <main className="min-h-screen bg-[#F7F8F6] px-4 pb-24 pt-10 md:pt-16">
+      <div className="mx-auto w-full max-w-xl">
+        <header className="mb-7 text-center">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center bg-[#0A6B62] text-white shadow-[0_8px_22px_rgba(10,107,98,0.18)]">
+            <CheckCircle size={38} weight="fill" aria-hidden="true" />
           </div>
-          <h1 className="text-3xl font-black text-ink tracking-tight">ใบประกาศพร้อมแล้ว!</h1>
-          <p className="text-muted text-sm font-medium mt-3 max-w-sm mx-auto">
-            บันทึกหรือแชร์ใบประกาศดิจิทัลของคุณได้เลย
+          <p className="text-xs font-black uppercase text-[#C8553A]">
+            Southern Border Digital Passport
           </p>
-        </div>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">
+            {certificate ? "ใบประกาศพร้อมแล้ว" : "ยังไม่พบใบประกาศ"}
+          </h1>
+          <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-muted">
+            {certificate
+              ? "ตรวจสอบผลงาน แล้วบันทึกหรือแชร์ไฟล์ภาพได้ทันที"
+              : "ยังไม่พบไฟล์ที่สร้างเสร็จ คุณสามารถกลับไปสร้างใหม่ได้โดยข้อมูลการเข้าชมไม่หาย"}
+          </p>
+        </header>
 
-        {/* Stamp Notification */}
-        {stampStatus === "earned" && (
-          <div className="mb-6 animate-scale-in">
-            <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/80 border border-amber-200 p-5 text-center shadow-sm">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Sparkle weight="fill" className="text-amber-600" size={20} />
-                <span className="text-sm font-black text-amber-700 uppercase tracking-wider">ได้รับตราประทับใหม่!</span>
-              </div>
-              <p className="text-xs font-medium text-amber-700/70">
-                ตราประทับนี้ถูกบันทึกในพาสปอร์ตของคุณแล้ว
-              </p>
-            </div>
+        {certificate ? (
+          <figure className="mb-5 border border-ink/10 bg-white p-2 shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+            {/* The source is an ownership-guarded same-origin media endpoint. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewUrl}
+              alt="ใบประกาศการท่องเที่ยวของคุณ"
+              className="h-auto w-full bg-slate-100 object-contain"
+            />
+            <figcaption className="px-2 py-3 text-center text-xs font-semibold text-muted">
+              ไฟล์นี้เป็นข้อมูลส่วนตัว ระบบจะไม่เผยแพร่สู่สาธารณะโดยอัตโนมัติ
+            </figcaption>
+          </figure>
+        ) : null}
+
+        {certificate && stampStatus === "earned" ? (
+          <div className="mb-5 flex items-center justify-center gap-2 border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+            <Sparkle weight="fill" size={19} aria-hidden="true" />
+            ได้รับตราประทับใหม่ในพาสปอร์ตแล้ว
           </div>
-        )}
+        ) : null}
 
-        {/* Success Actions */}
-        <div className="animate-fade-in-up delay-200">
-          <CertificateSuccessActions
-            visitId={visitId}
-            certUrl={certUrl}
-            stampStatus={stampStatus}
-          />
-        </div>
+        <CertificateSuccessActions
+          visitId={visitId}
+          certUrl={downloadUrl}
+          stampStatus={stampStatus}
+        />
       </div>
     </main>
   );

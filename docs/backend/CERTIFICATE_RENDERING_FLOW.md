@@ -804,18 +804,25 @@ Rules:
 
 ## 25. Certificate Sharing
 
-MVP:
+Current production behavior:
 
 ```text
-download image only
+owned certificate -> private download endpoint -> generated image File
 ```
 
-Future:
+The tourist can download the generated PNG immediately. On browsers that support
+`navigator.share` and `navigator.canShare({ files })`, the success page shares the
+generated image file itself. Other browsers show Thai instructions to download the
+image and share it from the device gallery.
+
+The system must never share or copy the private success-page URL as a fallback.
+The success page and certificate file remain protected by tourist visit ownership.
+
+Future optional channels:
 
 ```text
-public share link
+privacy-safe public share token
 LINE share
-Web Share API
 email delivery
 ```
 
@@ -829,6 +836,16 @@ revocation option future
 ```
 
 Do not publish certificates automatically.
+
+Current download route:
+
+```text
+GET /api/certificate/download?visitId={owned_visit_uuid}
+```
+
+The route verifies tourist ownership, streams the real image with
+`Content-Disposition: attachment`, uses `private, no-store`, and reports storage
+failure explicitly instead of returning a placeholder image.
 
 ---
 

@@ -161,5 +161,50 @@ describe("CertificatePreview template rendering", () => {
       templateId: 8,
       language: "th",
     });
+
+    const capturedCertificate = toPngMock.mock.calls[0]?.[0] as HTMLElement;
+    expect(capturedCertificate.querySelector('img[src="https://example.com/second.webp"]')).toBeInTheDocument();
+    expect(capturedCertificate.querySelector('img[src="https://example.com/first.webp"]')).not.toBeInTheDocument();
+  });
+
+  it("captures a no-photo preview and sends no photo id to generation", async () => {
+    const layout = createDefaultCertificateLayout("portrait", "coral-white");
+    toPngMock.mockResolvedValue("data:image/png;base64,certificate");
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ certificateId: 100, stamp: { status: "none" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    render(
+      <CertificatePreview
+        visitId="550e8400-e29b-41d4-a716-446655440000"
+        photoId=""
+        previewUrl=""
+        touristName="นักท่องเที่ยว"
+        attractionName="สถานที่ท่องเที่ยว"
+        provinceName="ยะลา"
+        visitDate="1 สิงหาคม 2569"
+        templateId={9}
+        templateName="ความทรงจำแนวตั้ง"
+        templateBackgroundUrl="https://example.com/portrait.webp"
+        language="th"
+        layout={layout}
+      />,
+    );
+
+    expect(screen.getByText("ยังไม่มีรูปภาพ")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /ปรับรูปภาพ/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "สร้างใบประกาศดิจิทัล" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const payload = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(payload).toMatchObject({
+      visitId: "550e8400-e29b-41d4-a716-446655440000",
+      templateId: 9,
+      language: "th",
+    });
+    expect(payload).not.toHaveProperty("photoId");
   });
 });

@@ -85,7 +85,7 @@ export function CertificatePreview({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           visitId,
-          photoId,
+          ...(photoId ? { photoId } : {}),
           templateId: selectedTemplate.templateId,
           language,
           base64Image: dataUrl,
@@ -155,14 +155,17 @@ export function CertificatePreview({
         )}
       </div>
 
-      <CertificateCustomizer
-        templates={availableTemplates}
-        selectedTemplateId={selectedTemplate.templateId}
-        adjustment={photoAdjustment}
-        disabled={isGenerating}
-        onSelectTemplate={setSelectedTemplateId}
-        onAdjustmentChange={(value) => setPhotoAdjustment(normalizePhotoAdjustment(value))}
-      />
+      {availableTemplates.length > 1 || previewUrl ? (
+        <CertificateCustomizer
+          templates={availableTemplates}
+          selectedTemplateId={selectedTemplate.templateId}
+          adjustment={photoAdjustment}
+          disabled={isGenerating}
+          showPhotoControls={Boolean(previewUrl)}
+          onSelectTemplate={setSelectedTemplateId}
+          onAdjustmentChange={(value) => setPhotoAdjustment(normalizePhotoAdjustment(value))}
+        />
+      ) : null}
 
       <div className="w-full rounded-lg border border-ink/10 bg-white p-5 text-center">
         <p className="mb-2 text-xs font-semibold text-[#0A6B62]">

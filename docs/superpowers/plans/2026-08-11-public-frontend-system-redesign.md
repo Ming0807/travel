@@ -403,10 +403,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: targeted certificate rendering/ownership tests
 - Test: `tests/e2e/certificate-flow.spec.ts`
 
-- [ ] Write failing tests for no-photo certificate generation, actual generated preview, ownership guard, idempotency, download, file sharing, and fallback instructions.
-- [ ] Remove private success URL sharing and pass a generated file to `navigator.share` only when supported.
-- [ ] Verify templates preserve custom placement and backgrounds without relying on a baked circular opening.
-- [ ] Run certificate regression, storage/privacy, and mobile browser gates; commit as `fix: align certificate preview and sharing`.
+- [x] Write failing tests for no-photo certificate generation, actual generated preview, ownership guard, idempotency, download, file sharing, and fallback instructions.
+- [x] Remove private success URL sharing and pass a generated file to `navigator.share` only when supported.
+- [x] Verify templates preserve custom placement and backgrounds without relying on a baked circular opening.
+- [x] Run certificate regression, storage/privacy, and mobile browser gates; commit as `fix: align certificate preview and sharing`.
 
 ### Task 18: Shorten survey burden and preserve research separation
 

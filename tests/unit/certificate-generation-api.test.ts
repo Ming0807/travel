@@ -124,6 +124,26 @@ describe("POST /api/certificate/generate", () => {
     expect(mocks.processCertificateGeneration).not.toHaveBeenCalled();
   });
 
+  it("generates a certificate without a tourist photo", async () => {
+    const response = await POST(request({ visitId, base64Image: pngDataUrl }));
+    const body = await json(response);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      success: true,
+      certificateId: "certificate-1",
+    });
+    expect(mocks.getPhotoById).not.toHaveBeenCalled();
+    expect(mocks.processCertificateGeneration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        visitId,
+        templateId: 7,
+        certificatePath: expect.any(String),
+      }),
+    );
+    expect(mocks.processCertificateGeneration.mock.calls[0]?.[0]).not.toHaveProperty("photoId");
+  });
+
   it("rejects non-PNG bytes even when the data URL claims image/png", async () => {
     const response = await POST(request({
       visitId,
@@ -156,6 +176,69 @@ describe("POST /api/certificate/generate", () => {
     expect(mocks.processCertificateGeneration).not.toHaveBeenCalled();
   });
 
+  it("reuses the existing certificate when the client retries after the first request succeeds", async () => {
+    mocks.getCertificateByVisitId
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        certificate_id: "certificate-1",
+        certificate_path: "certificates/2026/06/reused.png",
+      });
+
+    const firstResponse = await POST(request({ visitId, base64Image: pngDataUrl }));
+    const secondResponse = await POST(request({ visitId, base64Image: pngDataUrl }));
+
+    expect(firstResponse.status).toBe(200);
+    expect(secondResponse.status).toBe(200);
+    expect(await json(secondResponse)).toMatchObject({
+      success: true,
+      certificateId: "certificate-1",
+    });
+    expect(mocks.uploadPrivateFile).toHaveBeenCalledTimes(1);
+    expect(mocks.processCertificateGeneration).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows a retry after a transient certificate persistence failure and cleans the failed object", async () => {
+    mocks.processCertificateGeneration
+      .mockRejectedValueOnce(new Error("DB_DOWN"))
+      .mockResolvedValueOnce("certificate-retry");
+
+    const firstResponse = await POST(request({ visitId, base64Image: pngDataUrl }));
+    const secondResponse = await POST(request({ visitId, base64Image: pngDataUrl }));
+
+    expect(firstResponse.status).toBe(500);
+    expect(secondResponse.status).toBe(200);
+    expect(await json(secondResponse)).toMatchObject({
+      success: true,
+      certificateId: "certificate-retry",
+    });
+    expect(mocks.uploadPrivateFile).toHaveBeenCalledTimes(2);
+    expect(mocks.deletePrivateFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns the winning certificate and cleans the losing object after a uniqueness race", async () => {
+    mocks.getCertificateByVisitId
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        certificate_id: "certificate-winner",
+        certificate_path: "certificates/2026/08/winner.png",
+      });
+    mocks.processCertificateGeneration.mockRejectedValueOnce(
+      new Error("duplicate certificate for visit"),
+    );
+
+    const response = await POST(request({ visitId, base64Image: pngDataUrl }));
+    const body = await json(response);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      success: true,
+      certificateId: "certificate-winner",
+      certificateUrl: "/api/media/image?bucket=certificate-files&path=certificates%2F2026%2F08%2Fwinner.png",
+    });
+    expect(mocks.uploadPrivateFile).toHaveBeenCalledTimes(1);
+    expect(mocks.deletePrivateFile).toHaveBeenCalledTimes(1);
+  });
+
   it("stores a certificate through the private storage adapter and returns a private media URL", async () => {
     const response = await POST(request({ visitId, photoId, base64Image: pngDataUrl }));
     const body = await json(response);
@@ -166,6 +249,10 @@ describe("POST /api/certificate/generate", () => {
       certificateId: "certificate-1",
       certificateUrl: expect.stringMatching(/^\/api\/media\/image\?bucket=certificate-files&path=/),
     });
+    expect(JSON.stringify(body)).not.toContain("supabase.co");
+    expect(JSON.stringify(body)).not.toContain("signed.example");
+    expect(body).not.toHaveProperty("certificatePath");
+    expect(body).not.toHaveProperty("storagePath");
 
     expect(mocks.uploadPrivateFile).toHaveBeenCalledWith(expect.objectContaining({
       bucket: "certificate-files",

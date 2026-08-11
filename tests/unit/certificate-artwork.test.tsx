@@ -39,4 +39,32 @@ describe("CertificateArtwork", () => {
     expect(screen.queryByText("16 กรกฎาคม 2569")).not.toBeInTheDocument();
     expect(screen.getByLabelText("ขอบเขตปลอดภัย")).toBeInTheDocument();
   });
+
+  it("preserves a full background and rectangular custom photo placement without a baked circular opening", () => {
+    const layout = {
+      ...createDefaultCertificateLayout("portrait", "coral-white"),
+      photoShape: "square" as const,
+      photoX: 64,
+      photoY: 42,
+      photoSize: 34,
+    };
+    const { container } = render(
+      <CertificateArtwork
+        layout={layout}
+        templateBackgroundUrl="/templates/full-background.webp"
+        previewUrl="/photos/memory.webp"
+        touristName="นักเดินทาง"
+        attractionName="เมืองยะลา"
+        provinceName="ยะลา"
+        visitDate="16 สิงหาคม 2569"
+      />,
+    );
+
+    const photoFrame = container.querySelector("[data-certificate-photo-frame]");
+    expect(photoFrame).toHaveClass("rounded-none");
+    expect(photoFrame).not.toHaveClass("rounded-full");
+    expect(photoFrame).toHaveStyle({ left: "64%", top: "42%", width: "34%" });
+    expect(container.querySelector('img[src="/templates/full-background.webp"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/photos/memory.webp"]')).toBeInTheDocument();
+  });
 });

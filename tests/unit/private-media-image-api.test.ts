@@ -87,6 +87,19 @@ describe("GET /api/media/image private access", () => {
     );
   });
 
+  it("does not download a certificate for a tourist who does not own the visit", async () => {
+    mocks.requireTouristVisitAccess.mockRejectedValueOnce(new Error("VISIT_ACCESS_DENIED"));
+
+    const response = await GET(request(
+      "http://localhost:3000/api/media/image?bucket=certificate-files&path=certificates/2026/06/visit-1/private.png",
+    ));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/png");
+    expect(mocks.createPrivateFileSignedUrl).not.toHaveBeenCalled();
+    expect(await responseBytes(response)).not.toEqual(Buffer.from([1, 2, 3]));
+  });
+
   it("returns only a placeholder when private media has no matching DB record", async () => {
     mocks.getPhotoByStoragePath.mockResolvedValueOnce(null);
 

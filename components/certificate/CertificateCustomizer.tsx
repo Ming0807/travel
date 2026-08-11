@@ -13,6 +13,7 @@ type CertificateCustomizerProps = {
   selectedTemplateId: number;
   adjustment: PhotoAdjustment;
   disabled?: boolean;
+  showPhotoControls?: boolean;
   onSelectTemplate: (templateId: number) => void;
   onAdjustmentChange: (adjustment: PhotoAdjustment) => void;
 };
@@ -66,6 +67,7 @@ export function CertificateCustomizer({
   selectedTemplateId,
   adjustment,
   disabled = false,
+  showPhotoControls = true,
   onSelectTemplate,
   onAdjustmentChange,
 }: CertificateCustomizerProps) {
@@ -109,22 +111,24 @@ export function CertificateCustomizer({
         <h2 id="certificate-customizer-heading" className="sr-only">ปรับแต่งใบประกาศ</h2>
       )}
 
-      <button
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls="certificate-photo-controls"
-        disabled={disabled}
-        onClick={() => setIsOpen((current) => !current)}
-        className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-black text-ink disabled:opacity-50"
-      >
-        <span className="inline-flex items-center gap-2">
-          <SlidersHorizontal size={20} aria-hidden="true" />
-          ปรับรูปภาพ
-        </span>
-        <span className="text-xs font-semibold text-ink-light">{isOpen ? "ซ่อนเครื่องมือ" : "ซูมและจัดตำแหน่ง"}</span>
-      </button>
+      {showPhotoControls ? (
+        <button
+          type="button"
+          aria-expanded={isOpen}
+          aria-controls="certificate-photo-controls"
+          disabled={disabled}
+          onClick={() => setIsOpen((current) => !current)}
+          className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-black text-ink disabled:opacity-50"
+        >
+          <span className="inline-flex items-center gap-2">
+            <SlidersHorizontal size={20} aria-hidden="true" />
+            ปรับรูปภาพ
+          </span>
+          <span className="text-xs font-semibold text-ink-light">{isOpen ? "ซ่อนเครื่องมือ" : "ซูมและจัดตำแหน่ง"}</span>
+        </button>
+      ) : null}
 
-      {isOpen ? (
+      {showPhotoControls && isOpen ? (
         <div id="certificate-photo-controls" className="space-y-4 border-t border-ink/10 px-4 pb-5 pt-4">
           <RangeControl
             id="certificate-photo-zoom"

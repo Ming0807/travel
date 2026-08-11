@@ -55,6 +55,7 @@ function parseCertificateImage(raw: unknown) {
 
 export async function POST(request: NextRequest) {
   let certificatePath: string | null = null;
+  let ownedVisitId: string | null = null;
 
   try {
     const body = (await request.json()) as Record<string, unknown>;
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
 
     const visitId = visitIdResult.data;
     const access = await requireTouristVisitAccess(visitId);
+    ownedVisitId = visitId;
 
     const existingCertificate = await getCertificateByVisitId(visitId);
     if (existingCertificate) {
@@ -135,7 +137,7 @@ export async function POST(request: NextRequest) {
     const certificateId = await processCertificateGeneration({
       visitId,
       templateId: template.templateId,
-      photoId: rawPhotoId || undefined,
+      ...(rawPhotoId ? { photoId: rawPhotoId } : {}),
       certificatePath,
     });
 
@@ -148,6 +150,29 @@ export async function POST(request: NextRequest) {
       certificateUrl: certificateUrl(certificatePath),
     });
   } catch (error) {
+    if (certificatePath && ownedVisitId) {
+      try {
+        const winningCertificate = await getCertificateByVisitId(ownedVisitId);
+        if (winningCertificate) {
+          if (winningCertificate.certificate_path !== certificatePath) {
+            await deletePrivateFile({ bucket: "certificate-files", path: certificatePath });
+          }
+          const stampResult = await assignStampForVisit(ownedVisitId);
+          return NextResponse.json({
+            success: true,
+            certificateId: winningCertificate.certificate_id,
+            stamp: stampResult.success ? { status: stampResult.status } : { status: "failed" as const },
+            certificateUrl: certificateUrl(winningCertificate.certificate_path),
+          });
+        }
+      } catch (recoveryError) {
+        console.warn(
+          "Certificate generation recovery failed:",
+          recoveryError instanceof Error ? recoveryError.message : "unknown error",
+        );
+      }
+    }
+
     if (certificatePath) {
       try {
         await deletePrivateFile({ bucket: "certificate-files", path: certificatePath });
