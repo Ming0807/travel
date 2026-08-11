@@ -19,6 +19,7 @@ import { XPProgressBar } from "@/components/badges/XPProgressBar";
 import { BadgeGrid } from "@/components/badges/BadgeGrid";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { LeaderboardPrivacyForm } from "@/components/profile/LeaderboardPrivacyForm";
 
 type ProfileSummary = Awaited<ReturnType<typeof getCurrentTouristProfileSummary>>;
 
@@ -227,6 +228,12 @@ export default async function ProfilePage() {
             </div>
 
             {/* Account Linking Context */}
+            <LeaderboardPrivacyForm
+              initialVisibility={profile.leaderboardVisibility}
+              initialAlias={profile.leaderboardAlias}
+              displayName={profile.displayName}
+            />
+
             <AccountLinkingTeaser isGuest={profile.isGuest} context="profile" />
 
           </div>

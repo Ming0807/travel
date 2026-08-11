@@ -86,6 +86,14 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Privacy**: Confirm RLS is enabled, public policies are absent, withdrawn/excluded sessions are omitted, and microdata export rejects `n < 10`.
 - [ ] **Field gate**: Do not create/activate the final production study or begin recruitment until Workstream 18A and pilot/freeze approvals are signed off.
 
+### 11. Public Leaderboard Privacy
+- [ ] **Migration `20260811000000_add_leaderboard_privacy_preferences.sql`**: Apply after the current research migrations.
+- [ ] **Private default**: Confirm existing and new tourists have `leaderboard_visibility = 'private'` until they opt in.
+- [ ] **Legacy snapshot cleanup**: Confirm `leaderboard_snapshots` contains no pre-migration names or tourist UUIDs.
+- [ ] **Atomic preference RPC**: Confirm `set_tourist_leaderboard_preference(...)` is executable only by `service_role` and writes a `leaderboard_public_profile` consent record.
+- [ ] **Withdrawal**: Confirm switching back to private removes the tourist from all public periods on the next request.
+- [ ] **Public DTO**: Confirm browser responses contain no tourist UUID, provider identity, guest token, or raw certificate name without display-name opt-in.
+
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:
 

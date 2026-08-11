@@ -1,16 +1,21 @@
 import "server-only";
 import { resolveCurrentTouristId } from "@/lib/auth/guards";
 import { listCertificatesForTourist } from "@/lib/repositories/certificate.repository";
-import { getTouristById, listTouristIdentityProviders } from "@/lib/repositories/tourist.repository";
+import {
+  getTouristById,
+  getTouristLeaderboardPreference,
+  listTouristIdentityProviders,
+} from "@/lib/repositories/tourist.repository";
 import { getCurrentTouristPassport } from "@/lib/services/passport.service";
 
 export async function getCurrentTouristProfileSummary() {
   const touristId = await resolveCurrentTouristId();
-  const [tourist, identities, certificates, passport] = await Promise.all([
+  const [tourist, identities, certificates, passport, leaderboardPreference] = await Promise.all([
     getTouristById(touristId),
     listTouristIdentityProviders(touristId),
     listCertificatesForTourist(touristId),
-    getCurrentTouristPassport()
+    getCurrentTouristPassport(),
+    getTouristLeaderboardPreference(touristId).catch(() => ({ visibility: "private" as const, alias: null })),
   ]);
 
   const linkedProviders = identities
@@ -31,6 +36,8 @@ export async function getCurrentTouristProfileSummary() {
     ageGroup: tourist?.age_group || "prefer_not_to_answer",
     preferredLanguage: tourist?.preferred_language ?? null,
     preferredLanguageSource: tourist?.preferred_language_source ?? null,
+    leaderboardVisibility: leaderboardPreference.visibility,
+    leaderboardAlias: leaderboardPreference.alias,
     isGuest: linkedProviders.length === 0,
     linkedProviders,
     passportSummary: {

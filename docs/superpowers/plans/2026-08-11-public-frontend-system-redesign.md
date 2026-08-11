@@ -327,11 +327,12 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/leaderboard-privacy.test.ts`
 - Test: `tests/e2e/leaderboard.spec.ts`
 
-- [ ] Prove with failing tests that certificate/display name is never public without explicit opt-in.
-- [ ] Add or use a purpose-specific public leaderboard preference and anonymized alias fallback.
-- [ ] Replace `#0` with “ยังไม่ติด Top 100”; add accessible period controls and semantic ranking rows.
-- [ ] Document migration/privacy effects and run targeted tests plus migration verification.
-- [ ] Controller performs line-level privacy review; commit as `fix: make public leaderboard privacy-first`.
+- [x] Prove with failing tests that certificate/display name is never public without explicit opt-in.
+- [x] Add a purpose-specific private/alias/display-name preference, atomic consent record, and anonymous alias fallback.
+- [x] Remove tourist UUID and unnecessary visit counts from the public DTO; delete legacy snapshots.
+- [x] Replace `#0` with “ยังไม่ติด Top 100”; add accessible rolling-period controls and semantic ranking rows.
+- [x] Document migration/privacy effects and run targeted tests plus migration verification.
+- [x] Controller performs final line-level privacy review; commit as `fix: make public leaderboard privacy-first`.
 
 ### Task 14: Recompose profile, login, and account linking
 

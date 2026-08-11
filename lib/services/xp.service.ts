@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { BadgeCategory, TouristBadge, XPLevelInfo, LeaderboardEntry } from "@/types/tourism";
 
@@ -25,19 +26,22 @@ type TouristBadgeRow = {
   earned_at: string;
   badge_definitions: BadgeDefinitionRow | BadgeDefinitionRow[];
 };
-type LeaderboardSnapshotEntry = {
-  rank?: number;
-  tourist_id: string;
-  tourist_name: string;
-  total_xp: number;
-  badge_count: number;
-  stamp_count: number;
-  visit_count: number;
-};
+type LeaderboardVisibility = "private" | "alias" | "display_name";
 type XpEventRow = {
   tourist_id: string;
   xp_amount: number;
-  tourists?: { display_name?: string | null } | { display_name?: string | null }[] | null;
+  tourists?:
+    | {
+        display_name?: string | null;
+        leaderboard_visibility?: LeaderboardVisibility | null;
+        leaderboard_alias?: string | null;
+      }
+    | Array<{
+        display_name?: string | null;
+        leaderboard_visibility?: LeaderboardVisibility | null;
+        leaderboard_alias?: string | null;
+      }>
+    | null;
 };
 type TouristCountRow = { tourist_id: string };
 
@@ -365,41 +369,21 @@ export async function getTouristBadges(touristId: string): Promise<TouristBadge[
 
 export async function getLeaderboard(
   period: "weekly" | "monthly" | "all_time" = "all_time",
-  limit: number = 50
+  limit: number = 50,
+  currentTouristId?: string,
 ): Promise<LeaderboardEntry[]> {
   const supabase = createSupabaseServiceRoleClient();
-
-  if (period !== "all_time") {
-    const today = new Date().toISOString().split("T")[0];
-    const { data: snapshot } = await supabase
-      .from("leaderboard_snapshots")
-      .select("ranking")
-      .eq("period", period)
-      .eq("snapshot_date", today)
-      .maybeSingle();
-
-    if (snapshot?.ranking && Array.isArray(snapshot.ranking)) {
-      return (snapshot.ranking as LeaderboardSnapshotEntry[]).slice(0, limit).map((entry, index) => ({
-        rank: entry.rank ?? index + 1,
-        touristId: entry.tourist_id,
-        touristName: entry.tourist_name,
-        totalXp: entry.total_xp,
-        badgeCount: entry.badge_count,
-        stampCount: entry.stamp_count,
-        visitCount: entry.visit_count,
-        level: calculateLevel(entry.total_xp).level,
-      }));
-    }
-  }
+  const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
 
   // Compute leaderboard from live data using proper Date objects
   let query = supabase
     .from("xp_events")
     .select(`
       tourist_id,
-      tourists!inner(display_name),
+      tourists!inner(display_name, leaderboard_visibility, leaderboard_alias),
       xp_amount
-    `);
+    `)
+    .in("tourists.leaderboard_visibility", ["alias", "display_name"]);
 
   if (period === "weekly") {
     const cutoff = new Date(Date.now() - 7 * 86400000).toISOString();
@@ -411,7 +395,11 @@ export async function getLeaderboard(
 
   const { data, error } = await query;
 
-  if (error) throw new Error(`Failed to fetch leaderboard: ${error.message}`);
+  if (error) {
+    // Until the privacy migration is applied, fail closed instead of exposing legacy names.
+    if (/leaderboard_visibility|schema cache/i.test(error.message)) return [];
+    throw new Error(`Failed to fetch leaderboard: ${error.message}`);
+  }
 
   // Aggregate XP per tourist
   const xpMap = new Map<string, number>();
@@ -419,8 +407,13 @@ export async function getLeaderboard(
 
   for (const row of (data ?? []) as XpEventRow[]) {
     const tid = row.tourist_id;
-    const tourists = row.tourists;
-    const name = Array.isArray(tourists) ? (tourists[0]?.display_name ?? "Unknown") : (tourists?.display_name ?? "Unknown");
+    const tourists = Array.isArray(row.tourists) ? row.tourists[0] : row.tourists;
+    if (!tourists || tourists.leaderboard_visibility === "private" || !tourists.leaderboard_visibility) continue;
+    const generatedAlias = `นักเดินทาง ${createHash("sha256").update(`leaderboard:${tid}`).digest("hex").slice(0, 4).toUpperCase()}`;
+    const name =
+      tourists.leaderboard_visibility === "display_name"
+        ? tourists.display_name?.trim() || generatedAlias
+        : tourists.leaderboard_alias?.trim() || generatedAlias;
     const amount = Number(row.xp_amount) || 0;
     xpMap.set(tid, (xpMap.get(tid) ?? 0) + amount);
     nameMap.set(tid, name);
@@ -428,18 +421,22 @@ export async function getLeaderboard(
 
   // Sort by XP descending
   const sorted = Array.from(xpMap.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit);
+    .sort((a, b) => {
+      const xpDifference = b[1] - a[1];
+      if (xpDifference !== 0) return xpDifference;
+      const nameDifference = (nameMap.get(a[0]) ?? "").localeCompare(nameMap.get(b[0]) ?? "", "th");
+      return nameDifference !== 0 ? nameDifference : a[0].localeCompare(b[0]);
+    })
+    .slice(0, safeLimit);
 
   if (sorted.length === 0) return [];
 
   // Batch queries: one query per statistic for ALL leaderboard tourist IDs
   const touristIds = sorted.map(([id]) => id);
 
-  const [badgeCountsRes, stampCountsRes, visitCountsRes] = await Promise.all([
+  const [badgeCountsRes, stampCountsRes] = await Promise.all([
     supabase.from("tourist_badges").select("tourist_id", { count: "exact" }).in("tourist_id", touristIds),
     supabase.from("tourist_stamps").select("tourist_id", { count: "exact" }).in("tourist_id", touristIds),
-    supabase.from("visits").select("tourist_id", { count: "exact" }).in("tourist_id", touristIds),
   ]);
 
   // Count occurrences per tourist
@@ -454,20 +451,18 @@ export async function getLeaderboard(
 
   const badgeCountMap = countByTourist(badgeCountsRes.data ?? []);
   const stampCountMap = countByTourist(stampCountsRes.data ?? []);
-  const visitCountMap = countByTourist(visitCountsRes.data ?? []);
 
   const entries: LeaderboardEntry[] = sorted.map(([touristId, totalXp], index) => {
-    const name = nameMap.get(touristId) ?? "Unknown";
+    const publicName = nameMap.get(touristId) ?? "นักเดินทาง";
 
     return {
       rank: index + 1,
-      touristId,
-      touristName: name,
+      publicName,
       totalXp,
       badgeCount: badgeCountMap.get(touristId) ?? 0,
       stampCount: stampCountMap.get(touristId) ?? 0,
-      visitCount: visitCountMap.get(touristId) ?? 0,
       level: calculateLevel(totalXp).level,
+      isCurrentTourist: touristId === currentTouristId,
     };
   });
 

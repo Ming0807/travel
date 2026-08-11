@@ -458,6 +458,8 @@ This table should not store visit-specific information.
 | age_group | varchar(50) | no | Age group |
 | preferred_language | varchar(10) | no | Nullable controlled value: th, en, or ms. Missing detection remains null. |
 | preferred_language_source | varchar(20) | no | Nullable provenance: detected or selected. |
+| leaderboard_visibility | text | yes | Purpose-specific public leaderboard preference: private, alias, or display_name. Defaults to private. |
+| leaderboard_alias | text | no | Optional public alias, 3-40 characters, used only for alias visibility. |
 | profile_completed_at | timestamptz | no | When minimal profile was completed |
 | created_at | timestamptz | yes | Record creation time |
 | updated_at | timestamptz | no | Last update time |
@@ -475,6 +477,10 @@ foreign key(origin_province_id) references provinces(province_id)
 Do not require legal name.
 
 Do not store full address.
+
+`display_name` is collected for the tourist experience and certificate. It must not be reused on a public leaderboard unless `leaderboard_visibility = 'display_name'` was explicitly selected.
+
+Leaderboard withdrawal sets visibility back to `private` and records a purpose-specific consent withdrawal event. Public DTOs must never include `tourist_id` or provider identity values.
 
 ---
 

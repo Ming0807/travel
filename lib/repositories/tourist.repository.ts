@@ -13,6 +13,8 @@ export type GuestCheckinProfile = {
   hasCurrentConsent: boolean;
 };
 
+export type LeaderboardVisibility = "private" | "alias" | "display_name";
+
 export async function getGuestCheckinProfile(guestToken: string): Promise<GuestCheckinProfile | null> {
   const supabase = createSupabaseServiceRoleClient();
   const { data: identity, error } = await supabase
@@ -134,6 +136,44 @@ export async function getTouristById(touristId: string) {
 
   if (error || !data) return null;
   return data;
+}
+
+export async function getTouristLeaderboardPreference(touristId: string): Promise<{
+  visibility: LeaderboardVisibility;
+  alias: string | null;
+}> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("tourists")
+    .select("leaderboard_visibility, leaderboard_alias")
+    .eq("tourist_id", touristId)
+    .single();
+
+  if (error || !data) throw new Error("TOURIST_LEADERBOARD_PREFERENCE_NOT_FOUND");
+
+  const visibility = data.leaderboard_visibility;
+  return {
+    visibility:
+      visibility === "alias" || visibility === "display_name" ? visibility : "private",
+    alias: typeof data.leaderboard_alias === "string" ? data.leaderboard_alias : null,
+  };
+}
+
+export async function setTouristLeaderboardPreference(params: {
+  touristId: string;
+  visibility: LeaderboardVisibility;
+  alias: string | null;
+}) {
+  const supabase = createSupabaseServiceRoleClient();
+  const { error } = await supabase.rpc("set_tourist_leaderboard_preference", {
+    p_tourist_id: params.touristId,
+    p_visibility: params.visibility,
+    p_alias: params.alias,
+    p_consent_version: "leaderboard-privacy-v1",
+    p_source: "tourist_profile",
+  });
+
+  if (error) throw new Error("TOURIST_LEADERBOARD_PREFERENCE_UPDATE_FAILED");
 }
 
 export async function listTouristIdentityProviders(touristId: string) {

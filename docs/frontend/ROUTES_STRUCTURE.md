@@ -480,6 +480,20 @@ Purpose:
 
 - future public share page
 
+## 7.4 Public Leaderboard
+
+```text
+/leaderboard
+```
+
+Purpose:
+
+- motivate voluntary tourism participation through XP
+- show only tourists who explicitly choose public visibility
+- support private, public alias, and explicit passport display-name modes
+- show rolling 7-day, rolling 30-day, and all-time rankings truthfully
+- never expose tourist UUIDs or identity-provider values to the browser
+
 MVP status:
 
 Not required.

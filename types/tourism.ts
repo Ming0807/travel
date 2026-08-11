@@ -115,13 +115,12 @@ export type XPLevelInfo = {
 
 export type LeaderboardEntry = {
   rank: number;
-  touristId: string;
-  touristName: string;
+  publicName: string;
   totalXp: number;
   badgeCount: number;
   stampCount: number;
-  visitCount: number;
   level: number;
+  isCurrentTourist: boolean;
 };
 
 export type PlaceholderPageStatus = "MVP placeholder" | "Planned" | "Future";

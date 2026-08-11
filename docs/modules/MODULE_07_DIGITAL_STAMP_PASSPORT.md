@@ -1026,3 +1026,21 @@ This module is done when:
 [ ] Privacy rules are followed.
 [ ] Documentation and tests are updated.
 ```
+
+---
+
+## 38. Public Leaderboard Privacy
+
+The public leaderboard is optional and purpose-specific. Certificate names are private by default and are not automatically reused for ranking.
+
+Supported visibility values:
+
+```text
+private      = excluded from public ranking
+alias        = public alias or server-generated anonymous alias
+display_name = certificate/passport display name after explicit confirmation
+```
+
+Public leaderboard output may include only rank, public name, XP, level, stamp count, badge count, and whether the row belongs to the current tourist. It must not include `tourist_id`, provider IDs, guest tokens, certificate IDs, or visit history.
+
+Preference changes and withdrawal are handled atomically by `set_tourist_leaderboard_preference(...)` and recorded under `purpose_key = leaderboard_public_profile`.
