@@ -193,11 +193,18 @@ function publicImage(row: DbRecord, thumbnailByStoragePath?: Map<string, string>
   return imageUrlFromStoragePath(thumbnailByStoragePath?.get(storagePath) ?? storagePath);
 }
 
-function publicManagedStoryImage(row: DbRecord): string | null {
+function publicManagedImage(
+  row: DbRecord,
+  thumbnailByStoragePath?: Map<string, string>,
+): string | null {
   const media = publicAttractionMedia(row);
   const storagePath = storagePathFromMedia(media);
   if (!storagePath || /^https?:\/\//i.test(storagePath)) return null;
-  return imageUrlFromStoragePath(storagePath);
+  return imageUrlFromStoragePath(thumbnailByStoragePath?.get(storagePath) ?? storagePath);
+}
+
+function publicManagedStoryImage(row: DbRecord): string | null {
+  return publicManagedImage(row);
 }
 
 function mapAttractionCard(row: DbRecord, thumbnailByStoragePath?: Map<string, string>): InternalAttractionCard {
@@ -1181,8 +1188,34 @@ export type PublicRestaurantCard = {
   description: string;
   imageUrl: string | null;
   imageAlt: string;
-  rating?: number;
-  reviewCount?: number;
+};
+
+export const PUBLIC_HOSPITALITY_MAX_PAGE = 10_000;
+
+export type PublicHospitalityListingState = "available" | "empty" | "unavailable";
+
+export type PublicRestaurantPageInput = {
+  query?: string;
+  foodType?: string;
+  province?: string;
+  page: number;
+  pageSize: number;
+};
+
+export type PublicAccommodationPageInput = {
+  query?: string;
+  accommodationType?: string;
+  province?: string;
+  page: number;
+  pageSize: number;
+};
+
+export type PublicHospitalityPage<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageCount: number;
+  state: PublicHospitalityListingState;
 };
 
 export type PublicRestaurantDetail = {
@@ -1207,7 +1240,10 @@ export type PublicRestaurantDetail = {
   }[];
 };
 
-function mapRestaurantRow(row: DbRecord): PublicRestaurantCard {
+function mapRestaurantRow(
+  row: DbRecord,
+  thumbnailByStoragePath?: Map<string, string>,
+): PublicRestaurantCard {
   const province = one(row.provinces);
   const name = text(row.name_th, text(row.name_en, ""));
   return {
@@ -1216,9 +1252,94 @@ function mapRestaurantRow(row: DbRecord): PublicRestaurantCard {
     province: text(province?.province_name_th, text(province?.province_name_en, "")),
     foodType: text(row.food_type, "Local"),
     description: text(row.description_th, text(row.description_en, "")),
-    imageUrl: publicImage(row),
+    imageUrl: publicManagedImage(row, thumbnailByStoragePath),
     imageAlt: `${name} restaurant image`
   };
+}
+
+function normalizeHospitalityPage(page: number) {
+  return Number.isSafeInteger(page)
+    && page > 0
+    && page <= PUBLIC_HOSPITALITY_MAX_PAGE
+    ? page
+    : 1;
+}
+
+function normalizeHospitalityPageSize(pageSize: number) {
+  return Number.isInteger(pageSize) && pageSize > 0 ? Math.min(pageSize, 48) : 12;
+}
+
+function unavailableHospitalityPage<T>(page: number): PublicHospitalityPage<T> {
+  return { items: [], total: 0, page, pageCount: 0, state: "unavailable" };
+}
+
+export async function listPublicRestaurantPage(
+  input: PublicRestaurantPageInput,
+): Promise<PublicHospitalityPage<PublicRestaurantCard>> {
+  const page = normalizeHospitalityPage(input.page);
+  const pageSize = normalizeHospitalityPageSize(input.pageSize);
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const liveProvinces = await listLiveDestinationProvinces();
+    const liveProvinceIds = liveProvinces.map((province) => province.provinceId);
+    if (liveProvinceIds.length === 0) {
+      return { items: [], total: 0, page, pageCount: 0, state: "empty" };
+    }
+
+    const provinceFilter = sanitizeDestinationProvinceFilter(
+      input.province,
+      liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+    );
+    let query = supabase
+      .from("restaurants")
+      .select(`
+        restaurant_id,
+        slug,
+        name_th,
+        name_en,
+        description_th,
+        description_en,
+        food_type,
+        provinces!inner (province_name_th, province_name_en),
+        content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
+      `, { count: "exact" })
+      .eq("is_published", true)
+      .eq("is_active", true)
+      .in("province_id", liveProvinceIds);
+
+    const search = input.query ? escapeIlikePattern(input.query.slice(0, 100)) : "";
+    if (search) {
+      query = query.or(
+        `name_th.ilike.%${search}%,name_en.ilike.%${search}%,slug.ilike.%${search}%`,
+      );
+    }
+    if (provinceFilter) query = query.eq("provinces.province_name_en", provinceFilter);
+    const foodType = text(input.foodType).slice(0, 100);
+    if (foodType) query = query.ilike("food_type", `%${escapeIlikePattern(foodType)}%`);
+
+    const from = (page - 1) * pageSize;
+    const { data, error, count } = await query
+      .order("name_th", { ascending: true })
+      .order("restaurant_id", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) return unavailableHospitalityPage(page);
+    const rows = (data ?? []) as DbRecord[];
+    const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, rows);
+    const items = rows.map((row) => mapRestaurantRow(row, thumbnailByStoragePath));
+    const total = typeof count === "number" ? count : 0;
+
+    return {
+      items,
+      total,
+      page,
+      pageCount: total > 0 ? Math.ceil(total / pageSize) : 0,
+      state: total > 0 ? "available" : "empty",
+    };
+  } catch {
+    return unavailableHospitalityPage(page);
+  }
 }
 
 export async function listPublicRestaurants(options?: { search?: string; foodType?: string; province?: string; featuredSlugs?: string[] }): Promise<PublicRestaurantCard[]> {
@@ -1266,7 +1387,7 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
       .limit(options?.featuredSlugs ? options.featuredSlugs.length : 50);
 
     if (error || !data || data.length === 0) return [];
-    const results = (data as DbRecord[]).map(mapRestaurantRow);
+    const results = (data as DbRecord[]).map((row) => mapRestaurantRow(row));
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       return results.sort((a, b) => options.featuredSlugs!.indexOf(a.slug) - options.featuredSlugs!.indexOf(b.slug));
@@ -1360,7 +1481,10 @@ export type PublicAccommodationCard = {
   priceRange?: string;
 };
 
-function mapAccommodationRow(row: DbRecord): PublicAccommodationCard {
+function mapAccommodationRow(
+  row: DbRecord,
+  thumbnailByStoragePath?: Map<string, string>,
+): PublicAccommodationCard {
   const province = one(row.provinces);
   const name = text(row.name_th, text(row.name_en, ""));
   return {
@@ -1369,10 +1493,80 @@ function mapAccommodationRow(row: DbRecord): PublicAccommodationCard {
     province: text(province?.province_name_th, text(province?.province_name_en, "")),
     accommodationType: text(row.accommodation_type, "Accommodation"),
     description: text(row.description_th, text(row.description_en, "")),
-    imageUrl: publicImage(row),
+    imageUrl: publicManagedImage(row, thumbnailByStoragePath),
     imageAlt: `${name} accommodation image`,
     priceRange: text(row.price_range)
   };
+}
+
+export async function listPublicAccommodationPage(
+  input: PublicAccommodationPageInput,
+): Promise<PublicHospitalityPage<PublicAccommodationCard>> {
+  const page = normalizeHospitalityPage(input.page);
+  const pageSize = normalizeHospitalityPageSize(input.pageSize);
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const liveProvinces = await listLiveDestinationProvinces();
+    const liveProvinceIds = liveProvinces.map((province) => province.provinceId);
+    if (liveProvinceIds.length === 0) {
+      return { items: [], total: 0, page, pageCount: 0, state: "empty" };
+    }
+
+    const provinceFilter = sanitizeDestinationProvinceFilter(
+      input.province,
+      liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+    );
+    let query = supabase
+      .from("accommodations")
+      .select(`
+        accommodation_id,
+        slug,
+        name_th,
+        name_en,
+        description_th,
+        description_en,
+        accommodation_type,
+        price_range,
+        provinces!inner (province_name_th, province_name_en),
+        content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
+      `, { count: "exact" })
+      .eq("is_published", true)
+      .eq("is_active", true)
+      .in("province_id", liveProvinceIds);
+
+    const search = input.query ? escapeIlikePattern(input.query.slice(0, 100)) : "";
+    if (search) {
+      query = query.or(
+        `name_th.ilike.%${search}%,name_en.ilike.%${search}%,slug.ilike.%${search}%`,
+      );
+    }
+    if (provinceFilter) query = query.eq("provinces.province_name_en", provinceFilter);
+    const accommodationType = text(input.accommodationType).slice(0, 100);
+    if (accommodationType) query = query.eq("accommodation_type", accommodationType);
+
+    const from = (page - 1) * pageSize;
+    const { data, error, count } = await query
+      .order("name_th", { ascending: true })
+      .order("accommodation_id", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) return unavailableHospitalityPage(page);
+    const rows = (data ?? []) as DbRecord[];
+    const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, rows);
+    const items = rows.map((row) => mapAccommodationRow(row, thumbnailByStoragePath));
+    const total = typeof count === "number" ? count : 0;
+
+    return {
+      items,
+      total,
+      page,
+      pageCount: total > 0 ? Math.ceil(total / pageSize) : 0,
+      state: total > 0 ? "available" : "empty",
+    };
+  } catch {
+    return unavailableHospitalityPage(page);
+  }
 }
 
 export async function listPublicAccommodations(options?: { search?: string; province?: string; featuredSlugs?: string[] }): Promise<PublicAccommodationCard[]> {
@@ -1417,7 +1611,7 @@ export async function listPublicAccommodations(options?: { search?: string; prov
       .limit(options?.featuredSlugs ? options.featuredSlugs.length : 50);
 
     if (error || !data || data.length === 0) return [];
-    const results = (data as DbRecord[]).map(mapAccommodationRow);
+    const results = (data as DbRecord[]).map((row) => mapAccommodationRow(row));
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       return results.sort((a, b) => options.featuredSlugs!.indexOf(a.slug) - options.featuredSlugs!.indexOf(b.slug));

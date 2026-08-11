@@ -1,68 +1,80 @@
-"use client";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
+import { PublicButton } from "@/components/public/PublicButton";
+import {
+  PublicFields,
+  PublicSearchField,
+  PublicSelect,
+} from "@/components/public/PublicFields";
 
-import { CaretDown } from "@phosphor-icons/react/dist/ssr";
-
-const accommodationTypes = [
-  { value: "Hotel", label: "Hotel / โรงแรม" },
-  { value: "Resort", label: "Resort / รีสอร์ท" },
-  { value: "Homestay", label: "Homestay / โฮมสเตย์" },
-  { value: "Guesthouse", label: "Guesthouse / เกสต์เฮาส์" },
-  { value: "Hostel", label: "Hostel / โฮสเทล" },
+export const ACCOMMODATION_TYPES = [
+  { value: "Hotel", label: "โรงแรม" },
+  { value: "Resort", label: "รีสอร์ต" },
+  { value: "Homestay", label: "โฮมสเตย์" },
+  { value: "Guesthouse", label: "เกสต์เฮาส์" },
+  { value: "Hostel", label: "โฮสเทล" },
 ];
 
 type AccommodationFilterBarProps = {
+  query?: string;
   accommodationType?: string;
   province?: string;
   provinces?: Array<{ value: string; label: string }>;
 };
 
 export function AccommodationFilterBar({
+  query,
   accommodationType,
   province,
   provinces = [],
 }: AccommodationFilterBarProps) {
+  const hasFilters = Boolean(query || accommodationType || province);
+
   return (
-    <div className="flex flex-wrap gap-3">
-      <div className="relative">
-        <select
+    <form
+      action="/accommodations"
+      method="GET"
+      className="rounded-[var(--public-radius-panel)] border border-black/10 bg-white p-4 sm:p-5"
+    >
+      <PublicFields className={provinces.length > 1
+        ? "lg:grid-cols-[minmax(0,1.5fr)_minmax(190px,0.65fr)_minmax(190px,0.65fr)_auto] lg:items-end"
+        : "md:grid-cols-[minmax(0,1.5fr)_minmax(210px,0.75fr)_auto] md:items-end"}
+      >
+        <PublicSearchField
+          id="accommodation-search"
+          label="ค้นหาที่พัก"
+          name="q"
+          defaultValue={query ?? ""}
+          maxLength={100}
+          placeholder="ชื่อที่พักหรือย่านที่สนใจ"
+        />
+        <PublicSelect
+          id="accommodation-type"
+          label="ประเภทที่พัก"
           name="accommodationType"
-          defaultValue={accommodationType || ""}
-          onChange={(e) => {
-            const params = new URLSearchParams(window.location.search);
-            if (e.target.value) params.set("accommodationType", e.target.value);
-            else params.delete("accommodationType");
-            params.delete("q");
-            window.location.href = `/accommodations?${params.toString()}`;
-          }}
-          className="appearance-none bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink cursor-pointer hover:bg-cream transition-colors pr-8"
-        >
-          <option value="">ทุกประเภทที่พัก</option>
-          {accommodationTypes.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
-        <CaretDown size={10} weight="bold" className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted" />
-      </div>
-      {provinces.length > 1 ? <div className="relative">
-        <select
-          name="province"
-          defaultValue={province || ""}
-          onChange={(e) => {
-            const params = new URLSearchParams(window.location.search);
-            if (e.target.value) params.set("province", e.target.value);
-            else params.delete("province");
-            params.delete("q");
-            window.location.href = `/accommodations?${params.toString()}`;
-          }}
-          className="appearance-none bg-white border border-ink/10 px-4 py-2 rounded-full text-xs font-bold text-ink cursor-pointer hover:bg-cream transition-colors pr-8"
-        >
-          <option value="">ทุกจังหวัดที่เปิดให้บริการ</option>
-          {provinces.map((p) => (
-            <option key={p.value} value={p.value}>{p.label}</option>
-          ))}
-        </select>
-        <CaretDown size={10} weight="bold" className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted" />
-      </div> : null}
-    </div>
+          defaultValue={accommodationType ?? ""}
+          options={[{ value: "", label: "ทุกประเภท" }, ...ACCOMMODATION_TYPES]}
+        />
+        {provinces.length > 1 ? (
+          <PublicSelect
+            id="accommodation-province"
+            label="จังหวัด"
+            name="province"
+            defaultValue={province ?? ""}
+            options={[{ value: "", label: "ทุกพื้นที่ที่เปิดให้บริการ" }, ...provinces]}
+          />
+        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <PublicButton type="submit" className="gap-2">
+            <MagnifyingGlass size={18} weight="bold" aria-hidden="true" />
+            ค้นหาที่พัก
+          </PublicButton>
+          {hasFilters ? (
+            <PublicButton href="/accommodations" variant="quiet">
+              ล้างตัวกรอง
+            </PublicButton>
+          ) : null}
+        </div>
+      </PublicFields>
+    </form>
   );
 }

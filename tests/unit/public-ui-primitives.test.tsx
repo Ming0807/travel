@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement, type ImgHTMLAttributes, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -9,6 +9,7 @@ vi.mock("next/image", () => ({
 }));
 
 import { PublicButton } from "../../components/public/PublicButton";
+import { PublicCtaBand } from "../../components/public/PublicCtaBand";
 import { PublicFields, PublicSearchField, PublicSelect } from "../../components/public/PublicFields";
 import { PublicMediaFrame } from "../../components/public/PublicMediaFrame";
 import { PublicPageFrame } from "../../components/public/PublicPageFrame";
@@ -123,6 +124,66 @@ describe("public UI primitives", () => {
 
     expect(screen.getByText("Image unavailable")).toBeVisible();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("replaces media that fails at runtime with the honest fallback", () => {
+    render(
+      <PublicMediaFrame
+        src="/images/missing.jpg"
+        alt="Missing attraction"
+        aspect="landscape"
+        sizes="100vw"
+        fallbackLabel="Image unavailable"
+      />,
+    );
+
+    fireEvent.error(screen.getByRole("img", { name: "Missing attraction" }));
+
+    expect(screen.getByText("Image unavailable")).toBeVisible();
+    expect(screen.queryByRole("img", { name: "Missing attraction" })).not.toBeInTheDocument();
+  });
+
+  it("collapses a CTA to text-only when its optional image fails", () => {
+    render(
+      <PublicCtaBand
+        title="Plan another stop"
+        description="Build the next part of the trip."
+        linkText="View routes"
+        linkUrl="/routes"
+        image="cta/missing.jpg"
+      />,
+    );
+
+    fireEvent.error(screen.getByRole("img", { name: "Plan another stop" }));
+
+    const section = screen.getByRole("heading", { name: "Plan another stop" }).closest("section");
+    expect(section?.innerHTML).not.toContain("md:grid-cols");
+    expect(screen.queryByRole("img", { name: "Plan another stop" })).not.toBeInTheDocument();
+  });
+
+  it("stops reserving CTA space when an optional image stalls", () => {
+    vi.useFakeTimers();
+
+    try {
+      render(
+        <PublicCtaBand
+          title="Plan another stop"
+          description="Build the next part of the trip."
+          linkText="View routes"
+          linkUrl="/routes"
+          image="cta/stalled.jpg"
+        />,
+      );
+
+      expect(screen.getByRole("heading", { name: "Plan another stop" }).closest("section")?.innerHTML).toContain("md:grid-cols");
+
+      act(() => vi.advanceTimersByTime(5_000));
+
+      expect(screen.getByRole("heading", { name: "Plan another stop" }).closest("section")?.innerHTML).not.toContain("md:grid-cols");
+      expect(screen.queryByRole("img", { name: "Plan another stop" })).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("exposes state semantics and renders a real optional action", () => {

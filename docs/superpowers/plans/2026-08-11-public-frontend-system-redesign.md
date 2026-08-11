@@ -214,10 +214,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/public-hospitality-listing.test.ts`
 - Test: `tests/e2e/public-hospitality.spec.ts`
 
-- [ ] Write failing tests proving filters operate over the full published dataset rather than the first 50 rows.
-- [ ] Implement paginated repository contracts with truthful totals and URL-driven filters.
-- [ ] Migrate both pages to the shared listing primitives while retaining distinct food/stay decision fields.
-- [ ] Run targeted unit/E2E and commit as `feat: harden food and stay discovery`.
+- [x] Write failing tests proving filters operate over the full published dataset rather than the first 50 rows.
+- [x] Implement paginated repository contracts with truthful totals and URL-driven filters.
+- [x] Migrate both pages to the shared listing primitives while retaining distinct food/stay decision fields.
+- [x] Run targeted unit/E2E and commit as `feat: harden food and stay discovery`.
 
 ### Task 8: Recompose restaurant and accommodation details
 

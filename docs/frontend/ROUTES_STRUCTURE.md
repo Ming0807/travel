@@ -120,6 +120,25 @@ Recommended:
 /admin/attractions/[attractionId]/edit
 ```
 
+## 2.6 Public Hospitality Discovery
+
+`/restaurants` and `/accommodations` use URL-driven server filtering and exact
+database totals. Search, type, province, and page values must remain together
+when filters change. Pagination operates over the full published launch-scope
+dataset instead of a client-filtered first page.
+
+The listing states are distinct:
+
+- `available`: render the exact total and current page.
+- `empty`: no published records match the active filters.
+- `unavailable`: the query failed; do not present this as zero records.
+
+Restaurant cards show food type and province. Accommodation cards show type,
+province, and the stored price range. Booking, availability, ratings, halal
+claims, and amenities must not render unless their production data contracts
+exist. Listing covers use managed media only; stale third-party stock URLs are
+not public card media.
+
 Admin users need precise record management.
 
 ---
