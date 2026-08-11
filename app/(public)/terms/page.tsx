@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 export const metadata: Metadata = {
   title: "เงื่อนไขการใช้บริการ | ท่องเที่ยวชายแดนใต้",
   description: "ขอบเขตบริการ กติกาเนื้อหา QR ใบประกาศ พาสปอร์ต คะแนน และข้อควรรู้ของระบบนำร่องท่องเที่ยวยะลา",
+  alternates: { canonical: "/terms" },
 };
 
 const sections: LegalSection[] = [

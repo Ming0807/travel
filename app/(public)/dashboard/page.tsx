@@ -7,6 +7,7 @@ import type { PublicDashboardEvidence } from "@/types/public-dashboard";
 export const metadata: Metadata = {
   title: "ข้อมูลการท่องเที่ยวที่ระบบบันทึกได้ | ท่องเที่ยวชายแดนใต้",
   description: "รายงานหลักฐานสาธารณะจากรายการเข้าชม ใบประกาศ และแบบสำรวจโดยสมัครใจของระบบนำร่องจังหวัดยะลา",
+  alternates: { canonical: "/dashboard" },
 };
 
 export const revalidate = 300;

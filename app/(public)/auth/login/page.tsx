@@ -6,6 +6,7 @@ import { resolveSafeAuthDestination } from "@/lib/auth/oauth";
 export const metadata: Metadata = {
   title: "เข้าสู่ระบบ | ท่องเที่ยวยะลา",
   description: "เข้าสู่ระบบเพื่อค้นคืนพาสปอร์ตท่องเที่ยวและจัดการเรื่องราวของคุณ",
+  alternates: { canonical: "/auth/login" },
 };
 
 type LoginPageProps = {

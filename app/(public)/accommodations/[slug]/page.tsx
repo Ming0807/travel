@@ -29,6 +29,7 @@ export async function generateMetadata({
     title: `${accommodation.name} | ที่พักในยะลา`,
     description: accommodation.description?.slice(0, 160)
       ?? `ข้อมูลที่พัก ${accommodation.name} ในจังหวัดยะลา`,
+    alternates: { canonical: `/accommodations/${accommodation.slug}` },
   };
 }
 

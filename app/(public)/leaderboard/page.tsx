@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, LockKey, Sparkle, Trophy } from "@phosphor-icons/react/dist/ssr";
@@ -9,6 +10,12 @@ import { resolveCurrentTouristId, TouristAccessError } from "@/lib/auth/guards";
 import { LeaderboardContent } from "@/components/badges/LeaderboardContent";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+
+export const metadata: Metadata = {
+  title: "กระดานผู้นำนักเดินทาง",
+  description: "อันดับ XP สำหรับนักเดินทางที่เลือกเข้าร่วมแบบสาธารณะ พร้อมตัวเลือกใช้นามแฝงและถอนการแสดงผลได้ทุกเมื่อ",
+  alternates: { canonical: "/leaderboard" },
+};
 
 async function resolveOptionalTouristId() {
   try {

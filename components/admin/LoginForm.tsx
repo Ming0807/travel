@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { loginAdminAction } from "@/app/actions/admin-auth-actions";
 import { SignIn, Spinner } from "@phosphor-icons/react";
 
-export function LoginForm() {
+export function LoginForm({ redirectTo = "/admin" }: { redirectTo?: string }) {
   const router = useRouter();
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,13 +23,13 @@ export function LoginForm() {
       setErrorMsg(result.error || "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง");
       setIsLoading(false);
     } else {
-      router.push("/admin");
+      router.push(redirectTo);
       router.refresh();
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5" aria-label="แบบฟอร์มเข้าสู่ระบบหลังบ้าน">
       {errorMsg && (
         <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
           {errorMsg}
@@ -44,7 +44,7 @@ export function LoginForm() {
           name="email"
           required
           autoComplete="username"
-          className="min-h-12 w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/20"
+          className="min-h-12 w-full rounded-[var(--public-radius-control)] border border-slate-300 bg-white px-4 py-3 text-base outline-none transition-colors focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/20"
           placeholder="เช่น amornthep หรือ admin@example.com"
         />
       </div>
@@ -57,7 +57,7 @@ export function LoginForm() {
           name="password"
           required
           autoComplete="current-password"
-          className="min-h-12 w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/20"
+          className="min-h-12 w-full rounded-[var(--public-radius-control)] border border-slate-300 bg-white px-4 py-3 text-base outline-none transition-colors focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/20"
           placeholder="••••••••"
         />
       </div>
@@ -65,7 +65,7 @@ export function LoginForm() {
       <div className="-mt-2 flex justify-end">
         <Link
           href="/admin/forgot-password"
-          className="text-xs font-semibold text-[#0A6B62] transition hover:text-[#085A53] hover:underline"
+          className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--public-teal)] hover:underline"
         >
           ลืมรหัสผ่าน?
         </Link>
@@ -74,14 +74,14 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="mt-2 flex min-h-12 items-center justify-center gap-2 rounded-md bg-[#0A6B62] px-6 py-3.5 font-bold text-white transition hover:bg-[#085A53] disabled:cursor-not-allowed disabled:opacity-70"
+        className="mt-2 flex min-h-12 items-center justify-center gap-2 rounded-[var(--public-radius-control)] bg-[var(--public-coral)] px-6 py-3.5 font-semibold text-[var(--public-ink)] transition-colors hover:bg-[#d86548] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isLoading ? (
           <Spinner size={20} className="animate-spin" />
         ) : (
           <SignIn size={20} weight="bold" />
         )}
-        {isLoading ? "กำลังเข้าสู่ระบบ" : "เข้าสู่ระบบหลังบ้าน"}
+        {isLoading ? "กำลังตรวจสอบบัญชี" : "เข้าสู่ระบบหลังบ้าน"}
       </button>
     </form>
   );

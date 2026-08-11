@@ -26,6 +26,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "ร้านอาหารในยะลา",
   description: "ค้นหาร้านอาหารท้องถิ่นในจังหวัดยะลาจากข้อมูลที่เผยแพร่แล้ว",
+  alternates: { canonical: "/restaurants" },
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;

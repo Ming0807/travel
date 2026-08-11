@@ -48,7 +48,7 @@ export function HomepageHero({
     <section className="bg-background px-3 pb-8 pt-4 text-ink sm:px-6 sm:pt-8 lg:px-8 lg:pb-10">
       <div className="mx-auto max-w-7xl">
         <div className="relative min-h-[420px] overflow-hidden border border-ink/10 bg-ink shadow-soft lg:grid lg:min-h-[410px] lg:grid-cols-[0.92fr_1.08fr] lg:bg-white">
-          <div className="absolute inset-0 lg:hidden">
+          <div className="absolute inset-0 lg:left-[46%]">
             {img0 ? (
               <Image
                 src={img0}
@@ -56,12 +56,12 @@ export function HomepageHero({
                 fill
                 priority
                 className="object-cover"
-                sizes="(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 0px"
+                sizes="(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 54vw"
               />
             ) : (
               <div className="flex h-full items-center justify-center bg-teal text-white"><ImageSquare size={52} aria-hidden="true" /></div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/75 to-ink/15" />
+            <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/75 to-ink/15 lg:hidden" />
           </div>
 
           <div className="relative z-10 flex flex-col justify-center px-6 py-10 text-white sm:px-10 lg:px-14 lg:text-ink">
@@ -82,16 +82,6 @@ export function HomepageHero({
             </div>
           </div>
 
-          <div className="relative hidden min-h-[410px] bg-cream lg:block">
-            {img0 ? (
-              <Image src={img0} alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา" fill priority className="object-cover" sizes="(max-width: 1024px) 0px, 54vw" />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-3 bg-tealSoft text-teal">
-                <ImageSquare size={52} aria-hidden="true" />
-                <p className="text-sm font-bold">เพิ่มภาพ Hero ผ่านหน้า Settings</p>
-              </div>
-            )}
-          </div>
         </div>
 
         <div className="relative z-20 mx-auto -mt-7 w-[calc(100%-1.5rem)] max-w-5xl sm:-mt-8">

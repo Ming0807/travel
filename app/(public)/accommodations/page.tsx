@@ -26,6 +26,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "ที่พักในยะลา",
   description: "ค้นหาที่พักในจังหวัดยะลาจากข้อมูลที่เผยแพร่แล้ว",
+  alternates: { canonical: "/accommodations" },
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;

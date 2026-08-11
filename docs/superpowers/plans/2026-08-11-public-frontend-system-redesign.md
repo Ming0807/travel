@@ -488,11 +488,11 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Modify: affected `app/(public)/**/page.tsx`, `loading.tsx`, `not-found.tsx`, and shared public components
 - Test: `tests/e2e/public-route-matrix.spec.ts`
 
-- [ ] Verify one literal `h1`, Thai-first title/description, canonical metadata, and honest Yala scope per route.
-- [ ] Verify one priority image, accurate `sizes`, thumbnail/full-image policy, no undocumented `unoptimized`, and deliberate revalidation.
-- [ ] Add no-data/loading/error/not-found behavior without client-side fetching where server rendering suffices.
-- [ ] Run cross-route Playwright at 360, 390, 768, 1280, and 1440px with overflow, focus, image, and console-error assertions.
-- [ ] Commit as `test: harden the public route matrix`.
+- [x] Verify one literal `h1`, Thai-first title/description, canonical metadata, and honest Yala scope per route.
+- [x] Verify one priority image, accurate `sizes`, thumbnail/full-image policy, no undocumented `unoptimized`, and deliberate revalidation.
+- [x] Add no-data/loading/error/not-found behavior without client-side fetching where server rendering suffices.
+- [x] Run cross-route Playwright at 360, 390, 768, 1280, and 1440px with overflow, focus, image, and console-error assertions.
+- [x] Commit as `test: harden the public route matrix`.
 
 ### Task 23: Final release checkpoint
 

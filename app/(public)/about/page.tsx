@@ -17,6 +17,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 export const metadata: Metadata = {
   title: "เกี่ยวกับโครงการ | แพลตฟอร์มข้อมูลท่องเที่ยวยะลา",
   description: "ขอบเขต เป้าหมาย และหลักการทำงานของแพลตฟอร์มข้อมูลท่องเที่ยวยะลารุ่นนำร่อง",
+  alternates: { canonical: "/about" },
 };
 
 const capabilities = [
@@ -74,7 +75,7 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <figure className="relative aspect-[4/3] min-h-[320px] overflow-hidden border border-ink/10 bg-slate-100">
+            <figure className="relative aspect-[4/3] overflow-hidden border border-ink/10 bg-slate-100">
               <Image
                 src="/certificate-templates/yala-mist-heritage-v2.webp"
                 alt="ตัวอย่างงานภาพสำหรับใบประกาศดิจิทัลในโครงการนำร่องยะลา"

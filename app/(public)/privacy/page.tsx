@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 export const metadata: Metadata = {
   title: "นโยบายความเป็นส่วนตัว | ท่องเที่ยวชายแดนใต้",
   description: "ข้อมูลที่ระบบนำร่องท่องเที่ยวยะลาเก็บ เหตุผลที่ใช้ ตัวเลือกของผู้ใช้ และช่องทางขอจัดการข้อมูล",
+  alternates: { canonical: "/privacy" },
 };
 
 function DataList({ items }: { items: Array<{ title: string; detail: string }> }) {

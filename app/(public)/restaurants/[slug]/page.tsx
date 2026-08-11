@@ -32,6 +32,7 @@ export async function generateMetadata({
     title: `${restaurant.name} | ร้านอาหารในยะลา`,
     description: restaurant.description?.slice(0, 160)
       ?? `ข้อมูลร้านอาหาร ${restaurant.name} ในจังหวัดยะลา`,
+    alternates: { canonical: `/restaurants/${restaurant.slug}` },
   };
 }
 

@@ -1,56 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
-import Link from "next/link";
 import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { PublicButton } from "@/components/public/PublicButton";
+import { PublicEdgePage } from "@/components/public/PublicEdgePage";
 
 export default function PublicError({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error("Public Route Error:", error);
-  }, [error]);
-
   return (
-    <section className="tourism-container grid min-h-[70vh] place-items-center py-20 text-center">
-      <div className="max-w-lg rounded-2xl bg-white p-8 shadow-card">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-rose-50 text-rose-600">
-          <WarningCircle size={24} aria-hidden="true" />
-        </div>
-        <h1 className="mt-5 text-2xl font-black text-[#073F37]">
-          ไม่สามารถแสดงเนื้อหาได้
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          เกิดข้อผิดพลาดในการโหลดหน้านี้ กรุณาลองอีกครั้งในภายหลัง
-          <br />
-          <span className="mt-1 block text-xs text-slate-400">
-            This page is temporarily unavailable. Please try again later.
-          </span>
-        </p>
-        {error.digest && (
-          <p className="mt-2 text-xs text-slate-400">
-            Error ID: {error.digest}
-          </p>
-        )}
-        <div className="mt-6 flex items-center justify-center gap-3">
-          <button
-            onClick={reset}
-            className="inline-flex rounded-full bg-[#0F766E] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#0d6157]"
-          >
-            ลองอีกครั้ง
-          </button>
-          <Link
-            href="/"
-            className="inline-flex rounded-full border-2 border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
-          >
-            กลับหน้าแรก
-          </Link>
-        </div>
-      </div>
-    </section>
+    <PublicEdgePage
+      code="500"
+      tone="error"
+      title="เปิดหน้านี้ไม่สำเร็จ"
+      description="ระบบยังโหลดข้อมูลหน้านี้ไม่สำเร็จ คุณสามารถลองโหลดอีกครั้ง หรือกลับไปเริ่มจากหน้าแรกได้โดยข้อมูลที่บันทึกไว้ก่อนหน้านี้จะไม่ถูกเปิดเผยบนหน้านี้"
+      icon={<WarningCircle size={24} weight="fill" aria-hidden="true" />}
+      actions={
+        <>
+          <PublicButton onClick={reset}>ลองโหลดอีกครั้ง</PublicButton>
+          <PublicButton href="/" variant="quiet">กลับหน้าแรก</PublicButton>
+        </>
+      }
+    />
   );
 }

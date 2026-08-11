@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import Link from "next/link";
+import { ArrowLeft, ShieldWarning } from "@phosphor-icons/react";
 
 export default function AdminError({
   error,
@@ -12,11 +12,6 @@ export default function AdminError({
   error: Error & { digest?: string; code?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    // Log the error to an error reporting service
-    console.error("Admin Error Boundary Caught:", error);
-  }, [error]);
-
   const isUnauthorized =
     error.message?.includes("UNAUTHORIZED") ||
     error.message?.includes("sign in") ||
@@ -27,39 +22,40 @@ export default function AdminError({
     error.message?.includes("permission") ||
     error.code === "FORBIDDEN";
 
-  let title = "Something went wrong";
-  let description = "An unexpected error occurred while loading this admin page.";
+  let title = "เปิดหน้าจัดการไม่สำเร็จ";
+  let description = "ระบบไม่สามารถโหลดหน้านี้ได้ในขณะนี้ กรุณาลองอีกครั้ง";
 
   if (isUnauthorized) {
-    title = "Authentication Required";
-    description = "You must be signed in as an administrator to access this page.";
+    title = "กรุณาเข้าสู่ระบบอีกครั้ง";
+    description = "เซสชันผู้ดูแลอาจหมดอายุ กรุณาเข้าสู่ระบบก่อนกลับมาทำรายการต่อ";
   } else if (isForbidden) {
-    title = "Access Denied";
-    description = "You do not have the required permissions to view this page or perform this action.";
+    title = "ไม่มีสิทธิ์เข้าถึง";
+    description = "บัญชีนี้ไม่มีสิทธิ์เปิดหน้าหรือดำเนินการดังกล่าว หากจำเป็นต้องใช้งานโปรดติดต่อผู้ดูแลหลัก";
   }
 
   return (
     <AdminShell>
       <div className="space-y-6">
-        <AdminPageHeader eyebrow="Error" title={title} description="Could not load the requested page." />
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center shadow-card">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600">
-            <span className="text-2xl font-black">!</span>
+        <AdminPageHeader eyebrow="สถานะระบบ" title={title} description={description} />
+        <div className="border border-slate-200 bg-white p-8 text-center sm:p-12">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-red-50 text-red-700">
+            <ShieldWarning size={24} weight="fill" aria-hidden="true" />
           </div>
-          <h3 className="mt-4 text-lg font-black text-[#073F37]">{title}</h3>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{description}</p>
+          <h2 className="mt-5 text-lg font-semibold text-slate-900">ยังไม่มีการเปลี่ยนแปลงข้อมูลจากหน้าที่เปิดไม่สำเร็จ</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">ลองเปิดหน้าอีกครั้ง หรือกลับไปหน้าภาพรวมเพื่อเลือกเมนูอื่น</p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <button
               onClick={() => reset()}
-              className="rounded-xl bg-[#0A6B62] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#085A53]"
+              className="min-h-11 rounded-md bg-[#073F37] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#052e2b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E77455]"
             >
-              Try again
+              ลองโหลดอีกครั้ง
             </button>
             <Link
-              href="/"
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              href={isUnauthorized ? "/admin/login" : "/admin"}
+              className="inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#073F37]"
             >
-              Go to Homepage
+              <ArrowLeft size={17} aria-hidden="true" />
+              {isUnauthorized ? "ไปหน้าเข้าสู่ระบบ" : "กลับหน้าภาพรวม"}
             </Link>
           </div>
         </div>

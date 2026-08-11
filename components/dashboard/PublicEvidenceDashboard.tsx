@@ -58,7 +58,7 @@ function DistributionTable({ group }: { group: PublicEvidenceDistributionGroup }
   const maxValue = Math.max(1, ...group.items.map((item) => item.value ?? 0));
 
   return (
-    <article className="border-t border-ink/10 pt-5 first:border-t-0 first:pt-0">
+    <article className="min-w-0 border-t border-ink/10 pt-5 first:border-t-0 first:pt-0">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h3 className="text-base font-black text-ink">{group.label}</h3>
@@ -181,7 +181,7 @@ export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboar
       <section aria-labelledby="visit-trend-heading" className="px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-7 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.55fr)]">
-            <article className="border border-ink/10 bg-white p-5 sm:p-7">
+            <article className="min-w-0 border border-ink/10 bg-white p-5 sm:p-7">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-black uppercase text-teal">Recorded visits</p>
@@ -225,7 +225,7 @@ export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboar
               )}
             </article>
 
-            <aside className="border border-ink/10 bg-ink p-6 text-white">
+            <aside className="min-w-0 border border-ink/10 bg-ink p-6 text-white">
               <ShieldCheck aria-hidden="true" size={30} className="text-coral" weight="duotone" />
               <h2 className="mt-5 text-xl font-black">เกณฑ์ก่อนเผยแพร่และแปลผล</h2>
               <dl className="mt-6 divide-y divide-white/15 border-y border-white/15">
@@ -240,14 +240,14 @@ export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboar
 
       <section className="border-y border-ink/10 bg-white px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2">
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-black uppercase text-coral">Visitor profile</p>
             <h2 className="mt-2 text-2xl font-black">ภาพรวมผู้เข้าร่วม</h2>
             <div className="mt-6 space-y-7">
               {hasProfileData ? evidence.visitorProfile.map((group) => <DistributionTable key={group.key} group={group} />) : <p className="border border-dashed border-ink/20 bg-background p-6 text-sm text-muted">ยังไม่มีข้อมูลโปรไฟล์ที่ผ่านเกณฑ์เผยแพร่</p>}
             </div>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-black uppercase text-teal">Travel behavior</p>
             <h2 className="mt-2 text-2xl font-black">พฤติกรรมการเดินทาง</h2>
             <div className="mt-6 space-y-7">
@@ -260,7 +260,7 @@ export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboar
       <section className="px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)]">
-            <article>
+            <article className="min-w-0">
               <p className="text-xs font-black uppercase text-coral">Attraction evidence</p>
               <h2 className="mt-2 text-2xl font-black">สถานที่ที่มีรายการเข้าชมในระบบ</h2>
               <p className="mt-2 text-sm leading-6 text-muted">แสดงเฉพาะสถานที่ที่มีอย่างน้อย {evidence.thresholds.publicCellMinimum} รายการ และคะแนนจะแสดงเมื่อมีคำตอบอย่างน้อย {evidence.thresholds.interpretationMinimum}</p>
@@ -278,7 +278,7 @@ export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboar
               ) : <p className="mt-6 border border-dashed border-ink/20 bg-white p-6 text-sm text-muted">ยังไม่มีสถานที่ที่ผ่านเกณฑ์เผยแพร่ในช่วงข้อมูลนี้</p>}
             </article>
 
-            <article className="border border-ink/10 bg-white p-6">
+            <article className="min-w-0 border border-ink/10 bg-white p-6">
               <p className="text-xs font-black uppercase text-teal">Experience quality</p>
               <h2 className="mt-2 text-2xl font-black">คุณภาพประสบการณ์</h2>
               <p className="mt-2 text-sm leading-6 text-muted">คะแนน 1-5 จากแบบสำรวจโดยสมัครใจ Missing data ไม่ถูกนับเป็นศูนย์</p>

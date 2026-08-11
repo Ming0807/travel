@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "แบ่งปันเรื่องราวของคุณ | ท่องเที่ยวชายแดนใต้",
+  alternates: { canonical: "/stories/share" },
 };
 
 export const dynamic = "force-dynamic";

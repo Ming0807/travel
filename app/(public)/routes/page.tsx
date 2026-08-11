@@ -15,6 +15,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "เส้นทางท่องเที่ยวแนะนำในยะลา",
   description: "วางแผนเที่ยวจังหวัดยะลาด้วยเส้นทางและจุดแวะที่ทีมงานเผยแพร่จากข้อมูลสถานที่จริง",
+  alternates: { canonical: "/routes" },
 };
 
 export default async function RoutesPage() {

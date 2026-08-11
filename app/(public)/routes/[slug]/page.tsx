@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: route.name,
     description: route.description || `แผนการเดินทาง ${route.name} ในจังหวัดยะลา`,
+    alternates: { canonical: `/routes/${route.slug}` },
   };
 }
 

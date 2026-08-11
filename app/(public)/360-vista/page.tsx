@@ -15,6 +15,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "ทัวร์เสมือนจริง 360° ในยะลา",
   description: "เปิดสื่อพาโนรามาและทัวร์เสมือนจริง 360° ที่เชื่อมกับสถานที่ท่องเที่ยวซึ่งเผยแพร่แล้วในจังหวัดยะลา",
+  alternates: { canonical: "/360-vista" },
 };
 
 export default async function Vista360Page() {

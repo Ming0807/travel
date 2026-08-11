@@ -789,22 +789,12 @@ Documentation only or placeholder.
 ## 13.1 Admin Login
 
 ```text
-/login
-```
-
-or:
-
-```text
 /admin/login
 ```
 
-Recommendation:
-
-```text
-/admin/login
-```
-
-to keep admin auth separate.
+Protected admin routes redirect here with a URL-encoded internal destination, for example
+`/admin/login?redirect=%2Fadmin%2Fsettings`. The login page accepts only paths beginning
+with `/admin`; external URLs and protocol-relative values fall back to `/admin`.
 
 ## 13.2 Auth Callback
 
@@ -1080,13 +1070,9 @@ MVP can use local/session storage carefully.
 
 ## 20.1 Not Found
 
-Use:
-
-```text
-/not-found
-```
-
-or framework not-found page.
+The framework `not-found.tsx` boundary renders a Thai-first recovery page with links to
+`/attractions` and `/`. Admin routes use a separate admin-styled boundary that returns to
+`/admin`.
 
 ## 20.2 Invalid QR
 
@@ -1100,11 +1086,8 @@ friendly error state.
 
 ## 20.3 Unauthorized Admin
 
-Show:
-
-```text
-You do not have permission to view this page.
-```
+Admin error boundaries distinguish authentication, permission, and general module failures
+in Thai. They must not render raw exception messages or digests in the browser.
 
 ## 20.4 Expired Session
 
@@ -1126,14 +1109,19 @@ SEO applies mostly to public routes:
  /attractions/[slug]
 ```
 
-Each public attraction page should have:
+Every public page should have:
 
 ```text
 title
 description
-open graph image
-canonical URL if needed
+exactly one h1
+one canonical URL
 ```
+
+Dynamic attraction, restaurant, accommodation, route, and story detail routes must derive
+their canonical URL from the resolved public record. Public release QA checks canonical
+metadata, horizontal overflow, and browser console errors at 360, 390, 768, 1280, and
+1440 pixels.
 
 QR and tourist flow pages do not need public SEO.
 

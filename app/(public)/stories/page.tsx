@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   title: "เรื่องราวจากยะลา | ท่องเที่ยวชายแดนใต้",
   description:
     "บทความ คู่มือ และประสบการณ์จริงจากจังหวัดยะลา ซึ่งผ่านการเผยแพร่ในระบบแล้ว",
+  alternates: { canonical: "/stories" },
 };
 
 export const revalidate = 60;

@@ -27,6 +27,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "สถานที่ท่องเที่ยวในยะลา",
   description: "ค้นหาและเลือกสถานที่ท่องเที่ยวในจังหวัดยะลาจากข้อมูลที่เผยแพร่แล้ว",
+  alternates: { canonical: "/attractions" },
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
