@@ -190,7 +190,7 @@ export function CertificateSuccessActions({ visitId, certUrl, stampStatus }: Pro
         </div>
         <h3 className="mb-1 font-bold text-ink">แบบสอบถามสั้น ๆ (ไม่บังคับ)</h3>
         <p className="mb-4 text-sm leading-6 text-muted">
-          ช่วยให้สถานที่ท่องเที่ยวเห็นสิ่งที่ควรพัฒนา ใช้เวลาประมาณ 1 นาที
+          ช่วยให้สถานที่ท่องเที่ยวเห็นสิ่งที่ควรพัฒนา เลือกตอบได้ในประมาณ 2–3 นาที
         </p>
         <Link
           href={`/visit/${visitId}/survey`}

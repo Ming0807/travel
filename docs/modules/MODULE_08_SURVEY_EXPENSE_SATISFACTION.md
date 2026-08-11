@@ -223,8 +223,18 @@ Thai:
 MVP survey should take:
 
 ```text
-30 to 90 seconds
+Approximately 2 to 3 minutes when every section is answered
 ```
+
+The production form is progressive and shows one section at a time:
+
+```text
+Travel behavior -> Overnight and spending -> Satisfaction
+```
+
+Every question remains optional. The skip action is visible before the first
+question, the form preserves selected values after a recoverable save error,
+and the submit action exposes a pending state to prevent duplicate saves.
 
 ## 10.2 Use Quick Inputs
 
@@ -243,6 +253,10 @@ Avoid:
 - many required questions
 - complex tables
 - personal questions
+
+Every 1-5 rating must explain both ends of the scale. The satisfaction section
+includes `facility_score`, and an unanswered score is stored as `NULL`, never
+as zero.
 
 ## 10.3 Allow Skip
 

@@ -260,10 +260,12 @@ If an English instrument is used, preserve the same item codes and complete a do
 
 ## 13. Tourism Survey Corrections Before Fieldwork
 
-The current operational survey is valuable, but these issues must be resolved before collecting final data:
+The operational survey is valuable. The first two implementation gaps below
+were resolved before pilot collection; the remaining interpretation and freeze
+rules still apply:
 
-1. **Facility score mismatch:** `satisfaction_surveys.facility_score` and dashboard calculations exist, but `MicroSurveyForm` does not ask the question. Add one 1-5 item for facilities, or remove/relabel the metric before fieldwork. The recommended action is to add the item.
-2. **Preferred-language bias:** `tourists.preferred_language` is used by analytics, while profile creation can default missing values to `th`. Detect browser/request language, let the participant change it, and record the source. Do not interpret a technical default as a stated preference.
+1. **Facility score parity (resolved):** `MicroSurveyForm`, validation, the atomic survey RPC, and dashboard calculations now share the same optional 1-5 facilities dimension. Missing values remain `NULL`.
+2. **Preferred-language provenance (resolved):** minimal check-in detects the browser language, lets the participant change it, and records whether the value was detected or selected. Analytics must still distinguish provenance where interpretation requires it.
 3. **Expense meaning:** spending range is self-reported and must never be labelled as business revenue or official economic impact.
 4. **Expense categories:** if multiple categories are needed, add a normalized visit-to-category relation with at most three selections and one primary category. Do not overload the current single-category field.
 5. **Instrument freeze:** after pilot corrections, lock survey and evaluation versions. Never change item meaning during the same collection wave.
@@ -467,10 +469,10 @@ The privacy design follows purpose limitation and data minimization: a new, unre
 
 | Area | Current evidence | Required action |
 |---|---|---|
-| Minimal profile | `components/checkin/MinimalForm.tsx` | Add language detection/editability only after field definition is approved |
-| Tourist profile | `lib/repositories/tourist.repository.ts` defaults missing language to `th` | Remove measurement bias and record language provenance |
-| Tourism survey | `components/survey/MicroSurveyForm.tsx` | Add facility item and preserve optional, low-friction UX |
-| Survey validation | `lib/validation/survey.ts` lacks facility input | Add typed validation and version-aware mapping |
+| Minimal profile | `components/checkin/MinimalForm.tsx` | Browser-language detection and participant editability implemented |
+| Tourist profile | `lib/repositories/tourist.repository.ts` | Language and provenance are stored; analytics must not treat a fallback as a stated preference |
+| Tourism survey | `components/survey/MicroSurveyForm.tsx` | Progressive three-part form, visible skip, pending/retry, low/high anchors, and facility item implemented |
+| Survey validation | `lib/validation/survey.ts` | Typed nullable facility input implemented; unanswered values remain `NULL` |
 | Survey transaction | `20260713000000_atomic_survey_submission.sql` | Extend only through a new migration; preserve atomicity |
 | Funnel | `lib/repositories/funnel.repository.ts` stores session ID in JSON metadata | Add research-session correlation and session-level metrics |
 | Check-in campaign | `checkin_codes.campaign_id` is a placeholder without a campaign table | Use a real research-study/check-in relation and foreign keys |

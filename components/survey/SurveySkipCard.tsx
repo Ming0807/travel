@@ -2,13 +2,13 @@ import { skipPostCertificateSurveyAction } from "@/app/actions/survey-actions";
 
 export function SurveySkipCard({ visitId }: { visitId: string }) {
   return (
-    <form action={skipPostCertificateSurveyAction} className="rounded-2xl border border-white bg-white p-5 shadow-card">
+    <form action={skipPostCertificateSurveyAction} className="flex flex-col gap-4 border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
       <input type="hidden" name="visitId" value={visitId} />
-      <h2 className="text-lg font-black text-ink">ยังไม่สะดวกตอบตอนนี้?</h2>
-      <p className="mt-2 text-sm leading-6 text-muted">
-        คุณสามารถข้ามแบบสอบถามได้ ใบประกาศและตราประทับของคุณจะไม่ถูกยกเลิก
-      </p>
-      <button type="submit" className="mt-4 w-full rounded-full border border-teal/20 bg-tealSoft px-5 py-3 font-bold text-teal">
+      <div>
+        <h2 className="text-base font-black text-ink">ยังไม่สะดวกตอบตอนนี้?</h2>
+        <p className="mt-1 text-sm leading-6 text-muted">ข้ามได้ทันที ใบประกาศและตราประทับของคุณจะไม่ถูกยกเลิก</p>
+      </div>
+      <button type="submit" className="min-h-11 shrink-0 border border-teal/30 bg-white px-5 font-bold text-teal transition-colors hover:bg-teal hover:text-white">
         ข้ามแบบสอบถาม
       </button>
     </form>

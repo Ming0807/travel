@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { MicroSurveyForm } from "@/components/survey/MicroSurveyForm";
@@ -21,6 +21,9 @@ describe("current satisfaction dimensions", () => {
         }}
       />,
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /ถัดไป/ }));
+    fireEvent.click(screen.getByRole("button", { name: /ถัดไป/ }));
 
     const facility = screen.getByRole("group", { name: /facility/i });
     expect(within(facility).getAllByRole("radio")).toHaveLength(5);

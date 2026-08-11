@@ -75,9 +75,12 @@ Allowed topics:
 Rules:
 
 - Survey is optional.
-- Skip must be visible.
+- Skip must be visible before the first question.
 - Skipping survey must not remove certificate, stamp, visit, or passport progress.
 - Use chips, segmented controls, sliders, rating buttons, steppers, and short optional comments instead of long free-text fields.
+- Show one short section at a time, preserve answers when moving backward, and explain both ends of every rating scale.
+- Disable duplicate submission while saving and preserve entered answers after a recoverable error.
+- Keep operational tourism questions separate from consented research-evaluation items and storage.
 
 ---
 

@@ -39,7 +39,8 @@ export default async function ResearchEvaluationPage({
           <span className="flex size-11 items-center justify-center bg-coral text-white">
             <ClipboardText aria-hidden="true" size={24} weight="fill" />
           </span>
-          <h1 className="mt-4 text-2xl font-black sm:text-3xl">{evaluation.titleTh}</h1>
+          <p className="mt-4 text-xs font-black uppercase text-coral">แบบประเมินงานวิจัย · สำหรับผู้ที่ยินยอมเข้าร่วมเท่านั้น</p>
+          <h1 className="mt-2 text-2xl font-black sm:text-3xl">{evaluation.titleTh}</h1>
           {evaluation.descriptionTh ? <p className="mt-3 max-w-prose text-sm leading-7 text-slate-700">{evaluation.descriptionTh}</p> : null}
           <p className="mt-3 text-sm font-semibold text-teal">ใช้เวลาประมาณ {evaluation.estimatedMinutes ?? 4} นาที และพักไว้กลับมาตอบต่อได้</p>
         </header>

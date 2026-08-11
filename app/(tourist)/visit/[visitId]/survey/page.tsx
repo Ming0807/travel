@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { getPostCertificateSurveyPageData } from "@/lib/services/survey.service";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft, ClipboardText, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+
 import { MicroSurveyForm } from "@/components/survey/MicroSurveyForm";
 import { SurveySkipCard } from "@/components/survey/SurveySkipCard";
-import { notFound } from "next/navigation";
-import { ClipboardText, ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { SURVEY_PRIVACY_NOTICE } from "@/lib/content/survey-copy";
+import { getPostCertificateSurveyPageData } from "@/lib/services/survey.service";
 
 export const metadata: Metadata = {
   title: "แบบสอบถาม | Southern Border Tourism",
@@ -16,7 +18,7 @@ const surveyErrorMessages: Record<string, string> = {
   survey_reference_invalid: "ตัวเลือกบางรายการไม่พร้อมใช้งานแล้ว กรุณาเลือกคำตอบใหม่อีกครั้ง",
   certificate_required: "กรุณาสร้างใบประกาศก่อนตอบแบบสอบถาม",
   survey_save_failed: "ยังบันทึกคำตอบไม่ได้ กรุณาลองใหม่อีกครั้ง",
-  save_failed: "ยังบันทึกคำตอบไม่ได้ กรุณาลองใหม่อีกครั้ง"
+  save_failed: "ยังบันทึกคำตอบไม่ได้ กรุณาลองใหม่อีกครั้ง",
 };
 
 export default async function SurveyPage({
@@ -29,9 +31,11 @@ export default async function SurveyPage({
   const { visitId } = await params;
   const resolvedSearchParams = await searchParams;
   const rawError = Array.isArray(resolvedSearchParams?.error)
-    ? resolvedSearchParams?.error[0]
+    ? resolvedSearchParams.error[0]
     : resolvedSearchParams?.error;
-  const formError = rawError ? surveyErrorMessages[rawError] ?? surveyErrorMessages.save_failed : undefined;
+  const formError = rawError
+    ? surveyErrorMessages[rawError] ?? surveyErrorMessages.save_failed
+    : undefined;
 
   let pageData;
   try {
@@ -41,80 +45,70 @@ export default async function SurveyPage({
   }
 
   const { options, existingSurvey } = pageData;
-  const hasExistingSurvey = !!existingSurvey;
+  const hasExistingSurvey = Boolean(existingSurvey);
 
   return (
-    <main className="min-h-screen bg-slate-50 relative pb-32 overflow-hidden">
-      {/* Premium Background */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-coral/5 rounded-full blur-[120px] -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-teal/5 rounded-full blur-[150px] -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
-
-      <div className="relative z-10 mx-auto max-w-lg px-4 pt-8 md:pt-12">
-        {/* Back Link */}
-        <a
+    <main className="min-h-screen bg-slate-50 pb-32 text-ink">
+      <div className="mx-auto max-w-xl px-4 pt-7 sm:pt-10">
+        <Link
           href={`/visit/${visitId}/certificate/success`}
-          className="inline-flex items-center gap-2 text-sm font-bold text-muted hover:text-coral transition-colors mb-6"
+          className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-600 transition-colors hover:text-coral"
         >
-          <ArrowLeft size={16} weight="bold" />
+          <ArrowLeft aria-hidden="true" size={17} weight="bold" />
           กลับไปหน้าใบประกาศ
-        </a>
+        </Link>
 
-        {/* Header */}
-        <div className="text-center mb-8 animate-fade-in-up">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal to-emerald text-white shadow-md shadow-teal/20 rotate-3">
-            <ClipboardText size={28} weight="fill" />
-          </div>
-          <h1 className="text-3xl font-black text-ink tracking-tight">
-            {hasExistingSurvey ? "แบบสอบถามของคุณ" : "แบบสอบถามสั้น ๆ"}
+        <header className="border-b border-slate-300 pb-6">
+          <span className="flex size-11 items-center justify-center bg-coral text-white">
+            <ClipboardText aria-hidden="true" size={24} weight="fill" />
+          </span>
+          <p className="mt-4 text-xs font-black uppercase text-teal">ข้อมูลการท่องเที่ยว · ไม่บังคับ</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">
+            {hasExistingSurvey ? "แบบสอบถามของคุณ" : "เล่าประสบการณ์ทริปนี้"}
           </h1>
-          <p className="text-muted text-sm font-medium mt-3 max-w-sm mx-auto">
+          <p className="mt-3 max-w-prose text-sm font-medium leading-7 text-slate-700">
             {hasExistingSurvey
-              ? "คุณตอบแบบสอบถามนี้แล้ว ขอบคุณสำหรับข้อมูล!"
-              : "ช่วยพัฒนาการท่องเที่ยว ใช้เวลาเพียง 1 นาที"}
+              ? "คุณตอบแบบสอบถามนี้แล้ว ขอบคุณสำหรับข้อมูล"
+              : "เลือกตอบเฉพาะส่วนที่สะดวก ใช้เวลาประมาณ 2–3 นาที และข้ามได้ทุกเมื่อ"}
           </p>
-        </div>
+        </header>
 
-        {/* Privacy Notice */}
-        <div className="mb-6 rounded-xl bg-white/80 backdrop-blur border border-ink/5 p-4 text-xs leading-5 text-muted shadow-sm animate-fade-in-up delay-100">
-          <p className="font-medium">
-            <strong className="text-ink">เราใช้ข้อมูลอย่างรับผิดชอบ:</strong> {SURVEY_PRIVACY_NOTICE}
-          </p>
+        <div className="my-5 flex gap-3 border border-teal/20 bg-[#F2FAF8] p-4 text-xs leading-6 text-slate-700">
+          <ShieldCheck aria-hidden="true" className="mt-0.5 shrink-0 text-teal" size={20} weight="fill" />
+          <p><strong className="text-ink">ใช้ข้อมูลอย่างรับผิดชอบ:</strong> {SURVEY_PRIVACY_NOTICE}</p>
         </div>
 
         {hasExistingSurvey ? (
-          <div className="rounded-2xl bg-white p-8 text-center shadow-card animate-fade-in-up delay-200">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-teal/10 text-teal">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-muted">
-              คุณได้ตอบแบบสอบถามสำหรับการเยี่ยมชมนี้แล้ว
-            </p>
-            <a
+          <div className="border border-slate-200 bg-white p-7 text-center shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+            <p className="text-sm font-medium text-muted">คุณได้ตอบแบบสอบถามสำหรับการเยี่ยมชมนี้แล้ว</p>
+            <Link
               href={`/visit/${visitId}/certificate/success`}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-teal px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-teal/90"
+              className="mt-6 inline-flex min-h-12 items-center bg-teal px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-ink"
             >
               กลับไปหน้าใบประกาศ
-            </a>
+            </Link>
           </div>
         ) : (
           <>
-            <MicroSurveyForm
-              visitId={visitId}
-              options={{
-                travelCompanions: options.travelCompanions,
-                transportModes: options.transportModes,
-                travelPurposes: options.travelPurposes,
-                expenseCategories: options.expenseCategories,
-                spendingRanges: options.spendingRanges,
-              }}
-              error={formError}
-            />
-
-            <div className="mt-4">
+            <div className="mb-5">
               <SurveySkipCard visitId={visitId} />
             </div>
+            <section
+              aria-label="แบบสอบถามการท่องเที่ยว"
+              className="border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:p-6"
+            >
+              <MicroSurveyForm
+                visitId={visitId}
+                options={{
+                  travelCompanions: options.travelCompanions,
+                  transportModes: options.transportModes,
+                  travelPurposes: options.travelPurposes,
+                  expenseCategories: options.expenseCategories,
+                  spendingRanges: options.spendingRanges,
+                }}
+                error={formError}
+              />
+            </section>
           </>
         )}
       </div>

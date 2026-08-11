@@ -419,10 +419,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Modify: `components/research/ResearchEvaluationForm.tsx`
 - Test: survey/research unit and E2E suites
 
-- [ ] Write failing tests for optional skip, accurate duration, pending/double-submit, retry, facility score parity, browser-language capture, and production/research dataset separation.
-- [ ] Keep tourism survey progressive; keep 19 core research items, three incentive items, and optional comment only inside consented research mode.
-- [ ] Add low/high anchors to rating questions and retain nullable missing answers.
-- [ ] Run targeted data/privacy/UI gates; controller reviews line-by-line; commit as `fix: reduce survey burden and separate research data`.
+- [x] Write failing tests for optional skip, server-derived duration, pending/double-submit, retry, facility score parity, browser-language capture, and production/research dataset separation.
+- [x] Keep tourism survey progressive; keep 19 core research items, three incentive items, and optional comment only inside consented research mode.
+- [x] Add low/high anchors to rating questions and retain nullable missing answers.
+- [x] Run targeted data/privacy/UI gates; controller reviews line-by-line; commit as `fix: reduce survey burden and separate research data`.
 
 ---
 
