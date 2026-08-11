@@ -89,7 +89,7 @@ describe("check-in funnel UX contract", () => {
   it("makes photo optional without blocking a certificate", () => {
     render(<PhotoUploadClient visitId="visit-1" />);
 
-    expect(screen.getByRole("link", { name: /ข้ามขั้นตอนนี้/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ข้ามรูปภาพและสร้างใบประกาศ/ })).toBeInTheDocument();
     expect(screen.getByText(/ใบประกาศไม่มีรูป/)).toBeInTheDocument();
   });
 

@@ -167,7 +167,7 @@ describe("PhotoUploadClient", () => {
     expect(drawImage).toHaveBeenCalledOnce();
     await userEvent.click(screen.getByRole("button", { name: "ใช้ภาพนี้" }));
     expect(screen.queryByRole("dialog", { name: "ใช้กล้องถ่ายรูป" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "อัปโหลดและไปต่อ" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "อัปโหลดรูปและสร้างใบประกาศ" })).toBeEnabled();
     expect(stop).toHaveBeenCalled();
   });
 
@@ -177,7 +177,7 @@ describe("PhotoUploadClient", () => {
 
     const source = new File(["camera"], "camera.jpg", { type: "image/jpeg" });
     fireEvent.change(screen.getByLabelText("เลือกจากคลังรูปหรือแอปไฟล์"), { target: { files: [source] } });
-    await userEvent.click(screen.getByRole("button", { name: "อัปโหลดและไปต่อ" }));
+    await userEvent.click(screen.getByRole("button", { name: "อัปโหลดรูปและสร้างใบประกาศ" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("ไม่สามารถย่อรูปนี้ได้");
     expect(fetch).not.toHaveBeenCalled();
@@ -199,7 +199,7 @@ describe("PhotoUploadClient", () => {
     fireEvent.change(screen.getByLabelText("เลือกจากคลังรูปหรือแอปไฟล์"), {
       target: { files: [new File(["camera"], "camera.jpg", { type: "image/jpeg" })] },
     });
-    await userEvent.click(screen.getByRole("button", { name: "อัปโหลดและไปต่อ" }));
+    await userEvent.click(screen.getByRole("button", { name: "อัปโหลดรูปและสร้างใบประกาศ" }));
 
     await waitFor(() => expect(fetch).toHaveBeenCalledOnce());
     const [endpoint, init] = vi.mocked(fetch).mock.calls[0];
@@ -220,7 +220,7 @@ describe("PhotoUploadClient", () => {
     fireEvent.change(screen.getByLabelText("เลือกจากคลังรูปหรือแอปไฟล์"), {
       target: { files: [new File(["camera"], "camera.jpg", { type: "image/jpeg" })] },
     });
-    await userEvent.click(screen.getByRole("button", { name: "อัปโหลดและไปต่อ" }));
+    await userEvent.click(screen.getByRole("button", { name: "อัปโหลดรูปและสร้างใบประกาศ" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("รูปยังมีขนาดใหญ่เกินไป");
   });

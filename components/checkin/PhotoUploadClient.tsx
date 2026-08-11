@@ -1,15 +1,23 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  Camera,
+  Image as ImageIcon,
+  Spinner,
+  Trash,
+  WarningCircle,
+} from "@phosphor-icons/react/dist/ssr";
+
+import { CameraCaptureDialog } from "@/components/checkin/CameraCaptureDialog";
 import {
   formatPhotoBytes,
   prepareVisitPhotoForUpload,
   validateVisitPhotoSource,
   type PreparedVisitPhoto,
 } from "@/lib/media/client-photo-compression";
-import { CameraCaptureDialog } from "@/components/checkin/CameraCaptureDialog";
-import { Camera, Spinner, Image as ImageIcon, Trash, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 
 export function PhotoUploadClient({ visitId }: { visitId: string }) {
   const router = useRouter();
@@ -19,8 +27,8 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<"idle" | "preparing" | "uploading">("idle");
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const nativeCameraInputRef = useRef<HTMLInputElement>(null);
   const isBusy = stage !== "idle";
 
   useEffect(() => {
@@ -46,26 +54,17 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && !selectFile(file)) {
-      event.currentTarget.value = "";
-    }
-  };
-
-  const openCamera = () => {
-    setIsCameraOpen(true);
+    if (file && !selectFile(file)) event.currentTarget.value = "";
   };
 
   const handleRemove = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setSelectedFile(null);
     setPreparedPhoto(null);
     setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = "";
-    }
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
+    if (nativeCameraInputRef.current) nativeCameraInputRef.current.value = "";
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -93,7 +92,10 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
         throw new Error("รูปยังมีขนาดใหญ่เกินไปสำหรับการอัปโหลด กรุณาเลือกรูปอื่นหรือถ่ายใหม่ด้วยโหมดปกติ");
       }
 
-      const payload = await response.json().catch(() => null) as { photoId?: string; error?: string } | null;
+      const payload = await response.json().catch(() => null) as {
+        photoId?: string;
+        error?: string;
+      } | null;
       if (!response.ok || !payload?.photoId) {
         throw new Error(payload?.error || "อัปโหลดรูปไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
       }
@@ -107,184 +109,179 @@ export function PhotoUploadClient({ visitId }: { visitId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="w-full space-y-5">
-
-      {/* Upload Area */}
-      <div
-        onClick={() => !previewUrl && !isBusy && fileInputRef.current?.click()}
-        className="relative flex min-h-64 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-ink/10 bg-ink/[0.02] p-6 transition-colors hover:border-coral/40 hover:bg-coral/[0.02] focus-within:border-coral"
-      >
-        {previewUrl ? (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={previewUrl}
-              alt="Photo preview"
-              className="max-h-64 w-full rounded-lg object-cover shadow-sm"
-            />
-            <div className="flex items-center gap-2 mt-4">
-              <button
-                type="button"
-                disabled={isBusy}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemove();
-                }}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
-              >
-                <Trash size={14} />
-                ลบรูป
-              </button>
-              <button
-                type="button"
-                disabled={isBusy}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-ink/10 bg-white px-4 py-2 text-sm font-bold text-ink transition-colors hover:bg-ink/5 disabled:opacity-50"
-              >
-                <ImageIcon size={14} />
-                เปลี่ยนรูป
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-cream text-coral">
-              <Camera size={32} weight="fill" />
-            </div>
-            <p className="text-base font-bold text-ink">แตะเพื่ออัปโหลดรูป</p>
-            <p className="mt-1 text-sm text-muted">JPG, PNG, WebP หรือ HEIC สูงสุด 50MB</p>
-            <p className="mt-2 text-xs font-medium text-ink/50">ระบบจะย่อรูปก่อนส่ง ช่วยประหยัดเน็ตและอัปโหลดเร็วขึ้น</p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  openCamera();
-                }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white"
-              >
-                <Camera size={18} weight="fill" /> ถ่ายรูป
-              </button>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/10 bg-white px-5 py-2.5 text-sm font-bold text-ink"
-              >
-                <ImageIcon size={18} /> เลือกจากคลังรูปหรือไฟล์
-              </button>
-            </div>
-            <p className="mt-3 text-center text-xs text-ink/55">
-              เมื่อกดถ่ายรูป ระบบจะขอสิทธิ์ใช้กล้องหากคุณยังไม่เคยอนุญาต
-            </p>
-          </>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          name="photo"
-          aria-label="เลือกจากคลังรูปหรือแอปไฟล์"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        <input
-          ref={cameraInputRef}
-          type="file"
-          aria-label="ถ่ายรูปด้วยกล้อง"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileChange}
-          className="hidden"
-        />
+      <div className="border-b border-slate-200 pb-5">
+        <h2 className="text-lg font-black text-ink">เลือกรูปด้วยวิธีที่สะดวก</h2>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          ปุ่มถ่ายรูปจะขอสิทธิ์กล้อง ส่วนปุ่มคลังรูปจะไม่เปิดกล้อง
+        </p>
       </div>
 
-      {selectedFile && (
-        <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-4 py-3 text-sm">
-          <div className="min-w-0">
-            <p className="truncate font-bold text-ink">{selectedFile.name}</p>
-            <p className="text-xs text-muted">
-              ต้นฉบับ {formatPhotoBytes(selectedFile.size)}
-              {preparedPhoto ? ` · เตรียมส่ง ${formatPhotoBytes(preparedPhoto.uploadBytes)}` : " · จะย่อก่อนอัปโหลด"}
-            </p>
+      <div className="rounded-lg border border-teal/20 bg-teal/5 p-3">
+        <Link
+          href={`/visit/${visitId}/certificate/preview`}
+          className="flex min-h-11 w-full items-center justify-center rounded-md border border-teal/30 bg-white px-4 py-2.5 text-sm font-bold text-teal transition-colors hover:border-teal"
+        >
+          ข้ามรูปภาพและสร้างใบประกาศ
+        </Link>
+        <p className="mt-2 text-center text-xs leading-5 text-slate-600">
+          ใบประกาศไม่มีรูปส่วนตัว และตราประทับยังได้รับตามปกติ
+        </p>
+      </div>
+
+      {previewUrl ? (
+        <div className="space-y-4">
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewUrl} alt="ตัวอย่างรูปสำหรับใบประกาศ" className="max-h-80 w-full object-contain" />
           </div>
-          {stage !== "idle" && <Spinner className="shrink-0 animate-spin text-teal" size={20} aria-hidden="true" />}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => setIsCameraOpen(true)}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-ink px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+            >
+              <Camera aria-hidden="true" size={18} weight="fill" />
+              ถ่ายใหม่
+            </button>
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => galleryInputRef.current?.click()}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-ink disabled:opacity-50"
+            >
+              <ImageIcon aria-hidden="true" size={18} />
+              เปลี่ยนจากคลัง
+            </button>
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={handleRemove}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 disabled:opacity-50"
+            >
+              <Trash aria-hidden="true" size={18} />
+              ลบรูป
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              aria-label="ถ่ายรูป"
+              onClick={() => setIsCameraOpen(true)}
+              className="flex min-h-24 items-center gap-4 rounded-md bg-ink px-5 py-4 text-left text-white transition-colors hover:bg-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-white/10">
+                <Camera aria-hidden="true" size={24} weight="fill" />
+              </span>
+              <span>
+                <span className="block font-black">ถ่ายรูป</span>
+                <span className="mt-1 block text-xs leading-5 text-white/75">เปิดกล้องเมื่อคุณกดเท่านั้น</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-label="เลือกจากคลังรูปหรือไฟล์"
+              onClick={() => galleryInputRef.current?.click()}
+              className="flex min-h-24 items-center gap-4 rounded-md border border-slate-300 bg-white px-5 py-4 text-left text-ink transition-colors hover:border-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-teal/10 text-teal">
+                <ImageIcon aria-hidden="true" size={24} weight="fill" />
+              </span>
+              <span>
+                <span className="block font-black">เลือกจากคลังรูปหรือไฟล์</span>
+                <span className="mt-1 block text-xs leading-5 text-slate-600">ไม่ขอสิทธิ์ใช้กล้อง</span>
+              </span>
+            </button>
+          </div>
+          <p className="text-xs leading-5 text-slate-500">
+            รองรับ JPG, PNG, WebP, HEIC และ HEIF สูงสุด 50MB ระบบจะย่อรูปบนอุปกรณ์ก่อนอัปโหลด
+          </p>
         </div>
       )}
 
-      {stage !== "idle" && (
+      <input
+        ref={galleryInputRef}
+        type="file"
+        name="photo"
+        aria-label="เลือกจากคลังรูปหรือแอปไฟล์"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+        onChange={handleFileChange}
+        className="sr-only"
+      />
+      <input
+        ref={nativeCameraInputRef}
+        type="file"
+        aria-label="ถ่ายรูปด้วยกล้อง"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileChange}
+        className="sr-only"
+      />
+
+      {selectedFile ? (
+        <div className="flex items-center justify-between gap-4 border-y border-slate-200 py-3 text-sm">
+          <div className="min-w-0">
+            <p className="truncate font-bold text-ink">{selectedFile.name}</p>
+            <p className="text-xs text-slate-500">
+              ต้นฉบับ {formatPhotoBytes(selectedFile.size)}
+              {preparedPhoto
+                ? ` · เตรียมส่ง ${formatPhotoBytes(preparedPhoto.uploadBytes)}`
+                : " · จะย่อก่อนอัปโหลด"}
+            </p>
+          </div>
+          {stage !== "idle" ? <Spinner className="shrink-0 animate-spin text-teal" size={20} aria-hidden="true" /> : null}
+        </div>
+      ) : null}
+
+      {stage !== "idle" ? (
         <p role="status" aria-live="polite" className="text-center text-sm font-medium text-teal">
           {stage === "preparing" ? "กำลังปรับขนาดรูปบนอุปกรณ์ของคุณ..." : "กำลังอัปโหลดรูปที่ปรับขนาดแล้ว..."}
         </p>
-      )}
+      ) : null}
 
-      {error && (
-        <div role="alert" className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
-          <WarningCircle className="mt-0.5 shrink-0" size={20} weight="fill" />
+      {error ? (
+        <div role="alert" className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">
+          <WarningCircle aria-hidden="true" className="mt-0.5 shrink-0" size={20} weight="fill" />
           <p>{error}</p>
         </div>
-      )}
+      ) : null}
 
-      {/* Tips */}
-      <div className="rounded-2xl bg-teal/5 border border-teal/10 p-4">
-        <h4 className="text-sm font-bold text-teal mb-2">เคล็ดลับรูปสวย</h4>
-        <ul className="space-y-1 text-xs text-ink/70">
-          <li className="flex items-center gap-2">
-            <span className="w-1 h-1 rounded-full bg-teal/50" />
-            ใช้รูปที่ใบหน้าชัดเจน
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-1 h-1 rounded-full bg-teal/50" />
-            หลีกเลี่ยงแสงย้อนหรือภาพมืด
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-1 h-1 rounded-full bg-teal/50" />
-            รูปจะถูกแสดงบนใบประกาศดิจิทัลของคุณ
-          </li>
+      <div className="border-t border-slate-200 pt-4">
+        <h3 className="text-sm font-bold text-teal">รูปที่เหมาะกับใบประกาศ</h3>
+        <ul className="mt-2 grid gap-1 text-xs leading-5 text-slate-600 sm:grid-cols-2">
+          <li>• ใบหน้าหรือจุดเด่นของภาพมองเห็นชัด</li>
+          <li>• หลีกเลี่ยงภาพมืดหรือแสงย้อนมากเกินไป</li>
         </ul>
       </div>
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={!selectedFile || isBusy}
-        className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-ink px-5 py-4 text-base font-bold text-white shadow-sm transition-colors hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex min-h-14 w-full items-center justify-center gap-2 rounded-md bg-ink px-5 py-4 text-base font-bold text-white transition-colors hover:bg-teal disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isBusy ? (
           <>
-            <Spinner className="animate-spin" size={20} />
+            <Spinner aria-hidden="true" className="animate-spin" size={20} />
             {stage === "preparing" ? "กำลังปรับขนาดรูป..." : "กำลังอัปโหลด..."}
           </>
         ) : (
           <>
-            <ImageIcon weight="bold" size={22} />
-            {selectedFile ? "อัปโหลดและไปต่อ" : "เลือกรูปก่อน"}
+            <ImageIcon aria-hidden="true" weight="bold" size={22} />
+            {selectedFile ? "อัปโหลดรูปและสร้างใบประกาศ" : "เลือกรูปก่อน"}
           </>
         )}
       </button>
 
-      <div className="text-center">
-        <a
-          href={`/visit/${visitId}/certificate/preview`}
-          className="text-sm font-bold text-muted hover:text-coral transition-colors"
-        >
-          ข้ามขั้นตอนนี้ (ใบประกาศไม่มีรูป)
-        </a>
-      </div>
-
-      {isCameraOpen && (
+      {isCameraOpen ? (
         <CameraCaptureDialog
-          onCapture={(file) => {
-            selectFile(file);
-          }}
+          onCapture={selectFile}
           onClose={() => setIsCameraOpen(false)}
-          onNativeFallback={() => cameraInputRef.current?.click()}
+          onNativeFallback={() => nativeCameraInputRef.current?.click()}
         />
-      )}
+      ) : null}
     </form>
   );
 }

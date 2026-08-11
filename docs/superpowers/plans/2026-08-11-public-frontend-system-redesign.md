@@ -384,10 +384,11 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/photo-upload-ui.test.tsx`
 - Test: `tests/e2e/mobile-photo-flow.spec.ts`
 
-- [ ] Write failing tests for two distinct actions, `capture="environment"`, permission denial, focus trap/restore, stream cleanup, retake, skip, HEIC, compression errors, and fixed footer visibility.
-- [ ] Keep camera permission request behind the camera action only; gallery must not request camera permission.
-- [ ] Use dynamic viewport/safe-area layout so controls remain reachable after camera open.
-- [ ] Run targeted tests and 360/390/430px browser screenshots; commit as `fix: harden mobile camera and gallery UX`.
+- [x] Write failing tests for two distinct actions, `capture="environment"`, permission denial, focus trap/restore, stream cleanup, retake, skip, HEIC, compression errors, and fixed footer visibility.
+- [x] Keep camera permission request behind the camera action only; gallery must not request camera permission.
+- [x] Use dynamic viewport/safe-area layout so controls remain reachable after camera open.
+- [x] Run targeted tests and 360/390/430px viewport contracts; commit as `fix: harden mobile camera and gallery UX`.
+- [ ] Run the conditional live photo-route screenshots with `PHOTO_FLOW_VISIT_ID` when a non-production test visit is available; do not create analytics-polluting production rows for this check.
 
 ### Task 17: Make certificate preview, generation, and sharing consistent
 

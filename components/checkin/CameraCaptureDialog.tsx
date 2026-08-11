@@ -51,20 +51,47 @@ export function CameraCaptureDialog({
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
+    const previouslyFocused = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((element) => !element.hasAttribute("hidden"));
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
+      previouslyFocused?.focus();
     };
   }, [onClose]);
 
@@ -164,15 +191,17 @@ export function CameraCaptureDialog({
 
   const dialog = (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="camera-dialog-title"
+      aria-describedby="camera-dialog-description"
       className="fixed inset-0 z-[100] flex h-[100dvh] max-h-[100dvh] w-screen flex-col overflow-hidden bg-black text-white"
     >
       <header className="flex min-h-16 shrink-0 items-center justify-between border-b border-white/15 px-4">
         <div>
           <h2 id="camera-dialog-title" className="text-base font-bold">ใช้กล้องถ่ายรูป</h2>
-          <p className="mt-0.5 text-xs text-white/70">
+          <p id="camera-dialog-description" className="mt-0.5 text-xs text-white/70">
             ระบบจะขอสิทธิ์ใช้กล้องเมื่อคุณกดปุ่มนี้เท่านั้น
           </p>
         </div>
