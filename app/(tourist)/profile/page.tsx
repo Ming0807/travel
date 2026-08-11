@@ -1,10 +1,7 @@
 export const dynamic = "force-dynamic";
 
-import Link from "next/link";
-import { Compass, Warning } from "@phosphor-icons/react/dist/ssr";
-
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { PublicButton } from "@/components/public/PublicButton";
+import { ProfileAccessState } from "@/components/profile/ProfileAccessState";
 import { TouristProfileView } from "@/components/profile/TouristProfileView";
 import { TouristAccessError, resolveCurrentTouristId } from "@/lib/auth/guards";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
@@ -76,34 +73,11 @@ export default async function ProfilePage() {
   const result = await loadProfile();
 
   if (result.kind === "no_identity") {
-    return (
-      <main className="flex min-h-[70vh] items-center justify-center bg-[var(--public-canvas)] px-4 py-12">
-        <section className="w-full max-w-md rounded-[var(--public-radius-panel)] border border-slate-200 bg-white p-7 text-center">
-          <Compass aria-hidden="true" className="mx-auto text-teal" size={42} weight="fill" />
-          <h1 className="mt-5 text-2xl font-black text-ink">ยังไม่พบพาสปอร์ตบนบัญชีนี้</h1>
-          <p className="mt-3 text-base leading-7 text-slate-600">
-            เริ่มจากเช็กอินสถานที่ในยะลา หรือเข้าสู่ระบบด้วยบัญชีที่เคยเชื่อมกับพาสปอร์ต
-          </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <PublicButton href="/attractions">ค้นหาสถานที่</PublicButton>
-            <PublicButton href="/auth/login?next=%2Fprofile" variant="secondary">เข้าสู่ระบบ</PublicButton>
-          </div>
-        </section>
-      </main>
-    );
+    return <ProfileAccessState kind="no_identity" />;
   }
 
   if (result.kind === "error") {
-    return (
-      <main className="flex min-h-[70vh] items-center justify-center bg-[var(--public-canvas)] px-4 py-12">
-        <section className="w-full max-w-md rounded-[var(--public-radius-panel)] border border-slate-200 bg-white p-7 text-center">
-          <Warning aria-hidden="true" className="mx-auto text-coral" size={40} weight="fill" />
-          <h1 className="mt-5 text-2xl font-black text-ink">โหลดโปรไฟล์ไม่สำเร็จ</h1>
-          <p className="mt-3 text-base leading-7 text-slate-600">ข้อมูลของคุณยังไม่ถูกเปลี่ยน กรุณาลองเปิดหน้านี้อีกครั้ง</p>
-          <Link href="/profile" className="mt-5 inline-flex min-h-11 items-center font-semibold text-teal hover:underline">ลองใหม่</Link>
-        </section>
-      </main>
-    );
+    return <ProfileAccessState kind="error" />;
   }
 
   return (
