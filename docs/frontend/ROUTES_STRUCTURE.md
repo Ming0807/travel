@@ -43,6 +43,26 @@ The route-family UX/UI contract and executable migration order are maintained in
 
 Public routes are grouped by user job rather than forced into one layout: discovery listings, place/route details, editorial, reward/identity, focused QR/visit flow, and trust/legal/evidence. Focused QR, visit, account-linking, and research tasks hide global discovery navigation. All active public copy and filters use the Yala pilot scope.
 
+Public discovery directories now share one compact information hierarchy:
+
+```text
+breadcrumb and page purpose
+search/filter toolbar when the data contract supports filtering
+truthful result count or unavailable state
+featured result only when a real eligible record exists
+responsive result list
+next-step action
+```
+
+This contract applies to `/attractions`, `/stories`, `/routes`, `/restaurants`,
+`/accommodations`, and `/360-vista`. Detail routes remain independent because
+their job is reading or inspecting one record, not comparing a directory.
+
+`/attractions` also supports a guest-only "ทริปของฉัน" shortlist. It stores at
+most 20 attraction slugs in versioned browser local storage, does not create a
+tourist or research record, and links to the real `/routes` directory for the
+next planning step. It must never claim to generate an itinerary.
+
 ---
 
 ## 2. Route Design Principles
@@ -173,6 +193,11 @@ Yala attractions. External links must use HTTPS, open in a new tab, and be
 labelled as an external system. When the CMS has no published 360 media, the
 page may offer the configured external provider with a clear privacy notice,
 but it must not invent supported places or render a CSS mock panorama.
+
+The 360 directory uses the same compact discovery intro and result summary as
+the other public directories. Its cards retain the real media behavior and
+must distinguish managed panorama media from an external provider before the
+visitor opens it.
 
 Admin users need precise record management.
 

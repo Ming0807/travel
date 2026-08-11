@@ -165,6 +165,30 @@ Priority order for dashboard:
 
 ## 5. Tourist UX Principles
 
+## 5.0 Public Discovery Directories
+
+Public listing pages should feel like one product while preserving the data
+contract of each module. Use a compact Thai-first introduction, a restrained
+filter toolbar, a truthful result summary, and consistent missing-image states.
+
+Rules:
+
+- Never promote a record as featured unless it is eligible and has configured media.
+- A broken or missing image shows the record name and an honest placeholder.
+- Empty data and unavailable data are different states with different recovery actions.
+- Save-to-trip is a separate button from the detail link and announces its state.
+- The guest shortlist stays on the current browser, is capped at 20 attractions,
+  and is not presented as a saved account itinerary.
+- Mobile directory pages keep enough bottom safe area for the global navigation
+  and any shortlist action bar.
+- `/360-vista` identifies external providers and explains the privacy boundary
+  before opening a new tab.
+
+Leaderboard and profile pages must also distinguish availability states. A
+privacy migration or service failure is not an empty leaderboard. A missing
+guest passport explains browser/device identity boundaries and offers real
+login, retry, and attraction-discovery actions without creating a new profile.
+
 ## 5.1 First Screen Must Be Clear
 
 After scanning QR, the tourist should immediately understand:
