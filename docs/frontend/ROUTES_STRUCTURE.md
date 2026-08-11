@@ -155,6 +155,25 @@ website links require HTTPS, and map links require valid coordinates. The
 public pages do not invent booking, availability, amenities, or contact actions
 that are not represented by production data.
 
+## 2.8 Public Routes And 360 Experiences
+
+`/routes` lists only published routes whose stops all resolve to active,
+published attractions in a live destination province. Route cards show the
+stored cover, computed day count, and real stop count. Database failures reach
+the route error boundary instead of appearing as an empty list.
+
+`/routes/[slug]` groups stops by stored day and display order. A Google Maps
+directions action is available only when every stop has valid coordinates;
+otherwise the page directs visitors to each attraction's own location details.
+Route and stop media prefer managed thumbnails and always provide an honest
+fallback instead of a generated or CSS-simulated scene.
+
+`/360-vista` reads published panorama and external 360 references from active
+Yala attractions. External links must use HTTPS, open in a new tab, and be
+labelled as an external system. When the CMS has no published 360 media, the
+page may offer the configured external provider with a clear privacy notice,
+but it must not invent supported places or render a CSS mock panorama.
+
 Admin users need precise record management.
 
 ---

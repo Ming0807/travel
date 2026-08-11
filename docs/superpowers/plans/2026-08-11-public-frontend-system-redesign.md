@@ -245,10 +245,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/public-routes-vista.test.tsx`
 - Test: `tests/e2e/public-routes-vista.spec.ts`
 
-- [ ] Write failing tests that reject a non-functional map action and hardcoded CSS panorama preview.
-- [ ] Render route day/stop timelines from stored route data and show maps only when real coordinate geometry exists.
-- [ ] Render 360 content from published media/CMS data or an honest empty/external-provider state.
-- [ ] Run targeted gates and commit as `fix: make routes and 360 content truthful`.
+- [x] Write failing tests that reject a non-functional map action and hardcoded CSS panorama preview.
+- [x] Render route day/stop timelines from stored route data and show maps only when real coordinate geometry exists.
+- [x] Render 360 content from published media/CMS data or an honest empty/external-provider state.
+- [x] Run targeted gates and commit as `fix: make routes and 360 content truthful`.
 
 ---
 

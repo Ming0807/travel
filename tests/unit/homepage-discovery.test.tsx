@@ -19,10 +19,23 @@ function attraction(overrides: Partial<AttractionCard> = {}): AttractionCard {
 }
 
 const routes: PublicRouteCard[] = [
-  { slug: "betong-one-day", name: "เบตง 1 วัน", description: "จุดชมวิว คาเฟ่ และตลาด", days: 1, imageUrl: null },
+  { slug: "betong-one-day", name: "เบตง 1 วัน", description: "จุดชมวิว คาเฟ่ และตลาด", days: 1, stopCount: 3, imageUrl: null, imageAlt: "เส้นทางเบตง 1 วัน" },
 ];
 
 describe("HomepageDiscoveryWorkspace", () => {
+  it("distinguishes an unavailable route feed from an empty route feed", () => {
+    render(
+      <HomepageDiscoveryWorkspace
+        attractions={[attraction()]}
+        routes={[]}
+        routesUnavailable
+      />,
+    );
+
+    expect(screen.getByText(/ยังโหลดเส้นทางแนะนำไม่ได้/)).toBeVisible();
+    expect(screen.queryByText("เส้นทางที่เผยแพร่แล้วจะแสดงที่นี่")).not.toBeInTheDocument();
+  });
+
   it("filters real attractions by their returned category", () => {
     render(
       <HomepageDiscoveryWorkspace

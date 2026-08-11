@@ -22,6 +22,11 @@ import {
   sanitizeDestinationProvinceFilter,
 } from "@/lib/destinations/launch-scope";
 import {
+  buildRouteDirectionsUrl,
+  safeExternalTourUrl,
+  type PublicRouteStop,
+} from "@/lib/routes/public-route";
+import {
   listLiveDestinationProvinceIds,
   listLiveDestinationProvinces,
 } from "@/lib/repositories/destination-scope.repository";
@@ -159,6 +164,12 @@ function text(value: unknown, fallback = "") {
 function numberValue(value: unknown, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function nullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function escapeIlikePattern(value: string) {
@@ -1790,8 +1801,30 @@ export type PublicRouteCard = {
   name: string;
   description: string;
   days: number;
+  stopCount: number;
   imageUrl: string | null;
+  imageAlt: string;
 };
+
+function mapPublicRouteCard(
+  row: DbRecord,
+  thumbnailByStoragePath: Map<string, string>,
+): PublicRouteCard {
+  const stops = Array.isArray(row.suggested_route_stops)
+    ? row.suggested_route_stops as DbRecord[]
+    : [];
+  const name = text(row.name_th, text(row.name_en));
+
+  return {
+    slug: text(row.slug),
+    name,
+    description: text(row.description_th, text(row.description_en)),
+    days: Math.max(1, ...stops.map((stop) => numberValue(stop.day_number, 1))),
+    stopCount: stops.length,
+    imageUrl: publicManagedImage(row, thumbnailByStoragePath),
+    imageAlt: publicImageAlt(row, name),
+  };
+}
 
 export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Promise<PublicRouteCard[]> {
   try {
@@ -1807,9 +1840,13 @@ export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Pr
       description_en,
       content_media (
         storage_path,
+        media_type,
+        alt_text_th,
+        alt_text_en,
         is_cover,
         is_active,
-        lifecycle_status
+        lifecycle_status,
+        display_order
       ),
       suggested_route_stops (
         day_number,
@@ -1833,25 +1870,19 @@ export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Pr
         .eq("is_published", true)
         .eq("is_active", true)
         .limit(featuredSlugs.length);
-      if (!fe && fd && fd.length > 0) {
-        const results = (fd as DbRecord[])
+      if (fe) throw new Error("PUBLIC_ROUTE_LIST_FAILED");
+      if (fd && fd.length > 0) {
+        const rows = (fd as DbRecord[])
           .filter((row) =>
             routeStopsArePublicForLaunch(
               row.suggested_route_stops,
               liveProvinceIdSet,
             ),
-          )
-          .map(row => {
-          const stops = Array.isArray(row.suggested_route_stops) ? row.suggested_route_stops as { day_number: number }[] : [];
-          const days = stops.length > 0 ? Math.max(...stops.map(s => (s.day_number || 1))) : 1;
-          return {
-            slug: text(row.slug),
-            name: text(row.name_th, text(row.name_en)),
-            description: text(row.description_th, text(row.description_en)),
-            days,
-            imageUrl: publicImage(row as DbRecord),
-          };
-        }).filter(r => r.slug);
+          );
+        const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, rows);
+        const results = rows
+          .map((row) => mapPublicRouteCard(row, thumbnailByStoragePath))
+          .filter((route) => route.slug);
         return featuredSlugs.map(s => results.find(r => r.slug === s)).filter((r): r is PublicRouteCard => Boolean(r)).slice(0, limit);
       }
       return [];
@@ -1865,41 +1896,29 @@ export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Pr
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    if (error || !data) return [];
+    if (error) throw new Error("PUBLIC_ROUTE_LIST_FAILED");
+    if (!data) return [];
 
-    return (data as DbRecord[])
+    const rows = (data as DbRecord[])
       .filter((row) =>
         routeStopsArePublicForLaunch(
           row.suggested_route_stops,
           liveProvinceIdSet,
         ),
-      )
-      .map(row => {
-      const stops = Array.isArray(row.suggested_route_stops) ? row.suggested_route_stops as { day_number: number }[] : [];
-      const days = stops.length > 0 ? Math.max(...stops.map(s => s.day_number || 1)) : 1;
-
-      return {
-        slug: text(row.slug),
-        name: text(row.name_th, text(row.name_en)),
-        description: text(row.description_th, text(row.description_en)),
-        days,
-        imageUrl: publicImage(row as DbRecord),
-      };
-    });
+      );
+    const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, rows);
+    return rows
+      .map((row) => mapPublicRouteCard(row, thumbnailByStoragePath))
+      .filter((route) => route.slug);
   } catch {
-    return [];
+    throw new Error("PUBLIC_ROUTE_LIST_FAILED");
   }
 }
 
 export type PublicRouteDetail = PublicRouteCard & {
   fullDescription: string;
-  stops: {
-    dayNumber: number;
-    sequence: number;
-    attractionName: string;
-    attractionSlug: string;
-    attractionImage: string | null;
-  }[];
+  mapUrl: string | null;
+  stops: PublicRouteStop[];
 };
 
 export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDetail | null> {
@@ -1917,22 +1936,43 @@ export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDet
         name_en,
         description_th,
         description_en,
-        content_media (storage_path, is_cover, is_active, lifecycle_status),
+        content_media (
+          storage_path,
+          media_type,
+          alt_text_th,
+          alt_text_en,
+          is_cover,
+          is_active,
+          lifecycle_status,
+          display_order
+        ),
         suggested_route_stops (
           day_number,
           display_order,
           attractions (
+            attraction_id,
             is_active,
             is_published,
             name_th,
             name_en,
             slug,
+            latitude,
+            longitude,
             provinces (
               province_id,
               is_active,
               province_name_en
             ),
-            content_media (storage_path, is_cover, is_active, lifecycle_status)
+            content_media (
+              storage_path,
+              media_type,
+              alt_text_th,
+              alt_text_en,
+              is_cover,
+              is_active,
+              lifecycle_status,
+              display_order
+            )
           )
         )
       `)
@@ -1941,37 +1981,151 @@ export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDet
       .eq("is_active", true)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) throw new Error("PUBLIC_ROUTE_DETAIL_FAILED");
+    if (!data) return null;
 
     const row = data as DbRecord;
     const stopsArray = Array.isArray(row.suggested_route_stops) ? (row.suggested_route_stops as DbRecord[]) : [];
     if (!routeStopsArePublicForLaunch(stopsArray, liveProvinceIdSet)) return null;
 
-    // Process and sort stops
-    const mappedStops = stopsArray.map(stop => {
+    const attractionRows = stopsArray.flatMap((stop) => {
       const attraction = one(stop.attractions);
-      return {
+      return attraction ? [attraction] : [];
+    });
+    const thumbnailByStoragePath = await loadMediaAssetThumbnails(
+      supabase,
+      [row, ...attractionRows],
+    );
+    const mappedStops = stopsArray.flatMap<PublicRouteStop>((stop) => {
+      const attraction = one(stop.attractions);
+      const attractionSlug = text(attraction?.slug);
+      const attractionId = numberValue(attraction?.attraction_id);
+      if (!attraction || !attractionSlug || attractionId <= 0) return [];
+      const attractionName = text(attraction.name_th, text(attraction.name_en, attractionSlug));
+      return [{
+        attractionId,
         dayNumber: numberValue(stop.day_number, 1),
         sequence: numberValue(stop.display_order, 1),
-        attractionName: text(attraction?.name_th, text(attraction?.name_en, "Unknown")),
-        attractionSlug: text(attraction?.slug, ""),
-        attractionImage: publicImage(attraction ?? {})
-      };
+        attractionName,
+        attractionSlug,
+        attractionImage: publicManagedImage(attraction, thumbnailByStoragePath),
+        attractionImageAlt: publicImageAlt(attraction, attractionName),
+        latitude: nullableNumber(attraction.latitude),
+        longitude: nullableNumber(attraction.longitude),
+      }];
     }).sort((a, b) => {
       if (a.dayNumber !== b.dayNumber) return a.dayNumber - b.dayNumber;
       return a.sequence - b.sequence;
     });
 
+    if (mappedStops.length !== stopsArray.length) return null;
+    const routeName = text(row.name_th, text(row.name_en));
+
     return {
       slug: text(row.slug),
-      name: text(row.name_th, text(row.name_en)),
+      name: routeName,
       description: text(row.description_th, text(row.description_en)),
       fullDescription: text(row.description_th, text(row.description_en)),
       days: Math.max(1, ...mappedStops.map((stop) => stop.dayNumber)),
-      imageUrl: publicImage(row as DbRecord),
-      stops: mappedStops
+      stopCount: mappedStops.length,
+      imageUrl: publicManagedImage(row, thumbnailByStoragePath),
+      imageAlt: publicImageAlt(row, routeName),
+      mapUrl: buildRouteDirectionsUrl(mappedStops),
+      stops: mappedStops,
     };
   } catch {
-    return null;
+    throw new Error("PUBLIC_ROUTE_DETAIL_FAILED");
+  }
+}
+
+export type PublicVirtualTourCard = {
+  attractionSlug: string;
+  attractionName: string;
+  province: string;
+  mediaType: "panorama" | "video360" | "external_url";
+  provider: "platform" | "external";
+  href: string;
+  previewImageUrl: string | null;
+  previewImageAlt: string;
+};
+
+export async function listPublicVirtualTours(limit = 12): Promise<PublicVirtualTourCard[]> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const liveProvinceIds = await listLiveDestinationProvinceIds();
+    if (liveProvinceIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from("attractions")
+      .select(`
+        attraction_id,
+        province_id,
+        slug,
+        name_th,
+        name_en,
+        is_active,
+        is_published,
+        provinces (province_id, province_name_th, province_name_en, is_active),
+        content_media (
+          storage_path,
+          media_type,
+          alt_text_th,
+          alt_text_en,
+          is_cover,
+          is_active,
+          lifecycle_status,
+          display_order
+        )
+      `)
+      .eq("is_published", true)
+      .eq("is_active", true)
+      .in("province_id", liveProvinceIds)
+      .order("created_at", { ascending: false })
+      .limit(Math.min(Math.max(limit * 3, limit), 60));
+
+    if (error) throw new Error("PUBLIC_VIRTUAL_TOURS_FAILED");
+    const rows = Array.isArray(data) ? data as DbRecord[] : [];
+    const liveProvinceIdSet = new Set(liveProvinceIds);
+    const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, rows);
+
+    return rows.flatMap<PublicVirtualTourCard>((row) => {
+      const provinceId = numberValue(row.province_id);
+      const province = one(row.provinces);
+      const attractionSlug = text(row.slug);
+      if (
+        row.is_published !== true
+        || row.is_active === false
+        || !liveProvinceIdSet.has(provinceId)
+        || !attractionSlug
+      ) {
+        return [];
+      }
+
+      const mediaRows = Array.isArray(row.content_media)
+        ? row.content_media as unknown as PublicAttractionMediaRow[]
+        : [];
+      const selected = selectPublicAttractionMedia(mediaRows);
+      const virtualTour = selected.virtualTour;
+      if (!virtualTour) return [];
+
+      const href = virtualTour.type === "panorama"
+        ? virtualTour.url
+        : safeExternalTourUrl(virtualTour.url);
+      if (!href) return [];
+
+      const attractionName = text(row.name_th, text(row.name_en, attractionSlug));
+      return [{
+        attractionSlug,
+        attractionName,
+        province: text(province?.province_name_th, text(province?.province_name_en, "ยะลา")),
+        mediaType: virtualTour.type,
+        provider: virtualTour.type === "panorama" ? "platform" : "external",
+        href,
+        previewImageUrl: publicManagedImage(row, thumbnailByStoragePath),
+        previewImageAlt: publicImageAlt(row, attractionName),
+      }];
+    }).slice(0, limit);
+  } catch {
+    throw new Error("PUBLIC_VIRTUAL_TOURS_FAILED");
   }
 }

@@ -1,110 +1,101 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
-import { MapTrifold, CalendarBlank, CaretRight, NavigationArrow } from "@phosphor-icons/react/dist/ssr";
+import { MapTrifold, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { PublicButton } from "@/components/public/PublicButton";
+import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
+import { PublicPageFrame } from "@/components/public/PublicPageFrame";
+import { PublicRouteCard } from "@/components/routes/PublicRouteCard";
+import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
 import { listPublicRoutes } from "@/lib/repositories/public-content.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 
-export const metadata: Metadata = {
-  title: "เส้นทางแนะนำ | ท่องเที่ยวชายแดนใต้",
-  description: "ค้นพบเส้นทางท่องเที่ยวที่คัดสรรมาเป็นอย่างดีในยะลา ปัตตานี และนราธิวาส",
-};
+export const revalidate = 60;
 
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "เส้นทางท่องเที่ยวแนะนำในยะลา",
+  description: "วางแผนเที่ยวจังหวัดยะลาด้วยเส้นทางและจุดแวะที่ทีมงานเผยแพร่จากข้อมูลสถานที่จริง",
+};
 
 export default async function RoutesPage() {
   const settingsService = new SettingsService();
-  const [routes, heroSettings] = await Promise.all([
-    listPublicRoutes(20),
+  const [routeState, heroSettings] = await Promise.all([
+    listPublicRoutes(24)
+      .then((items) => ({ items, loadError: false }))
+      .catch(() => ({ items: [], loadError: true })),
     settingsService.getSetting("routes_page_hero", {
-      title: "เส้นทางท่องเที่ยว <br/> <span class=\"text-leaf\">ที่แนะนำ</span>",
-      description: "ให้เราช่วยคุณวางแผนการเดินทาง ด้วยเส้นทางท่องเที่ยวที่คัดสรรมาเป็นอย่างดี ครอบคลุมทั้งสถานที่ยอดฮิตและจุดหมายลับที่รอคุณไปค้นพบ"
-    })
+      title: "เส้นทางท่องเที่ยวแนะนำในยะลา",
+      description: "เลือกแผนการเดินทางจากจุดแวะที่ทีมงานจัดลำดับไว้ แล้วเปิดรายละเอียดของแต่ละสถานที่ก่อนออกเดินทาง",
+    }),
   ]);
+  const routes = routeState.items;
+  const title = launchSafeAttractionsCopy(heroSettings.title, "เส้นทางท่องเที่ยวแนะนำในยะลา");
+  const description = launchSafeAttractionsCopy(
+    heroSettings.description,
+    "เลือกแผนการเดินทางจากจุดแวะที่ทีมงานจัดลำดับไว้ แล้วเปิดรายละเอียดของแต่ละสถานที่ก่อนออกเดินทาง",
+  );
 
   return (
-    <div className="bg-background min-h-screen text-ink pb-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-20">
-        
-        {/* Breadcrumb */}
-        <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <Link href="/" className="hover:text-coral transition-colors">หน้าแรก</Link>
-          <span>›</span>
-          <span className="text-ink">เส้นทาง</span>
-        </div>
+    <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
+      <PublicPageFrame variant="listing" className="pb-16 pt-8 sm:pt-10">
+        <nav aria-label="เส้นทางนำทาง" className="flex items-center gap-2 text-sm text-black/65">
+          <Link href="/" className="hover:text-[var(--public-teal)]">หน้าแรก</Link>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page" className="font-semibold text-[var(--public-ink)]">เส้นทางแนะนำ</span>
+        </nav>
 
-        {/* HERO SECTION */}
-        <section className="mb-16">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
-            <div className="max-w-2xl">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight" dangerouslySetInnerHTML={{ __html: heroSettings.title }}>
-              </h1>
-              <p className="text-muted leading-relaxed text-base md:text-lg">
-                {heroSettings.description}
+        <header className="mt-7 grid gap-5 border-b border-black/10 pb-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div>
+            <p className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--public-coral-strong)]">
+              <MapTrifold size={19} weight="fill" aria-hidden="true" />
+              แผนเที่ยวจากสถานที่จริง
+            </p>
+            <h1 className="mt-3 max-w-4xl text-3xl font-bold leading-tight text-balance sm:text-4xl lg:text-5xl">
+              {title}
+            </h1>
+            <p className="mt-4 max-w-[70ch] text-base leading-7 text-black/65 sm:text-lg">{description}</p>
+          </div>
+          <p className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--public-teal)]">
+            <MapPin size={20} weight="fill" aria-hidden="true" />
+            ขอบเขตข้อมูล: จังหวัดยะลา
+          </p>
+        </header>
+
+        <section aria-labelledby="routes-result-heading" className="mt-10">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-4">
+            <div>
+              <h2 id="routes-result-heading" className="text-2xl font-bold">แผนการเดินทางที่เผยแพร่</h2>
+              <p className="mt-1 text-sm leading-6 text-black/65">
+                พบ {routes.length.toLocaleString("th-TH")} เส้นทาง ทุกจุดแวะเชื่อมกับหน้าสถานที่จริง
               </p>
             </div>
-            <div className="flex gap-3">
-              <button className="bg-white border border-ink/10 px-6 py-3 rounded-full text-sm font-bold text-ink hover:bg-cream transition-colors flex items-center gap-2">
-                <MapTrifold size={20} /> ดูเส้นทางบนแผนที่
-              </button>
-            </div>
           </div>
-        </section>
 
-        {/* ROUTES GRID */}
-        {routes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {routes.map((route) => (
-              <Link href={`/routes/${route.slug}`} key={route.slug} className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-ink/5">
-                <div className="relative h-64 w-full overflow-hidden">
-                  {route.imageUrl ? (
-                    <Image 
-                      src={route.imageUrl} 
-                      alt={route.name} 
-                      fill 
-                      className="object-cover transition-transform duration-700 group-hover:scale-105" 
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-sand/70 text-center text-sm font-semibold text-muted">
-                      <MapTrifold size={28} className="text-leaf" />
-                      <span>ยังไม่มีรูปภาพ</span>
-                    </div>
-                  )}
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold text-ink shadow-sm">
-                    <CalendarBlank size={14} className="text-leaf" /> {route.days} วัน
-                  </div>
-                </div>
-                <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="text-xl font-black text-ink mb-3 group-hover:text-leaf transition-colors line-clamp-2">
-                    {route.name}
-                  </h3>
-                  <p className="text-sm text-muted mb-6 line-clamp-3 leading-relaxed flex-grow">
-                    {route.description}
-                  </p>
-                  <div className="flex items-center justify-between pt-4 border-t border-ink/5 mt-auto">
-                    <span className="text-sm font-bold text-leaf flex items-center gap-1.5 group-hover:underline">
-                      <NavigationArrow size={16} /> ดูแผนการเดินทาง
-                    </span>
-                    <div className="w-8 h-8 rounded-full bg-cream flex items-center justify-center text-ink group-hover:bg-leaf group-hover:text-white transition-colors">
-                      <CaretRight weight="bold" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="py-20 text-center bg-white rounded-2xl border border-ink/5">
-            <MapTrifold size={48} className="mx-auto text-muted mb-4 opacity-50" />
-            <h3 className="text-xl font-bold text-ink mb-2">ยังไม่มีเส้นทางแนะนำในขณะนี้</h3>
-            <p className="text-muted">กำลังเตรียมเส้นทางท่องเที่ยวใหม่ๆ สำหรับคุณ โปรดติดตาม</p>
-          </div>
-        )}
-      </div>
-      
-      {/* SITE FOOTER */}
+          {routeState.loadError ? (
+            <div className="mt-6">
+              <PublicErrorState
+                title="โหลดเส้นทางท่องเที่ยวไม่สำเร็จ"
+                description="ระบบยังตรวจสอบเส้นทางที่เผยแพร่ไม่ได้ในขณะนี้ กรุณาลองโหลดอีกครั้ง"
+                action={<PublicButton href="/routes">ลองโหลดอีกครั้ง</PublicButton>}
+              />
+            </div>
+          ) : routes.length > 0 ? (
+            <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {routes.map((route, index) => (
+                <PublicRouteCard key={route.slug} route={route} priority={index === 0} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6">
+              <PublicEmptyState
+                title="กำลังเตรียมเส้นทางแนะนำ"
+                description="เมื่อทีมงานเผยแพร่เส้นทางที่มีจุดแวะครบถ้วน รายการจะปรากฏที่หน้านี้"
+                action={<PublicButton href="/attractions" variant="secondary">ดูสถานที่ท่องเที่ยว</PublicButton>}
+              />
+            </div>
+          )}
+        </section>
+      </PublicPageFrame>
       <SiteFooter />
     </div>
   );

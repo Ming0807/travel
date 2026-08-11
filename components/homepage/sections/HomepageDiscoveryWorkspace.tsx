@@ -18,6 +18,7 @@ import type { AttractionCard } from "@/types/tourism";
 type HomepageDiscoveryWorkspaceProps = {
   attractions?: AttractionCard[];
   routes?: PublicRouteCard[];
+  routesUnavailable?: boolean;
 };
 
 const PLANNING_LINKS = [
@@ -34,6 +35,7 @@ function hasCoordinates(attraction: AttractionCard) {
 export function HomepageDiscoveryWorkspace({
   attractions = [],
   routes = [],
+  routesUnavailable = false,
 }: HomepageDiscoveryWorkspaceProps) {
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const categories = useMemo(
@@ -180,7 +182,11 @@ export function HomepageDiscoveryWorkspace({
                 ))}
               </div>
             ) : (
-              <p className="p-4 text-xs leading-5 text-muted">เส้นทางที่เผยแพร่แล้วจะแสดงที่นี่</p>
+              <p className="p-4 text-xs leading-5 text-muted">
+                {routesUnavailable
+                  ? "ยังโหลดเส้นทางแนะนำไม่ได้ในขณะนี้ เปิดหน้ารวมเพื่อลองอีกครั้ง"
+                  : "เส้นทางที่เผยแพร่แล้วจะแสดงที่นี่"}
+              </p>
             )}
           </section>
         </aside>

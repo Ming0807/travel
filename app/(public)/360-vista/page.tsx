@@ -1,145 +1,82 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowSquareOut, Compass } from "@phosphor-icons/react/dist/ssr";
+import { Compass, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { PublicButton } from "@/components/public/PublicButton";
+import { PublicPageFrame } from "@/components/public/PublicPageFrame";
+import { PublicErrorState } from "@/components/public/PublicStates";
+import { PublicVistaGrid } from "@/components/vista/PublicVistaGrid";
 import { VISTA_360_EXTERNAL_URL } from "@/constants/product";
+import { listPublicVirtualTours } from "@/lib/repositories/public-content.repository";
+import { safeExternalTourUrl } from "@/lib/routes/public-route";
 
-const places = [
-  {
-    name: "Yala City 360° Virtual Tour",
-    description: "สำรวจยะลาแบบ 360 องศา สัมผัสบรรยากาศสถานที่สำคัญในเมืองยะลา ไม่ว่าจะเป็นมัสยิดกลาง ตลาดนัดมะพร้าว สะพานดำ และสถานที่ท่องเที่ยวอื่นๆ เสมือนจริง",
-    province: "ยะลา",
-    spots: ["มัสยิดกลางยะลา", "ตลาดนัดมะพร้าว", "สะพานดำ", "จุดชมวิวใจกลางเมือง"],
-  },
-];
+export const revalidate = 60;
 
-export const metadata = {
-  title: "360° Virtual Tour | Southern Border Explorer",
-  description: "สำรวจสถานที่ท่องเที่ยวในพื้นที่ชายแดนใต้แบบ 360 องศา เสมือนจริง ผ่านระบบ 360 Vista",
+export const metadata: Metadata = {
+  title: "ทัวร์เสมือนจริง 360° ในยะลา",
+  description: "เปิดสื่อพาโนรามาและทัวร์เสมือนจริง 360° ที่เชื่อมกับสถานที่ท่องเที่ยวซึ่งเผยแพร่แล้วในจังหวัดยะลา",
 };
 
-export default function Vista360Page() {
+export default async function Vista360Page() {
+  const tourState = await listPublicVirtualTours(12)
+    .then((items) => ({ items, loadError: false }))
+    .catch(() => ({ items: [], loadError: true }));
+  const items = tourState.items;
+  const externalProviderUrl = safeExternalTourUrl(VISTA_360_EXTERNAL_URL);
+
   return (
-    <main className="bg-background min-h-screen text-ink">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-24 pb-20">
-        
-        {/* Breadcrumb */}
-        <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-          <Link href="/" className="hover:text-coral transition-colors">หน้าแรก</Link>
-          <span>/</span>
-          <span className="text-ink">ภาพจำลองเสมือนจริง 360 องศา</span>
-        </div>
+    <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
+      <PublicPageFrame variant="listing" className="pb-16 pt-8 sm:pt-10">
+        <nav aria-label="เส้นทางนำทาง" className="flex items-center gap-2 text-sm text-black/65">
+          <Link href="/" className="hover:text-[var(--public-teal)]">หน้าแรก</Link>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page" className="font-semibold text-[var(--public-ink)]">ทัวร์เสมือนจริง 360°</span>
+        </nav>
 
-        {/* Hero Section */}
-        <div className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-16 items-start mb-16">
-          <div className="lg:w-1/2 pt-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-blue-100 text-blue-700 px-4 py-1.5 text-xs font-bold mb-6">
-              <Compass size={14} weight="fill" />
-              ระบบภายนอก - เชื่อมต่อกับ 360 Vista
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-ink mb-6 leading-tight">
-              360° <span className="text-coral">Virtual Tour</span>
-              <br />ยะลา
-            </h1>
-            <p className="text-muted leading-relaxed text-base md:text-lg max-w-lg mb-8">
-              สัมผัสประสบการณ์เสมือนจริงในการท่องเที่ยวจังหวัดยะลา 
-              ผ่านระบบ 360 Vista — โปรเจกต์ระบบภาพเสมือนจริงของสถานที่ท่องเที่ยว 
-              ที่จะพาคุณไปชมบรรยากาศสถานที่สำคัญแบบ 360 องศา
+        <header className="mt-7 grid gap-6 border-b border-black/10 pb-7 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div>
+            <p className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--public-coral-strong)]">
+              <Compass size={19} weight="fill" aria-hidden="true" />
+              สำรวจก่อนออกเดินทาง
             </p>
-            <a
-              href={VISTA_360_EXTERNAL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 bg-coral text-white px-8 py-4 rounded-full text-sm font-bold shadow-md hover:bg-coral/90 transition-all hover:shadow-md"
-            >
-              <Compass size={22} weight="fill" />
-              เปิด 360 Vista
-              <ArrowSquareOut size={18} weight="bold" />
-            </a>
+            <h1 className="mt-3 max-w-4xl text-3xl font-bold leading-tight text-balance sm:text-4xl lg:text-5xl">
+              ทัวร์เสมือนจริง 360° ในยะลา
+            </h1>
+            <p className="mt-4 max-w-[70ch] text-base leading-7 text-black/65 sm:text-lg">
+              รายการด้านล่างมาจากสื่อที่ผู้ดูแลเผยแพร่กับสถานที่จริง หากเป็นผู้ให้บริการภายนอก ระบบจะแจ้งให้ทราบก่อนเปิดลิงก์
+            </p>
           </div>
-
-          {/* Preview Card */}
-          <div className="lg:w-1/2 w-full">
-            <a
-              href={VISTA_360_EXTERNAL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group block relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-md border border-ink/5 bg-[#EAF2F0]"
-            >
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,#EAF2F0_0%,#F8EDE7_58%,#173F37_100%)] transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:28px_28px]" />
-              <div className="absolute inset-8 rounded-xl border border-white/60 bg-white/25 backdrop-blur-sm" />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/40 group-hover:scale-110 transition-transform duration-300">
-                  <Compass size={36} className="text-white" weight="fill" />
-                </div>
-              </div>
-              <div className="absolute bottom-6 left-6 right-6 text-white">
-                <p className="text-lg font-bold mb-1">คลิกเพื่อเปิด 360° Virtual Tour</p>
-                <p className="text-sm text-white/80">Yala City — ยะลา</p>
-              </div>
-            </a>
+          <div className="border border-black/10 bg-white p-4">
+            <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-[var(--public-teal)]">
+              <ShieldCheck size={20} weight="fill" className="mt-0.5 shrink-0" aria-hidden="true" />
+              เราไม่ส่งชื่อ โปรไฟล์ หรือรหัสนักท่องเที่ยวไปกับลิงก์ 360° ภายนอก
+            </p>
           </div>
-        </div>
+        </header>
 
-        {/* Info Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl p-8 border border-ink/5">
-              <h2 className="text-2xl font-black text-ink mb-6">เกี่ยวกับ 360 Vista</h2>
-              <div className="space-y-4 text-muted leading-relaxed">
-                <p>
-                  <strong className="text-ink">360 Vista</strong> เป็นโปรเจกต์ระบบภาพเสมือนจริง 
-                  (Virtual Tour) ของสถานที่ท่องเที่ยวในพื้นที่จังหวัดชายแดนใต้ 
-                  โดยพัฒนาโดยทีมงานอีกกลุ่มหนึ่ง ซึ่งระบบของเรา (Southern Border Explorer) 
-                  ได้เชื่อมโยงข้อมูลเพื่อให้นักท่องเที่ยวสามารถเข้าถึงประสบการณ์เสมือนจริงได้
-                </p>
-                <p>
-                  เมื่อผู้ใช้คลิกเข้าไปที่ 360 Vista จะสามารถ:
-                </p>
-                <ul className="list-disc pl-5 space-y-2">
-                  <li>ชมบรรยากาศสถานที่ท่องเที่ยวแบบ 360 องศา</li>
-                  <li>เลือกสถานที่ต่างๆ ในจังหวัดยะลา</li>
-                  <li>สัมผัสประสบการณ์เสมือนจริงผ่านมุมมองรอบทิศทาง</li>
-                </ul>
-              </div>
-            </div>
+        <section aria-labelledby="vista-list-heading" className="mt-10">
+          <div className="border-b border-black/10 pb-4">
+            <h2 id="vista-list-heading" className="text-2xl font-bold">ประสบการณ์ที่พร้อมใช้งาน</h2>
+            <p className="mt-1 text-sm leading-6 text-black/65">
+              {items.length > 0
+                ? `พบ ${items.length.toLocaleString("th-TH")} สถานที่จากข้อมูลที่เผยแพร่แล้ว`
+                : "ยังไม่มีสื่อ 360° จาก CMS ที่พร้อมเผยแพร่"}
+            </p>
           </div>
-
-          <div className="bg-white rounded-2xl p-8 border border-ink/5">
-            <h3 className="font-black text-ink text-lg mb-4">สถานที่ใน 360 Vista</h3>
-            <div className="space-y-3">
-              {places[0].spots.map((spot, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-coral" />
-                  <span className="text-sm font-semibold text-ink">{spot}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 pt-6 border-t border-ink/5">
-              <p className="text-xs text-muted">
-                ระบบ 360 Vista เป็นระบบภายนอกที่พัฒนาโดยโปรเจกต์อื่น 
-                ระบบของเราทำหน้าที่เชื่อมโยงและนำทางไปยังระบบดังกล่าวเท่านั้น
-              </p>
-            </div>
+          <div className="mt-6">
+            {tourState.loadError ? (
+              <PublicErrorState
+                title="โหลดรายการ 360° ไม่สำเร็จ"
+                description="ระบบยังตรวจสอบสื่อที่เผยแพร่ไม่ได้ในขณะนี้ ข้อมูลจึงไม่ถูกแสดงเป็นรายการว่าง"
+                action={<PublicButton href="/360-vista">ลองโหลดอีกครั้ง</PublicButton>}
+              />
+            ) : (
+              <PublicVistaGrid items={items} externalProviderUrl={externalProviderUrl} />
+            )}
           </div>
-        </div>
-
-        {/* CTA */}
-        <div className="text-center">
-          <a
-            href={VISTA_360_EXTERNAL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 bg-ink text-white px-10 py-5 rounded-full text-base font-bold shadow-md hover:bg-[#073F37] transition-all hover:shadow-md"
-          >
-            <Compass size={24} weight="fill" />
-            เปิด 360 Vista — Yala City Virtual Tour
-            <ArrowSquareOut size={20} weight="bold" />
-          </a>
-        </div>
-      </div>
+        </section>
+      </PublicPageFrame>
       <SiteFooter />
-    </main>
+    </div>
   );
 }

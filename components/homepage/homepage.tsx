@@ -55,19 +55,26 @@ export async function Homepage() {
   const featuredSlugs = featuredAttractionsSetting.slugs ?? [];
   const featuredRouteSlugs = routesSettings.slugs ?? [];
 
-  const [attractions, stories, routes] = await Promise.all([
+  const routePromise = featuredRouteSlugs.length > 0
+    ? listPublicRoutes(routeLimit, featuredRouteSlugs)
+    : listPublicRoutes(routeLimit);
+  const [attractions, stories, routeState] = await Promise.all([
     listPublicAttractionCards(8, { featuredSlugs }),
     listPublicStories({ limit: storiesLimit }),
-    featuredRouteSlugs.length > 0
-      ? listPublicRoutes(routeLimit, featuredRouteSlugs)
-      : listPublicRoutes(routeLimit),
+    routePromise
+      .then((items) => ({ items, unavailable: false }))
+      .catch(() => ({ items: [], unavailable: true })),
   ]);
 
   return (
     <>
       <HomepageHero {...heroSettings} />
       <HomepageQuickActions />
-      <HomepageDiscoveryWorkspace attractions={attractions} routes={routes} />
+      <HomepageDiscoveryWorkspace
+        attractions={attractions}
+        routes={routeState.items}
+        routesUnavailable={routeState.unavailable}
+      />
       <HomepageHowItWorks {...howItWorksSettings} />
       <HomepageStories
         stories={stories}
