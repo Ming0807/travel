@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { RestaurantDiscoveryCard } from "@/components/hospitality/HospitalityDiscoveryCard";
+import { HospitalityFeaturedResult } from "@/components/hospitality/HospitalityFeaturedResult";
 import { PublicButton } from "@/components/public/PublicButton";
 import { PublicCtaBand } from "@/components/public/PublicCtaBand";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
@@ -14,6 +15,8 @@ import {
   RestaurantFilterBar,
 } from "@/components/restaurants/RestaurantFilterBar";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
+import { selectFeaturedHospitality } from "@/lib/hospitality/featured-result";
+import { restaurantFoodTypeLabel } from "@/lib/hospitality/labels";
 import {
   listPublicRestaurantPage,
   PUBLIC_HOSPITALITY_MAX_PAGE,
@@ -144,6 +147,10 @@ export default async function RestaurantsPage({
     "ค้นหาร้านอาหารท้องถิ่นและเลือกมื้อที่เหมาะกับแผนเดินทางของคุณ",
   );
   const hasFilters = Boolean(query || foodType || province);
+  const featuredRestaurant = page === 1 ? selectFeaturedHospitality(restaurantPage.items) : null;
+  const standardRestaurants = featuredRestaurant
+    ? restaurantPage.items.filter((restaurant) => restaurant.slug !== featuredRestaurant.slug)
+    : restaurantPage.items;
 
   return (
     <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
@@ -196,15 +203,32 @@ export default async function RestaurantsPage({
             </div>
           ) : (
             <>
-              <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {restaurantPage.items.map((restaurant, index) => (
-                  <RestaurantDiscoveryCard
-                    key={restaurant.slug}
-                    restaurant={restaurant}
-                    priority={index === 0}
+              {featuredRestaurant && featuredRestaurant.imageUrl ? (
+                <div className="mt-6">
+                  <HospitalityFeaturedResult
+                    href={`/restaurants/${featuredRestaurant.slug}`}
+                    label="ร้านอาหารแนะนำ"
+                    name={featuredRestaurant.name}
+                    province={featuredRestaurant.province}
+                    category={restaurantFoodTypeLabel(featuredRestaurant.foodType)}
+                    description={featuredRestaurant.description}
+                    imageUrl={featuredRestaurant.imageUrl}
+                    imageAlt={featuredRestaurant.imageAlt}
+                    actionLabel="ดูข้อมูลร้านอาหาร"
                   />
-                ))}
-              </div>
+                </div>
+              ) : null}
+              {standardRestaurants.length > 0 ? (
+                <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {standardRestaurants.map((restaurant, index) => (
+                    <RestaurantDiscoveryCard
+                      key={restaurant.slug}
+                      restaurant={restaurant}
+                      priority={!featuredRestaurant && index === 0}
+                    />
+                  ))}
+                </div>
+              ) : null}
               <PublicPagination
                 page={restaurantPage.page}
                 pageCount={restaurantPage.pageCount}

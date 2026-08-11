@@ -183,6 +183,12 @@ Rules:
   and any shortlist action bar.
 - `/360-vista` identifies external providers and explains the privacy boundary
   before opening a new tab.
+- Restaurant and accommodation directories translate controlled type codes to
+  Thai-first labels, keep unknown values visible as a truthful fallback, and
+  expose every currently supported type in the server-side filter.
+- Hospitality cards separate image, title, and explicit detail actions so
+  keyboard and touch users can predict what each target opens. A featured card
+  is allowed only when its managed image exists.
 
 Leaderboard and profile pages must also distinguish availability states. A
 privacy migration or service failure is not an empty leaderboard. A missing

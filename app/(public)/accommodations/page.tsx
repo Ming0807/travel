@@ -5,6 +5,7 @@ import {
   AccommodationFilterBar,
 } from "@/components/accommodations/AccommodationFilterBar";
 import { AccommodationDiscoveryCard } from "@/components/hospitality/HospitalityDiscoveryCard";
+import { HospitalityFeaturedResult } from "@/components/hospitality/HospitalityFeaturedResult";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicButton } from "@/components/public/PublicButton";
 import { PublicCtaBand } from "@/components/public/PublicCtaBand";
@@ -14,6 +15,8 @@ import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicSt
 import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
 import { PublicDirectoryToolbar } from "@/components/public/directory/PublicDirectoryToolbar";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
+import { selectFeaturedHospitality } from "@/lib/hospitality/featured-result";
+import { accommodationTypeLabel } from "@/lib/hospitality/labels";
 import {
   listPublicAccommodationPage,
   PUBLIC_HOSPITALITY_MAX_PAGE,
@@ -144,6 +147,10 @@ export default async function AccommodationsPage({
     "เปรียบเทียบประเภทและช่วงราคาจากข้อมูลที่ผู้ดูแลเผยแพร่",
   );
   const hasFilters = Boolean(query || accommodationType || province);
+  const featuredAccommodation = page === 1 ? selectFeaturedHospitality(accommodationPage.items) : null;
+  const standardAccommodations = featuredAccommodation
+    ? accommodationPage.items.filter((accommodation) => accommodation.slug !== featuredAccommodation.slug)
+    : accommodationPage.items;
 
   return (
     <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
@@ -196,15 +203,34 @@ export default async function AccommodationsPage({
             </div>
           ) : (
             <>
-              <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {accommodationPage.items.map((accommodation, index) => (
-                  <AccommodationDiscoveryCard
-                    key={accommodation.slug}
-                    accommodation={accommodation}
-                    priority={index === 0}
+              {featuredAccommodation && featuredAccommodation.imageUrl ? (
+                <div className="mt-6">
+                  <HospitalityFeaturedResult
+                    href={`/accommodations/${featuredAccommodation.slug}`}
+                    label="ที่พักแนะนำ"
+                    name={featuredAccommodation.name}
+                    province={featuredAccommodation.province}
+                    category={accommodationTypeLabel(featuredAccommodation.accommodationType)}
+                    description={featuredAccommodation.description}
+                    imageUrl={featuredAccommodation.imageUrl}
+                    imageAlt={featuredAccommodation.imageAlt}
+                    actionLabel="ดูข้อมูลที่พัก"
+                    detail={featuredAccommodation.priceRange || "ยังไม่ระบุช่วงราคา"}
+                    detailLabel="ช่วงราคา"
                   />
-                ))}
-              </div>
+                </div>
+              ) : null}
+              {standardAccommodations.length > 0 ? (
+                <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {standardAccommodations.map((accommodation, index) => (
+                    <AccommodationDiscoveryCard
+                      key={accommodation.slug}
+                      accommodation={accommodation}
+                      priority={!featuredAccommodation && index === 0}
+                    />
+                  ))}
+                </div>
+              ) : null}
               <PublicPagination
                 page={accommodationPage.page}
                 pageCount={accommodationPage.pageCount}

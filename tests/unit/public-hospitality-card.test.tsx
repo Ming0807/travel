@@ -21,11 +21,16 @@ describe("hospitality discovery cards", () => {
       />,
     );
 
-    expect(screen.getByRole("link", { name: /Local Kitchen/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Local Kitchen" })).toHaveAttribute(
       "href",
       "/restaurants/local-kitchen",
     );
-    expect(screen.getByText("Malay")).toBeInTheDocument();
+    expect(screen.getByText("อาหารมลายู")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "ยังไม่มีภาพของLocal Kitchen" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ดูข้อมูลร้านอาหาร/ })).toHaveAttribute(
+      "href",
+      "/restaurants/local-kitchen",
+    );
     expect(screen.queryByText(/rating|review/i)).not.toBeInTheDocument();
   });
 
@@ -45,7 +50,11 @@ describe("hospitality discovery cards", () => {
       />,
     );
 
-    expect(screen.getByText("Hotel")).toBeInTheDocument();
+    expect(screen.getByText("โรงแรม")).toBeInTheDocument();
     expect(screen.getByText("1,000-1,500 THB")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ดูข้อมูลที่พัก/ })).toHaveAttribute(
+      "href",
+      "/accommodations/city-hotel",
+    );
   });
 });

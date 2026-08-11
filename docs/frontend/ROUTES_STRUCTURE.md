@@ -159,6 +159,13 @@ claims, and amenities must not render unless their production data contracts
 exist. Listing covers use managed media only; stale third-party stock URLs are
 not public card media.
 
+On the first result page, the first restaurant or accommodation with valid
+managed media may be shown as the featured result. Records without media stay
+in the standard grid and use a named missing-image state. Controlled food and
+accommodation type values are presented with Thai-first labels while the raw
+database value remains unchanged for server filtering. Mobile filters use a
+single disclosure control and preserve the same GET query contract as desktop.
+
 ## 2.7 Public Hospitality Details
 
 `/restaurants/[slug]` and `/accommodations/[slug]` expose only explicit public

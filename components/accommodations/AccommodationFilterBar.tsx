@@ -5,14 +5,10 @@ import {
   PublicSearchField,
   PublicSelect,
 } from "@/components/public/PublicFields";
+import { PublicFilterDisclosure } from "@/components/public/directory/PublicFilterDisclosure";
+import { ACCOMMODATION_TYPE_OPTIONS } from "@/lib/hospitality/labels";
 
-export const ACCOMMODATION_TYPES = [
-  { value: "Hotel", label: "โรงแรม" },
-  { value: "Resort", label: "รีสอร์ต" },
-  { value: "Homestay", label: "โฮมสเตย์" },
-  { value: "Guesthouse", label: "เกสต์เฮาส์" },
-  { value: "Hostel", label: "โฮสเทล" },
-];
+export const ACCOMMODATION_TYPES = ACCOMMODATION_TYPE_OPTIONS;
 
 type AccommodationFilterBarProps = {
   query?: string;
@@ -30,11 +26,8 @@ export function AccommodationFilterBar({
   const hasFilters = Boolean(query || accommodationType || province);
 
   return (
-    <form
-      action="/accommodations"
-      method="GET"
-      className="rounded-[var(--public-radius-panel)] border border-black/10 bg-white p-4 sm:p-5"
-    >
+    <PublicFilterDisclosure id="accommodation-filter-form" openLabel="เปิดตัวกรองที่พัก" closeLabel="ซ่อนตัวกรองที่พัก">
+      <form action="/accommodations" method="GET">
       <PublicFields className={provinces.length > 1
         ? "lg:grid-cols-[minmax(0,1.5fr)_minmax(190px,0.65fr)_minmax(190px,0.65fr)_auto] lg:items-end"
         : "md:grid-cols-[minmax(0,1.5fr)_minmax(210px,0.75fr)_auto] md:items-end"}
@@ -75,6 +68,7 @@ export function AccommodationFilterBar({
           ) : null}
         </div>
       </PublicFields>
-    </form>
+      </form>
+    </PublicFilterDisclosure>
   );
 }

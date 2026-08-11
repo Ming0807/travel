@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { MapPin } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
+import { PublicMissingImage } from "@/components/public/directory/PublicMissingImage";
 import type {
   PublicAccommodationCard,
   PublicRestaurantCard,
 } from "@/lib/repositories/public-content.repository";
+import { accommodationTypeLabel, restaurantFoodTypeLabel } from "@/lib/hospitality/labels";
 
 type HospitalityCardProps = {
   href: string;
@@ -14,8 +16,9 @@ type HospitalityCardProps = {
   description: string;
   imageUrl: string | null;
   imageAlt: string;
-  fallbackLabel: string;
   detail?: string | null;
+  detailLabel?: string;
+  actionLabel: string;
   priority?: boolean;
 };
 
@@ -27,26 +30,29 @@ function HospitalityCard({
   description,
   imageUrl,
   imageAlt,
-  fallbackLabel,
   detail,
+  detailLabel,
+  actionLabel,
   priority = false,
 }: HospitalityCardProps) {
   return (
-    <article className="h-full">
-      <Link
-        href={href}
-        className="group flex h-full flex-col rounded-[var(--public-radius-panel)] border border-black/10 bg-white p-2 transition-colors hover:border-[var(--public-teal)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]"
-      >
-        <PublicMediaFrame
-          src={imageUrl}
-          alt={imageAlt}
-          aspect="landscape"
-          sizes="(max-width: 767px) calc(100vw - 2rem), (max-width: 1279px) calc(50vw - 2.5rem), 384px"
-          priority={priority}
-          fallbackLabel={fallbackLabel}
-        />
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden border border-black/10 bg-white transition-colors hover:border-[var(--public-teal)]">
+      <Link href={href} className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]">
+        {imageUrl ? (
+          <PublicMediaFrame
+            src={imageUrl}
+            alt={imageAlt}
+            aspect="landscape"
+            sizes="(max-width: 767px) calc(100vw - 2rem), (max-width: 1279px) calc(50vw - 3rem), 360px"
+            priority={priority}
+            fallbackLabel={`ยังไม่มีภาพของ${name}`}
+          />
+        ) : (
+          <PublicMissingImage label={name} />
+        )}
+      </Link>
 
-        <div className="flex flex-1 flex-col px-2 pb-3 pt-4 sm:px-3">
+        <div className="flex flex-1 flex-col p-4 sm:p-5">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold">
             <span className="inline-flex items-center gap-1 text-[var(--public-teal)]">
               <MapPin size={16} weight="fill" aria-hidden="true" />
@@ -55,8 +61,10 @@ function HospitalityCard({
             <span className="text-black/65">{category}</span>
           </div>
 
-          <h2 className="mt-3 text-xl font-bold leading-8 text-[var(--public-ink)] group-hover:text-[var(--public-teal)]">
-            {name}
+          <h2 className="mt-3 text-xl font-bold leading-8 text-[var(--public-ink)]">
+            <Link href={href} className="hover:text-[var(--public-teal)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]">
+              {name}
+            </Link>
           </h2>
           {description ? (
             <p className="mt-2 line-clamp-2 text-base leading-7 text-black/65">
@@ -64,12 +72,19 @@ function HospitalityCard({
             </p>
           ) : null}
           {detail ? (
-            <p className="mt-auto pt-4 text-sm font-semibold text-[var(--public-coral-strong)]">
+            <p className="mt-4 border-t border-black/10 pt-4 text-sm font-semibold text-[var(--public-ink)]">
+              {detailLabel ? <span className="text-black/55">{detailLabel}: </span> : null}
               {detail}
             </p>
           ) : null}
+
+          <Link
+            href={href}
+            className="mt-auto inline-flex min-h-11 items-center justify-between gap-2 pt-5 text-sm font-bold text-[var(--public-coral-strong)] hover:text-[var(--public-teal)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]"
+          >
+            {actionLabel} <ArrowRight aria-hidden="true" size={17} weight="bold" />
+          </Link>
         </div>
-      </Link>
     </article>
   );
 }
@@ -86,11 +101,11 @@ export function RestaurantDiscoveryCard({
       href={`/restaurants/${restaurant.slug}`}
       name={restaurant.name}
       province={restaurant.province}
-      category={restaurant.foodType}
+      category={restaurantFoodTypeLabel(restaurant.foodType)}
       description={restaurant.description}
       imageUrl={restaurant.imageUrl}
       imageAlt={restaurant.imageAlt}
-      fallbackLabel="ร้านนี้ยังไม่มีรูปภาพที่เผยแพร่"
+      actionLabel="ดูข้อมูลร้านอาหาร"
       priority={priority}
     />
   );
@@ -108,12 +123,13 @@ export function AccommodationDiscoveryCard({
       href={`/accommodations/${accommodation.slug}`}
       name={accommodation.name}
       province={accommodation.province}
-      category={accommodation.accommodationType}
+      category={accommodationTypeLabel(accommodation.accommodationType)}
       description={accommodation.description}
       imageUrl={accommodation.imageUrl}
       imageAlt={accommodation.imageAlt}
-      fallbackLabel="ที่พักนี้ยังไม่มีรูปภาพที่เผยแพร่"
       detail={accommodation.priceRange || "ยังไม่ระบุช่วงราคา"}
+      detailLabel="ช่วงราคา"
+      actionLabel="ดูข้อมูลที่พัก"
       priority={priority}
     />
   );

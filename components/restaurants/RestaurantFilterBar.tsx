@@ -5,15 +5,10 @@ import {
   PublicSearchField,
   PublicSelect,
 } from "@/components/public/PublicFields";
+import { PublicFilterDisclosure } from "@/components/public/directory/PublicFilterDisclosure";
+import { RESTAURANT_FOOD_TYPE_OPTIONS } from "@/lib/hospitality/labels";
 
-export const RESTAURANT_FOOD_TYPES = [
-  { value: "Thai", label: "อาหารไทย" },
-  { value: "Malay", label: "อาหารมลายู" },
-  { value: "International", label: "อาหารนานาชาติ" },
-  { value: "Coffee", label: "คาเฟ่และกาแฟ" },
-  { value: "Bakery", label: "เบเกอรี่" },
-  { value: "Halal", label: "อาหารฮาลาล" },
-];
+export const RESTAURANT_FOOD_TYPES = RESTAURANT_FOOD_TYPE_OPTIONS;
 
 type RestaurantFilterBarProps = {
   query?: string;
@@ -31,11 +26,8 @@ export function RestaurantFilterBar({
   const hasFilters = Boolean(query || foodType || province);
 
   return (
-    <form
-      action="/restaurants"
-      method="GET"
-      className="rounded-[var(--public-radius-panel)] border border-black/10 bg-white p-4 sm:p-5"
-    >
+    <PublicFilterDisclosure id="restaurant-filter-form" openLabel="เปิดตัวกรองร้านอาหาร" closeLabel="ซ่อนตัวกรองร้านอาหาร">
+      <form action="/restaurants" method="GET">
       <PublicFields className={provinces.length > 1
         ? "lg:grid-cols-[minmax(0,1.5fr)_minmax(190px,0.65fr)_minmax(190px,0.65fr)_auto] lg:items-end"
         : "md:grid-cols-[minmax(0,1.5fr)_minmax(210px,0.75fr)_auto] md:items-end"}
@@ -76,6 +68,7 @@ export function RestaurantFilterBar({
           ) : null}
         </div>
       </PublicFields>
-    </form>
+      </form>
+    </PublicFilterDisclosure>
   );
 }

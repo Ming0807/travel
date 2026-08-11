@@ -19,6 +19,9 @@ describe("public hospitality filters", () => {
     expect(screen.getByRole("combobox", { name: /ประเภท/ })).toHaveAttribute("name", "foodType");
     expect(container.querySelector('select[name="province"]')).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ค้นหา/ })).toHaveAttribute("type", "submit");
+    expect(screen.getByRole("option", { name: "อาหารไทย-จีน" })).toHaveValue("Thai-Chinese");
+    expect(screen.getByRole("option", { name: "สตรีทฟู้ด" })).toHaveValue("Street Food");
+    expect(screen.getByRole("option", { name: "ติ่มซำ" })).toHaveValue("Dimsum");
   });
 
   it("submits accommodation search and type together without client navigation", () => {
