@@ -27,6 +27,10 @@ describe("LeaderboardContent", () => {
 
     expect(screen.getByText("ยังไม่ติด Top 100")).toBeInTheDocument();
     expect(screen.queryByText("#0")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ค้นหาสถานที่เพื่อเริ่มสะสมคะแนน" })).toHaveAttribute(
+      "href",
+      "/attractions",
+    );
   });
 
   it("explains private participation without leaking a name", () => {

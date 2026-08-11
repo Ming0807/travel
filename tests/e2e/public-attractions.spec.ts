@@ -11,24 +11,24 @@ test.describe("Public attractions navigation", () => {
   });
 
   test("renders a truthful attraction detail with usable gallery controls", async ({ page }) => {
-    await page.goto("/attractions/yala-beef-soup");
+    await page.goto("/attractions/aiyerweng-skywalk");
 
-    await expect(page.getByRole("heading", { level: 1, name: "ซุปเนื้อยะลา สาขาดั้งเดิม" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "สกายวอล์คอัยเยอร์เวง" })).toBeVisible();
     await expect(page.getByText("Population")).toHaveCount(0);
     await expect(page.getByText("Currency")).toHaveCount(0);
     await expect(page.getByText("+18 Photos")).toHaveCount(0);
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/attractions\/yala-beef-soup$/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/attractions\/aiyerweng-skywalk$/);
 
-    const galleryButton = page.getByRole("button", { name: "ดูรูปทั้งหมด 2 รูป" });
+    const galleryButton = page.getByRole("button", { name: "ดูรูปทั้งหมด 1 รูป" });
     await expect(galleryButton).toBeVisible();
     await galleryButton.click();
-    await expect(page.getByRole("dialog", { name: /รูปภาพ ซุปเนื้อยะลา/ })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: /รูปภาพ สกายวอล์คอัยเยอร์เวง/ })).toBeVisible();
     await page.getByRole("button", { name: "ปิดรูปภาพ" }).click();
   });
 
   test("keeps the attraction detail within a mobile viewport", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/attractions/yala-beef-soup");
+    await page.goto("/attractions/aiyerweng-skywalk");
 
     await expect(page.getByLabel("ไปยังส่วนของหน้านี้")).toBeVisible();
     const dimensions = await page.evaluate(() => ({

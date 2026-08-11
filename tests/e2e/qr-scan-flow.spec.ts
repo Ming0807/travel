@@ -49,8 +49,9 @@ test.describe("QR Scan Flow", () => {
     await expect(page.getByRole("heading", { name: "ไม่พบ QR Code นี้" })).toBeVisible();
     await expect(page.locator("p", { hasText: "รหัสเช็กอินไม่ถูกต้อง หรือไม่มีอยู่ในระบบ" })).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "ลองใหม่อีกครั้ง" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "กลับสู่หน้าหลัก" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "ตรวจสอบ QR อีกครั้ง" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "กลับหน้าหลัก" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "แจ้งปัญหา QR" })).toBeVisible();
   });
 
   test("admin leaderboard route does not return a 404 during QR admin navigation", async ({ page }) => {

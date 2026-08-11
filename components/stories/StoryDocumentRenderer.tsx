@@ -167,7 +167,8 @@ export function LegacyStoryContent({
   content: string | null;
   fallback: string;
 }) {
-  const source = content?.trim() || fallback.trim();
+  const source = (content?.trim() || fallback.trim())
+    .replace(/\\r\\n|\\n|\\r/g, "\n");
   const withoutExecutableBlocks = source.replace(
     /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
     " ",

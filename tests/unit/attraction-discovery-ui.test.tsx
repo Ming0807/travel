@@ -72,6 +72,22 @@ describe("launchSafeAttractionsCopy", () => {
     ).toBe("เที่ยว ยะลา ให้ลึกกว่าเดิม");
   });
 
+  it("replaces the legacy English demo banner without rejecting intentional English copy", () => {
+    expect(
+      launchSafeAttractionsCopy(
+        "Sea of Mist Aiyerweng",
+        "วางแผนต่อจากสถานที่ที่เลือก",
+      ),
+    ).toBe("วางแผนต่อจากสถานที่ที่เลือก");
+
+    expect(
+      launchSafeAttractionsCopy(
+        "Yala walking routes for international visitors",
+        "ดูเส้นทางแนะนำ",
+      ),
+    ).toBe("Yala walking routes for international visitors");
+  });
+
   it("keeps the attraction banner action internal and avoids a no-op self link", () => {
     expect(safeAttractionsBannerHref("/stories")).toBe("/stories");
     expect(safeAttractionsBannerHref("/attractions")).toBe("/routes");

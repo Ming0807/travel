@@ -57,6 +57,20 @@ describe("public story presentation", () => {
     expect(container.innerHTML).not.toContain("onerror");
   });
 
+  it("turns escaped legacy newlines into readable paragraphs", () => {
+    const { container } = render(
+      <LegacyStoryContent
+        content={"ย่อหน้าแรก\\n\\nย่อหน้าที่สอง"}
+        fallback=""
+      />,
+    );
+
+    expect(screen.getByText("ย่อหน้าแรก")).toBeInTheDocument();
+    expect(screen.getByText("ย่อหน้าที่สอง")).toBeInTheDocument();
+    expect(container.querySelectorAll("p")).toHaveLength(2);
+    expect(container).not.toHaveTextContent("\\n");
+  });
+
   it("does not crash on an out-of-range legacy numeric entity", () => {
     expect(() =>
       render(

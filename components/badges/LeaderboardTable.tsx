@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Medal, SealCheck, Star, Trophy } from "@phosphor-icons/react";
 import type { LeaderboardEntry } from "@/types/tourism";
 
@@ -58,6 +59,12 @@ export function LeaderboardTable({ entries, period, onPeriodChange }: Leaderboar
             <Trophy size={28} className="mx-auto text-ink/25" aria-hidden="true" />
             <p className="mt-3 text-sm font-bold text-ink">ยังไม่มีอันดับในช่วงเวลานี้</p>
             <p className="mt-1 text-xs leading-5 text-muted">อันดับจะแสดงเฉพาะนักเดินทางที่เลือกเข้าร่วมแบบสาธารณะ</p>
+            <Link
+              href="/attractions"
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-ink px-4 text-sm font-bold text-white transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+            >
+              ค้นหาสถานที่เพื่อเริ่มสะสมคะแนน
+            </Link>
           </div>
         ) : (
           <ol className="divide-y divide-ink/10">
