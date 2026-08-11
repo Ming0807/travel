@@ -228,10 +228,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Modify: `app/(public)/accommodations/[slug]/page.tsx`
 - Test: `tests/unit/public-hospitality-detail.test.tsx`
 
-- [ ] Add failing tests for conditional phone/map/site links, no fake booking action, nearby attraction links, and media fallbacks.
-- [ ] Implement distinct food/stay detail layouts using shared media/action/state primitives.
-- [ ] Add metadata, loading/not-found behavior, and responsive image policy.
-- [ ] Run targeted tests, Impeccable, and screenshots; commit as `feat: redesign hospitality details`.
+- [x] Add failing tests for conditional phone/map/site links, no fake booking action, nearby attraction links, and media fallbacks.
+- [x] Implement distinct food/stay detail layouts using shared media/action/state primitives.
+- [x] Add metadata, loading/not-found behavior, and responsive image policy.
+- [x] Run targeted tests, Impeccable, and screenshots; commit as `feat: redesign hospitality details`.
 
 ### Task 9: Make routes and 360 experiences truthful
 

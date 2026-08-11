@@ -8,6 +8,7 @@ const aspectClasses = {
   square: "aspect-square",
   portrait: "aspect-[3/4]",
   wide: "aspect-[16/7]",
+  detail: "aspect-[4/3] sm:aspect-[2/1] lg:aspect-[16/7]",
 } as const;
 
 export interface PublicMediaFrameProps {

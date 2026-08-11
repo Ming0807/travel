@@ -30,7 +30,10 @@ vi.mock("@/lib/supabase/service-role", () => ({
   createSupabaseServiceRoleClient: vi.fn().mockReturnValue(supabaseClient),
 }));
 
-import { getPublicAttractionReviews } from "@/lib/repositories/public-review.repository";
+import {
+  getPublicAttractionReviews,
+  getPublicRestaurantReviews,
+} from "@/lib/repositories/public-review.repository";
 
 describe("getPublicAttractionReviews", () => {
   beforeEach(() => {
@@ -81,5 +84,21 @@ describe("getPublicAttractionReviews", () => {
       stats: null,
       items: [],
     });
+  });
+
+  it("returns restaurant reviews without selecting tourist identity data", async () => {
+    statsQuery.is.mockResolvedValue({ data: [{ rating: 5 }], error: null });
+    itemsQuery.limit.mockResolvedValue({
+      data: [{ review_id: 7, rating: 5, title: "Great food", comment: null, created_at: "2026-08-10T08:00:00Z" }],
+      error: null,
+    });
+
+    const result = await getPublicRestaurantReviews(9);
+
+    expect(statsQuery.eq).toHaveBeenCalledWith("restaurant_id", 9);
+    expect(itemsQuery.eq).toHaveBeenCalledWith("restaurant_id", 9);
+    expect(itemsQuery.select).toHaveBeenCalledWith(expect.not.stringContaining("tourists"));
+    expect(result.items[0]).toMatchObject({ authorLabel: "นักเดินทาง", rating: 5 });
+    expect(result.items[0]).not.toHaveProperty("touristName");
   });
 });

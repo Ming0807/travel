@@ -139,6 +139,22 @@ claims, and amenities must not render unless their production data contracts
 exist. Listing covers use managed media only; stale third-party stock URLs are
 not public card media.
 
+## 2.7 Public Hospitality Details
+
+`/restaurants/[slug]` and `/accommodations/[slug]` expose only explicit public
+DTO fields. A missing record renders the route-specific missing state; a query
+failure must reach the error boundary instead of becoming a false 404.
+
+Related attractions are curated, published, active, and limited to provinces
+that are currently live. Hero media uses the managed full image with responsive
+sizes, while related cards prefer managed thumbnails. Failed media renders an
+honest Thai fallback.
+
+Contact actions are conditional. Phone links require a valid telephone value,
+website links require HTTPS, and map links require valid coordinates. The
+public pages do not invent booking, availability, amenities, or contact actions
+that are not represented by production data.
+
 Admin users need precise record management.
 
 ---

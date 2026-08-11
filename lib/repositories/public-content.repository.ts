@@ -203,6 +203,11 @@ function publicManagedImage(
   return imageUrlFromStoragePath(thumbnailByStoragePath?.get(storagePath) ?? storagePath);
 }
 
+function publicImageAlt(row: DbRecord, fallback: string): string {
+  const media = publicAttractionMedia(row);
+  return text(media?.alt_text_th, text(media?.alt_text_en, fallback));
+}
+
 function publicManagedStoryImage(row: DbRecord): string | null {
   return publicManagedImage(row);
 }
@@ -1218,7 +1223,16 @@ export type PublicHospitalityPage<T> = {
   state: PublicHospitalityListingState;
 };
 
+type PublicHospitalityRelatedAttraction = {
+  slug: string;
+  name: string;
+  distanceText: string | null;
+  imageUrl: string | null;
+  imageAlt: string;
+};
+
 export type PublicRestaurantDetail = {
+  restaurantId: number;
   slug: string;
   name: string;
   province: string;
@@ -1231,14 +1245,43 @@ export type PublicRestaurantDetail = {
   latitude: number | null;
   longitude: number | null;
   imageUrl: string | null;
+  imageAlt: string;
   isPublished: boolean;
-  nearbyAttractions: {
-    slug: string;
-    name: string;
-    distanceText: string | null;
-    imageUrl: string | null;
-  }[];
+  nearbyAttractions: PublicHospitalityRelatedAttraction[];
 };
+
+function mapPublicHospitalityAttractions(
+  links: DbRecord[],
+  liveProvinceIds: Set<number>,
+  thumbnailByStoragePath: Map<string, string>,
+): PublicHospitalityRelatedAttraction[] {
+  return links
+    .slice()
+    .sort((left, right) => numberValue(left.display_order) - numberValue(right.display_order))
+    .flatMap((link) => {
+      const attraction = one(link.attractions);
+      const slug = text(attraction?.slug);
+      const provinceId = numberValue(attraction?.province_id);
+      if (
+        !attraction
+        || !slug
+        || attraction.is_published !== true
+        || attraction.is_active === false
+        || !liveProvinceIds.has(provinceId)
+      ) {
+        return [];
+      }
+
+      const name = text(attraction.name_th, text(attraction.name_en, slug));
+      return [{
+        slug,
+        name,
+        distanceText: text(link.distance_text) || null,
+        imageUrl: publicManagedImage(attraction, thumbnailByStoragePath),
+        imageAlt: publicImageAlt(attraction, name),
+      }];
+    });
+}
 
 function mapRestaurantRow(
   row: DbRecord,
@@ -1406,16 +1449,34 @@ export async function getPublicRestaurantDetail(slug: string): Promise<PublicRes
     const { data, error } = await supabase
       .from("restaurants")
       .select(`
-        *,
+        restaurant_id,
+        province_id,
+        slug,
+        name_th,
+        name_en,
+        description_th,
+        description_en,
+        food_type,
+        latitude,
+        longitude,
+        address_text,
+        opening_hours,
+        contact_info,
+        is_published,
+        is_active,
         provinces (province_name_th, province_name_en, province_id),
         content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order),
         restaurant_attractions (
+          display_order,
           distance_text,
           attractions (
             slug,
             name_th,
             name_en,
-            content_media (storage_path, is_cover, is_active, lifecycle_status)
+            province_id,
+            is_published,
+            is_active,
+            content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
           )
         )
       `)
@@ -1425,48 +1486,44 @@ export async function getPublicRestaurantDetail(slug: string): Promise<PublicRes
       .in("province_id", liveProvinceIds)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) throw new Error("PUBLIC_RESTAURANT_DETAIL_FAILED");
+    if (!data) return null;
 
     const row = data as DbRecord & { restaurant_attractions?: DbRecord[] };
     const province = one(row.provinces);
-    const nearbyAttractions = Array.isArray(row.restaurant_attractions)
-      ? (row.restaurant_attractions as DbRecord[]).map(link => {
-          const attraction = one(link.attractions);
-          return {
-            slug: text(attraction?.slug),
-            name: text(attraction?.name_th, text(attraction?.name_en, "")),
-            distanceText: text(link.distance_text) || null,
-            imageUrl: (() => {
-              if (!attraction) return null;
-              const media = Array.isArray(attraction.content_media)
-                ? (attraction.content_media as DbRecord[])
-                : [];
-              const publicReadyMedia = media.filter((item) => item.is_active !== false && text(item.lifecycle_status, "active") === "active");
-              const cover = publicReadyMedia.find(m => m.is_cover === true) ?? publicReadyMedia[0];
-              return imageUrlFromStoragePath(cover?.storage_path);
-            })()
-          };
-        })
+    const relatedRows = Array.isArray(row.restaurant_attractions)
+      ? (row.restaurant_attractions as DbRecord[])
+          .map((link) => one(link.attractions))
+          .filter((attraction): attraction is DbRecord => Boolean(attraction))
       : [];
+    const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, relatedRows);
+    const nearbyAttractions = mapPublicHospitalityAttractions(
+      Array.isArray(row.restaurant_attractions) ? row.restaurant_attractions as DbRecord[] : [],
+      new Set(liveProvinceIds),
+      thumbnailByStoragePath,
+    );
+    const name = text(row.name_th, text(row.name_en, slug));
 
     return {
+      restaurantId: numberValue(row.restaurant_id),
       slug: text(row.slug, slug),
-      name: text(row.name_th, text(row.name_en, slug)),
+      name,
       province: text(province?.province_name_th, text(province?.province_name_en, "")),
       provinceId: Number(province?.province_id ?? 0),
-      foodType: row.food_type as string | null,
-      description: text(row.description_th, row.description_en as string | undefined) || null,
-      addressText: (row.address_text as string | undefined) ?? null,
-      openingHours: (row.opening_hours as string | undefined) ?? null,
-      contactInfo: (row.contact_info as string | undefined) ?? null,
-      latitude: row.latitude === null ? null : Number(row.latitude),
-      longitude: row.longitude === null ? null : Number(row.longitude),
-      imageUrl: publicImage(row as DbRecord),
+      foodType: text(row.food_type) || null,
+      description: text(row.description_th, text(row.description_en)) || null,
+      addressText: text(row.address_text) || null,
+      openingHours: text(row.opening_hours) || null,
+      contactInfo: text(row.contact_info) || null,
+      latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
+      longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),
+      imageUrl: publicManagedImage(row),
+      imageAlt: publicImageAlt(row, name),
       isPublished: Boolean(row.is_published),
-      nearbyAttractions
+      nearbyAttractions,
     };
   } catch {
-    return null;
+    throw new Error("PUBLIC_RESTAURANT_DETAIL_FAILED");
   }
 }
 
@@ -1623,6 +1680,7 @@ export async function listPublicAccommodations(options?: { search?: string; prov
 }
 
 export type PublicAccommodationDetail = {
+  accommodationId: number;
   slug: string;
   name: string;
   province: string;
@@ -1635,13 +1693,9 @@ export type PublicAccommodationDetail = {
   latitude: number | null;
   longitude: number | null;
   imageUrl: string | null;
+  imageAlt: string;
   isPublished: boolean;
-  nearbyAttractions: {
-    slug: string;
-    name: string;
-    distanceText: string | null;
-    imageUrl: string | null;
-  }[];
+  nearbyAttractions: PublicHospitalityRelatedAttraction[];
 };
 
 export async function getPublicAccommodationDetail(slug: string): Promise<PublicAccommodationDetail | null> {
@@ -1652,15 +1706,33 @@ export async function getPublicAccommodationDetail(slug: string): Promise<Public
     const { data, error } = await supabase
       .from("accommodations")
       .select(`
-        *,
+        accommodation_id,
+        province_id,
+        slug,
+        name_th,
+        name_en,
+        description_th,
+        description_en,
+        accommodation_type,
+        latitude,
+        longitude,
+        address_text,
+        contact_info,
+        price_range,
+        is_published,
+        is_active,
         provinces (province_name_th, province_name_en, province_id),
         content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order),
         attraction_related_accommodations (
+          display_order,
           attractions (
             slug,
             name_th,
             name_en,
-            content_media (storage_path, is_cover, is_active, lifecycle_status)
+            province_id,
+            is_published,
+            is_active,
+            content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
           )
         )
       `)
@@ -1670,48 +1742,46 @@ export async function getPublicAccommodationDetail(slug: string): Promise<Public
       .in("province_id", liveProvinceIds)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) throw new Error("PUBLIC_ACCOMMODATION_DETAIL_FAILED");
+    if (!data) return null;
 
     const row = data as DbRecord & { attraction_related_accommodations?: DbRecord[] };
     const province = one(row.provinces);
-    const nearbyAttractions = Array.isArray(row.attraction_related_accommodations)
-      ? (row.attraction_related_accommodations as DbRecord[]).map(link => {
-          const attraction = one(link.attractions);
-          return {
-            slug: text(attraction?.slug),
-            name: text(attraction?.name_th, text(attraction?.name_en, "")),
-            distanceText: null, // this table doesn't have distance text currently
-            imageUrl: (() => {
-              if (!attraction) return null;
-              const media = Array.isArray(attraction.content_media)
-                ? (attraction.content_media as DbRecord[])
-                : [];
-              const publicReadyMedia = media.filter((item) => item.is_active !== false && text(item.lifecycle_status, "active") === "active");
-              const cover = publicReadyMedia.find(m => m.is_cover === true) ?? publicReadyMedia[0];
-              return imageUrlFromStoragePath(cover?.storage_path);
-            })()
-          };
-        })
+    const relatedRows = Array.isArray(row.attraction_related_accommodations)
+      ? (row.attraction_related_accommodations as DbRecord[])
+          .map((link) => one(link.attractions))
+          .filter((attraction): attraction is DbRecord => Boolean(attraction))
       : [];
+    const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, relatedRows);
+    const nearbyAttractions = mapPublicHospitalityAttractions(
+      Array.isArray(row.attraction_related_accommodations)
+        ? row.attraction_related_accommodations as DbRecord[]
+        : [],
+      new Set(liveProvinceIds),
+      thumbnailByStoragePath,
+    );
+    const name = text(row.name_th, text(row.name_en, slug));
 
     return {
+      accommodationId: numberValue(row.accommodation_id),
       slug: text(row.slug, slug),
-      name: text(row.name_th, text(row.name_en, slug)),
+      name,
       province: text(province?.province_name_th, text(province?.province_name_en, "")),
       provinceId: Number(province?.province_id ?? 0),
-      accommodationType: row.accommodation_type as string | null,
-      description: text(row.description_th, row.description_en as string | undefined) || null,
-      addressText: (row.address_text as string | undefined) ?? null,
-      contactInfo: (row.contact_info as string | undefined) ?? null,
-      priceRange: (row.price_range as string | undefined) ?? null,
-      latitude: row.latitude === null ? null : Number(row.latitude),
-      longitude: row.longitude === null ? null : Number(row.longitude),
-      imageUrl: publicImage(row as DbRecord),
+      accommodationType: text(row.accommodation_type) || null,
+      description: text(row.description_th, text(row.description_en)) || null,
+      addressText: text(row.address_text) || null,
+      contactInfo: text(row.contact_info) || null,
+      priceRange: text(row.price_range) || null,
+      latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
+      longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),
+      imageUrl: publicManagedImage(row),
+      imageAlt: publicImageAlt(row, name),
       isPublished: Boolean(row.is_published),
-      nearbyAttractions
+      nearbyAttractions,
     };
   } catch {
-    return null;
+    throw new Error("PUBLIC_ACCOMMODATION_DETAIL_FAILED");
   }
 }
 

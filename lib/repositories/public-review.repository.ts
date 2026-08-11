@@ -34,22 +34,23 @@ function buildReviewStats(rows: Array<{ rating: unknown }>): ReviewStats {
   };
 }
 
-export async function getPublicAttractionReviews(
-  attractionId: number,
+async function getPublicReviews(
+  scopeColumn: "attraction_id" | "restaurant_id",
+  scopeId: number,
   limit = 20,
 ): Promise<PublicReviewBundle> {
   const supabase = createSupabaseServiceRoleClient();
   const statsQuery = supabase
     .from("reviews")
     .select("rating")
-    .eq("attraction_id", attractionId)
+    .eq(scopeColumn, scopeId)
     .eq("is_approved", true)
     .eq("is_published", true)
     .is("deleted_at", null);
   const itemsQuery = supabase
     .from("reviews")
     .select("review_id, rating, title, comment, created_at")
-    .eq("attraction_id", attractionId)
+    .eq(scopeColumn, scopeId)
     .eq("is_approved", true)
     .eq("is_published", true)
     .is("deleted_at", null);
@@ -80,4 +81,18 @@ export async function getPublicAttractionReviews(
       createdAt: String(row.created_at),
     })),
   };
+}
+
+export async function getPublicAttractionReviews(
+  attractionId: number,
+  limit = 20,
+): Promise<PublicReviewBundle> {
+  return getPublicReviews("attraction_id", attractionId, limit);
+}
+
+export async function getPublicRestaurantReviews(
+  restaurantId: number,
+  limit = 20,
+): Promise<PublicReviewBundle> {
+  return getPublicReviews("restaurant_id", restaurantId, limit);
 }
