@@ -57,7 +57,7 @@ Traveler story     submitted -> moderation -> approved/rejected -> published -> 
 
 Both workflows share Media Library, taxonomy, search, public rendering, and recommendation infrastructure. They must remain separate queues in admin UX.
 
-The editor will use hybrid structured content: TipTap JSON is the canonical editable document and sanitized HTML remains available for rendering and compatibility with existing stories. Public recommendations begin with curated relationships and deterministic relevance scoring. They must not be labeled AI.
+The editor uses hybrid structured content: TipTap JSON is the canonical editable document. Public rendering never injects legacy HTML; older HTML records are reduced to inert plain text until an editor explicitly saves them as structured content. Public recommendations begin with curated relationships and deterministic relevance scoring. They must not be labeled AI.
 
 Recommendation behavior is deliberately explainable:
 
@@ -127,7 +127,11 @@ Implemented baseline:
 - Story status changes use the domain workflow actions rather than a direct status dropdown. Server-side readiness and permission checks remain authoritative.
 - The editor sidebar derives a Thai publish-readiness checklist and document outline from saved structured content, and shows revision history only when the current admin has `story.revision_read`.
 - Inline story images are selected from Media Library, require accessible alt text, and store the media asset UUID plus normalized storage path instead of an external URL. Canonical document version 2 supports this managed reference while version 1 numeric media references remain readable during migration.
-- The public Story Hub uses URL-backed server filters and 12-item pagination for search, province, topic, and author type. Story detail prefers canonical structured content, generates a table of contents, preserves image dimensions and captions, and falls back to the legacy sanitized HTML path only when structured content is unavailable.
+- The public Story Hub uses URL-backed server filters and 12-item pagination for title/excerpt search, province, topic, and author type. Its leading layout is labeled "latest" because the query is publication-date ordered; it is not presented as editorially featured.
+- Story detail prefers canonical structured content, generates desktop and mobile table-of-contents controls only when headings exist, preserves image dimensions and captions, and renders legacy HTML as inert plain text when structured content is unavailable.
+- Public traveler stories use a neutral author label instead of exposing `tourists.display_name`; a future explicit public-author consent field is required before a personal display name may appear.
+- Story query failures reach a retryable error boundary instead of being reported as a missing story. Published and updated timestamps remain distinct.
+- Related destinations come from active `attraction_related_stories` records whose attractions are public in the live destination scope. Shared destination keys now contribute to explainable related-story ranking.
 - Public Story metadata includes canonical, Open Graph, Twitter, and Article JSON-LD fields. Legacy external cover URLs are intentionally excluded from public DTOs so editors must replace stock or unmanaged images through Media Library.
 - Main CMS image surfaces use saved media paths or missing-image states instead of Unsplash fallback images.
 - Public attraction detail sections now use a shared, content-aware section model so public navigation and the attraction visual editor use the same order and localized labels.

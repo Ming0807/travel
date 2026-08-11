@@ -16,6 +16,7 @@ describe("homepage editorial sections", () => {
       imageAlt: "",
       date: "10 สิงหาคม 2569",
       publishedAt: "2026-08-10T00:00:00.000Z",
+      updatedAt: null,
       authorType: "admin",
       authorName: "กองบรรณาธิการ",
       readingMinutes: 3,

@@ -266,9 +266,9 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/public-stories.test.tsx`
 - Test: `tests/e2e/public-stories.spec.ts`
 
-- [ ] Write failing tests for true featured/latest semantics, filters, author type, update/source information, sanitization boundary, and 70ch reading width.
-- [ ] Implement newsroom and reading layouts with real related-content/destination links.
-- [ ] Add desktop TOC and mobile disclosure only when headings exist.
+- [x] Write failing tests for true featured/latest semantics, filters, author type, update/source information, sanitization boundary, and 70ch reading width.
+- [x] Implement newsroom and reading layouts with real related-content/destination links.
+- [x] Add desktop TOC and mobile disclosure only when headings exist.
 - [ ] Run targeted gates and commit as `feat: redesign public story discovery and reading`.
 
 ### Task 11: Make story contribution expectations and moderation explicit

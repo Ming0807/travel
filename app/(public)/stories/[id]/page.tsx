@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { cache } from "react";
 import {
   ArrowLeft,
   Clock,
@@ -12,12 +13,15 @@ import { PublicStoryCard } from "@/components/stories/PublicStoryCard";
 import { StoryDetailEngagement } from "@/components/stories/StoryEngagementTracker";
 import {
   StoryDocumentRenderer,
+  LegacyStoryContent,
   buildStoryTableOfContents,
 } from "@/components/stories/StoryDocumentRenderer";
 import { StoryShareActions } from "@/components/stories/StoryShareActions";
 import { getPublicStory } from "@/lib/repositories/public-content.repository";
 
 export const revalidate = 60;
+
+const loadPublicStory = cache(getPublicStory);
 
 function publicUrl(path: string): string {
   return new URL(
@@ -32,7 +36,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const data = await getPublicStory(id);
+  const data = await loadPublicStory(id);
 
   if (!data) {
     return {
@@ -60,6 +64,7 @@ export async function generateMetadata({
       title,
       description,
       publishedTime: story.publishedAt ?? undefined,
+      modifiedTime: story.updatedAt ?? undefined,
       images,
     },
     twitter: {
@@ -71,12 +76,11 @@ export async function generateMetadata({
   };
 }
 
-function storyParagraphs(content: string | null, excerpt: string) {
-  const source = content?.trim() || excerpt.trim();
-  return source
-    .split(/\n{2,}|\r?\n/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+function formatStoryDate(value: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("th-TH", { dateStyle: "medium" }).format(date);
 }
 
 export default async function StoryDetailsPage({
@@ -85,24 +89,28 @@ export default async function StoryDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await getPublicStory(id);
+  const data = await loadPublicStory(id);
   if (!data) notFound();
 
-  const { story, relatedStories } = data;
+  const { story, relatedStories, relatedDestinations } = data;
   const engagementEnabled = Boolean(
     process.env.CONTENT_ENGAGEMENT_HASH_SECRET,
   );
-  const paragraphs = storyParagraphs(story.content, story.excerpt);
   const toc = story.contentDocument
     ? buildStoryTableOfContents(story.contentDocument)
     : [];
   const storyUrl = publicUrl(`/stories/${story.id}`);
+  const updatedDate = formatStoryDate(story.updatedAt);
+  const showUpdatedDate = Boolean(
+    updatedDate && story.updatedAt !== story.publishedAt,
+  );
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: story.title,
     description: story.seoDescription || story.excerpt,
     datePublished: story.publishedAt,
+    dateModified: story.updatedAt ?? story.publishedAt,
     inLanguage: story.primaryLanguage,
     image: story.imageUrl ? [publicUrl(story.imageUrl)] : undefined,
     mainEntityOfPage: storyUrl,
@@ -116,26 +124,26 @@ export default async function StoryDetailsPage({
   };
 
   return (
-    <div className="min-h-screen bg-white text-ink">
+    <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <main className="mx-auto max-w-6xl px-4 pb-24 pt-10 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 pb-24 pt-8 sm:px-6 lg:px-8 lg:pt-10">
         <nav aria-label="เส้นทางนำทาง">
           <Link
             href="/stories"
-            className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-700 hover:text-[#075E54]"
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-black/65 hover:text-[var(--public-coral)]"
           >
             <ArrowLeft size={17} weight="bold" aria-hidden="true" />
             กลับไปหน้ารวมเรื่องราว
           </Link>
         </nav>
 
-        <header className="mx-auto max-w-4xl pb-10 pt-10 text-center">
-          <div className="flex flex-wrap items-center justify-center gap-2 text-sm font-bold text-slate-600">
+        <header className="mx-auto max-w-5xl border-b border-black/10 pb-9 pt-8">
+          <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-black/60">
             <span>{story.category}</span>
             {story.province ? (
               <>
@@ -144,16 +152,16 @@ export default async function StoryDetailsPage({
               </>
             ) : null}
           </div>
-          <h1 className="mt-5 text-4xl font-black leading-tight text-balance sm:text-5xl lg:text-6xl">
+          <h1 className="mt-5 max-w-4xl text-4xl font-black leading-tight text-balance sm:text-5xl lg:text-6xl">
             {story.title}
           </h1>
           {story.excerpt ? (
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-700 text-pretty sm:text-lg">
+            <p className="mt-6 max-w-[70ch] text-base leading-7 text-black/70 text-pretty sm:text-lg">
               {story.excerpt}
             </p>
           ) : null}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-sm text-slate-600">
-            <span className="font-bold text-slate-800">{story.authorName}</span>
+          <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-3 text-sm text-black/60">
+            <span className="font-bold text-[var(--public-ink)]">{story.authorName}</span>
             <span aria-hidden="true">•</span>
             <span>
               {story.authorType === "tourist"
@@ -162,17 +170,20 @@ export default async function StoryDetailsPage({
             </span>
             <span aria-hidden="true">•</span>
             <span>{story.date}</span>
+            {showUpdatedDate ? (
+              <span>อัปเดต {updatedDate}</span>
+            ) : null}
             <span className="inline-flex items-center gap-1">
               <Clock size={15} weight="bold" aria-hidden="true" />
               อ่านประมาณ {story.readingMinutes} นาที
             </span>
           </div>
-          <div className="mt-7 flex justify-center">
+          <div className="mt-7 flex">
             <StoryShareActions title={story.title} url={storyUrl} />
           </div>
         </header>
 
-        <div className="relative mx-auto aspect-[16/9] w-full max-w-5xl overflow-hidden rounded-lg bg-slate-100">
+        <div className="relative mx-auto mt-8 aspect-[16/9] w-full max-w-5xl overflow-hidden rounded-[var(--public-radius-panel)] bg-white">
           {story.imageUrl ? (
             <Image
               src={story.imageUrl}
@@ -191,7 +202,7 @@ export default async function StoryDetailsPage({
         </div>
 
         {toc.length > 0 ? (
-          <details className="mx-auto mt-10 max-w-3xl rounded-lg border border-slate-200 bg-slate-50 p-4 lg:hidden">
+          <details className="mx-auto mt-8 max-w-3xl rounded-[var(--public-radius-panel)] border border-black/10 bg-white p-4 lg:hidden">
             <summary className="min-h-11 cursor-pointer py-2 text-sm font-black text-slate-900">
               สารบัญเนื้อหา
             </summary>
@@ -200,7 +211,7 @@ export default async function StoryDetailsPage({
                 <li key={item.id} className={item.level > 2 ? "pl-4" : ""}>
                   <a
                     href={`#${item.id}`}
-                    className="inline-flex min-h-10 items-center text-sm font-semibold text-slate-700 hover:text-[#075E54]"
+                    className="inline-flex min-h-10 items-center text-sm font-semibold text-black/70 hover:text-[var(--public-coral)]"
                   >
                     {item.label}
                   </a>
@@ -219,7 +230,7 @@ export default async function StoryDetailsPage({
                   <li key={item.id} className={item.level > 2 ? "pl-3" : ""}>
                     <a
                       href={`#${item.id}`}
-                      className="block py-2 text-sm font-semibold leading-5 text-slate-600 hover:text-[#075E54]"
+                      className="block py-2 text-sm font-semibold leading-5 text-black/60 hover:text-[var(--public-coral)]"
                     >
                       {item.label}
                     </a>
@@ -234,27 +245,8 @@ export default async function StoryDetailsPage({
           <article>
             {story.contentDocument ? (
               <StoryDocumentRenderer document={story.contentDocument} />
-            ) : story.content &&
-              story.authorType !== "tourist" &&
-              /<[a-z][\s\S]*>/i.test(story.content) ? (
-              <div
-                className="prose prose-lg mx-auto max-w-[70ch] prose-headings:font-black prose-headings:text-ink prose-p:leading-8 prose-p:text-slate-800 prose-a:font-bold prose-a:text-[#075E54] prose-a:underline prose-a:underline-offset-4 md:prose-xl"
-                dangerouslySetInnerHTML={{ __html: story.content }}
-              />
             ) : (
-              <div className="prose prose-lg mx-auto max-w-[70ch] prose-p:leading-8 prose-p:text-slate-800 md:prose-xl">
-                {paragraphs.length > 0 ? (
-                  paragraphs.map((paragraph, index) => (
-                    <p key={`${index}-${paragraph.slice(0, 24)}`}>
-                      {paragraph}
-                    </p>
-                  ))
-                ) : (
-                  <div className="border-y border-slate-200 py-12 text-center text-sm font-semibold text-slate-600">
-                    เรื่องนี้ยังไม่มีเนื้อหาฉบับเต็ม
-                  </div>
-                )}
-              </div>
+              <LegacyStoryContent content={story.content} fallback={story.excerpt} />
             )}
             {engagementEnabled && story.storyId > 0 ? (
               <StoryDetailEngagement
@@ -266,20 +258,57 @@ export default async function StoryDetailsPage({
           <span className="hidden lg:block" />
         </div>
 
+        {relatedDestinations.length > 0 ? (
+          <section className="mx-auto mt-20 max-w-5xl border-t border-black/10 pt-10" aria-labelledby="story-destinations-heading">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 id="story-destinations-heading" className="text-2xl font-black sm:text-3xl">
+                  สถานที่ที่กล่าวถึงในเรื่องนี้
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-black/60">
+                  เปิดข้อมูลสถานที่จริงในระบบเพื่อวางแผนเดินทางต่อ
+                </p>
+              </div>
+              <Link href="/attractions" className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--public-teal)] hover:text-[var(--public-coral)]">
+                ดูสถานที่ทั้งหมด
+              </Link>
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedDestinations.map((destination) => (
+                <Link
+                  key={destination.slug}
+                  href={`/attractions/${destination.slug}`}
+                  className="group grid grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-[var(--public-radius-panel)] border border-black/10 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--public-coral)]"
+                >
+                  <div className="relative min-h-28 bg-slate-100">
+                    {destination.imageUrl ? (
+                      <Image src={destination.imageUrl} alt={destination.imageAlt} fill sizes="112px" className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+                    ) : null}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-black leading-6 group-hover:text-[var(--public-coral)]">{destination.name}</h3>
+                    {destination.province ? <p className="mt-2 text-xs font-semibold text-black/55">{destination.province}</p> : null}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {relatedStories.length > 0 ? (
-          <section className="mt-24 border-t border-slate-200 pt-12">
+          <section className="mx-auto mt-20 max-w-5xl border-t border-black/10 pt-10">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <h2 className="text-3xl font-black text-slate-900">
                   เรื่องที่น่าอ่านต่อ
                 </h2>
-                <p className="mt-2 text-sm text-slate-600">
-                  เนื้อหาเพิ่มเติมจากจังหวัดชายแดนใต้
+                <p className="mt-2 text-sm text-black/60">
+                  คัดจากความสัมพันธ์ของหัวข้อ สถานที่ และลำดับที่ทีมเนื้อหากำหนด
                 </p>
               </div>
               <Link
                 href="/stories"
-                className="inline-flex min-h-11 items-center text-sm font-bold text-[#075E54] underline underline-offset-4"
+                className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--public-teal)] hover:text-[var(--public-coral)]"
               >
                 ดูเรื่องราวทั้งหมด
               </Link>

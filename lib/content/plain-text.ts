@@ -1,3 +1,9 @@
+function decodeEntityCodePoint(value: number): string {
+  return Number.isInteger(value) && value >= 0 && value <= 0x10ffff
+    ? String.fromCodePoint(value)
+    : "�";
+}
+
 export function plainTextFromLegacyHtml(value: string): string {
   let result = value;
   for (let pass = 0; pass < 3; pass += 1) {
@@ -9,10 +15,10 @@ export function plainTextFromLegacyHtml(value: string): string {
       .replace(/&quot;/gi, '"')
       .replace(/&#x27;/gi, "'")
       .replace(/&#(\d+);/g, (_match, digits: string) =>
-        String.fromCodePoint(Number(digits))
+        decodeEntityCodePoint(Number(digits))
       )
       .replace(/&#x([\da-f]+);/gi, (_match, hex: string) =>
-        String.fromCodePoint(Number.parseInt(hex, 16))
+        decodeEntityCodePoint(Number.parseInt(hex, 16))
       );
     if (result === previous) break;
   }

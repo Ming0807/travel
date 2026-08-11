@@ -11,6 +11,7 @@ const story: PublicStoryCardData = {
   province: "ปัตตานี",
   date: "20 ก.ค. 2569",
   publishedAt: "2026-07-20T00:00:00.000Z",
+  updatedAt: null,
   imageUrl: null,
   imageAlt: "ภาพประกอบเรื่องราว",
   category: "วัฒนธรรม",

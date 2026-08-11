@@ -5,6 +5,7 @@ import type {
   StoryDocumentNode,
 } from "@/lib/content/story-document";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
 
 export type StoryTableOfContentsItem = {
   id: string;
@@ -155,6 +156,39 @@ export function StoryDocumentRenderer({
   return (
     <div className="prose prose-lg mx-auto max-w-[70ch] prose-headings:scroll-mt-28 prose-headings:font-black prose-headings:text-ink prose-p:leading-8 prose-p:text-slate-800 prose-a:font-bold prose-a:text-[#075E54] prose-a:underline prose-a:underline-offset-4 prose-blockquote:border-slate-300 prose-blockquote:text-slate-700 md:prose-xl">
       {renderChildren(document.content, "story", headingIds)}
+    </div>
+  );
+}
+
+export function LegacyStoryContent({
+  content,
+  fallback,
+}: {
+  content: string | null;
+  fallback: string;
+}) {
+  const source = content?.trim() || fallback.trim();
+  const withoutExecutableBlocks = source.replace(
+    /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
+    " ",
+  );
+  const paragraphs = withoutExecutableBlocks
+    .split(/<\/(?:p|div|h[1-6]|li|blockquote)>|<br\b[^>]*\/?>|\n{2,}|\r?\n/gi)
+    .map((paragraph) => plainTextFromLegacyHtml(paragraph))
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="prose prose-lg mx-auto max-w-[70ch] prose-p:leading-8 prose-p:text-slate-800 md:prose-xl">
+      {paragraphs.length > 0 ? (
+        paragraphs.map((paragraph, index) => (
+          <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>
+        ))
+      ) : (
+        <div className="border-y border-slate-200 py-12 text-center text-sm font-semibold text-slate-600">
+          เรื่องนี้ยังไม่มีเนื้อหาฉบับเต็ม
+        </div>
+      )}
     </div>
   );
 }

@@ -219,6 +219,7 @@ describe("public story repository pagination", () => {
         is_published: true,
         author_type: "admin",
         published_at: "2026-07-20T00:00:00.000Z",
+        updated_at: "2026-07-21T00:00:00.000Z",
         content_media: [],
         story_topic_links: [],
       },
@@ -232,6 +233,43 @@ describe("public story repository pagination", () => {
     expect(chain.eq).toHaveBeenCalledWith("is_published", true);
     expect(result?.story.contentDocument).toEqual(
       expect.objectContaining({ version: 2 })
+    );
+    expect(result?.story.updatedAt).toBe("2026-07-21T00:00:00.000Z");
+  });
+
+  it("does not publish a tourist display name without a public-author consent field", async () => {
+    chain.range.mockResolvedValueOnce({
+      data: [
+        {
+          story_id: 22,
+          slug: "traveler-note",
+          title: "บันทึกนักเดินทาง",
+          author_type: "tourist",
+          status: "published",
+          is_published: true,
+          tourists: { display_name: "ชื่อจริงที่ไม่ควรเปิดเผย" },
+          content_media: [],
+          story_topic_links: [],
+        },
+      ],
+      error: null,
+      count: 1,
+    });
+
+    const result = await listPublicStoryPage({ page: 1, pageSize: 12 });
+
+    expect(result.items[0]?.authorName).toBe("นักเดินทาง");
+    expect(result.items[0]?.authorName).not.toContain("ชื่อจริง");
+  });
+
+  it("throws repository failures so the route error boundary can retry", async () => {
+    chain.maybeSingle.mockResolvedValueOnce({
+      data: null,
+      error: { message: "database unavailable" },
+    });
+
+    await expect(getPublicStory("service-error")).rejects.toThrow(
+      "PUBLIC_STORY_QUERY_FAILED",
     );
   });
 
@@ -279,14 +317,7 @@ describe("public story repository pagination", () => {
             author_type: "admin",
             published_at: "2026-07-18T00:00:00.000Z",
             provinces: { province_name_th: "ยะลา" },
-            content_media: [
-              {
-                storage_path: "stories/curated.webp",
-                is_cover: true,
-                is_active: true,
-                lifecycle_status: "active",
-              },
-            ],
+            content_media: [],
             story_topic_links: [],
           },
         ],

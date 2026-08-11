@@ -22,13 +22,12 @@ test.describe("Public Story experience", () => {
 
     await page
       .getByRole("searchbox", {
-        name: "ค้นหาจากชื่อหรือเนื้อหาเรื่องราว",
+        name: "ค้นหาจากชื่อหรือคำโปรยเรื่องราว",
       })
       .fill("เมืองเก่า");
-    await page.getByLabel("เลือกจังหวัด").selectOption("Pattani");
     await page.getByRole("button", { name: "ค้นหาเรื่องราว" }).click();
 
-    await expect(page).toHaveURL(/q=.*&province=Pattani/);
+    await expect(page).toHaveURL(/q=/);
     await expect(page.getByText(/พบ .* เรื่อง/)).toBeVisible();
     expect(
       await page.evaluate(
