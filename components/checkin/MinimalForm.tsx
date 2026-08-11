@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   CheckCircle,
   Compass,
@@ -75,7 +76,7 @@ export function MinimalForm({
   const consentField = initialProfile?.hasCurrentConsent ? (
     <>
       <input type="hidden" name="hasConsented" value="true" />
-      <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+      <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
         <CheckCircle aria-hidden="true" className="mt-0.5 shrink-0" size={20} weight="fill" />
         <div>
           <p className="font-bold">คุณเคยให้ความยินยอมสำหรับการใช้งานนี้แล้ว</p>
@@ -85,7 +86,7 @@ export function MinimalForm({
     </>
   ) : (
     <div>
-      <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-teal/40">
+      <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-teal/40">
         <input
           type="checkbox"
           name="hasConsented"
@@ -110,9 +111,9 @@ export function MinimalForm({
   );
 
   return (
-    <form action={formAction} className="w-full space-y-5 animate-fade-in-up delay-200">
+    <form action={formAction} className="w-full space-y-5">
       {state.message || state.errors?._form?.[0] ? (
-        <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">
+        <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">
           {state.errors?._form?.[0] ?? state.message}
         </div>
       ) : null}
@@ -152,10 +153,10 @@ export function MinimalForm({
           <button
             type="submit"
             disabled={isPending}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-ink px-5 py-3.5 text-base font-bold text-white transition-colors hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-ink px-5 py-3.5 text-base font-bold text-white transition-colors hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? <Spinner aria-hidden="true" className="animate-spin" size={20} /> : <CheckCircle aria-hidden="true" size={21} weight="bold" />}
-            {isPending ? "กำลังเตรียมขั้นตอนถัดไป..." : "ใช้ข้อมูลเดิมและดำเนินการต่อ"}
+            {isPending ? "กำลังเตรียมขั้นตอนถัดไป..." : "ใช้ข้อมูลเดิมและไปขั้นตอนรูปภาพ"}
           </button>
           <button
             type="button"
@@ -202,7 +203,7 @@ export function MinimalForm({
               defaultValue={initialProfile?.displayName ?? ""}
               placeholder="ใช้ชื่อเล่น นามแฝง หรือชื่อจริงก็ได้"
               maxLength={100}
-              className="min-h-12 w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-base text-ink outline-none transition-colors placeholder:text-slate-400 focus:border-teal focus:ring-2 focus:ring-teal/15"
+              className="min-h-12 w-full rounded-md border border-ink/15 bg-white px-4 py-3 text-base text-ink outline-none transition-colors placeholder:text-slate-500 focus:border-teal focus:ring-2 focus:ring-teal/15"
               required
             />
             <p className="text-xs leading-5 text-slate-500">ไม่จำเป็นต้องใช้ชื่อจริงตามบัตรประชาชน</p>
@@ -218,7 +219,7 @@ export function MinimalForm({
               name="originCountryId"
               aria-label="ประเทศที่เดินทางมา"
               value={countryId ?? ""}
-              className="min-h-12 w-full rounded-xl border border-ink/15 bg-white px-4 py-3 text-base text-ink outline-none transition-colors focus:border-teal focus:ring-2 focus:ring-teal/15"
+              className="min-h-12 w-full rounded-md border border-ink/15 bg-white px-4 py-3 text-base text-ink outline-none transition-colors focus:border-teal focus:ring-2 focus:ring-teal/15"
               required
               onChange={(event) => {
                 const nextCountryId = Number(event.target.value) || null;
@@ -254,7 +255,7 @@ export function MinimalForm({
               {AGE_GROUP_OPTIONS.map((age) => (
                 <label
                   key={age.value}
-                  className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-sm font-semibold text-slate-700 transition-colors has-[:checked]:border-teal has-[:checked]:bg-teal/8 has-[:checked]:text-teal has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal has-[:focus-visible]:ring-offset-2 hover:border-slate-300"
+                  className="flex min-h-12 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-2 text-center text-sm font-semibold text-slate-700 transition-colors has-[:checked]:border-teal has-[:checked]:bg-teal/8 has-[:checked]:text-teal has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal has-[:focus-visible]:ring-offset-2 hover:border-slate-300"
                 >
                   <input
                     type="radio"
@@ -281,7 +282,7 @@ export function MinimalForm({
               ] as const).map(([value, label]) => (
                 <label
                   key={value}
-                  className="flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-xs font-semibold text-slate-700 transition-colors has-[:checked]:border-teal has-[:checked]:bg-teal/8 has-[:checked]:text-teal has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal has-[:focus-visible]:ring-offset-2 hover:border-slate-300"
+                  className="flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-2 text-center text-xs font-semibold text-slate-700 transition-colors has-[:checked]:border-teal has-[:checked]:bg-teal/8 has-[:checked]:text-teal has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal has-[:focus-visible]:ring-offset-2 hover:border-slate-300"
                 >
                   <input
                     className="sr-only"
@@ -307,17 +308,25 @@ export function MinimalForm({
           <button
             type="submit"
             disabled={isPending}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-ink px-5 py-3.5 text-base font-bold text-white transition-colors hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-ink px-5 py-3.5 text-base font-bold text-white transition-colors hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? <Spinner aria-hidden="true" className="animate-spin" size={20} /> : <CheckCircle aria-hidden="true" size={21} weight="bold" />}
-            {isPending ? "กำลังบันทึกข้อมูล..." : "บันทึกและไปเลือกรูปภาพ"}
+            {isPending ? "กำลังบันทึกข้อมูล..." : "บันทึกและไปขั้นตอนรูปภาพ"}
           </button>
+          <p className="text-center text-xs leading-5 text-slate-500">
+            ขั้นตอนถัดไปเลือกข้ามรูปภาพได้ และยังสร้างใบประกาศต่อได้
+          </p>
         </>
       )}
 
-      <div className="flex items-center justify-center gap-2 text-center text-xs leading-5 text-slate-500">
+      <div className="flex items-start justify-center gap-2 text-center text-xs leading-5 text-slate-500">
         <LockKey aria-hidden="true" size={15} weight="fill" />
-        <span>ข้อมูลถูกเก็บอย่างปลอดภัยและใช้เพื่อการท่องเที่ยวในภาพรวม</span>
+        <span>
+          ใช้ข้อมูลตามวัตถุประสงค์ที่แจ้งและไม่แสดงข้อมูลส่วนบุคคลต่อสาธารณะ ดูรายละเอียดใน{" "}
+          <Link href="/privacy" className="font-bold text-teal underline underline-offset-2">
+            นโยบายความเป็นส่วนตัว
+          </Link>
+        </span>
       </div>
     </form>
   );

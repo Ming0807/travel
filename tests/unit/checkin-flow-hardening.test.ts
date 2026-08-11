@@ -532,7 +532,7 @@ describe("QR Check-in Flow Hardening", () => {
         consentVersion: "1.0",
         purposeKey: "checkin_profile_creation",
       }));
-      expect(vi.mocked(recordFunnelEvent).mock.calls.map(([event]) => event.eventName)).not.toContain("minimal_form_completed");
+      expect(vi.mocked(recordFunnelEvent).mock.calls.map(([event]) => event.eventName)).toContain("minimal_form_completed");
       expect(tableCalls().slice(0, 4)).toEqual(["tourist_identities", "tourists", "tourist_identities", "consent_records"]);
       expect(revalidatePath).toHaveBeenCalledWith("/checkin/test");
       expect(redirect).toHaveBeenCalledWith("/visit/mock-visit-id/photo");

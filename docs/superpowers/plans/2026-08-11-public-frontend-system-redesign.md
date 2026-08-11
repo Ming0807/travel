@@ -368,10 +368,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/checkin-funnel-ui.test.tsx`
 - Test: `tests/e2e/qr-scan-flow.spec.ts`
 
-- [ ] Write failing tests for benefit/duration/optionality/privacy copy, returning-tourist prefill/edit, server-recorded time, and focused shell.
-- [ ] Implement progress labels `ข้อมูลสั้น ๆ`, `รูป/ใบประกาศ`, `รับรางวัล`, `แบบสำรวจ (ไม่บังคับ)` without claiming uncompleted steps.
-- [ ] Preserve event distinction: scan, landing, visit, upload, certificate, and survey.
-- [ ] Run targeted gates and commit as `feat: clarify the QR check-in funnel`.
+- [x] Write failing tests for benefit/duration/optionality/privacy copy, returning-tourist prefill/edit, server-recorded time, and focused shell.
+- [x] Implement progress labels `ข้อมูลสั้น ๆ`, `รูป/ใบประกาศ`, `รับรางวัล`, `แบบสำรวจ (ไม่บังคับ)` without claiming uncompleted steps.
+- [x] Preserve event distinction: scan, landing, visit, upload, certificate, and survey.
+- [x] Run targeted gates and commit as `feat: clarify the QR check-in funnel`.
 
 ### Task 16: Harden camera/gallery and mobile photo UX
 

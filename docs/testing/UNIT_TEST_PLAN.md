@@ -902,7 +902,7 @@ does not use word Revenue
 Target components:
 
 ```text
-MinimalProfileForm
+MinimalForm
 SurveyForm
 PhotoUploadField
 AdminAttractionForm

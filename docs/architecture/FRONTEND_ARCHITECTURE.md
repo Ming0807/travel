@@ -80,10 +80,12 @@ src/
 ├── components/
 │   ├── ui/                     → shadcn/ui base components
 │   ├── common/                 → Shared components (header, footer, loading)
-│   ├── tourist/                → Tourist-facing components
+│   ├── checkin/                → QR check-in and certificate-entry components
 │   │   ├── CheckinLanding.tsx
-│   │   ├── PhotoUpload.tsx
+│   │   ├── CheckinProgress.tsx
+│   │   ├── PhotoUploadClient.tsx
 │   │   ├── MinimalForm.tsx
+│   ├── tourist/                → Tourist account and public journey components
 │   │   ├── CertificatePreview.tsx
 │   │   ├── SurveyForm.tsx
 │   │   └── PassportView.tsx

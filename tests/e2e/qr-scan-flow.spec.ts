@@ -9,29 +9,37 @@ test.describe("QR Scan Flow", () => {
     expect(cookies.some((cookie) => cookie.name === "sbtp_checkin_session" && cookie.httpOnly)).toBe(true);
   });
 
-  test("renders the valid QR landing contract with a start CTA", async ({ page }) => {
-    await page.route("**/checkin/demo-valid-qr", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "text/html; charset=utf-8",
-        body: `
-          <main>
-            <h1>จุดทดสอบ QR</h1>
-            <p>สถานที่ทดสอบ</p>
-            <a href="/checkin/demo-valid-qr/start">สร้างใบประกาศของฉัน</a>
-          </main>
-        `,
-      });
-    });
+  test("renders the real demo QR landing contract with a start CTA", async ({ page }) => {
+    await page.goto("/checkin/try");
 
-    await page.goto("/checkin/demo-valid-qr");
+    await expect(page).toHaveURL(/\/checkin\/(?!try)[^/]+$/);
+    await expect(page.getByRole("heading", { name: "รับใบประกาศและตราประทับดิจิทัล" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "ขั้นตอนการรับใบประกาศ" })).toBeVisible();
+    await expect(page.getByText("รูปภาพไม่บังคับ")).toBeVisible();
+    await expect(page.getByText("แบบสำรวจไม่บังคับ")).toBeVisible();
 
-    await expect(page).toHaveURL(/\/checkin\/demo-valid-qr/);
-    await expect(page.getByRole("heading", { name: "จุดทดสอบ QR" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "สร้างใบประกาศของฉัน" })).toHaveAttribute(
-      "href",
-      "/checkin/demo-valid-qr/start"
-    );
+    const startLink = page.getByRole("link", { name: "สร้างใบประกาศของฉัน" });
+    await expect(startLink).toHaveAttribute("href", /\/checkin\/[^/]+\/start$/);
+  });
+
+  test("keeps the check-in entry readable without horizontal overflow", async ({ page }) => {
+    await page.goto("/checkin/try");
+    await expect(page).toHaveURL(/\/checkin\/(?!try)[^/]+$/);
+
+    for (const viewport of [
+      { width: 360, height: 800 },
+      { width: 390, height: 844 },
+      { width: 430, height: 932 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+      await expect(page.getByRole("link", { name: "สร้างใบประกาศของฉัน" })).toBeVisible();
+      await expect(page.getByRole("navigation", { name: "ขั้นตอนการรับใบประกาศ" })).toBeVisible();
+    }
   });
 
   test("shows a Thai-first unavailable state for an invalid QR code", async ({ page }) => {

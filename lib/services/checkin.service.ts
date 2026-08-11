@@ -72,9 +72,9 @@ export type FunnelEventName =
 export async function trackCheckinFunnelEvent(
   eventName: FunnelEventName, 
   codeDetails: CheckinCodeDetails,
-  extra?: { touristId?: string; visitId?: string }
+  extra?: { touristId?: string; visitId?: string; sessionId?: string }
 ) {
-  const sessionId = await getCheckinSessionId();
+  const sessionId = extra?.sessionId ?? await getCheckinSessionId();
   await recordFunnelEvent({
     eventName,
     checkinCodeId: codeDetails.checkin_code_id,

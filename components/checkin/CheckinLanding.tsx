@@ -1,65 +1,113 @@
+import Image from "next/image";
 import Link from "next/link";
-import { CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
-import { MapPin, Certificate, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+import {
+  Camera,
+  Certificate,
+  Clock,
+  MapPin,
+  ShieldCheck,
+  Stamp,
+} from "@phosphor-icons/react/dist/ssr";
+
+import { CheckinProgress } from "@/components/checkin/CheckinProgress";
+import type { CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
 
 export function CheckinLanding({ details }: { details: CheckinCodeDetails }) {
-  const attraction = details.attraction!;
-  
+  const attraction = details.attraction;
+  const heroImage = details.photo_spot?.sample_image_url || attraction?.cover_image_url;
+  const placeName = details.photo_spot?.spot_name_th || attraction?.name_th || "สถานที่ท่องเที่ยว";
+  const provinceName = attraction?.province?.province_name_th || "ชายแดนใต้";
+
   return (
-    <div className="min-h-screen bg-background relative flex flex-col justify-center pb-12">
-      {/* Hero Background */}
-      <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-ink/90 to-background">
-        <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1528181304800-259b08848526?q=80&w=2000&auto=format&fit=crop')" }}></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background"></div>
-      </div>
-
-      <div className="relative z-10 flex flex-col items-center max-w-lg mx-auto w-full px-4 pt-20 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-        <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-mode-both">
-          {/* Attraction Context */}
-          <div className="inline-flex items-center gap-2 bg-white border border-ink/5 shadow-sm text-coral px-5 py-2 rounded-full text-sm font-bold animate-in fade-in zoom-in-95 duration-500 delay-300 fill-mode-both">
-            <MapPin weight="fill" />
-            <span>{attraction.province?.province_name_th || "สถานที่ท่องเที่ยว"}</span>
-          </div>
-          
-          <h1 className="text-4xl md:text-5xl font-black text-ink leading-tight drop-shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 fill-mode-both">
-            {details.photo_spot ? details.photo_spot.spot_name_th : attraction.name_th}
+    <main className="min-h-screen bg-white pb-24 text-ink">
+      <section
+        className="relative min-h-[18rem] overflow-hidden bg-ink sm:min-h-[22rem]"
+        aria-labelledby="checkin-place-name"
+      >
+        {heroImage ? (
+          <Image
+            src={heroImage}
+            alt={`บรรยากาศ ${placeName}`}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        ) : (
+          <Camera
+            aria-hidden="true"
+            className="absolute right-6 top-8 text-white/20"
+            size={96}
+            weight="fill"
+          />
+        )}
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative mx-auto flex min-h-[18rem] max-w-lg flex-col justify-end px-5 pb-7 pt-16 text-white sm:min-h-[22rem]">
+          <span className="mb-3 inline-flex w-fit items-center gap-2 rounded-md bg-black/60 px-3 py-2 text-xs font-bold">
+            <MapPin aria-hidden="true" size={15} weight="fill" />
+            {provinceName}
+          </span>
+          <h1 id="checkin-place-name" className="text-3xl font-black leading-tight sm:text-4xl">
+            {placeName}
           </h1>
-          
-          {attraction.short_description_th && (
-            <p className="text-ink/70 text-base leading-relaxed font-medium max-w-md mx-auto animate-in fade-in duration-700 delay-700 fill-mode-both">
-              {attraction.short_description_th}
-            </p>
-          )}
+          {details.photo_spot && attraction ? (
+            <p className="mt-2 text-sm font-semibold text-white/85">{attraction.name_th}</p>
+          ) : null}
         </div>
+      </section>
 
-        {/* Certificate Teaser Card */}
-        <div className="w-full bg-white p-8 rounded-2xl border border-ink/5 flex flex-col items-center text-center space-y-5 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-[900ms] fill-mode-both hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-          <div className="h-20 w-20 bg-cream text-coral rounded-xl flex items-center justify-center mb-2 shadow-inner animate-in zoom-in-95 duration-500 delay-[1100ms] fill-mode-both">
-            <Certificate size={40} weight="fill" />
-          </div>
+      <div className="mx-auto max-w-lg px-5 py-7">
+        <div className="flex items-start justify-between gap-5 pb-6">
           <div>
-            <h2 className="text-2xl font-black text-ink mb-2">สร้างใบประกาศดิจิทัลฟรี</h2>
-            <p className="text-sm text-muted leading-relaxed">เก็บความทรงจำการเดินทาง และสะสมตราประทับ ใช้เวลาไม่ถึง 1 นาที</p>
+            <p className="text-sm font-bold text-coral">ความทรงจำจากการเดินทาง</p>
+            <h2 className="mt-1 text-2xl font-black leading-tight text-ink">
+              รับใบประกาศและตราประทับดิจิทัล
+            </h2>
           </div>
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-teal/10 text-teal">
+            <Certificate aria-hidden="true" size={25} weight="fill" />
+          </span>
         </div>
 
-        {/* Primary CTA */}
-        <div className="w-full space-y-4 pt-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-[1300ms] fill-mode-both">
-          <Link 
-            href={`/checkin/${details.code}/start`}
-            className="w-full flex items-center justify-center py-4 bg-coral text-white rounded-full font-bold text-lg shadow-sm hover:bg-coral/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            สร้างใบประกาศของฉัน
-          </Link>
-          <p className="text-xs text-center text-muted font-medium">ไม่ต้องใช้รหัสผ่าน หรือดาวน์โหลดแอป</p>
+        <CheckinProgress currentStep={0} />
+
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-b border-slate-200 py-5 text-sm">
+          <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
+            <Clock aria-hidden="true" size={18} />
+            ข้อมูลเริ่มต้นประมาณ 1 นาที
+          </span>
+          <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
+            <Certificate aria-hidden="true" size={18} />
+            ขั้นตอนทั้งหมดประมาณ 2–3 นาที
+          </span>
+          <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
+            <Camera aria-hidden="true" size={18} />
+            รูปภาพไม่บังคับ
+          </span>
+          <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
+            <Stamp aria-hidden="true" size={18} />
+            แบบสำรวจไม่บังคับ
+          </span>
         </div>
 
-        {/* Privacy Hint */}
-        <div className="flex items-center gap-2 text-[11px] text-muted font-bold tracking-wide uppercase mt-8 bg-white shadow-sm border border-ink/5 px-5 py-3 rounded-full animate-in fade-in duration-700 delay-[1500ms] fill-mode-both">
-          <ShieldCheck size={18} className="text-coral" />
-          <span>ข้อมูลของคุณปลอดภัยและใช้สำหรับสถิติการท่องเที่ยวเท่านั้น</span>
+        <Link
+          href={`/checkin/${details.code}/start`}
+          className="mt-6 flex min-h-14 w-full items-center justify-center rounded-md bg-ink px-6 py-4 text-lg font-bold text-white transition-colors hover:bg-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+        >
+          สร้างใบประกาศของฉัน
+        </Link>
+
+        <div className="mt-5 flex items-start gap-3 border-t border-slate-200 pt-5 text-xs leading-5 text-slate-600">
+          <ShieldCheck aria-hidden="true" className="mt-0.5 shrink-0 text-teal" size={18} weight="fill" />
+          <p>
+            เราใช้ข้อมูลเท่าที่จำเป็นเพื่อสร้างใบประกาศและวิเคราะห์สถิติการท่องเที่ยวในภาพรวม
+            โดยไม่ต้องสมัครสมาชิก อ่านรายละเอียดได้ที่{" "}
+            <Link href="/privacy" className="font-bold text-teal underline underline-offset-2">
+              นโยบายความเป็นส่วนตัว
+            </Link>
+          </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

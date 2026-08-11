@@ -81,7 +81,7 @@ export function SearchableProvinceField({
           value={query}
           placeholder="แตะเพื่อเลือก หรือพิมพ์ค้นหาจังหวัด"
           autoComplete="off"
-          className="min-h-12 w-full rounded-xl border border-ink/15 bg-white py-3 pl-11 pr-11 text-base text-ink outline-none transition-colors placeholder:text-slate-400 focus:border-teal focus:ring-2 focus:ring-teal/15"
+          className="min-h-12 w-full rounded-md border border-ink/15 bg-white py-3 pl-11 pr-11 text-base text-ink outline-none transition-colors placeholder:text-slate-500 focus:border-teal focus:ring-2 focus:ring-teal/15"
           onFocus={() => {
             setIsOpen(true);
             setActiveIndex(0);
@@ -132,7 +132,7 @@ export function SearchableProvinceField({
           id={listboxId}
           role="listbox"
           aria-label="รายชื่อจังหวัด"
-          className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10"
+          className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-1.5 shadow-md"
         >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, index) => {

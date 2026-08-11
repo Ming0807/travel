@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
+import { resolveAndValidateCheckinCode, trackCheckinFunnelEvent } from "@/lib/services/checkin.service";
 import { CheckinUnavailable } from "@/components/checkin/CheckinUnavailable";
 import { MinimalForm } from "@/components/checkin/MinimalForm";
 import { ArrowLeft, Compass, MapPin, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
@@ -10,6 +10,7 @@ import { detectPreferredLanguage } from "@/lib/validation/language";
 import { headers } from "next/headers";
 import { getOptionalResearchInvitationForCheckin } from "@/lib/services/research.service";
 import { ResearchInvitePrompt } from "@/components/research/ResearchInvitePrompt";
+import { CheckinProgress } from "@/components/checkin/CheckinProgress";
 
 export default async function StartCheckinPage({
   params,
@@ -21,6 +22,12 @@ export default async function StartCheckinPage({
 
   if (context.status !== "valid" || !context.details) {
     return <CheckinUnavailable status={context.status === "valid" ? "unavailable" : context.status} />;
+  }
+
+  try {
+    await trackCheckinFunnelEvent("certificate_started", context.details);
+  } catch {
+    // Analytics must never block the tourist reward flow.
   }
 
   const { attraction, photo_spot } = context.details;
@@ -54,24 +61,28 @@ export default async function StartCheckinPage({
             <ArrowLeft aria-hidden="true" size={18} weight="bold" />
           กลับไปหน้าสถานที่
           </Link>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal">
             <ShieldCheck aria-hidden="true" size={17} weight="fill" />
-            ข้อมูลปลอดภัย
+            ใช้ข้อมูลเท่าที่จำเป็น
           </span>
         </div>
       </div>
 
       <div className="mx-auto max-w-lg px-4 pt-7 md:pt-10">
 
-        <div className="mb-6 animate-fade-in-up text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-teal/20 bg-teal/5 px-4 py-2 text-xs font-bold text-teal">
+        <div className="mb-6">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-md border border-teal/20 bg-teal/5 px-3 py-2 text-xs font-bold text-teal">
             <MapPin weight="fill" size={14} />
             <span>{photo_spot ? photo_spot.spot_name_th : attraction?.name_th}</span>
           </div>
-          <h1 className="text-2xl font-black text-ink md:text-3xl">เตรียมความทรงจำของคุณ</h1>
-          <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-6 text-slate-600">
-            ใช้เวลาไม่ถึง 1 นาที แล้วไปเลือกรูปสำหรับใบประกาศดิจิทัล
+          <h1 className="text-2xl font-black text-ink md:text-3xl">ข้อมูลสั้น ๆ สำหรับใบประกาศ</h1>
+          <p className="mt-2 max-w-md text-sm font-medium leading-6 text-slate-600">
+            ใช้เวลาประมาณ 1 นาที รูปภาพเป็นขั้นตอนถัดไปและเลือกข้ามได้
           </p>
+        </div>
+
+        <div className="mb-6 bg-white px-4 py-1">
+          <CheckinProgress currentStep={0} />
         </div>
 
         {researchInvitation ? (
@@ -81,7 +92,7 @@ export default async function StartCheckinPage({
           />
         ) : null}
 
-        <div className="animate-scale-in rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 md:p-7">
           <MinimalForm
             checkinCode={code}
             countries={countries}

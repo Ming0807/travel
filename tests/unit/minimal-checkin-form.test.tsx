@@ -86,7 +86,7 @@ describe("MinimalForm", () => {
     expect(screen.getByText("ยินดีต้อนรับกลับ")).toBeInTheDocument();
     expect(screen.getByText("นักเดินทางเดิม")).toBeInTheDocument();
     expect(screen.queryByLabelText("ชื่อที่แสดงบนใบประกาศ")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "ใช้ข้อมูลเดิมและดำเนินการต่อ" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ใช้ข้อมูลเดิมและไปขั้นตอนรูปภาพ" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "แก้ไขข้อมูล" }));
     expect(screen.getByLabelText("ชื่อที่แสดงบนใบประกาศ")).toHaveValue("นักเดินทางเดิม");

@@ -240,10 +240,7 @@ export async function initiateCheckin(
       }
     }
 
-    // 5. Track funnel events
-    await trackCheckinFunnelEvent("certificate_started", context.details, { touristId });
-
-    // 6. Create visit record
+    // 5. Create visit record
     visitId = await initiateVisit({
       touristId,
       attractionId: context.details.attraction.attraction_id,
@@ -257,7 +254,16 @@ export async function initiateCheckin(
       // Research is voluntary and must never block the certificate flow.
     }
 
-    // 7. Award XP for checkin
+    try {
+      await trackCheckinFunnelEvent("minimal_form_completed", context.details, {
+        touristId,
+        visitId,
+      });
+    } catch {
+      // Analytics must never block the tourist reward flow.
+    }
+
+    // 6. Award XP for checkin
     try {
       await awardXP(touristId, "qr_checkin", { attraction_id: context.details.attraction.attraction_id }, visitId);
     } catch {
