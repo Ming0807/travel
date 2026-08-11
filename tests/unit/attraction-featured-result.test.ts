@@ -10,7 +10,7 @@ function attraction(slug: string, imageUrl: string | null): PublicAttractionCard
     province: "ยะลา",
     district: null,
     category: "ธรรมชาติ",
-    description: null,
+    description: "",
     imageUrl,
     imageAlt: slug,
     tags: [],

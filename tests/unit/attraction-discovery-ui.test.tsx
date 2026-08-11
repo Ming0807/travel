@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AttractionDiscoveryCard } from "@/components/attractions/AttractionDiscoveryCard";
 import { AttractionDiscoveryCta } from "@/components/attractions/AttractionDiscoveryCta";
 import { AttractionDiscoveryFilters } from "@/components/attractions/AttractionDiscoveryFilters";
+import { TripShortlistProvider } from "@/components/trip-shortlist/TripShortlistProvider";
 import type { PublicAttractionCard } from "@/lib/repositories/public-content.repository";
 import {
   launchSafeAttractionsCopy,
@@ -127,7 +128,11 @@ describe("AttractionDiscoveryCta", () => {
 
 describe("AttractionDiscoveryCard", () => {
   it("exposes the real destination link, location, type, and review summary", () => {
-    render(<AttractionDiscoveryCard attraction={baseAttraction} priority />);
+    render(
+      <TripShortlistProvider>
+        <AttractionDiscoveryCard attraction={baseAttraction} priority />
+      </TripShortlistProvider>,
+    );
 
     expect(screen.getByRole("link", { name: /สกายวอล์คอัยเยอร์เวง/ })).toHaveAttribute(
       "href",
@@ -139,35 +144,39 @@ describe("AttractionDiscoveryCard", () => {
     expect(screen.getByText("4.7 จาก 38 รีวิว")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "ทะเลหมอกอัยเยอร์เวง" })).toHaveAttribute(
       "sizes",
-      "(max-width: 767px) calc(100vw - 2rem), (max-width: 1279px) calc(50vw - 2.5rem), 384px",
+      "(max-width: 767px) calc(100vw - 2rem), (max-width: 1279px) calc(50vw - 3rem), 300px",
     );
   });
 
   it("distinguishes empty reviews, unavailable reviews, and missing media", () => {
     const { rerender } = render(
-      <AttractionDiscoveryCard
-        attraction={{
-          ...baseAttraction,
-          imageUrl: null,
-          rating: null,
-          reviewCount: null,
-          reviewState: "empty",
-        }}
-      />,
+      <TripShortlistProvider>
+        <AttractionDiscoveryCard
+          attraction={{
+            ...baseAttraction,
+            imageUrl: null,
+            rating: null,
+            reviewCount: null,
+            reviewState: "empty",
+          }}
+        />
+      </TripShortlistProvider>,
     );
 
     expect(screen.getByText("ยังไม่มีคะแนนรีวิว")).toBeInTheDocument();
-    expect(screen.getByLabelText("ยังไม่มีรูปภาพของสถานที่นี้")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "ยังไม่มีภาพของสกายวอล์คอัยเยอร์เวง" })).toBeInTheDocument();
 
     rerender(
-      <AttractionDiscoveryCard
-        attraction={{
-          ...baseAttraction,
-          rating: null,
-          reviewCount: null,
-          reviewState: "unavailable",
-        }}
-      />,
+      <TripShortlistProvider>
+        <AttractionDiscoveryCard
+          attraction={{
+            ...baseAttraction,
+            rating: null,
+            reviewCount: null,
+            reviewState: "unavailable",
+          }}
+        />
+      </TripShortlistProvider>,
     );
 
     expect(screen.getByText("คะแนนรีวิวยังไม่พร้อมใช้งาน")).toBeInTheDocument();
