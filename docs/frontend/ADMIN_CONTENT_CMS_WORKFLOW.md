@@ -566,6 +566,8 @@ Security hardening applied to all tourist-submitted content:
 - **Rendering guards**: Public story detail page and admin story editor now check `authorType !== "tourist"` before using `dangerouslySetInnerHTML`. Tourist content always renders as safe paragraphs.
 - **Strict validation**: Province IDs are validated with `/^\d+$/` (rejecting floats, hex, exponents, junk). Province existence is verified via DB before story insertion.
 - **OAuth identity**: `resolveTouristId()` in `lib/auth/guards.ts` supports Google, email, and LINE OAuth sessions, falling back to anonymous_device guest cookies. No identity creation/linking in story submission — only resolve.
+- **Truthful contribution workflow**: The public contribution form accepts plain text only because tourist UGC is stored as plain text. It does not expose rich-text or inline-image controls that would be discarded during normalization. Contributors must confirm they own or have permission to share the content. New records enter the `submitted` state, identical active submissions are rejected, and the success screen says the story is awaiting review without promising publication.
+- **Public-author privacy**: Authenticated account details are used for spam prevention and moderation ownership only. Public tourist stories use a neutral author label until a separate public-author consent model is implemented.
 
 These defenses apply to all admin CMS content operations where tourist-submitted data is displayed or stored.
 

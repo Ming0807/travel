@@ -128,6 +128,19 @@ describe("TouristAuthGate Component", () => {
     expect(buttons.length).toBe(2);
     expect(buttons[0].textContent).toMatch(/Google/i);
     expect(buttons[1].textContent).toMatch(/LINE/i);
+    expect(screen.getByRole("link", { name: "เงื่อนไขการใช้บริการ" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "นโยบายความเป็นส่วนตัว" })).toHaveAttribute("href", "/privacy");
+  });
+
+  it("shows a safe retryable error when OAuth cannot start", async () => {
+    vi.mocked(mockSupabase.auth.signInWithOAuth!).mockRejectedValueOnce(new Error("provider secret"));
+    render(<TouristAuthGate />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Google/ }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("ยังไม่สามารถเปิดหน้าล็อกอินได้ กรุณาลองใหม่");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("provider secret");
+    expect(screen.getByRole("button", { name: /Google/ })).toBeEnabled();
   });
 
   it("calls signInWithOAuth with 'google' when Google button is clicked", async () => {

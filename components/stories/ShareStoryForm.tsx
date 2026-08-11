@@ -1,42 +1,38 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import {
+  Article,
+  CheckCircle,
+  Info,
+  PaperPlaneRight,
+  ShieldCheck,
+  Warning,
+} from "@phosphor-icons/react";
 import { submitTouristStoryAction } from "@/app/actions/tourist-story-actions";
-import { CheckCircle, PaperPlaneRight, Warning } from "@phosphor-icons/react";
-import { TiptapEditor } from "./TiptapEditor";
 
-export function ShareStoryForm({
-  provinces,
-}: {
-  provinces: { id: number; name: string }[];
-}) {
-  const router = useRouter();
+type ProvinceOption = { id: number; name: string };
+
+export function ShareStoryForm({ provinces }: { provinces: ProvinceOption[] }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [contentHtml, setContentHtml] = useState("");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
     setError(null);
 
-    const formData = new FormData(e.currentTarget);
-
     try {
-      const result = await submitTouristStoryAction(formData);
-
+      const result = await submitTouristStoryAction(new FormData(event.currentTarget));
       if (result.success) {
         setSuccess(true);
-        // Refresh page after a short delay
-        setTimeout(() => {
-          router.push("/stories");
-          router.refresh();
-        }, 3000);
-      } else {
-        setError(result.error || "เกิดข้อผิดพลาดบางอย่าง กรุณาลองใหม่อีกครั้ง");
+        return;
       }
+      setError(result.error || "เกิดข้อผิดพลาดบางอย่าง กรุณาลองใหม่อีกครั้ง");
     } catch {
       setError("เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง");
     } finally {
@@ -46,126 +42,134 @@ export function ShareStoryForm({
 
   if (success) {
     return (
-      <div className="bg-slate-50 p-12 text-center border border-ink/10">
-        <CheckCircle
-          size={48}
-          weight="fill"
-          className="mx-auto text-ink mb-6"
-        />
-        <h3 className="text-2xl font-black text-ink mb-3">ส่งเรื่องราวเรียบร้อยแล้ว!</h3>
-        <p className="text-ink/70 mb-8 max-w-sm mx-auto text-lg">
-          ขอบคุณที่ร่วมแบ่งปันประสบการณ์การเดินทางของคุณ เรื่องราวของคุณถูกส่งไปตรวจสอบและจะได้รับการเผยแพร่เร็วๆ นี้
+      <section
+        role="status"
+        aria-live="polite"
+        className="border border-teal/20 bg-teal/5 px-6 py-10 text-center sm:px-10"
+      >
+        <CheckCircle size={48} weight="fill" className="mx-auto mb-5 text-teal" />
+        <p className="mb-2 text-xs font-bold uppercase text-teal">รับเรื่องแล้ว</p>
+        <h2 className="mb-3 text-2xl font-black text-ink">ส่งให้ทีมตรวจสอบแล้ว</h2>
+        <p className="mx-auto mb-8 max-w-lg text-base leading-7 text-muted">
+          เรื่องราวยังไม่เผยแพร่ทันที ทีมงานจะตรวจความเหมาะสมและความถูกต้องก่อนนำขึ้นหน้าเรื่องราว
         </p>
-        <p className="text-sm font-bold text-ink/50 uppercase tracking-widest">
-          กำลังพากลับไปหน้าเรื่องราว...
-        </p>
-      </div>
+        <Link
+          href="/stories"
+          className="inline-flex min-h-11 items-center justify-center border border-ink bg-ink px-6 text-sm font-bold text-white transition-colors hover:bg-white hover:text-ink"
+        >
+          กลับไปหน้าเรื่องราว
+        </Link>
+      </section>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12">
-      {error && (
-        <div className="flex items-center gap-3 bg-red-50 p-4 text-red-600 border border-red-100">
-          <Warning size={20} weight="fill" />
-          <p className="text-sm font-semibold">{error}</p>
+    <form onSubmit={handleSubmit} className="space-y-8" noValidate={false}>
+      <div className="grid gap-3 border-y border-ink/10 py-5 sm:grid-cols-2">
+        <div className="flex gap-3">
+          <Article size={22} weight="duotone" className="mt-0.5 shrink-0 text-coral" />
+          <div>
+            <p className="font-bold text-ink">ส่งได้เฉพาะข้อความ</p>
+            <p className="mt-1 text-sm leading-6 text-muted">
+              รูปจากใบประกาศหรือโปรไฟล์จะไม่ถูกแนบมากับเรื่องราวโดยอัตโนมัติ
+            </p>
+          </div>
         </div>
-      )}
+        <div className="flex gap-3">
+          <ShieldCheck size={22} weight="duotone" className="mt-0.5 shrink-0 text-teal" />
+          <div>
+            <p className="font-bold text-ink">ตรวจสอบก่อนแสดงผล</p>
+            <p className="mt-1 text-sm leading-6 text-muted">
+              ทีมงานจะตรวจสอบก่อนเผยแพร่ และจะไม่แสดงชื่อบัญชีของคุณต่อสาธารณะ
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {error ? (
+        <div role="alert" className="flex items-start gap-3 border border-red-200 bg-red-50 p-4 text-red-700">
+          <Warning size={20} weight="fill" className="mt-0.5 shrink-0" />
+          <p className="text-sm font-semibold leading-6">{error}</p>
+        </div>
+      ) : null}
 
       <div>
-        <label
-          htmlFor="title"
-          className="block text-sm font-bold text-ink uppercase tracking-widest mb-3"
-        >
-          หัวข้อเรื่องราว
+        <label htmlFor="title" className="mb-2 block text-sm font-bold text-ink">
+          หัวข้อเรื่องราว <span aria-hidden="true" className="text-coral">*</span>
         </label>
         <input
           type="text"
           id="title"
           name="title"
           required
-          maxLength={100}
-          placeholder="เช่น วันหยุดสุดสัปดาห์ที่เบตง"
-          className="w-full border-b border-ink/20 bg-transparent px-0 py-4 text-2xl font-medium text-ink placeholder:text-ink/20 focus:border-ink focus:outline-none transition-colors"
+          maxLength={200}
+          autoComplete="off"
+          placeholder="เช่น เช้าวันฝนพรำที่ยะลา"
+          className="min-h-12 w-full border border-ink/20 bg-white px-4 text-base font-medium text-ink outline-none transition-colors placeholder:text-ink/35 focus:border-ink focus:ring-2 focus:ring-coral/20"
         />
+        <p className="mt-2 text-xs text-muted">ตั้งชื่อให้ผู้อ่านเข้าใจว่าคุณพบอะไรจากการเดินทาง</p>
       </div>
 
       <div>
-        <label
-          htmlFor="provinceId"
-          className="block text-sm font-bold text-ink uppercase tracking-widest mb-3"
-        >
-          สถานที่ (จังหวัด)
+        <label htmlFor="provinceId" className="mb-2 block text-sm font-bold text-ink">
+          จังหวัดของเรื่องราว <span aria-hidden="true" className="text-coral">*</span>
         </label>
-        <div className="relative">
-          <select
-            id="provinceId"
-            name="provinceId"
-            required
-            className="w-full appearance-none border-b border-ink/20 bg-transparent px-0 py-4 text-lg font-medium text-ink focus:border-ink focus:outline-none transition-colors cursor-pointer rounded-none"
-          >
-            <option value="" disabled hidden>
-              เลือกจังหวัด...
-            </option>
-            {provinces.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-ink">
-            <svg
-              className="h-4 w-4 fill-current"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-            </svg>
-          </div>
-        </div>
+        <select
+          id="provinceId"
+          name="provinceId"
+          required
+          defaultValue=""
+          className="min-h-12 w-full border border-ink/20 bg-white px-4 text-base font-medium text-ink outline-none transition-colors focus:border-ink focus:ring-2 focus:ring-coral/20"
+        >
+          <option value="" disabled>เลือกจังหวัด</option>
+          {provinces.map((province) => (
+            <option key={province.id} value={province.id}>{province.name}</option>
+          ))}
+        </select>
       </div>
 
       <div>
-        <label
-          htmlFor="content"
-          className="block text-sm font-bold text-ink uppercase tracking-widest mb-3"
-        >
-          เรื่องราวของคุณ
+        <label htmlFor="content" className="mb-2 block text-sm font-bold text-ink">
+          เรื่องราวของคุณ <span aria-hidden="true" className="text-coral">*</span>
         </label>
-        
-        {/* Hidden textarea to capture HTML content for FormData */}
         <textarea
           id="content"
           name="content"
           required
-          hidden
-          readOnly
-          value={contentHtml}
+          maxLength={10000}
+          rows={12}
+          placeholder="เล่าบรรยากาศ สิ่งที่ค้นพบ หรือคำแนะนำจากประสบการณ์จริงของคุณ..."
+          className="w-full resize-y border border-ink/20 bg-white px-4 py-4 text-base leading-7 text-ink outline-none transition-colors placeholder:text-ink/35 focus:border-ink focus:ring-2 focus:ring-coral/20"
         />
-        
-        <TiptapEditor 
-          content={contentHtml} 
-          onChange={setContentHtml} 
-        />
+        <div className="mt-2 flex items-start gap-2 text-xs leading-5 text-muted">
+          <Info size={16} className="mt-0.5 shrink-0" />
+          <span>หลีกเลี่ยงเบอร์โทร ที่อยู่ หรือข้อมูลส่วนตัวของบุคคลอื่น เนื้อหาจะถูกเก็บเป็นข้อความธรรมดา</span>
+        </div>
       </div>
+
+      <label className="flex cursor-pointer items-start gap-3 border border-ink/15 bg-slate-50 p-4">
+        <input
+          type="checkbox"
+          name="rightsConfirmed"
+          value="true"
+          required
+          className="mt-1 h-5 w-5 shrink-0 accent-coral"
+        />
+        <span className="text-sm leading-6 text-ink">
+          ฉันเป็นเจ้าของหรือได้รับอนุญาตให้แบ่งปันเนื้อหานี้ และเนื้อหาไม่ละเมิดสิทธิหรือความเป็นส่วนตัวของผู้อื่น
+          <span className="mt-1 block text-xs text-muted">
+            อ่านรายละเอียดใน <Link href="/terms#content-rights" className="font-bold text-teal underline underline-offset-2">เงื่อนไขการใช้บริการ</Link>
+          </span>
+        </span>
+      </label>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="group inline-flex w-full items-center justify-center gap-3 bg-ink py-5 text-sm font-bold text-white transition-all hover:bg-ink/80 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:pointer-events-none"
+        className="group inline-flex min-h-12 w-full items-center justify-center gap-3 bg-coral px-6 py-4 text-sm font-bold text-white transition-colors hover:bg-[#C95C3F] disabled:cursor-wait disabled:opacity-65"
       >
-        {isSubmitting ? (
-          "กำลังส่งข้อมูล..."
-        ) : (
-          <>
-            ส่งเรื่องราวของคุณ{" "}
-            <PaperPlaneRight
-              size={18}
-              weight="fill"
-              className="transition-transform duration-300 ease-out group-hover:translate-x-1"
-            />
-          </>
-        )}
+        {isSubmitting ? "กำลังส่งให้ทีมตรวจสอบ..." : "ส่งให้ทีมตรวจสอบ"}
+        {!isSubmitting ? <PaperPlaneRight size={18} weight="fill" aria-hidden="true" /> : null}
       </button>
     </form>
   );

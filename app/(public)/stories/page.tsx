@@ -138,7 +138,15 @@ export default async function StoriesPage({
               </Link>
             ) : null}
           </div>
-          <form action="/stories" method="get" className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1.6fr)_minmax(180px,.7fr)_auto]">
+          <form
+            action="/stories"
+            method="get"
+            className={`mt-4 grid gap-3 ${
+              provinceOptions.length > 1
+                ? "md:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(170px,.65fr)_minmax(170px,.65fr)_auto]"
+                : "md:grid-cols-[minmax(0,1.6fr)_minmax(180px,.7fr)_auto]"
+            }`}
+          >
             <label className="relative">
               <span className="sr-only">ค้นหาจากชื่อหรือคำโปรยเรื่องราว</span>
               <MagnifyingGlass size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/45" aria-hidden="true" />
@@ -161,7 +169,23 @@ export default async function StoriesPage({
                 {topics.map((topic) => <option key={topic.key} value={topic.key}>{topic.name}</option>)}
               </select>
             </label>
-            {query.province ? <input type="hidden" name="province" value={query.province} /> : null}
+            {provinceOptions.length > 1 ? (
+              <label>
+                <span className="sr-only">เลือกจังหวัด</span>
+                <select
+                  name="province"
+                  defaultValue={query.province ?? ""}
+                  className="min-h-11 w-full rounded-[var(--public-radius-control)] border border-black/15 bg-white px-3 text-sm font-semibold outline-none focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/15"
+                >
+                  <option value="">ทุกจังหวัดที่เปิดให้บริการ</option>
+                  {provinceOptions.map((province) => (
+                    <option key={province.value} value={province.value}>{province.label}</option>
+                  ))}
+                </select>
+              </label>
+            ) : query.province ? (
+              <input type="hidden" name="province" value={query.province} />
+            ) : null}
             {query.authorType ? <input type="hidden" name="type" value={query.authorType} /> : null}
             <button type="submit" className="min-h-11 rounded-[var(--public-radius-control)] bg-[var(--public-ink)] px-5 text-sm font-black text-white hover:bg-black" aria-label="ค้นหาเรื่องราว">
               ค้นหา

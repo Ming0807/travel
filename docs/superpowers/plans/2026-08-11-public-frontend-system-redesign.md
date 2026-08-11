@@ -282,10 +282,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/tourist-story-action.test.ts`
 - Test: `tests/e2e/story-submission.spec.ts`
 
-- [ ] Add failing tests for sign-in explanation, content/photo rights, draft/submitted outcome, duplicate pending state, and safe errors.
-- [ ] Preserve resolve-only tourist identity and plain-text UGC storage.
-- [ ] Change success copy to “ส่งให้ทีมตรวจสอบแล้ว” and never promise publication.
-- [ ] Run targeted security/UI gates; controller reviews line-by-line; commit as `fix: clarify story contribution and moderation`.
+- [x] Add failing tests for sign-in explanation, content/photo rights, draft/submitted outcome, duplicate pending state, and safe errors.
+- [x] Preserve resolve-only tourist identity and plain-text UGC storage.
+- [x] Change success copy to “ส่งให้ทีมตรวจสอบแล้ว” and never promise publication.
+- [x] Run targeted security/UI gates; controller reviews line-by-line; commit as `fix: clarify story contribution and moderation`.
 
 ---
 

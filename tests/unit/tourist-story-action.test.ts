@@ -38,6 +38,7 @@ const mockSupabaseFromChain = {
   limit: vi.fn().mockReturnThis(),
   ilike: vi.fn().mockReturnThis(),
   or: vi.fn().mockReturnThis(),
+  in: vi.fn().mockReturnThis(),
   single: vi.fn(),
   maybeSingle: vi.fn(),
 };
@@ -59,6 +60,9 @@ function makeForm(overrides: Record<string, string> = {}) {
   fd.set("title", overrides.title ?? "My Amazing Trip");
   fd.set("content", overrides.content ?? "This is the story of my trip to Yala, full of amazing experiences and beautiful sights.");
   fd.set("provinceId", overrides.provinceId ?? "3");
+  if (overrides.rightsConfirmed !== "missing") {
+    fd.set("rightsConfirmed", overrides.rightsConfirmed ?? "true");
+  }
   return fd;
 }
 
@@ -198,6 +202,18 @@ describe("submitTouristStoryAction — validation", () => {
   it("invalid form does NOT call identity lookup or DB insert", async () => {
     const fd = makeForm({ title: "" });
     await submitTouristStoryAction(fd);
+    expect(mockResolveCurrentTouristId).not.toHaveBeenCalled();
+    expect(mockAdminSupabase.from).not.toHaveBeenCalled();
+  });
+
+  it("requires the author to confirm content rights before authentication or database access", async () => {
+    const result = await submitTouristStoryAction(makeForm({ rightsConfirmed: "missing" }));
+
+    expect(result).toMatchObject({
+      success: false,
+      code: "STORY_RIGHTS_REQUIRED",
+      error: "กรุณายืนยันว่าคุณมีสิทธิ์แบ่งปันเนื้อหานี้",
+    });
     expect(mockResolveCurrentTouristId).not.toHaveBeenCalled();
     expect(mockAdminSupabase.from).not.toHaveBeenCalled();
   });
@@ -437,7 +453,7 @@ describe("submitTouristStoryAction — insert payload", () => {
     expect(payload.province_id).toBe(3);
     expect(payload.tourist_id).toBe("tourist-uuid-resolved");
     expect(payload.author_type).toBe("tourist");
-    expect(payload.status).toBe("pending");
+    expect(payload.status).toBe("submitted");
     expect(payload.is_published).toBe(false);
     expect(payload.category).toBe("Story");
     expect(typeof payload.slug).toBe("string");
@@ -451,6 +467,46 @@ describe("submitTouristStoryAction — insert payload", () => {
     expect(payload.content).toBe(longText);
     expect((payload.excerpt as string).length).toBeLessThanOrEqual(154);
     expect((payload.excerpt as string).endsWith("...")).toBe(true);
+  });
+});
+
+describe("submitTouristStoryAction — duplicate moderation state", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthUser();
+    mockIdentityResolved();
+    mockStoryInsertSuccess();
+  });
+
+  it("does not create the same story twice while the first submission is under review", async () => {
+    mockSupabaseFromChain.maybeSingle
+      .mockResolvedValueOnce({ data: { province_id: 3 }, error: null })
+      .mockResolvedValueOnce({ data: { story_id: 42, status: "in_review" }, error: null });
+
+    const result = await submitTouristStoryAction(makeForm());
+
+    expect(result).toMatchObject({
+      success: false,
+      code: "STORY_ALREADY_PENDING",
+      error: "เรื่องราวนี้อยู่ระหว่างการตรวจสอบแล้ว",
+    });
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
+  });
+
+  it("returns a safe Thai error when duplicate checking is unavailable", async () => {
+    mockSupabaseFromChain.maybeSingle
+      .mockResolvedValueOnce({ data: { province_id: 3 }, error: null })
+      .mockResolvedValueOnce({ data: null, error: new Error("private database detail") });
+
+    const result = await submitTouristStoryAction(makeForm());
+
+    expect(result).toMatchObject({
+      success: false,
+      code: "STORY_DUPLICATE_CHECK_FAILED",
+      error: "ยังไม่สามารถตรวจสอบเรื่องราวที่รอตรวจได้ กรุณาลองใหม่",
+    });
+    expect(result.error).not.toContain("private database detail");
+    expect(mockSupabaseFromChain.insert).not.toHaveBeenCalled();
   });
 });
 

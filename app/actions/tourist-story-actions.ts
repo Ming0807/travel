@@ -35,12 +35,20 @@ function normalizePlainText(input: string): string {
       .replace(/&amp;/gi, "&");
 
     // Decimal numeric character references
-    result = result.replace(/&#(\d+);/g, (_match, digits) =>
-      String.fromCharCode(Number(digits)));
+    result = result.replace(/&#(\d+);/g, (_match, digits: string) => {
+      const codePoint = Number(digits);
+      return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+        ? String.fromCodePoint(codePoint)
+        : "";
+    });
 
     // Hex numeric character references (case-insensitive)
-    result = result.replace(/&#[xX]([\da-fA-F]+);/g, (_match, hex) =>
-      String.fromCharCode(parseInt(hex, 16)));
+    result = result.replace(/&#[xX]([\da-fA-F]+);/g, (_match, hex: string) => {
+      const codePoint = Number.parseInt(hex, 16);
+      return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+        ? String.fromCodePoint(codePoint)
+        : "";
+    });
 
     // Quote entities
     result = result.replace(/&quot;/g, '"').replace(/&#x27;/g, "'");
@@ -79,13 +87,22 @@ function validateStoryInput(formData: FormData):
   const rawTitle = formData.get("title");
   const rawContent = formData.get("content");
   const rawProvinceId = formData.get("provinceId");
+  const rightsConfirmed = formData.get("rightsConfirmed");
 
   if (typeof rawTitle !== "string" || typeof rawContent !== "string" || typeof rawProvinceId !== "string") {
     return { valid: false, error: "กรุณากรอกข้อมูลให้ครบทุกช่อง", field: "form" };
   }
 
-  const title = rawTitle.trim();
-  const content = rawContent.trim();
+  if (rightsConfirmed !== "true") {
+    return {
+      valid: false,
+      error: "กรุณายืนยันว่าคุณมีสิทธิ์แบ่งปันเนื้อหานี้",
+      field: "rightsConfirmed",
+    };
+  }
+
+  const title = normalizePlainText(rawTitle).trim();
+  const content = normalizePlainText(rawContent).trim();
 
   if (!title) {
     return { valid: false, error: "กรุณากรอกชื่อเรื่อง", field: "title" };
@@ -118,7 +135,13 @@ export async function submitTouristStoryAction(formData: FormData) {
     // 1. Validate input BEFORE any DB operations
     const validation = validateStoryInput(formData);
     if (!validation.valid) {
-      return { success: false, error: validation.error };
+      return {
+        success: false,
+        error: validation.error,
+        ...(validation.field === "rightsConfirmed"
+          ? { code: "STORY_RIGHTS_REQUIRED" as const }
+          : {}),
+      };
     }
     const { title, content, provinceId } = validation;
 
@@ -141,18 +164,9 @@ export async function submitTouristStoryAction(formData: FormData) {
       return { success: false, error: "ไม่สามารถยืนยันตัวตนได้ กรุณาลองใหม่" };
     }
 
-    // 4. Normalize to plain text — entity-decode first, then strip all tags
-    const safeContent = normalizePlainText(content);
-
-    // Guard: if normalization leaves only whitespace (e.g. user typed only HTML tags),
-    // return a field-level error before any DB operations
-    if (safeContent.trim().length === 0) {
-      return { success: false, error: "กรุณากรอกเนื้อหาเรื่องราว (ไม่อนุญาตเฉพาะ HTML tags หรือ entities)" };
-    }
-
-    // Compute excerpt from safe plain text
-    const excerpt = safeContent.slice(0, 150).replace(/\s+/g, " ").trim()
-      + (safeContent.length > 150 ? "..." : "");
+    // 4. Compute excerpt from validated plain text.
+    const excerpt = content.slice(0, 150).replace(/\s+/g, " ").trim()
+      + (content.length > 150 ? "..." : "");
 
     // 5. Generate slug from title
     const slug = title
@@ -177,31 +191,65 @@ export async function submitTouristStoryAction(formData: FormData) {
       return { success: false, error: "ไม่พบจังหวัดที่ระบุ กรุณาลองใหม่" };
     }
 
-    // 7. Insert story
+    // 7. Prevent an accidental repeat while an identical submission is still active.
+    const { data: existingStory, error: duplicateError } = await adminSupabase
+      .from("travel_stories")
+      .select("story_id,status")
+      .eq("tourist_id", touristId)
+      .eq("author_type", "tourist")
+      .eq("province_id", provinceId)
+      .eq("title", title)
+      .eq("content", content)
+      .in("status", ["submitted", "in_review", "changes_requested", "approved"])
+      .limit(1)
+      .maybeSingle();
+
+    if (duplicateError) {
+      return {
+        success: false,
+        code: "STORY_DUPLICATE_CHECK_FAILED",
+        error: "ยังไม่สามารถตรวจสอบเรื่องราวที่รอตรวจได้ กรุณาลองใหม่",
+      };
+    }
+    if (existingStory?.story_id) {
+      return {
+        success: false,
+        code: "STORY_ALREADY_PENDING",
+        error: "เรื่องราวนี้อยู่ระหว่างการตรวจสอบแล้ว",
+      };
+    }
+
+    // 8. Insert directly into the current tourist editorial workflow.
     const { data: story, error: storyError } = await adminSupabase
       .from("travel_stories")
       .insert({
         slug,
         title,
         excerpt,
-        content: safeContent,
+        content,
         category: "Story",
         province_id: provinceId,
         author_type: "tourist",
         tourist_id: touristId,
-        // Pre-migration compatibility: the editorial-platform trigger maps this to submitted.
-        status: "pending",
+        status: "submitted",
         is_published: false,
       })
       .select("slug")
       .single();
 
+    if (storyError?.code === "23505") {
+      return {
+        success: false,
+        code: "STORY_ALREADY_PENDING",
+        error: "เรื่องราวนี้อยู่ระหว่างการตรวจสอบแล้ว",
+      };
+    }
     if (storyError || !story) {
       return { success: false, error: "ไม่สามารถส่งเรื่องราวได้ กรุณาลองใหม่" };
     }
 
     revalidatePath("/stories");
-    return { success: true, storyId: story.slug };
+    return { success: true, storyId: story.slug, status: "submitted" as const };
   } catch {
     return { success: false, error: "เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่" };
   }
