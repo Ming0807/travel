@@ -53,6 +53,9 @@ describe("certificate success page", () => {
     render(view);
 
     expect(screen.getByText("ยังไม่พบไฟล์ใบประกาศ")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "ลองสร้างใบประกาศอีกครั้ง" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ลองสร้างใบประกาศอีกครั้ง" })).toHaveAttribute(
+      "href",
+      `/visit/${visitId}/certificate/preview`,
+    );
   });
 });

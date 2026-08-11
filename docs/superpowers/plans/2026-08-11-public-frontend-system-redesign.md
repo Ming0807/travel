@@ -498,15 +498,15 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 
 **Reasoning:** Controller `xhigh`; no delegated acceptance decision.
 
-- [ ] Run `git diff --check`.
-- [ ] Run ESLint on every changed TS/TSX file since the batch base.
-- [ ] Run `npm run typecheck`.
-- [ ] Run `npm test -- --run` once.
-- [ ] Run `npm run build` once and restore `next-env.d.ts` if generated content changes it.
-- [ ] Run the public cross-route Playwright matrix once.
-- [ ] Run Impeccable detection on every changed public UI file.
-- [ ] Verify SQL migration list and documentation if Batch 4 or 5 introduced schema changes.
-- [ ] Review screenshots and keyboard flows; do not approve on automated checks alone.
+- [x] Run `git diff --check`.
+- [x] Run ESLint on every changed TS/TSX file since the batch base.
+- [x] Run `npm run typecheck`.
+- [x] Run `npm test -- --run` once.
+- [x] Run `npm run build` once and restore `next-env.d.ts` if generated content changes it.
+- [x] Run the public cross-route Playwright matrix once.
+- [x] Run Impeccable detection on every changed public UI file.
+- [x] Verify SQL migration list and documentation if Batch 4 or 5 introduced schema changes.
+- [x] Review screenshots and keyboard flows; do not approve on automated checks alone.
 - [ ] Push once with a short timeout. If the Git account chooser blocks, record the local commit and continue without retrying.
 
 ## Completion Definition

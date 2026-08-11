@@ -17,17 +17,17 @@ describe("Homepage discovery entry", () => {
     expect(screen.queryByText("นราธิวาส")).not.toBeInTheDocument();
   });
 
-  it("gives the mobile hero image a positioned parent and container-aware sizes", () => {
+  it("uses one responsive priority image across mobile and desktop", () => {
     render(<HomepageHero images={["general/hero.webp"]} />);
 
-    const mobileImage = screen.getAllByRole("img", { name: "บรรยากาศการท่องเที่ยวจังหวัดยะลา" })[0];
-    const mobileFrame = mobileImage.parentElement;
+    const heroImage = screen.getByRole("img", { name: "บรรยากาศการท่องเที่ยวจังหวัดยะลา" });
+    const imageFrame = heroImage.parentElement;
 
-    expect(mobileFrame).toHaveClass("absolute", "inset-0", "lg:hidden");
-    expect(mobileFrame).not.toHaveClass("lg:static");
-    expect(mobileImage).toHaveAttribute(
+    expect(screen.getAllByRole("img", { name: "บรรยากาศการท่องเที่ยวจังหวัดยะลา" })).toHaveLength(1);
+    expect(imageFrame).toHaveClass("absolute", "inset-0", "lg:left-[46%]");
+    expect(heroImage).toHaveAttribute(
       "sizes",
-      "(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 0px",
+      "(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 54vw",
     );
   });
 
