@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bed, MapPin } from "@phosphor-icons/react/dist/ssr";
 import {
   ACCOMMODATION_TYPES,
   AccommodationFilterBar,
@@ -13,6 +11,8 @@ import { PublicCtaBand } from "@/components/public/PublicCtaBand";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicPagination } from "@/components/public/PublicPagination";
 import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
+import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
+import { PublicDirectoryToolbar } from "@/components/public/directory/PublicDirectoryToolbar";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
 import {
   listPublicAccommodationPage,
@@ -147,41 +147,19 @@ export default async function AccommodationsPage({
 
   return (
     <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
-      <PublicPageFrame variant="listing" className="pb-16 pt-8 sm:pt-10">
-        <nav aria-label="เส้นทางนำทาง" className="flex items-center gap-2 text-sm text-black/65">
-          <Link href="/" className="hover:text-[var(--public-teal)]">หน้าแรก</Link>
-          <span aria-hidden="true">/</span>
-          <span aria-current="page" className="font-semibold text-[var(--public-ink)]">ที่พัก</span>
-        </nav>
+      <PublicPageFrame variant="directory">
+        <PublicDirectoryIntro
+          breadcrumbs={[{ label: "หน้าแรก", href: "/" }, { label: "ที่พัก" }]}
+          title={title}
+          description={description}
+          scope="ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา"
+        />
 
-        <header className="mt-7 grid gap-5 border-b border-black/10 pb-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-          <div>
-            <p className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--public-coral-strong)]">
-              <Bed size={18} weight="fill" aria-hidden="true" />
-              ที่พักสำหรับวางแผนการเดินทาง
-            </p>
-            <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight text-balance sm:text-4xl lg:text-5xl">
-              {title}
-            </h1>
-            <p className="mt-4 max-w-[70ch] text-base leading-7 text-black/65 sm:text-lg">
-              {description}
-            </p>
-          </div>
-          <p className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--public-teal)]">
-            <MapPin size={20} weight="fill" aria-hidden="true" />
-            พื้นที่ให้บริการ: จังหวัดยะลา
-          </p>
-        </header>
-
-        <section aria-labelledby="accommodation-filter-heading" className="mt-7">
-          <h2 id="accommodation-filter-heading" className="mb-3 text-lg font-bold">ค้นหาและกรองที่พัก</h2>
-          <AccommodationFilterBar
-            query={query}
-            accommodationType={accommodationType}
-            province={province}
-            provinces={provinceOptions}
-          />
-        </section>
+        <div className="mt-7">
+          <PublicDirectoryToolbar label="ค้นหาและกรองที่พัก">
+            <AccommodationFilterBar query={query} accommodationType={accommodationType} province={province} provinces={provinceOptions} />
+          </PublicDirectoryToolbar>
+        </div>
 
         <section aria-labelledby="accommodation-results-heading" className="mt-10">
           <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-4">

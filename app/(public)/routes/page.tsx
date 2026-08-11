@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { MapTrifold, MapPin } from "@phosphor-icons/react/dist/ssr";
+
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicButton } from "@/components/public/PublicButton";
-import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
+import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
+import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
+import { PublicResultSummary } from "@/components/public/directory/PublicResultSummary";
 import { PublicRouteCard } from "@/components/routes/PublicRouteCard";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
 import { listPublicRoutes } from "@/lib/repositories/public-content.repository";
@@ -38,38 +39,18 @@ export default async function RoutesPage() {
 
   return (
     <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
-      <PublicPageFrame variant="listing" className="pb-16 pt-8 sm:pt-10">
-        <nav aria-label="เส้นทางนำทาง" className="flex items-center gap-2 text-sm text-black/65">
-          <Link href="/" className="hover:text-[var(--public-teal)]">หน้าแรก</Link>
-          <span aria-hidden="true">/</span>
-          <span aria-current="page" className="font-semibold text-[var(--public-ink)]">เส้นทางแนะนำ</span>
-        </nav>
+      <PublicPageFrame variant="directory">
+        <PublicDirectoryIntro
+          breadcrumbs={[{ label: "หน้าแรก", href: "/" }, { label: "เส้นทางแนะนำ" }]}
+          title={title}
+          description={description}
+          scope="ทุกจุดแวะเชื่อมกับหน้าสถานที่ที่เผยแพร่จริง"
+        />
 
-        <header className="mt-7 grid gap-5 border-b border-black/10 pb-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-          <div>
-            <p className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--public-coral-strong)]">
-              <MapTrifold size={19} weight="fill" aria-hidden="true" />
-              แผนเที่ยวจากสถานที่จริง
-            </p>
-            <h1 className="mt-3 max-w-4xl text-3xl font-bold leading-tight text-balance sm:text-4xl lg:text-5xl">
-              {title}
-            </h1>
-            <p className="mt-4 max-w-[70ch] text-base leading-7 text-black/65 sm:text-lg">{description}</p>
-          </div>
-          <p className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--public-teal)]">
-            <MapPin size={20} weight="fill" aria-hidden="true" />
-            ขอบเขตข้อมูล: จังหวัดยะลา
-          </p>
-        </header>
-
-        <section aria-labelledby="routes-result-heading" className="mt-10">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-4">
-            <div>
-              <h2 id="routes-result-heading" className="text-2xl font-bold">แผนการเดินทางที่เผยแพร่</h2>
-              <p className="mt-1 text-sm leading-6 text-black/65">
-                พบ {routes.length.toLocaleString("th-TH")} เส้นทาง ทุกจุดแวะเชื่อมกับหน้าสถานที่จริง
-              </p>
-            </div>
+        <section aria-labelledby="routes-result-heading" className="mt-9">
+          <div className="border-b border-black/10 pb-4">
+            <h2 id="routes-result-heading" className="text-2xl font-bold">แผนการเดินทางที่เผยแพร่</h2>
+            {!routeState.loadError ? <PublicResultSummary count={routes.length} noun="เส้นทาง" className="mt-1" /> : null}
           </div>
 
           {routeState.loadError ? (
@@ -82,9 +63,7 @@ export default async function RoutesPage() {
             </div>
           ) : routes.length > 0 ? (
             <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {routes.map((route, index) => (
-                <PublicRouteCard key={route.slug} route={route} priority={index === 0} />
-              ))}
+              {routes.map((route, index) => <PublicRouteCard key={route.slug} route={route} priority={index === 0} />)}
             </div>
           ) : (
             <div className="mt-6">

@@ -9,6 +9,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
+import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
 import { PublicStoryCard } from "@/components/stories/PublicStoryCard";
 import {
   listPublicStoryPage,
@@ -95,23 +96,14 @@ export default async function StoriesPage({
 
   return (
     <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
-      <PublicPageFrame variant="listing" className="pb-20 pt-8 sm:pt-10">
-        <nav aria-label="เส้นทางนำทาง" className="flex items-center gap-2 text-sm text-black/60">
-          <Link href="/" className="hover:text-[var(--public-teal)]">หน้าแรก</Link>
-          <span aria-hidden="true">/</span>
-          <span aria-current="page" className="font-semibold text-[var(--public-ink)]">เรื่องราว</span>
-        </nav>
-
-        <header className="mt-7 grid gap-7 border-b border-black/10 pb-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-          <div>
-            <h1 className="max-w-4xl text-4xl font-black leading-tight text-balance sm:text-5xl lg:text-6xl">
-              {heroTitle}
-            </h1>
-            <p className="mt-4 max-w-[70ch] text-base leading-7 text-black/65 text-pretty sm:text-lg">
-              {heroDescription}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
+      <PublicPageFrame variant="directory">
+        <PublicDirectoryIntro
+          breadcrumbs={[{ label: "หน้าแรก", href: "/" }, { label: "เรื่องราว" }]}
+          title={heroTitle}
+          description={heroDescription}
+          scope="บทความและประสบการณ์ที่ผ่านการเผยแพร่"
+        />
+        <div className="mt-5 flex flex-wrap gap-3">
             <Link
               href="/profile"
               className="inline-flex min-h-11 items-center justify-center rounded-[var(--public-radius-control)] border border-black/15 bg-white px-4 text-sm font-black hover:border-[var(--public-teal)] hover:text-[var(--public-teal)]"
@@ -125,8 +117,7 @@ export default async function StoriesPage({
               <PenNib size={18} weight="bold" aria-hidden="true" />
               แบ่งปันเรื่องราว
             </Link>
-          </div>
-        </header>
+        </div>
 
         <section className="mt-7 rounded-[var(--public-radius-panel)] border border-black/10 bg-white p-4 sm:p-5" aria-labelledby="story-filter-title">
           <div className="flex flex-wrap items-center justify-between gap-3">
