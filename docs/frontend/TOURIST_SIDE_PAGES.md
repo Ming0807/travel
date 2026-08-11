@@ -129,3 +129,27 @@ Tourist-side pages are acceptable when:
 - Optional sharing is user-initiated.
 - Passport works for same-device guests and explains optional Google/LINE recovery.
 - Public pages feel premium, mobile-first, and appropriate for a real tourism platform.
+
+---
+
+## 8. About and Contact Trust Pages
+
+### About (`/about`)
+
+The public About page is an evidence-led description of the current Yala pilot. It may describe implemented capabilities such as CMS-managed place data, voluntary QR visit recording, privacy-aware data collection, and aggregate planning dashboards.
+
+It must not display invented team members, unverified operators, unsupported authority claims, province-wide adoption figures, or sample statistics that look like production evidence. Legacy `about_team` settings are not a public data source; their default is intentionally empty.
+
+### Contact (`/contact`)
+
+The public Contact page submits to `POST /api/contact` and stores a support record in `contact_messages`. It supports pending, success, validation, server-error, and retry states. A failed submission preserves the entered values.
+
+The page must not publish an unverified email address, telephone number, office address, service hours, social account, response-time promise, FAQ, newsletter, or redemption process. It tells users not to send passwords, national ID numbers, financial data, or health data.
+
+### Acceptance Criteria
+
+- Every form control has an explicit accessible label.
+- Duplicate submission is blocked while a request is pending.
+- API validation and rate-limit errors use the shared structured error shape.
+- Database errors do not expose provider details.
+- Desktop and mobile browser tests cover success and retry.

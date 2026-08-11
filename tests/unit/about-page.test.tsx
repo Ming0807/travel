@@ -1,44 +1,32 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import AboutPage from "@/app/(public)/about/page";
+import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/services/settings.service", () => {
-  return {
-    SettingsService: class {
-      async getSetting(key: string, defaultValue: unknown) {
-        if (key === "about_vision") {
-          return { content: "Mocked Vision Content" };
-        }
-        if (key === "about_team") {
-          return [
-            { name: "John Doe", role: "Developer", imageUrl: "" },
-            { name: "Jane Smith", role: "Designer", imageUrl: "" }
-          ];
-        }
-        return defaultValue;
-      }
-    }
-  };
-});
+import AboutPage from "@/app/(public)/about/page";
 
 vi.mock("@/components/layout/SiteFooter", () => ({
   SiteFooter: () => <div data-testid="site-footer">Footer</div>,
 }));
 
-describe("About Page", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+describe("About Page public evidence", () => {
+  it("describes the current Yala pilot and only links to real product routes", () => {
+    render(<AboutPage />);
+
+    expect(screen.getByRole("heading", { level: 1, name: /แพลตฟอร์มข้อมูลท่องเที่ยวยะลา/ })).toBeInTheDocument();
+    expect(screen.getByText(/โครงการระบบสารสนเทศต้นแบบ/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /สำรวจสถานที่ในยะลา/ })).toHaveAttribute("href", "/attractions");
+    expect(screen.getAllByRole("link", { name: /ติดต่อโครงการ/ })).toEqual(
+      expect.arrayContaining([expect.objectContaining({ href: expect.stringContaining("/contact") })]),
+    );
+    expect(screen.getByTestId("site-footer")).toBeInTheDocument();
   });
 
-  it("renders the vision and team members from settings", async () => {
-    const jsx = await AboutPage();
-    render(jsx);
+  it("does not present unsupported team, scale, authority, or social claims", () => {
+    const { container } = render(<AboutPage />);
+    const text = container.textContent ?? "";
 
-    expect(screen.getByText("Mocked Vision Content")).toBeInTheDocument();
-    expect(screen.getByText("John Doe")).toBeInTheDocument();
-    expect(screen.getByText("Jane Smith")).toBeInTheDocument();
-    expect(screen.getByText("Developer")).toBeInTheDocument();
-    expect(screen.getByText("Designer")).toBeInTheDocument();
-    expect(screen.getByTestId("site-footer")).toBeInTheDocument();
+    expect(text).not.toMatch(/ดร\. อามีน|นายนพดล|นางสาวฟาติมา|John Doe|Jane Smith/);
+    expect(text).not.toMatch(/150\+|50K\+|10K\+|หลายพันคน|คอมมูนิตี้ที่เติบโต/);
+    expect(text).not.toMatch(/หน่วยงานการท่องเที่ยวอย่างเป็นทางการ|ข้อมูลทางการ/);
+    expect(container.querySelectorAll("svg[aria-label*='Facebook'], svg[aria-label*='Instagram']")).toHaveLength(0);
   });
 });

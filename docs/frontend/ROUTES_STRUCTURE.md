@@ -1361,3 +1361,14 @@ A tourist should never feel lost after scanning a QR code.
 | `/admin/attractions/[id]/improvements` | Approved attraction/admin permission | Review feedback issue, create action, record completion and follow-up |
 
 Public participant routes never accept internal research IDs or secret tokens in the URL. Ownership is carried in an HttpOnly same-site cookie; stakeholder routes do not create tourist profiles.
+
+---
+
+## 30. Public Trust Routes
+
+| Route | Purpose | Data behavior |
+|---|---|---|
+| `/about` | Explain the verified scope and current Yala pilot capabilities | No invented team, authority, or scale claims |
+| `/contact` | Submit a support, content-correction, QR, privacy, or collaboration message | Calls `POST /api/contact`; preserves values on failure |
+| `/privacy` | Explain actual personal-data handling and user choices | Must match implemented fields, providers, and retention behavior |
+| `/terms` | Explain the actual service contract and content rules | Must not promise unsupported services or legal/operator facts |

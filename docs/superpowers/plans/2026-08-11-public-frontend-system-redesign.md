@@ -440,10 +440,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/public-trust-pages.test.tsx`
 - Test: `tests/e2e/contact.spec.ts`
 
-- [ ] Write failing tests proving contact calls `/api/contact` and reports pending/error/success/retry.
-- [ ] Remove fake team, operator, scale, social, FAQ, newsletter, redemption, contact, hours, and response-time claims.
-- [ ] Build an evidence-led Yala pilot About page and a real support task page.
-- [ ] Run targeted gates and commit as `fix: make public trust pages evidence-based`.
+  - [x] Write failing tests proving contact calls `/api/contact` and reports pending/error/success/retry.
+  - [x] Remove fake team, operator, scale, social, FAQ, newsletter, redemption, contact, hours, and response-time claims.
+  - [x] Build an evidence-led Yala pilot About page and a real support task page.
+  - [x] Run targeted gates and commit as `fix: make public trust pages evidence-based`.
 
 ### Task 20: Rewrite privacy and terms as accurate service contracts
 

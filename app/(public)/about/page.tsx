@@ -1,348 +1,165 @@
-import { 
-  Target,
-  Eye,
-  CheckCircle,
-  MapPin,
-  Camera,
-  ShieldCheck,
-  InstagramLogo,
-  FacebookLogo,
-  LinkedinLogo,
-  Heart,
-  Users,
-  BookOpen,
-  GlobeHemisphereEast
-} from "@phosphor-icons/react/dist/ssr";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { projectVision as defaultVision, teamMembers as defaultTeam } from "@/lib/data/about";
-import { SettingsService } from "@/lib/services/settings.service";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  ArrowRight,
+  ChartBar,
+  CheckCircle,
+  Database,
+  MapPin,
+  QrCode,
+  ShieldCheck,
+  Sparkle,
+} from "@phosphor-icons/react/dist/ssr";
 
-export default async function AboutPage() {
-  const settingsService = new SettingsService();
-  const projectVision = await settingsService.getSetting("about_vision", defaultVision);
-  const teamMembers = await settingsService.getSetting("about_team", defaultTeam);
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
+export const metadata: Metadata = {
+  title: "เกี่ยวกับโครงการ | แพลตฟอร์มข้อมูลท่องเที่ยวยะลา",
+  description: "ขอบเขต เป้าหมาย และหลักการทำงานของแพลตฟอร์มข้อมูลท่องเที่ยวยะลารุ่นนำร่อง",
+};
+
+const capabilities = [
+  {
+    icon: MapPin,
+    title: "ข้อมูลสถานที่ที่จัดการได้",
+    description: "ผู้ดูแลเผยแพร่และปรับปรุงข้อมูลสถานที่ รูปภาพ เส้นทาง และเนื้อหาที่นักท่องเที่ยวเห็นจากระบบหลังบ้าน",
+  },
+  {
+    icon: QrCode,
+    title: "บันทึกการเยี่ยมชมโดยสมัครใจ",
+    description: "QR เชื่อมการเยี่ยมชมกับสถานที่จริง ก่อนมอบใบประกาศและตราประทับโดยไม่บังคับเข้าสู่ระบบหรือทำแบบสอบถาม",
+  },
+  {
+    icon: Database,
+    title: "ข้อมูลที่มีโครงสร้าง",
+    description: "ข้อมูลพื้นฐาน พฤติกรรมการเดินทาง ค่าใช้จ่ายช่วงประมาณ และความพึงพอใจถูกแยกตามวัตถุประสงค์และการยินยอม",
+  },
+  {
+    icon: ChartBar,
+    title: "สารสนเทศเพื่อการตัดสินใจ",
+    description: "Dashboard สรุปแนวโน้มและข้อเสนอแนะจากข้อมูลที่มีจริง พร้อมแสดงฐานข้อมูลและข้อจำกัดเมื่อกลุ่มตัวอย่างยังน้อย",
+  },
+] as const;
+
+const principles = [
+  "ให้คุณค่าก่อน แล้วจึงขอข้อมูลเพิ่มเติมแบบไม่บังคับ",
+  "ไม่เก็บเลขบัตรประชาชน ที่อยู่ละเอียด หรือข้อมูลอ่อนไหวที่ไม่จำเป็น",
+  "แยกข้อมูลท่องเที่ยว ข้อมูลการใช้งาน และข้อมูลวิจัยตามวัตถุประสงค์",
+  "ไม่ใช้จำนวนตัวอย่างน้อยเพื่อสรุปแทนประชากรทั้งจังหวัด",
+] as const;
+
+export default function AboutPage() {
   return (
-    <div className="bg-background min-h-screen text-ink pb-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
-        
-        {/* HERO SECTION */}
-        <section className="flex flex-col lg:flex-row justify-between gap-12 lg:gap-8 items-start mb-24">
-          <div className="lg:w-1/2 pt-8">
-            <div className="flex gap-2 text-xs font-bold text-muted uppercase tracking-widest mb-6">
-              <span>หน้าแรก</span>
-              <span>›</span>
-              <span className="text-ink">เกี่ยวกับเรา</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-6xl font-black text-ink mb-6 leading-tight">
-              เกี่ยวกับ <br className="hidden lg:block"/>ท่องเที่ยวชายแดนใต้
-            </h1>
-            <p className="text-muted leading-relaxed text-lg max-w-md mb-8">
-              เราคือนักเล่าเรื่อง นักสำรวจ และผู้สร้างสรรค์แพลตฟอร์มที่มุ่งหวังจะเปิดมุมมองใหม่ของการท่องเที่ยวใน 3 จังหวัดชายแดนใต้ — หนึ่งการเดินทาง หนึ่งความประทับใจ
-            </p>
-            <Link href="/attractions" className="inline-flex items-center gap-2 bg-coral text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-coral/90 transition-all">
-              ค้นพบเรื่องราวของเรา
-            </Link>
-            
-            {/* Dashed line decorative SVG */}
-            <div className="mt-8 opacity-40">
-              <svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 59C20.5 59 40 45.5 54.5 35C74.3989 20.5901 95 10 120 10C148 10 170 25 190 40" stroke="#E18868" strokeWidth="2" strokeDasharray="6 6"/>
-                <path d="M185 30L195 45L175 48" stroke="#E18868" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-          </div>
-          
-          <div className="lg:w-1/2 relative h-[500px] w-full">
-            {/* Background Shape */}
-            <div className="absolute top-10 left-10 w-[350px] h-[400px] bg-teal/5 rounded-2xl -z-10 opacity-70"></div>
-            
-            <div className="absolute top-0 left-0 w-64 h-80 rounded-2xl overflow-hidden shadow-md border-4 border-background z-10 bg-white">
-              <div className="flex h-full flex-col justify-between bg-[linear-gradient(135deg,#F8EDE7_0%,#F7F3EA_50%,#E9F0EC_100%)] p-6">
-                <MapPin size={40} weight="fill" className="text-coral" />
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Tourism data</p>
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    <span className="h-16 rounded-xl bg-white/70" />
-                    <span className="h-24 rounded-xl bg-white/80" />
-                    <span className="h-12 rounded-xl bg-white/60" />
-                  </div>
-                </div>
+    <>
+      <main className="bg-white text-ink">
+        <section className="border-b border-ink/10 bg-[#F7F8F6]">
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)] lg:px-8 lg:py-20">
+            <div className="self-center">
+              <p className="text-xs font-black uppercase text-coral">Yala smart tourism pilot</p>
+              <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight sm:text-5xl">
+                แพลตฟอร์มข้อมูลท่องเที่ยวยะลา
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-slate-700">
+                โครงการระบบสารสนเทศต้นแบบที่เชื่อมข้อมูลสถานที่ การเยี่ยมชมโดยสมัครใจ
+                ประสบการณ์นักท่องเที่ยว และการวิเคราะห์ข้อมูล เพื่อช่วยให้การพัฒนาการท่องเที่ยวมีหลักฐานประกอบมากขึ้น
+              </p>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <Link href="/attractions" className="inline-flex min-h-12 items-center justify-center gap-2 bg-coral px-6 font-black text-white transition-colors hover:bg-[#C8553A]">
+                  สำรวจสถานที่ในยะลา <ArrowRight aria-hidden="true" weight="bold" />
+                </Link>
+                <Link href="/contact" className="inline-flex min-h-12 items-center justify-center border border-ink/20 bg-white px-6 font-black text-ink transition-colors hover:border-ink">
+                  ติดต่อโครงการ
+                </Link>
               </div>
             </div>
-            
-            <div className="absolute top-8 right-4 w-48 h-48 rounded-2xl overflow-hidden shadow-md border-4 border-background z-20 bg-[#EAF2F0] p-5">
-              <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-teal/20 bg-white/50 text-center">
-                <GlobeHemisphereEast size={42} weight="light" className="text-teal" />
-                <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Official content</p>
-              </div>
-            </div>
-            
-            <div className="absolute bottom-4 right-12 w-56 h-40 rounded-2xl overflow-hidden shadow-md border-4 border-background z-30 bg-coral/5 p-5">
-              <div className="flex h-full items-end justify-between rounded-2xl border border-coral/20 bg-white/60 p-4">
-                <Camera size={34} weight="light" className="text-coral" />
-                <div className="space-y-2">
-                  <span className="block h-2 w-20 rounded-full bg-coral/30" />
-                  <span className="block h-2 w-14 rounded-full bg-ink/15" />
-                </div>
-              </div>
-            </div>
+
+            <figure className="relative aspect-[4/3] min-h-[320px] overflow-hidden border border-ink/10 bg-slate-100">
+              <Image
+                src="/certificate-templates/yala-mist-heritage-v2.webp"
+                alt="ตัวอย่างงานภาพสำหรับใบประกาศดิจิทัลในโครงการนำร่องยะลา"
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 46vw"
+                className="object-cover"
+              />
+              <figcaption className="absolute inset-x-0 bottom-0 bg-ink/85 px-5 py-4 text-sm font-semibold text-white">
+                ใบประกาศและตราประทับเป็นแรงจูงใจหลังบันทึกการเยี่ยมชม ไม่ใช่เงื่อนไขบังคับให้ตอบแบบสอบถาม
+              </figcaption>
+            </figure>
           </div>
         </section>
 
-        {/* MISSION & VISION */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24 bg-teal/5 p-10 md:p-12 rounded-2xl">
-          <div className="flex gap-6 items-start">
-            <div className="bg-coral text-white p-4 rounded-full shrink-0 shadow-sm">
-              <Target size={32} weight="fill" />
-            </div>
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+          <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr]">
             <div>
-              <h2 className="text-xl font-black text-ink mb-3">พันธกิจของเรา</h2>
-              <p className="text-muted text-sm leading-relaxed">
-                เพื่อสร้างแรงบันดาลใจและมอบพลังให้นักเดินทางด้วยคำแนะนำที่เชื่อถือได้ เรื่องราวที่แท้จริง และสถานที่ที่เราคัดสรรมาอย่างดี เพื่อเปลี่ยนการเดินทางให้เป็นประสบการณ์ที่น่าจดจำใน 3 จังหวัดชายแดนใต้
+              <p className="text-xs font-black uppercase text-teal">สิ่งที่ระบบทำจริง</p>
+              <h2 className="mt-3 text-3xl font-black">จากการเดินทาง สู่ข้อมูลที่นำไปใช้ได้</h2>
+              <p className="mt-4 text-sm leading-7 text-slate-700">
+                ระบบนี้ไม่ใช่เพียงเว็บไซต์ประชาสัมพันธ์ แต่เป็น Web Application ที่จัดเก็บข้อมูลอย่างมีโครงสร้าง
+                เชื่อมกับการทำงานของผู้ดูแล และนำผลรวมมาใช้ติดตามคุณภาพประสบการณ์ท่องเที่ยว
               </p>
             </div>
-          </div>
-          
-          <div className="flex gap-6 items-start">
-            <div className="bg-coral text-white p-4 rounded-full shrink-0 shadow-sm">
-              <Eye size={32} weight="fill" />
+            <div className="grid border-t border-ink/15 sm:grid-cols-2">
+              {capabilities.map(({ icon: Icon, title, description }) => (
+                <article key={title} className="border-b border-ink/15 p-5 sm:border-x sm:p-6">
+                  <Icon aria-hidden="true" className="text-coral" size={30} weight="duotone" />
+                  <h3 className="mt-4 text-lg font-black">{title}</h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">{description}</p>
+                </article>
+              ))}
             </div>
+          </div>
+        </section>
+
+        <section className="border-y border-ink/10 bg-[#FFF7F3]">
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-20">
             <div>
-              <h2 className="text-xl font-black text-ink mb-3">วิสัยทัศน์ของเรา</h2>
-              <p className="text-muted text-sm leading-relaxed">
-                {projectVision.content}
+              <ShieldCheck aria-hidden="true" className="text-teal" size={38} weight="fill" />
+              <h2 className="mt-4 text-3xl font-black">ข้อมูลต้องมีประโยชน์ โดยไม่เพิ่มภาระเกินจำเป็น</h2>
+              <p className="mt-4 text-sm leading-7 text-slate-700">
+                นักท่องเที่ยวได้รับใบประกาศและตราประทับก่อน แบบสอบถามหลังจากนั้นเป็นทางเลือก
+                การปฏิเสธหรือข้ามจะไม่ทำให้สิทธิ์ที่ได้รับแล้วหายไป
               </p>
             </div>
+            <ul className="divide-y divide-ink/15 border-y border-ink/15">
+              {principles.map((principle) => (
+                <li key={principle} className="flex gap-3 py-4 text-sm font-semibold leading-7 text-ink">
+                  <CheckCircle aria-hidden="true" className="mt-1 shrink-0 text-teal" size={20} weight="fill" />
+                  {principle}
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
-        {/* WHAT MAKES IT SPECIAL */}
-        <section className="mb-24">
-          <h2 className="text-3xl font-black text-ink mb-12">ความพิเศษของเรา</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <div className="text-coral">
-                <CheckCircle size={40} weight="light" />
-              </div>
-              <h3 className="font-bold text-ink">คัดสรรด้วยความใส่ใจ</h3>
-              <p className="text-sm text-muted leading-relaxed">
-                ทุกคำแนะนำและจุดหมายปลายทางถูกเลือกสรรจากประสบการณ์ตรงของนักเดินทางและผู้คนในพื้นที่
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+          <div className="grid gap-10 lg:grid-cols-[1fr_0.9fr]">
+            <div>
+              <Sparkle aria-hidden="true" className="text-coral" size={34} weight="fill" />
+              <h2 className="mt-4 text-3xl font-black">ขอบเขตปัจจุบัน: โครงการนำร่องในยะลา</h2>
+              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-700">
+                ระบบยังอยู่ระหว่างพัฒนาและประเมินผล เนื้อหา จำนวนข้อมูล และข้อสรุปเชิงวิเคราะห์จึงเพิ่มขึ้นตามการใช้งานจริง
+                สถิติที่แสดงต้องอ่านพร้อมช่วงเวลา ฐานตัวอย่าง และข้อจำกัด ไม่ใช่ตัวเลขทางการของทั้งจังหวัด
+              </p>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
+                สถาปัตยกรรมรองรับการขยายพื้นที่ในอนาคต แต่การขยายจะทำหลังจากตรวจคุณภาพข้อมูล กระบวนการดูแลเนื้อหา
+                และความพร้อมของหน่วยงานที่เกี่ยวข้องในระยะนำร่องแล้ว
               </p>
             </div>
-            
-            <div className="space-y-4">
-              <div className="text-coral">
-                <GlobeHemisphereEast size={40} weight="light" />
-              </div>
-              <h3 className="font-bold text-ink">สัมผัสวิถีท้องถิ่นแท้จริง</h3>
-              <p className="text-sm text-muted leading-relaxed">
-                พาคุณออกจากเส้นทางหลัก สู่สถานที่และเรื่องราวที่ผู้คนท้องถิ่นอยากนำเสนอ
+            <aside className="border border-ink/15 bg-[#F7F8F6] p-6">
+              <h2 className="text-lg font-black">พบข้อมูลไม่ถูกต้องหรืออยากร่วมทดสอบ?</h2>
+              <p className="mt-2 text-sm leading-7 text-slate-700">
+                ส่งรายละเอียดผ่านแบบฟอร์มติดต่อ ข้อความจะเข้าสู่ระบบหลังบ้านเพื่อให้ผู้ดูแลติดตามได้
               </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="text-coral">
-                <Camera size={40} weight="light" />
-              </div>
-              <h3 className="font-bold text-ink">เรื่องราวสร้างแรงบันดาลใจ</h3>
-              <p className="text-sm text-muted leading-relaxed">
-                จากแหล่งท่องเที่ยวลับสู่เส้นทางใหม่ๆ ที่จะปลุกความเป็นนักสำรวจในตัวคุณ
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="text-coral">
-                <ShieldCheck size={40} weight="light" />
-              </div>
-              <h3 className="font-bold text-ink">เชื่อถือได้ ปลอดภัย</h3>
-              <p className="text-sm text-muted leading-relaxed">
-                เนื้อหาอัปเดตตลอดเวลา พร้อมข้อแนะนำและระบบที่ดูแลข้อมูลให้คุณเดินทางอย่างมั่นใจ
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* OUR STORY */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-24 items-center">
-          <div className="lg:col-span-4 space-y-6">
-            <h2 className="text-3xl font-black text-ink">เรื่องราวของเรา</h2>
-            <div className="space-y-4 text-sm text-muted leading-relaxed">
-              <p>
-                แพลตฟอร์มนี้ถือกำเนิดขึ้นจากความรักในการเดินทางและความเชื่อที่ว่า การเดินทางที่ดีที่สุดคือการก้าวออกไปสัมผัสกับวิถีชีวิตจริงที่ซ่อนอยู่ในพื้นที่
-              </p>
-              <p>
-                สิ่งที่เริ่มต้นจากโปรเจกต์วิจัยเล็กๆ ของกลุ่มนักวิชาการ ได้เติบโตเป็นแพลตฟอร์มการเก็บข้อมูลการท่องเที่ยวและ Digital Passport ที่เชื่อมต่อนักเดินทางหลายพันคน
-              </p>
-              <p>
-                วันนี้ เราคือคอมมูนิตี้ที่เติบโตขึ้นเรื่อยๆ ซึ่งประกอบด้วยนักสำรวจ ครีเอเตอร์ และคนในพื้นที่ที่ทำงานร่วมกันเพื่อช่วยให้คุณเดินทางได้ลึกซึ้งขึ้น ชาญฉลาดขึ้น และมีจุดมุ่งหมาย
-              </p>
-            </div>
-            <p className="text-coral font-['Playfair_Display'] italic text-xl pt-4">
-              และการเดินทางยังคงดำเนินต่อไป...
-            </p>
-          </div>
-          
-          <div className="lg:col-span-8 relative h-[400px] rounded-2xl overflow-hidden shadow-md border border-ink/5 bg-teal/5">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,#FFF8EF_0%,#EDF3F0_52%,#F8E7DF_100%)]" />
-            <div className="absolute inset-8 rounded-xl border border-white/70 bg-white/35 p-8 backdrop-blur-sm">
-              <div className="grid h-full grid-cols-3 gap-4">
-                <div className="flex flex-col justify-end rounded-2xl bg-white/60 p-5">
-                  <MapPin size={36} weight="fill" className="text-coral" />
-                  <span className="mt-5 h-2 w-20 rounded-full bg-ink/20" />
-                </div>
-                <div className="flex flex-col justify-center rounded-2xl bg-white/70 p-5">
-                  <Users size={38} weight="light" className="text-teal" />
-                  <span className="mt-5 h-2 w-24 rounded-full bg-ink/20" />
-                  <span className="mt-2 h-2 w-16 rounded-full bg-coral/30" />
-                </div>
-                <div className="flex flex-col justify-start rounded-2xl bg-white/60 p-5">
-                  <BookOpen size={36} weight="light" className="text-ink" />
-                  <span className="mt-5 h-2 w-20 rounded-full bg-ink/20" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* MEET THE TEAM */}
-        <section className="mb-24">
-          <div className="flex justify-between items-end mb-12">
-            <h2 className="text-3xl font-black text-ink">ทีมงานของเรา</h2>
-            <Link href="/contact" className="border border-ink/20 rounded-full px-5 py-2 text-xs font-bold hover:bg-ink hover:text-white transition-colors">
-              ร่วมงานกับเรา
-            </Link>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {teamMembers.map((member: { name: string; role: string; imageUrl: string }, idx: number) => (
-              <div key={idx} className="bg-white rounded-xl p-5 border border-ink/5 flex flex-col items-center text-center hover:shadow-md transition-shadow">
-                <div className="w-full h-48 relative rounded-xl overflow-hidden mb-4 bg-cream">
-                  {member.imageUrl ? (
-                    <Image
-                      src={member.imageUrl}
-                      alt={member.name}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="flex h-full flex-col items-center justify-center bg-[#F4F1EA] text-center">
-                      <Users size={42} weight="light" className="text-coral" />
-                      <span className="mt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">Team profile</span>
-                    </div>
-                  )}
-                </div>
-                <h3 className="font-black text-ink">{member.name}</h3>
-                <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-3 mt-1 flex-1">{member.role}</p>
-                <div className="flex gap-3 text-ink/40 mt-auto pt-4 border-t border-ink/5 w-full justify-center">
-                  <InstagramLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
-                  <FacebookLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
-                  <LinkedinLogo size={16} className="hover:text-coral cursor-pointer transition-colors" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* STATS BANNER */}
-        <section className="bg-white rounded-2xl border border-coral/20 shadow-sm p-12 mb-24 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-coral/5 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center divide-x divide-ink/5">
-            <div className="flex flex-col items-center">
-              <div className="text-coral mb-3"><MapPin size={32} weight="light" /></div>
-              <h3 className="text-3xl font-black text-ink mb-1">150+</h3>
-              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">สถานที่ท่องเที่ยว</p>
-              <p className="text-xs text-muted">คัดสรรสถานที่เด่นๆ มาเพื่อคุณ</p>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              <div className="text-coral mb-3"><Users size={32} weight="light" /></div>
-              <h3 className="text-3xl font-black text-ink mb-1">50K+</h3>
-              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">นักเดินทางผู้ร่วมสนุก</p>
-              <p className="text-xs text-muted">มั่นใจด้วยคอมมูนิตี้ที่เติบโตต่อเนื่อง</p>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              <div className="text-coral mb-3"><BookOpen size={32} weight="light" /></div>
-              <h3 className="text-3xl font-black text-ink mb-1">10K+</h3>
-              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">ตราประทับสะสม</p>
-              <p className="text-xs text-muted">หลักฐานของความทรงจำดีๆ</p>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              <div className="text-coral mb-3"><GlobeHemisphereEast size={32} weight="light" /></div>
-              <h3 className="text-3xl font-black text-ink mb-1">3</h3>
-              <p className="text-xs font-bold text-ink uppercase tracking-wider mb-2">จังหวัดหลัก</p>
-              <p className="text-xs text-muted">ยะลา, ปัตตานี, นราธิวาส</p>
-            </div>
-          </div>
-        </section>
-
-        {/* OUR VALUES */}
-        <section className="mb-24">
-          <h2 className="text-3xl font-black text-ink mb-12">คุณค่าของเรา</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-xl border border-ink/5">
-              <div className="text-coral mb-4"><Heart size={28} weight="light" /></div>
-              <h3 className="font-bold text-ink mb-2">ประสบการณ์ที่แท้จริง</h3>
-              <p className="text-xs text-muted leading-relaxed">
-                เราเชื่อในเรื่องราวจริง ผู้คนจริง และช่วงเวลาแห่งความประทับใจ
-              </p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl border border-ink/5">
-              <div className="text-coral mb-4"><Users size={28} weight="light" /></div>
-              <h3 className="font-bold text-ink mb-2">เคารพในวัฒนธรรมท้องถิ่น</h3>
-              <p className="text-xs text-muted leading-relaxed">
-                เราเดินทางอย่างมีความหมายและสนับสนุนชุมชนที่เราไปเยือน
-              </p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl border border-ink/5">
-              <div className="text-coral mb-4"><Target size={28} weight="light" /></div>
-              <h3 className="font-bold text-ink mb-2">คัดสรรอย่างมีจุดมุ่งหมาย</h3>
-              <p className="text-xs text-muted leading-relaxed">
-                คุณภาพเหนือปริมาณ เราเลือกสิ่งที่มีค่าต่อเวลาของคุณอย่างแท้จริง
-              </p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl border border-ink/5">
-              <div className="text-coral mb-4"><ShieldCheck size={28} weight="light" /></div>
-              <h3 className="font-bold text-ink mb-2">น่าเชื่อถือและโปร่งใส</h3>
-              <p className="text-xs text-muted leading-relaxed">
-                คำแนะนำที่จริงใจและข้อมูลที่ชัดเจนซึ่งคุณสามารถเชื่อถือได้
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA BANNER */}
-        <section className="mb-20">
-          <div className="relative w-full h-[300px] rounded-2xl overflow-hidden flex flex-col items-center justify-center text-center px-4 shadow-md">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,#173F37_0%,#31685B_48%,#E18868_100%)]" />
-            <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(90deg,rgba(255,255,255,.25)_1px,transparent_1px),linear-gradient(rgba(255,255,255,.25)_1px,transparent_1px)] [background-size:48px_48px]" />
-            <div className="relative z-10">
-              <h2 className="text-4xl font-black text-white mb-3">ออกเดินทางสำรวจโลกไปด้วยกัน</h2>
-              <p className="text-white/90 mb-8">การผจญภัยครั้งยิ่งใหญ่ครั้งต่อไปของคุณเริ่มต้นจากเรื่องราวเหล่านี้</p>
-              <Link href="/attractions" className="inline-block bg-coral text-white px-8 py-3.5 rounded-full font-bold shadow-md hover:bg-coral/90 transition-all">
-                เริ่มต้นการสำรวจ
+              <Link href="/contact" className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 bg-teal px-5 font-black text-white transition-colors hover:bg-ink">
+                ติดต่อโครงการ <ArrowRight aria-hidden="true" weight="bold" />
               </Link>
-            </div>
+            </aside>
           </div>
         </section>
-        
-      </div>
-      
-      {/* SITE FOOTER */}
+      </main>
       <SiteFooter />
-    </div>
+    </>
   );
 }
