@@ -269,7 +269,7 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - [x] Write failing tests for true featured/latest semantics, filters, author type, update/source information, sanitization boundary, and 70ch reading width.
 - [x] Implement newsroom and reading layouts with real related-content/destination links.
 - [x] Add desktop TOC and mobile disclosure only when headings exist.
-- [ ] Run targeted gates and commit as `feat: redesign public story discovery and reading`.
+- [x] Run targeted gates and commit as `feat: redesign public story discovery and reading`.
 
 ### Task 11: Make story contribution expectations and moderation explicit
 
@@ -346,10 +346,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/tourist-auth.test.tsx`
 - Test: `tests/unit/identity-linking.test.ts`
 
-- [ ] Write failing tests for guest-first copy, connected identity state, consent separation, safe internal `next`, and no automatic `hasConsented: true`.
-- [ ] Separate profile groups: certificate name, origin, public display, connected accounts, consent/privacy actions.
-- [ ] Allowlist post-auth destinations to internal routes and reject protocol-relative/external values.
-- [ ] Run targeted auth/privacy gates; controller reviews line-by-line; commit as `fix: harden tourist identity and profile UX`.
+- [x] Write failing tests for guest-first copy, connected identity state, consent separation, safe internal `next`, and no automatic `hasConsented: true`.
+- [x] Separate profile groups: certificate name, origin, public display, connected accounts, consent/privacy actions.
+- [x] Allowlist post-auth destinations to internal routes and reject protocol-relative/external values.
+- [x] Run targeted auth/privacy gates; controller reviews line-by-line; commit as `fix: harden tourist identity and profile UX`.
 
 ---
 

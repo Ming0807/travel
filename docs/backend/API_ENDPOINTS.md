@@ -36,11 +36,11 @@ Invalid filter values return `400`; oversized exports return `413` and require n
 
 ## Tourist Identity Resolution (Server Actions)
 
-These server actions and auth guards support the OAuth tourist identity resolution added in June 2026. They resolve tourist identity from Supabase Auth sessions (Google, email, LINE) with guest fallback.
+These server actions and auth guards support OAuth tourist identity resolution. An authenticated session resolves only its linked provider identity; it never silently falls back to a different guest passport on the same device.
 
 | Function | Location | Status | Purpose | Notes |
 |---|---|---|---|---|
-| `resolveTouristId()` | `lib/auth/guards.ts:726` | Implemented | Resolves tourist from OAuth session then falls back to guest cookie. | Does NOT create new profiles — only resolves existing identities. |
+| `resolveTouristId()` | `lib/auth/guards.ts` | Implemented | Resolves the linked OAuth tourist when authenticated, or the guest cookie only when no authenticated user exists. | Does not create profiles and does not silently merge identities. |
 | `resolveCurrentTouristId()` | `lib/auth/guards.ts:715` | Implemented | Backward-compatible alias for `resolveTouristId()`. | Delegates to `resolveTouristId`. |
 | `submitTouristStoryAction()` | `app/actions/tourist-story-actions.ts` | Implemented | Submits tourist stories with XSS-safe plain text normalization, strict province validation, and identity-only resolve. | Identity resolution uses `resolveCurrentTouristId()`. |
 | `submitReviewAction()` | `app/actions/submit-review-action.ts` | Implemented | Submits reviews using `resolveCurrentTouristId()` for OAuth + guest identity. | Previously only supported guest identity. |
@@ -51,7 +51,8 @@ The `resolveTouristId()` function resolves identity from Supabase Auth metadata:
 
 - `user.app_metadata.provider` → mapped to `tourist_identities.provider` (google, email, line)
 - `user.id` (Supabase Auth UUID) → mapped to `tourist_identities.provider_user_id`
-- Falls back to `anonymous_device` guest cookie if no auth session
+- Uses the `anonymous_device` guest cookie only when no authenticated user exists
+- Sends an authenticated user with an unlinked account and a device passport to an explicit merge/separate decision
 
 ### Security / Privacy Notes
 

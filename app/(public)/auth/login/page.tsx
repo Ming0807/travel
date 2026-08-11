@@ -1,21 +1,33 @@
-import { TouristAuthGate } from "@/components/auth/TouristAuthGate";
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import type { Metadata } from "next";
 
+import { TouristAuthGate } from "@/components/auth/TouristAuthGate";
+import { resolveSafeAuthDestination } from "@/lib/auth/oauth";
+
 export const metadata: Metadata = {
-  title: "เข้าสู่ระบบ | ท่องเที่ยวชายแดนใต้",
+  title: "เข้าสู่ระบบ | ท่องเที่ยวยะลา",
+  description: "เข้าสู่ระบบเพื่อค้นคืนพาสปอร์ตท่องเที่ยวและจัดการเรื่องราวของคุณ",
 };
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ next?: string; error?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const nextPath = resolveSafeAuthDestination(params.next);
+  const initialError = params.error === "oauth_callback_failed"
+    ? "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่ หรือใช้งานต่อโดยไม่เข้าสู่ระบบ"
+    : null;
+
   return (
-    <div className="min-h-screen bg-slate-50 text-ink selection:bg-ink selection:text-white flex flex-col">
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
-        <TouristAuthGate
-          title="ยินดีต้อนรับกลับมา"
-          description="เข้าสู่ระบบเพื่อจัดการพาสปอร์ตดิจิทัล และแบ่งปันเรื่องราวของคุณ"
-        />
-      </main>
-      <SiteFooter />
-    </div>
+    <main className="flex min-h-screen items-center bg-[var(--public-canvas)] px-4 py-10 sm:px-6">
+      <TouristAuthGate
+        title="เข้าสู่ระบบบัญชีนักเดินทาง"
+        description="ค้นคืนพาสปอร์ต ตราประทับ และจัดการเรื่องราวจากอุปกรณ์อื่นได้"
+        nextPath={nextPath}
+        initialError={initialError}
+        headingLevel={1}
+      />
+    </main>
   );
 }

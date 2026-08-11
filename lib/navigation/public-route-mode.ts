@@ -4,7 +4,7 @@ const FOCUSED_PUBLIC_ROUTE_ROOTS = [
   "/visit",
   "/research",
   "/auth",
-  "/account/link-line",
+  "/account",
 ] as const;
 
 function matchesRouteRoot(pathname: string, root: string) {

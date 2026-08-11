@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { ChatCircleDots, Spinner, WarningCircle } from "@phosphor-icons/react";
-import { isLineLiffConfigured } from "@/lib/services/line-liff.client";
+import { isLineLiffConfigured, recoverLinePassport } from "@/lib/services/line-liff.client";
 
 export function LineRecoveryPanel({ className = "" }: { className?: string }) {
   const consentId = useId();
@@ -22,41 +22,17 @@ export function LineRecoveryPanel({ className = "" }: { className?: string }) {
     }
 
     setUiState({ kind: "redirecting" });
-    try {
-      const liff = (await import("@line/liff")).default;
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID || "";
-      await liff.init({ liffId });
-
-      if (!liff.isLoggedIn()) {
-        liff.login({ redirectUri: window.location.href });
-        return; // Will redirect
-      }
-
-      const idToken = liff.getIDToken();
-      if (!idToken) {
-        setUiState({ kind: "error", message: "ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาลองใหม่" });
-        return;
-      }
-
-      const response = await fetch("/api/line/recover", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, hasConsented: true, language: "th" }),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (response.ok && data?.recovered) {
-        window.location.reload();
-      } else {
-        setUiState({
-          kind: "error",
-          message: data?.error?.message || "เกิดข้อผิดพลาดในการกู้คืนบัญชี กรุณาลองใหม่",
-        });
-      }
-    } catch {
-      setUiState({ kind: "error", message: "LINE ชั่วคราวไม่สามารถใช้งานได้" });
+    const result = await recoverLinePassport({ hasConsented: true, language: "th" });
+    if (result.status === "recovered") {
+      window.location.reload();
+      return;
     }
+    if (result.status === "login_redirected") return;
+    if (result.status === "not_configured") {
+      setUiState({ kind: "error", message: "LINE ยังไม่พร้อมใช้งานในตอนนี้" });
+      return;
+    }
+    setUiState({ kind: "error", message: result.message });
   };
 
   if (!isConfigured) return null;

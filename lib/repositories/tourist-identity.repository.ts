@@ -14,6 +14,10 @@ export type TouristIdentityRecord = {
   lastSeenAt: string | null;
 };
 
+export type IdentityLinkingRepositoryResult = {
+  status: "linked" | "already_linked";
+};
+
 function mapTouristIdentity(row: {
   identity_id: string;
   tourist_id: string;
@@ -90,4 +94,51 @@ export async function touchTouristIdentity(identityId: string) {
   if (error) {
     throw new Error(`Failed to update tourist identity: ${error.message}`);
   }
+}
+
+export async function linkTouristIdentityWithConsent(params: {
+  touristId: string;
+  provider: Exclude<TouristIdentityProvider, "anonymous_device">;
+  providerUserId: string;
+  language: "th" | "en";
+  consentVersion: string;
+  consentPurposeKey: "passport_recovery";
+}): Promise<IdentityLinkingRepositoryResult> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.rpc("link_tourist_identity_with_consent", {
+    p_tourist_id: params.touristId,
+    p_provider: params.provider,
+    p_provider_user_id: params.providerUserId,
+    p_language: params.language,
+    p_consent_version: params.consentVersion,
+    p_purpose_key: params.consentPurposeKey,
+  });
+
+  if (error) throw new Error(error.message);
+  if (data !== "linked" && data !== "already_linked") {
+    throw new Error("IDENTITY_LINK_INVALID_RESULT");
+  }
+
+  return { status: data };
+}
+
+export async function recoverTouristPassportWithLine(params: {
+  lineProviderUserId: string;
+  newGuestToken: string;
+  language: "th" | "en";
+  consentVersion: string;
+  consentPurposeKey: "passport_recovery";
+}): Promise<{ status: "recovered" }> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.rpc("recover_tourist_passport_with_line", {
+    p_line_provider_user_id: params.lineProviderUserId,
+    p_new_guest_token: params.newGuestToken,
+    p_language: params.language,
+    p_consent_version: params.consentVersion,
+    p_purpose_key: params.consentPurposeKey,
+  });
+
+  if (error) throw new Error(error.message);
+  if (data !== "recovered") throw new Error("LINE_RECOVERY_INVALID_RESULT");
+  return { status: "recovered" };
 }

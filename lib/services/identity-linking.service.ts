@@ -2,12 +2,9 @@ import "server-only";
 
 import { resolveCurrentTouristId } from "@/lib/auth/guards";
 import {
-  createTouristIdentityLink,
-  findTouristIdentityByProvider,
-  touchTouristIdentity,
+  linkTouristIdentityWithConsent,
   type TouristIdentityProvider
 } from "@/lib/repositories/tourist-identity.repository";
-import { createConsentRecord } from "@/lib/repositories/consent.repository";
 
 export type IdentityLinkingStatus = "linked" | "already_linked";
 
@@ -53,69 +50,35 @@ export async function linkVerifiedIdentityToCurrentTourist(params: {
     );
   }
 
-  const existingIdentity = await findTouristIdentityByProvider(params.provider, params.providerUserId);
-
-  if (existingIdentity) {
-    if (existingIdentity.touristId !== touristId) {
-      throw new IdentityLinkingError("IDENTITY_CONFLICT", "This account is already linked to another passport.");
+  try {
+    if (params.provider === "anonymous_device") {
+      throw new IdentityLinkingError("IDENTITY_LINK_FAILED", "Guest identities cannot be linked here.");
     }
 
-    await touchTouristIdentity(existingIdentity.identityId);
-    await createConsentRecord({
-      touristId,
-      consentVersion: "line_linking_v1",
-      purpose: "Optional account linking for digital passport recovery.",
-      consentType: `${params.provider}_account_linking`,
-      purposeKey: "passport_recovery",
-      hasConsented: true,
-      source: params.provider === "line" ? "line_liff" : "web",
-      language: params.language,
-      metadata: {
-        provider: params.provider,
-        status: "already_linked"
-      }
-    });
-
-    return {
-      status: "already_linked",
-      provider: params.provider,
-      touristId
-    } satisfies IdentityLinkingResult;
-  }
-
-  try {
-    await createTouristIdentityLink({
+    const linking = await linkTouristIdentityWithConsent({
       touristId,
       provider: params.provider,
       providerUserId: params.providerUserId,
-      isPrimary: false
+      language: params.language,
+      consentVersion: "line_linking_v1",
+      consentPurposeKey: "passport_recovery",
     });
 
-    await createConsentRecord({
+    return {
+      status: linking.status,
+      provider: params.provider,
       touristId,
-      consentVersion: "line_linking_v1",
-      purpose: "Optional account linking for digital passport recovery.",
-      consentType: `${params.provider}_account_linking`,
-      purposeKey: "passport_recovery",
-      hasConsented: true,
-      source: params.provider === "line" ? "line_liff" : "web",
-      language: params.language,
-      metadata: {
-        provider: params.provider,
-        status: "linked"
-      }
-    });
+    } satisfies IdentityLinkingResult;
   } catch (error) {
     if (error instanceof IdentityLinkingError) {
       throw error;
     }
 
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("IDENTITY_CONFLICT")) {
+      throw new IdentityLinkingError("IDENTITY_CONFLICT", "This account is already linked to another passport.");
+    }
+
     throw new IdentityLinkingError("IDENTITY_LINK_FAILED", "Could not link this account right now.");
   }
-
-  return {
-    status: "linked",
-    provider: params.provider,
-    touristId
-  } satisfies IdentityLinkingResult;
 }

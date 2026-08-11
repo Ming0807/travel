@@ -59,7 +59,7 @@ const sections = [
           </li>
           <li className="flex items-start gap-3">
             <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-coral/60" />
-            <span><strong>อีเมล</strong> — เฉพาะเมื่อคุณเลือกผูกบัญชีหรือกู้คืนพาสปอร์ต</span>
+            <span><strong>ข้อมูลจากผู้ให้บริการบัญชี</strong> — ใช้รหัสผู้ใช้จาก Google หรือ LINE เพื่อเชื่อมบัญชี โดยไม่คัดลอกรหัสผ่านมาเก็บในฐานข้อมูลนักท่องเที่ยว</span>
           </li>
           <li className="flex items-start gap-3">
             <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-coral/60" />
@@ -139,7 +139,7 @@ const sections = [
             <span className="mt-1 h-5 w-5 shrink-0 rounded-full bg-teal/10 flex items-center justify-center text-teal font-black text-xs">1</span>
             <div>
               <strong className="text-ink">ความยินยอม (Consent)</strong>
-              <p className="text-sm text-muted">สำหรับการเก็บรวบรวมรูปถ่าย ข้อมูลการสำรวจ และการเชื่อมต่อบัญชี LINE/อีเมล</p>
+              <p className="text-sm text-muted">สำหรับการเก็บรวบรวมรูปถ่าย ข้อมูลการสำรวจ และการเชื่อมต่อบัญชี LINE เมื่อผู้ใช้เลือกดำเนินการ</p>
             </div>
           </li>
           <li className="flex items-start gap-3">

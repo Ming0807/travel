@@ -130,7 +130,7 @@ describe("resolveTouristId — identity resolution", () => {
       );
     });
 
-    it("resolves tourist via email OAuth identity (default provider)", async () => {
+    it("resolves tourist via an explicit email identity provider", async () => {
       const mockFindTouristByIdentity = vi.mocked(findTouristByIdentity);
       const mockCreateSupabaseServerClient = vi.mocked(createSupabaseServerClient);
 
@@ -140,7 +140,7 @@ describe("resolveTouristId — identity resolution", () => {
             data: {
               user: {
                 id: "auth-uuid-email-456",
-                app_metadata: {}, // No explicit provider → defaults to "email"
+                app_metadata: { provider: "email" },
               },
             },
             error: null,
@@ -160,7 +160,7 @@ describe("resolveTouristId — identity resolution", () => {
       );
     });
 
-    it("falls back to guest when OAuth identity not linked to any tourist", async () => {
+    it("does not fall back to a device guest when an authenticated identity is not linked", async () => {
       const mockGetGuestIdentity = vi.mocked(getGuestIdentity);
       const mockFindTouristByIdentity = vi.mocked(findTouristByIdentity);
       const mockCreateSupabaseServerClient = vi.mocked(createSupabaseServerClient);
@@ -184,10 +184,36 @@ describe("resolveTouristId — identity resolution", () => {
         .mockResolvedValueOnce("tourist-uuid-existing"); // Guest lookup succeeds
 
       const { resolveTouristId } = await importGuards();
-      const result = await resolveTouristId();
+      await expect(resolveTouristId()).rejects.toMatchObject({
+        code: "TOURIST_IDENTITY_NOT_FOUND",
+      });
+      expect(mockFindTouristByIdentity).toHaveBeenCalledTimes(1);
+      expect(mockGetGuestIdentity).not.toHaveBeenCalled();
+    });
 
-      expect(result).toBe("tourist-uuid-existing");
-      expect(mockFindTouristByIdentity).toHaveBeenCalledTimes(2);
+    it("rejects an unsupported authenticated provider instead of treating it as email", async () => {
+      vi.mocked(createSupabaseServerClient).mockReturnValue({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: {
+              user: {
+                id: "auth-uuid-unsupported",
+                app_metadata: { provider: "azure" },
+              },
+            },
+            error: null,
+          }),
+        },
+      } as never);
+      vi.mocked(getGuestIdentity).mockResolvedValue("guest-token-existing");
+
+      const { resolveTouristId } = await importGuards();
+
+      await expect(resolveTouristId()).rejects.toMatchObject({
+        code: "TOURIST_IDENTITY_NOT_FOUND",
+      });
+      expect(findTouristByIdentity).not.toHaveBeenCalled();
+      expect(getGuestIdentity).not.toHaveBeenCalled();
     });
 
     it("handles auth error gracefully and falls back to guest", async () => {
@@ -201,6 +227,7 @@ describe("resolveTouristId — identity resolution", () => {
         },
       } as never);
       mockGetGuestIdentity.mockResolvedValue("guest-token-fallback");
+      mockFindTouristByIdentity.mockReset();
       mockFindTouristByIdentity.mockResolvedValue("tourist-uuid-fallback");
 
       const { resolveTouristId } = await importGuards();

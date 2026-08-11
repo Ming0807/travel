@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getGuestIdentity } from "@/lib/auth/guest";
+import { resolveTouristAuthProvider } from "@/lib/auth/oauth";
 import { findTouristByIdentity } from "@/lib/repositories/tourist.repository";
 import { getVisitById } from "@/lib/repositories/visit.repository";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -784,28 +785,27 @@ export async function resolveCurrentTouristId(): Promise<string> {
  * Supported providers: google, email, line, anonymous_device.
  */
 export async function resolveTouristId(): Promise<string> {
-  // 1. Try Supabase Auth session (OAuth: Google, email, LINE)
+  let authenticatedUser: { id: string; app_metadata: { provider?: unknown } } | null = null;
+
   try {
     const authClient = await createSupabaseServerClient();
     const { data: { user }, error } = await authClient.auth.getUser();
-
-    if (!error && user) {
-      // Determine the identity provider from Supabase metadata
-      const provider = user.app_metadata.provider || "email";
-      // user.id is the Supabase Auth UUID, used as provider_user_id
-      const providerUserId = user.id;
-
-      const touristId = await findTouristByIdentity(provider, providerUserId);
-      if (touristId) {
-        return touristId;
-      }
-      // If no linked tourist identity exists, fall through to guest check
-    }
+    if (!error && user) authenticatedUser = user;
   } catch {
-    // Auth check failed — fall through to guest check
+    authenticatedUser = null;
   }
 
-  // 2. Fall back to anonymous_device guest cookie
+  if (authenticatedUser) {
+    const provider = resolveTouristAuthProvider(authenticatedUser.app_metadata.provider);
+
+    if (provider) {
+      const touristId = await findTouristByIdentity(provider, authenticatedUser.id);
+      if (touristId) return touristId;
+    }
+
+    throw new TouristAccessError("TOURIST_IDENTITY_NOT_FOUND", "บัญชีนี้ยังไม่ได้เชื่อมกับพาสปอร์ต");
+  }
+
   const guestToken = await getGuestIdentity();
 
   if (!guestToken) {

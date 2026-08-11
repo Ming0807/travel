@@ -51,7 +51,7 @@ describe("public navigation", () => {
     expect(shouldHidePublicChrome("/attractions/yala")).toBe(false);
   });
 
-  it.each(["/c", "/checkin/demo-code", "/visit/123", "/research/study", "/auth/login", "/account/link-line", "/admin"]) (
+  it.each(["/c", "/checkin/demo-code", "/visit/123", "/research/study", "/auth/login", "/account/link-line", "/account/confirm-link", "/admin"]) (
     "renders no public chrome or safe-area main on %s",
     (pathname) => {
       mockPathname.mockReturnValue(pathname);

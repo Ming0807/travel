@@ -138,6 +138,32 @@ export async function getTouristById(touristId: string) {
   return data;
 }
 
+export async function resolveTouristOAuthIdentity(params: {
+  provider: "google" | "line" | "email";
+  providerUserId: string;
+  displayName: string;
+}): Promise<{ touristId: string; status: "existing" | "created" }> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.rpc("resolve_tourist_oauth_identity", {
+    p_provider: params.provider,
+    p_provider_user_id: params.providerUserId,
+    p_display_name: params.displayName,
+  });
+
+  if (error) throw new Error(`Failed to resolve tourist account: ${error.message}`);
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (
+    !row ||
+    typeof row.tourist_id !== "string" ||
+    (row.status !== "existing" && row.status !== "created")
+  ) {
+    throw new Error("TOURIST_OAUTH_IDENTITY_INVALID_RESULT");
+  }
+
+  return { touristId: row.tourist_id, status: row.status };
+}
+
 export async function getTouristLeaderboardPreference(touristId: string): Promise<{
   visibility: LeaderboardVisibility;
   alias: string | null;

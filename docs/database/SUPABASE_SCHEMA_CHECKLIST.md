@@ -94,6 +94,14 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Withdrawal**: Confirm switching back to private removes the tourist from all public periods on the next request.
 - [ ] **Public DTO**: Confirm browser responses contain no tourist UUID, provider identity, guest token, or raw certificate name without display-name opt-in.
 
+### 12. Tourist Identity Linking
+- [ ] **Migration `20260811001000_harden_tourist_identity_linking.sql`**: Apply after the leaderboard privacy migration.
+- [ ] **Atomic account linking**: Confirm `link_tourist_identity_with_consent(...)` inserts or touches the provider identity and writes its `passport_recovery` consent record in one transaction.
+- [ ] **Atomic OAuth profile**: Confirm `resolve_tourist_oauth_identity(...)` resolves or creates a provider-backed tourist without reading or merging a guest cookie.
+- [ ] **Explicit guest merge**: Confirm an authenticated, unlinked user with an existing device passport is sent to `/account/confirm-link` and no merge occurs before confirmation.
+- [ ] **Atomic LINE recovery**: Confirm `recover_tourist_passport_with_line(...)` creates the new device identity and recovery consent together before the browser receives a cookie.
+- [ ] **RPC privileges**: Confirm all three functions are executable only by `service_role`.
+
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:
 

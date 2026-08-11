@@ -21,6 +21,12 @@ export type LineLinkResult =
       message: string;
     };
 
+export type LineRecoveryResult =
+  | { status: "recovered" }
+  | { status: "not_configured" }
+  | { status: "login_redirected" }
+  | { status: "error"; code: string; message: string };
+
 type LineLinkInput = {
   hasConsented: true;
   language?: LineLinkLanguage;
@@ -172,6 +178,67 @@ export async function linkLineAccount(input: LineLinkInput): Promise<LineLinkRes
       status: "error",
       code: "LINE_LINK_UNAVAILABLE",
       message: "LINE linking is temporarily unavailable. You can continue as Guest.",
+    };
+  }
+}
+
+export async function recoverLinePassport(input: LineLinkInput): Promise<LineRecoveryResult> {
+  if (!input.hasConsented) {
+    return {
+      status: "error",
+      code: "CONSENT_REQUIRED",
+      message: "กรุณายืนยันความยินยอมก่อนกู้คืนพาสปอร์ต",
+    };
+  }
+
+  try {
+    const liff = await getInitializedLiffClient();
+    if (!liff) return { status: "not_configured" };
+
+    if (!liff.isLoggedIn()) {
+      liff.login({ redirectUri: window.location.href });
+      return { status: "login_redirected" };
+    }
+
+    const idToken = liff.getIDToken();
+    if (!idToken) {
+      return {
+        status: "error",
+        code: "LINE_ID_TOKEN_UNAVAILABLE",
+        message: "ไม่สามารถยืนยันบัญชี LINE ได้ กรุณาลองใหม่",
+      };
+    }
+
+    const response = await fetch("/api/line/recover", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idToken,
+        hasConsented: true,
+        language: input.language,
+      }),
+    });
+    const payload = await readJsonSafely(response);
+
+    if (
+      response.ok &&
+      payload &&
+      typeof payload === "object" &&
+      "success" in payload &&
+      payload.success === true &&
+      "recovered" in payload &&
+      payload.recovered === true
+    ) {
+      return { status: "recovered" };
+    }
+
+    const error = getSafeError(payload, "ยังกู้คืนพาสปอร์ตไม่ได้ กรุณาลองใหม่");
+    return { status: "error", ...error };
+  } catch {
+    return {
+      status: "error",
+      code: "LINE_RECOVERY_UNAVAILABLE",
+      message: "LINE ยังไม่พร้อมใช้งานในตอนนี้ กรุณาลองใหม่ภายหลัง",
     };
   }
 }

@@ -3,59 +3,65 @@ import { NextResponse } from "next/server";
 import { getGuestIdentity } from "@/lib/auth/guest";
 import {
   findTouristByIdentity,
-  createTouristIdentity,
-  createTouristProfile,
+  resolveTouristOAuthIdentity,
 } from "@/lib/repositories/tourist.repository";
+import {
+  resolveSafeAuthDestination,
+  resolveTouristAuthProvider,
+} from "@/lib/auth/oauth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") || "/stories/share";
+  const next = resolveSafeAuthDestination(requestUrl.searchParams.get("next"));
 
-  if (code) {
+  const loginFailure = () => {
+    const url = new URL("/auth/login", requestUrl.origin);
+    url.searchParams.set("error", "oauth_callback_failed");
+    url.searchParams.set("next", next);
+    return NextResponse.redirect(url);
+  };
+
+  if (!code) return loginFailure();
+
+  try {
     const supabase = await createSupabaseServerClient();
     const {
       data: { session },
       error,
     } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (!error && session?.user) {
-      const user = session.user;
-      // Default to email if provider isn't explicitly google or line in metadata
-      // Supabase sets app_metadata.provider
-      const provider = user.app_metadata.provider || "email";
+    if (error || !session?.user) return loginFailure();
 
-      // 1. Check if this Supabase user is already linked to a tourist profile
-      let touristId = await findTouristByIdentity(provider, user.id);
+    const user = session.user;
+    const provider = resolveTouristAuthProvider(user.app_metadata.provider);
+    if (!provider) return loginFailure();
 
-      if (!touristId) {
-        // 2. Not linked. Check if they have a guest token on this device
-        const guestToken = await getGuestIdentity();
+    const existingTouristId = await findTouristByIdentity(provider, user.id);
+    if (existingTouristId) return NextResponse.redirect(new URL(next, requestUrl.origin));
 
-        if (guestToken) {
-          const guestTouristId = await findTouristByIdentity("anonymous_device", guestToken);
-          if (guestTouristId) {
-            // Found a guest profile! Link this new Google/LINE identity to it.
-            await createTouristIdentity(guestTouristId, provider, user.id);
-            touristId = guestTouristId;
-          }
-        }
+    const guestToken = await getGuestIdentity();
+    const guestTouristId = guestToken
+      ? await findTouristByIdentity("anonymous_device", guestToken)
+      : null;
 
-        // 3. No guest token or guest profile not found? Create a brand new tourist profile.
-        if (!touristId) {
-          touristId = await createTouristProfile({
-            displayName:
-              user.user_metadata?.full_name || user.user_metadata?.name || "นักเดินทาง",
-            ageGroup: "prefer_not_to_answer",
-          });
-          await createTouristIdentity(touristId, provider, user.id);
-        }
-      }
+    if (guestTouristId) {
+      const confirmationUrl = new URL("/account/confirm-link", requestUrl.origin);
+      confirmationUrl.searchParams.set("next", next);
+      return NextResponse.redirect(confirmationUrl);
     }
+
+    await resolveTouristOAuthIdentity({
+      provider,
+      providerUserId: user.id,
+      displayName:
+        user.user_metadata?.full_name || user.user_metadata?.name || "นักเดินทาง",
+    });
+  } catch {
+    return loginFailure();
   }
 
-  // Redirect to the originally requested page
   return NextResponse.redirect(new URL(next, requestUrl.origin));
 }

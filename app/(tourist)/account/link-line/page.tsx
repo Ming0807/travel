@@ -1,34 +1,33 @@
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+
 import { LineLinkPanel } from "@/components/account/LineLinkPanel";
+import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 
 export default function LinkLinePage() {
   return (
-    <main className="min-h-screen bg-cream px-4 pb-28 pt-8">
-      <div className="mx-auto max-w-lg space-y-5">
+    <main className="min-h-screen bg-[var(--public-canvas)] py-8 sm:py-12">
+      <PublicPageFrame variant="detail" className="max-w-2xl">
         <Link
           href="/passport"
-          className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-teal shadow-sm"
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-teal hover:underline"
         >
-          <ArrowLeft size={18} weight="bold" />
+          <ArrowLeft aria-hidden="true" size={18} weight="bold" />
           กลับไปพาสปอร์ต
         </Link>
 
-        <section className="rounded-2xl bg-gradient-to-br from-teal to-ink p-6 text-white shadow-glow">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/12 text-gold">
-            <ShieldCheck size={28} weight="fill" />
+        <header className="mt-3 border-b border-slate-300 pb-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-teal/10 text-teal">
+            <ShieldCheck aria-hidden="true" size={27} weight="fill" />
           </div>
-          <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-gold">
-            Optional LINE
+          <h1 className="mt-5 text-3xl font-black text-ink">เชื่อม LINE เพื่อค้นคืนพาสปอร์ต</h1>
+          <p className="mt-3 max-w-xl text-base leading-7 text-slate-600">
+            เป็นทางเลือกสำหรับเปิดพาสปอร์ตบนอุปกรณ์อื่น คุณยังใช้ระบบแบบผู้เยี่ยมชมได้ และระบบจะไม่ใช้การเชื่อมนี้เป็นความยินยอมรับข่าวสาร
           </p>
-          <h1 className="mt-2 text-3xl font-black leading-tight">เชื่อม LINE เมื่อคุณพร้อม</h1>
-          <p className="mt-3 text-sm leading-6 text-white/75">
-            ใช้ LINE เพื่อบันทึกพาสปอร์ตและตราประทับสำหรับการกลับมาใช้งานครั้งถัดไป โดยยังใช้งานแบบ Guest ได้เสมอ
-          </p>
-        </section>
+        </header>
 
-        <LineLinkPanel context="account" showContinueLink continueHref="/passport" />
-      </div>
+        <LineLinkPanel context="account" showContinueLink continueHref="/passport" className="mt-6" />
+      </PublicPageFrame>
     </main>
   );
 }

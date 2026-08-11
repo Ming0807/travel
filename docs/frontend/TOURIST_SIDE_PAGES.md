@@ -111,7 +111,7 @@ The passport page should show:
 - CTA to continue exploring
 - account-linking prompt for cross-device recovery
 
-Guest passport works on the same browser/device through an anonymous guest ID. Google or LINE linking allows cross-device recovery when the tourist chooses it.
+Guest passport works on the same browser/device through an anonymous guest ID. Google or LINE linking allows cross-device recovery when the tourist chooses it. If sign-in occurs on a device that already has a guest passport, the system must ask whether to merge or keep the records separate; it must never merge automatically.
 
 Do not expose provider_user_id, Google subject, LINE user ID, guest token, tourist_id, visit_id, or private storage paths.
 
