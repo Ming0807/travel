@@ -37,6 +37,36 @@ export type DashboardRepositoryPayload = {
   summary: DashboardSummaryData;
 };
 
+export type PublicDashboardProvinceScope = {
+  provinceId: number;
+  provinceName: string;
+};
+
+export async function getPublicDashboardProvinceScope(): Promise<PublicDashboardProvinceScope> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("provinces")
+    .select("province_id, province_name_th, province_name_en")
+    .eq("is_active", true)
+    .limit(100);
+
+  if (error) throw new Error("PUBLIC_DASHBOARD_SCOPE_QUERY_FAILED");
+
+  const yala = (data ?? []).find((row) => {
+    const thaiName = String(row.province_name_th ?? "").trim();
+    const englishName = String(row.province_name_en ?? "").trim().toLowerCase();
+    return thaiName === "ยะลา" || englishName === "yala";
+  });
+
+  const provinceId = Number(yala?.province_id ?? 0);
+  if (!provinceId) throw new Error("PUBLIC_DASHBOARD_YALA_SCOPE_NOT_FOUND");
+
+  return {
+    provinceId,
+    provinceName: String(yala?.province_name_th ?? yala?.province_name_en ?? "ยะลา"),
+  };
+}
+
 function toOption(value: string | number | null | undefined, label: string | null | undefined) {
   return value === null || value === undefined || !label ? null : { value: String(value), label };
 }

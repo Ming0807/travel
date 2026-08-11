@@ -471,10 +471,10 @@ Do not use Terra. Parallel agents may only receive non-overlapping ownership.
 - Test: `tests/unit/public-dashboard-evidence.test.tsx`
 - Test: `tests/e2e/public-dashboard.spec.ts`
 
-- [ ] Write failing tests for no-data, sample size, data-as-of, metric definition/source, small-sample warning, limitations, and accessible table alternatives.
-- [ ] Remove zero-filled missing data and prevent private/small-cell disclosure.
-- [ ] Present Yala KPIs, trend, visitor profile, travel behavior, attraction feedback, and improvement opportunities only when supported by existing approved formulas.
-- [ ] Run targeted metric/privacy/UI gates and commit as `feat: rebuild public dashboard as evidence report`.
+- [x] Write failing tests for no-data, sample size, data-as-of, metric definition/source, small-sample warning, limitations, and accessible table alternatives.
+- [x] Remove zero-filled missing data and prevent private/small-cell disclosure.
+- [x] Present Yala KPIs, trend, visitor profile, travel behavior, attraction feedback, and improvement opportunities only when supported by existing approved formulas.
+- [x] Run targeted metric/privacy/UI gates and commit as `feat: rebuild public dashboard as evidence report`.
 
 ---
 

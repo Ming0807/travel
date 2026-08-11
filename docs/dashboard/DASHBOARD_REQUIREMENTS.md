@@ -266,8 +266,32 @@ Out of current Phase 09 scope:
 export/download reports
 official data import comparison
 scheduled summary table refresh
-public dashboard
+public dashboard (implemented later as the Yala public evidence report)
 ```
+
+### Public evidence report implementation (11 August 2026)
+
+`/dashboard` is a privacy-safe evidence report for the Yala pilot. It is not a
+public copy of the protected admin dashboard.
+
+Rules:
+
+```text
+scope                          Yala only, resolved from province master data
+default period                 latest 30 calendar days
+data-as-of                     time the page reads and processes the live database
+public cell suppression        hide category/attraction cells below 5 records
+interpretation threshold       at least 30 satisfaction responses
+missing values                 show No data; never convert to zero
+QR scans                       never described as visits
+tourist profiles               not verified unique people
+spending                       self-reported estimate, never revenue
+chart accessibility            every charted dataset has an HTML table alternative
+```
+
+The public DTO contains only approved aggregate evidence. Admin viewer data,
+identity-provider detail, raw comments, IDs, contact data, and private file paths
+must not cross this boundary.
 
 MVP page sections:
 

@@ -2371,3 +2371,26 @@ The workspace must display date scope, collection mode, participant type, analys
 ## 45. Attraction Improvement Monitoring
 
 Feedback issue qualification is transparent and human-reviewed. Issue/action metrics include evidence count, denominator, baseline window, owner, priority, due date, status, follow-up metric, and follow-up window. Before/after display is operational monitoring only; it must not claim the action caused an observed change without an appropriate research design.
+
+---
+
+## 46. Public Evidence Report
+
+The public report at `/dashboard` uses the approved formulas in this dictionary,
+but applies an additional privacy and interpretation layer.
+
+| Public metric | Definition and source | Public rule |
+|---|---|---|
+| Tourist profiles with visits | Distinct `visits.tourist_id` | Not verified people; counts below 5 display as suppressed |
+| Recorded visits | Count of `visits` after minimal form and consent | Not page views or QR scans |
+| Certificates generated | Count of `certificates` linked to scoped visits | Counts below 5 display as suppressed |
+| Average satisfaction | Mean non-null `satisfaction_surveys.overall_score` | Display only when response count is at least 30 |
+| Visit trend | Daily count of `visits.visit_date` | Each daily cell below 5 is suppressed; table alternative required |
+| Visitor profile and travel behavior | Existing distribution formulas | Category labels/counts below 5 are not published |
+| Attraction evidence | Existing top-attraction visit and survey formulas | Attraction requires at least 5 visits; satisfaction requires at least 30 responses |
+| Improvement/promotion signal | Existing satisfaction thresholds over eligible attraction rows | Operational signal only, not causal evidence |
+
+The report scope is resolved from the active province master row named `ยะลา` or
+`Yala`; it does not hardcode a database ID. The displayed data-as-of timestamp is
+the processing time, not the latest event timestamp. Public output must not
+contain viewer identity, raw respondent records, comments, IDs, or private URLs.

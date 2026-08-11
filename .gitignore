@@ -15,6 +15,7 @@ coverage/
 test-results/
 playwright-report/
 output/
+.tmp-tests/
 
 # Environment files
 .env
@@ -36,4 +37,5 @@ Thumbs.db
 
 .codex/
 .reasonix/
+.superpowers/
 .worktrees/
