@@ -34,6 +34,8 @@ Digital Passport and leaderboard call-to-action
 
 Homepage search routes to the matching public directory and preserves the query parameter. Map content is shown only when a published attraction has valid coordinates. The current pilot scope is Yala; public navigation must not advertise Pattani or Narathiwat until those destinations are activated again.
 
+The global header search uses the same routing contract on every public page. It opens an accessible search dialog, lets the visitor choose attractions, restaurants, accommodations, or stories, and sends the query to the matching real directory. It is not a decorative icon or a homepage anchor.
+
 ### Public Frontend Redesign Contract
 
 The route-family UX/UI contract and executable migration order are maintained in:
@@ -57,6 +59,8 @@ next-step action
 This contract applies to `/attractions`, `/stories`, `/routes`, `/restaurants`,
 `/accommodations`, and `/360-vista`. Detail routes remain independent because
 their job is reading or inspecting one record, not comparing a directory.
+
+Restaurant category navigation is derived from active, published records in the current destination scope. Empty controlled categories are omitted from the top navigation, desktop sidebar, and mobile filter. If the availability query fails, the controlled category list remains available rather than presenting a false empty state.
 
 `/attractions` also supports a guest-only "ทริปของฉัน" shortlist. It stores at
 most 20 attraction slugs in versioned browser local storage, does not create a

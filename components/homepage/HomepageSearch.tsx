@@ -20,7 +20,7 @@ const SEARCH_DESTINATIONS: Record<
   stories: { pathname: "/stories", parameter: "search" },
 };
 
-const CATEGORY_OPTIONS: Array<{ value: HomepageSearchCategory; label: string }> = [
+export const PUBLIC_SEARCH_CATEGORY_OPTIONS: Array<{ value: HomepageSearchCategory; label: string }> = [
   { value: "attractions", label: "สถานที่ท่องเที่ยว" },
   { value: "restaurants", label: "ร้านอาหาร" },
   { value: "accommodations", label: "ที่พัก" },
@@ -79,7 +79,7 @@ export function HomepageSearch({ className = "" }: { className?: string }) {
         onChange={(event) => setCategory(event.target.value as HomepageSearchCategory)}
         className="hidden min-h-11 border-0 border-l border-ink/10 bg-white px-4 text-sm font-bold text-ink outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral sm:block"
       >
-        {CATEGORY_OPTIONS.map((option) => (
+        {PUBLIC_SEARCH_CATEGORY_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>

@@ -16,8 +16,12 @@ import {
 import { RestaurantCategoryNav } from "@/components/restaurants/RestaurantCategoryNav";
 import { RestaurantDirectoryItem } from "@/components/restaurants/RestaurantDirectoryItem";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
-import { groupRestaurantsForDirectory } from "@/lib/hospitality/restaurant-directory";
 import {
+  filterRestaurantFoodTypeOptions,
+  groupRestaurantsForDirectory,
+} from "@/lib/hospitality/restaurant-directory";
+import {
+  listAvailablePublicRestaurantFoodTypes,
   listPublicRestaurantPage,
   PUBLIC_HOSPITALITY_MAX_PAGE,
 } from "@/lib/repositories/public-content.repository";
@@ -107,7 +111,7 @@ export default async function RestaurantsPage({
   }
 
   const settingsService = new SettingsService();
-  const [restaurantPage, heroSettings, ctaSettings, liveProvinces] = await Promise.all([
+  const [restaurantPage, foodTypeAvailability, heroSettings, ctaSettings, liveProvinces] = await Promise.all([
     listPublicRestaurantPage({
       query,
       foodType,
@@ -115,6 +119,7 @@ export default async function RestaurantsPage({
       page,
       pageSize: 12,
     }),
+    listAvailablePublicRestaurantFoodTypes({ province: requestedProvince }),
     settingsService.getSetting("restaurants_page_hero", {
       title: "ร้านอาหารในจังหวัดยะลา",
       description: "ค้นหาร้านอาหารท้องถิ่นและเลือกมื้อที่เหมาะกับแผนเดินทางของคุณ",
@@ -157,7 +162,14 @@ export default async function RestaurantsPage({
   );
   const hasFilters = Boolean(query || foodType || province);
   const restaurantGroups = groupRestaurantsForDirectory(restaurantPage.items);
-  const categoryNavItems = RESTAURANT_PRIMARY_CATEGORY_VALUES.map((value) => ({
+  const visibleFoodTypeOptions = filterRestaurantFoodTypeOptions(
+    RESTAURANT_FOOD_TYPES,
+    foodTypeAvailability.state === "available" ? foodTypeAvailability.values : null,
+  );
+  const visibleFoodTypeValues = new Set(visibleFoodTypeOptions.map((option) => option.value));
+  const categoryNavItems = RESTAURANT_PRIMARY_CATEGORY_VALUES
+    .filter((value) => !value || visibleFoodTypeValues.has(value))
+    .map((value) => ({
     value,
     label: value
       ? RESTAURANT_FOOD_TYPES.find((option) => option.value === value)?.label ?? value
@@ -166,11 +178,12 @@ export default async function RestaurantsPage({
   }));
   const sidebarCategoryItems = [
     { value: "", label: "ร้านอาหารทั้งหมด" },
-    ...RESTAURANT_FOOD_TYPES,
+    ...visibleFoodTypeOptions,
   ].map((option) => ({
     ...option,
     href: restaurantHref({ query, foodType: option.value || undefined, province }),
   }));
+  const hasSidebarCategories = sidebarCategoryItems.length > 1;
 
   return (
     <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
@@ -182,13 +195,21 @@ export default async function RestaurantsPage({
           scope="ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา"
         />
 
-        <div className="mt-7">
-          <RestaurantCategoryNav activeValue={foodType} items={categoryNavItems} />
-        </div>
+        {categoryNavItems.length > 1 ? (
+          <div className="mt-7">
+            <RestaurantCategoryNav activeValue={foodType} items={categoryNavItems} />
+          </div>
+        ) : null}
 
         <div className="mt-5">
           <PublicDirectoryToolbar label="ค้นหาและกรองร้านอาหาร">
-            <RestaurantFilterBar query={query} foodType={foodType} province={province} provinces={provinceOptions} />
+            <RestaurantFilterBar
+              query={query}
+              foodType={foodType}
+              province={province}
+              provinces={provinceOptions}
+              foodTypes={visibleFoodTypeOptions}
+            />
           </PublicDirectoryToolbar>
         </div>
 
@@ -227,8 +248,11 @@ export default async function RestaurantsPage({
             </div>
           ) : (
             <>
-              <div className="mt-6 xl:grid xl:grid-cols-[13rem_minmax(0,1fr)] xl:gap-8">
-                <aside aria-label="หมวดหมู่ร้านอาหาร" className="hidden xl:block">
+              <div className={hasSidebarCategories
+                ? "mt-6 xl:grid xl:grid-cols-[13rem_minmax(0,1fr)] xl:gap-8"
+                : "mt-6"
+              }>
+                {hasSidebarCategories ? <aside aria-label="หมวดหมู่ร้านอาหาร" className="hidden xl:block">
                   <div className="sticky top-24 border-r border-black/10 pr-6">
                     <p className="pb-3 text-sm font-bold text-[var(--public-ink)]">หมวดหมู่ร้านอาหาร</p>
                     <nav aria-label="ตัวกรองประเภทอาหารทั้งหมด">
@@ -253,7 +277,7 @@ export default async function RestaurantsPage({
                       </ul>
                     </nav>
                   </div>
-                </aside>
+                </aside> : null}
                 <div className="min-w-0">
                   {restaurantGroups.map((group, groupIndex) => (
                     <section

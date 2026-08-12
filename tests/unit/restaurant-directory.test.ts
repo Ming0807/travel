@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { groupRestaurantsForDirectory } from "@/lib/hospitality/restaurant-directory";
+import {
+  filterRestaurantFoodTypeOptions,
+  groupRestaurantsForDirectory,
+} from "@/lib/hospitality/restaurant-directory";
 import type { PublicRestaurantCard } from "@/lib/repositories/public-content.repository";
 
 function restaurant(slug: string, foodType: string): PublicRestaurantCard {
@@ -16,6 +19,26 @@ function restaurant(slug: string, foodType: string): PublicRestaurantCard {
 }
 
 describe("restaurant directory grouping", () => {
+  it("keeps only categories backed by published restaurants", () => {
+    const options = [
+      { value: "Thai", label: "อาหารไทย" },
+      { value: "Malay", label: "อาหารมลายู" },
+      { value: "Halal", label: "อาหารฮาลาล" },
+      { value: "Coffee", label: "ร้านกาแฟ" },
+    ];
+
+    expect(filterRestaurantFoodTypeOptions(options, [" coffee ", "Western / Thai", "Malay"])).toEqual([
+      { value: "Thai", label: "อาหารไทย" },
+      { value: "Malay", label: "อาหารมลายู" },
+      { value: "Coffee", label: "ร้านกาแฟ" },
+    ]);
+  });
+
+  it("falls back to the controlled category list when availability cannot be loaded", () => {
+    const options = [{ value: "Malay", label: "อาหารมลายู" }];
+    expect(filterRestaurantFoodTypeOptions(options, null)).toEqual(options);
+  });
+
   it("groups controlled food types into stable editorial sections", () => {
     const groups = groupRestaurantsForDirectory([
       restaurant("malay", "Malay"),

@@ -11,7 +11,7 @@ const { restaurantQuery, accommodationQuery, mediaQuery, supabaseClient } = vi.h
     return chain;
   };
 
-  const restaurants = builder(["select", "eq", "ilike", "in", "or", "order", "range"]);
+  const restaurants = builder(["select", "eq", "ilike", "in", "or", "order", "range", "limit"]);
   const accommodations = builder(["select", "eq", "ilike", "in", "or", "order", "range"]);
   const media = builder(["select", "in"]);
   const client = {
@@ -43,6 +43,7 @@ vi.mock("@/lib/repositories/destination-scope.repository", () => ({
 }));
 
 import {
+  listAvailablePublicRestaurantFoodTypes,
   listPublicAccommodationPage,
   listPublicRestaurantPage,
 } from "@/lib/repositories/public-content.repository";
@@ -97,6 +98,7 @@ describe("public hospitality listings", () => {
       }
       query.range.mockResolvedValue({ data: [], error: null, count: 0 });
     }
+    restaurantQuery.limit.mockResolvedValue({ data: [], error: null });
     mediaQuery.select.mockReturnValue(mediaQuery);
     mediaQuery.in.mockResolvedValue({ data: [], error: null });
   });
@@ -133,6 +135,35 @@ describe("public hospitality listings", () => {
     expect(result.items[0]).toMatchObject({
       slug: "local-kitchen",
       imageUrl: "/site-media/restaurants/cover_thumb.webp",
+    });
+  });
+
+  it("loads only published food types for the visible restaurant navigation", async () => {
+    restaurantQuery.limit.mockResolvedValue({
+      data: [
+        { food_type: "Malay" },
+        { food_type: "Coffee" },
+        { food_type: "Malay" },
+        { food_type: null },
+      ],
+      error: null,
+    });
+
+    const result = await listAvailablePublicRestaurantFoodTypes({ province: "Yala" });
+
+    expect(restaurantQuery.select).toHaveBeenCalledWith("food_type, provinces!inner (province_name_en)");
+    expect(restaurantQuery.eq).toHaveBeenCalledWith("is_published", true);
+    expect(restaurantQuery.eq).toHaveBeenCalledWith("is_active", true);
+    expect(restaurantQuery.eq).toHaveBeenCalledWith("provinces.province_name_en", "Yala");
+    expect(restaurantQuery.limit).toHaveBeenCalledWith(1000);
+    expect(result).toEqual({ values: ["Malay", "Coffee"], state: "available" });
+  });
+
+  it("preserves navigation fallback when food type availability fails", async () => {
+    restaurantQuery.limit.mockResolvedValue({ data: null, error: { message: "offline" } });
+    await expect(listAvailablePublicRestaurantFoodTypes()).resolves.toEqual({
+      values: [],
+      state: "unavailable",
     });
   });
 

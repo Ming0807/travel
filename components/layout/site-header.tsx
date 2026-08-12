@@ -6,12 +6,12 @@ import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryL
 import { usePathname } from "next/navigation";
 import {
   Compass,
-  MagnifyingGlass,
   List,
   X,
   CaretDown
 } from "@phosphor-icons/react/dist/ssr";
 import { UserNavMenu } from "@/components/account/UserNavMenu";
+import { PublicGlobalSearch } from "@/components/layout/PublicGlobalSearch";
 import { shouldHidePublicChrome } from "@/lib/navigation/public-route-mode";
 
 type SiteHeaderProps = {
@@ -241,13 +241,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
 
           {/* Right Actions */}
           <div className="flex-1 flex items-center justify-end gap-4">
-            <Link
-              href="/#homepage-search"
-              className="grid h-11 w-11 place-items-center rounded-[6px] text-ink transition-colors hover:bg-cream hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
-              aria-label="ไปที่ช่องค้นหา"
-            >
-              <MagnifyingGlass size={20} weight="bold" />
-            </Link>
+            <PublicGlobalSearch />
             
             <div className="h-4 w-px bg-ink/10"></div>
 
@@ -280,6 +274,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           </Link>
 
           <div className="flex items-center gap-3">
+            <PublicGlobalSearch onOpen={() => closeMobileMenu()} />
             <button
               type="button"
               ref={mobileMenuTriggerRef}

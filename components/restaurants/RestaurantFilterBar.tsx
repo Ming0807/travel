@@ -15,6 +15,7 @@ type RestaurantFilterBarProps = {
   foodType?: string;
   province?: string;
   provinces?: Array<{ value: string; label: string }>;
+  foodTypes?: Array<{ value: string; label: string }>;
 };
 
 export function RestaurantFilterBar({
@@ -22,6 +23,7 @@ export function RestaurantFilterBar({
   foodType,
   province,
   provinces = [],
+  foodTypes = [...RESTAURANT_FOOD_TYPES],
 }: RestaurantFilterBarProps) {
   const hasFilters = Boolean(query || foodType || province);
 
@@ -45,7 +47,7 @@ export function RestaurantFilterBar({
           label="ประเภทอาหาร"
           name="foodType"
           defaultValue={foodType ?? ""}
-          options={[{ value: "", label: "ทุกประเภท" }, ...RESTAURANT_FOOD_TYPES]}
+          options={[{ value: "", label: "ทุกประเภท" }, ...foodTypes]}
         />
         {provinces.length > 1 ? (
           <PublicSelect

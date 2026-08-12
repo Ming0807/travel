@@ -34,6 +34,22 @@ function normalizeFoodType(value: string) {
   return value.trim().toLocaleLowerCase("en-US");
 }
 
+export function filterRestaurantFoodTypeOptions<T extends { value: string }>(
+  options: readonly T[],
+  availableFoodTypes: readonly string[] | null,
+): T[] {
+  if (availableFoodTypes === null) return [...options];
+
+  const normalizedAvailableTypes = availableFoodTypes
+    .map(normalizeFoodType)
+    .filter(Boolean);
+
+  return options.filter((option) => {
+    const normalizedOption = normalizeFoodType(option.value);
+    return normalizedAvailableTypes.some((foodType) => foodType.includes(normalizedOption));
+  });
+}
+
 export function groupRestaurantsForDirectory(
   items: PublicRestaurantCard[],
 ): RestaurantDirectoryGroup[] {

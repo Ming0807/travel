@@ -1536,6 +1536,50 @@ export async function listPublicRestaurantPage(
   }
 }
 
+export type PublicRestaurantFoodTypeAvailability = {
+  values: string[];
+  state: "available" | "unavailable";
+};
+
+export async function listAvailablePublicRestaurantFoodTypes(options?: {
+  province?: string;
+}): Promise<PublicRestaurantFoodTypeAvailability> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const liveProvinces = await listLiveDestinationProvinces();
+    const liveProvinceIds = liveProvinces.map((province) => province.provinceId);
+    if (liveProvinceIds.length === 0) return { values: [], state: "available" };
+
+    const provinceFilter = sanitizeDestinationProvinceFilter(
+      options?.province,
+      liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+    );
+    let query = supabase
+      .from("restaurants")
+      .select("food_type, provinces!inner (province_name_en)")
+      .eq("is_published", true)
+      .eq("is_active", true)
+      .in("province_id", liveProvinceIds);
+
+    if (provinceFilter) query = query.eq("provinces.province_name_en", provinceFilter);
+
+    const { data, error } = await query
+      .order("food_type", { ascending: true })
+      .limit(1000);
+
+    if (error) return { values: [], state: "unavailable" };
+
+    const values = Array.from(new Set(
+      ((data ?? []) as DbRecord[])
+        .map((row) => text(row.food_type).trim())
+        .filter(Boolean),
+    ));
+    return { values, state: "available" };
+  } catch {
+    return { values: [], state: "unavailable" };
+  }
+}
+
 export async function listPublicRestaurants(options?: { search?: string; foodType?: string; province?: string; featuredSlugs?: string[] }): Promise<PublicRestaurantCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
