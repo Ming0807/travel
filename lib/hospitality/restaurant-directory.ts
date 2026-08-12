@@ -57,7 +57,10 @@ export function groupRestaurantsForDirectory(
   const groups: RestaurantDirectoryGroup[] = RESTAURANT_DIRECTORY_SECTIONS.flatMap((section) => {
     const acceptedTypes = new Set(section.foodTypes.map(normalizeFoodType));
     const sectionItems = items.filter((item) => {
-      const accepted = acceptedTypes.has(normalizeFoodType(item.foodType));
+      const primarySection = item.categories?.[0]?.sectionKey;
+      const accepted = primarySection
+        ? primarySection === section.key
+        : acceptedTypes.has(normalizeFoodType(item.foodType));
       if (accepted) assigned.add(item.slug);
       return accepted;
     });

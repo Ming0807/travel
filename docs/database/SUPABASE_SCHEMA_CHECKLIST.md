@@ -102,6 +102,17 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Atomic LINE recovery**: Confirm `recover_tourist_passport_with_line(...)` creates the new device identity and recovery consent together before the browser receives a cookie.
 - [ ] **RPC privileges**: Confirm all three functions are executable only by `service_role`.
 
+### 13. Restaurant Category CMS
+- [ ] **Migration `20260812000000_create_restaurant_categories.sql`**: Apply after the current tourist identity migration.
+- [ ] **Controlled master data**: Confirm `restaurant_categories` contains the ten seeded Thai-first categories and supports active, featured, section, and display-order controls.
+- [ ] **Many-to-many assignment**: Confirm `restaurant_category_assignments` allows multiple ordered categories per restaurant and prevents duplicate pairs.
+- [ ] **Legacy backfill**: Review uncategorized restaurants after regex-based `food_type` backfill; do not publish a restaurant until at least one active category is selected.
+- [ ] **Atomic writes**: Confirm `create_restaurant_with_categories(...)`, `update_restaurant_with_categories(...)`, and `sync_restaurant_categories(...)` keep restaurant fields, assignments, and publication state in one transaction and are executable only by `service_role`.
+- [ ] **Archive invariant**: Confirm `set_restaurant_category_active(...)` rejects archiving the final active category of a published restaurant.
+- [ ] **Scalable counts**: Confirm the admin usage and public category-list RPCs return database-aggregated counts without loading all assignments into application memory.
+- [ ] **Public visibility**: Confirm RLS exposes only active categories assigned to active, published restaurants in the live destination scope.
+- [ ] **Admin workflow**: Verify `/admin/restaurants/categories`, restaurant create/edit, list filters, and export before production release.
+
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:
 

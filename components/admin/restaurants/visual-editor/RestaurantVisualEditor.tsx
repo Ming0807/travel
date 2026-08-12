@@ -9,12 +9,14 @@ import { HeaderForm, ContentForm, LocationForm, SettingsForm } from "./SectionFo
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
 import type { AdminSelectOption } from "@/components/admin/restaurants/RestaurantForm";
 import Image from "next/image";
+import type { AdminRestaurantCategory } from "@/lib/repositories/admin-restaurant-category.repository";
 
 type EditorSection = "header" | "content" | "location" | "settings" | "cover" | null;
 
 interface RestaurantVisualEditorProps {
   restaurant: AdminRestaurantRow;
   provinces: AdminSelectOption[];
+  categories: AdminRestaurantCategory[];
   coverMediaId?: number | null;
   coverMediaUrl?: string | null;
 }
@@ -34,6 +36,7 @@ function MissingImageState({ title, description }: { title: string; description:
 export function RestaurantVisualEditor({
   restaurant,
   provinces,
+  categories,
   coverMediaId: initialCoverMediaId,
   coverMediaUrl: initialCoverMediaUrl,
 }: RestaurantVisualEditorProps) {
@@ -94,11 +97,15 @@ export function RestaurantVisualEditor({
               />
             )}
             <div className={`absolute bottom-8 left-8 right-8 ${coverImage ? "text-white" : "text-slate-800"}`}>
-              {restaurant.food_type && (
-                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold mb-3 uppercase tracking-wider border ${coverImage ? "border-white/20 bg-white/20 text-white backdrop-blur-md" : "border-amber-200 bg-white text-amber-700"}`}>
-                  {restaurant.food_type}
-                </span>
-              )}
+              {restaurant.categories.length > 0 ? (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {restaurant.categories.map((category) => (
+                    <span key={category.categoryId} className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${coverImage ? "border-white/30 bg-black/25 text-white" : "border-amber-200 bg-white text-amber-700"}`}>
+                      {category.nameTh}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               <h1 className="text-3xl md:text-5xl font-black mb-2 leading-tight">
                 {name}
               </h1>
@@ -257,6 +264,7 @@ export function RestaurantVisualEditor({
         <SettingsForm
           restaurant={restaurant}
           provinces={provinces}
+          categories={categories}
           onClose={() => setActiveSection(null)}
           coverMediaId={coverMediaId}
           coverMediaUrl={coverMediaUrl}

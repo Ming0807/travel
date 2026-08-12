@@ -1,17 +1,17 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Public hospitality discovery", () => {
-  test("keeps restaurant search and type filters together in the URL", async ({ page }) => {
-    await page.goto("/restaurants?foodType=Halal");
+  test("keeps restaurant search and category filters together in the URL", async ({ page }) => {
+    await page.goto("/restaurants?category=halal");
 
     await expect(page.getByRole("heading", { level: 1 })).toContainText("ยะลา");
     const restaurantFilterTrigger = page.getByRole("button", { name: "เปิดตัวกรองร้านอาหาร" });
     if (await restaurantFilterTrigger.isVisible()) await restaurantFilterTrigger.click();
-    await expect(page.getByRole("combobox", { name: "ประเภทอาหาร" })).toHaveValue("Halal");
+    await expect(page.getByRole("combobox", { name: "หมวดหมู่ร้านอาหาร" })).toHaveValue("halal");
     await page.getByRole("searchbox", { name: "ค้นหาร้านอาหาร" }).fill("ยะลา");
     await page.getByRole("button", { name: "ค้นหาร้านอาหาร" }).click();
 
-    await expect(page).toHaveURL(/\/restaurants\?(?=.*q=)(?=.*foodType=Halal)/);
+    await expect(page).toHaveURL(/\/restaurants\?(?=.*q=)(?=.*category=halal)/);
     await expect(page.getByText(/พบทั้งหมด/)).toBeVisible();
   });
 

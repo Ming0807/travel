@@ -532,6 +532,14 @@ Recommended permission split:
 
 Frontend visibility is only convenience. Server actions and route handlers must enforce permissions.
 
+## Restaurant Category CMS
+
+Restaurant categories are managed at `/admin/restaurants/categories`; they are not hardcoded UI options. An administrator can create Thai/English labels, choose the editorial section, control ordering, mark featured navigation categories, and archive a category.
+
+One restaurant can select multiple categories from the create form or Visual Editor settings drawer. Drafts may be saved without a category. A restaurant cannot be published until at least one active category is selected. A category with linked restaurants cannot be deleted; archive it so historical assignments remain understandable.
+
+Public `/restaurants` navigation is data-driven: featured non-empty categories appear in the top navigation, every active non-empty category appears in the desktop sidebar and mobile filter, and category URLs use stable slugs. New categories therefore require no frontend code change.
+
 ## Development Team Plan
 
 Recommended team lanes:

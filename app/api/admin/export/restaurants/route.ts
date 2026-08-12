@@ -22,6 +22,29 @@ export async function GET(request: NextRequest) {
     void _page;
     void _pageSize;
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
+    let categoryRestaurantIds: number[] | null = null;
+    if (filters.categorySlug) {
+      const { data: category, error: categoryError } = await db
+        .from("restaurant_categories")
+        .select("category_id")
+        .eq("slug", filters.categorySlug)
+        .maybeSingle();
+      if (categoryError) {
+        return NextResponse.json({ error: "Failed to resolve restaurant category." }, { status: 500 });
+      }
+      if (!category) {
+        categoryRestaurantIds = [];
+      } else {
+        const { data: assignments, error: assignmentError } = await db
+          .from("restaurant_category_assignments")
+          .select("restaurant_id")
+          .eq("category_id", category.category_id);
+        if (assignmentError) {
+          return NextResponse.json({ error: "Failed to resolve category assignments." }, { status: 500 });
+        }
+        categoryRestaurantIds = Array.from(new Set((assignments ?? []).map((row) => Number(row.restaurant_id))));
+      }
+    }
 
     let query = db
       .from("restaurants")
@@ -43,7 +66,11 @@ export async function GET(request: NextRequest) {
           is_active,
           created_at,
           updated_at,
-          provinces (province_name_th)
+          provinces (province_name_th),
+          restaurant_category_assignments (
+            display_order,
+            restaurant_categories (name_th, name_en, slug)
+          )
         `,
         { count: "exact" },
       )
@@ -57,6 +84,9 @@ export async function GET(request: NextRequest) {
       );
     }
     if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
+    if (categoryRestaurantIds) {
+      query = query.in("restaurant_id", categoryRestaurantIds.length > 0 ? categoryRestaurantIds : [-1]);
+    }
     if (filters.foodType) query = query.ilike("food_type", `%${filters.foodType.replace(/%/g, "\\%").replace(/_/g, "\\_")}%`);
     if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
 
@@ -88,6 +118,16 @@ export async function GET(request: NextRequest) {
 
     const rows = (data ?? []).map((row) => {
       const province = Array.isArray(row.provinces) ? row.provinces[0] : row.provinces;
+      const categories = (row.restaurant_category_assignments ?? [])
+        .slice()
+        .sort((left, right) => Number(left.display_order) - Number(right.display_order))
+        .flatMap((assignment) => {
+          const category = Array.isArray(assignment.restaurant_categories)
+            ? assignment.restaurant_categories[0]
+            : assignment.restaurant_categories;
+          return category ? [category.name_th ?? category.name_en ?? category.slug ?? ""] : [];
+        })
+        .filter(Boolean);
       return {
         ID: String(row.restaurant_id),
         Slug: row.slug ?? "",
@@ -95,7 +135,8 @@ export async function GET(request: NextRequest) {
         "Name (EN)": row.name_en ?? "",
         "Description (TH)": row.description_th ?? "",
         "Description (EN)": row.description_en ?? "",
-        "Food Type": row.food_type ?? "",
+        Categories: categories.join(" | "),
+        "Legacy Food Type": row.food_type ?? "",
         Province: province?.province_name_th ?? "",
         Latitude: row.latitude !== null ? String(row.latitude) : "",
         Longitude: row.longitude !== null ? String(row.longitude) : "",

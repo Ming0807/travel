@@ -56,6 +56,19 @@ const restaurantRow = {
   description_th: "Local food",
   description_en: null,
   food_type: "Western / Thai",
+  restaurant_category_assignments: [{
+    display_order: 0,
+    restaurant_categories: {
+      category_id: 1,
+      slug: "thai",
+      name_th: "อาหารไทย",
+      name_en: "Thai",
+      section_key: "local",
+      display_order: 10,
+      is_featured: true,
+      is_active: true,
+    },
+  }],
   provinces: { province_name_th: "Yala", province_name_en: "Yala" },
   content_media: [{
     storage_path: "restaurants/cover.webp",
@@ -135,6 +148,7 @@ describe("public hospitality listings", () => {
     expect(result.items[0]).toMatchObject({
       slug: "local-kitchen",
       imageUrl: "/site-media/restaurants/cover_thumb.webp",
+      categories: [{ slug: "thai", name: "อาหารไทย", sectionKey: "local" }],
     });
   });
 

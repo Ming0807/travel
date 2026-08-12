@@ -46,8 +46,19 @@ export const adminRestaurantFiltersSchema = adminPaginationSchema.extend({
     (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
     z.string().max(100).optional()
   ),
+  categorySlug: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() !== "" ? value.trim().toLowerCase() : undefined),
+    z.string().max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional()
+  ),
   isPublished: optionalBooleanQuery
 });
+
+const categoryIds = z.preprocess(
+  (value) => value === undefined || value === null || value === ""
+    ? []
+    : Array.isArray(value) ? value : [value],
+  z.array(z.coerce.number().int().positive()).max(12),
+).transform((values) => Array.from(new Set(values)));
 
 export const adminRestaurantMutationSchema = z.object({
   provinceId: requiredId,
@@ -62,6 +73,7 @@ export const adminRestaurantMutationSchema = z.object({
   descriptionTh: optionalText,
   descriptionEn: optionalText,
   foodType: optionalShortText,
+  categoryIds,
   latitude: optionalCoordinate(-90, 90),
   longitude: optionalCoordinate(-180, 180),
   addressText: optionalText,
@@ -70,7 +82,22 @@ export const adminRestaurantMutationSchema = z.object({
   isPublished: booleanFromForm,
   isActive: booleanFromForm,
   coverMediaId: optionalId
+}).superRefine((value, context) => {
+  if (value.isPublished && value.categoryIds.length === 0) {
+    context.addIssue({
+      code: "custom",
+      path: ["categoryIds"],
+      message: "ร้านที่เผยแพร่ต้องมีอย่างน้อยหนึ่งหมวดหมู่",
+    });
+  }
 });
+
+export function restaurantMutationFormValues(formData: FormData) {
+  return {
+    ...Object.fromEntries(formData),
+    categoryIds: formData.getAll("categoryIds"),
+  };
+}
 
 export type AdminRestaurantFilters = z.infer<typeof adminRestaurantFiltersSchema>;
 export type AdminRestaurantMutationInput = z.infer<typeof adminRestaurantMutationSchema>;

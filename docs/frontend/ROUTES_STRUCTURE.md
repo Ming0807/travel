@@ -60,7 +60,7 @@ This contract applies to `/attractions`, `/stories`, `/routes`, `/restaurants`,
 `/accommodations`, and `/360-vista`. Detail routes remain independent because
 their job is reading or inspecting one record, not comparing a directory.
 
-Restaurant category navigation is derived from active, published records in the current destination scope. Empty controlled categories are omitted from the top navigation, desktop sidebar, and mobile filter. If the availability query fails, the controlled category list remains available rather than presenting a false empty state.
+Restaurant category navigation is derived from `restaurant_categories` and assignments to active, published restaurants in the current destination scope. Empty categories are omitted. Featured categories appear in the top navigation; every non-empty active category appears in the desktop sidebar and mobile filter. Category URLs use `category=<slug>`. Legacy `foodType` links redirect to a managed category when possible.
 
 `/attractions` also supports a guest-only "ทริปของฉัน" shortlist. It stores at
 most 20 attraction slugs in versioned browser local storage, does not create a
@@ -157,7 +157,7 @@ The listing states are distinct:
 - `empty`: no published records match the active filters.
 - `unavailable`: the query failed; do not present this as zero records.
 
-Restaurant directory rows show food type and province. Accommodation cards show type,
+Restaurant directory rows show managed category labels and province. Accommodation cards show type,
 province, and the stored price range. Booking, availability, ratings, halal
 claims, and amenities must not render unless their production data contracts
 exist. Listing covers use managed media only; stale third-party stock URLs are
@@ -170,9 +170,11 @@ category totals. Unknown published food types remain visible in the `อื่�
 group. The first accommodation with valid managed media may still be shown as
 a featured result; accommodation records without media stay in the standard
 grid and use a named missing-image state. Controlled food and accommodation
-type values are presented with Thai-first labels while the raw database value
-remains unchanged for server filtering. Mobile filters use a
+category labels are Thai-first while category slugs remain stable for server
+filtering. Mobile filters use a
 single disclosure control and preserve the same GET query contract as desktop.
+
+Admin category management lives at `/admin/restaurants/categories`. One restaurant may have multiple ordered categories. Draft records may be uncategorized, but publishing requires at least one active category. Categories referenced by restaurants are archived rather than hard-deleted.
 
 ## 2.7 Public Hospitality Details
 

@@ -1722,3 +1722,16 @@ Migrations, in order:
 1. `20260808000000_add_research_core.sql`
 2. `20260808001000_harden_research_data_quality.sql`
 3. `20260808002000_add_attraction_improvement_workflow.sql`
+
+---
+
+## 46. Restaurant Category Tables
+
+Migration `20260812000000_create_restaurant_categories.sql` replaces free-text restaurant categorization with controlled, reusable master data while retaining `restaurants.food_type` for one compatibility release.
+
+| Table | Purpose | Important constraints |
+|---|---|---|
+| `restaurant_categories` | Thai-first category names, stable slug, editorial section, menu visibility, ordering, and lifecycle | Unique lowercase slug; section is `local`, `meals`, `cafes`, or `other`; archived rows remain for history |
+| `restaurant_category_assignments` | Ordered many-to-many relationship between restaurants and categories | Composite primary key prevents duplicate assignment; foreign keys cascade with the parent records |
+
+Restaurant create/update RPCs call `sync_restaurant_categories(bigint, bigint[], boolean)` inside the same transaction. They reject inactive or unknown categories and prevent a published restaurant from having no active category. `set_restaurant_category_active(...)` also prevents archiving the final active category of a published restaurant. Category usage and public navigation counts are aggregated by database functions rather than loading all assignments into application memory. Mutation execution is limited to `service_role`.

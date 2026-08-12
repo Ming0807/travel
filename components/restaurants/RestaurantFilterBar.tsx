@@ -13,19 +13,26 @@ export const RESTAURANT_FOOD_TYPES = RESTAURANT_FOOD_TYPE_OPTIONS;
 type RestaurantFilterBarProps = {
   query?: string;
   foodType?: string;
+  categorySlug?: string;
   province?: string;
   provinces?: Array<{ value: string; label: string }>;
   foodTypes?: Array<{ value: string; label: string }>;
+  categories?: Array<{ value: string; label: string }>;
 };
 
 export function RestaurantFilterBar({
   query,
   foodType,
+  categorySlug,
   province,
   provinces = [],
   foodTypes = [...RESTAURANT_FOOD_TYPES],
+  categories,
 }: RestaurantFilterBarProps) {
-  const hasFilters = Boolean(query || foodType || province);
+  const hasFilters = Boolean(query || categorySlug || foodType || province);
+  const categoryOptions = categories ?? foodTypes;
+  const categoryParam = categories ? "category" : "foodType";
+  const selectedCategory = categories ? categorySlug : foodType;
 
   return (
     <PublicFilterDisclosure id="restaurant-filter-form" openLabel="เปิดตัวกรองร้านอาหาร" closeLabel="ซ่อนตัวกรองร้านอาหาร">
@@ -43,11 +50,11 @@ export function RestaurantFilterBar({
           placeholder="ชื่อร้านหรือเมนูที่สนใจ"
         />
         <PublicSelect
-          id="restaurant-food-type"
-          label="ประเภทอาหาร"
-          name="foodType"
-          defaultValue={foodType ?? ""}
-          options={[{ value: "", label: "ทุกประเภท" }, ...foodTypes]}
+          id="restaurant-category"
+          label="หมวดหมู่ร้านอาหาร"
+          name={categoryParam}
+          defaultValue={selectedCategory ?? ""}
+          options={[{ value: "", label: "ทุกหมวดหมู่" }, ...categoryOptions]}
         />
         {provinces.length > 1 ? (
           <PublicSelect

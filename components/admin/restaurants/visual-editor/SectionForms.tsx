@@ -6,15 +6,24 @@ import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import type { AdminSelectOption } from "@/components/admin/restaurants/RestaurantForm";
+import { RestaurantCategoryPicker } from "@/components/admin/restaurants/RestaurantCategoryPicker";
+import type { AdminRestaurantCategory } from "@/lib/repositories/admin-restaurant-category.repository";
 
 type SectionFormProps = {
   restaurant: AdminRestaurantRow;
   onClose: () => void;
   provinces?: AdminSelectOption[];
+  categories?: AdminRestaurantCategory[];
   coverMediaId?: number | null;
   coverMediaUrl?: string | null;
   onCoverChange?: (mediaId: number | null, mediaUrl: string | null) => void;
 };
+
+function CategoryInputs({ restaurant }: { restaurant: AdminRestaurantRow }) {
+  return restaurant.category_ids.map((categoryId) => (
+    <input key={categoryId} type="hidden" name="categoryIds" value={categoryId} />
+  ));
+}
 
 function toFiniteMediaId(value: unknown): number | null {
   const parsed = Number(value);
@@ -51,7 +60,7 @@ export function HeaderForm({ restaurant, onClose }: SectionFormProps) {
         <input type="hidden" name="longitude" value={restaurant.longitude ?? ""} />
         <input type="hidden" name="openingHours" value={restaurant.opening_hours ?? ""} />
         <input type="hidden" name="contactInfo" value={restaurant.contact_info ?? ""} />
-        <input type="hidden" name="foodType" value={restaurant.food_type ?? ""} />
+        <CategoryInputs restaurant={restaurant} />
         <input type="hidden" name="coverMediaId" value="" />
 
         <div className="space-y-4">
@@ -99,7 +108,7 @@ export function ContentForm({ restaurant, onClose }: SectionFormProps) {
         <input type="hidden" name="longitude" value={restaurant.longitude ?? ""} />
         <input type="hidden" name="openingHours" value={restaurant.opening_hours ?? ""} />
         <input type="hidden" name="contactInfo" value={restaurant.contact_info ?? ""} />
-        <input type="hidden" name="foodType" value={restaurant.food_type ?? ""} />
+        <CategoryInputs restaurant={restaurant} />
         <input type="hidden" name="coverMediaId" value="" />
         <input type="hidden" name="nameEn" value={restaurant.name_en ?? ""} />
 
@@ -140,7 +149,7 @@ export function LocationForm({ restaurant, onClose }: SectionFormProps) {
         <input type="hidden" name="isPublished" value={restaurant.is_published ? "true" : "false"} />
         <input type="hidden" name="descriptionTh" value={restaurant.description_th ?? ""} />
         <input type="hidden" name="descriptionEn" value={restaurant.description_en ?? ""} />
-        <input type="hidden" name="foodType" value={restaurant.food_type ?? ""} />
+        <CategoryInputs restaurant={restaurant} />
         <input type="hidden" name="coverMediaId" value="" />
         <input type="hidden" name="nameEn" value={restaurant.name_en ?? ""} />
 
@@ -176,7 +185,7 @@ export function LocationForm({ restaurant, onClose }: SectionFormProps) {
   );
 }
 
-export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId: cmId, coverMediaUrl: cmUrl, onCoverChange }: SectionFormProps) {
+export function SettingsForm({ restaurant, provinces = [], categories = [], onClose, coverMediaId: cmId, coverMediaUrl: cmUrl, onCoverChange }: SectionFormProps) {
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
   const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
   const [coverPreviewUrl, setCoverPreviewUrl] = useState(cmUrl ?? "");
@@ -228,18 +237,11 @@ export function SettingsForm({ restaurant, provinces = [], onClose, coverMediaId
             </select>
           </label>
 
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">ประเภทอาหาร</span>
-            <select className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.food_type ?? ""} name="foodType">
-              <option value="">ไม่ระบุ</option>
-              <option value="Thai">Thai / อาหารไทย</option>
-              <option value="Malay">Malay / อาหารมาเลย์</option>
-              <option value="International">International / นานาชาติ</option>
-              <option value="Coffee">Coffee / คาเฟ่</option>
-              <option value="Bakery">Bakery / เบเกอรี่</option>
-              <option value="Halal">Halal / ฮาลาล</option>
-            </select>
-          </label>
+          <RestaurantCategoryPicker
+            categories={categories}
+            selectedCategoryIds={restaurant.category_ids}
+            error={state.fieldErrors?.categoryIds?.[0]}
+          />
           
           <label className="block">
             <span className="text-sm font-bold text-slate-700">รูปภาพปก (Cover Image)</span>

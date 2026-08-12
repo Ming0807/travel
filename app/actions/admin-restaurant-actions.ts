@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
-import { adminRestaurantMutationSchema } from "@/lib/validation/admin-restaurant";
+import {
+  adminRestaurantMutationSchema,
+  restaurantMutationFormValues,
+} from "@/lib/validation/admin-restaurant";
 import { clearCoverMediaForEntity, linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminRestaurant,
@@ -20,10 +23,36 @@ type ActionResult<TData = unknown> = {
   data?: TData;
 };
 
+function restaurantMutationError<TData = unknown>(error: unknown, fallback: string): ActionResult<TData> {
+  if (error instanceof AdminAuthError) return { success: false, error: error.message };
+  const code = error instanceof Error ? error.message : "";
+  if (code === "RESTAURANT_CATEGORY_REQUIRED") {
+    return {
+      success: false,
+      error: "ร้านที่เผยแพร่ต้องมีอย่างน้อย 1 หมวดหมู่",
+      fieldErrors: { categoryIds: ["เลือกหมวดหมู่อย่างน้อย 1 หมวดก่อนเผยแพร่"] },
+    };
+  }
+  if (code === "RESTAURANT_CATEGORY_INVALID") {
+    return {
+      success: false,
+      error: "มีหมวดหมู่ที่ปิดใช้งานหรือไม่มีอยู่ในระบบ",
+      fieldErrors: { categoryIds: ["กรุณาเลือกหมวดหมู่ที่เปิดใช้งาน"] },
+    };
+  }
+  return { success: false, error: fallback };
+}
+
+function revalidateRestaurantPaths(restaurantId?: number) {
+  revalidatePath("/admin/restaurants");
+  revalidatePath("/restaurants");
+  if (restaurantId) revalidatePath(`/admin/restaurants/${restaurantId}/edit`);
+}
+
 export async function createRestaurantAction(_prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("restaurant.create");
-    const parsed = adminRestaurantMutationSchema.safeParse(Object.fromEntries(formData));
+    const parsed = adminRestaurantMutationSchema.safeParse(restaurantMutationFormValues(formData));
     if (!parsed.success) {
       return { success: false, error: "กรุณาตรวจข้อมูลร้านอาหารอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
@@ -49,18 +78,17 @@ export async function createRestaurantAction(_prevState: ActionResult<{ id: numb
       newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
-    revalidatePath("/admin/restaurants");
+    revalidateRestaurantPaths(created.restaurant_id);
     return { success: true, data: { id: created.restaurant_id } };
   } catch (error) {
-    if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "ยังสร้างร้านอาหารไม่ได้ กรุณาลองอีกครั้ง" };
+    return restaurantMutationError<{ id: number }>(error, "ยังสร้างร้านอาหารไม่ได้ กรุณาลองอีกครั้ง");
   }
 }
 
 export async function updateRestaurantAction(restaurantId: number, _prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("restaurant.update");
-    const parsed = adminRestaurantMutationSchema.safeParse(Object.fromEntries(formData));
+    const parsed = adminRestaurantMutationSchema.safeParse(restaurantMutationFormValues(formData));
     if (!parsed.success) {
       return { success: false, error: "กรุณาตรวจข้อมูลร้านอาหารอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
@@ -97,11 +125,10 @@ export async function updateRestaurantAction(restaurantId: number, _prevState: A
       newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
-    revalidatePath("/admin/restaurants");
+    revalidateRestaurantPaths(restaurantId);
     return { success: true };
   } catch (error) {
-    if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "ยังบันทึกการแก้ไขร้านอาหารไม่ได้ กรุณาลองอีกครั้ง" };
+    return restaurantMutationError<{ id: number }>(error, "ยังบันทึกการแก้ไขร้านอาหารไม่ได้ กรุณาลองอีกครั้ง");
   }
 }
 
@@ -122,11 +149,10 @@ export async function toggleRestaurantPublishAction(restaurantId: number): Promi
       newValues: { is_published: updated.is_published },
     });
 
-    revalidatePath("/admin/restaurants");
+    revalidateRestaurantPaths(restaurantId);
     return { success: true };
   } catch (error) {
-    if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "ยังเปลี่ยนสถานะเผยแพร่ไม่ได้ กรุณาลองอีกครั้ง" };
+    return restaurantMutationError(error, "ยังเปลี่ยนสถานะเผยแพร่ไม่ได้ กรุณาลองอีกครั้ง");
   }
 }
 
@@ -147,7 +173,7 @@ export async function toggleRestaurantActiveAction(restaurantId: number): Promis
       newValues: { is_active: updated.is_active },
     });
 
-    revalidatePath("/admin/restaurants");
+    revalidateRestaurantPaths(restaurantId);
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };

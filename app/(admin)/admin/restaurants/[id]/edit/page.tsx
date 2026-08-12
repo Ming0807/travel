@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/auth/guards";
 import { getAdminRestaurantById, getAdminProvinces } from "@/lib/repositories/admin-restaurant.repository";
 import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
+import { listAdminRestaurantCategories } from "@/lib/repositories/admin-restaurant-category.repository";
 
 export const metadata: Metadata = {
   title: "Edit Restaurant | Admin",
@@ -24,10 +25,11 @@ export default async function EditAdminRestaurantPage({
     notFound();
   }
 
-  const [restaurant, provinces, coverMedia] = await Promise.all([
+  const [restaurant, provinces, coverMedia, categories] = await Promise.all([
     getAdminRestaurantById(restaurantId),
     getAdminProvinces(),
     getCoverMediaForEntity("restaurant", restaurantId),
+    listAdminRestaurantCategories(),
   ]);
 
   if (!restaurant) {
@@ -38,6 +40,7 @@ export default async function EditAdminRestaurantPage({
     <RestaurantVisualEditor 
       restaurant={restaurant}
       provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}
+      categories={categories}
       coverMediaId={coverMedia?.media_id ?? null}
       coverMediaUrl={adminMediaPreviewUrl(coverMedia?.storage_path)}
     />

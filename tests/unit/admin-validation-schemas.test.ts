@@ -461,6 +461,7 @@ describe("adminRestaurantMutationSchema", () => {
     provinceId: "1",
     slug: "yala-kitchen",
     nameTh: "ครัวยะลา",
+    categoryIds: ["1"],
     isPublished: "true",
     isActive: "true",
   };
@@ -483,11 +484,11 @@ describe("adminRestaurantFiltersSchema", () => {
   it("accepts valid filters", () => {
     const result = adminRestaurantFiltersSchema.parse({
       provinceId: "1",
-      foodType: "seafood",
+      categorySlug: "seafood",
       isPublished: "true",
     });
     expect(result.provinceId).toBe(1);
-    expect(result.foodType).toBe("seafood");
+    expect(result.categorySlug).toBe("seafood");
   });
 });
 

@@ -818,6 +818,7 @@ describe("admin restaurant validation", () => {
       provinceId: "1",
       slug: "krua-thai",
       nameTh: "ครัวไทย",
+      categoryIds: ["1"],
       isPublished: "true",
       isActive: "true",
     };
@@ -834,7 +835,7 @@ describe("admin restaurant validation", () => {
         ...validPayload,
         nameEn: "Thai Kitchen",
         descriptionTh: "ร้านอาหารไทยแท้",
-        foodType: "seafood",
+        categoryIds: ["1", "2", "2"],
         latitude: "6.5",
         longitude: "101.2",
         addressText: "456 ถนนอาหาร",
@@ -842,7 +843,7 @@ describe("admin restaurant validation", () => {
         contactInfo: "099-xxx-xxxx",
         coverMediaId: "1",
       });
-      expect(result.foodType).toBe("seafood");
+      expect(result.categoryIds).toEqual([1, 2]);
       expect(result.coverMediaId).toBe(1);
     });
 
@@ -876,9 +877,9 @@ describe("admin restaurant validation", () => {
       expect(result.pageSize).toBe(20);
     });
 
-    it("accepts foodType filter", () => {
-      const result = adminRestaurantFiltersSchema.parse({ foodType: "seafood" });
-      expect(result.foodType).toBe("seafood");
+    it("accepts categorySlug filter", () => {
+      const result = adminRestaurantFiltersSchema.parse({ categorySlug: "seafood" });
+      expect(result.categorySlug).toBe("seafood");
     });
 
     it("accepts isPublished filter", () => {

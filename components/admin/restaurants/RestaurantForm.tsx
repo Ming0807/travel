@@ -9,6 +9,8 @@ import { AdminFormErrorSummary, AdminFormSection, AdminSaveBar } from "@/compone
 import { FormInput, FormTextarea, FormSelect, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
 import { Image, List } from "@phosphor-icons/react";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
+import { RestaurantCategoryPicker } from "@/components/admin/restaurants/RestaurantCategoryPicker";
+import type { AdminRestaurantCategory } from "@/lib/repositories/admin-restaurant-category.repository";
 
 export type AdminSelectOption = {
   id: number;
@@ -18,6 +20,7 @@ export type AdminSelectOption = {
 type RestaurantFormProps = {
   restaurant?: AdminRestaurantRow | null;
   provinces: AdminSelectOption[];
+  categories: AdminRestaurantCategory[];
   submitLabel?: string;
 };
 
@@ -35,11 +38,13 @@ const FIELD_LABELS = {
   latitude: "Latitude",
   longitude: "Longitude",
   coverImageUrl: "รูปภาพปก",
+  categoryIds: "หมวดหมู่ร้านอาหาร",
 };
 
 export function RestaurantForm({
   restaurant,
   provinces,
+  categories,
   submitLabel = "บันทึกข้อมูล"
 }: RestaurantFormProps) {
   const router = useRouter();
@@ -146,19 +151,10 @@ export function RestaurantForm({
                 options={provinces.map((p) => ({ value: p.id, label: p.label }))}
               />
 
-              <FormSelect
-                label="ประเภทอาหาร"
-                name="foodType"
-                defaultValue={restaurant?.food_type ?? ""}
-                placeholder="ไม่ระบุ"
-                options={[
-                  { value: "Thai", label: "Thai / อาหารไทย" },
-                  { value: "Malay", label: "Malay / อาหารมาเลย์" },
-                  { value: "International", label: "International / นานาชาติ" },
-                  { value: "Coffee", label: "Coffee / คาเฟ่" },
-                  { value: "Bakery", label: "Bakery / เบเกอรี่" },
-                  { value: "Halal", label: "Halal / ฮาลาล" },
-                ]}
+              <RestaurantCategoryPicker
+                categories={categories}
+                selectedCategoryIds={restaurant?.category_ids ?? []}
+                error={fe("categoryIds")}
               />
 
               <label className="block">

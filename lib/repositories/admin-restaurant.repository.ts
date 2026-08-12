@@ -5,6 +5,18 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminRestaurantFilters, AdminRestaurantMutationInput } from "@/lib/validation/admin-restaurant";
 import { firstJoin } from "@/lib/utils/supabase-joins";
 import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
+import {
+  listRestaurantCategoryIds,
+  syncAdminRestaurantCategories,
+} from "@/lib/repositories/admin-restaurant-category.repository";
+
+export type AdminRestaurantCategorySummary = {
+  categoryId: number;
+  slug: string;
+  nameTh: string;
+  nameEn: string | null;
+  isActive: boolean;
+};
 
 export type AdminRestaurantRow = {
   restaurant_id: number;
@@ -15,6 +27,8 @@ export type AdminRestaurantRow = {
   description_th: string | null;
   description_en: string | null;
   food_type: string | null;
+  category_ids: number[];
+  categories: AdminRestaurantCategorySummary[];
   latitude: number | null;
   longitude: number | null;
   address_text: string | null;
@@ -38,6 +52,23 @@ export type PaginatedResult<T> = {
 function mapRestaurant(rawRow: unknown): AdminRestaurantRow {
   const row = asRecord(rawRow);
   const province = asRecord(firstJoin(row.provinces as { province_name_th?: unknown } | { province_name_th?: unknown }[] | null));
+  const categoryAssignments = Array.isArray(row.restaurant_category_assignments)
+    ? row.restaurant_category_assignments
+      .map((assignment) => asRecord(assignment))
+      .sort((left, right) => numberValue(left.display_order) - numberValue(right.display_order))
+    : [];
+  const categories = categoryAssignments.flatMap<AdminRestaurantCategorySummary>((assignment) => {
+    const category = asRecord(firstJoin(assignment.restaurant_categories as Record<string, unknown> | Record<string, unknown>[] | null));
+    const categoryId = numberValue(category.category_id);
+    if (categoryId <= 0) return [];
+    return [{
+      categoryId,
+      slug: stringValue(category.slug),
+      nameTh: stringValue(category.name_th),
+      nameEn: nullableString(category.name_en),
+      isActive: booleanValue(category.is_active),
+    }];
+  });
 
   return {
     restaurant_id: numberValue(row.restaurant_id),
@@ -48,6 +79,8 @@ function mapRestaurant(rawRow: unknown): AdminRestaurantRow {
     description_th: nullableString(row.description_th),
     description_en: nullableString(row.description_en),
     food_type: nullableString(row.food_type),
+    category_ids: categories.map((category) => category.categoryId),
+    categories,
     latitude: nullableNumber(row.latitude),
     longitude: nullableNumber(row.longitude),
     address_text: nullableString(row.address_text),
@@ -70,15 +103,24 @@ function toPayload(input: AdminRestaurantMutationInput) {
     name_en: input.nameEn,
     description_th: input.descriptionTh,
     description_en: input.descriptionEn,
-    food_type: input.foodType,
     latitude: input.latitude,
     longitude: input.longitude,
     address_text: input.addressText,
     opening_hours: input.openingHours,
     contact_info: input.contactInfo,
-    is_published: input.isPublished,
     is_active: input.isActive
   };
+}
+
+const restaurantCategorySelect = `
+  restaurant_category_assignments (
+    display_order,
+    restaurant_categories (category_id, slug, name_th, name_en, is_active)
+  )
+`;
+
+function escapeAdminRestaurantIlike(value: string) {
+  return value.replace(/[\\%_]/g, "\\$&").replace(/,/g, " ").trim();
 }
 
 export async function listAdminRestaurants(filters: AdminRestaurantFilters): Promise<PaginatedResult<AdminRestaurantRow>> {
@@ -86,12 +128,28 @@ export async function listAdminRestaurants(filters: AdminRestaurantFilters): Pro
   const from = (filters.page - 1) * filters.pageSize;
   const to = from + filters.pageSize - 1;
 
+  let categoryRestaurantIds: number[] | null = null;
+  if (filters.categorySlug) {
+    const { data: categoryLinks, error: categoryError } = await supabase
+      .from("restaurant_category_assignments")
+      .select("restaurant_id, restaurant_categories!inner(slug)")
+      .eq("restaurant_categories.slug", filters.categorySlug);
+    if (categoryError) throw new Error("ADMIN_RESTAURANT_CATEGORY_FILTER_FAILED");
+    categoryRestaurantIds = Array.from(new Set(
+      (categoryLinks ?? []).map((row) => Number(row.restaurant_id)).filter(Number.isFinite),
+    ));
+    if (categoryRestaurantIds.length === 0) {
+      return { items: [], total: 0, page: filters.page, pageSize: filters.pageSize };
+    }
+  }
+
   let query = supabase
     .from("restaurants")
     .select(
       `
         *,
-        provinces (province_name_th)
+        provinces (province_name_th),
+        ${restaurantCategorySelect}
       `,
       { count: "exact" }
     )
@@ -100,10 +158,12 @@ export async function listAdminRestaurants(filters: AdminRestaurantFilters): Pro
     .range(from, to);
 
   if (filters.search) {
-    query = query.or(`name_th.ilike.%${filters.search}%,name_en.ilike.%${filters.search}%,slug.ilike.%${filters.search}%`);
+    const escaped = escapeAdminRestaurantIlike(filters.search);
+    query = query.or(`name_th.ilike.%${escaped}%,name_en.ilike.%${escaped}%,slug.ilike.%${escaped}%`);
   }
   if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
-  if (filters.foodType) query = query.ilike("food_type", `%${filters.foodType}%`);
+  if (filters.foodType) query = query.ilike("food_type", `%${escapeAdminRestaurantIlike(filters.foodType)}%`);
+  if (categoryRestaurantIds) query = query.in("restaurant_id", categoryRestaurantIds);
   if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
 
   const { data, error, count } = await query;
@@ -148,7 +208,8 @@ export async function getAdminRestaurantById(restaurantId: number): Promise<Admi
     .select(
       `
         *,
-        provinces (province_name_th)
+        provinces (province_name_th),
+        ${restaurantCategorySelect}
       `
     )
     .eq("restaurant_id", restaurantId)
@@ -180,32 +241,47 @@ export async function createAdminRestaurant(input: AdminRestaurantMutationInput)
   await assertLiveDestinationProvinceId(input.provinceId);
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
-    .from("restaurants")
-    .insert(toPayload(input))
-    .select("*")
-    .single();
+    .rpc("create_restaurant_with_categories", {
+      p_payload: toPayload(input),
+      p_category_ids: input.categoryIds,
+      p_is_published: input.isPublished,
+    });
 
   if (error) {
-    throw new Error(error.code === "23505" ? "DUPLICATE_SLUG" : "ADMIN_RESTAURANT_CREATE_FAILED");
+    const message = typeof error.message === "string" ? error.message : "";
+    if (error.code === "23505") throw new Error("DUPLICATE_SLUG");
+    if (message.includes("RESTAURANT_CATEGORY_REQUIRED")) throw new Error("RESTAURANT_CATEGORY_REQUIRED");
+    if (message.includes("RESTAURANT_CATEGORY_INVALID")) throw new Error("RESTAURANT_CATEGORY_INVALID");
+    throw new Error("ADMIN_RESTAURANT_CREATE_FAILED");
   }
 
-  return mapRestaurant(data);
+  const restaurantId = numberValue(data);
+  const created = await getAdminRestaurantById(restaurantId);
+  if (!created) throw new Error("ADMIN_RESTAURANT_CREATE_FAILED");
+  return created;
 }
 
 export async function updateAdminRestaurant(restaurantId: number, input: AdminRestaurantMutationInput): Promise<AdminRestaurantRow> {
+  await assertLiveDestinationProvinceId(input.provinceId);
   const supabase = createSupabaseServiceRoleClient();
-  const { data, error } = await supabase
-    .from("restaurants")
-    .update(toPayload(input))
-    .eq("restaurant_id", restaurantId)
-    .select("*")
-    .single();
+  const { error } = await supabase.rpc("update_restaurant_with_categories", {
+    p_restaurant_id: restaurantId,
+    p_payload: toPayload(input),
+    p_category_ids: input.categoryIds,
+    p_is_published: input.isPublished,
+  });
 
   if (error) {
-    throw new Error(error.code === "23505" ? "DUPLICATE_SLUG" : "ADMIN_RESTAURANT_UPDATE_FAILED");
+    const message = typeof error.message === "string" ? error.message : "";
+    if (error.code === "23505") throw new Error("DUPLICATE_SLUG");
+    if (message.includes("RESTAURANT_CATEGORY_REQUIRED")) throw new Error("RESTAURANT_CATEGORY_REQUIRED");
+    if (message.includes("RESTAURANT_CATEGORY_INVALID")) throw new Error("RESTAURANT_CATEGORY_INVALID");
+    throw new Error("ADMIN_RESTAURANT_UPDATE_FAILED");
   }
 
-  return mapRestaurant(data);
+  const updated = await getAdminRestaurantById(restaurantId);
+  if (!updated) throw new Error("ADMIN_RESTAURANT_UPDATE_FAILED");
+  return updated;
 }
 
 export async function updateAdminRestaurantStatus(
@@ -213,9 +289,22 @@ export async function updateAdminRestaurantStatus(
   patch: { is_published?: boolean; is_active?: boolean }
 ): Promise<AdminRestaurantRow> {
   const supabase = createSupabaseServiceRoleClient();
+  if (patch.is_published !== undefined) {
+    const categoryIds = await listRestaurantCategoryIds(restaurantId);
+    await syncAdminRestaurantCategories(restaurantId, categoryIds, patch.is_published);
+  }
+
+  const directPatch = { ...patch };
+  delete directPatch.is_published;
+  if (Object.keys(directPatch).length === 0) {
+    const current = await getAdminRestaurantById(restaurantId);
+    if (!current) throw new Error("ADMIN_RESTAURANT_UPDATE_FAILED");
+    return current;
+  }
+
   const { data, error } = await supabase
     .from("restaurants")
-    .update(patch)
+    .update(directPatch)
     .eq("restaurant_id", restaurantId)
     .select("*")
     .single();

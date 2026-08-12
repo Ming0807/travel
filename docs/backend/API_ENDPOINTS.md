@@ -26,7 +26,7 @@ Invalid filter values return `400`; oversized exports return `413` and require n
 | `/api/admin/export/attractions` | `search`, `provinceId`, `districtId`, `attractionTypeId`, `isPublished`, `isActive` |
 | `/api/admin/export/stories` | `search`, `provinceId`, `status`, `isPublished` |
 | `/api/admin/export/routes` | `search`, `isPublished`, `isActive` |
-| `/api/admin/export/restaurants` | `search`, `provinceId`, `foodType`, `isPublished` |
+| `/api/admin/export/restaurants` | `search`, `provinceId`, `categorySlug`, `foodType` (legacy), `isPublished` |
 | `/api/admin/export/accommodations` | `search`, `provinceId`, `accommodationType`, `isPublished` |
 | `/api/admin/export/badges` | `search`, `category`, `isActive` |
 | `/api/admin/export/tourists` | `search`, `countryId`, `provinceId`, `provider`, `sort`; exports pseudonymous references and summary fields only |

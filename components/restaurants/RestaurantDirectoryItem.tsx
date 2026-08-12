@@ -14,6 +14,9 @@ export function RestaurantDirectoryItem({
 }) {
   const href = `/restaurants/${restaurant.slug}`;
   const missingImageLabel = `ยังไม่มีภาพของ${restaurant.name}`;
+  const categoryLabel = restaurant.categories && restaurant.categories.length > 0
+    ? restaurant.categories.slice(0, 2).map((category) => category.name).join(" · ")
+    : restaurantFoodTypeLabel(restaurant.foodType);
 
   return (
     <article
@@ -58,7 +61,7 @@ export function RestaurantDirectoryItem({
               </Link>
             </h4>
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-black/60">
-              <span>{restaurantFoodTypeLabel(restaurant.foodType)}</span>
+              <span>{categoryLabel}</span>
               <span aria-hidden="true">•</span>
               <span className="inline-flex items-center gap-1">
                 <MapPin size={13} weight="fill" aria-hidden="true" />

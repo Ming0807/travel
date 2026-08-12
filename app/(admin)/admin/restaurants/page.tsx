@@ -11,6 +11,8 @@ import { listAdminRestaurants } from "@/lib/repositories/admin-restaurant.reposi
 import { adminRestaurantFiltersSchema } from "@/lib/validation/admin-restaurant";
 import { RestaurantStatusActions } from "@/components/admin/restaurants/RestaurantStatusActions";
 import { ExportButton } from "@/components/admin/ExportButton";
+import Link from "next/link";
+import { listAdminRestaurantCategories } from "@/lib/repositories/admin-restaurant-category.repository";
 
 export const metadata: Metadata = {
   title: "Restaurants Management | Admin",
@@ -19,7 +21,7 @@ export const metadata: Metadata = {
 const columns = [
   { key: "name", label: "ชื่อร้านอาหาร" },
   { key: "province", label: "จังหวัด", className: "hidden md:table-cell" },
-  { key: "foodType", label: "ประเภทอาหาร", className: "hidden lg:table-cell" },
+  { key: "foodType", label: "หมวดหมู่", className: "hidden lg:table-cell" },
   { key: "attractions", label: "สถานที่ใกล้เคียง", className: "hidden lg:table-cell text-center" },
   { key: "status", label: "สถานะ" },
   { key: "actions", label: "", className: "w-10" },
@@ -39,7 +41,10 @@ export default async function AdminRestaurantsPage({
   const raw = await searchParams;
   const parsed = adminRestaurantFiltersSchema.safeParse(raw);
   const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
-  const { items, total, page, pageSize } = await listAdminRestaurants(filters);
+  const [{ items, total, page, pageSize }, categories] = await Promise.all([
+    listAdminRestaurants(filters),
+    listAdminRestaurantCategories({ activeOnly: true }),
+  ]);
 
   return (
     <ListPageShell
@@ -48,7 +53,14 @@ export default async function AdminRestaurantsPage({
       description="จัดการข้อมูลร้านอาหารและธุรกิจชุมชนในยะลา ปัตตานี และนราธิวาส"
       createHref="/admin/restaurants/new"
       createLabel="เพิ่มร้านอาหารใหม่"
-      headerActions={<ExportButton endpoint="/api/admin/export/restaurants" label="Export CSV" />}
+      headerActions={(
+        <>
+          <Link href="/admin/restaurants/categories" className="inline-flex min-h-10 items-center border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
+            จัดการหมวดหมู่
+          </Link>
+          <ExportButton endpoint="/api/admin/export/restaurants" label="Export CSV" />
+        </>
+      )}
       total={total}
       page={page}
       pageSize={pageSize}
@@ -63,6 +75,11 @@ export default async function AdminRestaurantsPage({
             label="สถานะ"
             paramKey="isPublished"
             options={statusOptions}
+          />
+          <FilterSelect
+            label="หมวดหมู่"
+            paramKey="categorySlug"
+            options={categories.map((category) => ({ value: category.slug, label: category.nameTh }))}
           />
         </FilterBar>
       }
@@ -87,9 +104,13 @@ export default async function AdminRestaurantsPage({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-slate-500">
-                        {restaurant.food_type ?? "—"}
-                      </span>
+                      <div className="flex max-w-xs flex-wrap gap-1.5">
+                        {restaurant.categories.length > 0 ? restaurant.categories.map((category) => (
+                          <span key={category.categoryId} className="border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-700">
+                            {category.nameTh}
+                          </span>
+                        )) : <span className="text-xs font-semibold text-amber-700">ยังไม่จัดหมวด</span>}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="text-xs font-bold text-slate-600">{restaurant.attraction_count}</span>
@@ -149,8 +170,10 @@ export default async function AdminRestaurantsPage({
                       <p className="font-semibold text-slate-700">{restaurant.province_name_th ?? "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-400">ประเภทอาหาร</p>
-                      <p className="font-semibold text-slate-700">{restaurant.food_type ?? "—"}</p>
+                      <p className="text-xs text-slate-400">หมวดหมู่</p>
+                      <p className="font-semibold text-slate-700">
+                        {restaurant.categories.length > 0 ? restaurant.categories.map((category) => category.nameTh).join(", ") : "ยังไม่จัดหมวด"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-400">สถานที่ใกล้เคียง</p>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicButton } from "@/components/public/PublicButton";
@@ -9,19 +8,14 @@ import { PublicPagination } from "@/components/public/PublicPagination";
 import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
 import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
 import { PublicDirectoryToolbar } from "@/components/public/directory/PublicDirectoryToolbar";
-import {
-  RESTAURANT_FOOD_TYPES,
-  RestaurantFilterBar,
-} from "@/components/restaurants/RestaurantFilterBar";
+import { RestaurantFilterBar } from "@/components/restaurants/RestaurantFilterBar";
 import { RestaurantCategoryNav } from "@/components/restaurants/RestaurantCategoryNav";
 import { RestaurantDirectoryItem } from "@/components/restaurants/RestaurantDirectoryItem";
+import { RestaurantCategoryRail } from "@/components/restaurants/RestaurantCategoryRail";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
+import { groupRestaurantsForDirectory } from "@/lib/hospitality/restaurant-directory";
 import {
-  filterRestaurantFoodTypeOptions,
-  groupRestaurantsForDirectory,
-} from "@/lib/hospitality/restaurant-directory";
-import {
-  listAvailablePublicRestaurantFoodTypes,
+  listAvailablePublicRestaurantCategories,
   listPublicRestaurantPage,
   PUBLIC_HOSPITALITY_MAX_PAGE,
 } from "@/lib/repositories/public-content.repository";
@@ -37,15 +31,6 @@ export const metadata: Metadata = {
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
-
-const RESTAURANT_PRIMARY_CATEGORY_VALUES = [
-  "",
-  "Malay",
-  "Halal",
-  "Street Food",
-  "Coffee",
-  "Dessert/Cafe",
-] as const;
 
 function getParam(params: SearchParams, key: string) {
   const value = params[key];
@@ -69,18 +54,21 @@ function safeInternalHref(value: string, fallback: string) {
 
 function restaurantHref({
   query,
+  categorySlug,
   foodType,
   province,
   page,
 }: {
   query?: string;
+  categorySlug?: string;
   foodType?: string;
   province?: string;
   page?: number;
 }) {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
-  if (foodType) params.set("foodType", foodType);
+  if (categorySlug) params.set("category", categorySlug);
+  else if (foodType) params.set("foodType", foodType);
   if (province) params.set("province", province);
   if (page && page > 1) params.set("page", String(page));
   const queryString = params.toString();
@@ -94,32 +82,27 @@ export default async function RestaurantsPage({
 }) {
   const params = await searchParams;
   const query = getParam(params, "q");
+  const requestedCategorySlug = getParam(params, "category");
   const requestedFoodType = getParam(params, "foodType");
   const requestedProvince = getParam(params, "province");
   const requestedPage = getParam(params, "page");
   const page = parsePage(requestedPage);
 
-  const foodType = RESTAURANT_FOOD_TYPES.some((option) => option.value === requestedFoodType)
-    ? requestedFoodType
-    : undefined;
-
-  if (
-    (requestedFoodType && !foodType)
-    || (requestedPage !== undefined && requestedPage !== String(page))
-  ) {
+  if (requestedPage !== undefined && requestedPage !== String(page)) {
     redirect(restaurantHref({ query, province: requestedProvince }));
   }
 
   const settingsService = new SettingsService();
-  const [restaurantPage, foodTypeAvailability, heroSettings, ctaSettings, liveProvinces] = await Promise.all([
+  const [restaurantPage, categoryAvailability, heroSettings, ctaSettings, liveProvinces] = await Promise.all([
     listPublicRestaurantPage({
       query,
-      foodType,
+      categorySlug: requestedCategorySlug,
+      foodType: requestedCategorySlug ? undefined : requestedFoodType,
       province: requestedProvince,
       page,
       pageSize: 12,
     }),
-    listAvailablePublicRestaurantFoodTypes({ province: requestedProvince }),
+    listAvailablePublicRestaurantCategories({ province: requestedProvince }),
     settingsService.getSetting("restaurants_page_hero", {
       title: "ร้านอาหารในจังหวัดยะลา",
       description: "ค้นหาร้านอาหารท้องถิ่นและเลือกมื้อที่เหมาะกับแผนเดินทางของคุณ",
@@ -142,14 +125,34 @@ export default async function RestaurantsPage({
     ? requestedProvince
     : undefined;
 
+  const matchedLegacyCategory = requestedFoodType
+    ? categoryAvailability.items.find((category) => (
+      category.nameEn?.toLocaleLowerCase() === requestedFoodType.toLocaleLowerCase()
+      || category.name.toLocaleLowerCase() === requestedFoodType.toLocaleLowerCase()
+    ))
+    : undefined;
+  if (requestedFoodType) {
+    if (matchedLegacyCategory) {
+      redirect(restaurantHref({ query, categorySlug: matchedLegacyCategory.slug, province }));
+    }
+  }
+  const legacyFoodType = requestedFoodType && !matchedLegacyCategory ? requestedFoodType : undefined;
+  const categorySlug = categoryAvailability.items.some((category) => category.slug === requestedCategorySlug)
+    ? requestedCategorySlug
+    : undefined;
+  if (requestedCategorySlug && !categorySlug && categoryAvailability.state === "available") {
+    redirect(restaurantHref({ query, province }));
+  }
+
   if (requestedProvince && !province) {
-    redirect(restaurantHref({ query, foodType }));
+    redirect(restaurantHref({ query, categorySlug, foodType: legacyFoodType }));
   }
 
   if (page > Math.max(restaurantPage.pageCount, 1)) {
     redirect(restaurantHref({
       query,
-      foodType,
+      categorySlug,
+      foodType: legacyFoodType,
       province,
       page: restaurantPage.pageCount > 1 ? restaurantPage.pageCount : undefined,
     }));
@@ -160,28 +163,23 @@ export default async function RestaurantsPage({
     heroSettings.description,
     "ค้นหาร้านอาหารท้องถิ่นและเลือกมื้อที่เหมาะกับแผนเดินทางของคุณ",
   );
-  const hasFilters = Boolean(query || foodType || province);
+  const hasFilters = Boolean(query || categorySlug || legacyFoodType || province);
   const restaurantGroups = groupRestaurantsForDirectory(restaurantPage.items);
-  const visibleFoodTypeOptions = filterRestaurantFoodTypeOptions(
-    RESTAURANT_FOOD_TYPES,
-    foodTypeAvailability.state === "available" ? foodTypeAvailability.values : null,
-  );
-  const visibleFoodTypeValues = new Set(visibleFoodTypeOptions.map((option) => option.value));
-  const categoryNavItems = RESTAURANT_PRIMARY_CATEGORY_VALUES
-    .filter((value) => !value || visibleFoodTypeValues.has(value))
-    .map((value) => ({
-    value,
-    label: value
-      ? RESTAURANT_FOOD_TYPES.find((option) => option.value === value)?.label ?? value
-      : "ทั้งหมด",
-    href: restaurantHref({ query, foodType: value || undefined, province }),
-  }));
+  const categoryOptions = categoryAvailability.items.map((category) => ({ value: category.slug, label: category.name }));
+  const categoryNavItems = [
+    { value: "", label: "ทั้งหมด", href: restaurantHref({ query, province }) },
+    ...categoryAvailability.items.filter((category) => category.isFeatured).map((category) => ({
+      value: category.slug,
+      label: category.name,
+      href: restaurantHref({ query, categorySlug: category.slug, province }),
+    })),
+  ];
   const sidebarCategoryItems = [
     { value: "", label: "ร้านอาหารทั้งหมด" },
-    ...visibleFoodTypeOptions,
+    ...categoryOptions,
   ].map((option) => ({
     ...option,
-    href: restaurantHref({ query, foodType: option.value || undefined, province }),
+    href: restaurantHref({ query, categorySlug: option.value || undefined, province }),
   }));
   const hasSidebarCategories = sidebarCategoryItems.length > 1;
 
@@ -197,7 +195,7 @@ export default async function RestaurantsPage({
 
         {categoryNavItems.length > 1 ? (
           <div className="mt-7">
-            <RestaurantCategoryNav activeValue={foodType} items={categoryNavItems} />
+            <RestaurantCategoryNav activeValue={categorySlug} items={categoryNavItems} />
           </div>
         ) : null}
 
@@ -205,10 +203,11 @@ export default async function RestaurantsPage({
           <PublicDirectoryToolbar label="ค้นหาและกรองร้านอาหาร">
             <RestaurantFilterBar
               query={query}
-              foodType={foodType}
+              categorySlug={categorySlug}
+              foodType={legacyFoodType}
               province={province}
               provinces={provinceOptions}
-              foodTypes={visibleFoodTypeOptions}
+              categories={legacyFoodType ? undefined : categoryOptions}
             />
           </PublicDirectoryToolbar>
         </div>
@@ -235,7 +234,7 @@ export default async function RestaurantsPage({
               <PublicErrorState
                 title="โหลดรายการร้านอาหารไม่ได้ในขณะนี้"
                 description="กรุณาลองใหม่อีกครั้ง ระบบจะไม่แสดงว่าไม่มีร้านเมื่อฐานข้อมูลไม่พร้อม"
-                action={<PublicButton href={restaurantHref({ query, foodType, province })} variant="secondary">ลองโหลดอีกครั้ง</PublicButton>}
+                action={<PublicButton href={restaurantHref({ query, categorySlug, foodType: legacyFoodType, province })} variant="secondary">ลองโหลดอีกครั้ง</PublicButton>}
               />
             </div>
           ) : restaurantPage.items.length === 0 ? (
@@ -253,30 +252,7 @@ export default async function RestaurantsPage({
                 : "mt-6"
               }>
                 {hasSidebarCategories ? <aside aria-label="หมวดหมู่ร้านอาหาร" className="hidden xl:block">
-                  <div className="sticky top-24 border-r border-black/10 pr-6">
-                    <p className="pb-3 text-sm font-bold text-[var(--public-ink)]">หมวดหมู่ร้านอาหาร</p>
-                    <nav aria-label="ตัวกรองประเภทอาหารทั้งหมด">
-                      <ul className="space-y-1">
-                        {sidebarCategoryItems.map((item) => {
-                          const selected = item.value === (foodType ?? "");
-                          return (
-                            <li key={item.value || "all"}>
-                              <Link
-                                href={item.href}
-                                aria-current={selected ? "page" : undefined}
-                                className={`flex min-h-11 items-center border-l-2 px-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] ${selected
-                                  ? "border-[var(--public-coral-strong)] bg-[var(--public-coral)]/[0.08] text-[var(--public-coral-strong)]"
-                                  : "border-transparent text-black/65 hover:border-black/20 hover:bg-black/[0.025] hover:text-[var(--public-ink)]"
-                                }`}
-                              >
-                                {item.label}
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </nav>
-                  </div>
+                  <RestaurantCategoryRail items={sidebarCategoryItems} activeValue={categorySlug} />
                 </aside> : null}
                 <div className="min-w-0">
                   {restaurantGroups.map((group, groupIndex) => (
@@ -305,7 +281,7 @@ export default async function RestaurantsPage({
                   <PublicPagination
                     page={restaurantPage.page}
                     pageCount={restaurantPage.pageCount}
-                    createHref={(nextPage) => restaurantHref({ query, foodType, province, page: nextPage })}
+                    createHref={(nextPage) => restaurantHref({ query, categorySlug, foodType: legacyFoodType, province, page: nextPage })}
                   />
                 </div>
               </div>

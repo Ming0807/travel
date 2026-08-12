@@ -173,6 +173,12 @@ function one(value: unknown): DbRecord | null {
   return value && typeof value === "object" ? (value as DbRecord) : null;
 }
 
+function records(value: unknown): DbRecord[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is DbRecord => Boolean(item) && typeof item === "object")
+    : [];
+}
+
 function text(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim().length > 0 ? value : fallback;
 }
@@ -1336,6 +1342,17 @@ export async function getPublicStory(slug: string): Promise<PublicStoryData | nu
   }
 }
 
+export type PublicRestaurantCategory = {
+  categoryId: number;
+  slug: string;
+  name: string;
+  nameEn: string | null;
+  sectionKey: "local" | "meals" | "cafes" | "other";
+  displayOrder: number;
+  isFeatured: boolean;
+  count?: number;
+};
+
 export type PublicRestaurantCard = {
   slug: string;
   name: string;
@@ -1344,6 +1361,7 @@ export type PublicRestaurantCard = {
   description: string;
   imageUrl: string | null;
   imageAlt: string;
+  categories?: PublicRestaurantCategory[];
 };
 
 export const PUBLIC_HOSPITALITY_MAX_PAGE = 10_000;
@@ -1353,6 +1371,7 @@ export type PublicHospitalityListingState = "available" | "empty" | "unavailable
 export type PublicRestaurantPageInput = {
   query?: string;
   foodType?: string;
+  categorySlug?: string;
   province?: string;
   page: number;
   pageSize: number;
@@ -1440,15 +1459,72 @@ function mapRestaurantRow(
 ): PublicRestaurantCard {
   const province = one(row.provinces);
   const name = text(row.name_th, text(row.name_en, ""));
+  const categories = records(row.restaurant_category_assignments)
+    .slice()
+    .sort((left, right) => numberValue(left.display_order) - numberValue(right.display_order))
+    .flatMap((assignment) => {
+      const category = one(assignment.restaurant_categories);
+      const categoryId = numberValue(category?.category_id);
+      const slug = text(category?.slug);
+      if (!category || !categoryId || !slug || category.is_active === false) return [];
+      const sectionKey = text(category.section_key, "other");
+      return [{
+        categoryId,
+        slug,
+        name: text(category.name_th, text(category.name_en, slug)),
+        nameEn: text(category.name_en) || null,
+        sectionKey: (["local", "meals", "cafes", "other"].includes(sectionKey) ? sectionKey : "other") as PublicRestaurantCategory["sectionKey"],
+        displayOrder: numberValue(category.display_order),
+        isFeatured: category.is_featured === true,
+      }];
+    });
   return {
     slug: text(row.slug),
     name,
     province: text(province?.province_name_th, text(province?.province_name_en, "")),
-    foodType: text(row.food_type, "Local"),
+    foodType: categories[0]?.nameEn ?? categories[0]?.name ?? text(row.food_type, "Local"),
     description: text(row.description_th, text(row.description_en, "")),
     imageUrl: publicManagedImage(row, thumbnailByStoragePath),
-    imageAlt: `${name} restaurant image`
+    imageAlt: `${name} restaurant image`,
+    categories,
   };
+}
+
+const publicRestaurantCategorySelect = `
+  restaurant_category_assignments (
+    display_order,
+    restaurant_categories (
+      category_id,
+      slug,
+      name_th,
+      name_en,
+      section_key,
+      display_order,
+      is_featured,
+      is_active
+    )
+  )
+`;
+
+async function publicRestaurantIdsForCategory(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  categorySlug: string,
+): Promise<number[]> {
+  const { data: category, error: categoryError } = await supabase
+    .from("restaurant_categories")
+    .select("category_id")
+    .eq("slug", categorySlug)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (categoryError) throw new Error("PUBLIC_RESTAURANT_CATEGORY_QUERY_FAILED");
+  if (!category) return [];
+
+  const { data, error } = await supabase
+    .from("restaurant_category_assignments")
+    .select("restaurant_id")
+    .eq("category_id", numberValue(one(category)?.category_id));
+  if (error) throw new Error("PUBLIC_RESTAURANT_CATEGORY_QUERY_FAILED");
+  return Array.from(new Set((data ?? []).map((row) => numberValue(one(row)?.restaurant_id)).filter(Boolean)));
 }
 
 function normalizeHospitalityPage(page: number) {
@@ -1495,6 +1571,7 @@ export async function listPublicRestaurantPage(
         description_th,
         description_en,
         food_type,
+        ${publicRestaurantCategorySelect},
         provinces!inner (province_name_th, province_name_en),
         content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
       `, { count: "exact" })
@@ -1509,8 +1586,16 @@ export async function listPublicRestaurantPage(
       );
     }
     if (provinceFilter) query = query.eq("provinces.province_name_en", provinceFilter);
+    const categorySlug = text(input.categorySlug).slice(0, 100);
+    if (categorySlug) {
+      const restaurantIds = await publicRestaurantIdsForCategory(supabase, categorySlug);
+      if (restaurantIds.length === 0) {
+        return { items: [], total: 0, page, pageCount: 0, state: "empty" };
+      }
+      query = query.in("restaurant_id", restaurantIds);
+    }
     const foodType = text(input.foodType).slice(0, 100);
-    if (foodType) query = query.ilike("food_type", `%${escapeIlikePattern(foodType)}%`);
+    if (!categorySlug && foodType) query = query.ilike("food_type", `%${escapeIlikePattern(foodType)}%`);
 
     const from = (page - 1) * pageSize;
     const { data, error, count } = await query
@@ -1540,6 +1625,47 @@ export type PublicRestaurantFoodTypeAvailability = {
   values: string[];
   state: "available" | "unavailable";
 };
+
+export type PublicRestaurantCategoryAvailability = {
+  items: PublicRestaurantCategory[];
+  state: "available" | "unavailable";
+};
+
+export async function listAvailablePublicRestaurantCategories(options?: {
+  province?: string;
+}): Promise<PublicRestaurantCategoryAvailability> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const liveProvinces = await listLiveDestinationProvinces();
+    const provinceFilter = sanitizeDestinationProvinceFilter(
+      options?.province,
+      liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
+    );
+    const { data, error } = await supabase.rpc("list_public_restaurant_categories", {
+      p_province_en: provinceFilter ?? null,
+    });
+    if (error) return { items: [], state: "unavailable" };
+    const items = ((data ?? []) as DbRecord[]).flatMap((category) => {
+      const categoryId = numberValue(category.category_id);
+      const count = numberValue(category.restaurant_count);
+      if (!categoryId || count === 0) return [];
+      const sectionKey = text(category.section_key, "other");
+      return [{
+        categoryId,
+        slug: text(category.slug),
+        name: text(category.name_th, text(category.name_en)),
+        nameEn: text(category.name_en) || null,
+        sectionKey: (["local", "meals", "cafes", "other"].includes(sectionKey) ? sectionKey : "other") as PublicRestaurantCategory["sectionKey"],
+        displayOrder: numberValue(category.display_order),
+        isFeatured: category.is_featured === true,
+        count,
+      }];
+    });
+    return { items, state: "available" };
+  } catch {
+    return { items: [], state: "unavailable" };
+  }
+}
 
 export async function listAvailablePublicRestaurantFoodTypes(options?: {
   province?: string;
@@ -1580,7 +1706,7 @@ export async function listAvailablePublicRestaurantFoodTypes(options?: {
   }
 }
 
-export async function listPublicRestaurants(options?: { search?: string; foodType?: string; province?: string; featuredSlugs?: string[] }): Promise<PublicRestaurantCard[]> {
+export async function listPublicRestaurants(options?: { search?: string; foodType?: string; categorySlug?: string; province?: string; featuredSlugs?: string[] }): Promise<PublicRestaurantCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
     const liveProvinces = await listLiveDestinationProvinces();
@@ -1599,6 +1725,7 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
         description_th,
         description_en,
         food_type,
+        ${publicRestaurantCategorySelect},
         provinces!inner (province_name_th, province_name_en),
         content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
       `)
@@ -1612,6 +1739,12 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
 
     if (options?.foodType) {
       query = query.ilike("food_type", `%${options.foodType}%`);
+    }
+
+    if (options?.categorySlug) {
+      const restaurantIds = await publicRestaurantIdsForCategory(supabase, options.categorySlug);
+      if (restaurantIds.length === 0) return [];
+      query = query.in("restaurant_id", restaurantIds);
     }
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {

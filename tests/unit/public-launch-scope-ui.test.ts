@@ -20,7 +20,7 @@ describe("Public Yala launch scope UI", () => {
     const content = source("app/(public)/attractions/page.tsx");
 
     expect(content).toContain("requestedProvince");
-    expect(content).toContain("พื้นที่ให้บริการ: จังหวัดยะลา");
+    expect(content).toContain("ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา");
     expect(content).not.toContain("listLiveDestinationProvinces");
   });
 

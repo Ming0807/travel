@@ -9,10 +9,12 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { isFocusedPublicRoute, shouldHidePublicChrome } from "@/lib/navigation/public-route-mode";
 
 const mockPathname = vi.hoisted(() => vi.fn());
+const mockRouter = vi.hoisted(() => ({ push: vi.fn() }));
 const mobileNavigationLabel = "เมนูนำทางมือถือ";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname(),
+  useRouter: () => mockRouter,
 }));
 
 vi.mock("next/link", () => ({
@@ -33,6 +35,7 @@ vi.mock("@/components/checkin/PublicCheckinEntryLink", () => ({
 
 describe("public navigation", () => {
   beforeEach(() => {
+    mockRouter.push.mockReset();
     mockPathname.mockReturnValue("/");
   });
 
