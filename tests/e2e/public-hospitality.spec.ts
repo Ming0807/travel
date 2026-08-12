@@ -5,6 +5,8 @@ test.describe("Public hospitality discovery", () => {
     await page.goto("/restaurants?foodType=Halal");
 
     await expect(page.getByRole("heading", { level: 1 })).toContainText("ยะลา");
+    const restaurantFilterTrigger = page.getByRole("button", { name: "เปิดตัวกรองร้านอาหาร" });
+    if (await restaurantFilterTrigger.isVisible()) await restaurantFilterTrigger.click();
     await expect(page.getByRole("combobox", { name: "ประเภทอาหาร" })).toHaveValue("Halal");
     await page.getByRole("searchbox", { name: "ค้นหาร้านอาหาร" }).fill("ยะลา");
     await page.getByRole("button", { name: "ค้นหาร้านอาหาร" }).click();
@@ -17,8 +19,9 @@ test.describe("Public hospitality discovery", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/accommodations?accommodationType=Hotel");
 
+    await page.getByRole("button", { name: "เปิดตัวกรองที่พัก" }).click();
     await expect(page.getByRole("combobox", { name: "ประเภทที่พัก" })).toHaveValue("Hotel");
-    await expect(page.getByText("Hotel", { exact: true }).last()).toBeVisible();
+    await expect(page.getByText("โรงแรม", { exact: true }).last()).toBeVisible();
     await expect(page.locator("html")).toHaveJSProperty("scrollWidth", 390);
   });
 

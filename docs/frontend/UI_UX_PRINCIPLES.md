@@ -186,9 +186,13 @@ Rules:
 - Restaurant and accommodation directories translate controlled type codes to
   Thai-first labels, keep unknown values visible as a truthful fallback, and
   expose every currently supported type in the server-side filter.
-- Hospitality cards separate image, title, and explicit detail actions so
-  keyboard and touch users can predict what each target opens. A featured card
-  is allowed only when its managed image exists.
+- Restaurant results use compact horizontal rows and editorial groups so the
+  directory remains useful when image coverage is low. Category counts, meal
+  suitability, ratings, and opening state are omitted until complete data
+  contracts exist.
+- Hospitality results separate image, title, and explicit detail actions so
+  keyboard and touch users can predict what each target opens. Accommodation
+  featured cards are allowed only when their managed image exists.
 
 Leaderboard and profile pages must also distinguish availability states. A
 privacy migration or service failure is not an empty leaderboard. A missing

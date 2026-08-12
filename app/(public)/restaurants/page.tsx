@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { RestaurantDiscoveryCard } from "@/components/hospitality/HospitalityDiscoveryCard";
-import { HospitalityFeaturedResult } from "@/components/hospitality/HospitalityFeaturedResult";
 import { PublicButton } from "@/components/public/PublicButton";
 import { PublicCtaBand } from "@/components/public/PublicCtaBand";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
@@ -14,9 +13,10 @@ import {
   RESTAURANT_FOOD_TYPES,
   RestaurantFilterBar,
 } from "@/components/restaurants/RestaurantFilterBar";
+import { RestaurantCategoryNav } from "@/components/restaurants/RestaurantCategoryNav";
+import { RestaurantDirectoryItem } from "@/components/restaurants/RestaurantDirectoryItem";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
-import { selectFeaturedHospitality } from "@/lib/hospitality/featured-result";
-import { restaurantFoodTypeLabel } from "@/lib/hospitality/labels";
+import { groupRestaurantsForDirectory } from "@/lib/hospitality/restaurant-directory";
 import {
   listPublicRestaurantPage,
   PUBLIC_HOSPITALITY_MAX_PAGE,
@@ -33,6 +33,15 @@ export const metadata: Metadata = {
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
+
+const RESTAURANT_PRIMARY_CATEGORY_VALUES = [
+  "",
+  "Malay",
+  "Halal",
+  "Street Food",
+  "Coffee",
+  "Dessert/Cafe",
+] as const;
 
 function getParam(params: SearchParams, key: string) {
   const value = params[key];
@@ -147,10 +156,21 @@ export default async function RestaurantsPage({
     "ค้นหาร้านอาหารท้องถิ่นและเลือกมื้อที่เหมาะกับแผนเดินทางของคุณ",
   );
   const hasFilters = Boolean(query || foodType || province);
-  const featuredRestaurant = page === 1 ? selectFeaturedHospitality(restaurantPage.items) : null;
-  const standardRestaurants = featuredRestaurant
-    ? restaurantPage.items.filter((restaurant) => restaurant.slug !== featuredRestaurant.slug)
-    : restaurantPage.items;
+  const restaurantGroups = groupRestaurantsForDirectory(restaurantPage.items);
+  const categoryNavItems = RESTAURANT_PRIMARY_CATEGORY_VALUES.map((value) => ({
+    value,
+    label: value
+      ? RESTAURANT_FOOD_TYPES.find((option) => option.value === value)?.label ?? value
+      : "ทั้งหมด",
+    href: restaurantHref({ query, foodType: value || undefined, province }),
+  }));
+  const sidebarCategoryItems = [
+    { value: "", label: "ร้านอาหารทั้งหมด" },
+    ...RESTAURANT_FOOD_TYPES,
+  ].map((option) => ({
+    ...option,
+    href: restaurantHref({ query, foodType: option.value || undefined, province }),
+  }));
 
   return (
     <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
@@ -163,12 +183,16 @@ export default async function RestaurantsPage({
         />
 
         <div className="mt-7">
+          <RestaurantCategoryNav activeValue={foodType} items={categoryNavItems} />
+        </div>
+
+        <div className="mt-5">
           <PublicDirectoryToolbar label="ค้นหาและกรองร้านอาหาร">
             <RestaurantFilterBar query={query} foodType={foodType} province={province} provinces={provinceOptions} />
           </PublicDirectoryToolbar>
         </div>
 
-        <section aria-labelledby="restaurant-results-heading" className="mt-10">
+        <section aria-labelledby="restaurant-results-heading" className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-4">
             <div>
               <h2 id="restaurant-results-heading" className="text-2xl font-bold">ร้านอาหารที่ค้นพบ</h2>
@@ -203,37 +227,64 @@ export default async function RestaurantsPage({
             </div>
           ) : (
             <>
-              {featuredRestaurant && featuredRestaurant.imageUrl ? (
-                <div className="mt-6">
-                  <HospitalityFeaturedResult
-                    href={`/restaurants/${featuredRestaurant.slug}`}
-                    label="ร้านอาหารแนะนำ"
-                    name={featuredRestaurant.name}
-                    province={featuredRestaurant.province}
-                    category={restaurantFoodTypeLabel(featuredRestaurant.foodType)}
-                    description={featuredRestaurant.description}
-                    imageUrl={featuredRestaurant.imageUrl}
-                    imageAlt={featuredRestaurant.imageAlt}
-                    actionLabel="ดูข้อมูลร้านอาหาร"
+              <div className="mt-6 xl:grid xl:grid-cols-[13rem_minmax(0,1fr)] xl:gap-8">
+                <aside aria-label="หมวดหมู่ร้านอาหาร" className="hidden xl:block">
+                  <div className="sticky top-24 border-r border-black/10 pr-6">
+                    <p className="pb-3 text-sm font-bold text-[var(--public-ink)]">หมวดหมู่ร้านอาหาร</p>
+                    <nav aria-label="ตัวกรองประเภทอาหารทั้งหมด">
+                      <ul className="space-y-1">
+                        {sidebarCategoryItems.map((item) => {
+                          const selected = item.value === (foodType ?? "");
+                          return (
+                            <li key={item.value || "all"}>
+                              <Link
+                                href={item.href}
+                                aria-current={selected ? "page" : undefined}
+                                className={`flex min-h-11 items-center border-l-2 px-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] ${selected
+                                  ? "border-[var(--public-coral-strong)] bg-[var(--public-coral)]/[0.08] text-[var(--public-coral-strong)]"
+                                  : "border-transparent text-black/65 hover:border-black/20 hover:bg-black/[0.025] hover:text-[var(--public-ink)]"
+                                }`}
+                              >
+                                {item.label}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </nav>
+                  </div>
+                </aside>
+                <div className="min-w-0">
+                  {restaurantGroups.map((group, groupIndex) => (
+                    <section
+                      key={group.key}
+                      aria-labelledby={`restaurant-group-${group.key}`}
+                      className="border-b border-black/10 py-6 first:pt-0 last:border-b-0"
+                    >
+                      <div className="mb-2">
+                        <h3 id={`restaurant-group-${group.key}`} className="text-lg font-bold text-[var(--public-teal)]">
+                          {group.title}
+                        </h3>
+                        <p className="mt-1 text-sm leading-6 text-black/55">{group.description}</p>
+                      </div>
+                      <div className="grid min-w-0 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+                        {group.items.map((restaurant, itemIndex) => (
+                          <RestaurantDirectoryItem
+                            key={restaurant.slug}
+                            restaurant={restaurant}
+                            priority={groupIndex === 0 && itemIndex === 0}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                  <PublicPagination
+                    page={restaurantPage.page}
+                    pageCount={restaurantPage.pageCount}
+                    createHref={(nextPage) => restaurantHref({ query, foodType, province, page: nextPage })}
                   />
                 </div>
-              ) : null}
-              {standardRestaurants.length > 0 ? (
-                <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {standardRestaurants.map((restaurant, index) => (
-                    <RestaurantDiscoveryCard
-                      key={restaurant.slug}
-                      restaurant={restaurant}
-                      priority={!featuredRestaurant && index === 0}
-                    />
-                  ))}
-                </div>
-              ) : null}
-              <PublicPagination
-                page={restaurantPage.page}
-                pageCount={restaurantPage.pageCount}
-                createHref={(nextPage) => restaurantHref({ query, foodType, province, page: nextPage })}
-              />
+              </div>
             </>
           )}
         </section>

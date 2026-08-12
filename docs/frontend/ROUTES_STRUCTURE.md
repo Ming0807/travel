@@ -153,17 +153,21 @@ The listing states are distinct:
 - `empty`: no published records match the active filters.
 - `unavailable`: the query failed; do not present this as zero records.
 
-Restaurant cards show food type and province. Accommodation cards show type,
+Restaurant directory rows show food type and province. Accommodation cards show type,
 province, and the stored price range. Booking, availability, ratings, halal
 claims, and amenities must not render unless their production data contracts
 exist. Listing covers use managed media only; stale third-party stock URLs are
 not public card media.
 
-On the first result page, the first restaurant or accommodation with valid
-managed media may be shown as the featured result. Records without media stay
-in the standard grid and use a named missing-image state. Controlled food and
-accommodation type values are presented with Thai-first labels while the raw
-database value remains unchanged for server filtering. Mobile filters use a
+Restaurants use the Market Street Directory composition: a horizontal primary
+category navigator, a desktop category rail, and compact rows grouped from the
+current server-paginated result page. Group headings never claim full-dataset
+category totals. Unknown published food types remain visible in the `อื่น ๆ`
+group. The first accommodation with valid managed media may still be shown as
+a featured result; accommodation records without media stay in the standard
+grid and use a named missing-image state. Controlled food and accommodation
+type values are presented with Thai-first labels while the raw database value
+remains unchanged for server filtering. Mobile filters use a
 single disclosure control and preserve the same GET query contract as desktop.
 
 ## 2.7 Public Hospitality Details
