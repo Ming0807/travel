@@ -48,7 +48,8 @@ describe("public hospitality filters", () => {
     const form = container.querySelector('form[action="/accommodations"]');
     expect(form).toBeInTheDocument();
     expect(screen.getByRole("searchbox")).toHaveAttribute("name", "q");
-    expect(screen.getByRole("combobox", { name: /ประเภท/ })).toHaveAttribute("name", "accommodationType");
+    expect(container.querySelector('input[name="accommodationType"]')).toHaveValue("Hotel");
+    expect(screen.queryByRole("combobox", { name: /ประเภท/ })).not.toBeInTheDocument();
     expect(container.querySelector('select[name="province"]')).not.toBeInTheDocument();
     expect(container.innerHTML).not.toContain("window.location");
   });

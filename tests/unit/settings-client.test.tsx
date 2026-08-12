@@ -79,6 +79,8 @@ const EMPTY_SETTINGS = [
   { setting_key: "restaurants_page_hero", setting_value: { title: "", description: "" }, description: null, updated_at: "2026-01-01" },
   { setting_key: "restaurants_page_feature", setting_value: { title: "", subtitle: "" }, description: null, updated_at: "2026-01-01" },
   { setting_key: "restaurants_page_cta", setting_value: { title: "", subtitle: "", linkText: "", linkUrl: "", image: "" }, description: null, updated_at: "2026-01-01" },
+  { setting_key: "accommodations_page_hero", setting_value: { title: "", description: "", image: "" }, description: null, updated_at: "2026-01-01" },
+  { setting_key: "accommodations_page_cta", setting_value: { title: "", subtitle: "", linkText: "", linkUrl: "", image: "" }, description: null, updated_at: "2026-01-01" },
   { setting_key: "general_info", setting_value: {}, description: null, updated_at: "2026-01-01" },
   { setting_key: "social_media", setting_value: {}, description: null, updated_at: "2026-01-01" },
   { setting_key: "footer_info", setting_value: {}, description: null, updated_at: "2026-01-01" },
@@ -117,6 +119,7 @@ describe("SettingsClient", () => {
     await userEvent.click(screen.getByText("หน้าสาธารณะ"));
     await waitFor(() => {
       expect(screen.getByText("หน้าสถานที่ท่องเที่ยว")).toBeInTheDocument();
+      expect(screen.getByText("หน้าที่พัก")).toBeInTheDocument();
     });
   });
 

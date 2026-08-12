@@ -160,7 +160,7 @@ describe("resolveTouristId — identity resolution", () => {
       );
     });
 
-    it("does not fall back to a device guest when an authenticated identity is not linked", async () => {
+    it("keeps the existing device guest available when an authenticated identity is not linked", async () => {
       const mockGetGuestIdentity = vi.mocked(getGuestIdentity);
       const mockFindTouristByIdentity = vi.mocked(findTouristByIdentity);
       const mockCreateSupabaseServerClient = vi.mocked(createSupabaseServerClient);
@@ -184,11 +184,18 @@ describe("resolveTouristId — identity resolution", () => {
         .mockResolvedValueOnce("tourist-uuid-existing"); // Guest lookup succeeds
 
       const { resolveTouristId } = await importGuards();
-      await expect(resolveTouristId()).rejects.toMatchObject({
-        code: "TOURIST_IDENTITY_NOT_FOUND",
-      });
-      expect(mockFindTouristByIdentity).toHaveBeenCalledTimes(1);
-      expect(mockGetGuestIdentity).not.toHaveBeenCalled();
+      await expect(resolveTouristId()).resolves.toBe("tourist-uuid-existing");
+      expect(mockFindTouristByIdentity).toHaveBeenNthCalledWith(
+        1,
+        "google",
+        "auth-uuid-new-user",
+      );
+      expect(mockFindTouristByIdentity).toHaveBeenNthCalledWith(
+        2,
+        "anonymous_device",
+        "guest-token-existing",
+      );
+      expect(mockGetGuestIdentity).toHaveBeenCalledTimes(1);
     });
 
     it("rejects an unsupported authenticated provider instead of treating it as email", async () => {

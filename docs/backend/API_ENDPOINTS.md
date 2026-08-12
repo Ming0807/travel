@@ -36,11 +36,11 @@ Invalid filter values return `400`; oversized exports return `413` and require n
 
 ## Tourist Identity Resolution (Server Actions)
 
-These server actions and auth guards support OAuth tourist identity resolution. An authenticated session resolves only its linked provider identity; it never silently falls back to a different guest passport on the same device.
+These server actions and auth guards support OAuth tourist identity resolution. A linked OAuth identity remains authoritative. When a supported but unlinked OAuth session is opened in a browser that already has a valid guest cookie, read-only tourist flows may continue with that existing same-browser guest passport; this does not merge or link identities.
 
 | Function | Location | Status | Purpose | Notes |
 |---|---|---|---|---|
-| `resolveTouristId()` | `lib/auth/guards.ts` | Implemented | Resolves the linked OAuth tourist when authenticated, or the guest cookie only when no authenticated user exists. | Does not create profiles and does not silently merge identities. |
+| `resolveTouristId()` | `lib/auth/guards.ts` | Implemented | Resolves a linked OAuth tourist first, then an existing same-browser guest for a supported but unlinked account, or the guest cookie when unauthenticated. | Does not create profiles, link identities, or silently merge records. |
 | `resolveCurrentTouristId()` | `lib/auth/guards.ts:715` | Implemented | Backward-compatible alias for `resolveTouristId()`. | Delegates to `resolveTouristId`. |
 | `submitTouristStoryAction()` | `app/actions/tourist-story-actions.ts` | Implemented | Submits tourist stories with XSS-safe plain text normalization, strict province validation, and identity-only resolve. | Identity resolution uses `resolveCurrentTouristId()`. |
 | `submitReviewAction()` | `app/actions/submit-review-action.ts` | Implemented | Submits reviews using `resolveCurrentTouristId()` for OAuth + guest identity. | Previously only supported guest identity. |
@@ -51,7 +51,7 @@ The `resolveTouristId()` function resolves identity from Supabase Auth metadata:
 
 - `user.app_metadata.provider` → mapped to `tourist_identities.provider` (google, email, line)
 - `user.id` (Supabase Auth UUID) → mapped to `tourist_identities.provider_user_id`
-- Uses the `anonymous_device` guest cookie only when no authenticated user exists
+- Uses the `anonymous_device` guest cookie when unauthenticated, or as a continuity fallback when the authenticated provider is supported but has not yet been linked
 - Sends an authenticated user with an unlinked account and a device passport to an explicit merge/separate decision
 
 ### Security / Privacy Notes

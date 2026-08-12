@@ -105,7 +105,7 @@ const GROUPS: {
 
 const GROUP_KEYS: Record<SettingsGroupId, SiteSettingKey[]> = {
   homepage: ["homepage_hero", "homepage_featured_attractions", "homepage_stories", "homepage_featured_routes", "homepage_how_it_works", "homepage_highlights", "homepage_cta"],
-  publicPages: ["attractions_page_hero", "attractions_page_banner", "stories_page_hero", "stories_page_cta", "routes_page_hero", "restaurants_page_hero", "restaurants_page_feature", "restaurants_page_cta"],
+  publicPages: ["attractions_page_hero", "attractions_page_banner", "stories_page_hero", "stories_page_cta", "routes_page_hero", "restaurants_page_hero", "restaurants_page_feature", "restaurants_page_cta", "accommodations_page_hero", "accommodations_page_cta"],
   contact: ["general_info", "social_media", "footer_info"],
   seo: ["seo_settings"],
   system: ["feature_toggles", "maintenance_info"],
@@ -167,6 +167,8 @@ const KEY_TO_GROUP: Record<string, SettingsGroupId> = {
   restaurants_page_hero: "publicPages",
   restaurants_page_feature: "publicPages",
   restaurants_page_cta: "publicPages",
+  accommodations_page_hero: "publicPages",
+  accommodations_page_cta: "publicPages",
   general_info: "contact",
   social_media: "contact",
   footer_info: "contact",
@@ -702,6 +704,19 @@ function PublicPageSettings({
           <TextInput label="URL CTA" value={settings.restaurants_page_cta.linkUrl} onChange={(value) => updateSettingObject("restaurants_page_cta", { linkUrl: value })} />
         </div>
         <ImageField label="ภาพ CTA" value={settings.restaurants_page_cta.image} onRemove={() => updateSettingObject("restaurants_page_cta", { image: "" })} onPick={() => openPicker({ key: "restaurants_page_cta", field: "image" })} />
+      </SettingsSection>
+
+      <SettingsSection title="หน้าที่พัก" description="ข้อความ ภาพบรรยากาศ และ CTA ของหน้าค้นหาที่พัก">
+        <TextInput label="หัวข้อ Hero ที่พัก" value={settings.accommodations_page_hero.title} onChange={(value) => updateSettingObject("accommodations_page_hero", { title: value })} />
+        <TextArea label="คำอธิบาย Hero ที่พัก" value={settings.accommodations_page_hero.description} onChange={(value) => updateSettingObject("accommodations_page_hero", { description: value })} rows={3} />
+        <ImageField label="ภาพบรรยากาศหน้า Hero ที่พัก" value={settings.accommodations_page_hero.image} onRemove={() => updateSettingObject("accommodations_page_hero", { image: "" })} onPick={() => openPicker({ key: "accommodations_page_hero", field: "image" })} />
+        <TextInput label="หัวข้อ CTA ที่พัก" value={settings.accommodations_page_cta.title} onChange={(value) => updateSettingObject("accommodations_page_cta", { title: value })} />
+        <TextInput label="คำอธิบาย CTA ที่พัก" value={settings.accommodations_page_cta.subtitle} onChange={(value) => updateSettingObject("accommodations_page_cta", { subtitle: value })} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextInput label="ข้อความปุ่ม CTA ที่พัก" value={settings.accommodations_page_cta.linkText} onChange={(value) => updateSettingObject("accommodations_page_cta", { linkText: value })} />
+          <TextInput label="URL CTA ที่พัก" value={settings.accommodations_page_cta.linkUrl} onChange={(value) => updateSettingObject("accommodations_page_cta", { linkUrl: value })} />
+        </div>
+        <ImageField label="ภาพ CTA ที่พัก" value={settings.accommodations_page_cta.image} onRemove={() => updateSettingObject("accommodations_page_cta", { image: "" })} onPick={() => openPicker({ key: "accommodations_page_cta", field: "image" })} />
       </SettingsSection>
     </>
   );

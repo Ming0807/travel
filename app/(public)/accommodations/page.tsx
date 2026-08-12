@@ -4,6 +4,8 @@ import {
   ACCOMMODATION_TYPES,
   AccommodationFilterBar,
 } from "@/components/accommodations/AccommodationFilterBar";
+import { AccommodationDirectoryHero } from "@/components/accommodations/AccommodationDirectoryHero";
+import { AccommodationTypeRail } from "@/components/accommodations/AccommodationTypeRail";
 import { AccommodationDiscoveryCard } from "@/components/hospitality/HospitalityDiscoveryCard";
 import { HospitalityFeaturedResult } from "@/components/hospitality/HospitalityFeaturedResult";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -12,11 +14,11 @@ import { PublicCtaBand } from "@/components/public/PublicCtaBand";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicPagination } from "@/components/public/PublicPagination";
 import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
-import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
 import { PublicDirectoryToolbar } from "@/components/public/directory/PublicDirectoryToolbar";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
 import { selectFeaturedHospitality } from "@/lib/hospitality/featured-result";
 import { accommodationTypeLabel } from "@/lib/hospitality/labels";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import {
   listPublicAccommodationPage,
   PUBLIC_HOSPITALITY_MAX_PAGE,
@@ -98,7 +100,7 @@ export default async function AccommodationsPage({
   }
 
   const settingsService = new SettingsService();
-  const [accommodationPage, heroSettings, ctaSettings, liveProvinces] = await Promise.all([
+  const [accommodationPage, heroSettings, ctaSettings, homepageHeroSettings, liveProvinces] = await Promise.all([
     listPublicAccommodationPage({
       query,
       accommodationType,
@@ -109,6 +111,7 @@ export default async function AccommodationsPage({
     settingsService.getSetting("accommodations_page_hero", {
       title: "ที่พักในจังหวัดยะลา",
       description: "เปรียบเทียบประเภทและช่วงราคาจากข้อมูลที่ผู้ดูแลเผยแพร่",
+      image: "",
     }),
     settingsService.getSetting("accommodations_page_cta", {
       title: "ต้องการเพิ่มข้อมูลที่พัก?",
@@ -117,6 +120,7 @@ export default async function AccommodationsPage({
       linkUrl: "/contact",
       image: "",
     }),
+    settingsService.getSetting("homepage_hero", { images: [] as string[] }),
     listLiveDestinationProvinces(),
   ]);
 
@@ -151,27 +155,39 @@ export default async function AccommodationsPage({
   const standardAccommodations = featuredAccommodation
     ? accommodationPage.items.filter((accommodation) => accommodation.slug !== featuredAccommodation.slug)
     : accommodationPage.items;
+  const managedDirectoryImage = siteMediaImageUrl(heroSettings.image);
+  const homepageFallbackImage = siteMediaImageUrl(homepageHeroSettings.images?.[0]);
+  const heroImageUrl = featuredAccommodation?.imageUrl || managedDirectoryImage || homepageFallbackImage;
+  const heroUsesDirectoryFallback = !featuredAccommodation?.imageUrl;
 
   return (
     <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
-      <PublicPageFrame variant="directory">
-        <PublicDirectoryIntro
-          breadcrumbs={[{ label: "หน้าแรก", href: "/" }, { label: "ที่พัก" }]}
+      <PublicPageFrame variant="listing" className="pb-16 pt-5 sm:pt-7">
+        <AccommodationDirectoryHero
           title={title}
           description={description}
           scope="ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา"
+          imageUrl={heroImageUrl}
+          imageAlt={featuredAccommodation?.imageAlt || "ภาพบรรยากาศการท่องเที่ยวในจังหวัดยะลา"}
+          imageContext={heroUsesDirectoryFallback && heroImageUrl ? "ภาพบรรยากาศจังหวัดยะลา" : undefined}
         />
 
-        <div className="mt-7">
-          <PublicDirectoryToolbar label="ค้นหาและกรองที่พัก">
+        <div className="border-x border-b border-black/10 bg-white">
+          <PublicDirectoryToolbar label="ค้นหาและกรองที่พัก" className="rounded-none border-0 border-b border-black/10">
             <AccommodationFilterBar query={query} accommodationType={accommodationType} province={province} provinces={provinceOptions} />
           </PublicDirectoryToolbar>
+          <AccommodationTypeRail
+            query={query}
+            selectedType={accommodationType}
+            province={province}
+            types={ACCOMMODATION_TYPES}
+          />
         </div>
 
-        <section aria-labelledby="accommodation-results-heading" className="mt-10">
+        <section aria-labelledby="accommodation-results-heading" className="mt-9">
           <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-4">
             <div>
-              <h2 id="accommodation-results-heading" className="text-2xl font-bold">ที่พักที่ค้นพบ</h2>
+              <h2 id="accommodation-results-heading" className="text-2xl font-black sm:text-3xl">ที่พักที่ค้นพบ</h2>
               <p className="mt-1 text-sm leading-6 text-black/65" aria-live="polite">
                 {accommodationPage.state === "unavailable"
                   ? "ยังไม่สามารถสรุปจำนวนที่พักได้"
@@ -217,6 +233,7 @@ export default async function AccommodationsPage({
                     actionLabel="ดูข้อมูลที่พัก"
                     detail={featuredAccommodation.priceRange || "ยังไม่ระบุช่วงราคา"}
                     detailLabel="ช่วงราคา"
+                    trustLabel="ข้อมูลที่ผู้ดูแลเผยแพร่แล้ว"
                   />
                 </div>
               ) : null}

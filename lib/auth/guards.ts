@@ -801,6 +801,17 @@ export async function resolveTouristId(): Promise<string> {
     if (provider) {
       const touristId = await findTouristByIdentity(provider, authenticatedUser.id);
       if (touristId) return touristId;
+    } else {
+      throw new TouristAccessError("TOURIST_IDENTITY_NOT_FOUND", "ไม่รองรับผู้ให้บริการบัญชีนี้");
+    }
+
+    // An unlinked OAuth session must not hide an existing guest passport on
+    // the same browser. This is read-only fallback; account linking still
+    // requires the explicit confirmation and consent flow.
+    const guestToken = await getGuestIdentity();
+    if (guestToken) {
+      const guestTouristId = await findTouristByIdentity("anonymous_device", guestToken);
+      if (guestTouristId) return guestTouristId;
     }
 
     throw new TouristAccessError("TOURIST_IDENTITY_NOT_FOUND", "บัญชีนี้ยังไม่ได้เชื่อมกับพาสปอร์ต");

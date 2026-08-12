@@ -193,11 +193,21 @@ Rules:
 - Hospitality results separate image, title, and explicit detail actions so
   keyboard and touch users can predict what each target opens. Accommodation
   featured cards are allowed only when their managed image exists.
+- The accommodation directory uses managed accommodation media first. If no
+  listing image exists, its hero may use an admin-managed directory image or a
+  homepage Yala ambience image only when it is explicitly labelled as ambience,
+  never as a specific accommodation. Hero copy, image, and CTA remain editable
+  in Admin Settings; listing records remain owned by the Accommodation CMS.
 
 Leaderboard and profile pages must also distinguish availability states. A
 privacy migration or service failure is not an empty leaderboard. A missing
 guest passport explains browser/device identity boundaries and offers real
 login, retry, and attraction-discovery actions without creating a new profile.
+Visit photo routes follow the same distinction: a genuinely missing visit is a
+404, an absent or mismatched browser identity shows privacy-safe recovery, and a
+service failure shows a retry state. An unlinked Google/LINE session must not
+hide a valid same-browser guest passport, but identity merging still requires
+the explicit confirmation flow.
 
 ## 5.1 First Screen Must Be Clear
 

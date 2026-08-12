@@ -1,4 +1,4 @@
-import { ArrowRight, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, CheckCircle, MapPin } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
@@ -15,6 +15,7 @@ export interface HospitalityFeaturedResultProps {
   actionLabel: string;
   detail?: string | null;
   detailLabel?: string;
+  trustLabel?: string;
 }
 
 export function HospitalityFeaturedResult({
@@ -29,6 +30,7 @@ export function HospitalityFeaturedResult({
   actionLabel,
   detail,
   detailLabel,
+  trustLabel,
 }: HospitalityFeaturedResultProps) {
   return (
     <article className="grid overflow-hidden border border-black/10 bg-white lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.85fr)]">
@@ -44,7 +46,14 @@ export function HospitalityFeaturedResult({
       </Link>
 
       <div className="flex min-w-0 flex-col justify-center p-5 sm:p-7 lg:p-8">
-        <p className="text-xs font-bold text-[var(--public-coral-strong)]">{label}</p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="text-xs font-bold text-[var(--public-coral-strong)]">{label}</p>
+          {trustLabel ? (
+            <p className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--public-teal)]">
+              <CheckCircle aria-hidden="true" size={15} weight="fill" /> {trustLabel}
+            </p>
+          ) : null}
+        </div>
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold">
           <span className="inline-flex items-center gap-1 text-[var(--public-teal)]">
             <MapPin aria-hidden="true" size={16} weight="fill" /> {province}

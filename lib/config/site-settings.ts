@@ -82,6 +82,18 @@ export const SITE_SETTING_DEFAULTS = {
     linkUrl: "/contact",
     image: "",
   },
+  accommodations_page_hero: {
+    title: "ที่พักในจังหวัดยะลา",
+    description: "เปรียบเทียบประเภทและช่วงราคาจากข้อมูลที่ผู้ดูแลเผยแพร่",
+    image: "",
+  },
+  accommodations_page_cta: {
+    title: "ต้องการเพิ่มข้อมูลที่พัก?",
+    subtitle: "ส่งข้อมูลให้ทีมงานตรวจสอบก่อนเผยแพร่บนแพลตฟอร์ม",
+    linkText: "ติดต่อทีมงาน",
+    linkUrl: "/contact",
+    image: "",
+  },
   general_info: {
     email: "",
     phone: "",
