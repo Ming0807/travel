@@ -1750,3 +1750,60 @@ Migration `20260812000000_create_restaurant_categories.sql` replaces free-text r
 | `restaurant_category_assignments` | Ordered many-to-many relationship between restaurants and categories | Composite primary key prevents duplicate assignment; foreign keys cascade with the parent records |
 
 Restaurant create/update RPCs call `sync_restaurant_categories(bigint, bigint[], boolean)` inside the same transaction. They reject inactive or unknown categories and prevent a published restaurant from having no active category. `set_restaurant_category_active(...)` also prevents archiving the final active category of a published restaurant. Category usage and public navigation counts are aggregated by database functions rather than loading all assignments into application memory. Mutation execution is limited to `service_role`.
+
+---
+
+## 47. Attraction Related Content Intelligence
+
+Migration `20260813002000_add_attraction_related_content_settings.sql` is
+created locally but **has not been applied to any production database**. It adds
+the explicit display contract for the four related-content sections on an
+attraction detail page.
+
+| Table / function | Purpose | Important constraints |
+|---|---|---|
+| `attraction_related_content_settings` | One display configuration per attraction and content type | Primary key is `(attraction_id, content_type)`; content types are `attractions`, `restaurants`, `accommodations`, and `stories`; mode is `automatic`, `manual`, `hybrid`, or `hidden`; `max_items` is 1 through 8 |
+| `attraction_related_attractions` reverse index | Finds attractions that reference an attraction | `idx_ara_related_attraction_id`; new self-links are blocked by `attraction_related_attractions_no_self_link`; the constraint is `NOT VALID` so existing rows are preserved for review |
+| `attraction_related_restaurants` reverse index | Finds attractions that reference a restaurant | `idx_arr_restaurant_id` |
+| `attraction_related_accommodations` reverse index | Finds attractions that reference an accommodation | `idx_arac_accommodation_id` |
+| `attraction_related_stories` reverse index | Finds attractions that reference a story | `idx_ars_story_id` |
+| `sync_attraction_related_content_v2(...)` | Server-only atomic replacement of ordered curated relations plus the section setting | Validates source and target existence, rejects null/self/invalid IDs, deduplicates while preserving first order, raises failures, and does not modify content records |
+
+Backfill creates four settings rows for every current attraction. A section
+with existing legacy relation rows is marked `manual`; a section without rows
+is marked `automatic`. The legacy `sync_attraction_related_content(...)`
+function remains unchanged for compatibility. Public settings reads are
+restricted by `is_public_attraction(attraction_id)` and mutation privileges are
+limited to the server-side `service_role` RPC boundary.
+
+### Apply and verify later
+
+Do not run this migration as part of the current change. After the application
+code that consumes the new settings/RPC contract is ready and the production
+window is approved, apply it through the project's controlled migration process.
+Migration `20260730111000_enforce_destination_launch_scope.sql` must already be
+applied because the settings RLS policy uses `is_public_attraction(bigint)`.
+Then verify the migration history with:
+
+```sql
+SELECT version, name
+FROM supabase_migrations.schema_migrations
+WHERE version = '20260813002000';
+```
+
+The expected result is exactly one row named
+`20260813002000_add_attraction_related_content_settings`. Also verify the
+objects without mutating data:
+
+```sql
+SELECT
+  to_regclass('public.attraction_related_content_settings') AS settings_table,
+  to_regclass('public.attraction_related_attractions') AS attraction_relations,
+  to_regclass('public.attraction_related_restaurants') AS restaurant_relations,
+  to_regclass('public.attraction_related_accommodations') AS accommodation_relations,
+  to_regclass('public.attraction_related_stories') AS story_relations;
+
+SELECT to_regprocedure(
+  'public.sync_attraction_related_content_v2(bigint,text,bigint[],text,smallint)'
+) AS related_content_rpc;
+```

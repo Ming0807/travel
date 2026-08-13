@@ -113,6 +113,18 @@ Before any production deployment or major testing cycle, verify that the followi
 - [ ] **Public visibility**: Confirm RLS exposes only active categories assigned to active, published restaurants in the live destination scope.
 - [ ] **Admin workflow**: Verify `/admin/restaurants/categories`, restaurant create/edit, list filters, and export before production release.
 
+### 14. Attraction Related Content Intelligence (Phase 19)
+- [ ] **Migration `20260813002000_add_attraction_related_content_settings.sql`**: Created locally but **not yet applied**. Do not mark applied until the controlled production migration window is approved.
+- [ ] **Prerequisite**: Confirm `20260730111000_enforce_destination_launch_scope.sql` is applied because the new RLS policy calls `is_public_attraction(bigint)`.
+- [ ] **Settings backfill**: Confirm every current attraction has four settings rows; existing relation rows are `manual` and empty sections are `automatic`.
+- [ ] **Mode constraints**: Confirm content types are `attractions`, `restaurants`, `accommodations`, `stories`; modes are `automatic`, `manual`, `hybrid`, `hidden`; `max_items` is between 1 and 8.
+- [ ] **Public scope**: Confirm settings SELECT is protected by `public.is_public_attraction(attraction_id)` and no direct anonymous/authenticated mutation policy exists.
+- [ ] **Reverse indexes**: Confirm `idx_ara_related_attraction_id`, `idx_arr_restaurant_id`, `idx_arac_accommodation_id`, and `idx_ars_story_id` exist.
+- [ ] **Self-link safety**: Confirm `attraction_related_attractions_no_self_link` blocks new self-links. It is intentionally `NOT VALID` until existing legacy self-links are reviewed; no content or relation rows are deleted by the migration.
+- [ ] **Atomic RPC**: Confirm `sync_attraction_related_content_v2(bigint,text,bigint[],text,smallint)` validates source/targets, deduplicates in first-seen order, preserves display order, updates settings in the same transaction, raises failures, and is executable only by `service_role`.
+- [ ] **Legacy compatibility**: Confirm the original `sync_attraction_related_content(bigint,text,bigint[])` signature remains present and unchanged.
+- [ ] **Post-apply history query**: After applying, run `SELECT version, name FROM supabase_migrations.schema_migrations WHERE version = '20260813002000';` and expect one row named `20260813002000_add_attraction_related_content_settings`.
+
 ## Resolving Drift
 Run the read-only history comparison before applying or repairing migrations:
 
