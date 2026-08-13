@@ -1,14 +1,14 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
-import { updateAttractionAction } from "@/app/actions/admin-attraction-actions";
+import { updateAttractionSectionAction } from "@/app/actions/admin-attraction-actions";
 import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
-import { HiddenAttractionFields } from "./HiddenAttractionFields";
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
-import type { AdminSelectOption } from "@/components/admin/attractions/AttractionForm";
+import type { AdminSelectOption } from "@/components/admin/attractions/types";
 import { AttractionCategoryPicker } from "@/components/admin/attractions/AttractionCategoryPicker";
 import type { AttractionTypeAssignment } from "@/lib/repositories/attraction-category.repository";
+import type { AttractionEditSection } from "@/lib/validation/admin-attraction";
 
 type AdminDistrictOption = AdminSelectOption & {
   provinceId: number;
@@ -23,8 +23,12 @@ const inputClass = "mt-2 min-h-11 w-full rounded-[var(--admin-radius-control)] b
 const textareaClass = "mt-2 w-full rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm";
 const helpClass = "mt-1 text-xs leading-5 text-slate-500";
 
-function useAttractionSectionAction(attraction: AdminAttractionRow, onClose: () => void) {
-  const action = updateAttractionAction.bind(null, attraction.attraction_id);
+function useAttractionSectionAction(
+  attraction: AdminAttractionRow,
+  section: AttractionEditSection,
+  onClose: () => void,
+) {
+  const action = updateAttractionSectionAction.bind(null, attraction.attraction_id, section);
   const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
 
   useEffect(() => {
@@ -35,11 +39,10 @@ function useAttractionSectionAction(attraction: AdminAttractionRow, onClose: () 
 }
 
 export function HeaderForm({ attraction, onClose }: SectionFormProps) {
-  const { state, formAction, isPending } = useAttractionSectionAction(attraction, onClose);
+  const { state, formAction, isPending } = useAttractionSectionAction(attraction, "header", onClose);
 
   return (
     <form action={formAction} className="space-y-6 pb-20">
-      <HiddenAttractionFields attraction={attraction} exclude={["nameTh", "nameEn", "slug"]} />
       <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
 
       <div className="grid gap-5">
@@ -67,25 +70,10 @@ export function HeaderForm({ attraction, onClose }: SectionFormProps) {
 }
 
 export function ContentForm({ attraction, onClose }: SectionFormProps) {
-  const { state, formAction, isPending } = useAttractionSectionAction(attraction, onClose);
+  const { state, formAction, isPending } = useAttractionSectionAction(attraction, "content", onClose);
 
   return (
     <form action={formAction} className="space-y-6 pb-20">
-      <HiddenAttractionFields
-        attraction={attraction}
-        exclude={[
-          "shortDescriptionTh",
-          "shortDescriptionEn",
-          "descriptionTh",
-          "descriptionEn",
-          "historyTh",
-          "historyEn",
-          "travelTipsTh",
-          "travelTipsEn",
-          "howToGetThereTh",
-          "howToGetThereEn",
-        ]}
-      />
       <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
 
       <div className="space-y-8">
@@ -132,11 +120,10 @@ export function ContentForm({ attraction, onClose }: SectionFormProps) {
 }
 
 export function LocationForm({ attraction, onClose }: SectionFormProps) {
-  const { state, formAction, isPending } = useAttractionSectionAction(attraction, onClose);
+  const { state, formAction, isPending } = useAttractionSectionAction(attraction, "location", onClose);
 
   return (
     <form action={formAction} className="space-y-6 pb-20">
-      <HiddenAttractionFields attraction={attraction} exclude={["addressText", "latitude", "longitude", "openingHours", "contactInfo"]} />
       <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
 
       <div className="grid gap-5">
@@ -187,8 +174,9 @@ export function SettingsForm({
   categoryAssignments: AttractionTypeAssignment[];
   onClose: () => void;
 }) {
-  const { state, formAction, isPending } = useAttractionSectionAction(attraction, onClose);
+  const { state, formAction, isPending } = useAttractionSectionAction(attraction, "settings", onClose);
   const [selectedProvinceId, setSelectedProvinceId] = useState(attraction.province_id);
+  const [selectedDistrictId, setSelectedDistrictId] = useState<number | "">(attraction.district_id ?? "");
   const filteredDistricts = useMemo(
     () => districts.filter((district) => district.provinceId === Number(selectedProvinceId)),
     [districts, selectedProvinceId]
@@ -196,10 +184,6 @@ export function SettingsForm({
 
   return (
     <form action={formAction} className="space-y-6 pb-20">
-      <HiddenAttractionFields
-        attraction={attraction}
-        exclude={["isActive", "isPublished", "attractionTypeId", "provinceId", "districtId", "sustainabilityCategory", "estimatedCapacityPerDay"]}
-      />
       <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
 
       <div className="grid gap-6">
@@ -225,7 +209,13 @@ export function SettingsForm({
             <select
               className={inputClass}
               value={selectedProvinceId ?? ""}
-              onChange={(event) => setSelectedProvinceId(Number(event.target.value))}
+              onChange={(event) => {
+                const nextProvinceId = Number(event.target.value);
+                setSelectedProvinceId(nextProvinceId);
+                if (!districts.some((district) => district.id === selectedDistrictId && district.provinceId === nextProvinceId)) {
+                  setSelectedDistrictId("");
+                }
+              }}
               name="provinceId"
               required
             >
@@ -240,7 +230,12 @@ export function SettingsForm({
 
           <label className="block">
             <span className="text-sm font-bold text-slate-700">อำเภอ (District)</span>
-            <select className={inputClass} defaultValue={attraction.district_id ?? ""} name="districtId">
+            <select
+              className={inputClass}
+              value={selectedDistrictId}
+              onChange={(event) => setSelectedDistrictId(event.target.value ? Number(event.target.value) : "")}
+              name="districtId"
+            >
               <option value="">ไม่ระบุ (Not specified)</option>
               {filteredDistricts.map((district) => (
                 <option key={district.id} value={district.id}>{district.label}</option>

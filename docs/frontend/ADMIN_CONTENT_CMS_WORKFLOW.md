@@ -154,12 +154,12 @@ The admin editor should follow the same section order that the visitor sees on t
 | Gallery | Cover & gallery media | Cover image, gallery ordering, alt text |
 | Overview | Overview content | Short and long description |
 | Things to Do | Activities | Planned structured content if schema is missing |
-| Where to Stay | Related stays | Planned related-content module |
-| Food & Drink | Nearby restaurants | Restaurant relationship data |
+| Where to Stay | Related content workspace | Automatic, manual, hybrid, or hidden accommodations |
+| Food & Drink | Related content workspace | Automatic, manual, hybrid, or hidden restaurants |
 | Tips | Travel tips | Planned structured content if schema is missing |
 | How to Get There | Location & access | Address, opening hours, coordinates, contact |
 | Reviews | Reviews | Review moderation module |
-| Articles | Related stories | Story relationship data, planned if schema is missing |
+| Articles | Related content workspace | Verified stories with direct attraction evidence |
 | CTA / QR entry | QR and certificate context | Photo spots and check-in codes |
 
 Recommended layout:
@@ -171,6 +171,42 @@ Right: public preview and readiness
 ```
 
 This helps admins understand exactly what part of the public page they are editing.
+
+### Attraction editor field ownership
+
+The attraction workflow is draft-first and each field has one visible owner:
+
+| Workspace | Owned fields |
+|---|---|
+| Quick create | Initial Thai name, province, optional primary category, custom slug, draft defaults |
+| Header | Thai/English names and slug |
+| Content | Short/long descriptions, history, visitor guidance, access guidance and custom sections |
+| Location | Address, coordinates, contact, website, access directions |
+| Settings | Active/published state, province/district, selected categories and primary category |
+| Media | Cover and gallery assets, order, alt text and media metadata |
+| Related content | Section mode, display limit and ordered editorial selections |
+
+Saving one workspace must patch only its owned columns. Do not add hidden copies of
+fields from another workspace because a stale drawer can otherwise overwrite a newer
+change. The old all-fields attraction form is intentionally not part of the active
+create or edit flow.
+
+### Attraction related-content workspace
+
+The attraction editor has one Thai-first workspace for nearby attractions,
+restaurants, accommodations and stories. Each tab supports:
+
+- `automatic`: rank eligible published content using geography, categories and direct links;
+- `manual`: show only the ordered records selected by an editor;
+- `hybrid`: keep editorial records first, then fill remaining capacity automatically;
+- `hidden`: omit the public section;
+- server-side search and pagination instead of loading every record into the browser;
+- move-up/move-down controls, repair states for unavailable records, dirty-state
+  protection, and a mobile-safe Save/Cancel footer.
+
+Automatic recommendations must be explainable and deterministic. Stories require
+direct attraction evidence; province alone is not sufficient. Empty or incompatible
+sections fail closed and never expose mock content.
 
 ## Content Map
 
@@ -268,6 +304,7 @@ When an admin wants to edit text and images inside an attraction page:
    - history
    - opening hours
    - media
+   - related attractions, restaurants, accommodations, and stories
    - publishing status
 7. Preview the public attraction page.
 8. Save draft or publish.
@@ -279,6 +316,10 @@ Publishing should show readiness warnings when key content is missing:
 - missing province or district
 - no active check-in code when the attraction is intended for QR flow
 - missing alt text on public images
+
+The create screen must stay short. It creates a draft from the minimum identifying
+information and sends the admin to the visual editor; it must not repeat the complete
+edit form before the record exists.
 
 ## Scenario: Create Or Edit A Story
 

@@ -1,7 +1,11 @@
 import "server-only";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
-import type { AdminAttractionFilters, AdminAttractionMutationInput } from "@/lib/validation/admin-attraction";
+import type {
+  AdminAttractionFilters,
+  AdminAttractionMutationInput,
+  AdminAttractionSectionMutation,
+} from "@/lib/validation/admin-attraction";
 import type { Json } from "@/types/database";
 import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 import {
@@ -74,12 +78,6 @@ type AdminAttractionQueryRow = Omit<
     attraction_types?: SupabaseJoin<{ type_name_th: string | null }>;
   }>;
 };
-
-type ContentListProvince = { province_name_th: string | null };
-type ContentListAttraction = { attraction_id: number; name_th: string; provinces?: SupabaseJoin<ContentListProvince> };
-type ContentListRestaurant = { restaurant_id: number; name_th: string; provinces?: SupabaseJoin<ContentListProvince> };
-type ContentListAccommodation = { accommodation_id: number; name_th: string; provinces?: SupabaseJoin<ContentListProvince> };
-type ContentListStory = { story_id: number; title: string };
 
 export type AdminRelatedContentSetting = {
   attractionId: number;
@@ -549,6 +547,64 @@ export async function updateAdminAttraction(attractionId: number, input: AdminAt
   return mapAttraction(data);
 }
 
+export async function updateAdminAttractionSection(
+  attractionId: number,
+  mutation: AdminAttractionSectionMutation,
+): Promise<AdminAttractionRow> {
+  let patch: Record<string, unknown>;
+  if (mutation.section === "header") {
+    patch = {
+      slug: mutation.values.slug,
+      name_th: mutation.values.nameTh,
+      name_en: mutation.values.nameEn,
+    };
+  } else if (mutation.section === "content") {
+    patch = {
+      short_description_th: mutation.values.shortDescriptionTh,
+      short_description_en: mutation.values.shortDescriptionEn,
+      description_th: mutation.values.descriptionTh,
+      description_en: mutation.values.descriptionEn,
+      history_th: mutation.values.historyTh,
+      history_en: mutation.values.historyEn,
+      travel_tips_th: mutation.values.travelTipsTh,
+      travel_tips_en: mutation.values.travelTipsEn,
+      how_to_get_there_th: mutation.values.howToGetThereTh,
+      how_to_get_there_en: mutation.values.howToGetThereEn,
+    };
+  } else if (mutation.section === "location") {
+    patch = {
+      latitude: mutation.values.latitude,
+      longitude: mutation.values.longitude,
+      address_text: mutation.values.addressText,
+      opening_hours: mutation.values.openingHours,
+      contact_info: mutation.values.contactInfo,
+    };
+  } else {
+    patch = {
+      province_id: mutation.values.provinceId,
+      district_id: mutation.values.districtId,
+      sustainability_category: mutation.values.sustainabilityCategory,
+      estimated_capacity_per_day: mutation.values.estimatedCapacityPerDay,
+      attraction_type_id: mutation.values.primaryAttractionTypeId,
+      is_published: mutation.values.isPublished,
+      is_active: mutation.values.isActive,
+    };
+  }
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("attractions")
+    .update(patch)
+    .eq("attraction_id", attractionId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(error.code === "23505" ? "DUPLICATE_SLUG" : "ADMIN_ATTRACTION_UPDATE_FAILED");
+  }
+  return mapAttraction(data);
+}
+
 export async function updateAdminAttractionStatus(
   attractionId: number,
   patch: { is_published?: boolean; is_active?: boolean }
@@ -790,7 +846,12 @@ function mapSearchItem(
 export async function searchAdminAttractionRelatedContent(
   input: RelatedContentSearchInput,
 ): Promise<AdminRelatedContentSearchResult> {
-  if (!positiveInteger(input.attractionId) || !isRelatedContentType(input.contentType) || typeof input.query !== "string") {
+  if (
+    !positiveInteger(input.attractionId)
+    || !isRelatedContentType(input.contentType)
+    || typeof input.query !== "string"
+    || input.query.length > 100
+  ) {
     throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
   }
   const page = normalizePage(input.page);
@@ -1151,35 +1212,5 @@ export async function getContentReadiness(): Promise<ContentReadiness> {
       totalActive: mediaRes.count ?? 0,
       withAltText,
     },
-  };
-}
-
-export async function getAdminAllContentList() {
-  const supabase = createSupabaseServiceRoleClient();
-  const [attractions, restaurants, stories] = await Promise.all([
-    supabase.from("attractions").select("attraction_id, name_th, province_id, provinces(province_name_th)").eq("is_published", true),
-    supabase.from("restaurants").select("restaurant_id, name_th, province_id, provinces(province_name_th)").eq("is_published", true),
-    supabase.from("travel_stories").select("story_id, title").eq("is_published", true)
-  ]);
-
-  // Note: accommodations won't work locally since migration failed, but we query it safely if it exists.
-  // Actually, we'll skip accommodations for now to prevent 500 errors in this function if the table is missing,
-  // or we can use maybeSingle/error catching. Let's just catch it.
-
-  let accommodationsList: ContentListAccommodation[] = [];
-  try {
-    const { data } = await supabase.from("accommodations").select("accommodation_id, name_th, province_id, provinces(province_name_th)").eq("is_published", true);
-    accommodationsList = (data || []) as ContentListAccommodation[];
-  } catch {
-    // Ignore if table missing
-  }
-
-  const getProvinceName = (p: SupabaseJoin<ContentListProvince>) => firstJoin(p)?.province_name_th ?? undefined;
-
-  return {
-    attractions: ((attractions.data || []) as ContentListAttraction[]).map(a => ({ id: a.attraction_id, name: a.name_th, province: getProvinceName(a.provinces) })),
-    restaurants: ((restaurants.data || []) as ContentListRestaurant[]).map(r => ({ id: r.restaurant_id, name: r.name_th, province: getProvinceName(r.provinces) })),
-    accommodations: accommodationsList.map(a => ({ id: a.accommodation_id, name: a.name_th, province: getProvinceName(a.provinces) })),
-    stories: ((stories.data || []) as ContentListStory[]).map(s => ({ id: s.story_id, name: s.title }))
   };
 }

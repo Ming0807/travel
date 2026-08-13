@@ -4,7 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { createPhotoSpotAction, updatePhotoSpotAction } from "@/app/actions/admin-photo-spot-actions";
 import { AdminPhotoSpotRow } from "@/lib/repositories/photo-spot.repository";
 import { ArrowLeft, FileText, ImageSquare, List, MapPinLine, QrCode } from "@phosphor-icons/react";
-import { AdminSelectOption } from "@/components/admin/attractions/AttractionForm";
+import type { AdminSelectOption } from "@/components/admin/attractions/types";
 import {
   AdminFormErrorSummary,
   AdminFormSection,

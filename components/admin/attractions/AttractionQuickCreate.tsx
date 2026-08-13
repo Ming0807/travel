@@ -4,7 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createAttractionAction } from "@/app/actions/admin-attraction-actions";
 import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
-import type { AdminSelectOption } from "@/components/admin/attractions/AttractionForm";
+import type { AdminSelectOption } from "@/components/admin/attractions/types";
 import { CheckCircle, FileText, ImageSquare, MapPinLine, QrCode } from "@phosphor-icons/react";
 
 type AttractionQuickCreateProps = {

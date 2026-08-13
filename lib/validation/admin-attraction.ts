@@ -36,6 +36,113 @@ const booleanFromForm = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+export const ATTRACTION_EDIT_SECTIONS = ["header", "content", "location", "settings"] as const;
+export type AttractionEditSection = (typeof ATTRACTION_EDIT_SECTIONS)[number];
+
+const attractionHeaderSectionSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(3, "Slug is required.")
+    .max(200)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, URL-safe, and hyphen-separated."),
+  nameTh: z.string().trim().min(1, "Thai attraction name is required.").max(255),
+  nameEn: optionalShortText,
+});
+
+const attractionContentSectionSchema = z.object({
+  shortDescriptionTh: optionalText,
+  shortDescriptionEn: optionalText,
+  descriptionTh: optionalText,
+  descriptionEn: optionalText,
+  historyTh: optionalText,
+  historyEn: optionalText,
+  travelTipsTh: optionalText,
+  travelTipsEn: optionalText,
+  howToGetThereTh: optionalText,
+  howToGetThereEn: optionalText,
+});
+
+const attractionLocationSectionSchema = z.object({
+  latitude: optionalCoordinate(-90, 90),
+  longitude: optionalCoordinate(-180, 180),
+  addressText: optionalText,
+  openingHours: optionalShortText,
+  contactInfo: optionalShortText,
+});
+
+const attractionSettingsSectionSchema = z.object({
+  provinceId: requiredId,
+  districtId: optionalId,
+  attractionTypeIds: z.array(requiredId).max(4, "เลือกหมวดหมู่ได้สูงสุด 4 หมวด").default([]),
+  primaryAttractionTypeId: optionalId,
+  sustainabilityCategory: optionalShortText,
+  estimatedCapacityPerDay: optionalPositiveInt,
+  isPublished: booleanFromForm,
+  isActive: booleanFromForm,
+}).superRefine((value, context) => {
+  if (value.attractionTypeIds.length > 0 && value.primaryAttractionTypeId === null) {
+    context.addIssue({ code: "custom", path: ["primaryAttractionTypeId"], message: "กรุณาเลือกหมวดหลัก" });
+  }
+  if (value.primaryAttractionTypeId !== null && !value.attractionTypeIds.includes(value.primaryAttractionTypeId)) {
+    context.addIssue({ code: "custom", path: ["primaryAttractionTypeId"], message: "หมวดหลักต้องอยู่ในหมวดที่เลือก" });
+  }
+  if (value.isPublished && value.primaryAttractionTypeId === null) {
+    context.addIssue({ code: "custom", path: ["primaryAttractionTypeId"], message: "สถานที่ที่เผยแพร่ต้องมีหมวดหลัก" });
+  }
+});
+
+export type AdminAttractionSectionMutation =
+  | { section: "header"; values: z.infer<typeof attractionHeaderSectionSchema> }
+  | { section: "content"; values: z.infer<typeof attractionContentSectionSchema> }
+  | { section: "location"; values: z.infer<typeof attractionLocationSectionSchema> }
+  | { section: "settings"; values: z.infer<typeof attractionSettingsSectionSchema> };
+
+function normalizedCategoryFormValues(formData: FormData) {
+  const typeIds = Array.from(new Set(
+    formData.getAll("attractionTypeIds")
+      .map((value) => typeof value === "string" ? Number(value) : Number.NaN)
+      .filter((value) => Number.isSafeInteger(value) && value > 0),
+  ));
+  return {
+    ...Object.fromEntries(formData.entries()),
+    attractionTypeIds: typeIds.map(String),
+    primaryAttractionTypeId: formData.get("primaryAttractionTypeId") ?? "",
+  };
+}
+
+export function parseAdminAttractionSectionFormData(
+  section: AttractionEditSection,
+  formData: FormData,
+) {
+  const raw = section === "settings"
+    ? normalizedCategoryFormValues(formData)
+    : Object.fromEntries(formData.entries());
+
+  if (section === "header") {
+    const parsed = attractionHeaderSectionSchema.safeParse(raw);
+    return parsed.success
+      ? { success: true as const, data: { section, values: parsed.data } satisfies AdminAttractionSectionMutation }
+      : parsed;
+  }
+  if (section === "content") {
+    const parsed = attractionContentSectionSchema.safeParse(raw);
+    return parsed.success
+      ? { success: true as const, data: { section, values: parsed.data } satisfies AdminAttractionSectionMutation }
+      : parsed;
+  }
+  if (section === "location") {
+    const parsed = attractionLocationSectionSchema.safeParse(raw);
+    return parsed.success
+      ? { success: true as const, data: { section, values: parsed.data } satisfies AdminAttractionSectionMutation }
+      : parsed;
+  }
+  const parsed = attractionSettingsSectionSchema.safeParse(raw);
+  return parsed.success
+    ? { success: true as const, data: { section, values: parsed.data } satisfies AdminAttractionSectionMutation }
+    : parsed;
+}
+
 export const adminPaginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20)

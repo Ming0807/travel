@@ -195,6 +195,18 @@ describe("admin attraction related-content contract", () => {
     expect(query.range).toHaveBeenCalledWith(20, 39);
   });
 
+  it("rejects overlong search input before querying the database", async () => {
+    await expect(searchAdminAttractionRelatedContent({
+      attractionId: 10,
+      contentType: "restaurants",
+      query: "x".repeat(101),
+      page: 1,
+      pageSize: 20,
+    })).rejects.toThrow("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
+
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
   it("excludes the source attraction and only searches live published candidates", async () => {
     const query = setBuilder("attractions", {
       data: [{ attraction_id: 11, name_th: "จุดชมวิว", name_en: null, slug: "viewpoint", province_id: 1, is_published: true, is_active: true, provinces: { province_name_th: "ยะลา" } }],

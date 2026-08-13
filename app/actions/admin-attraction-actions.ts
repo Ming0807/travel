@@ -7,11 +7,14 @@ import {
   getAttractionPublishCategoryError,
   hasExplicitAttractionCategorySelection,
   parseAdminAttractionMutationFormData,
+  parseAdminAttractionSectionFormData,
+  type AttractionEditSection,
 } from "@/lib/validation/admin-attraction";
 import { syncAttractionTypeAssignments } from "@/lib/repositories/attraction-category.repository";
 import {
   createAdminAttraction,
   updateAdminAttraction,
+  updateAdminAttractionSection,
   updateAdminAttractionStatus,
   findAttractionBySlug,
   getAdminAttractionById,
@@ -109,6 +112,68 @@ export async function updateAttractionAction(attractionId: number, _prevState: A
     console.error("Failed to update attraction:", error);
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังบันทึกการแก้ไขสถานที่ไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
+export async function updateAttractionSectionAction(
+  attractionId: number,
+  section: AttractionEditSection,
+  _prevState: ActionResult<{ id: number }>,
+  formData: FormData,
+): Promise<ActionResult<{ id: number }>> {
+  try {
+    const guard = await requirePermission("attraction.update");
+    const parsed = parseAdminAttractionSectionFormData(section, formData);
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: "กรุณาตรวจข้อมูลในส่วนนี้อีกครั้ง",
+        fieldErrors: parsed.error.flatten().fieldErrors,
+      };
+    }
+
+    if (parsed.data.section === "header") {
+      const existingSlug = await findAttractionBySlug(parsed.data.values.slug, attractionId);
+      if (existingSlug !== null) {
+        return {
+          success: false,
+          error: "Slug นี้ถูกใช้งานแล้ว",
+          fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] },
+        };
+      }
+    }
+
+    const old = await getAdminAttractionById(attractionId);
+    if (!old) return { success: false, error: "ไม่พบสถานที่นี้ อาจถูกลบหรือย้ายแล้ว" };
+
+    const updated = await updateAdminAttractionSection(attractionId, parsed.data);
+    if (parsed.data.section === "settings") {
+      await syncAttractionTypeAssignments({
+        attractionId,
+        attractionTypeIds: parsed.data.values.attractionTypeIds,
+        primaryAttractionTypeId: parsed.data.values.primaryAttractionTypeId,
+        isPublished: parsed.data.values.isPublished,
+      });
+    }
+
+    await logAdminMutation({
+      actor: guard.actor,
+      action: `attraction.update_${section}`,
+      entityType: "attraction",
+      entityId: attractionId,
+      oldValues: old as unknown as Record<string, unknown>,
+      newValues: parsed.data.values as unknown as Record<string, unknown>,
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true, data: { id: updated.attraction_id } };
+  } catch (error) {
+    console.error(`Failed to update attraction ${section} section:`, error);
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    if (error instanceof Error && error.message === "DUPLICATE_SLUG") {
+      return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
+    }
+    return { success: false, error: "ยังบันทึกส่วนนี้ไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 

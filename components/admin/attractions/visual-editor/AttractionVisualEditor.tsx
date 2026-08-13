@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { AttractionHeader } from "@/components/attractions/attraction-header";
 import { AttractionGallery } from "@/components/attractions/attraction-gallery";
 import { AttractionTabs } from "@/components/attractions/attraction-tabs";
@@ -10,10 +10,16 @@ import { InlineEditableText } from "@/components/admin/forms/InlineEditableText"
 import { Drawer } from "@/components/admin/Drawer";
 import { HeaderForm, ContentForm, LocationForm, SettingsForm } from "./SectionForms";
 import { MediaManager } from "@/components/admin/attractions/MediaManager";
-import { RelatedContentForm } from "./RelatedContentForm";
-import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
+import {
+  RelatedContentWorkspace,
+  type SelectedRelatedContentByType,
+} from "./RelatedContentWorkspace";
+import type {
+  AdminAttractionRow,
+  AdminRelatedContentSetting,
+} from "@/lib/repositories/admin-attraction.repository";
 import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
-import type { AdminSelectOption } from "@/components/admin/attractions/AttractionForm";
+import type { AdminSelectOption } from "@/components/admin/attractions/types";
 import { MapPinLine, ArrowLeft, PencilSimple, Image as ImageIcon, Eye, QrCode, CheckCircle, WarningCircle, ChartLine } from "@phosphor-icons/react";
 import Link from "next/link";
 import { AttractionCardsRow } from "@/components/attractions/attraction-cards-row";
@@ -23,21 +29,9 @@ import type { PublicAttractionDetail } from "@/lib/repositories/public-content.r
 import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 import type { AttractionTypeAssignment } from "@/lib/repositories/attraction-category.repository";
+import type { RelatedContentType } from "@/lib/content/attraction-related-content";
 
-type EditorSection = "header" | "content" | "location" | "settings" | "gallery" | "related_attractions" | "related_accommodations" | "related_restaurants" | "related_stories" | null;
-
-type RelatedOption = {
-  id: number;
-  name: string;
-  province?: string;
-};
-
-type AttractionRelatedContent = {
-  attractions?: { related_attraction_id: number | string | null }[];
-  accommodations?: { accommodation_id: number | string | null }[];
-  restaurants?: { restaurant_id: number | string | null }[];
-  stories?: { story_id: number | string | null }[];
-};
+type EditorSection = "header" | "content" | "location" | "settings" | "gallery" | "related" | null;
 
 const EDITOR_SECTIONS: Exclude<EditorSection, null>[] = [
   "header",
@@ -45,26 +39,17 @@ const EDITOR_SECTIONS: Exclude<EditorSection, null>[] = [
   "location",
   "settings",
   "gallery",
-  "related_attractions",
-  "related_accommodations",
-  "related_restaurants",
-  "related_stories",
+  "related",
 ];
 
 function getInitialEditorSection(): EditorSection {
   if (typeof window === "undefined") return null;
   const hash = window.location.hash.replace("#", "");
+  if (hash.startsWith("related_")) return "related";
   return EDITOR_SECTIONS.includes(hash as Exclude<EditorSection, null>)
     ? (hash as EditorSection)
     : null;
 }
-
-type AdminContentLists = {
-  attractions?: RelatedOption[];
-  accommodations?: RelatedOption[];
-  restaurants?: RelatedOption[];
-  stories?: RelatedOption[];
-};
 
 interface AttractionVisualEditorProps {
   attraction: AdminAttractionRow;
@@ -80,8 +65,8 @@ interface AttractionVisualEditorProps {
   publicDetail?: PublicAttractionDetail | null;
   reviewStats?: ReviewStats | null;
   publicReviews?: ReviewCard[] | null;
-  allContent?: AdminContentLists;
-  relatedContent?: AttractionRelatedContent;
+  relatedSettings: AdminRelatedContentSetting[];
+  selectedRelatedContent: SelectedRelatedContentByType;
 }
 
 function MissingImageState({ title, description }: { title: string; description: string }) {
@@ -227,10 +212,31 @@ export function AttractionVisualEditor({
   publicDetail,
   reviewStats,
   publicReviews,
-  allContent,
-  relatedContent
+  relatedSettings,
+  selectedRelatedContent,
 }: AttractionVisualEditorProps) {
   const [activeSection, setActiveSection] = useState<EditorSection>(getInitialEditorSection);
+  const [relatedInitialType, setRelatedInitialType] = useState<RelatedContentType>("attractions");
+  const [relatedWorkspaceDirty, setRelatedWorkspaceDirty] = useState(false);
+
+  const closeRelatedWorkspace = useCallback(() => {
+    setRelatedWorkspaceDirty(false);
+    setActiveSection(null);
+  }, []);
+
+  const requestCloseRelatedWorkspace = useCallback(() => {
+    if (
+      !relatedWorkspaceDirty
+      || window.confirm("มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ต้องการออกโดยไม่บันทึกหรือไม่?")
+    ) {
+      closeRelatedWorkspace();
+    }
+  }, [closeRelatedWorkspace, relatedWorkspaceDirty]);
+
+  function openRelatedWorkspace(type: RelatedContentType) {
+    setRelatedInitialType(type);
+    setActiveSection("related");
+  }
 
   useEffect(() => {
     if (window.location.hash && activeSection) {
@@ -257,14 +263,13 @@ export function AttractionVisualEditor({
     return url ? [{ url, alt: item.alt_text_th || item.alt_text_en || name }] : [];
   });
   const hasGalleryImages = previewImages.length > 0;
-  const relatedAttractionCount = relatedContent?.attractions?.length ?? 0;
-  const relatedAccommodationCount = relatedContent?.accommodations?.length ?? 0;
-  const relatedRestaurantCount = relatedContent?.restaurants?.length ?? 0;
-  const relatedStoryCount = relatedContent?.stories?.length ?? 0;
-  const publicThingsToDo = relatedAttractionCount > 0 ? publicDetail?.thingsToDo ?? [] : [];
-  const publicWhereToStay = relatedAccommodationCount > 0 ? publicDetail?.whereToStay ?? [] : [];
-  const publicFoodAndDrink = relatedRestaurantCount > 0 ? publicDetail?.foodAndDrink ?? [] : [];
-  const publicArticles = relatedStoryCount > 0 ? publicDetail?.articles ?? [] : [];
+  const publicThingsToDo = publicDetail?.thingsToDo ?? [];
+  const publicWhereToStay = publicDetail?.whereToStay ?? [];
+  const publicFoodAndDrink = publicDetail?.foodAndDrink ?? [];
+  const publicArticles = publicDetail?.articles ?? [];
+  const relatedMode = (type: RelatedContentType) =>
+    relatedSettings.find((setting) => setting.contentType === type)?.mode
+      ?? (selectedRelatedContent[type].length > 0 ? "manual" : "automatic");
   const locale = "th";
   const sectionLabel = (key: Parameters<typeof getAttractionSectionLabel>[0]) =>
     getAttractionSectionLabel(key, locale);
@@ -284,7 +289,11 @@ export function AttractionVisualEditor({
   const checkinCodeCount = attraction.checkin_code_count ?? 0;
   const hasPublicText = Boolean(attraction.short_description_th || attraction.description_th);
   const hasLocationDetails = Boolean(attraction.address_text || attraction.how_to_get_there_th || (attraction.latitude !== null && attraction.longitude !== null));
-  const hasRelatedContent = relatedAttractionCount + relatedAccommodationCount + relatedRestaurantCount + relatedStoryCount > 0;
+  const hasRelatedContent = relatedSettings.some((setting) =>
+    setting.mode === "automatic"
+    || setting.mode === "hybrid"
+    || (setting.mode === "manual" && selectedRelatedContent[setting.contentType].length > 0),
+  );
   const pageMapItems: PageMapItem[] = [
     {
       id: "header",
@@ -338,7 +347,7 @@ export function AttractionVisualEditor({
       complete: hasRelatedContent,
       help: hasRelatedContent ? "มีการเชื่อมโยงเนื้อหาอย่างน้อย 1 รายการแล้ว" : "ทางเลือก: เชื่อมโยงที่พัก ร้านอาหาร บทความ หรือสถานที่ใกล้เคียง",
       actionLabel: "เลือกสถานที่ที่เกี่ยวข้อง",
-      targetSection: "related_attractions",
+      targetSection: "related",
     },
     {
       id: "publish",
@@ -537,18 +546,18 @@ export function AttractionVisualEditor({
                       linkPrefix="/attractions"
                     />
                   </div>
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
-                    <button onClick={() => setActiveSection("related_attractions")} className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
+                  <div className="pointer-events-auto absolute right-4 top-4 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                    <button onClick={() => openRelatedWorkspace("attractions")} className="flex min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
                       <PencilSimple size={14} /> เลือกเนื้อหา
                     </button>
                   </div>
                 </div>
               ) : (
                 <ReadinessState
-                  title="ยังไม่ได้เลือกสถานที่ท่องเที่ยวใกล้เคียง (No related attractions)"
-                  description="ในโหมด Editor นี้จะไม่แสดงข้อมูลจำลอง หากต้องการให้แสดงในหน้าเว็บจริง กรุณาเลือกสถานที่ท่องเที่ยวที่เกี่ยวข้อง"
-                  actionLabel="เลือกสถานที่ใกล้เคียง"
-                  onAction={() => setActiveSection("related_attractions")}
+                  title={relatedMode("attractions") === "hidden" ? "ส่วนสถานที่ใกล้เคียงถูกซ่อน" : "ยังไม่มีสถานที่ใกล้เคียงที่พร้อมแสดง"}
+                  description={relatedMode("attractions") === "automatic" || relatedMode("attractions") === "hybrid" ? "ระบบยังไม่พบสถานที่ที่ผ่านเงื่อนไขพื้นที่และความพร้อมของเนื้อหา" : "เลือกสถานที่จริงที่เกี่ยวข้อง หรือเปลี่ยนวิธีแสดงผลในพื้นที่จัดการ"}
+                  actionLabel="จัดการสถานที่ใกล้เคียง"
+                  onAction={() => openRelatedWorkspace("attractions")}
                 />
               )}
 
@@ -564,18 +573,18 @@ export function AttractionVisualEditor({
                       linkPrefix="/accommodations"
                     />
                   </div>
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
-                    <button onClick={() => setActiveSection("related_accommodations")} className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
+                  <div className="pointer-events-auto absolute right-4 top-4 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                    <button onClick={() => openRelatedWorkspace("accommodations")} className="flex min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
                       <PencilSimple size={14} /> เลือกเนื้อหา
                     </button>
                   </div>
                 </div>
               ) : (
                 <ReadinessState
-                  title="ยังไม่ได้เลือกที่พักแนะนำ (No related accommodations)"
-                  description="การ์ดที่พักจะถูกซ่อนจนกว่าจะมีการเชื่อมโยงที่พักจริงเข้าระบบ เพื่อป้องกันการแสดงผลข้อมูลจำลองในหน้าพรีวิว"
-                  actionLabel="เลือกที่พัก"
-                  onAction={() => setActiveSection("related_accommodations")}
+                  title={relatedMode("accommodations") === "hidden" ? "ส่วนที่พักถูกซ่อน" : "ยังไม่มีที่พักที่พร้อมแสดง"}
+                  description={relatedMode("accommodations") === "automatic" || relatedMode("accommodations") === "hybrid" ? "ระบบยังไม่พบที่พักที่ผ่านเงื่อนไขพื้นที่และความพร้อมของเนื้อหา" : "เลือกที่พักจริงที่เกี่ยวข้อง หรือเปลี่ยนวิธีแสดงผลในพื้นที่จัดการ"}
+                  actionLabel="จัดการที่พัก"
+                  onAction={() => openRelatedWorkspace("accommodations")}
                 />
               )}
 
@@ -591,18 +600,18 @@ export function AttractionVisualEditor({
                       linkPrefix="/restaurants"
                     />
                   </div>
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
-                    <button onClick={() => setActiveSection("related_restaurants")} className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
+                  <div className="pointer-events-auto absolute right-4 top-4 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                    <button onClick={() => openRelatedWorkspace("restaurants")} className="flex min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
                       <PencilSimple size={14} /> เลือกเนื้อหา
                     </button>
                   </div>
                 </div>
               ) : (
                 <ReadinessState
-                  title="ยังไม่ได้เลือกร้านอาหารแนะนำ (No related restaurants)"
-                  description="การ์ดร้านอาหารจะถูกซ่อนจนกว่าจะมีการเชื่อมโยงร้านอาหารจริงเข้าระบบ"
-                  actionLabel="เลือกร้านอาหาร"
-                  onAction={() => setActiveSection("related_restaurants")}
+                  title={relatedMode("restaurants") === "hidden" ? "ส่วนร้านอาหารถูกซ่อน" : "ยังไม่มีร้านอาหารที่พร้อมแสดง"}
+                  description={relatedMode("restaurants") === "automatic" || relatedMode("restaurants") === "hybrid" ? "ระบบยังไม่พบร้านอาหารที่ผ่านเงื่อนไขพื้นที่และความพร้อมของเนื้อหา" : "เลือกร้านอาหารจริงที่เกี่ยวข้อง หรือเปลี่ยนวิธีแสดงผลในพื้นที่จัดการ"}
+                  actionLabel="จัดการร้านอาหาร"
+                  onAction={() => openRelatedWorkspace("restaurants")}
                 />
               )}
 
@@ -616,8 +625,8 @@ export function AttractionVisualEditor({
                     title={sectionLabel("reviews")}
                   />
                 </div>
-                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Link href={`/admin/reviews?attractionId=${attraction.attraction_id}`} className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
+                <div className="absolute right-0 top-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                  <Link href={`/admin/reviews?attractionId=${attraction.attraction_id}`} className="flex min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
                     <PencilSimple size={14} /> จัดการรีวิว
                   </Link>
                 </div>
@@ -635,18 +644,18 @@ export function AttractionVisualEditor({
                       linkPrefix="/stories"
                     />
                   </div>
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
-                    <button onClick={() => setActiveSection("related_stories")} className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
+                  <div className="pointer-events-auto absolute right-4 top-4 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                    <button onClick={() => openRelatedWorkspace("stories")} className="flex min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50">
                       <PencilSimple size={14} /> เลือกเนื้อหา
                     </button>
                   </div>
                 </div>
               ) : (
                 <ReadinessState
-                  title="No related stories selected"
-                  description="Article cards are hidden until saved story relationships exist. This preview will not invent editorial recommendations."
-                  actionLabel="Select stories"
-                  onAction={() => setActiveSection("related_stories")}
+                  title={relatedMode("stories") === "hidden" ? "ส่วนเรื่องราวถูกซ่อน" : "ยังไม่มีเรื่องราวที่เชื่อมโยงโดยตรง"}
+                  description="เรื่องราวจะแสดงเมื่อผู้ดูแลยืนยันความสัมพันธ์กับสถานที่นี้เท่านั้น ระบบจะไม่แนะนำจากจังหวัดเดียวกันเพียงอย่างเดียว"
+                  actionLabel="จัดการเรื่องราว"
+                  onAction={() => openRelatedWorkspace("stories")}
                 />
               )}
             </div>
@@ -758,68 +767,21 @@ export function AttractionVisualEditor({
         </div>
       </Drawer>
 
-      {/* Related Content Drawers */}
+      {/* One workspace owns every related-content field and display mode. */}
       <Drawer
-        isOpen={activeSection === "related_attractions"}
-        onClose={() => setActiveSection(null)}
-        title="เลือกสถานที่ท่องเที่ยวใกล้เคียง"
+        isOpen={activeSection === "related"}
+        onClose={requestCloseRelatedWorkspace}
+        title="จัดการเนื้อหาที่เกี่ยวข้อง"
+        size="xl"
+        bodyClassName="p-0"
       >
-        <RelatedContentForm
+        <RelatedContentWorkspace
           attractionId={attraction.attraction_id}
-          type="attractions"
-          availableItems={allContent?.attractions?.filter((a) => a.id !== attraction.attraction_id) || []}
-          initialSelectedIds={relatedContent?.attractions?.map((a) => Number(a.related_attraction_id)) || []}
-          attractionProvince={provinceName}
-          onClose={() => setActiveSection(null)}
-          title={sectionLabel("things_to_do")}
-        />
-      </Drawer>
-
-      <Drawer
-        isOpen={activeSection === "related_accommodations"}
-        onClose={() => setActiveSection(null)}
-        title="เลือกที่พักใกล้เคียง"
-      >
-        <RelatedContentForm
-          attractionId={attraction.attraction_id}
-          type="accommodations"
-          availableItems={allContent?.accommodations || []}
-          initialSelectedIds={relatedContent?.accommodations?.map((a) => Number(a.accommodation_id)) || []}
-          attractionProvince={provinceName}
-          onClose={() => setActiveSection(null)}
-          title={sectionLabel("where_to_stay")}
-        />
-      </Drawer>
-
-      <Drawer
-        isOpen={activeSection === "related_restaurants"}
-        onClose={() => setActiveSection(null)}
-        title="เลือกร้านอาหารใกล้เคียง"
-      >
-        <RelatedContentForm
-          attractionId={attraction.attraction_id}
-          type="restaurants"
-          availableItems={allContent?.restaurants || []}
-          initialSelectedIds={relatedContent?.restaurants?.map((a) => Number(a.restaurant_id)) || []}
-          attractionProvince={provinceName}
-          onClose={() => setActiveSection(null)}
-          title={sectionLabel("food_drink")}
-        />
-      </Drawer>
-
-      <Drawer
-        isOpen={activeSection === "related_stories"}
-        onClose={() => setActiveSection(null)}
-        title="เลือกบทความที่เกี่ยวข้อง"
-      >
-        <RelatedContentForm
-          attractionId={attraction.attraction_id}
-          type="stories"
-          availableItems={allContent?.stories || []}
-          initialSelectedIds={relatedContent?.stories?.map((a) => Number(a.story_id)) || []}
-          attractionProvince={provinceName}
-          onClose={() => setActiveSection(null)}
-          title={sectionLabel("articles")}
+          initialType={relatedInitialType}
+          settings={relatedSettings}
+          selectedByType={selectedRelatedContent}
+          onDirtyChange={setRelatedWorkspaceDirty}
+          onClose={closeRelatedWorkspace}
         />
       </Drawer>
     </div>

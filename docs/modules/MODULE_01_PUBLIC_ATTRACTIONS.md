@@ -283,7 +283,12 @@ related actions
 
 Only sections backed by published data may render. The public page must not
 invent ratings, visit facts, best-time guidance, 360 media, or related places.
-Related attractions are limited to explicit curated relations.
+Related attractions, restaurants, accommodations, and stories are composed from
+the section's saved `automatic`, `manual`, `hybrid`, or `hidden` setting. Manual
+items preserve editorial order; hybrid items keep editorial choices first and fill
+only the remaining capacity. Automatic reasons must come from real geography,
+distance, category, or direct relationship evidence. A story is never recommended
+from province evidence alone.
 
 ## 10.3 Required Call-to-Action
 
@@ -707,6 +712,9 @@ Admin must be able to manage:
 - select up to four controlled categories per attraction
 - mark exactly one selected category as primary before publishing
 - use secondary categories for public/admin discovery without duplicating dashboard counts
+- choose automatic, manual, hybrid, or hidden behavior independently for each related-content type
+- search and order selected related records without loading an unbounded dataset
+- repair inactive or unpublished editorial selections before they can appear publicly
 
 ```text
 attractions
@@ -717,7 +725,10 @@ check-in codes
 publish status
 ```
 
-Until admin CMS is complete, seed data can be used.
+The public read model must remain compatible before the related-content settings
+migration is applied: existing curated relations derive manual behavior and sections
+without curated relations derive automatic behavior. After migration deployment,
+the saved settings table becomes the source of truth.
 
 ---
 
