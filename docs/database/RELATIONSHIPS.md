@@ -396,7 +396,7 @@ attraction_types.attraction_type_id 1 -> many attractions.attraction_type_id
 
 ### Purpose
 
-Supports filtering and attraction category analysis.
+The direct foreign key represents the primary category used by dashboard grouping and compatibility consumers.
 
 ### Foreign Key
 
@@ -417,6 +417,15 @@ ON DELETE SET NULL
 ```
 
 or restrict and deactivate attraction type.
+
+### Multi-category relationship
+
+```text
+attractions many <-> many attraction_types
+through attraction_type_assignments
+```
+
+`attraction_type_assignments` is authoritative for public/admin discovery across every selected category. `attractions.attraction_type_id` mirrors the assignment with `is_primary = true`, preventing dashboard double counting while existing consumers migrate incrementally.
 
 ---
 

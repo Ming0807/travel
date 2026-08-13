@@ -253,7 +253,7 @@ This is one of the core tables in the platform.
 | attraction_id | bigint identity | yes | Primary key |
 | province_id | bigint | yes | Province where attraction is located |
 | district_id | bigint | no | District where attraction is located |
-| attraction_type_id | bigint | no | Attraction type |
+| attraction_type_id | bigint | no | Compatibility primary attraction category; synchronized with `attraction_type_assignments` |
 | slug | varchar(200) | yes | URL-friendly unique slug |
 | name_th | varchar(255) | yes | Attraction name in Thai |
 | name_en | varchar(255) | no | Attraction name in English |
@@ -288,6 +288,21 @@ unique(slug)
 ## 7.4 Notes
 
 This table should support public attraction pages and dashboard filters.
+
+### 7.5 Table: attraction_type_assignments
+
+Stores the controlled many-to-many category assignments for each attraction. A published attraction has exactly one primary assignment, while up to three additional assignments improve public and admin discovery.
+
+| Column | Type | Required | Description |
+|---|---:|---:|---|
+| attraction_id | bigint | yes | Attraction foreign key; cascades on attraction deletion |
+| attraction_type_id | bigint | yes | Attraction type foreign key |
+| is_primary | boolean | yes | Whether this is the compatibility/dashboard primary category |
+| display_order | integer | yes | Primary-first presentation order, zero or greater |
+| created_at | timestamptz | yes | Record creation time |
+| updated_at | timestamptz | no | Last update time |
+
+Constraints include a composite primary key on `(attraction_id, attraction_type_id)` and a partial unique index allowing at most one primary assignment per attraction. Category sets are replaced atomically through `sync_attraction_types`.
 
 ---
 
