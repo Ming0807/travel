@@ -7,6 +7,7 @@ import { getAdminAttractionPreview } from "@/lib/repositories/public-content.rep
 import { getReviewStatsByAttraction, listPublicReviewsByAttraction } from "@/lib/repositories/admin-review.repository";
 import { notFound } from "next/navigation";
 import { listAttractionTypeAssignments } from "@/lib/repositories/attraction-category.repository";
+import { sanitizeAdminRichHtml } from "@/lib/content/admin-rich-html";
 
 export const metadata: Metadata = {
   title: "Edit Attraction | Admin",
@@ -56,6 +57,10 @@ export default async function EditAdminAttractionPage({
       districts={districts.map(d => ({ id: d.district_id, label: d.district_name_th, provinceId: d.province_id }))}
       attractionTypes={types.map(t => ({ id: t.attraction_type_id, label: t.type_name_th, labelEn: t.type_name_en, isActive: t.is_active }))}
       categoryAssignments={categoryAssignments}
+      richContentPreview={{
+        descriptionTh: sanitizeAdminRichHtml(attraction.description_th),
+        historyTh: sanitizeAdminRichHtml(attraction.history_th),
+      }}
       publicDetail={publicDetail}
       reviewStats={reviewStats}
       publicReviews={publicReviews}

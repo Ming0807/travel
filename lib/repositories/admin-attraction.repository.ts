@@ -205,7 +205,7 @@ export async function listAdminAttractions(filters: AdminAttractionFilters): Pro
         *,
         provinces (province_name_th),
         districts (district_name_th),
-        attraction_types (type_name_th),
+        attraction_types!attractions_attraction_type_id_fkey (type_name_th),
         attraction_type_assignments (
           is_primary,
           display_order,
@@ -253,7 +253,7 @@ export async function getAdminAttractionById(attractionId: number): Promise<Admi
         *,
         provinces (province_name_th),
         districts (district_name_th),
-        attraction_types (type_name_th),
+        attraction_types!attractions_attraction_type_id_fkey (type_name_th),
         attraction_type_assignments (
           is_primary,
           display_order,

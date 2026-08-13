@@ -5,6 +5,7 @@ import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import {
   getAttractionPublishCategoryError,
+  hasExplicitAttractionCategorySelection,
   parseAdminAttractionMutationFormData,
 } from "@/lib/validation/admin-attraction";
 import { syncAttractionTypeAssignments } from "@/lib/repositories/attraction-category.repository";
@@ -78,12 +79,14 @@ export async function updateAttractionAction(attractionId: number, _prevState: A
 
     const old = await getAdminAttractionById(attractionId);
     const updated = await updateAdminAttraction(attractionId, parsed.data);
-    await syncAttractionTypeAssignments({
-      attractionId,
-      attractionTypeIds: parsed.data.attractionTypeIds,
-      primaryAttractionTypeId: parsed.data.primaryAttractionTypeId,
-      isPublished: parsed.data.isPublished,
-    });
+    if (hasExplicitAttractionCategorySelection(formData)) {
+      await syncAttractionTypeAssignments({
+        attractionId,
+        attractionTypeIds: parsed.data.attractionTypeIds,
+        primaryAttractionTypeId: parsed.data.primaryAttractionTypeId,
+        isPublished: parsed.data.isPublished,
+      });
+    }
     await logAdminMutation({
       actor: guard.actor,
       action: "attraction.update",
@@ -96,6 +99,7 @@ export async function updateAttractionAction(attractionId: number, _prevState: A
     revalidatePath('/', 'layout');
     return { success: true, data: { id: updated.attraction_id } };
   } catch (error) {
+    console.error("Failed to update attraction:", error);
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังบันทึกการแก้ไขสถานที่ไม่ได้ กรุณาลองอีกครั้ง" };
   }

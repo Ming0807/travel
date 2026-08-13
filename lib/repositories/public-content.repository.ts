@@ -531,7 +531,7 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
           latitude,
           longitude,
           provinces!inner (province_name_th, province_name_en),
-          attraction_types (type_name_th, type_name_en),
+          attraction_types!attractions_attraction_type_id_fkey (type_name_th, type_name_en),
           category_filter:attraction_type_assignments!inner (
             attraction_types!inner (type_name_en, is_active)
           ),
@@ -638,7 +638,7 @@ export async function listPublicAttractionPage(
       longitude,
       provinces!inner (province_name_th, province_name_en),
       districts (district_name_th, district_name_en),
-      attraction_types (type_name_th, type_name_en),
+      attraction_types!attractions_attraction_type_id_fkey (type_name_th, type_name_en),
       category_filter:attraction_type_assignments!inner (
         attraction_types!inner (type_name_en, is_active)
       ),
@@ -714,7 +714,7 @@ async function loadAttractionDetail(
         latitude,
         longitude,
         provinces (province_name_th, province_name_en),
-        attraction_types (type_name_th, type_name_en),
+        attraction_types!attractions_attraction_type_id_fkey (type_name_th, type_name_en),
         attraction_type_assignments (
           is_primary,
           display_order,

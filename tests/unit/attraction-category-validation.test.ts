@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getAttractionPublishCategoryError,
+  hasExplicitAttractionCategorySelection,
   parseAdminAttractionMutationFormData,
 } from "@/lib/validation/admin-attraction";
 
@@ -14,6 +15,18 @@ function validForm() {
 }
 
 describe("attraction category mutation validation", () => {
+  it("distinguishes category editor fields from a legacy hidden primary field", () => {
+    const sectionForm = new FormData();
+    sectionForm.set("attractionTypeId", "3");
+    expect(hasExplicitAttractionCategorySelection(sectionForm)).toBe(false);
+
+    const categoryForm = new FormData();
+    categoryForm.append("attractionTypeIds", "3");
+    categoryForm.append("attractionTypeIds", "4");
+    categoryForm.set("primaryAttractionTypeId", "3");
+    expect(hasExplicitAttractionCategorySelection(categoryForm)).toBe(true);
+  });
+
   it("blocks a publish transition without a primary category", () => {
     expect(getAttractionPublishCategoryError(false, null)).toBeTruthy();
     expect(getAttractionPublishCategoryError(false, 3)).toBeNull();

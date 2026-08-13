@@ -10,11 +10,14 @@ import { AttractionInfoSidebar } from "@/components/attractions/attraction-info-
 import { AttractionReviews } from "@/components/attractions/attraction-reviews";
 import { AttractionTabs } from "@/components/attractions/attraction-tabs";
 import { AttractionTips } from "@/components/attractions/attraction-tips";
+import { AttractionRichContent } from "@/components/attractions/AttractionRichContent";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicButton } from "@/components/public/PublicButton";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { ReviewSubmissionForm } from "@/components/reviews/ReviewSubmissionForm";
 import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
+import { sanitizeAdminRichHtml } from "@/lib/content/admin-rich-html";
+import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
 import { getPublicAttractionDetail } from "@/lib/repositories/public-content.repository";
 import { getPublicAttractionReviews } from "@/lib/repositories/public-review.repository";
 
@@ -31,7 +34,7 @@ export async function generateMetadata({ params }: AttractionDetailPageProps): P
   const attraction = await loadAttraction(slug);
   if (!attraction) return { title: "ไม่พบสถานที่ท่องเที่ยว" };
 
-  const description = attraction.description || `ข้อมูลการเดินทางและรีวิวของ ${attraction.name} จังหวัด${attraction.province}`;
+  const description = plainTextFromLegacyHtml(sanitizeAdminRichHtml(attraction.description)) || `ข้อมูลการเดินทางและรีวิวของ ${attraction.name} จังหวัด${attraction.province}`;
   return {
     title: attraction.name,
     description: description.slice(0, 160),
@@ -90,9 +93,7 @@ export default async function AttractionDetailPage({ params }: AttractionDetailP
               {data.description ? (
                 <section id="overview" className="scroll-mt-36">
                   <h2 className="text-2xl font-bold text-[var(--public-ink)]">{sectionLabel("overview")}</h2>
-                  <p className="mt-4 max-w-[72ch] whitespace-pre-wrap text-base leading-8 text-slate-700">
-                    {data.description}
-                  </p>
+                  <AttractionRichContent html={data.description} className="mt-4" />
                 </section>
               ) : null}
 

@@ -121,6 +121,11 @@ export function parseAdminAttractionMutationFormData(formData: FormData) {
   return adminAttractionMutationSchema.safeParse(raw);
 }
 
+export function hasExplicitAttractionCategorySelection(formData: FormData) {
+  return formData.has("primaryAttractionTypeId")
+    || formData.getAll("attractionTypeIds").length > 0;
+}
+
 export function getAttractionPublishCategoryError(
   isCurrentlyPublished: boolean,
   primaryAttractionTypeId: number | null,

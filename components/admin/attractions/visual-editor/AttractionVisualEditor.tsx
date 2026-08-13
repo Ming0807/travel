@@ -73,6 +73,10 @@ interface AttractionVisualEditorProps {
   districts: (AdminSelectOption & { provinceId: number })[];
   attractionTypes: AdminSelectOption[];
   categoryAssignments: AttractionTypeAssignment[];
+  richContentPreview: {
+    descriptionTh: string;
+    historyTh: string;
+  };
   publicDetail?: PublicAttractionDetail | null;
   reviewStats?: ReviewStats | null;
   publicReviews?: ReviewCard[] | null;
@@ -219,6 +223,7 @@ export function AttractionVisualEditor({
   districts,
   attractionTypes,
   categoryAssignments,
+  richContentPreview,
   publicDetail,
   reviewStats,
   publicReviews,
@@ -465,31 +470,24 @@ export function AttractionVisualEditor({
                       />
                     </p>
                   )}
-                  <div className="text-base leading-relaxed text-slate-600">
-                    <InlineEditableText
-                      value={description}
-                      fieldName="descriptionTh"
-                      attractionId={attraction.attraction_id}
-                      placeholder="คลิกเพื่อเพิ่มคำอธิบายเต็ม..."
-                      multiline
-                      maxLength={4000}
-                      className="min-h-[40px]"
+                  {richContentPreview.descriptionTh ? (
+                    <div
+                      className="prose prose-lg max-w-[72ch] prose-headings:font-black prose-headings:text-slate-800 prose-p:leading-8 prose-p:text-slate-700 prose-a:font-bold prose-a:text-[#0A6B62] prose-img:my-8 prose-img:h-auto prose-img:w-full prose-img:rounded-lg pointer-events-none"
+                      dangerouslySetInnerHTML={{ __html: richContentPreview.descriptionTh }}
                     />
-                  </div>
+                  ) : (
+                    <p className="text-sm italic text-slate-400">ยังไม่มีคำอธิบายฉบับเต็ม กด “แก้ไข เนื้อหา” เพื่อเพิ่มข้อมูล</p>
+                  )}
                 </section>
 
                 <section id="history" className="scroll-mt-24">
                   <h2 className="mb-4 text-2xl font-bold text-slate-800">ประวัติศาสตร์ / เรื่องเล่า</h2>
-                  <div className="text-base leading-relaxed text-slate-600">
-                    <InlineEditableText
-                      value={attraction.history_th ?? ""}
-                      fieldName="historyTh"
-                      attractionId={attraction.attraction_id}
-                      placeholder="คลิกเพื่อเพิ่มประวัติศาสตร์หรือเรื่องเล่า..."
-                      multiline
-                      maxLength={4000}
+                  {richContentPreview.historyTh ? (
+                    <div
+                      className="prose prose-lg max-w-[72ch] prose-headings:font-black prose-headings:text-slate-800 prose-p:leading-8 prose-p:text-slate-700 prose-a:font-bold prose-a:text-[#0A6B62] prose-img:my-8 prose-img:h-auto prose-img:w-full prose-img:rounded-lg pointer-events-none"
+                      dangerouslySetInnerHTML={{ __html: richContentPreview.historyTh }}
                     />
-                  </div>
+                  ) : null}
                   {!attraction.history_th ? (
                     <p className="mt-2 text-xs text-slate-400">
                       เพิ่มประวัติศาสตร์ของสถานที่เพื่อให้ผู้เยี่ยมชมเข้าใจบริบท

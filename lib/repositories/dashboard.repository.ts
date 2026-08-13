@@ -236,7 +236,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
           attraction_type_id,
           provinces (province_name_th, province_name_en),
           districts (district_name_th, district_name_en),
-          attraction_types (type_name_th, type_name_en)
+          attraction_types!attractions_attraction_type_id_fkey (type_name_th, type_name_en)
         ),
         travel_companions (name_th, name_en),
         transport_modes (name_th, name_en),

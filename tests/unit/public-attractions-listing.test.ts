@@ -110,6 +110,12 @@ describe("listPublicAttractionPage", () => {
       expect.stringContaining("content_media"),
       { count: "exact" },
     );
+    expect(attractionQuery.select).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "attraction_types!attractions_attraction_type_id_fkey",
+      ),
+      { count: "exact" },
+    );
     expect(attractionQuery.eq).toHaveBeenCalledWith("is_published", true);
     expect(attractionQuery.eq).toHaveBeenCalledWith("is_active", true);
     expect(attractionQuery.in).toHaveBeenCalledWith("province_id", [1]);

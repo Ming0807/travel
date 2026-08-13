@@ -7,6 +7,7 @@ const { state, client } = vi.hoisted(() => {
     initialResult: { data: null as Record<string, unknown> | null, error: null as unknown },
     publicFilters: [] as Array<[string, unknown]>,
     tables: [] as string[],
+    attractionSelects: [] as string[],
   };
 
   const relationResult = { data: [], error: null };
@@ -20,7 +21,10 @@ const { state, client } = vi.hoisted(() => {
 
   const attractionBuilder = () => {
     const query: Record<string, ReturnType<typeof vi.fn>> = {};
-    query.select = vi.fn().mockReturnValue(query);
+    query.select = vi.fn((selection: string) => {
+      state.attractionSelects.push(selection);
+      return query;
+    });
     query.eq = vi.fn((column: string, value: unknown) => {
       state.publicFilters.push([column, value]);
       return query;
@@ -115,6 +119,7 @@ describe("getPublicAttractionDetail", () => {
     state.initialResult = { data: attractionRow, error: null };
     state.publicFilters.length = 0;
     state.tables.length = 0;
+    state.attractionSelects.length = 0;
   });
 
   it("returns only curated related content and does not invent province-wide recommendations", async () => {
@@ -140,6 +145,9 @@ describe("getPublicAttractionDetail", () => {
       "attraction_related_accommodations",
       "attraction_related_stories",
     ]);
+    expect(state.attractionSelects[0]).toContain(
+      "attraction_types!attractions_attraction_type_id_fkey",
+    );
   });
 
   it("surfaces a database failure instead of converting it to a not-found response", async () => {

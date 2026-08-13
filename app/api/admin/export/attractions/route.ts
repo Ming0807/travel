@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         *,
         provinces (province_name_th, province_name_en),
         districts (district_name_th, district_name_en),
-        attraction_types (type_name_th, type_name_en),
+        attraction_types!attractions_attraction_type_id_fkey (type_name_th, type_name_en),
         attraction_type_assignments (
           is_primary,
           display_order,
