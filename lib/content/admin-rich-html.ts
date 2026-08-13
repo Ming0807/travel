@@ -6,6 +6,10 @@ import {
   normalizeSiteMediaStoragePath,
   siteMediaImageUrl,
 } from "@/lib/media/storage-paths";
+import {
+  normalizeRichImageAlign,
+  normalizeRichImageSize,
+} from "@/lib/content/rich-image-layout";
 
 function managedImageUrl(raw: string | undefined): string | null {
   const value = raw?.trim();
@@ -82,6 +86,8 @@ export function sanitizeAdminRichHtml(value: string | null | undefined): string 
         "data-asset-id",
         "data-storage-path",
         "data-caption",
+        "data-image-size",
+        "data-image-align",
         "loading",
         "decoding",
       ],
@@ -125,6 +131,12 @@ export function sanitizeAdminRichHtml(value: string | null | undefined): string 
             ...(attribs["data-caption"]
               ? { "data-caption": attribs["data-caption"] }
               : {}),
+            "data-image-size": normalizeRichImageSize(
+              attribs["data-image-size"],
+            ),
+            "data-image-align": normalizeRichImageAlign(
+              attribs["data-image-align"],
+            ),
             loading: "lazy",
             decoding: "async",
           },

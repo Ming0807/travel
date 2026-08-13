@@ -52,6 +52,7 @@ describe("FormRichText managed media insertion", () => {
         label="เนื้อหา"
         name="content"
         documentName="contentDocument"
+        imageLayoutControls
         onValueChange={onValueChange}
       />,
     );
@@ -66,6 +67,8 @@ describe("FormRichText managed media insertion", () => {
       screen.getByLabelText("คำอธิบายรูปภาพ"),
       "มัสยิดกลางปัตตานียามเย็น",
     );
+    await userEvent.click(screen.getByRole("button", { name: "ขนาดกลาง" }));
+    await userEvent.click(screen.getByRole("button", { name: "ชิดขวา" }));
     await userEvent.click(screen.getByRole("button", { name: "แทรกรูปภาพ" }));
 
     await waitFor(() =>
@@ -87,5 +90,39 @@ describe("FormRichText managed media insertion", () => {
         }),
       ),
     );
+
+    await waitFor(() => {
+      const htmlCalls = onValueChange.mock.calls
+        .map(([value]) => value.html as string)
+        .filter(Boolean);
+      expect(htmlCalls.some((html) => html.includes('data-image-size="medium"'))).toBe(true);
+      expect(htmlCalls.some((html) => html.includes('data-image-align="right"'))).toBe(true);
+      expect(htmlCalls.some((html) => html.includes("<p></p>"))).toBe(true);
+    });
+  });
+
+  it("updates the layout of an existing selected image", async () => {
+    const onValueChange = vi.fn();
+    render(
+      <FormRichText
+        label="เนื้อหา"
+        name="content"
+        defaultValue={'<img src="/site-media/stories/pattani.webp" alt="รูปเดิม" data-asset-id="f04a9a4e-4e2a-4f7f-9fb5-000000000042" data-storage-path="stories/pattani.webp" data-image-size="full" data-image-align="center"><p></p>'}
+        imageLayoutControls
+        onValueChange={onValueChange}
+      />,
+    );
+
+    await userEvent.click(await screen.findByRole("img", { name: "รูปเดิม" }));
+    await userEvent.click(await screen.findByRole("button", { name: "ขนาดกลาง" }));
+    await userEvent.click(screen.getByRole("button", { name: "ชิดขวา" }));
+
+    await waitFor(() => {
+      const htmlCalls = onValueChange.mock.calls
+        .map(([value]) => value.html as string)
+        .filter(Boolean);
+      expect(htmlCalls.some((html) => html.includes('data-image-size="medium"'))).toBe(true);
+      expect(htmlCalls.some((html) => html.includes('data-image-align="right"'))).toBe(true);
+    });
   });
 });

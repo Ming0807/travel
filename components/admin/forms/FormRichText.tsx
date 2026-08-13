@@ -1,12 +1,23 @@
 "use client";
 
-import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import {
+  useEditor,
+  useEditorState,
+  EditorContent,
+  type Editor,
+} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
 import TiptapImage from "@tiptap/extension-image";
 import NextImage from "next/image";
-import { ImageSquare, X } from "@phosphor-icons/react";
+import {
+  ImageSquare,
+  TextAlignCenter,
+  TextAlignLeft,
+  TextAlignRight,
+  X,
+} from "@phosphor-icons/react";
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { StoryDocument } from "@/lib/content/story-document";
 import {
@@ -15,6 +26,12 @@ import {
 } from "@/lib/content/tiptap-story-document";
 import { createManagedStoryImageNode } from "@/lib/content/managed-story-image";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import {
+  normalizeRichImageAlign,
+  normalizeRichImageSize,
+  type RichImageAlign,
+  type RichImageSize,
+} from "@/lib/content/rich-image-layout";
 import {
   MediaPickerModal,
   type MediaPickerAsset,
@@ -225,17 +242,108 @@ function ToolbarSeparator() {
   return <div className="mx-0.5 h-6 w-px bg-slate-200" />;
 }
 
+const IMAGE_SIZE_OPTIONS: { value: RichImageSize; label: string; ariaLabel: string }[] = [
+  { value: "full", label: "เต็ม", ariaLabel: "ขนาดเต็ม" },
+  { value: "large", label: "ใหญ่", ariaLabel: "ขนาดใหญ่" },
+  { value: "medium", label: "กลาง", ariaLabel: "ขนาดกลาง" },
+  { value: "small", label: "เล็ก", ariaLabel: "ขนาดเล็ก" },
+];
+
+const IMAGE_ALIGN_OPTIONS: {
+  value: RichImageAlign;
+  label: string;
+  icon: typeof TextAlignLeft;
+}[] = [
+  { value: "left", label: "ชิดซ้าย", icon: TextAlignLeft },
+  { value: "center", label: "กึ่งกลาง", icon: TextAlignCenter },
+  { value: "right", label: "ชิดขวา", icon: TextAlignRight },
+];
+
+function ImageLayoutControls({
+  size,
+  align,
+  onSizeChange,
+  onAlignChange,
+  compact = false,
+}: {
+  size: RichImageSize;
+  align: RichImageAlign;
+  onSizeChange: (value: RichImageSize) => void;
+  onAlignChange: (value: RichImageAlign) => void;
+  compact?: boolean;
+}) {
+  const buttonClass = (active: boolean) =>
+    `${compact ? "min-h-11 min-w-11 px-2.5 text-xs" : "min-h-11 px-3 text-sm"} inline-flex items-center justify-center gap-1.5 border font-bold transition ${
+      active
+        ? "border-[#0A6B62] bg-[#E6F4EF] text-[#075E54]"
+        : "border-slate-300 bg-white text-slate-700 hover:border-[#0A6B62] hover:text-[#075E54]"
+    }`;
+
+  return (
+    <div className={`grid gap-3 ${compact ? "sm:grid-cols-[1fr_auto]" : "sm:grid-cols-2"}`}>
+      <fieldset>
+        <legend className="mb-1.5 text-xs font-bold text-slate-600">ขนาดรูปภาพ</legend>
+        <div className="grid grid-cols-4" role="group" aria-label="ขนาดรูปภาพ">
+          {IMAGE_SIZE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              aria-label={option.ariaLabel}
+              aria-pressed={size === option.value}
+              onClick={() => onSizeChange(option.value)}
+              className={buttonClass(size === option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className="mb-1.5 text-xs font-bold text-slate-600">ตำแหน่งรูปภาพ</legend>
+        <div className="grid grid-cols-3" role="group" aria-label="ตำแหน่งรูปภาพ">
+          {IMAGE_ALIGN_OPTIONS.map((option) => {
+            const Icon = option.icon;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-label={option.label}
+                aria-pressed={align === option.value}
+                onClick={() => onAlignChange(option.value)}
+                className={buttonClass(align === option.value)}
+              >
+                <Icon aria-hidden="true" size={16} weight="bold" />
+                {compact ? null : <span>{option.label}</span>}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+    </div>
+  );
+}
+
 // ─── Editor Toolbar ─────────────────────────────────────────────
 
 function EditorToolbar({
   editor,
   onOpenMedia,
+  imageLayoutControls,
 }: {
   editor: Editor;
   onOpenMedia: () => void;
+  imageLayoutControls: boolean;
 }) {
   const [linkUrl, setLinkUrl] = useState("");
   const [showLinkInput, setShowLinkInput] = useState(false);
+  const selectedImage = useEditorState({
+    editor,
+    selector: ({ editor: currentEditor }) => ({
+      active: currentEditor.isActive("image"),
+      size: normalizeRichImageSize(currentEditor.getAttributes("image").imageSize),
+      align: normalizeRichImageAlign(currentEditor.getAttributes("image").imageAlign),
+    }),
+  });
 
   const handleSetLink = useCallback(() => {
     if (linkUrl) {
@@ -386,6 +494,27 @@ function EditorToolbar({
           </button>
         </div>
       ) : null}
+      {imageLayoutControls ? (
+        <div className="w-full border-t border-slate-200 pt-2">
+          {selectedImage.active ? (
+            <ImageLayoutControls
+              compact
+              size={selectedImage.size}
+              align={selectedImage.align}
+              onSizeChange={(imageSize) =>
+                editor.chain().focus().updateAttributes("image", { imageSize }).run()
+              }
+              onAlignChange={(imageAlign) =>
+                editor.chain().focus().updateAttributes("image", { imageAlign }).run()
+              }
+            />
+          ) : (
+            <p className="py-1 text-xs font-semibold text-slate-600">
+              คลิกรูปในเนื้อหาเพื่อปรับขนาดและตำแหน่ง
+            </p>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -403,6 +532,7 @@ interface FormRichTextProps {
   minHeight?: number;
   defaultDocument?: StoryDocument | null;
   documentName?: string;
+  imageLayoutControls?: boolean;
   onValueChange?: (value: {
     html: string;
     document: StoryDocument | null;
@@ -437,13 +567,29 @@ const ManagedStoryImage = TiptapImage.extend({
             ? { "data-caption": String(attributes.caption) }
             : {},
       },
+      imageSize: {
+        default: "full",
+        parseHTML: (element) =>
+          normalizeRichImageSize(element.getAttribute("data-image-size")),
+        renderHTML: (attributes) => ({
+          "data-image-size": normalizeRichImageSize(attributes.imageSize),
+        }),
+      },
+      imageAlign: {
+        default: "center",
+        parseHTML: (element) =>
+          normalizeRichImageAlign(element.getAttribute("data-image-align")),
+        renderHTML: (attributes) => ({
+          "data-image-align": normalizeRichImageAlign(attributes.imageAlign),
+        }),
+      },
     };
   },
 }).configure({
   inline: false,
   allowBase64: false,
   HTMLAttributes: {
-    class: "my-6 h-auto w-full rounded-lg object-cover",
+    class: "h-auto rounded-lg object-cover",
   },
 });
 
@@ -458,6 +604,7 @@ export function FormRichText({
   minHeight = 300,
   defaultDocument = null,
   documentName,
+  imageLayoutControls = false,
   onValueChange,
 }: FormRichTextProps) {
   const [mounted, setMounted] = useState(false);
@@ -472,6 +619,8 @@ export function FormRichText({
   );
   const [imageAlt, setImageAlt] = useState("");
   const [imageCaption, setImageCaption] = useState("");
+  const [imageSize, setImageSize] = useState<RichImageSize>("full");
+  const [imageAlign, setImageAlign] = useState<RichImageAlign>("center");
   const [mediaError, setMediaError] = useState<string | null>(null);
   const hiddenRef = useRef<HTMLInputElement>(null);
 
@@ -527,6 +676,18 @@ export function FormRichText({
     onUpdate: ({ editor: ed }) => updateEditorValue(ed),
   });
 
+  const handleEditorClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!editor || !imageLayoutControls) return;
+      const target = event.target;
+      if (!(target instanceof HTMLImageElement)) return;
+
+      const position = editor.view.posAtDOM(target, 0);
+      editor.chain().focus().setNodeSelection(position).run();
+    },
+    [editor, imageLayoutControls],
+  );
+
   // Sync if defaultValue changes externally (e.g., form reset with new data)
   useEffect(() => {
     if (editor && !defaultDocument && defaultValue !== editor.getHTML()) {
@@ -546,6 +707,8 @@ export function FormRichText({
     setSelectedMedia(null);
     setImageAlt("");
     setImageCaption("");
+    setImageSize("full");
+    setImageAlign("center");
     setMediaError(null);
   }, []);
 
@@ -562,6 +725,8 @@ export function FormRichText({
     setSelectedMedia(asset);
     setImageAlt("");
     setImageCaption("");
+    setImageSize("full");
+    setImageAlign("center");
     setMediaError(null);
   }, []);
 
@@ -580,12 +745,32 @@ export function FormRichText({
         content: [node],
       }).content[0];
       if (!tiptapNode) throw new Error("INVALID_MANAGED_STORY_IMAGE");
-      editor.chain().focus().insertContent(tiptapNode).run();
+      const imageNode = {
+        ...tiptapNode,
+        attrs: {
+          ...tiptapNode.attrs,
+          ...(imageLayoutControls ? { imageSize, imageAlign } : {}),
+        },
+      };
+      editor
+        .chain()
+        .focus()
+        .insertContent([imageNode, { type: "paragraph" }])
+        .run();
       closeImageDetails();
     } catch {
       setMediaError("กรุณาใส่คำอธิบายรูปภาพก่อนแทรก");
     }
-  }, [closeImageDetails, editor, imageAlt, imageCaption, selectedMedia]);
+  }, [
+    closeImageDetails,
+    editor,
+    imageAlign,
+    imageAlt,
+    imageCaption,
+    imageLayoutControls,
+    imageSize,
+    selectedMedia,
+  ]);
 
   if (!mounted) {
     // SSR fallback — render a static textarea so forms still work
@@ -622,15 +807,16 @@ export function FormRichText({
         >
           <EditorToolbar
             editor={editor}
+            imageLayoutControls={imageLayoutControls}
             onOpenMedia={() => {
               setMediaError(null);
               setIsMediaPickerOpen(true);
             }}
           />
-          <div className="px-4 py-3">
+          <div className="px-4 py-3" onClick={handleEditorClick}>
             <EditorContent
               editor={editor}
-              className="prose prose-sm prose-headings:font-black prose-headings:text-slate-800 prose-h2:text-lg prose-h3:text-base prose-h4:text-sm prose-p:text-slate-700 prose-p:leading-7 prose-a:text-[#0A6B62] prose-ul:list-disc prose-ol:list-decimal prose-blockquote:border-l-[#0A6B62] prose-blockquote:text-slate-600 max-w-none [&_.ProseMirror]:min-h-[200px] [&_.ProseMirror]:outline-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-slate-400 [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0"
+              className="rich-content-media prose prose-sm prose-headings:font-black prose-headings:text-slate-800 prose-h2:text-lg prose-h3:text-base prose-h4:text-sm prose-p:text-slate-700 prose-p:leading-7 prose-a:text-[#0A6B62] prose-ul:list-disc prose-ol:list-decimal prose-blockquote:border-l-[#0A6B62] prose-blockquote:text-slate-600 max-w-none [&_.ProseMirror]:min-h-[200px] [&_.ProseMirror]:outline-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-slate-400 [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0"
             />
           </div>
         </div>
@@ -729,6 +915,14 @@ export function FormRichText({
                   placeholder="ข้อมูลเพิ่มเติม เครดิตภาพ หรือสถานที่ถ่ายภาพ (ไม่บังคับ)"
                 />
               </label>
+              {imageLayoutControls ? (
+                <ImageLayoutControls
+                  size={imageSize}
+                  align={imageAlign}
+                  onSizeChange={setImageSize}
+                  onAlignChange={setImageAlign}
+                />
+              ) : null}
               {mediaError ? (
                 <p role="alert" className="text-sm font-bold text-rose-700">
                   {mediaError}

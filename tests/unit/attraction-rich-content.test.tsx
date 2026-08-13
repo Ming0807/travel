@@ -2,6 +2,10 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { AttractionRichContent } from "@/components/attractions/AttractionRichContent";
 import { sanitizeAdminRichHtml } from "@/lib/content/admin-rich-html";
+import {
+  normalizeRichImageAlign,
+  normalizeRichImageSize,
+} from "@/lib/content/rich-image-layout";
 
 describe("attraction rich content", () => {
   it("renders Tiptap paragraphs and managed images instead of visible HTML source", () => {
@@ -35,5 +39,40 @@ describe("attraction rich content", () => {
     expect(result).not.toMatch(/script|onclick|javascript:|onerror|tracker\.example/i);
     expect(result).toContain("เนื้อหาปลอดภัย");
     expect(result).toContain("ลิงก์อันตราย");
+  });
+
+  it("preserves validated image layout and defaults invalid legacy values", () => {
+    const html = `
+      <img
+        src="/site-media/general/first.webp"
+        alt="รูปแรก"
+        data-image-size="medium"
+        data-image-align="right"
+      />
+      <p></p>
+      <img
+        src="/site-media/general/second.webp"
+        alt="รูปที่สอง"
+        data-image-size="oversized"
+        data-image-align="floating"
+      />
+    `;
+
+    const { container } = render(<AttractionRichContent html={html} />);
+    const images = container.querySelectorAll("img");
+
+    expect(container.firstElementChild).toHaveClass("rich-content-media");
+    expect(container.querySelector("p:empty")).not.toBeNull();
+    expect(images[0]).toHaveAttribute("data-image-size", "medium");
+    expect(images[0]).toHaveAttribute("data-image-align", "right");
+    expect(images[1]).toHaveAttribute("data-image-size", "full");
+    expect(images[1]).toHaveAttribute("data-image-align", "center");
+  });
+
+  it("normalizes the image layout contract", () => {
+    expect(normalizeRichImageSize("small")).toBe("small");
+    expect(normalizeRichImageSize("invalid")).toBe("full");
+    expect(normalizeRichImageAlign("left")).toBe("left");
+    expect(normalizeRichImageAlign(null)).toBe("center");
   });
 });

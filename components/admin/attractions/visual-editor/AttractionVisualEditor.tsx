@@ -472,7 +472,7 @@ export function AttractionVisualEditor({
                   )}
                   {richContentPreview.descriptionTh ? (
                     <div
-                      className="prose prose-lg max-w-[72ch] prose-headings:font-black prose-headings:text-slate-800 prose-p:leading-8 prose-p:text-slate-700 prose-a:font-bold prose-a:text-[#0A6B62] prose-img:my-8 prose-img:h-auto prose-img:w-full prose-img:rounded-lg pointer-events-none"
+                      className="rich-content-media prose prose-lg max-w-[72ch] prose-headings:font-black prose-headings:text-slate-800 prose-p:leading-8 prose-p:text-slate-700 prose-a:font-bold prose-a:text-[#0A6B62] prose-img:h-auto prose-img:rounded-lg pointer-events-none"
                       dangerouslySetInnerHTML={{ __html: richContentPreview.descriptionTh }}
                     />
                   ) : (
@@ -484,7 +484,7 @@ export function AttractionVisualEditor({
                   <h2 className="mb-4 text-2xl font-bold text-slate-800">ประวัติศาสตร์ / เรื่องเล่า</h2>
                   {richContentPreview.historyTh ? (
                     <div
-                      className="prose prose-lg max-w-[72ch] prose-headings:font-black prose-headings:text-slate-800 prose-p:leading-8 prose-p:text-slate-700 prose-a:font-bold prose-a:text-[#0A6B62] prose-img:my-8 prose-img:h-auto prose-img:w-full prose-img:rounded-lg pointer-events-none"
+                      className="rich-content-media prose prose-lg max-w-[72ch] prose-headings:font-black prose-headings:text-slate-800 prose-p:leading-8 prose-p:text-slate-700 prose-a:font-bold prose-a:text-[#0A6B62] prose-img:h-auto prose-img:rounded-lg pointer-events-none"
                       dangerouslySetInnerHTML={{ __html: richContentPreview.historyTh }}
                     />
                   ) : null}

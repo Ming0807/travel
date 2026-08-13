@@ -95,8 +95,8 @@ export function ContentForm({ attraction, onClose }: SectionFormProps) {
             <span className="text-sm font-bold text-slate-600">คำอธิบายสั้น (Short Description)</span>
             <textarea className={`${textareaClass} min-h-[96px]`} defaultValue={attraction.short_description_th ?? ""} maxLength={500} name="shortDescriptionTh" />
           </label>
-          <FormRichText label="รายละเอียด (Full Description)" name="descriptionTh" defaultValue={attraction.description_th ?? ""} minHeight={200} />
-          <FormRichText label="ประวัติ / เรื่องเล่า (History & Story)" name="historyTh" defaultValue={attraction.history_th ?? ""} minHeight={200} />
+          <FormRichText imageLayoutControls label="รายละเอียด (Full Description)" name="descriptionTh" defaultValue={attraction.description_th ?? ""} minHeight={200} />
+          <FormRichText imageLayoutControls label="ประวัติ / เรื่องเล่า (History & Story)" name="historyTh" defaultValue={attraction.history_th ?? ""} minHeight={200} />
           <label className="block">
             <span className="text-sm font-bold text-slate-600">ข้อแนะนำการเดินทาง (Travel Tips)</span>
             <textarea className={`${textareaClass} min-h-[110px]`} defaultValue={attraction.travel_tips_th ?? ""} maxLength={5000} name="travelTipsTh" />
@@ -113,8 +113,8 @@ export function ContentForm({ attraction, onClose }: SectionFormProps) {
             <span className="text-sm font-bold text-slate-600">คำอธิบายสั้น (Short Description)</span>
             <textarea className={`${textareaClass} min-h-[96px]`} defaultValue={attraction.short_description_en ?? ""} maxLength={500} name="shortDescriptionEn" />
           </label>
-          <FormRichText label="รายละเอียด (Full Description)" name="descriptionEn" defaultValue={attraction.description_en ?? ""} minHeight={200} />
-          <FormRichText label="ประวัติ / เรื่องเล่า (History & Story)" name="historyEn" defaultValue={attraction.history_en ?? ""} minHeight={200} />
+          <FormRichText imageLayoutControls label="รายละเอียด (Full Description)" name="descriptionEn" defaultValue={attraction.description_en ?? ""} minHeight={200} />
+          <FormRichText imageLayoutControls label="ประวัติ / เรื่องเล่า (History & Story)" name="historyEn" defaultValue={attraction.history_en ?? ""} minHeight={200} />
           <label className="block">
             <span className="text-sm font-bold text-slate-600">ข้อแนะนำการเดินทาง (Travel Tips)</span>
             <textarea className={`${textareaClass} min-h-[110px]`} defaultValue={attraction.travel_tips_en ?? ""} maxLength={5000} name="travelTipsEn" />

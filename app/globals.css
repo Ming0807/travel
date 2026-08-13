@@ -230,6 +230,70 @@ textarea {
   pointer-events: none;
 }
 
+/* Rich content media: shared by the editor, admin preview, and public pages. */
+.rich-content-media > p:empty,
+.rich-content-media > .ProseMirror > p:empty,
+.rich-content-media > .ProseMirror > p:has(> br.ProseMirror-trailingBreak:only-child) {
+  display: block;
+  min-height: 1.5rem;
+  margin-block: 0.5rem;
+}
+
+.rich-content-media > p:empty::before,
+.rich-content-media > .ProseMirror > p:empty::before {
+  content: "\00a0";
+}
+
+.rich-content-media img[data-image-size] {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  margin-block: 2rem;
+}
+
+.rich-content-media img[data-image-size="full"] {
+  width: 100%;
+}
+
+.rich-content-media img[data-image-size="large"] {
+  width: 82%;
+}
+
+.rich-content-media img[data-image-size="medium"] {
+  width: 64%;
+}
+
+.rich-content-media img[data-image-size="small"] {
+  width: 46%;
+}
+
+.rich-content-media img[data-image-align="left"] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.rich-content-media img[data-image-align="center"] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.rich-content-media img[data-image-align="right"] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.rich-content-media .ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid rgba(10, 107, 98, 0.35);
+  outline-offset: 4px;
+}
+
+@media (max-width: 640px) {
+  .rich-content-media img[data-image-size] {
+    width: 100%;
+    margin-inline: 0;
+  }
+}
+
 /* ─── Micro-animations ─── */
 
 .animate-fade-in-up {
