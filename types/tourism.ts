@@ -6,6 +6,7 @@ export type AttractionCard = {
   slug: string;
   name: string;
   province: string;
+  district?: string | null;
   category: string;
   description: string;
   imageUrl: string | null;

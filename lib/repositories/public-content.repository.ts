@@ -18,6 +18,16 @@ import {
   type StoryRecommendationReason,
 } from "@/lib/content/story-recommendation";
 import {
+  composeRelatedContent,
+  type RelatedContentCandidate,
+  type RelatedContentSource,
+} from "@/lib/content/attraction-related-content";
+import {
+  isMissingRelatedContentSettingsError,
+  resolveRelatedContentSettings,
+  type AttractionRelatedContentSetting,
+} from "@/lib/content/attraction-related-settings";
+import {
   routeStopsArePublicForLaunch,
   sanitizeDestinationProvinceFilter,
 } from "@/lib/destinations/launch-scope";
@@ -46,6 +56,8 @@ type PublicAttractionListOptions = {
   type?: string;
   featuredSlugs?: string[];
   exactFeaturedOnly?: boolean;
+  includeReviewSummaries?: boolean;
+  preferThumbnails?: boolean;
 };
 
 export const PUBLIC_ATTRACTION_MAX_PAGE = 10_000;
@@ -136,11 +148,14 @@ export type PublicStoryData = {
 
 export type PublicAttractionRelatedItem = {
   id: string;
+  href: string;
   title: string;
   description: string;
   imageUrl: string | null;
+  imageAlt: string;
   category?: string;
   recommendationReason?: string;
+  recommendationSource: "curated" | "automatic";
   rating?: number;
   reviews?: string;
   price?: string;
@@ -280,6 +295,7 @@ function toPublicAttractionCard(card: InternalAttractionCard, summary?: { rating
     slug: card.slug,
     name: card.name,
     province: card.province,
+    district: card.district,
     category: card.category,
     description: card.description,
     imageUrl: card.imageUrl,
@@ -532,6 +548,7 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
           latitude,
           longitude,
           provinces!inner (province_name_th, province_name_en),
+          districts (district_name_th, district_name_en),
           attraction_types!attractions_attraction_type_id_fkey (type_name_th, type_name_en),
           category_filter:attraction_type_assignments!inner (
             attraction_types!inner (type_name_en, is_active)
@@ -594,10 +611,14 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
       }
     }
 
-    const thumbnailByStoragePath = await loadMediaAssetThumbnails(supabase, finalRows);
+    const thumbnailByStoragePath = options?.preferThumbnails === false
+      ? new Map<string, string>()
+      : await loadMediaAssetThumbnails(supabase, finalRows);
     const finalResults = finalRows.map((row) => mapAttractionCard(row, thumbnailByStoragePath));
 
-    return withReviewSummaries(supabase, finalResults);
+    return options?.includeReviewSummaries === false
+      ? finalResults.map((card) => toPublicAttractionCard(card))
+      : withReviewSummaries(supabase, finalResults);
   } catch {
     return [];
   }
@@ -700,6 +721,8 @@ async function loadAttractionDetail(
       .from("attractions")
       .select(`
         attraction_id,
+        province_id,
+        district_id,
         slug,
         name_th,
         name_en,
@@ -715,8 +738,10 @@ async function loadAttractionDetail(
         latitude,
         longitude,
         provinces (province_name_th, province_name_en),
+        districts (district_name_th, district_name_en),
         attraction_types!attractions_attraction_type_id_fkey (type_name_th, type_name_en),
         attraction_type_assignments (
+          attraction_type_id,
           is_primary,
           display_order,
           attraction_types (type_name_th, type_name_en)
@@ -741,6 +766,7 @@ async function loadAttractionDetail(
 
     const row = data as DbRecord;
     const province = one(row.provinces);
+    const district = one(row.districts);
     const name = text(row.name_th, text(row.name_en, "Untitled attraction"));
     const media = Array.isArray(row.content_media)
       ? (row.content_media as PublicAttractionMediaRow[])
@@ -789,7 +815,8 @@ async function loadAttractionDetail(
       articles: []
     };
 
-    // 1. Fetch curated relations
+    // Relationships are independent optional sections. A failed section must not
+    // turn an otherwise valid attraction page into a 500 response.
     const [curatedAttractions, curatedRestaurants, curatedAccommodations, curatedStories] = await Promise.all([
       supabase.from("attraction_related_attractions").select("related_attraction_id, attractions!related_attraction_id (slug)").eq("attraction_id", attractionId).order("display_order"),
       supabase.from("attraction_related_restaurants").select("restaurants (slug)").eq("attraction_id", attractionId).order("display_order"),
@@ -806,72 +833,157 @@ async function loadAttractionDetail(
     const curatedRestaurantSlugs = extractSlugs(curatedRestaurants.data, "restaurants");
     const curatedAccommodationSlugs = extractSlugs(curatedAccommodations.data, "accommodations");
     const curatedStorySlugs = extractSlugs(curatedStories.data, "travel_stories");
-    const relationError = curatedAttractions.error
-      ?? curatedRestaurants.error
-      ?? curatedAccommodations.error
-      ?? curatedStories.error;
-    if (relationError) throw new Error("PUBLIC_ATTRACTION_DETAIL_FAILED");
+    const relationCounts = {
+      attractions: curatedAttractions.error ? 0 : curatedAttractionSlugs.length,
+      restaurants: curatedRestaurants.error ? 0 : curatedRestaurantSlugs.length,
+      accommodations: curatedAccommodations.error ? 0 : curatedAccommodationSlugs.length,
+      stories: curatedStories.error ? 0 : curatedStorySlugs.length,
+    };
+    const settings = await loadRelatedContentSettings(supabase, attractionId, relationCounts);
+    const sourceCategories = records(row.attraction_type_assignments).flatMap((assignment) => {
+      const category = one(assignment.attraction_types);
+      return [
+        numberValue(assignment.attraction_type_id) || null,
+        text(category?.type_name_th) || null,
+        text(category?.type_name_en) || null,
+      ].filter((value): value is string | number => value !== null);
+    });
+    const source: RelatedContentSource = {
+      id: text(row.slug, slug),
+      evidence: {
+        provinceId: text(province?.province_name_th, text(province?.province_name_en)) || null,
+        districtId: text(district?.district_name_th, text(district?.district_name_en)) || null,
+        latitude: baseDetail.latitude,
+        longitude: baseDetail.longitude,
+        categoryIds: sourceCategories,
+      },
+    };
 
-    // Only explicitly curated relationships appear on the detail page.
-    const [attractionsRes, restaurantsRes, accommodationsRes, storiesRes] = await Promise.all([
-      curatedAttractionSlugs.length > 0
-        ? listPublicAttractionCards(curatedAttractionSlugs.length, {
-            featuredSlugs: curatedAttractionSlugs,
-            exactFeaturedOnly: true,
-          })
-        : Promise.resolve([]),
-      curatedRestaurantSlugs.length > 0
-        ? listPublicRestaurants({ featuredSlugs: curatedRestaurantSlugs })
-        : Promise.resolve([]),
-      curatedAccommodationSlugs.length > 0
-        ? listPublicAccommodations({ featuredSlugs: curatedAccommodationSlugs })
-        : Promise.resolve([]),
-      curatedStorySlugs.length > 0
-        ? listPublicStories({ limit: curatedStorySlugs.length, featuredSlugs: curatedStorySlugs })
-        : Promise.resolve([]),
-    ]);
+    const attractionGeneral = settings.attractions.mode === "automatic"
+      || settings.attractions.mode === "hybrid"
+      ? await listPublicAttractionCards(24, {
+          includeReviewSummaries: false,
+          preferThumbnails: false,
+        })
+      : [];
+    const attractionMissing = settings.attractions.mode === "hidden"
+      ? []
+      : missingCuratedSlugs(curatedAttractionSlugs, attractionGeneral);
+    const attractionExact = attractionMissing.length > 0
+      ? await listPublicAttractionCards(attractionMissing.length, {
+          featuredSlugs: attractionMissing,
+          exactFeaturedOnly: true,
+          includeReviewSummaries: false,
+          preferThumbnails: false,
+        })
+      : [];
+    const attractionPool = [...attractionGeneral, ...attractionExact]
+      .filter((card) => card.slug !== slug);
+    const attractionCurated = orderCuratedCards(curatedAttractionSlugs, attractionPool);
 
-    baseDetail.thingsToDo = attractionsRes
-      .filter(a => a.slug !== slug)
-      .slice(0, 4)
-      .map(a => ({
-        id: a.slug,
-        title: a.name,
-        description: a.description,
-        imageUrl: a.imageUrl,
-        category: a.category
-      }));
+    const restaurantGeneral = settings.restaurants.mode === "automatic"
+      || settings.restaurants.mode === "hybrid"
+      ? await listPublicRestaurants({ limit: 24 })
+      : [];
+    const restaurantMissing = settings.restaurants.mode === "hidden"
+      ? []
+      : missingCuratedSlugs(curatedRestaurantSlugs, restaurantGeneral);
+    const restaurantExact = restaurantMissing.length > 0
+      ? await listPublicRestaurants({ featuredSlugs: restaurantMissing })
+      : [];
+    const restaurantPool = [...restaurantGeneral, ...restaurantExact];
+    const restaurantCurated = orderCuratedCards(curatedRestaurantSlugs, restaurantPool);
 
-    baseDetail.foodAndDrink = restaurantsRes
-      .slice(0, 4)
-      .map(r => ({
-        id: r.slug,
-        title: r.name,
-        description: r.description,
-        imageUrl: r.imageUrl,
-        category: r.foodType || "ร้านอาหาร"
-      }));
+    const accommodationGeneral = settings.accommodations.mode === "automatic"
+      || settings.accommodations.mode === "hybrid"
+      ? await listPublicAccommodations({ limit: 24 })
+      : [];
+    const accommodationMissing = settings.accommodations.mode === "hidden"
+      ? []
+      : missingCuratedSlugs(curatedAccommodationSlugs, accommodationGeneral);
+    const accommodationExact = accommodationMissing.length > 0
+      ? await listPublicAccommodations({ featuredSlugs: accommodationMissing })
+      : [];
+    const accommodationPool = [...accommodationGeneral, ...accommodationExact];
+    const accommodationCurated = orderCuratedCards(curatedAccommodationSlugs, accommodationPool);
 
-    baseDetail.whereToStay = accommodationsRes
-      .slice(0, 4)
-      .map(a => ({
-        id: a.slug,
-        title: a.name,
-        description: a.description,
-        imageUrl: a.imageUrl,
-        category: a.accommodationType || "ที่พัก"
-      }));
+    // A story may be shown only when an editor has verified that it directly
+    // relates to this attraction. Province-only similarity is not sufficient.
+    const storyRows = settings.stories.mode === "hidden" || curatedStorySlugs.length === 0
+      ? []
+      : await listPublicStories({
+          limit: curatedStorySlugs.length,
+          featuredSlugs: curatedStorySlugs,
+        });
+    const storyPool = storyRows.map((story) => ({
+      slug: story.id,
+      name: story.title,
+      province: story.province,
+      description: story.excerpt,
+      imageUrl: story.thumbnailUrl ?? story.imageUrl,
+      imageAlt: story.imageAlt,
+      category: story.category,
+      publishedAt: story.publishedAt,
+    }));
+    const storyCurated = orderCuratedCards(curatedStorySlugs, storyPool);
 
-    baseDetail.articles = storiesRes
-      .slice(0, 3)
-      .map(s => ({
-        id: s.id,
-        title: s.title,
-        description: s.excerpt,
-        imageUrl: s.imageUrl,
-        category: s.category,
-        recommendationReason: "คัดเลือกให้เข้ากับสถานที่นี้",
-      }));
+    baseDetail.thingsToDo = mapComposedCards({
+      contentType: "attractions",
+      setting: settings.attractions,
+      source,
+      curatedSlugs: curatedAttractionSlugs,
+      curatedCards: attractionCurated,
+      automaticCards: attractionPool,
+      candidateEvidence: (card, direct, curatedOrder) => relatedCandidate(card, {
+        district: card.district,
+        categories: [card.category],
+        directVerifiedRelation: direct,
+      }, curatedOrder),
+      hrefPrefix: "/attractions",
+      category: (card) => card.category,
+    });
+    baseDetail.foodAndDrink = mapComposedCards({
+      contentType: "restaurants",
+      setting: settings.restaurants,
+      source,
+      curatedSlugs: curatedRestaurantSlugs,
+      curatedCards: restaurantCurated,
+      automaticCards: restaurantPool,
+      candidateEvidence: (card, direct, curatedOrder) => relatedCandidate(card, {
+        categories: card.categories?.map((category) => category.categoryId) ?? [card.foodType],
+        directVerifiedRelation: direct,
+      }, curatedOrder),
+      hrefPrefix: "/restaurants",
+      category: (card) => card.foodType || "ร้านอาหาร",
+    });
+    baseDetail.whereToStay = mapComposedCards({
+      contentType: "accommodations",
+      setting: settings.accommodations,
+      source,
+      curatedSlugs: curatedAccommodationSlugs,
+      curatedCards: accommodationCurated,
+      automaticCards: accommodationPool,
+      candidateEvidence: (card, direct, curatedOrder) => relatedCandidate(card, {
+        categories: [card.accommodationType],
+        directVerifiedRelation: direct,
+      }, curatedOrder),
+      hrefPrefix: "/accommodations",
+      category: (card) => card.accommodationType || "ที่พัก",
+    });
+    baseDetail.articles = mapComposedCards({
+      contentType: "stories",
+      setting: settings.stories,
+      source,
+      curatedSlugs: curatedStorySlugs,
+      curatedCards: storyCurated,
+      automaticCards: storyPool,
+      candidateEvidence: (card, _direct, curatedOrder) => relatedCandidate(card, {
+        directVerifiedRelation: true,
+        publishedAt: card.publishedAt,
+      }, curatedOrder),
+      hrefPrefix: "/stories",
+      category: (card) => card.category,
+    });
 
     return baseDetail;
 }
@@ -1395,6 +1507,8 @@ export type PublicRestaurantCard = {
   imageUrl: string | null;
   imageAlt: string;
   categories?: PublicRestaurantCategory[];
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export const PUBLIC_HOSPITALITY_MAX_PAGE = 10_000;
@@ -1520,7 +1634,160 @@ function mapRestaurantRow(
     imageUrl: publicManagedImage(row, thumbnailByStoragePath),
     imageAlt: `${name} restaurant image`,
     categories,
+    latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
+    longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),
   };
+}
+
+type RelatedCardBase = {
+  slug: string;
+  name: string;
+  province: string;
+  description: string;
+  imageUrl: string | null;
+  imageAlt: string;
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+function relatedContentReadiness(card: RelatedCardBase): number {
+  const hasDescription = Boolean(card.description.trim());
+  const hasImage = Boolean(card.imageUrl);
+  if (hasDescription && hasImage) return 1;
+  if (hasDescription || hasImage) return 0.5;
+  return 0;
+}
+
+function looksLikeNonProductionContent(slug: string): boolean {
+  return /(^|[-_])(demo|mock|sample)([-_]|$)/i.test(slug);
+}
+
+function relatedCandidate(
+  card: RelatedCardBase,
+  evidence: {
+    district?: string | null;
+    categories?: readonly (string | number)[];
+    directVerifiedRelation?: boolean;
+    publishedAt?: string | null;
+  },
+  curatedOrder?: number,
+): RelatedContentCandidate {
+  const isNonProduction = looksLikeNonProductionContent(card.slug);
+  return {
+    id: card.slug,
+    slug: card.slug,
+    title: card.name,
+    curatedOrder,
+    evidence: {
+      provinceId: card.province,
+      districtId: evidence.district ?? null,
+      latitude: card.latitude ?? null,
+      longitude: card.longitude ?? null,
+      categoryIds: evidence.categories ?? [],
+      directVerifiedRelation: evidence.directVerifiedRelation,
+      contentReadiness: relatedContentReadiness(card),
+      publishedAt: evidence.publishedAt,
+    },
+    eligibility: {
+      published: true,
+      active: true,
+      inLaunchScope: true,
+      usableTitle: Boolean(card.name.trim()),
+      usableSlug: Boolean(card.slug.trim()),
+      directVerifiedRelation: evidence.directVerifiedRelation,
+      isMock: isNonProduction,
+      isDemo: isNonProduction,
+    },
+  };
+}
+
+function missingCuratedSlugs<T extends { slug: string }>(
+  curatedSlugs: readonly string[],
+  loaded: readonly T[],
+): string[] {
+  const loadedSlugs = new Set(loaded.map((item) => item.slug));
+  return curatedSlugs.filter((slug) => !loadedSlugs.has(slug));
+}
+
+function orderCuratedCards<T extends { slug: string }>(
+  curatedSlugs: readonly string[],
+  cards: readonly T[],
+): T[] {
+  const bySlug = new Map(cards.map((card) => [card.slug, card]));
+  return curatedSlugs.flatMap((slug) => {
+    const card = bySlug.get(slug);
+    return card ? [card] : [];
+  });
+}
+
+async function loadRelatedContentSettings(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  attractionId: number,
+  relationCounts: Record<"attractions" | "restaurants" | "accommodations" | "stories", number>,
+) {
+  const { data, error } = await supabase
+    .from("attraction_related_content_settings")
+    .select("content_type, mode, max_items")
+    .eq("attraction_id", attractionId);
+
+  if (error && !isMissingRelatedContentSettingsError(error)) {
+    // Fail optional sections closed when their control plane is unavailable.
+    // Only a genuinely missing migration is allowed to use legacy inference.
+    return resolveRelatedContentSettings([
+      { content_type: "attractions", mode: "hidden", max_items: 4 },
+      { content_type: "restaurants", mode: "hidden", max_items: 4 },
+      { content_type: "accommodations", mode: "hidden", max_items: 4 },
+      { content_type: "stories", mode: "hidden", max_items: 3 },
+    ], relationCounts);
+  }
+
+  return resolveRelatedContentSettings((data ?? []) as DbRecord[], relationCounts);
+}
+
+function mapComposedCards<T extends RelatedCardBase>(input: {
+  contentType: "attractions" | "restaurants" | "accommodations" | "stories";
+  setting: AttractionRelatedContentSetting;
+  source: RelatedContentSource;
+  curatedSlugs: readonly string[];
+  curatedCards: readonly T[];
+  automaticCards: readonly T[];
+  candidateEvidence: (card: T, direct: boolean, curatedOrder?: number) => RelatedContentCandidate;
+  hrefPrefix: string;
+  category: (card: T) => string | undefined;
+}): PublicAttractionRelatedItem[] {
+  const curatedSlugSet = new Set(input.curatedSlugs);
+  const allCards = [...input.curatedCards, ...input.automaticCards];
+  const cardBySlug = new Map(allCards.map((card) => [card.slug, card]));
+  const curatedCandidates = input.curatedCards.map((card, index) =>
+    input.candidateEvidence(card, true, index + 1),
+  );
+  const automaticCandidates = input.automaticCards.map((card) =>
+    input.candidateEvidence(card, curatedSlugSet.has(card.slug)),
+  );
+  const composed = composeRelatedContent({
+    contentType: input.contentType,
+    source: input.source,
+    mode: input.setting.mode,
+    limit: input.setting.maxItems,
+    curatedCandidates,
+    automaticCandidates,
+  });
+
+  return composed.items.flatMap((ranked) => {
+    const card = cardBySlug.get(ranked.slug);
+    if (!card) return [];
+    return [{
+      id: card.slug,
+      href: `${input.hrefPrefix}/${card.slug}`,
+      title: card.name,
+      description: card.description,
+      imageUrl: card.imageUrl,
+      imageAlt: card.imageAlt,
+      category: input.category(card),
+      recommendationSource: ranked.source,
+      ...(ranked.source === "automatic" ? { recommendationReason: ranked.reasonLabel } : {}),
+    }];
+  });
 }
 
 const publicRestaurantCategorySelect = `
@@ -1739,7 +2006,7 @@ export async function listAvailablePublicRestaurantFoodTypes(options?: {
   }
 }
 
-export async function listPublicRestaurants(options?: { search?: string; foodType?: string; categorySlug?: string; province?: string; featuredSlugs?: string[] }): Promise<PublicRestaurantCard[]> {
+export async function listPublicRestaurants(options?: { search?: string; foodType?: string; categorySlug?: string; province?: string; featuredSlugs?: string[]; limit?: number }): Promise<PublicRestaurantCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
     const liveProvinces = await listLiveDestinationProvinces();
@@ -1758,6 +2025,8 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
         description_th,
         description_en,
         food_type,
+        latitude,
+        longitude,
         ${publicRestaurantCategorySelect},
         provinces!inner (province_name_th, province_name_en),
         content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
@@ -1788,7 +2057,7 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
 
     const { data, error } = await query
       .order("name_th", { ascending: true })
-      .limit(options?.featuredSlugs ? options.featuredSlugs.length : 50);
+      .limit(options?.featuredSlugs ? options.featuredSlugs.length : Math.min(50, Math.max(1, options?.limit ?? 50)));
 
     if (error || !data || data.length === 0) return [];
     const results = (data as DbRecord[]).map((row) => mapRestaurantRow(row));
@@ -1898,6 +2167,8 @@ export type PublicAccommodationCard = {
   thumbnailUrl?: string | null;
   imageAlt: string;
   priceRange?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 function mapAccommodationRow(
@@ -1915,7 +2186,9 @@ function mapAccommodationRow(
     imageUrl: publicManagedImage(row),
     thumbnailUrl: publicManagedImage(row, thumbnailByStoragePath),
     imageAlt: `${name} accommodation image`,
-    priceRange: text(row.price_range)
+    priceRange: text(row.price_range),
+    latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
+    longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),
   };
 }
 
@@ -1989,7 +2262,7 @@ export async function listPublicAccommodationPage(
   }
 }
 
-export async function listPublicAccommodations(options?: { search?: string; province?: string; featuredSlugs?: string[] }): Promise<PublicAccommodationCard[]> {
+export async function listPublicAccommodations(options?: { search?: string; province?: string; featuredSlugs?: string[]; limit?: number }): Promise<PublicAccommodationCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
     const liveProvinces = await listLiveDestinationProvinces();
@@ -2009,6 +2282,8 @@ export async function listPublicAccommodations(options?: { search?: string; prov
         description_en,
         accommodation_type,
         price_range,
+        latitude,
+        longitude,
         provinces!inner (province_name_th, province_name_en),
         content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
       `)
@@ -2028,7 +2303,7 @@ export async function listPublicAccommodations(options?: { search?: string; prov
 
     const { data, error } = await query
       .order("name_th", { ascending: true })
-      .limit(options?.featuredSlugs ? options.featuredSlugs.length : 50);
+      .limit(options?.featuredSlugs ? options.featuredSlugs.length : Math.min(50, Math.max(1, options?.limit ?? 50)));
 
     if (error || !data || data.length === 0) return [];
     const results = (data as DbRecord[]).map((row) => mapAccommodationRow(row));
