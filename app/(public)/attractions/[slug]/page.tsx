@@ -107,6 +107,16 @@ export default async function AttractionDetailPage({ params }: AttractionDetailP
                 />
               ) : null}
 
+              {data.foodAndDrink.length > 0 ? (
+                <AttractionCardsRow
+                  id="food"
+                  title={sectionLabel("food_drink")}
+                  items={data.foodAndDrink}
+                  viewAllText="ดูร้านอาหารทั้งหมด"
+                  linkPrefix="/restaurants"
+                />
+              ) : null}
+
               {data.whereToStay.length > 0 ? (
                 <AttractionCardsRow
                   id="where-to-stay"
@@ -117,13 +127,13 @@ export default async function AttractionDetailPage({ params }: AttractionDetailP
                 />
               ) : null}
 
-              {data.foodAndDrink.length > 0 ? (
+              {data.articles.length > 0 ? (
                 <AttractionCardsRow
-                  id="food"
-                  title={sectionLabel("food_drink")}
-                  items={data.foodAndDrink}
-                  viewAllText="ดูร้านอาหารทั้งหมด"
-                  linkPrefix="/restaurants"
+                  id="articles"
+                  title={sectionLabel("articles")}
+                  items={data.articles}
+                  viewAllText="ดูเรื่องราวทั้งหมด"
+                  linkPrefix="/stories"
                 />
               ) : null}
 
@@ -169,15 +179,6 @@ export default async function AttractionDetailPage({ params }: AttractionDetailP
                 </div>
               </AttractionReviews>
 
-              {data.articles.length > 0 ? (
-                <AttractionCardsRow
-                  id="articles"
-                  title={sectionLabel("articles")}
-                  items={data.articles}
-                  viewAllText="ดูเรื่องราวทั้งหมด"
-                  linkPrefix="/stories"
-                />
-              ) : null}
             </div>
           </div>
 

@@ -30,6 +30,7 @@ describe("attraction section navigation", () => {
         description: "A public overview",
         thingsToDo: [{ id: "a" }],
         foodAndDrink: [{ id: "r" }],
+        whereToStay: [{ id: "h" }],
         travelTips: ["Bring water"],
         articles: [{ id: "s" }],
       },
@@ -40,10 +41,11 @@ describe("attraction section navigation", () => {
       "overview",
       "things_to_do",
       "food_drink",
+      "where_to_stay",
+      "articles",
       "travel_tips",
       "how_to_get_there",
       "reviews",
-      "articles",
     ]);
   });
 

@@ -55,6 +55,13 @@ export const ATTRACTION_SECTION_DEFINITIONS: AttractionSectionDefinition[] = [
     shortLabels: { th: "กิจกรรม", en: "Things" },
   },
   {
+    key: "food_drink",
+    id: "food",
+    required: false,
+    labels: { th: "อาหารและเครื่องดื่ม", en: "Food & Drink" },
+    shortLabels: { th: "อาหาร", en: "Food" },
+  },
+  {
     key: "where_to_stay",
     id: "where-to-stay",
     required: false,
@@ -62,11 +69,11 @@ export const ATTRACTION_SECTION_DEFINITIONS: AttractionSectionDefinition[] = [
     shortLabels: { th: "ที่พัก", en: "Stay" },
   },
   {
-    key: "food_drink",
-    id: "food",
+    key: "articles",
+    id: "articles",
     required: false,
-    labels: { th: "อาหารและเครื่องดื่ม", en: "Food & Drink" },
-    shortLabels: { th: "อาหาร", en: "Food" },
+    labels: { th: "บทความแนะนำ", en: "Recommended Articles" },
+    shortLabels: { th: "บทความ", en: "Articles" },
   },
   {
     key: "travel_tips",
@@ -88,13 +95,6 @@ export const ATTRACTION_SECTION_DEFINITIONS: AttractionSectionDefinition[] = [
     required: false,
     labels: { th: "รีวิว", en: "Reviews" },
     shortLabels: { th: "รีวิว", en: "Reviews" },
-  },
-  {
-    key: "articles",
-    id: "articles",
-    required: false,
-    labels: { th: "บทความแนะนำ", en: "Recommended Articles" },
-    shortLabels: { th: "บทความ", en: "Articles" },
   },
 ];
 
