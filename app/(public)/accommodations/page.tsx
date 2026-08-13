@@ -5,9 +5,11 @@ import {
   AccommodationFilterBar,
 } from "@/components/accommodations/AccommodationFilterBar";
 import { AccommodationDirectoryHero } from "@/components/accommodations/AccommodationDirectoryHero";
+import {
+  AccommodationFeaturedResult,
+  AccommodationResultCard,
+} from "@/components/accommodations/AccommodationResultCard";
 import { AccommodationTypeRail } from "@/components/accommodations/AccommodationTypeRail";
-import { AccommodationDiscoveryCard } from "@/components/hospitality/HospitalityDiscoveryCard";
-import { HospitalityFeaturedResult } from "@/components/hospitality/HospitalityFeaturedResult";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicButton } from "@/components/public/PublicButton";
 import { PublicCtaBand } from "@/components/public/PublicCtaBand";
@@ -17,7 +19,6 @@ import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicSt
 import { PublicDirectoryToolbar } from "@/components/public/directory/PublicDirectoryToolbar";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
 import { selectFeaturedHospitality } from "@/lib/hospitality/featured-result";
-import { accommodationTypeLabel } from "@/lib/hospitality/labels";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import {
   listPublicAccommodationPage,
@@ -221,26 +222,13 @@ export default async function AccommodationsPage({
             <>
               {featuredAccommodation && featuredAccommodation.imageUrl ? (
                 <div className="mt-6">
-                  <HospitalityFeaturedResult
-                    href={`/accommodations/${featuredAccommodation.slug}`}
-                    label="ที่พักแนะนำ"
-                    name={featuredAccommodation.name}
-                    province={featuredAccommodation.province}
-                    category={accommodationTypeLabel(featuredAccommodation.accommodationType)}
-                    description={featuredAccommodation.description}
-                    imageUrl={featuredAccommodation.imageUrl}
-                    imageAlt={featuredAccommodation.imageAlt}
-                    actionLabel="ดูข้อมูลที่พัก"
-                    detail={featuredAccommodation.priceRange || "ยังไม่ระบุช่วงราคา"}
-                    detailLabel="ช่วงราคา"
-                    trustLabel="ข้อมูลที่ผู้ดูแลเผยแพร่แล้ว"
-                  />
+                  <AccommodationFeaturedResult accommodation={featuredAccommodation} />
                 </div>
               ) : null}
               {standardAccommodations.length > 0 ? (
                 <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {standardAccommodations.map((accommodation, index) => (
-                    <AccommodationDiscoveryCard
+                    <AccommodationResultCard
                       key={accommodation.slug}
                       accommodation={accommodation}
                       priority={!featuredAccommodation && index === 0}

@@ -47,7 +47,7 @@ export function AttractionQuickCreate({
 
   if (state?.success && state.data?.id) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-[var(--admin-radius-panel)] border border-slate-200 bg-white p-6 text-center">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-teal border-t-transparent"></div>
         <h2 className="mt-6 text-xl font-bold text-slate-800">กำลังเตรียมหน้าต่างแก้ไข (Visual Editor)...</h2>
         <p className="mt-2 text-sm text-slate-500">กรุณารอสักครู่ ระบบกำลังพาท่านไปสู่โหมดแก้ไขแบบเห็นภาพจริง</p>
@@ -60,13 +60,13 @@ export function AttractionQuickCreate({
   }
 
   return (
-    <form action={formAction} className="grid gap-6 pb-20 lg:grid-cols-[minmax(0,1fr)_340px] lg:[&>div:last-child]:col-span-2">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="mb-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-teal/10 text-teal">
+    <form action={formAction} className="grid gap-5 pb-20 lg:grid-cols-[minmax(0,1fr)_320px] lg:[&>div:last-child]:col-span-2">
+      <div className="rounded-[var(--admin-radius-panel)] border border-slate-200 bg-white p-4 sm:p-6 lg:p-8">
+        <div className="mb-7 border-b border-slate-200 pb-6 text-left">
+          <div className="flex h-14 w-14 items-center justify-center rounded-[var(--admin-radius-panel)] bg-[#fff5f1] text-[var(--admin-accent-strong)]">
             <FileText size={32} weight="duotone" />
           </div>
-          <h2 className="mt-4 text-2xl font-bold text-slate-800">สร้างสถานที่ท่องเที่ยวใหม่</h2>
+          <h2 className="mt-4 text-2xl font-black text-[#202020]">สร้างสถานที่ท่องเที่ยวใหม่</h2>
           <p className="mt-2 text-sm text-slate-500">
             กรอกข้อมูลพื้นฐานเพื่อสร้างฉบับร่าง (Draft) ก่อน จากนั้นระบบจะพาท่านไปยัง Visual Editor เพื่อใส่รูปและเนื้อหา
           </p>
@@ -78,7 +78,7 @@ export function AttractionQuickCreate({
           <label className="block">
             <span className="text-sm font-bold text-slate-700">ชื่อสถานที่ (ภาษาไทย) *</span>
             <input
-              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+              className="mt-2 min-h-11 w-full rounded-[var(--admin-radius-control)] border border-slate-300 px-4 py-3 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm"
               name="nameTh"
               maxLength={255}
               placeholder="เช่น บ่อน้ำร้อนเบตง"
@@ -90,7 +90,7 @@ export function AttractionQuickCreate({
           <label className="block">
             <span className="text-sm font-bold text-slate-700">จังหวัด (Province) *</span>
             <select
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+              className="mt-2 min-h-11 w-full rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm"
               name="provinceId"
               required
             >
@@ -107,7 +107,7 @@ export function AttractionQuickCreate({
           <label className="block">
             <span className="text-sm font-bold text-slate-700">หมวดหมู่ (Attraction Category)</span>
             <select
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+              className="mt-2 min-h-11 w-full rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm"
               name="attractionTypeId"
             >
               <option value="">เลือกภายหลังใน Visual Editor (Choose later)</option>
@@ -124,7 +124,7 @@ export function AttractionQuickCreate({
               <span className="text-sm font-bold text-slate-700">ลิงก์ URL (Slug) *</span>
             </div>
             <input
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition-all focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10"
+              className="min-h-11 w-full rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-4 py-3 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm"
               name="slug"
               value={slug}
               onChange={handleSlugChange}
@@ -163,7 +163,7 @@ export function AttractionQuickCreate({
       </div>
 
       <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-[var(--admin-radius-panel)] border border-slate-200 bg-white p-5">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-coral">ขั้นตอนต่อไป</p>
           <h3 className="mt-2 text-base font-black text-slate-900">สร้างฉบับร่างก่อน ค่อยจัดหน้าทีหลัง</h3>
           <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
@@ -175,8 +175,8 @@ export function AttractionQuickCreate({
             ].map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.text} className="flex gap-3 rounded-2xl bg-slate-50 p-3">
-                  <Icon className="mt-0.5 shrink-0 text-teal" size={18} weight="duotone" />
+                <div key={item.text} className="flex gap-3 border-b border-slate-100 py-3 last:border-0">
+                  <Icon className="mt-0.5 shrink-0 text-[var(--admin-accent-strong)]" size={18} weight="duotone" />
                   <span>{item.text}</span>
                 </div>
               );
@@ -184,7 +184,7 @@ export function AttractionQuickCreate({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-5">
+        <div className="rounded-[var(--admin-radius-panel)] border border-emerald-200 bg-emerald-50 p-5">
           <div className="flex gap-3">
             <CheckCircle className="mt-0.5 shrink-0 text-emerald-700" size={20} weight="fill" />
             <p className="text-sm font-bold leading-6 text-emerald-900">

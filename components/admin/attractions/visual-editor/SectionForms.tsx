@@ -17,8 +17,8 @@ type SectionFormProps = {
   onClose: () => void;
 };
 
-const inputClass = "mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15";
-const textareaClass = "mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15";
+const inputClass = "mt-2 min-h-11 w-full rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm";
+const textareaClass = "mt-2 w-full rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm";
 const helpClass = "mt-1 text-xs leading-5 text-slate-500";
 
 function useAttractionSectionAction(attraction: AdminAttractionRow, onClose: () => void) {

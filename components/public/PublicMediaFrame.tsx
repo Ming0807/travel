@@ -8,6 +8,8 @@ const aspectClasses = {
   square: "aspect-square",
   portrait: "aspect-[3/4]",
   wide: "aspect-[16/7]",
+  featured: "aspect-[16/9] lg:h-full lg:min-h-[290px] lg:aspect-auto",
+  directory: "aspect-[16/10] sm:aspect-[16/9]",
   detail: "aspect-[4/3] sm:aspect-[2/1] lg:aspect-[16/7]",
 } as const;
 

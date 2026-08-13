@@ -2,7 +2,22 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { AccommodationDirectoryHero } from "@/components/accommodations/AccommodationDirectoryHero";
+import {
+  AccommodationFeaturedResult,
+  AccommodationResultCard,
+} from "@/components/accommodations/AccommodationResultCard";
 import { AccommodationTypeRail } from "@/components/accommodations/AccommodationTypeRail";
+
+const accommodation = {
+  slug: "camp-yala",
+  name: "เดอะ แคมป์ ยะลา",
+  province: "ยะลา",
+  accommodationType: "Resort",
+  description: "รีสอร์ตท่ามกลางธรรมชาติ เหมาะสำหรับการพักผ่อนหลังเดินทาง",
+  imageUrl: "/site-media/accommodations/camp-yala.webp",
+  imageAlt: "ห้องพักเดอะ แคมป์ ยะลา",
+  priceRange: "1,600 - 3,500 บาท/คืน",
+};
 
 describe("accommodation directory UI", () => {
   it("renders a truthful editorial hero from managed accommodation media", () => {
@@ -47,6 +62,31 @@ describe("accommodation directory UI", () => {
     );
     expect(screen.getByRole("link", { name: "รีสอร์ต" }).getAttribute("href")).toContain(
       "accommodationType=Resort",
+    );
+  });
+
+  it("renders the featured result as verified accommodation information without booking claims", () => {
+    render(<AccommodationFeaturedResult accommodation={accommodation} />);
+
+    expect(screen.getByRole("heading", { name: accommodation.name })).toBeInTheDocument();
+    expect(screen.getByText("ข้อมูลโดยผู้ดูแล")).toBeInTheDocument();
+    expect(screen.getByText(accommodation.priceRange)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ดูข้อมูลที่พัก/ })).toHaveAttribute(
+      "href",
+      "/accommodations/camp-yala",
+    );
+    expect(screen.queryByText(/จองเลย|ห้องว่าง/)).not.toBeInTheDocument();
+  });
+
+  it("renders a compact accommodation comparison card with a visible mobile action", () => {
+    render(<AccommodationResultCard accommodation={accommodation} />);
+
+    expect(screen.getByRole("heading", { name: accommodation.name })).toBeInTheDocument();
+    expect(screen.getByText("รีสอร์ต")).toBeInTheDocument();
+    expect(screen.getByText(accommodation.priceRange)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: `ดูรายละเอียด ${accommodation.name}` })).toHaveAttribute(
+      "href",
+      "/accommodations/camp-yala",
     );
   });
 });

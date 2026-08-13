@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Drawer } from "@/components/admin/Drawer";
 import { EmptyState } from "@/components/admin/EmptyState";
+import { EditableBlock } from "@/components/admin/forms/EditableBlock";
 
 const foundationFiles = [
   "components/admin/AdminShell.tsx",
@@ -94,6 +95,7 @@ describe("admin drawer accessibility", () => {
 
     const dialog = screen.getByRole("dialog", { name: "แก้ไขข้อมูล" });
     expect(dialog.parentElement?.parentElement).toBe(document.body);
+    expect(dialog.className).toContain("h-[100dvh]");
     expect(document.body).toHaveStyle({ overflow: "hidden" });
     await waitFor(() => expect(screen.getByRole("button", { name: "ปิด แก้ไขข้อมูล" })).toHaveFocus());
 
@@ -102,5 +104,17 @@ describe("admin drawer accessibility", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(document.body.style.overflow).toBe("");
     expect(trigger).toHaveFocus();
+  });
+
+  it("keeps edit actions visible and touch-sized on small screens", () => {
+    render(
+      <EditableBlock id="gallery" label="รูปภาพ" onEdit={() => undefined}>
+        <div>ตัวอย่างรูปภาพ</div>
+      </EditableBlock>,
+    );
+
+    const editButton = screen.getByRole("button", { name: "แก้ไข รูปภาพ" });
+    expect(editButton).toHaveClass("min-h-11");
+    expect(editButton.parentElement).toHaveClass("opacity-100");
   });
 });

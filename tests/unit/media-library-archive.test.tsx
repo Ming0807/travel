@@ -411,8 +411,7 @@ describe("MediaLibrary archive/unarchive flow", () => {
       expect(screen.getByText("hero-beach.jpg")).toBeInTheDocument();
     });
 
-    const card = screen.getByText("hero-beach.jpg").closest("article");
-    await userEvent.click(card!);
+    await userEvent.click(screen.getByRole("button", { name: "เลือกภาพ hero-beach.jpg" }));
 
     expect(onSelect).toHaveBeenCalledWith(
       "https://example.com/storage/hero-beach.jpg",

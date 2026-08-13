@@ -605,7 +605,17 @@ function MediaForm({
 
           {selectedMediaType.needsUpload ? (
             <div>
-              <span className="text-sm font-black text-slate-700">ไฟล์รูปภาพ</span>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-sm font-black text-slate-700">ไฟล์รูปภาพ</span>
+                <button
+                  type="button"
+                  onClick={() => setIsMediaPickerOpen(true)}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--admin-radius-control)] border border-[var(--admin-accent)] bg-white px-3 text-sm font-black text-[var(--admin-accent-strong)] transition-colors hover:bg-[#fff5f1]"
+                >
+                  <Images size={17} weight="bold" aria-hidden="true" />
+                  เลือกจากคลังภาพ
+                </button>
+              </div>
               <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center transition hover:border-[#0A6B62] hover:bg-[#E6F4EF]">
                 <UploadSimple className="text-[#0A6B62]" size={30} weight="bold" />
                 <span className="mt-2 text-sm font-black text-slate-800">
@@ -830,7 +840,7 @@ function MediaForm({
         </aside>
       </div>
 
-      <div className="mt-5 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+      <div className="sticky bottom-0 z-20 -mx-4 mt-5 flex flex-col gap-2 border-t border-slate-200 bg-white/98 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:mx-0 sm:flex-row sm:justify-end sm:px-0 sm:pb-4">
         <button
           type="button"
           onClick={onClose}
@@ -851,6 +861,12 @@ function MediaForm({
         isOpen={isMediaPickerOpen}
         onClose={() => setIsMediaPickerOpen(false)}
         onSelect={(url) => setStoragePath(url)}
+        onSelectAsset={(asset) => {
+          setStoragePath(asset.storage_path || asset.url);
+          setUploadError(null);
+          setUploadSuccess(false);
+        }}
+        title="เลือกภาพสำหรับสถานที่"
       />
     </form>
   );

@@ -80,8 +80,8 @@ interface AttractionVisualEditorProps {
 
 function MissingImageState({ title, description }: { title: string; description: string }) {
   return (
-    <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-amber-300 bg-amber-50 px-6 py-12 text-center">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm">
+    <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[var(--admin-radius-panel)] border-2 border-dashed border-amber-300 bg-amber-50 px-6 py-12 text-center">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[var(--admin-radius-panel)] bg-white text-amber-600 shadow-sm">
         <ImageIcon size={28} weight="duotone" />
       </div>
       <h3 className="text-lg font-black text-slate-800">{title}</h3>
@@ -102,7 +102,7 @@ function ReadinessState({
   onAction?: () => void;
 }) {
   return (
-    <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 p-8">
+    <div className="rounded-[var(--admin-radius-panel)] border-2 border-dashed border-slate-200 bg-slate-50 p-5 sm:p-8">
       <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">ข้อมูลยังไม่ครบ (Missing content)</p>
       <h3 className="mt-2 text-lg font-black text-slate-800">{title}</h3>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{description}</p>
@@ -110,7 +110,7 @@ function ReadinessState({
         <button
           type="button"
           onClick={onAction}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-strong)]"
         >
           <PencilSimple size={16} />
           {actionLabel}
@@ -144,7 +144,7 @@ function PageMap({
 
   return (
     <section className="mx-auto mt-6 max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-[var(--admin-radius-panel)] border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.16em] text-coral">แผนผังส่วนประกอบหน้าเว็บ (Public Page Map)</p>
@@ -153,18 +153,18 @@ function PageMap({
               การ์ดแต่ละใบแสดงสถานะของข้อมูลในหน้าสาธารณะ ควรแก้ไขคำเตือนต่างๆ ให้เรียบร้อยก่อนกดเผยแพร่หรือแชร์ลิงก์ให้ผู้ใช้งาน
             </p>
           </div>
-          <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-700">
+          <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-700">
             พร้อมใช้งาน {completeCount}/{items.length} ส่วน
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-4 grid auto-cols-[minmax(15rem,82vw)] grid-flow-col gap-3 overflow-x-auto pb-2 md:auto-cols-auto md:grid-flow-row md:grid-cols-2 md:overflow-visible md:pb-0 xl:grid-cols-4">
           {items.map((item) => {
             const card = (
               <div
-                className={`h-full rounded-2xl border p-3 text-left transition ${
+                className={`h-full rounded-[var(--admin-radius-panel)] border p-3 text-left transition ${
                   activeSection === item.targetSection
-                    ? "border-teal bg-teal/5"
+                    ? "border-[var(--admin-accent)] bg-[#fff5f1]"
                     : item.complete
                       ? "border-emerald-100 bg-emerald-50/60 hover:bg-emerald-50"
                       : "border-amber-200 bg-amber-50 hover:bg-amber-100/70"
@@ -180,7 +180,7 @@ function PageMap({
                     <p className="text-sm font-black text-slate-900">{item.label}</p>
                     <p className="mt-0.5 text-xs font-bold uppercase tracking-wide text-slate-500">{item.publicSection}</p>
                     <p className="mt-2 text-xs leading-5 text-slate-600">{item.help}</p>
-                    <span className="mt-3 inline-flex text-xs font-black text-teal">{item.actionLabel}</span>
+                    <span className="mt-3 inline-flex text-xs font-black text-[var(--admin-accent-strong)]">{item.actionLabel}</span>
                   </div>
                 </div>
               </div>
@@ -188,7 +188,7 @@ function PageMap({
 
             if (item.href) {
               return (
-                <Link key={item.id} href={item.href} className="block focus:outline-none focus:ring-2 focus:ring-teal/30 rounded-2xl">
+                <Link key={item.id} href={item.href} className="block rounded-[var(--admin-radius-panel)] focus:outline-none focus:ring-2 focus:ring-[var(--admin-accent)]/30">
                   {card}
                 </Link>
               );
@@ -196,7 +196,7 @@ function PageMap({
 
             if (item.targetSection) {
               return (
-                <button key={item.id} type="button" onClick={() => onOpenSection(item.targetSection!)} className="text-left">
+                <button key={item.id} type="button" onClick={() => onOpenSection(item.targetSection!)} className="min-h-11 text-left">
                   {card}
                 </button>
               );
@@ -344,15 +344,15 @@ export function AttractionVisualEditor({
   ];
 
   return (
-    <div className="relative min-h-screen bg-white pb-20">
+    <div className="admin-app relative min-h-screen bg-[var(--admin-canvas)] pb-20 text-[var(--admin-ink)]">
       {/* Editor Toolbar */}
-      <div className="sticky top-0 z-30 flex flex-col gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="sticky top-0 z-30 flex flex-col gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex w-full items-center gap-3 lg:w-auto">
-          <Link href="/admin/attractions" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+          <Link href="/admin/attractions" aria-label="กลับไปรายการสถานที่" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--admin-radius-control)] border border-slate-200 bg-white text-slate-600 transition hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-strong)]">
             <ArrowLeft size={20} weight="bold" />
           </Link>
           <div className="min-w-0">
-            <h1 className="truncate text-base sm:text-lg font-black text-slate-800">Visual Editor: {name}</h1>
+            <h1 className="truncate text-base font-black text-[#202020] sm:text-lg">แก้ไขหน้าสถานที่: {name}</h1>
             <p className="truncate text-xs font-bold text-slate-500">คุณกำลังแก้ไขหน้าตาแบบเดียวกับที่แสดงผลจริง</p>
           </div>
         </div>
@@ -360,7 +360,7 @@ export function AttractionVisualEditor({
           <Link
             href={`/attractions/${attraction.slug}`}
             target="_blank"
-            className="inline-flex flex-1 justify-center sm:flex-none items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:border-[var(--admin-accent)] sm:flex-none"
           >
             <Eye size={16} weight="bold" />
             <span className="hidden sm:inline">Preview public page</span>
@@ -368,34 +368,34 @@ export function AttractionVisualEditor({
           </Link>
           <Link
             href={`/admin/attractions/${attraction.attraction_id}/media`}
-            className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 md:inline-flex"
+            className="hidden min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:border-[var(--admin-accent)] md:inline-flex"
           >
             <ImageIcon size={16} weight="bold" />
             Media
           </Link>
           <Link
             href={`/admin/checkin-codes?attractionId=${attraction.attraction_id}`}
-            className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 xl:inline-flex"
+            className="hidden min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:border-[var(--admin-accent)] xl:inline-flex"
           >
             <QrCode size={16} weight="bold" />
             QR
           </Link>
           <Link
             href={`/admin/attractions/${attraction.attraction_id}/improvements`}
-            className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 xl:inline-flex"
+            className="hidden min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:border-[var(--admin-accent)] xl:inline-flex"
           >
             <ChartLine size={16} weight="bold" />
             แผนปรับปรุง
           </Link>
-          <div className="hidden sm:block rounded-lg bg-teal/10 px-3 py-1.5 text-xs font-bold text-teal">
+          <div className="hidden border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-black text-slate-700 sm:block">
             สถานะ: {attraction.is_published ? "เผยแพร่แล้ว" : "ยังไม่เผยแพร่"}
           </div>
           <button
             type="button"
             onClick={() => setActiveSection("settings")}
-            className="flex-1 justify-center sm:flex-none inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-[var(--admin-radius-control)] bg-[var(--admin-accent)] px-3 py-2 text-sm font-black text-white transition hover:bg-[var(--admin-accent-strong)] sm:flex-none"
           >
-            ตั้งค่า / สถานะ
+            <span className="sm:hidden">ตั้งค่า</span><span className="hidden sm:inline">ตั้งค่า / สถานะ</span>
           </button>
         </div>
       </div>
@@ -714,7 +714,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "header"}
         onClose={() => setActiveSection(null)}
-        title="แก้ไขข้อมูลหลัก (Header)" bodyClassName="p-0"
+        title="แก้ไขข้อมูลหลัก (Header)"
       >
         <HeaderForm attraction={attraction} onClose={() => setActiveSection(null)} />
       </Drawer>
@@ -740,7 +740,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "settings"}
         onClose={() => setActiveSection(null)}
-        title="ตั้งค่าหมวดหมู่และสถานะ" bodyClassName="p-0"
+        title="ตั้งค่าหมวดหมู่และสถานะ"
       >
         <SettingsForm attraction={attraction} provinces={provinces} districts={districts} attractionTypes={attractionTypes} onClose={() => setActiveSection(null)} />
       </Drawer>
@@ -760,7 +760,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "related_attractions"}
         onClose={() => setActiveSection(null)}
-        title="เลือกสถานที่ท่องเที่ยวใกล้เคียง" bodyClassName="p-0"
+        title="เลือกสถานที่ท่องเที่ยวใกล้เคียง"
       >
         <RelatedContentForm
           attractionId={attraction.attraction_id}
@@ -776,7 +776,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "related_accommodations"}
         onClose={() => setActiveSection(null)}
-        title="เลือกที่พักใกล้เคียง" bodyClassName="p-0"
+        title="เลือกที่พักใกล้เคียง"
       >
         <RelatedContentForm
           attractionId={attraction.attraction_id}
@@ -792,7 +792,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "related_restaurants"}
         onClose={() => setActiveSection(null)}
-        title="เลือกร้านอาหารใกล้เคียง" bodyClassName="p-0"
+        title="เลือกร้านอาหารใกล้เคียง"
       >
         <RelatedContentForm
           attractionId={attraction.attraction_id}
@@ -808,7 +808,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "related_stories"}
         onClose={() => setActiveSection(null)}
-        title="เลือกบทความที่เกี่ยวข้อง" bodyClassName="p-0"
+        title="เลือกบทความที่เกี่ยวข้อง"
       >
         <RelatedContentForm
           attractionId={attraction.attraction_id}

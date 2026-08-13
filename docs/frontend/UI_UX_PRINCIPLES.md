@@ -198,6 +198,12 @@ Rules:
   homepage Yala ambience image only when it is explicitly labelled as ambience,
   never as a specific accommodation. Hero copy, image, and CTA remain editable
   in Admin Settings; listing records remain owned by the Accommodation CMS.
+- Accommodation results use one editorial featured record only when a real
+  managed image exists, followed by compact square-edged cards. Every card keeps
+  province, controlled accommodation type, stored price range, and a visible
+  detail action available on touch devices. The UI must not imply booking,
+  availability, rating, or room inventory capabilities that the data does not
+  support.
 
 Leaderboard and profile pages must also distinguish availability states. A
 privacy migration or service failure is not an empty leaderboard. A missing

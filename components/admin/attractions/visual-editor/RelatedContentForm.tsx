@@ -59,7 +59,7 @@ export function RelatedContentForm({
         <div>
           <h3 className="font-bold text-slate-800 mb-2">เนื้อหาที่เลือกให้แสดง ({selectedIds.length})</h3>
           {selectedItems.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+            <div className="rounded-[var(--admin-radius-panel)] border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
               ยังไม่ได้เลือกเนื้อหา (ระบบจะดึงข้อมูลอัตโนมัติตามจังหวัด)
             </div>
           ) : (
@@ -67,8 +67,8 @@ export function RelatedContentForm({
               {selectedItems.map((item, index) => {
                 const isDifferentProvince = item.province && attractionProvince && item.province !== attractionProvince;
                 return (
-                  <div key={item.id} className={`flex items-center justify-between rounded-xl border p-3 shadow-sm ${isDifferentProvince ? 'border-orange-200 bg-orange-50' : 'border-slate-200 bg-white'}`}>
-                    <div className="flex items-center gap-3">
+                  <div key={item.id} className={`flex items-center justify-between gap-3 rounded-[var(--admin-radius-panel)] border p-3 ${isDifferentProvince ? 'border-orange-200 bg-orange-50' : 'border-slate-200 bg-white'}`}>
+                    <div className="flex min-w-0 items-center gap-3">
                       <DotsSixVertical className="text-slate-400 cursor-move" size={16} />
                       <span className="text-xs font-bold text-slate-500 w-4">{index + 1}.</span>
                       <div>
@@ -80,7 +80,7 @@ export function RelatedContentForm({
                         )}
                       </div>
                     </div>
-                    <button type="button" onClick={() => removeItem(item.id)} className="text-red-500 hover:text-red-600 p-1">
+                    <button type="button" onClick={() => removeItem(item.id)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--admin-radius-control)] text-red-500 hover:bg-red-50 hover:text-red-600" aria-label={`นำ ${item.name} ออก`}>
                       <X size={16} weight="bold" />
                     </button>
                   </div>
@@ -96,7 +96,7 @@ export function RelatedContentForm({
             <input 
               type="text" 
               placeholder="ค้นหาชื่อ หรือ จังหวัด..." 
-              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              className="min-h-11 w-full rounded-[var(--admin-radius-control)] border border-slate-300 px-4 py-2 text-base focus:border-[var(--admin-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -106,8 +106,8 @@ export function RelatedContentForm({
             {filteredUnselected.map(item => {
               const isRecommended = item.province && attractionProvince && item.province === attractionProvince;
               return (
-                <div key={item.id} className={`flex items-center justify-between rounded-xl border p-3 ${isRecommended ? 'border-teal/20 bg-teal/5' : 'border-slate-100 bg-slate-50/50'}`}>
-                  <div>
+                <div key={item.id} className={`flex items-center justify-between gap-3 rounded-[var(--admin-radius-panel)] border p-3 ${isRecommended ? 'border-[var(--admin-accent)]/30 bg-[#fff5f1]' : 'border-slate-200 bg-slate-50/50'}`}>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-slate-700">{item.name}</p>
                       {isRecommended && <span className="rounded bg-teal/10 px-1.5 py-0.5 text-xs font-bold text-teal">แนะนำ</span>}
@@ -117,7 +117,7 @@ export function RelatedContentForm({
                   <button 
                     type="button" 
                     onClick={() => toggleItem(item.id)}
-                    className="flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-xs font-bold text-blue-600 shadow-sm border border-slate-200 hover:bg-slate-50"
+                    className="flex min-h-11 shrink-0 items-center gap-1 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-3 py-2 text-xs font-black text-[var(--admin-accent-strong)] hover:border-[var(--admin-accent)]"
                   >
                     <Plus size={12} weight="bold" /> เลือก
                   </button>
@@ -137,7 +137,7 @@ export function RelatedContentForm({
         </div>
       )}
 
-      <AdminSaveBar cancelHref="#" onCancel={onClose} isPending={isPending} submitLabel="บันทึกข้อมูล" />
+      <AdminSaveBar onCancel={onClose} isPending={isPending} submitLabel="บันทึกข้อมูล" />
     </form>
   );
 }

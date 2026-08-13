@@ -11,6 +11,28 @@ import {
 
 export const runtime = "nodejs";
 
+async function proxyImage(url: string | URL, path: string) {
+  const upstream = await fetch(url, {
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!upstream.ok) throw new Error("MEDIA_PREVIEW_UPSTREAM_FAILED");
+
+  const contentType = resolveSafeImageContentType(
+    upstream.headers.get("content-type"),
+    path,
+  );
+  if (!contentType) throw new Error("MEDIA_PREVIEW_INVALID_CONTENT_TYPE");
+
+  return new NextResponse(await upstream.arrayBuffer(), {
+    status: 200,
+    headers: {
+      "Content-Type": contentType,
+      "Cache-Control": "private, max-age=300",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
 export async function GET(req: NextRequest) {
   try {
     await requireAdmin(); // Any admin can preview media
@@ -26,30 +48,14 @@ export async function GET(req: NextRequest) {
     if (isPublicContentMediaReference(path)) {
       const storagePath = normalizePublicContentMediaReference(path);
       const signedUrl = await createPrivateFileSignedUrl("visit-photos", storagePath, 60 * 60);
-      return NextResponse.redirect(signedUrl);
+      return proxyImage(signedUrl, storagePath);
     }
 
     try {
       const mediaUrl = siteMediaImageUrl(normalizeSiteMediaStoragePath(path));
       if (mediaUrl) {
         const resolvedMediaUrl = new URL(mediaUrl, req.url);
-        const upstream = await fetch(resolvedMediaUrl, {
-          signal: AbortSignal.timeout(8000),
-        });
-        if (!upstream.ok) throw new Error("MEDIA_PREVIEW_UPSTREAM_FAILED");
-        const contentType = resolveSafeImageContentType(
-          upstream.headers.get("content-type"),
-          path
-        );
-        if (!contentType) throw new Error("MEDIA_PREVIEW_INVALID_CONTENT_TYPE");
-        return new NextResponse(await upstream.arrayBuffer(), {
-          status: 200,
-          headers: {
-            "Content-Type": contentType,
-            "Cache-Control": "private, max-age=300",
-            "X-Content-Type-Options": "nosniff",
-          },
-        });
+        return proxyImage(resolvedMediaUrl, path);
       }
     } catch {
       // Not a public site-media path; try private storage below.

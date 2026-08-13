@@ -2,7 +2,8 @@
 
 import { X } from "@phosphor-icons/react";
 import { MediaLibrary } from "./MediaLibrary";
-import { useEffect } from "react";
+import { useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 
 export type MediaPickerAsset = {
   id: string;
@@ -25,41 +26,57 @@ type MediaPickerModalProps = {
 };
 
 export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectAsset, title = "Select Image", showArchived = false }: MediaPickerModalProps) {
-  
-  // Prevent body scroll when open
+  const titleId = useId();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus({ preventScroll: true });
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
     };
-  }, [isOpen]);
+    window.addEventListener("keydown", handleKeyDown);
 
-  if (!isOpen) return null;
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen, onClose]);
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white sm:rounded-2xl shadow-2xl w-full h-[100dvh] sm:h-[85vh] max-w-6xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+  if (!isOpen || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div className="admin-app fixed inset-0 z-[100] flex items-stretch justify-center bg-slate-950/65 sm:items-center sm:p-6">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="flex h-[100dvh] w-full max-w-6xl flex-col overflow-hidden bg-white shadow-2xl sm:h-[min(88vh,900px)] sm:rounded-[var(--admin-radius-panel)]"
+      >
         
         {/* Header */}
-        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:py-4">
           <div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900">{title}</h2>
+            <h2 id={titleId} className="text-lg font-black text-[#202020] sm:text-xl">{title}</h2>
             <p className="mt-0.5 text-xs text-slate-500 hidden sm:block">เลือกภาพจากคลังเพื่อใช้งานซ้ำ หรืออัปโหลดใหม่เพื่อช่วยประหยัดพื้นที่จัดเก็บ</p>
           </div>
           <button
+            ref={closeButtonRef}
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+            aria-label={`ปิด ${title}`}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--admin-radius-control)] text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#202020] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)]"
           >
-            <X size={20} weight="bold" />
+            <X size={20} weight="bold" aria-hidden="true" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden relative bg-slate-50">
+        <div className="relative min-h-0 flex-1 overflow-hidden bg-slate-50 pb-[env(safe-area-inset-bottom)]">
           <MediaLibrary 
             mode="pick" 
             showArchived={showArchived}
@@ -82,6 +99,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectAsset, tit
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

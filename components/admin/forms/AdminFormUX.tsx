@@ -162,11 +162,11 @@ export function AdminSaveBar({
   onSubmit,
 }: AdminSaveBarProps) {
   return (
-    <div className="sticky bottom-0 z-10 flex flex-col gap-3 border-t border-slate-200 bg-white/95 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-end">
+    <div className="sticky bottom-0 z-20 -mx-4 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:-mx-6 sm:flex-row sm:items-center sm:justify-end sm:px-6 sm:pb-4">
       {secondary ? <div className="sm:mr-auto">{secondary}</div> : null}
       {cancelHref ? (
         <Link
-          className="min-h-11 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-center text-sm font-black text-slate-700 transition hover:bg-slate-50"
+          className="min-h-11 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-5 py-2.5 text-center text-sm font-black text-slate-700 transition hover:bg-slate-50"
           href={cancelHref}
         >
           ยกเลิก
@@ -175,7 +175,7 @@ export function AdminSaveBar({
         <button
           type="button"
           onClick={onCancel}
-          className="min-h-11 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+          className="min-h-11 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-5 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-50"
         >
           ยกเลิก
         </button>
@@ -183,7 +183,7 @@ export function AdminSaveBar({
       <button
         disabled={isPending || disabled}
         onClick={onSubmit}
-        className="min-h-11 rounded-lg bg-[#073F37] px-6 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50"
+        className="min-h-11 rounded-[var(--admin-radius-control)] bg-[var(--admin-accent)] px-6 py-2.5 text-sm font-black text-white transition hover:bg-[var(--admin-accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
         type={onSubmit ? "button" : "submit"}
       >
         {isPending ? pendingLabel : submitLabel}

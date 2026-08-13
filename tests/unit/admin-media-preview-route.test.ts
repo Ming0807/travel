@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   requireAdmin: vi.fn(),
   createPrivateFileSignedUrl: vi.fn(),
   normalizeSiteMediaStoragePath: vi.fn(),
+  isPublicContentMediaReference: vi.fn(),
+  normalizePublicContentMediaReference: vi.fn(),
   siteMediaImageUrl: vi.fn(),
   resolveSafeImageContentType: vi.fn(),
 }));
@@ -14,8 +16,8 @@ vi.mock("@/lib/storage/private-files", () => ({
   createPrivateFileSignedUrl: mocks.createPrivateFileSignedUrl,
 }));
 vi.mock("@/lib/media/storage-paths", () => ({
-  isPublicContentMediaReference: () => false,
-  normalizePublicContentMediaReference: vi.fn(),
+  isPublicContentMediaReference: mocks.isPublicContentMediaReference,
+  normalizePublicContentMediaReference: mocks.normalizePublicContentMediaReference,
   normalizeSiteMediaStoragePath: mocks.normalizeSiteMediaStoragePath,
   siteMediaImageUrl: mocks.siteMediaImageUrl,
   resolveSafeImageContentType: mocks.resolveSafeImageContentType,
@@ -59,5 +61,40 @@ describe("admin media preview route", () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
     expect(mocks.createPrivateFileSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("proxies legacy Cloudinary content instead of redirecting next/image", async () => {
+    const cloudinaryReference =
+      "cloudinary:image:authenticated:v1779702853:webp:southern-border-tourism/content-media/attraction/38/hero";
+    mocks.requireAdmin.mockResolvedValue({ adminId: "admin-1" });
+    mocks.isPublicContentMediaReference.mockReturnValue(true);
+    mocks.normalizePublicContentMediaReference.mockReturnValue(cloudinaryReference);
+    mocks.createPrivateFileSignedUrl.mockResolvedValue("https://cloudinary.example/signed-image");
+    mocks.resolveSafeImageContentType.mockReturnValue("image/webp");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(new Uint8Array([1, 2, 3]), {
+          status: 200,
+          headers: { "content-type": "image/webp" },
+        })
+      )
+    );
+    const request = {
+      url: `http://127.0.0.1:3000/api/admin/media/preview?bucket=visit-photos&path=${encodeURIComponent(cloudinaryReference)}`,
+      nextUrl: new URL(
+        `http://127.0.0.1:3000/api/admin/media/preview?bucket=visit-photos&path=${encodeURIComponent(cloudinaryReference)}`
+      ),
+    } as unknown as NextRequest;
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/webp");
+    expect(response.headers.get("cache-control")).toBe("private, max-age=300");
+    expect(fetch).toHaveBeenCalledWith(
+      "https://cloudinary.example/signed-image",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
   });
 });

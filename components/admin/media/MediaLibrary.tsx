@@ -122,6 +122,59 @@ function EntityTypeLabel({ type }: { type: string }) {
   return <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${info.badge}`}>{info.label}</span>;
 }
 
+function MediaPickerAssetCard({
+  asset,
+  onSelect,
+}: {
+  asset: MediaAsset;
+  onSelect?: (url: string, asset?: MediaAsset) => void;
+}) {
+  const archived = asset.lifecycle_status === "archived";
+  const readiness = getAssetReadiness(asset);
+
+  return (
+    <article className={`overflow-hidden rounded-[var(--admin-radius-panel)] border bg-white ${archived ? "border-slate-200 opacity-60 saturate-0" : "border-slate-200"}`}>
+      <button
+        type="button"
+        disabled={archived}
+        onClick={() => onSelect?.(asset.url, asset)}
+        aria-label={`เลือกภาพ ${asset.file_name}`}
+        className="group block w-full text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--admin-accent)] disabled:cursor-not-allowed"
+      >
+        <span className="relative block aspect-[16/10] bg-slate-100">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={asset.thumbnail_url ?? asset.url}
+            alt=""
+            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            loading="lazy"
+          />
+          <span className="absolute left-2 top-2 flex flex-wrap gap-1.5" aria-hidden="true">
+            <span className={`px-2 py-1 text-[11px] font-black ${readiness.tone === "success" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>
+              {readiness.label}
+            </span>
+            <span className="bg-white/95 px-2 py-1 text-[11px] font-black text-slate-700">
+              {asset.category}
+            </span>
+          </span>
+        </span>
+        <span className="block p-3 sm:p-4">
+          <span className="block truncate text-sm font-black text-[#202020]" title={asset.file_name}>
+            {asset.file_name}
+          </span>
+          <span className="mt-1 block truncate text-xs text-slate-500">
+            {asset.mime_type.replace("image/", "").toUpperCase()} · {formatSize(asset.size_bytes)}
+          </span>
+          <span className="mt-3 flex min-h-11 items-center justify-center gap-2 bg-[var(--admin-accent)] px-3 text-sm font-black text-white transition-colors group-hover:bg-[var(--admin-accent-strong)]">
+            <CheckCircle size={17} weight="fill" aria-hidden="true" />
+            เลือกภาพนี้
+          </span>
+        </span>
+      </button>
+    </article>
+  );
+}
+
 // ─── References Dialog ──────────────────────────────────────────────────────
 
 function ReferencesDialog({
@@ -767,7 +820,7 @@ export function MediaLibrary({
         </div>
       ) : null}
 
-      <div className={mode === "pick" ? "flex-1 overflow-y-auto p-5" : "p-5"}>
+      <div className={mode === "pick" ? "flex-1 overscroll-contain overflow-y-auto p-3 sm:p-5" : "p-5"}>
         {!isServerManaged && loading ? (
           <div className="flex h-[200px] items-center justify-center" role="status" aria-label="Loading media assets">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#0A6B62]" />
@@ -782,11 +835,18 @@ export function MediaLibrary({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className={mode === "pick"
+            ? "grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-4"
+            : "grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-4"
+          }>
             {visibleAssets.map((asset) => {
               const readiness = getAssetReadiness(asset);
               const isPickMode = mode === "pick";
               const archived = isArchived(asset);
+
+              if (isPickMode) {
+                return <MediaPickerAssetCard key={asset.id} asset={asset} onSelect={onSelect} />;
+              }
 
               return (
                 <article

@@ -174,6 +174,11 @@ category labels are Thai-first while category slugs remain stable for server
 filtering. Mobile filters use a
 single disclosure control and preserve the same GET query contract as desktop.
 
+The accommodation result area uses an orange/white/black editorial hierarchy:
+one verified featured result when eligible, then a responsive compact-card
+grid. The hero remains an independently managed directory surface; redesigning
+the result grid must not replace its content or settings contract.
+
 Admin category management lives at `/admin/restaurants/categories`. One restaurant may have multiple ordered categories. Draft records may be uncategorized, but publishing requires at least one active category. Categories referenced by restaurants are archived rather than hard-deleted.
 
 ## 2.7 Public Hospitality Details
@@ -631,6 +636,15 @@ Purpose:
 - image management
 - photo spot management
 - check-in code management
+
+The attraction visual editor is mobile-capable rather than desktop-only. Edit
+actions remain visible without hover, drawers use the dynamic viewport height
+and safe-area padding, form controls avoid mobile browser zoom, and save/cancel
+actions remain reachable at the bottom of the current drawer. Media selection
+uses an explicit `เลือกภาพนี้` button for every asset; the card itself is not a
+nested interactive target. Closing a nested media picker restores the parent
+drawer scroll lock. Legacy authenticated content media is proxied by the admin
+preview endpoint so `next/image` does not fail on redirects.
 
 ## 9.3 Photo Spots
 

@@ -6,7 +6,6 @@ const directoryPages = [
   "app/(public)/stories/page.tsx",
   "app/(public)/routes/page.tsx",
   "app/(public)/restaurants/page.tsx",
-  "app/(public)/accommodations/page.tsx",
   "app/(public)/360-vista/page.tsx",
 ];
 
@@ -25,5 +24,17 @@ describe("public directory adoption", () => {
     expect(source).toContain("PublicResultSummary");
     expect(source).toContain("PublicVistaGrid");
     expect(source).toContain("ผู้ให้บริการภายนอก");
+  });
+
+  it("keeps the approved accommodation hero and the dedicated result composition", () => {
+    const source = readFileSync(
+      resolve(process.cwd(), "app/(public)/accommodations/page.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("AccommodationDirectoryHero");
+    expect(source).toContain("AccommodationFeaturedResult");
+    expect(source).toContain("AccommodationResultCard");
+    expect(source).toContain('variant="listing"');
   });
 });
