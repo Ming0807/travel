@@ -1,59 +1,104 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  initialLeaderboardPreferenceActionState,
-  updateLeaderboardPreferenceAction,
-} from "@/app/actions/leaderboard-preference-actions";
-import { resolveCurrentTouristId } from "@/lib/auth/guards";
-import { setTouristLeaderboardPreference } from "@/lib/repositories/tourist.repository";
 
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("@/lib/auth/guards", () => ({ resolveCurrentTouristId: vi.fn() }));
-vi.mock("@/lib/repositories/tourist.repository", () => ({ setTouristLeaderboardPreference: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  resolveCurrentTouristId: vi.fn(),
+  setTouristLeaderboardPreference: vi.fn(),
+  revalidatePath: vi.fn(),
+}));
+
+vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
+vi.mock("@/lib/auth/guards", () => ({
+  resolveCurrentTouristId: mocks.resolveCurrentTouristId,
+}));
+vi.mock("@/lib/repositories/tourist.repository", () => ({
+  setTouristLeaderboardPreference: mocks.setTouristLeaderboardPreference,
+}));
+
+import { updateLeaderboardPreferenceAction } from "@/app/actions/leaderboard-preference-actions";
+
+function preferenceForm(entries: Record<string, string>) {
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(entries)) formData.set(key, value);
+  return formData;
+}
 
 describe("updateLeaderboardPreferenceAction", () => {
   beforeEach(() => {
-    vi.mocked(resolveCurrentTouristId).mockResolvedValue("10000000-0000-4000-8000-000000000001");
-    vi.mocked(setTouristLeaderboardPreference).mockResolvedValue(undefined);
+    vi.clearAllMocks();
+    mocks.resolveCurrentTouristId.mockResolvedValue("tourist-001");
+    mocks.setTouristLeaderboardPreference.mockResolvedValue(undefined);
   });
 
-  it("does not publish an alias before explicit confirmation", async () => {
-    const formData = new FormData();
-    formData.set("visibility", "alias");
-    formData.set("alias", "สายหมอกยะลา");
-
-    const result = await updateLeaderboardPreferenceAction(initialLeaderboardPreferenceActionState, formData);
-
-    expect(result).toEqual({ status: "error", message: "กรุณายืนยันก่อนเข้าร่วมอันดับสาธารณะ" });
-    expect(resolveCurrentTouristId).not.toHaveBeenCalled();
-    expect(setTouristLeaderboardPreference).not.toHaveBeenCalled();
-  });
-
-  it("updates only the current tourist after confirmation", async () => {
-    const formData = new FormData();
-    formData.set("visibility", "alias");
-    formData.set("alias", "  สายหมอกยะลา  ");
-    formData.set("confirmedPublic", "on");
-
-    const result = await updateLeaderboardPreferenceAction(initialLeaderboardPreferenceActionState, formData);
+  it("publishes the current passport display name after explicit confirmation", async () => {
+    const result = await updateLeaderboardPreferenceAction(
+      { status: "idle", message: "" },
+      preferenceForm({ visibility: "display_name", confirmedPublic: "on" }),
+    );
 
     expect(result.status).toBe("success");
-    expect(setTouristLeaderboardPreference).toHaveBeenCalledWith({
-      touristId: "10000000-0000-4000-8000-000000000001",
+    expect(mocks.setTouristLeaderboardPreference).toHaveBeenCalledWith({
+      touristId: "tourist-001",
+      visibility: "display_name",
+      alias: null,
+    });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/leaderboard");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/profile");
+  });
+
+  it("does not publish a public profile without explicit confirmation", async () => {
+    const result = await updateLeaderboardPreferenceAction(
+      { status: "idle", message: "" },
+      preferenceForm({ visibility: "display_name" }),
+    );
+
+    expect(result.status).toBe("error");
+    expect(mocks.resolveCurrentTouristId).not.toHaveBeenCalled();
+    expect(mocks.setTouristLeaderboardPreference).not.toHaveBeenCalled();
+  });
+
+  it("trims and saves a public alias after explicit confirmation", async () => {
+    const result = await updateLeaderboardPreferenceAction(
+      { status: "idle", message: "" },
+      preferenceForm({
+        visibility: "alias",
+        alias: "  สายหมอกยะลา  ",
+        confirmedPublic: "on",
+      }),
+    );
+
+    expect(result.status).toBe("success");
+    expect(mocks.setTouristLeaderboardPreference).toHaveBeenCalledWith({
+      touristId: "tourist-001",
       visibility: "alias",
       alias: "สายหมอกยะลา",
     });
   });
 
-  it("allows withdrawal to private without a public confirmation checkbox", async () => {
-    const formData = new FormData();
-    formData.set("visibility", "private");
-
-    const result = await updateLeaderboardPreferenceAction(initialLeaderboardPreferenceActionState, formData);
+  it("allows withdrawing to private without public confirmation", async () => {
+    const result = await updateLeaderboardPreferenceAction(
+      { status: "idle", message: "" },
+      preferenceForm({ visibility: "private" }),
+    );
 
     expect(result.status).toBe("success");
-    expect(setTouristLeaderboardPreference).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mocks.setTouristLeaderboardPreference).toHaveBeenCalledWith({
+      touristId: "tourist-001",
       visibility: "private",
       alias: null,
-    }));
+    });
+  });
+
+  it("returns a safe retry message when persistence fails", async () => {
+    mocks.setTouristLeaderboardPreference.mockRejectedValue(new Error("DATABASE_DETAIL"));
+
+    const result = await updateLeaderboardPreferenceAction(
+      { status: "idle", message: "" },
+      preferenceForm({ visibility: "private" }),
+    );
+
+    expect(result).toEqual({
+      status: "error",
+      message: "ยังบันทึกการตั้งค่าไม่ได้ กรุณาลองใหม่",
+    });
   });
 });

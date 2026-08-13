@@ -3,7 +3,6 @@
 import { useActionState, useState } from "react";
 import { CheckCircle, LockKey, Spinner, UsersThree, WarningCircle } from "@phosphor-icons/react";
 import {
-  initialLeaderboardPreferenceActionState,
   updateLeaderboardPreferenceAction,
 } from "@/app/actions/leaderboard-preference-actions";
 import type { LeaderboardVisibility } from "@/lib/validation/leaderboard";
@@ -19,6 +18,11 @@ const OPTIONS: Array<{ value: LeaderboardVisibility; title: string; description:
   { value: "alias", title: "แสดงด้วยนามแฝง", description: "แสดงนามแฝง คะแนน เลเวล จำนวนตรา และเหรียญ โดยไม่แสดงชื่อบนใบประกาศ" },
   { value: "display_name", title: "แสดงชื่อในพาสปอร์ต", description: "แสดงชื่อที่ใช้บนใบประกาศ พร้อมคะแนน เลเวล จำนวนตรา และเหรียญ" },
 ];
+
+const initialLeaderboardPreferenceActionState = {
+  status: "idle" as const,
+  message: "",
+};
 
 export function LeaderboardPrivacyForm({ initialVisibility, initialAlias, displayName }: LeaderboardPrivacyFormProps) {
   const [visibility, setVisibility] = useState<LeaderboardVisibility>(initialVisibility);

@@ -10,11 +10,6 @@ export type LeaderboardPreferenceActionState = {
   message: string;
 };
 
-export const initialLeaderboardPreferenceActionState: LeaderboardPreferenceActionState = {
-  status: "idle",
-  message: "",
-};
-
 export async function updateLeaderboardPreferenceAction(
   _previousState: LeaderboardPreferenceActionState,
   formData: FormData,

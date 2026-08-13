@@ -44,6 +44,7 @@ These server actions and auth guards support OAuth tourist identity resolution. 
 | `resolveCurrentTouristId()` | `lib/auth/guards.ts:715` | Implemented | Backward-compatible alias for `resolveTouristId()`. | Delegates to `resolveTouristId`. |
 | `submitTouristStoryAction()` | `app/actions/tourist-story-actions.ts` | Implemented | Submits tourist stories with XSS-safe plain text normalization, strict province validation, and identity-only resolve. | Identity resolution uses `resolveCurrentTouristId()`. |
 | `submitReviewAction()` | `app/actions/submit-review-action.ts` | Implemented | Submits reviews using `resolveCurrentTouristId()` for OAuth + guest identity. | Previously only supported guest identity. |
+| `updateLeaderboardPreferenceAction()` | `app/actions/leaderboard-preference-actions.ts` | Implemented | Validates explicit public-profile confirmation and updates the current tourist's leaderboard visibility through the service-role RPC. | The `"use server"` module exports only the async action; client initial state stays in the client form module as required by Next.js. |
 
 ### OAuth Provider Mapping
 
@@ -60,6 +61,9 @@ The `resolveTouristId()` function resolves identity from Supabase Auth metadata:
 - Service role used only in server-only repository boundaries
 - Guest flow remains fully functional
 - No duplicate tourist profiles for same OAuth identity
+- A new tourist who signs in before creating guest data uses the linked Google/LINE identity as the canonical profile; an anonymous browser identity is not required or attached automatically
+- A guest who later signs in may explicitly link the provider to the existing tourist, preserving visits, certificates, stamps, XP, and profile data on the same `tourist_id`
+- If both a provider profile and a different guest profile already contain data, they remain separate until a dedicated, conflict-aware merge workflow is confirmed; the application must never merge them silently
 
 ## Admin Media Endpoints
 
