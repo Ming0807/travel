@@ -39,4 +39,13 @@ describe("homepage information sections", () => {
     expect(screen.getByText("340")).toBeInTheDocument();
     expect(screen.getByText("4.6")).toBeInTheDocument();
   });
+
+  it("keeps the homepage available when public analytics cannot be loaded", async () => {
+    getPublicDashboardAnalytics.mockRejectedValueOnce(new Error("database unavailable"));
+
+    render(await HomepageDashboardPreview());
+
+    expect(screen.getByRole("status")).toHaveTextContent("ข้อมูลสถิติยังไม่พร้อมใช้งานชั่วคราว");
+    expect(screen.queryByText("0.0")).not.toBeInTheDocument();
+  });
 });

@@ -16,8 +16,8 @@ const KPI_DEFINITIONS = [
 ] as const;
 
 export async function HomepageDashboardPreview() {
-  const analytics = await getPublicDashboardAnalytics({});
-  const values = new Map(analytics.kpis.map((kpi) => [kpi.key, kpi.value]));
+  const analytics = await getPublicDashboardAnalytics({}).catch(() => null);
+  const values = new Map(analytics?.kpis.map((kpi) => [kpi.key, kpi.value]) ?? []);
 
   return (
     <section id="dashboard" aria-labelledby="homepage-statistics-heading" className="bg-ink px-4 py-10 text-white sm:px-6 lg:px-8 lg:py-14">
@@ -33,18 +33,24 @@ export async function HomepageDashboardPreview() {
           </Link>
         </div>
 
-        <dl className="grid sm:grid-cols-2 lg:grid-cols-4">
-          {KPI_DEFINITIONS.map(({ key, label, hint, icon: Icon, accent }, index) => (
-            <div key={key} className={`py-6 sm:p-6 ${index > 0 ? "border-t border-white/15 sm:border-l sm:border-t-0" : "sm:pl-0"}`}>
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-sm font-bold text-white/70">{label}</dt>
-                <Icon aria-hidden="true" size={22} weight="duotone" className={accent} />
+        {analytics ? (
+          <dl className="grid sm:grid-cols-2 lg:grid-cols-4">
+            {KPI_DEFINITIONS.map(({ key, label, hint, icon: Icon, accent }, index) => (
+              <div key={key} className={`py-6 sm:p-6 ${index > 0 ? "border-t border-white/15 sm:border-l sm:border-t-0" : "sm:pl-0"}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-sm font-bold text-white/70">{label}</dt>
+                  <Icon aria-hidden="true" size={22} weight="duotone" className={accent} />
+                </div>
+                <dd className="mt-3 text-3xl font-black tabular-nums">{values.get(key) ?? (key === "average_satisfaction" ? "0.0" : "0")}</dd>
+                <p className="mt-2 text-xs leading-5 text-white/50">{hint}</p>
               </div>
-              <dd className="mt-3 text-3xl font-black tabular-nums">{values.get(key) ?? (key === "average_satisfaction" ? "0.0" : "0")}</dd>
-              <p className="mt-2 text-xs leading-5 text-white/50">{hint}</p>
-            </div>
-          ))}
-        </dl>
+            ))}
+          </dl>
+        ) : (
+          <p role="status" className="border-b border-white/15 py-8 text-sm font-semibold text-white/75">
+            ข้อมูลสถิติยังไม่พร้อมใช้งานชั่วคราว กรุณากลับมาดูอีกครั้ง
+          </p>
+        )}
       </div>
     </section>
   );
