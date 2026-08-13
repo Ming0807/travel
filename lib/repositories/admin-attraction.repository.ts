@@ -460,13 +460,21 @@ export async function updateAdminAttractionRelatedContent(attractionId: number, 
   const supabase = createSupabaseServiceRoleClient();
 
   // Use atomic RPC transaction instead of delete + insert
-  const { error: rpcError } = await supabase.rpc('sync_attraction_related_content', {
+  const { data: rpcData, error: rpcError } = await supabase.rpc('sync_attraction_related_content', {
     p_attraction_id: attractionId,
     p_entity_type: type,
     p_related_ids: relatedIds
   });
 
-  if (rpcError) {
+  const rpcSucceeded = Boolean(
+    rpcData
+      && typeof rpcData === "object"
+      && !Array.isArray(rpcData)
+      && "success" in rpcData
+      && rpcData.success === true,
+  );
+
+  if (rpcError || !rpcSucceeded) {
     console.error("sync_attraction_related_content RPC error:", rpcError);
     throw new Error("ADMIN_ATTRACTION_RELATED_UPDATE_FAILED");
   }

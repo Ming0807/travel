@@ -204,6 +204,34 @@ describe("listPublicAttractionCards", () => {
       ["general/full-size.webp"]
     );
   });
+
+  it("does not fill an exact curated attraction list with unrelated fallback records", async () => {
+    mockFromChain.limit.mockResolvedValueOnce({
+      data: [
+        {
+          attraction_id: 12,
+          slug: "curated-place",
+          name_th: "สถานที่ที่คัดเลือก",
+          name_en: "Curated place",
+          short_description_th: "รายการที่ผู้ดูแลเลือกไว้",
+          short_description_en: null,
+          provinces: { province_name_th: "ยะลา", province_name_en: "Yala" },
+          attraction_types: { type_name_th: "วัฒนธรรม", type_name_en: "Culture" },
+          content_media: [],
+        },
+      ],
+      error: null,
+    });
+    mockFromChain.is.mockResolvedValueOnce({ data: [], error: null });
+
+    const attractions = await listPublicAttractionCards(2, {
+      featuredSlugs: ["curated-place", "unavailable-place"],
+      exactFeaturedOnly: true,
+    });
+
+    expect(attractions.map((attraction) => attraction.slug)).toEqual(["curated-place"]);
+    expect(mockFromChain.order).not.toHaveBeenCalledWith("created_at", { ascending: false });
+  });
 });
 
 describe("listPublicRoutes — featured slugs", () => {

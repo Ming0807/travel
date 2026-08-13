@@ -45,6 +45,7 @@ type PublicAttractionListOptions = {
   province?: string;
   type?: string;
   featuredSlugs?: string[];
+  exactFeaturedOnly?: boolean;
 };
 
 export const PUBLIC_ATTRACTION_MAX_PAGE = 10_000;
@@ -575,7 +576,7 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
       }
     }
 
-    if (finalRows.length < limit) {
+    if (finalRows.length < limit && !options?.exactFeaturedOnly) {
       const remaining = limit - finalRows.length;
       const { data, error } = await buildBaseQuery()
         .order("created_at", { ascending: false })
@@ -814,7 +815,10 @@ async function loadAttractionDetail(
     // Only explicitly curated relationships appear on the detail page.
     const [attractionsRes, restaurantsRes, accommodationsRes, storiesRes] = await Promise.all([
       curatedAttractionSlugs.length > 0
-        ? listPublicAttractionCards(curatedAttractionSlugs.length, { featuredSlugs: curatedAttractionSlugs })
+        ? listPublicAttractionCards(curatedAttractionSlugs.length, {
+            featuredSlugs: curatedAttractionSlugs,
+            exactFeaturedOnly: true,
+          })
         : Promise.resolve([]),
       curatedRestaurantSlugs.length > 0
         ? listPublicRestaurants({ featuredSlugs: curatedRestaurantSlugs })
