@@ -112,9 +112,9 @@ export function AccommodationResultCard({
         href={href}
         className="block bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]"
       >
-        {accommodation.imageUrl ? (
+        {accommodation.thumbnailUrl || accommodation.imageUrl ? (
           <PublicMediaFrame
-            src={accommodation.imageUrl}
+            src={accommodation.thumbnailUrl || accommodation.imageUrl}
             alt={accommodation.imageAlt}
             aspect="directory"
             sizes="(max-width: 767px) calc(100vw - 2rem), (max-width: 1279px) calc(50vw - 3rem), 360px"

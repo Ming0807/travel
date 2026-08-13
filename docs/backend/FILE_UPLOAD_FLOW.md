@@ -133,6 +133,20 @@ Common rules:
 - Do not trust original filenames for storage keys.
 - Write audit entries for admin media/template uploads.
 
+Admin browser upload boundary:
+
+```text
+source image: JPG / PNG / WebP, maximum 10MB
+browser preparation: WebP, maximum 3.5MB request file
+stored content image: maximum 1920px wide, WebP quality 80
+Media Library thumbnail: 400px wide, WebP quality 70
+```
+
+The 3.5MB value is a transport target, not the public display asset contract.
+The server still decodes and renders the canonical 1920px image from the
+prepared WebP. Media Library cards may use the 400px thumbnail, while hero and
+detail surfaces must use the canonical image to preserve visible detail.
+
 Current variants:
 
 ```text

@@ -125,7 +125,7 @@ export function AccommodationDiscoveryCard({
       province={accommodation.province}
       category={accommodationTypeLabel(accommodation.accommodationType)}
       description={accommodation.description}
-      imageUrl={accommodation.imageUrl}
+      imageUrl={accommodation.thumbnailUrl || accommodation.imageUrl}
       imageAlt={accommodation.imageAlt}
       detail={accommodation.priceRange || "ยังไม่ระบุช่วงราคา"}
       detailLabel="ช่วงราคา"

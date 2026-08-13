@@ -15,6 +15,7 @@ const accommodation = {
   accommodationType: "Resort",
   description: "รีสอร์ตท่ามกลางธรรมชาติ เหมาะสำหรับการพักผ่อนหลังเดินทาง",
   imageUrl: "/site-media/accommodations/camp-yala.webp",
+  thumbnailUrl: "/site-media/accommodations/camp-yala-thumb.webp",
   imageAlt: "ห้องพักเดอะ แคมป์ ยะลา",
   priceRange: "1,600 - 3,500 บาท/คืน",
 };
@@ -71,6 +72,9 @@ describe("accommodation directory UI", () => {
     expect(screen.getByRole("heading", { name: accommodation.name })).toBeInTheDocument();
     expect(screen.getByText("ข้อมูลโดยผู้ดูแล")).toBeInTheDocument();
     expect(screen.getByText(accommodation.priceRange)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: accommodation.imageAlt }).getAttribute("src")).toContain(
+      encodeURIComponent(accommodation.imageUrl),
+    );
     expect(screen.getByRole("link", { name: /ดูข้อมูลที่พัก/ })).toHaveAttribute(
       "href",
       "/accommodations/camp-yala",
@@ -84,6 +88,9 @@ describe("accommodation directory UI", () => {
     expect(screen.getByRole("heading", { name: accommodation.name })).toBeInTheDocument();
     expect(screen.getByText("รีสอร์ต")).toBeInTheDocument();
     expect(screen.getByText(accommodation.priceRange)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: accommodation.imageAlt }).getAttribute("src")).toContain(
+      encodeURIComponent(accommodation.thumbnailUrl),
+    );
     expect(screen.getByRole("link", { name: `ดูรายละเอียด ${accommodation.name}` })).toHaveAttribute(
       "href",
       "/accommodations/camp-yala",

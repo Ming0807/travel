@@ -598,6 +598,7 @@ Never use EXIF for hidden tracking.
 
 | Step | Status | Detail |
 |---|---|---|
+| Client resize before request | ✅ Implemented | `lib/media/admin-image-upload-client.ts` accepts a source up to 10MB and prepares a WebP request file no larger than 3.5MB, avoiding Vercel's 4.5MB Function body limit. |
 | File validation (MIME, size) | ✅ Implemented | `lib/services/admin-image-processing.service.ts` validates JPG/PNG/WebP and max 10MB. |
 | Decode validation | ✅ Implemented | Sharp reads image metadata and rejects invalid bytes or SVG/GIF files spoofed as raster MIME types. |
 | Pixel guard | ✅ Implemented | Uploads over 64 megapixels are rejected before rendering variants. |
@@ -1122,7 +1123,9 @@ Recommended limits:
 
 ```text
 tourist photo: 5 MB
-admin attraction image: 10 MB
+admin attraction source image: 10 MB
+admin prepared Function upload: 3.5 MB target
+admin canonical content image: max 1920px WebP q80
 stamp asset: 2 MB
 certificate generated image: 5 MB
 official CSV import: 10 MB

@@ -1862,6 +1862,7 @@ export type PublicAccommodationCard = {
   accommodationType: string;
   description: string;
   imageUrl: string | null;
+  thumbnailUrl?: string | null;
   imageAlt: string;
   priceRange?: string;
 };
@@ -1878,7 +1879,8 @@ function mapAccommodationRow(
     province: text(province?.province_name_th, text(province?.province_name_en, "")),
     accommodationType: text(row.accommodation_type, "Accommodation"),
     description: text(row.description_th, text(row.description_en, "")),
-    imageUrl: publicManagedImage(row, thumbnailByStoragePath),
+    imageUrl: publicManagedImage(row),
+    thumbnailUrl: publicManagedImage(row, thumbnailByStoragePath),
     imageAlt: `${name} accommodation image`,
     priceRange: text(row.price_range)
   };

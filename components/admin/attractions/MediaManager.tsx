@@ -19,6 +19,10 @@ import type { AdminMediaEntityType } from "@/lib/validation/media";
 import type { AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
+import {
+  type AdminImageUploadStage,
+  uploadAdminImage,
+} from "@/lib/media/admin-image-upload-client";
 
 type MediaType = "image" | "panorama" | "video360" | "embed" | "external_url";
 
@@ -467,6 +471,8 @@ function MediaForm({
   const [storagePath, setStoragePath] = useState(initialData?.storage_path || "");
   const [altTextTh, setAltTextTh] = useState(initialData?.alt_text_th || "");
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadStage, setUploadStage] = useState<AdminImageUploadStage | null>(null);
+  const [uploadSize, setUploadSize] = useState<{ original: number; prepared: number } | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
@@ -494,46 +500,39 @@ function MediaForm({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      setUploadError("ไฟล์นี้ไม่รองรับ กรุณาใช้ JPG, PNG หรือ WebP");
-      event.target.value = "";
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError("ไฟล์ใหญ่เกินไป กรุณาใช้ไฟล์ไม่เกิน 10MB");
-      event.target.value = "";
-      return;
-    }
-
     setUploadingFile(true);
+    setUploadStage("preparing");
+    setUploadSize(null);
     setUploadError(null);
     setUploadSuccess(false);
 
     try {
-      const body = new FormData();
-      body.append("file", file);
-      body.append("entityId", String(entityId));
-      body.append("entityType", entityType);
-
-      const response = await fetch("/api/admin/media/upload", {
-        method: "POST",
-        body,
+      const result = await uploadAdminImage<{
+        success?: boolean;
+        storagePath?: string;
+      }>({
+        endpoint: "/api/admin/media/upload",
+        file,
+        fields: {
+          entityId: String(entityId),
+          entityType,
+        },
+        onStage: setUploadStage,
       });
-      const result = await response.json();
 
-      if (!response.ok || !result.success) {
-        setUploadError(result.error || "อัปโหลดไม่สำเร็จ กรุณาลองใหม่");
+      if (!result.data.success || !result.data.storagePath) {
+        setUploadError("ระบบไม่ได้รับ path ของรูปภาพ กรุณาลองใหม่");
         return;
       }
 
-      setStoragePath(result.storagePath);
+      setStoragePath(result.data.storagePath);
+      setUploadSize({ original: result.originalBytes, prepared: result.uploadBytes });
       setUploadSuccess(true);
-    } catch {
-      setUploadError("เชื่อมต่อไม่สำเร็จ กรุณาตรวจอินเทอร์เน็ตแล้วลองใหม่");
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "อัปโหลดไม่สำเร็จ กรุณาลองใหม่");
     } finally {
       setUploadingFile(false);
+      setUploadStage(null);
       event.target.value = "";
     }
   };
@@ -619,9 +618,15 @@ function MediaForm({
               <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center transition hover:border-[#0A6B62] hover:bg-[#E6F4EF]">
                 <UploadSimple className="text-[#0A6B62]" size={30} weight="bold" />
                 <span className="mt-2 text-sm font-black text-slate-800">
-                  {uploadingFile ? "กำลังอัปโหลด..." : storagePath ? "เปลี่ยนไฟล์" : "อัปโหลดไฟล์"}
+                  {uploadStage === "preparing"
+                    ? "กำลังย่อรูปบนอุปกรณ์..."
+                    : uploadStage === "uploading"
+                      ? "กำลังอัปโหลด..."
+                      : storagePath ? "เปลี่ยนไฟล์" : "อัปโหลดไฟล์"}
                 </span>
-                <span className="mt-1 text-xs text-slate-500">รองรับ JPG, PNG, WebP ขนาดไม่เกิน 10MB</span>
+                <span className="mt-1 text-xs leading-5 text-slate-500">
+                  ต้นฉบับ JPG, PNG, WebP ไม่เกิน 10MB · ย่อก่อนส่งไม่เกิน 3.5MB · บันทึกภาพหลักสูงสุด 1920px WebP คุณภาพ 80
+                </span>
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -637,9 +642,10 @@ function MediaForm({
                 </p>
               ) : null}
               {uploadSuccess ? (
-                <p className="mt-2 flex gap-2 text-xs font-bold text-emerald-700">
+                <p className="mt-2 flex gap-2 text-xs font-bold text-emerald-700" role="status">
                   <CheckCircle className="shrink-0" size={15} weight="fill" />
                   อัปโหลดสำเร็จ ระบบเติม path ให้แล้ว
+                  {uploadSize ? ` (ย่อจาก ${(uploadSize.original / 1024 / 1024).toFixed(1)}MB เหลือ ${(uploadSize.prepared / 1024 / 1024).toFixed(1)}MB ก่อนส่ง)` : ""}
                 </p>
               ) : null}
             </div>

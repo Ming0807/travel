@@ -19,6 +19,10 @@ import {
   UploadSimple,
   WarningCircle,
 } from "@phosphor-icons/react";
+import {
+  type AdminImageUploadStage,
+  uploadAdminImage,
+} from "@/lib/media/admin-image-upload-client";
 
 export type MediaAsset = {
   id: string;
@@ -59,7 +63,6 @@ const CATEGORIES = [
 ];
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
 type MediaLibraryProps = {
   mode?: "manage" | "pick";
@@ -338,6 +341,7 @@ export function MediaLibrary({
   const [category, setCategory] = useState("All");
   const [query, setQuery] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadStage, setUploadStage] = useState<AdminImageUploadStage | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState("");
   const [deleteCandidate, setDeleteCandidate] = useState<MediaAsset | null>(null);
@@ -406,47 +410,33 @@ export function MediaLibrary({
   }, [category, showArchived, isServerManaged]);
 
   const uploadFile = async (file: File) => {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("Unsupported file type. Use JPG, PNG, or WebP.");
-      return;
-    }
-
-    if (file.size > MAX_SIZE_BYTES) {
-      setError("File is too large. Use an image up to 10MB.");
-      return;
-    }
-
     setUploading(true);
+    setUploadStage("preparing");
     setError("");
-
-    const formData = new FormData();
-    formData.append("file", file);
     const uploadCategory = isServerManaged ? serverData?.filters.category ?? "General" : category;
-    formData.append("category", uploadCategory === "All" ? "General" : uploadCategory);
 
     try {
-      const response = await fetch("/api/admin/media", {
-        method: "POST",
-        body: formData,
+      const result = await uploadAdminImage<{ asset?: MediaAsset }>({
+        endpoint: "/api/admin/media",
+        file,
+        fields: {
+          category: uploadCategory === "All" ? "General" : uploadCategory,
+        },
+        onStage: setUploadStage,
       });
-      const data = await response.json().catch(() => null);
 
-      if (!response.ok) {
-        setError(data?.error || "Upload failed. Please try again.");
-        return;
-      }
-
-      if (data?.asset) {
+      if (result.data.asset) {
         if (isServerManaged) {
           window.location.reload();
         } else {
-          setAssets((current) => [data.asset, ...current]);
+          setAssets((current) => [result.data.asset!, ...current]);
         }
       }
-    } catch {
-      setError("Upload failed because the connection was interrupted. Please try again.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "อัปโหลดไม่สำเร็จ กรุณาลองใหม่");
     } finally {
       setUploading(false);
+      setUploadStage(null);
       setIsDragging(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -617,7 +607,9 @@ export function MediaLibrary({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-black text-slate-800">อัปโหลดภาพของระบบ</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">รองรับ JPG, PNG, WebP ไม่เกิน 10MB ระบบสร้าง path ให้อัตโนมัติ</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  ต้นฉบับ JPG, PNG, WebP ไม่เกิน 10MB · ย่อก่อนส่งไม่เกิน 3.5MB · ภาพหลักสูงสุด 1920px WebP คุณภาพ 80 และ thumbnail 400px
+                </p>
               </div>
               <button
                 type="button"
@@ -630,7 +622,7 @@ export function MediaLibrary({
                 ) : (
                   <UploadSimple size={18} weight="bold" />
                 )}
-                {uploading ? "กำลังอัปโหลด..." : "อัปโหลด"}
+                {uploadStage === "preparing" ? "กำลังย่อรูป..." : uploadStage === "uploading" ? "กำลังอัปโหลด..." : "อัปโหลด"}
               </button>
             </div>
           </div>
