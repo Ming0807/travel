@@ -8,17 +8,22 @@ import { AdminFormErrorSummary, AdminSaveBar } from "@/components/admin/forms/Ad
 import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { ImageSquare, QrCode, ArrowLeft, MapPinLine, FileText, CheckCircle, WarningCircle, List } from "@phosphor-icons/react";
 import { useState } from "react";
+import { AttractionCategoryPicker, type AttractionCategoryOption } from "@/components/admin/attractions/AttractionCategoryPicker";
+import type { AttractionTypeAssignment } from "@/lib/repositories/attraction-category.repository";
 
 export type AdminSelectOption = {
   id: number;
   label: string;
+  labelEn?: string | null;
+  isActive?: boolean;
 };
 
 type AttractionFormProps = {
   attraction?: AdminAttractionRow | null;
   provinces: AdminSelectOption[];
   districts: AdminSelectOption[];
-  attractionTypes: AdminSelectOption[];
+  attractionTypes: AttractionCategoryOption[];
+  categoryAssignments?: AttractionTypeAssignment[];
   submitLabel?: string;
 };
 
@@ -52,6 +57,7 @@ export function AttractionForm({
   provinces,
   districts,
   attractionTypes,
+  categoryAssignments = [],
   submitLabel = "บันทึกข้อมูล"
 }: AttractionFormProps) {
   const isEditing = !!attraction;
@@ -287,21 +293,12 @@ export function AttractionForm({
                   <h2 className="text-lg font-bold text-slate-800">หมวดหมู่พื้นที่</h2>
                 </div>
                 <div className="p-6 grid gap-5">
-                  <label className="block">
-                    <span className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider block">ประเภทแหล่งท่องเที่ยว</span>
-                    <select
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:bg-white focus:border-teal focus:ring-4 focus:ring-teal/10 transition-all"
-                      defaultValue={attraction?.attraction_type_id ?? ""}
-                      name="attractionTypeId"
-                    >
-                      <option value="">ไม่ระบุ</option>
-                      {attractionTypes.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <AttractionCategoryPicker
+                    categories={attractionTypes}
+                    selectedCategoryIds={categoryAssignments.map((category) => category.attractionTypeId)}
+                    primaryCategoryId={categoryAssignments.find((category) => category.isPrimary)?.attractionTypeId ?? attraction?.attraction_type_id}
+                    error={state?.fieldErrors?.primaryAttractionTypeId?.[0] ?? state?.fieldErrors?.attractionTypeIds?.[0]}
+                  />
 
                   <label className="block">
                     <span className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider block">จังหวัด *</span>

@@ -22,6 +22,7 @@ import type { ReviewCard, ReviewStats } from "@/types/tourism";
 import type { PublicAttractionDetail } from "@/lib/repositories/public-content.repository";
 import { buildAttractionSectionNavigation, getAttractionSectionLabel } from "@/lib/content/attraction-sections";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
+import type { AttractionTypeAssignment } from "@/lib/repositories/attraction-category.repository";
 
 type EditorSection = "header" | "content" | "location" | "settings" | "gallery" | "related_attractions" | "related_accommodations" | "related_restaurants" | "related_stories" | null;
 
@@ -71,6 +72,7 @@ interface AttractionVisualEditorProps {
   provinces: AdminSelectOption[];
   districts: (AdminSelectOption & { provinceId: number })[];
   attractionTypes: AdminSelectOption[];
+  categoryAssignments: AttractionTypeAssignment[];
   publicDetail?: PublicAttractionDetail | null;
   reviewStats?: ReviewStats | null;
   publicReviews?: ReviewCard[] | null;
@@ -216,6 +218,7 @@ export function AttractionVisualEditor({
   provinces,
   districts,
   attractionTypes,
+  categoryAssignments,
   publicDetail,
   reviewStats,
   publicReviews,
@@ -743,7 +746,7 @@ export function AttractionVisualEditor({
         onClose={() => setActiveSection(null)}
         title="ตั้งค่าหมวดหมู่และสถานะ"
       >
-        <SettingsForm attraction={attraction} provinces={provinces} districts={districts} attractionTypes={attractionTypes} onClose={() => setActiveSection(null)} />
+        <SettingsForm attraction={attraction} provinces={provinces} districts={districts} attractionTypes={attractionTypes} categoryAssignments={categoryAssignments} onClose={() => setActiveSection(null)} />
       </Drawer>
 
       <Drawer

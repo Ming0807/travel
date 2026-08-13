@@ -57,6 +57,8 @@ export const adminAttractionMutationSchema = z.object({
   provinceId: requiredId,
   districtId: optionalId,
   attractionTypeId: optionalId,
+  attractionTypeIds: z.array(requiredId).max(4, "เลือกหมวดหมู่ได้สูงสุด 4 หมวด").default([]),
+  primaryAttractionTypeId: optionalId,
   slug: z
     .string()
     .trim()
@@ -85,7 +87,39 @@ export const adminAttractionMutationSchema = z.object({
   estimatedCapacityPerDay: optionalPositiveInt,
   isPublished: booleanFromForm,
   isActive: booleanFromForm
+}).superRefine((value, context) => {
+  if (value.attractionTypeIds.length > 0 && value.primaryAttractionTypeId === null) {
+    context.addIssue({ code: "custom", path: ["primaryAttractionTypeId"], message: "กรุณาเลือกหมวดหลัก" });
+  }
+  if (value.primaryAttractionTypeId !== null && !value.attractionTypeIds.includes(value.primaryAttractionTypeId)) {
+    context.addIssue({ code: "custom", path: ["primaryAttractionTypeId"], message: "หมวดหลักต้องอยู่ในหมวดที่เลือก" });
+  }
+  if (value.isPublished && value.primaryAttractionTypeId === null) {
+    context.addIssue({ code: "custom", path: ["primaryAttractionTypeId"], message: "สถานที่ที่เผยแพร่ต้องมีหมวดหลัก" });
+  }
 });
+
+export function parseAdminAttractionMutationFormData(formData: FormData) {
+  const raw = Object.fromEntries(formData.entries()) as Record<string, FormDataEntryValue | FormDataEntryValue[]>;
+  const repeatedValues = formData.getAll("attractionTypeIds");
+  const hasMultiCategoryFields = repeatedValues.length > 0 || formData.has("primaryAttractionTypeId");
+  const legacyPrimary = formData.get("attractionTypeId");
+  const rawIds = hasMultiCategoryFields ? repeatedValues : legacyPrimary ? [legacyPrimary] : [];
+  const normalizedIds = Array.from(new Set(
+    rawIds
+      .map((value) => typeof value === "string" ? Number(value) : Number.NaN)
+      .filter((value) => Number.isSafeInteger(value) && value > 0),
+  ));
+  const primaryValue = hasMultiCategoryFields
+    ? formData.get("primaryAttractionTypeId")
+    : legacyPrimary;
+
+  raw.attractionTypeIds = normalizedIds.map(String);
+  raw.primaryAttractionTypeId = primaryValue ?? "";
+  raw.attractionTypeId = primaryValue ?? "";
+
+  return adminAttractionMutationSchema.safeParse(raw);
+}
 
 export const adminAttractionIdSchema = z.object({
   attractionId: requiredId

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
-import { adminAttractionMutationSchema } from "@/lib/validation/admin-attraction";
+import { parseAdminAttractionMutationFormData } from "@/lib/validation/admin-attraction";
+import { syncAttractionTypeAssignments } from "@/lib/repositories/attraction-category.repository";
 import {
   createAdminAttraction,
   updateAdminAttraction,
@@ -25,7 +26,7 @@ type ActionResult<TData = unknown> = {
 export async function createAttractionAction(_prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("attraction.create");
-    const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData.entries()));
+    const parsed = parseAdminAttractionMutationFormData(formData);
     if (!parsed.success) {
       return { success: false, error: "กรุณาตรวจข้อมูลสถานที่อีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
@@ -36,6 +37,12 @@ export async function createAttractionAction(_prevState: ActionResult<{ id: numb
     }
 
     const created = await createAdminAttraction(parsed.data);
+    await syncAttractionTypeAssignments({
+      attractionId: created.attraction_id,
+      attractionTypeIds: parsed.data.attractionTypeIds,
+      primaryAttractionTypeId: parsed.data.primaryAttractionTypeId,
+      isPublished: parsed.data.isPublished,
+    });
     await logAdminMutation({
       actor: guard.actor,
       action: "attraction.create",
@@ -56,7 +63,7 @@ export async function createAttractionAction(_prevState: ActionResult<{ id: numb
 export async function updateAttractionAction(attractionId: number, _prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("attraction.update");
-    const parsed = adminAttractionMutationSchema.safeParse(Object.fromEntries(formData.entries()));
+    const parsed = parseAdminAttractionMutationFormData(formData);
     if (!parsed.success) {
       return { success: false, error: "กรุณาตรวจข้อมูลสถานที่อีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
@@ -68,6 +75,12 @@ export async function updateAttractionAction(attractionId: number, _prevState: A
 
     const old = await getAdminAttractionById(attractionId);
     const updated = await updateAdminAttraction(attractionId, parsed.data);
+    await syncAttractionTypeAssignments({
+      attractionId,
+      attractionTypeIds: parsed.data.attractionTypeIds,
+      primaryAttractionTypeId: parsed.data.primaryAttractionTypeId,
+      isPublished: parsed.data.isPublished,
+    });
     await logAdminMutation({
       actor: guard.actor,
       action: "attraction.update",

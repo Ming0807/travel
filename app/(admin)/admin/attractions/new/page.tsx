@@ -30,7 +30,7 @@ export default async function NewAdminAttractionPage() {
         <div className="mt-8 max-w-6xl">
           <AttractionQuickCreate
             provinces={provinces.map(p => ({ id: p.provinceId, label: p.nameTh }))}
-            attractionTypes={types.map(t => ({ id: t.attraction_type_id, label: t.type_name_th }))}
+            attractionTypes={types.filter(t => t.is_active).map(t => ({ id: t.attraction_type_id, label: t.type_name_th }))}
           />
         </div>
       </div>

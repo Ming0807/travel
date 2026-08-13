@@ -7,6 +7,8 @@ import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { HiddenAttractionFields } from "./HiddenAttractionFields";
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
 import type { AdminSelectOption } from "@/components/admin/attractions/AttractionForm";
+import { AttractionCategoryPicker } from "@/components/admin/attractions/AttractionCategoryPicker";
+import type { AttractionTypeAssignment } from "@/lib/repositories/attraction-category.repository";
 
 type AdminDistrictOption = AdminSelectOption & {
   provinceId: number;
@@ -175,12 +177,14 @@ export function SettingsForm({
   provinces,
   districts,
   attractionTypes,
+  categoryAssignments,
   onClose,
 }: {
   attraction: AdminAttractionRow;
   provinces: AdminSelectOption[];
   districts: AdminDistrictOption[];
   attractionTypes: AdminSelectOption[];
+  categoryAssignments: AttractionTypeAssignment[];
   onClose: () => void;
 }) {
   const { state, formAction, isPending } = useAttractionSectionAction(attraction, onClose);
@@ -247,15 +251,12 @@ export function SettingsForm({
             </p>
           </label>
 
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">หมวดหมู่สถานที่ (Attraction Category)</span>
-            <select className={inputClass} defaultValue={attraction.attraction_type_id ?? ""} name="attractionTypeId">
-              <option value="">ไม่ระบุ (Not specified)</option>
-              {attractionTypes.map((type) => (
-                <option key={type.id} value={type.id}>{type.label}</option>
-              ))}
-            </select>
-          </label>
+          <AttractionCategoryPicker
+            categories={attractionTypes}
+            selectedCategoryIds={categoryAssignments.map((category) => category.attractionTypeId)}
+            primaryCategoryId={categoryAssignments.find((category) => category.isPrimary)?.attractionTypeId ?? attraction.attraction_type_id}
+            error={state?.fieldErrors?.primaryAttractionTypeId?.[0] ?? state?.fieldErrors?.attractionTypeIds?.[0]}
+          />
 
           <label className="block">
             <span className="text-sm font-bold text-slate-700">หมวดหมู่ความยั่งยืน (Sustainability Category)</span>

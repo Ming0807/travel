@@ -64,6 +64,9 @@ describe("admin query boolean filters", () => {
 describe("adminAttractionMutationSchema", () => {
   const validPayload = {
     provinceId: "1",
+    attractionTypeId: "1",
+    attractionTypeIds: ["1"],
+    primaryAttractionTypeId: "1",
     slug: "yala-beach",
     nameTh: "หาดยะลา",
     isPublished: "true",

@@ -325,7 +325,7 @@ export async function getAdminProvinces() {
 
 export async function getAdminAttractionTypes() {
   const supabase = createSupabaseServiceRoleClient();
-  const { data, error } = await supabase.from("attraction_types").select("attraction_type_id, type_name_th").order("type_name_th");
+  const { data, error } = await supabase.from("attraction_types").select("attraction_type_id, type_name_th, type_name_en, is_active").order("type_name_th");
   if (error) throw new Error("FAILED_TO_FETCH_ATTRACTION_TYPES");
   return data;
 }
