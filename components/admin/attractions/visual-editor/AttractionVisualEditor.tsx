@@ -425,6 +425,7 @@ export function AttractionVisualEditor({
                 mainImage={previewImages[0] ?? null}
                 gallery={previewImages}
                 attractionName={name}
+                unoptimized
               />
             ) : (
               <MissingImageState

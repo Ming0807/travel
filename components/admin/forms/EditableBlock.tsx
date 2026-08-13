@@ -19,8 +19,8 @@ export function EditableBlock({ id, label, children, onEdit, isActive = false }:
       }`}
       id={`editable-block-${id}`}
     >
-      {/* Edit Overlay Button */}
-      <div className="absolute left-3 top-3 z-20 opacity-100 transition-opacity sm:left-4 sm:top-4 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
+      {/* Mobile actions stay in document flow so they never cover preview content. */}
+      <div className="relative z-20 flex border-b border-slate-200 bg-slate-50 p-2 opacity-100 transition-opacity sm:absolute sm:left-4 sm:top-4 sm:block sm:border-0 sm:bg-transparent sm:p-0 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
         <button
           type="button"
           onClick={onEdit}

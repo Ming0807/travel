@@ -88,6 +88,25 @@ describe("AttractionHeader", () => {
 });
 
 describe("AttractionGallery", () => {
+  it("can bypass Next image optimization for authenticated admin previews", () => {
+    const previewUrl =
+      "/api/admin/media/preview?bucket=visit-photos&path=cloudinary%3Aimage%3Aauthenticated%3Av1%3Ajpg%3Acontent-media%2Fattraction%2F4%2Fcover";
+
+    render(
+      <AttractionGallery
+        mainImage={{ url: previewUrl, alt: "Admin cover" }}
+        gallery={[{ url: previewUrl, alt: "Admin cover" }]}
+        attractionName="Test attraction"
+        unoptimized
+      />,
+    );
+
+    const imageSrc = screen.getByRole("img", { name: "Admin cover" }).getAttribute("src");
+    expect(imageSrc).not.toContain("/_next/image");
+    const resolvedImageUrl = new URL(imageSrc ?? "", "http://localhost:3000");
+    expect(`${resolvedImageUrl.pathname}${resolvedImageUrl.search}`).toBe(previewUrl);
+  });
+
   it("uses real image counts, accessible labels, and optimized image sizing", () => {
     render(
       <AttractionGallery

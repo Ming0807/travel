@@ -9,6 +9,7 @@ type AttractionGalleryProps = {
   mainImage: PublicAttractionImage | null;
   gallery: PublicAttractionImage[];
   attractionName: string;
+  unoptimized?: boolean;
 };
 
 type GalleryImageProps = {
@@ -17,10 +18,11 @@ type GalleryImageProps = {
   sizes: string;
   className: string;
   priority?: boolean;
+  unoptimized?: boolean;
   onInvalid: (url: string) => void;
 };
 
-function GalleryImage({ image, alt, sizes, className, priority, onInvalid }: GalleryImageProps) {
+function GalleryImage({ image, alt, sizes, className, priority, unoptimized, onInvalid }: GalleryImageProps) {
   const imageRef = useRef<HTMLImageElement>(null);
   const inspectImage = useCallback((node: HTMLImageElement | null) => {
     if (!node?.complete || !node.currentSrc) return;
@@ -39,6 +41,7 @@ function GalleryImage({ image, alt, sizes, className, priority, onInvalid }: Gal
       fill
       priority={priority}
       sizes={sizes}
+      unoptimized={unoptimized}
       className={className}
       onLoad={(event) => inspectImage(event.currentTarget)}
       onError={() => onInvalid(image.url)}
@@ -46,7 +49,12 @@ function GalleryImage({ image, alt, sizes, className, priority, onInvalid }: Gal
   );
 }
 
-export function AttractionGallery({ mainImage, gallery, attractionName }: AttractionGalleryProps) {
+export function AttractionGallery({
+  mainImage,
+  gallery,
+  attractionName,
+  unoptimized = false,
+}: AttractionGalleryProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
@@ -95,6 +103,7 @@ export function AttractionGallery({ mainImage, gallery, attractionName }: Attrac
             image={primaryImage}
             alt={primaryImage.alt || attractionName}
             priority
+            unoptimized={unoptimized}
             sizes="(max-width: 1023px) calc(100vw - 2rem), 736px"
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             onInvalid={handleMediaError}
@@ -114,6 +123,7 @@ export function AttractionGallery({ mainImage, gallery, attractionName }: Attrac
                 image={image}
                 alt={image.alt || `${attractionName} รูปที่ ${index + 2}`}
                 sizes="352px"
+                unoptimized={unoptimized}
                 className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                 onInvalid={handleMediaError}
               />
@@ -160,6 +170,7 @@ export function AttractionGallery({ mainImage, gallery, attractionName }: Attrac
                 image={selected}
                 alt={selected.alt || attractionName}
                 sizes="94vw"
+                unoptimized={unoptimized}
                 className="object-contain"
                 onInvalid={handleMediaError}
               />
@@ -180,6 +191,7 @@ export function AttractionGallery({ mainImage, gallery, attractionName }: Attrac
                     image={image}
                     alt=""
                     sizes="96px"
+                    unoptimized={unoptimized}
                     className="object-cover"
                     onInvalid={handleMediaError}
                   />

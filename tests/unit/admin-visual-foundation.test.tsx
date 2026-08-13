@@ -116,5 +116,8 @@ describe("admin drawer accessibility", () => {
     const editButton = screen.getByRole("button", { name: "แก้ไข รูปภาพ" });
     expect(editButton).toHaveClass("min-h-11");
     expect(editButton.parentElement).toHaveClass("opacity-100");
+    expect(editButton.parentElement).toHaveClass("relative");
+    expect(editButton.parentElement).toHaveClass("sm:absolute");
+    expect(editButton.parentElement).not.toHaveClass("absolute");
   });
 });
