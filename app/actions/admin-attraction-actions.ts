@@ -17,8 +17,15 @@ import {
   getAdminAttractionById,
   updateAdminAttractionField,
   getInlineFieldColumn,
-  updateAdminAttractionRelatedContent,
+  updateAdminAttractionRelatedContentV2,
+  searchAdminAttractionRelatedContent,
+  type RelatedContentSearchInput,
+  type AdminRelatedContentSearchResult,
 } from "@/lib/repositories/admin-attraction.repository";
+import type {
+  RelatedContentMode,
+  RelatedContentType,
+} from "@/lib/content/attraction-related-content";
 
 type ActionResult<TData = unknown> = {
   success: boolean;
@@ -192,27 +199,94 @@ export async function updateAttractionFieldAction(
   }
 }
 
-export async function updateAttractionRelatedContentAction(
-  attractionId: number,
-  type: 'attractions' | 'restaurants' | 'accommodations' | 'stories',
-  relatedIds: number[]
+export async function searchAttractionRelatedContentAction(
+  input: RelatedContentSearchInput,
+): Promise<ActionResult<AdminRelatedContentSearchResult>> {
+  try {
+    await requirePermission("attraction.update");
+    const data = await searchAdminAttractionRelatedContent(input);
+    return { success: true, data };
+  } catch (error) {
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    if (error instanceof Error && error.message === "ADMIN_ATTRACTION_RELATED_INVALID_INPUT") {
+      return { success: false, error: "กรุณาตรวจสอบข้อมูลการค้นหาอีกครั้ง" };
+    }
+    return { success: false, error: "ไม่สามารถค้นหาเนื้อหาที่เกี่ยวข้องได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
+function relatedContentDefaultLimit(type: RelatedContentType): number {
+  return type === "stories" ? 3 : 4;
+}
+
+type SaveRelatedContentActionInput = {
+  attractionId: number;
+  type: RelatedContentType;
+  relatedIds: number[];
+  mode?: RelatedContentMode;
+  maxItems?: number;
+};
+
+export async function saveAttractionRelatedContentAction(
+  input: SaveRelatedContentActionInput,
 ): Promise<ActionResult> {
   try {
     const guard = await requirePermission("attraction.update");
-    await updateAdminAttractionRelatedContent(attractionId, type, relatedIds);
+    const mode = input.mode ?? "manual";
+    const maxItems = input.maxItems ?? relatedContentDefaultLimit(input.type);
+    const updated = await updateAdminAttractionRelatedContentV2({
+      attractionId: input.attractionId,
+      contentType: input.type,
+      mode,
+      maxItems,
+      relatedIds: input.relatedIds,
+    });
 
     await logAdminMutation({
       actor: guard.actor,
       action: "attraction.update_related",
       entityType: "attraction",
-      entityId: attractionId,
-      newValues: { type, relatedIds },
+      entityId: input.attractionId,
+      newValues: { type: input.type, relatedIds: input.relatedIds, mode, maxItems, curatedCount: updated.curatedCount },
     });
 
-    revalidatePath('/', 'layout');
+    revalidatePath(`/admin/attractions/${input.attractionId}/edit`);
+    try {
+      const attraction = await getAdminAttractionById(input.attractionId);
+      if (attraction?.slug) revalidatePath(`/attractions/${attraction.slug}`);
+    } catch (revalidationError) {
+      console.error("Related content saved but public path revalidation failed:", revalidationError);
+    }
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    if (error instanceof Error && error.message === "ADMIN_ATTRACTION_RELATED_INVALID_INPUT") {
+      return { success: false, error: "กรุณาตรวจสอบโหมด จำนวน และรายการเนื้อหาที่เลือก" };
+    }
     return { success: false, error: "ยังบันทึกข้อมูลเชื่อมโยงไม่ได้ กรุณาลองอีกครั้ง" };
   }
+}
+
+export async function updateAttractionRelatedContentAction(
+  attractionId: number,
+  type: RelatedContentType,
+  relatedIds: number[],
+  _prevState: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const modeValue = formData.get("mode");
+  const maxItemsValue = formData.get("maxItems");
+  const mode = typeof modeValue === "string" && modeValue.length > 0
+    ? modeValue as RelatedContentMode
+    : undefined;
+  const parsedMaxItems = typeof maxItemsValue === "string" && maxItemsValue.trim()
+    ? Number(maxItemsValue)
+    : undefined;
+  return saveAttractionRelatedContentAction({
+    attractionId,
+    type,
+    relatedIds,
+    mode,
+    maxItems: parsedMaxItems,
+  });
 }

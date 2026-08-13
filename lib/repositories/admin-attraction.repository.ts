@@ -4,8 +4,17 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminAttractionFilters, AdminAttractionMutationInput } from "@/lib/validation/admin-attraction";
 import type { Json } from "@/types/database";
 import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
-import { assertLiveDestinationProvinceId } from "@/lib/repositories/destination-scope.repository";
+import {
+  assertLiveDestinationProvinceId,
+  listLiveDestinationProvinceIds,
+} from "@/lib/repositories/destination-scope.repository";
 import { listAttractionIdsByType } from "@/lib/repositories/attraction-category.repository";
+import {
+  RELATED_CONTENT_MODES,
+  RELATED_CONTENT_TYPES,
+  type RelatedContentMode,
+  type RelatedContentType,
+} from "@/lib/content/attraction-related-content";
 
 export type AdminAttractionRow = {
   attraction_id: number;
@@ -71,6 +80,227 @@ type ContentListAttraction = { attraction_id: number; name_th: string; provinces
 type ContentListRestaurant = { restaurant_id: number; name_th: string; provinces?: SupabaseJoin<ContentListProvince> };
 type ContentListAccommodation = { accommodation_id: number; name_th: string; provinces?: SupabaseJoin<ContentListProvince> };
 type ContentListStory = { story_id: number; title: string };
+
+export type AdminRelatedContentSetting = {
+  attractionId: number;
+  contentType: RelatedContentType;
+  mode: RelatedContentMode;
+  maxItems: number;
+};
+
+export type RelatedContentSearchInput = {
+  attractionId: number;
+  contentType: RelatedContentType;
+  query: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type AdminRelatedContentSearchItem = {
+  id: number;
+  name: string;
+  slug: string;
+  provinceName: string | null;
+  status: "published";
+  editHref: string;
+};
+
+export type AdminRelatedContentSearchResult = PaginatedResult<AdminRelatedContentSearchItem>;
+
+export type AdminSelectedRelatedContentItem = {
+  id: number;
+  name: string | null;
+  slug: string | null;
+  provinceName: string | null;
+  isPublished: boolean;
+  isActive: boolean | null;
+  status: "published" | "unavailable" | "missing";
+  available: boolean;
+  editHref: string;
+};
+
+export type UpdateAdminRelatedContentInput = {
+  attractionId: number;
+  contentType: RelatedContentType;
+  mode: RelatedContentMode;
+  maxItems: number;
+  relatedIds: number[];
+};
+
+export type UpdateAdminRelatedContentResult = {
+  attractionId: number;
+  contentType: RelatedContentType;
+  mode: RelatedContentMode;
+  maxItems: number;
+  curatedCount: number;
+};
+
+type RepositoryErrorLike = { code?: unknown; message?: unknown };
+
+type QueryResponse<T> = {
+  data: T[] | null;
+  error: RepositoryErrorLike | null;
+  count?: number | null;
+};
+
+type QueryBuilder<T> = PromiseLike<QueryResponse<T>> & {
+  select: (columns: string, options?: { count?: "exact"; head?: boolean }) => QueryBuilder<T>;
+  eq: (column: string, value: unknown) => QueryBuilder<T>;
+  neq: (column: string, value: unknown) => QueryBuilder<T>;
+  in: (column: string, values: readonly unknown[]) => QueryBuilder<T>;
+  or: (filters: string) => QueryBuilder<T>;
+  order: (column: string, options?: { ascending?: boolean; nullsFirst?: boolean }) => QueryBuilder<T>;
+  range: (from: number, to: number) => QueryBuilder<T>;
+};
+
+type ProvinceRow = { province_name_th?: string | null; province_name_en?: string | null };
+
+type RelatedAttractionRow = {
+  attraction_id?: unknown;
+  name_th?: unknown;
+  name_en?: unknown;
+  slug?: unknown;
+  province_id?: unknown;
+  is_published?: unknown;
+  is_active?: unknown;
+  provinces?: SupabaseJoin<ProvinceRow>;
+};
+
+type RelatedRestaurantRow = {
+  restaurant_id?: unknown;
+  name_th?: unknown;
+  name_en?: unknown;
+  slug?: unknown;
+  province_id?: unknown;
+  is_published?: unknown;
+  is_active?: unknown;
+  provinces?: SupabaseJoin<ProvinceRow>;
+};
+
+type RelatedAccommodationRow = {
+  accommodation_id?: unknown;
+  name_th?: unknown;
+  name_en?: unknown;
+  slug?: unknown;
+  province_id?: unknown;
+  is_published?: unknown;
+  is_active?: unknown;
+  provinces?: SupabaseJoin<ProvinceRow>;
+};
+
+type RelatedStoryRow = {
+  story_id?: unknown;
+  title?: unknown;
+  slug?: unknown;
+  province_id?: unknown;
+  is_published?: unknown;
+  status?: unknown;
+  provinces?: SupabaseJoin<ProvinceRow>;
+};
+
+type RelatedSettingsRow = {
+  attraction_id?: unknown;
+  content_type?: unknown;
+  mode?: unknown;
+  max_items?: unknown;
+};
+
+const DEFAULT_RELATED_CONTENT_LIMITS: Record<RelatedContentType, number> = {
+  attractions: 4,
+  restaurants: 4,
+  accommodations: 4,
+  stories: 3,
+};
+
+function asQueryBuilder<T>(value: unknown): QueryBuilder<T> {
+  return value as QueryBuilder<T>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function errorCode(error: RepositoryErrorLike | null): string | null {
+  return typeof error?.code === "string" ? error.code : null;
+}
+
+function errorMessage(error: RepositoryErrorLike | null): string {
+  return typeof error?.message === "string" ? error.message : "";
+}
+
+function isMissingRelatedSettingsTable(error: RepositoryErrorLike | null): boolean {
+  const code = errorCode(error);
+  const message = errorMessage(error).toLowerCase();
+  return code === "42P01"
+    || code === "PGRST205"
+    || ((code === "PGRST204" || message.includes("schema cache")) && message.includes("attraction_related_content_settings"));
+}
+
+function isRelatedContentType(value: unknown): value is RelatedContentType {
+  return typeof value === "string" && (RELATED_CONTENT_TYPES as readonly string[]).includes(value);
+}
+
+function isRelatedContentMode(value: unknown): value is RelatedContentMode {
+  return typeof value === "string" && (RELATED_CONTENT_MODES as readonly string[]).includes(value);
+}
+
+function positiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+}
+
+function nonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
+function normalizePage(value: number | undefined): number {
+  return positiveInteger(value) ? value : 1;
+}
+
+function normalizePageSize(value: number | undefined): number {
+  if (!positiveInteger(value)) return 20;
+  return Math.min(20, value);
+}
+
+function escapeSearchPattern(value: string): string {
+  return value.trim().replace(/[\\%_]/g, "\\$&").replace(/[,()]/g, " ");
+}
+
+function provinceName(value: SupabaseJoin<ProvinceRow> | undefined): string | null {
+  const province = firstJoin(value);
+  return province?.province_name_th ?? province?.province_name_en ?? null;
+}
+
+function publicName(thai: unknown, english: unknown, fallback: unknown = null): string | null {
+  for (const value of [thai, english, fallback]) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function publicSlug(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function editHref(contentType: RelatedContentType, id: number): string {
+  const resource = contentType === "attractions"
+    ? "attractions"
+    : contentType === "restaurants"
+      ? "restaurants"
+      : contentType === "accommodations"
+        ? "accommodations"
+        : "stories";
+  return `/admin/${resource}/${id}/edit`;
+}
+
+function parseSettingsRow(row: RelatedSettingsRow): AdminRelatedContentSetting | null {
+  const attractionId = Number(row.attraction_id);
+  const contentType = row.content_type;
+  const mode = row.mode;
+  const maxItems = Number(row.max_items);
+  if (!positiveInteger(attractionId) || !isRelatedContentType(contentType) || !isRelatedContentMode(mode)) return null;
+  if (!Number.isSafeInteger(maxItems) || maxItems < 1 || maxItems > 8) return null;
+  return { attractionId, contentType, mode, maxItems };
+}
 
 function mapAttraction(row: AdminAttractionQueryRow, photoSpotCounts = new Map<number, number>(), checkinCodeCounts = new Map<number, number>()): AdminAttractionRow {
   const province = firstJoin(row.provinces);
@@ -394,21 +624,271 @@ export async function getAdminPhotoSpotsList() {
   return data || [];
 }
 
-export async function getAdminAttractionRelatedContent(attractionId: number) {
+type AttractionRelationRow = {
+  id: number;
+  attraction_id: number;
+  related_attraction_id: number;
+  display_order: number;
+};
+
+type RestaurantRelationRow = {
+  id: number;
+  attraction_id: number;
+  restaurant_id: number;
+  display_order: number;
+};
+
+type AccommodationRelationRow = {
+  id: number;
+  attraction_id: number;
+  accommodation_id: number;
+  display_order: number;
+};
+
+type StoryRelationRow = {
+  id: number;
+  attraction_id: number;
+  story_id: number;
+  display_order: number;
+};
+
+export type AdminAttractionRelatedContent = {
+  attractions: AttractionRelationRow[];
+  restaurants: RestaurantRelationRow[];
+  accommodations: AccommodationRelationRow[];
+  stories: StoryRelationRow[];
+};
+
+function relationRows<T>(data: unknown): T[] {
+  return Array.isArray(data) ? data as T[] : [];
+}
+
+export async function getAdminAttractionRelatedContent(
+  attractionId: number,
+): Promise<AdminAttractionRelatedContent> {
+  if (!positiveInteger(attractionId)) throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
   const supabase = createSupabaseServiceRoleClient();
   const [attractions, restaurants, accommodations, stories] = await Promise.all([
     supabase.from("attraction_related_attractions").select("*").eq("attraction_id", attractionId).order("display_order"),
     supabase.from("attraction_related_restaurants").select("*").eq("attraction_id", attractionId).order("display_order"),
     supabase.from("attraction_related_accommodations").select("*").eq("attraction_id", attractionId).order("display_order"),
-    supabase.from("attraction_related_stories").select("*").eq("attraction_id", attractionId).order("display_order")
+    supabase.from("attraction_related_stories").select("*").eq("attraction_id", attractionId).order("display_order"),
   ]);
 
+  if (attractions.error || restaurants.error || accommodations.error || stories.error) {
+    throw new Error("ADMIN_ATTRACTION_RELATED_READ_FAILED");
+  }
+
   return {
-    attractions: attractions.data || [],
-    restaurants: restaurants.data || [],
-    accommodations: accommodations.data || [],
-    stories: stories.data || []
+    attractions: relationRows<AttractionRelationRow>(attractions.data),
+    restaurants: relationRows<RestaurantRelationRow>(restaurants.data),
+    accommodations: relationRows<AccommodationRelationRow>(accommodations.data),
+    stories: relationRows<StoryRelationRow>(stories.data),
   };
+}
+
+function settingsFromLegacy(
+  attractionId: number,
+  related: AdminAttractionRelatedContent,
+): AdminRelatedContentSetting[] {
+  const relations: Record<RelatedContentType, number> = {
+    attractions: related.attractions.length,
+    restaurants: related.restaurants.length,
+    accommodations: related.accommodations.length,
+    stories: related.stories.length,
+  };
+  return RELATED_CONTENT_TYPES.map((contentType) => ({
+    attractionId,
+    contentType,
+    mode: relations[contentType] > 0 ? "manual" : "automatic",
+    maxItems: DEFAULT_RELATED_CONTENT_LIMITS[contentType],
+  }));
+}
+
+export async function getAdminAttractionRelatedContentSettings(
+  attractionId: number,
+): Promise<AdminRelatedContentSetting[]> {
+  if (!positiveInteger(attractionId)) throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await asQueryBuilder<RelatedSettingsRow>(
+    supabase
+      .from("attraction_related_content_settings")
+      .select("attraction_id, content_type, mode, max_items")
+      .eq("attraction_id", attractionId),
+  );
+
+  if (error && !isMissingRelatedSettingsTable(error)) {
+    throw new Error("ADMIN_ATTRACTION_RELATED_SETTINGS_READ_FAILED");
+  }
+
+  if (error && isMissingRelatedSettingsTable(error)) {
+    return settingsFromLegacy(attractionId, await getAdminAttractionRelatedContent(attractionId));
+  }
+
+  const rawSettings = relationRows<RelatedSettingsRow>(data);
+  const parsed = rawSettings
+    .map(parseSettingsRow);
+  if (parsed.some((setting) => setting === null)) {
+    throw new Error("ADMIN_ATTRACTION_RELATED_SETTINGS_READ_FAILED");
+  }
+  const validSettings = parsed.filter((setting): setting is AdminRelatedContentSetting => setting !== null);
+  const byType = new Map(validSettings.map((setting) => [setting.contentType, setting]));
+  const missingTypes = RELATED_CONTENT_TYPES.filter((contentType) => !byType.has(contentType));
+  if (missingTypes.length === 0) return validSettings.sort((left, right) => RELATED_CONTENT_TYPES.indexOf(left.contentType) - RELATED_CONTENT_TYPES.indexOf(right.contentType));
+
+  const legacy = settingsFromLegacy(attractionId, await getAdminAttractionRelatedContent(attractionId));
+  return RELATED_CONTENT_TYPES.map((contentType) => byType.get(contentType) ?? legacy.find((setting) => setting.contentType === contentType)!)
+    .filter((setting): setting is AdminRelatedContentSetting => setting !== undefined);
+}
+
+function searchQuery<T>(
+  supabase: ReturnType<typeof createSupabaseServiceRoleClient>,
+  table: string,
+  columns: string,
+  idColumn: string,
+  source: RelatedContentSearchInput,
+  liveProvinceIds: number[],
+  includeActive: boolean,
+  searchColumns: string[],
+): QueryBuilder<T> {
+  const page = normalizePage(source.page);
+  const pageSize = normalizePageSize(source.pageSize);
+  const query = asQueryBuilder<T>(
+    supabase.from(table as never).select(columns, { count: "exact" }),
+  );
+  query.eq("is_published", true);
+  if (includeActive) query.eq("is_active", true);
+  query.in("province_id", liveProvinceIds);
+  if (source.contentType === "attractions") query.neq(idColumn, source.attractionId);
+  const escaped = escapeSearchPattern(source.query);
+  if (escaped) query.or(searchColumns.map((column) => `${column}.ilike.%${escaped}%`).join(","));
+  query.order(searchColumns[0] ?? idColumn, { ascending: true });
+  query.range((page - 1) * pageSize, page * pageSize - 1);
+  return query;
+}
+
+function mapSearchItem(
+  contentType: RelatedContentType,
+  row: RelatedAttractionRow | RelatedRestaurantRow | RelatedAccommodationRow | RelatedStoryRow,
+): AdminRelatedContentSearchItem | null {
+  const isStory = contentType === "stories";
+  const id = Number(isStory ? (row as RelatedStoryRow).story_id : contentType === "attractions" ? (row as RelatedAttractionRow).attraction_id : contentType === "restaurants" ? (row as RelatedRestaurantRow).restaurant_id : (row as RelatedAccommodationRow).accommodation_id);
+  const typedRow = row as RelatedAttractionRow & RelatedRestaurantRow & RelatedAccommodationRow & RelatedStoryRow;
+  const name = isStory ? publicName(typedRow.title, null) : publicName(typedRow.name_th, typedRow.name_en);
+  const slug = publicSlug(typedRow.slug);
+  if (!positiveInteger(id) || !name || !slug) return null;
+  return {
+    id,
+    name,
+    slug,
+    provinceName: provinceName(typedRow.provinces),
+    status: "published",
+    editHref: editHref(contentType, id),
+  };
+}
+
+export async function searchAdminAttractionRelatedContent(
+  input: RelatedContentSearchInput,
+): Promise<AdminRelatedContentSearchResult> {
+  if (!positiveInteger(input.attractionId) || !isRelatedContentType(input.contentType) || typeof input.query !== "string") {
+    throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
+  }
+  const page = normalizePage(input.page);
+  const pageSize = normalizePageSize(input.pageSize);
+  const liveProvinceIds = await listLiveDestinationProvinceIds();
+  if (liveProvinceIds.length === 0) return { items: [], total: 0, page, pageSize };
+
+  const supabase = createSupabaseServiceRoleClient();
+  let response: QueryResponse<RelatedAttractionRow | RelatedRestaurantRow | RelatedAccommodationRow | RelatedStoryRow>;
+  if (input.contentType === "attractions") {
+    response = await searchQuery<RelatedAttractionRow>(supabase, "attractions", "attraction_id, name_th, name_en, slug, province_id, is_published, is_active, provinces(province_name_th, province_name_en)", "attraction_id", input, liveProvinceIds, true, ["name_th", "name_en", "slug"]);
+  } else if (input.contentType === "restaurants") {
+    response = await searchQuery<RelatedRestaurantRow>(supabase, "restaurants", "restaurant_id, name_th, name_en, slug, province_id, is_published, is_active, provinces(province_name_th, province_name_en)", "restaurant_id", input, liveProvinceIds, true, ["name_th", "name_en", "slug"]);
+  } else if (input.contentType === "accommodations") {
+    response = await searchQuery<RelatedAccommodationRow>(supabase, "accommodations", "accommodation_id, name_th, name_en, slug, province_id, is_published, is_active, provinces(province_name_th, province_name_en)", "accommodation_id", input, liveProvinceIds, true, ["name_th", "name_en", "slug"]);
+  } else {
+    const storyQuery = searchQuery<RelatedStoryRow>(supabase, "travel_stories", "story_id, title, slug, province_id, is_published, status, provinces(province_name_th, province_name_en)", "story_id", input, liveProvinceIds, false, ["title", "slug"]);
+    storyQuery.eq("status", "published");
+    response = await storyQuery;
+  }
+
+  if (response.error) throw new Error("ADMIN_ATTRACTION_RELATED_SEARCH_FAILED");
+  const items = relationRows<RelatedAttractionRow | RelatedRestaurantRow | RelatedAccommodationRow | RelatedStoryRow>(response.data)
+    .map((row) => mapSearchItem(input.contentType, row))
+    .filter((item): item is AdminRelatedContentSearchItem => item !== null);
+  return { items, total: response.count ?? items.length, page, pageSize };
+}
+
+function selectedRowsQuery<T>(
+  supabase: ReturnType<typeof createSupabaseServiceRoleClient>,
+  table: string,
+  columns: string,
+  idColumn: string,
+  ids: number[],
+): QueryBuilder<T> {
+  return asQueryBuilder<T>(
+    supabase.from(table as never).select(columns).in(idColumn, ids),
+  );
+}
+
+export async function getAdminSelectedRelatedContent(
+  attractionId: number,
+  contentType: RelatedContentType,
+  relatedIds: number[],
+): Promise<AdminSelectedRelatedContentItem[]> {
+  if (!positiveInteger(attractionId) || !isRelatedContentType(contentType) || !Array.isArray(relatedIds) || relatedIds.some((id) => !positiveInteger(id))) {
+    throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
+  }
+  const ids = Array.from(new Set(relatedIds));
+  if (ids.length === 0) return [];
+  const supabase = createSupabaseServiceRoleClient();
+  let response: QueryResponse<RelatedAttractionRow | RelatedRestaurantRow | RelatedAccommodationRow | RelatedStoryRow>;
+  const columns = contentType === "stories"
+    ? "story_id, title, slug, province_id, is_published, status, provinces(province_name_th, province_name_en)"
+    : "*, provinces(province_name_th, province_name_en)";
+  if (contentType === "attractions") response = await selectedRowsQuery<RelatedAttractionRow>(supabase, "attractions", columns, "attraction_id", ids);
+  else if (contentType === "restaurants") response = await selectedRowsQuery<RelatedRestaurantRow>(supabase, "restaurants", columns, "restaurant_id", ids);
+  else if (contentType === "accommodations") response = await selectedRowsQuery<RelatedAccommodationRow>(supabase, "accommodations", columns, "accommodation_id", ids);
+  else response = await selectedRowsQuery<RelatedStoryRow>(supabase, "travel_stories", columns, "story_id", ids);
+  if (response.error) throw new Error("ADMIN_ATTRACTION_RELATED_SELECTED_READ_FAILED");
+
+  const rows = relationRows<RelatedAttractionRow | RelatedRestaurantRow | RelatedAccommodationRow | RelatedStoryRow>(response.data);
+  const liveProvinceIds = new Set(await listLiveDestinationProvinceIds());
+  const byId = new Map<number, AdminSelectedRelatedContentItem>();
+  for (const row of rows) {
+    const typedRow = row as RelatedAttractionRow & RelatedRestaurantRow & RelatedAccommodationRow & RelatedStoryRow;
+    const id = Number(contentType === "stories" ? typedRow.story_id : contentType === "attractions" ? typedRow.attraction_id : contentType === "restaurants" ? typedRow.restaurant_id : typedRow.accommodation_id);
+    const name = contentType === "stories" ? publicName(typedRow.title, null) : publicName(typedRow.name_th, typedRow.name_en);
+    const slug = publicSlug(typedRow.slug);
+    const isPublished = typedRow.is_published === true;
+    const isActive = contentType === "stories" ? null : typedRow.is_active === true;
+    const storyIsPublished = contentType !== "stories" || typedRow.status === "published";
+    const provinceId = Number(typedRow.province_id);
+    const inScope = contentType === "stories" && !positiveInteger(provinceId) ? true : liveProvinceIds.has(provinceId);
+    const available = positiveInteger(id) && Boolean(name) && Boolean(slug) && isPublished && (isActive ?? true) && storyIsPublished && inScope;
+    byId.set(id, {
+      id,
+      name,
+      slug,
+      provinceName: provinceName(typedRow.provinces),
+      isPublished,
+      isActive,
+      status: available ? "published" : "unavailable",
+      available,
+      editHref: editHref(contentType, id),
+    });
+  }
+  return ids.map((id) => byId.get(id) ?? {
+    id,
+    name: null,
+    slug: null,
+    provinceName: null,
+    isPublished: false,
+    isActive: false,
+    status: "missing",
+    available: false,
+    editHref: editHref(contentType, id),
+  });
 }
 
 // ─── Inline field update (used by InlineEditableText) ─────────────────────
@@ -456,26 +936,75 @@ export async function updateAdminAttractionField(
   }
 }
 
-export async function updateAdminAttractionRelatedContent(attractionId: number, type: 'attractions' | 'restaurants' | 'accommodations' | 'stories', relatedIds: number[]) {
-  const supabase = createSupabaseServiceRoleClient();
+function validateUpdateInput(input: UpdateAdminRelatedContentInput): void {
+  if (!positiveInteger(input.attractionId) || !isRelatedContentType(input.contentType) || !isRelatedContentMode(input.mode) || !Array.isArray(input.relatedIds)) {
+    throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
+  }
+  if (!Number.isSafeInteger(input.maxItems) || input.maxItems < 1 || input.maxItems > 8) {
+    throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
+  }
+  const seen = new Set<number>();
+  for (const id of input.relatedIds) {
+    if (!positiveInteger(id) || seen.has(id)) throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
+    seen.add(id);
+    if (input.contentType === "attractions" && id === input.attractionId) {
+      throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
+    }
+  }
+}
 
-  // Use atomic RPC transaction instead of delete + insert
-  const { data: rpcData, error: rpcError } = await supabase.rpc('sync_attraction_related_content', {
+function rpcPayload(value: unknown): Record<string, unknown> | null {
+  return isRecord(value) ? value : null;
+}
+
+export async function updateAdminAttractionRelatedContentV2(
+  input: UpdateAdminRelatedContentInput,
+): Promise<UpdateAdminRelatedContentResult> {
+  validateUpdateInput(input);
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.rpc("sync_attraction_related_content_v2", {
+    p_attraction_id: input.attractionId,
+    p_entity_type: input.contentType,
+    p_related_ids: input.relatedIds,
+    p_mode: input.mode,
+    p_max_items: input.maxItems,
+  });
+  const payload = rpcPayload(data);
+  const curatedCount = payload?.curated_count;
+  const success = payload?.success === true
+    && payload?.content_type === input.contentType
+    && payload?.mode === input.mode
+    && Number(payload?.max_items) === input.maxItems;
+  if (error || !success || (curatedCount !== undefined && !nonNegativeInteger(Number(curatedCount)))) {
+    console.error("sync_attraction_related_content_v2 RPC error:", error);
+    throw new Error("ADMIN_ATTRACTION_RELATED_UPDATE_FAILED");
+  }
+  return {
+    attractionId: input.attractionId,
+    contentType: input.contentType,
+    mode: input.mode,
+    maxItems: input.maxItems,
+    curatedCount: Number(curatedCount ?? input.relatedIds.length),
+  };
+}
+
+export async function updateAdminAttractionRelatedContent(
+  attractionId: number,
+  type: RelatedContentType,
+  relatedIds: number[],
+): Promise<void> {
+  if (!positiveInteger(attractionId) || !isRelatedContentType(type) || !Array.isArray(relatedIds) || relatedIds.some((id) => !positiveInteger(id))) {
+    throw new Error("ADMIN_ATTRACTION_RELATED_INVALID_INPUT");
+  }
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.rpc("sync_attraction_related_content", {
     p_attraction_id: attractionId,
     p_entity_type: type,
-    p_related_ids: relatedIds
+    p_related_ids: relatedIds,
   });
-
-  const rpcSucceeded = Boolean(
-    rpcData
-      && typeof rpcData === "object"
-      && !Array.isArray(rpcData)
-      && "success" in rpcData
-      && rpcData.success === true,
-  );
-
-  if (rpcError || !rpcSucceeded) {
-    console.error("sync_attraction_related_content RPC error:", rpcError);
+  const payload = rpcPayload(data);
+  if (error || payload?.success !== true) {
+    console.error("sync_attraction_related_content RPC error:", error);
     throw new Error("ADMIN_ATTRACTION_RELATED_UPDATE_FAILED");
   }
 }
