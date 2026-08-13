@@ -114,7 +114,14 @@ describe("listPublicAttractionPage", () => {
     expect(attractionQuery.eq).toHaveBeenCalledWith("is_active", true);
     expect(attractionQuery.in).toHaveBeenCalledWith("province_id", [1]);
     expect(attractionQuery.eq).toHaveBeenCalledWith("provinces.province_name_en", "Yala");
-    expect(attractionQuery.eq).toHaveBeenCalledWith("attraction_types.type_name_en", "Nature");
+    expect(attractionQuery.select).toHaveBeenCalledWith(
+      expect.stringContaining("category_filter:attraction_type_assignments!inner"),
+      { count: "exact" },
+    );
+    expect(attractionQuery.eq).toHaveBeenCalledWith(
+      "category_filter.attraction_types.type_name_en",
+      "Nature",
+    );
     expect(attractionQuery.or).toHaveBeenCalledWith(
       "name_th.ilike.%น้ำตก\\%\\_%,name_en.ilike.%น้ำตก\\%\\_%,slug.ilike.%น้ำตก\\%\\_%",
     );

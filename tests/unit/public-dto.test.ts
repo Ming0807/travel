@@ -128,7 +128,13 @@ describe("listPublicAttractionCards", () => {
     expect(mockFromChain.eq).toHaveBeenCalledWith("is_published", true);
     expect(mockFromChain.eq).toHaveBeenCalledWith("is_active", true);
     expect(mockFromChain.eq).not.toHaveBeenCalledWith("provinces.province_name_en", "Pattani");
-    expect(mockFromChain.eq).toHaveBeenCalledWith("attraction_types.type_name_en", "Culture");
+    expect(mockFromChain.select).toHaveBeenCalledWith(
+      expect.stringContaining("category_filter:attraction_type_assignments!inner"),
+    );
+    expect(mockFromChain.eq).toHaveBeenCalledWith(
+      "category_filter.attraction_types.type_name_en",
+      "Culture",
+    );
     expect(mockFromChain.or).toHaveBeenCalledWith(expect.stringContaining("slug.ilike"));
     expect(mockFromChain.or).toHaveBeenCalledWith(expect.not.stringContaining("old,_town"));
 

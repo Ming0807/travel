@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
-import { parseAdminAttractionMutationFormData } from "@/lib/validation/admin-attraction";
+import {
+  getAttractionPublishCategoryError,
+  parseAdminAttractionMutationFormData,
+} from "@/lib/validation/admin-attraction";
 import { syncAttractionTypeAssignments } from "@/lib/repositories/attraction-category.repository";
 import {
   createAdminAttraction,
@@ -103,6 +106,11 @@ export async function toggleAttractionPublishAction(attractionId: number): Promi
     const guard = await requirePermission("attraction.publish");
     const current = await getAdminAttractionById(attractionId);
     if (!current) return { success: false, error: "ไม่พบสถานที่นี้ อาจถูกลบหรือย้ายแล้ว" };
+    const categoryError = getAttractionPublishCategoryError(
+      current.is_published,
+      current.attraction_type_id,
+    );
+    if (categoryError) return { success: false, error: categoryError };
 
     const updated = await updateAdminAttractionStatus(attractionId, { is_published: !current.is_published });
     await logAdminMutation({

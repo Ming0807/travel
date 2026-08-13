@@ -23,6 +23,24 @@ type AssignmentRow = {
   }>;
 };
 
+const ADMIN_CATEGORY_FILTER_LIMIT = 10_000;
+
+export async function listAttractionIdsByType(attractionTypeId: number): Promise<number[]> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("attraction_type_assignments")
+    .select("attraction_id")
+    .eq("attraction_type_id", attractionTypeId)
+    .limit(ADMIN_CATEGORY_FILTER_LIMIT + 1);
+
+  if (error) throw new Error("ATTRACTION_CATEGORY_FILTER_FAILED");
+  if ((data ?? []).length > ADMIN_CATEGORY_FILTER_LIMIT) {
+    throw new Error("ATTRACTION_CATEGORY_FILTER_TOO_LARGE");
+  }
+
+  return (data ?? []).map((row) => Number(row.attraction_id));
+}
+
 export async function listAttractionTypeAssignments(attractionId: number): Promise<AttractionTypeAssignment[]> {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase

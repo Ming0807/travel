@@ -74,6 +74,7 @@ describe("AttractionHeader", () => {
         name="ย่านเมืองเก่ายะลา"
         province="ยะลา"
         attractionType="วัฒนธรรม"
+        attractionTypes={["History"]}
         reviewState="empty"
         rating={null}
         reviewCount={null}
@@ -83,6 +84,7 @@ describe("AttractionHeader", () => {
     expect(screen.getByRole("heading", { level: 1, name: "ย่านเมืองเก่ายะลา" })).toBeInTheDocument();
     expect(screen.getByText("วัฒนธรรม")).toBeInTheDocument();
     expect(screen.getByText("ยังไม่มีคะแนนรีวิว")).toBeInTheDocument();
+    expect(screen.getByText("History")).toBeInTheDocument();
     expect(screen.queryByText(/0(?:\.0)?/)).not.toBeInTheDocument();
   });
 });

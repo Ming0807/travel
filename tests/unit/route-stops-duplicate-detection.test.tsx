@@ -59,6 +59,7 @@ const baseAttraction = {
   updated_at: null,
   district_name_th: null,
   attraction_type_name_th: null,
+  attraction_type_names_th: [],
   photo_spot_count: 0,
   checkin_code_count: 0,
 };

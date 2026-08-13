@@ -6,6 +6,10 @@ const migration = readFileSync(
   resolve(process.cwd(), "supabase/migrations/20260813000000_add_attraction_type_assignments.sql"),
   "utf8",
 );
+const publicationGuardMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/20260813001000_harden_attraction_category_publication.sql"),
+  "utf8",
+);
 
 describe("attraction multi-category migration", () => {
   it("creates a constrained assignment table and useful indexes", () => {
@@ -37,6 +41,11 @@ describe("attraction multi-category migration", () => {
   it("keeps direct compatibility-column updates mirrored", () => {
     expect(migration).toMatch(/FUNCTION public\.mirror_primary_attraction_type/i);
     expect(migration).toMatch(/AFTER INSERT OR UPDATE OF attraction_type_id ON public\.attractions/i);
+  });
+
+  it("rejects direct publication without a primary category", () => {
+    expect(publicationGuardMigration).toMatch(/FUNCTION public\.enforce_published_attraction_category/i);
+    expect(publicationGuardMigration).toMatch(/BEFORE INSERT OR UPDATE OF is_published, attraction_type_id ON public\.attractions/i);
   });
 
   it("protects writes and permits reads only for public attractions", () => {

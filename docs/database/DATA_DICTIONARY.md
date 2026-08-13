@@ -302,7 +302,7 @@ Stores the controlled many-to-many category assignments for each attraction. A p
 | created_at | timestamptz | yes | Record creation time |
 | updated_at | timestamptz | no | Last update time |
 
-Constraints include a composite primary key on `(attraction_id, attraction_type_id)` and a partial unique index allowing at most one primary assignment per attraction. Category sets are replaced atomically through `sync_attraction_types`.
+Constraints include a composite primary key on `(attraction_id, attraction_type_id)` and a partial unique index allowing at most one primary assignment per attraction. Category sets are replaced atomically through `sync_attraction_types`. A database trigger rejects direct publication when `attractions.attraction_type_id` has no primary category, while the compatibility mirror keeps older primary-category consumers aligned.
 
 ---
 

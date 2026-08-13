@@ -121,6 +121,16 @@ export function parseAdminAttractionMutationFormData(formData: FormData) {
   return adminAttractionMutationSchema.safeParse(raw);
 }
 
+export function getAttractionPublishCategoryError(
+  isCurrentlyPublished: boolean,
+  primaryAttractionTypeId: number | null,
+): string | null {
+  if (!isCurrentlyPublished && primaryAttractionTypeId === null) {
+    return "กรุณาเลือกหมวดหลักก่อนเผยแพร่สถานที่";
+  }
+  return null;
+}
+
 export const adminAttractionIdSchema = z.object({
   attractionId: requiredId
 });

@@ -5,6 +5,7 @@ import type { AdminAttractionFilters, AdminAttractionMutationInput } from "@/lib
 import type { Json } from "@/types/database";
 import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 import { assertLiveDestinationProvinceId } from "@/lib/repositories/destination-scope.repository";
+import { listAttractionIdsByType } from "@/lib/repositories/attraction-category.repository";
 
 export type AdminAttractionRow = {
   attraction_id: number;
@@ -39,6 +40,7 @@ export type AdminAttractionRow = {
   province_name_th: string | null;
   district_name_th: string | null;
   attraction_type_name_th: string | null;
+  attraction_type_names_th: string[];
   photo_spot_count: number;
   checkin_code_count: number;
 };
@@ -57,6 +59,11 @@ type AdminAttractionQueryRow = Omit<
   provinces?: SupabaseJoin<{ province_name_th: string | null }>;
   districts?: SupabaseJoin<{ district_name_th: string | null }>;
   attraction_types?: SupabaseJoin<{ type_name_th: string | null }>;
+  attraction_type_assignments?: Array<{
+    is_primary: boolean;
+    display_order: number;
+    attraction_types?: SupabaseJoin<{ type_name_th: string | null }>;
+  }>;
 };
 
 type ContentListProvince = { province_name_th: string | null };
@@ -69,6 +76,15 @@ function mapAttraction(row: AdminAttractionQueryRow, photoSpotCounts = new Map<n
   const province = firstJoin(row.provinces);
   const district = firstJoin(row.districts);
   const attractionType = firstJoin(row.attraction_types);
+  const assignedTypeNames = (row.attraction_type_assignments ?? [])
+    .slice()
+    .sort((left, right) => Number(right.is_primary) - Number(left.is_primary) || left.display_order - right.display_order)
+    .map((assignment) => firstJoin(assignment.attraction_types)?.type_name_th ?? null)
+    .filter((name): name is string => Boolean(name));
+  const primaryTypeName = attractionType?.type_name_th ?? null;
+  const attractionTypeNames = Array.from(new Set(
+    assignedTypeNames.length > 0 ? assignedTypeNames : primaryTypeName ? [primaryTypeName] : [],
+  ));
 
   return {
     attraction_id: Number(row.attraction_id),
@@ -102,7 +118,8 @@ function mapAttraction(row: AdminAttractionQueryRow, photoSpotCounts = new Map<n
     updated_at: row.updated_at,
     province_name_th: province?.province_name_th ?? null,
     district_name_th: district?.district_name_th ?? null,
-    attraction_type_name_th: attractionType?.type_name_th ?? null,
+    attraction_type_name_th: primaryTypeName,
+    attraction_type_names_th: attractionTypeNames,
     photo_spot_count: photoSpotCounts.get(Number(row.attraction_id)) ?? 0,
     checkin_code_count: checkinCodeCounts.get(Number(row.attraction_id)) ?? 0
   };
@@ -173,6 +190,13 @@ export async function listAdminAttractions(filters: AdminAttractionFilters): Pro
   const supabase = createSupabaseServiceRoleClient();
   const from = (filters.page - 1) * filters.pageSize;
   const to = from + filters.pageSize - 1;
+  const categoryAttractionIds = filters.attractionTypeId
+    ? await listAttractionIdsByType(filters.attractionTypeId)
+    : null;
+
+  if (categoryAttractionIds?.length === 0) {
+    return { items: [], total: 0, page: filters.page, pageSize: filters.pageSize };
+  }
 
   let query = supabase
     .from("attractions")
@@ -181,7 +205,12 @@ export async function listAdminAttractions(filters: AdminAttractionFilters): Pro
         *,
         provinces (province_name_th),
         districts (district_name_th),
-        attraction_types (type_name_th)
+        attraction_types (type_name_th),
+        attraction_type_assignments (
+          is_primary,
+          display_order,
+          attraction_types (type_name_th)
+        )
       `,
       { count: "exact" }
     )
@@ -194,7 +223,7 @@ export async function listAdminAttractions(filters: AdminAttractionFilters): Pro
   }
   if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
   if (filters.districtId) query = query.eq("district_id", filters.districtId);
-  if (filters.attractionTypeId) query = query.eq("attraction_type_id", filters.attractionTypeId);
+  if (categoryAttractionIds) query = query.in("attraction_id", categoryAttractionIds);
   if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
   if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
 
@@ -224,7 +253,12 @@ export async function getAdminAttractionById(attractionId: number): Promise<Admi
         *,
         provinces (province_name_th),
         districts (district_name_th),
-        attraction_types (type_name_th)
+        attraction_types (type_name_th),
+        attraction_type_assignments (
+          is_primary,
+          display_order,
+          attraction_types (type_name_th)
+        )
       `
     )
     .eq("attraction_id", attractionId)

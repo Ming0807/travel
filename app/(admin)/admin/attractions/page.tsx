@@ -109,9 +109,16 @@ export default async function AdminAttractionsPage({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-slate-500">
-                        {attraction.attraction_type_name_th ?? "—"}
-                      </span>
+                      <div title={attraction.attraction_type_names_th.join(", ")}>
+                        <span className="text-xs font-semibold text-slate-700">
+                          {attraction.attraction_type_name_th ?? "—"}
+                        </span>
+                        {attraction.attraction_type_names_th.length > 1 ? (
+                          <span className="ml-1 text-xs text-slate-500">
+                            +{attraction.attraction_type_names_th.length - 1} หมวด
+                          </span>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="text-xs font-bold text-slate-600">{attraction.photo_spot_count}</span>
@@ -175,7 +182,12 @@ export default async function AdminAttractionsPage({
                     </div>
                     <div>
                       <p className="text-xs text-slate-400">ประเภท</p>
-                      <p className="font-semibold text-slate-700">{attraction.attraction_type_name_th ?? "—"}</p>
+                      <p className="font-semibold text-slate-700">
+                        {attraction.attraction_type_name_th ?? "—"}
+                        {attraction.attraction_type_names_th.length > 1
+                          ? ` +${attraction.attraction_type_names_th.length - 1} หมวด`
+                          : ""}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-400">จุดถ่ายรูป</p>

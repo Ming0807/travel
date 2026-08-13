@@ -70,6 +70,7 @@ export default async function AttractionDetailPage({ params }: AttractionDetailP
           name={data.name}
           province={data.province}
           attractionType={data.attractionType}
+          attractionTypes={data.attractionTypes}
           reviewState={reviewBundle.state}
           rating={reviewBundle.stats?.averageRating ?? null}
           reviewCount={reviewBundle.stats?.totalReviews ?? null}

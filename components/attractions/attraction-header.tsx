@@ -5,6 +5,7 @@ type AttractionHeaderProps = {
   name: string;
   province: string;
   attractionType: string;
+  attractionTypes?: string[];
   reviewState: "available" | "empty" | "unavailable";
   rating: number | null;
   reviewCount: number | null;
@@ -14,10 +15,13 @@ export function AttractionHeader({
   name,
   province,
   attractionType,
+  attractionTypes = [],
   reviewState,
   rating,
   reviewCount,
 }: AttractionHeaderProps) {
+  const categories = Array.from(new Set([attractionType, ...attractionTypes].filter(Boolean)));
+
   return (
     <header className="mb-6 sm:mb-8">
       <nav aria-label="เส้นทางนำทาง" className="mb-5 flex min-w-0 items-center gap-1.5 text-sm text-slate-600">
@@ -37,12 +41,12 @@ export function AttractionHeader({
           <MapPin aria-hidden="true" size={16} weight="fill" className="text-[var(--public-coral)]" />
           {province}
         </span>
-        {attractionType ? (
-          <span className="inline-flex min-h-8 items-center gap-1.5 border border-slate-200 bg-white px-3 py-1 text-slate-700">
+        {categories.map((category) => (
+          <span key={category} className="inline-flex min-h-8 items-center gap-1.5 border border-slate-200 bg-white px-3 py-1 text-slate-700">
             <Tag aria-hidden="true" size={16} />
-            {attractionType}
+            {category}
           </span>
-        ) : null}
+        ))}
       </div>
 
       <h1 className="mt-4 max-w-4xl text-balance text-3xl font-bold leading-tight text-[var(--public-ink)] sm:text-4xl lg:text-5xl">

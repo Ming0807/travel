@@ -657,6 +657,7 @@ Indexes needed:
 attractions(slug)
 attractions(province_id)
 attractions(attraction_type_id)
+attraction_type_assignments(attraction_type_id, attraction_id)
 attractions(is_published, is_active)
 attraction_images(attraction_id)
 photo_spots(attraction_id)
@@ -702,6 +703,10 @@ SEO is useful because attraction pages may be public-facing.
 The public module depends on admin CMS.
 
 Admin must be able to manage:
+
+- select up to four controlled categories per attraction
+- mark exactly one selected category as primary before publishing
+- use secondary categories for public/admin discovery without duplicating dashboard counts
 
 ```text
 attractions

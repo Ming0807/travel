@@ -6,10 +6,17 @@ import { logAuditAction } from "@/lib/services/audit-log.service";
 import { adminAttractionFiltersSchema } from "@/lib/validation/admin-attraction";
 import { parseExportFormat, createExportResponse } from "@/lib/utils/export-response";
 import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
+import { listAttractionIdsByType } from "@/lib/repositories/attraction-category.repository";
 
 export const dynamic = "force-dynamic";
 
 type ExportRecord = Record<string, unknown>;
+
+function exportRecords(value: unknown): ExportRecord[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is ExportRecord => Boolean(item) && typeof item === "object")
+    : [];
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,6 +33,9 @@ export async function GET(request: NextRequest) {
     const maxRows = getServerEnv().EXPORT_MAX_ROWS;
 
     const supabase = createSupabaseServiceRoleClient();
+    const categoryAttractionIds = filters.attractionTypeId
+      ? await listAttractionIdsByType(filters.attractionTypeId)
+      : null;
 
     let query = supabase
       .from("attractions")
@@ -33,7 +43,12 @@ export async function GET(request: NextRequest) {
         *,
         provinces (province_name_th, province_name_en),
         districts (district_name_th, district_name_en),
-        attraction_types (type_name_th, type_name_en)
+        attraction_types (type_name_th, type_name_en),
+        attraction_type_assignments (
+          is_primary,
+          display_order,
+          attraction_types (type_name_th, type_name_en)
+        )
       `)
       .order("updated_at", { ascending: false, nullsFirst: false })
       .limit(maxRows + 1);
@@ -44,7 +59,8 @@ export async function GET(request: NextRequest) {
     }
     if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
     if (filters.districtId) query = query.eq("district_id", filters.districtId);
-    if (filters.attractionTypeId) query = query.eq("attraction_type_id", filters.attractionTypeId);
+    if (categoryAttractionIds?.length) query = query.in("attraction_id", categoryAttractionIds);
+    if (categoryAttractionIds && categoryAttractionIds.length === 0) query = query.eq("attraction_id", -1);
     if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
     if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
 
@@ -69,6 +85,11 @@ export async function GET(request: NextRequest) {
       const province = firstJoin(row.provinces as SupabaseJoin<ExportRecord>);
       const district = firstJoin(row.districts as SupabaseJoin<ExportRecord>);
       const type = firstJoin(row.attraction_types as SupabaseJoin<ExportRecord>);
+      const assignedTypes = exportRecords(row.attraction_type_assignments)
+        .sort((left, right) => Number(Boolean(right.is_primary)) - Number(Boolean(left.is_primary))
+          || Number(left.display_order ?? 0) - Number(right.display_order ?? 0))
+        .map((assignment) => firstJoin(assignment.attraction_types as SupabaseJoin<ExportRecord>))
+        .filter((category): category is ExportRecord => Boolean(category));
 
       return {
         "ID": String(row.attraction_id),
@@ -79,8 +100,10 @@ export async function GET(request: NextRequest) {
         "Province (EN)": province?.province_name_en || "",
         "District (TH)": district?.district_name_th || "",
         "District (EN)": district?.district_name_en || "",
-        "Type (TH)": type?.type_name_th || "",
-        "Type (EN)": type?.type_name_en || "",
+        "Primary Type (TH)": type?.type_name_th || "",
+        "Primary Type (EN)": type?.type_name_en || "",
+        "All Types (TH)": assignedTypes.map((category) => category.type_name_th).filter(Boolean).join(" | "),
+        "All Types (EN)": assignedTypes.map((category) => category.type_name_en).filter(Boolean).join(" | "),
         "Is Published": row.is_published ? "Yes" : "No",
         "Is Active": row.is_active ? "Yes" : "No",
         "Sustainability": row.sustainability_category || "",

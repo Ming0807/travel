@@ -10,6 +10,7 @@ vi.mock("@/lib/supabase/service-role", () => ({
 }));
 
 import {
+  listAttractionIdsByType,
   listAttractionTypeAssignments,
   syncAttractionTypeAssignments,
 } from "@/lib/repositories/attraction-category.repository";
@@ -44,5 +45,19 @@ describe("admin attraction category repository", () => {
       p_primary_attraction_type_id: 3,
       p_is_published: true,
     });
+  });
+
+  it("loads attraction ids assigned to a category for admin filters", async () => {
+    const limit = vi.fn().mockResolvedValue({
+      data: [{ attraction_id: 10 }, { attraction_id: 12 }],
+      error: null,
+    });
+    const eq = vi.fn(() => ({ limit }));
+    const select = vi.fn(() => ({ eq }));
+    mocks.from.mockReturnValue({ select });
+
+    await expect(listAttractionIdsByType(3)).resolves.toEqual([10, 12]);
+    expect(mocks.from).toHaveBeenCalledWith("attraction_type_assignments");
+    expect(eq).toHaveBeenCalledWith("attraction_type_id", 3);
   });
 });

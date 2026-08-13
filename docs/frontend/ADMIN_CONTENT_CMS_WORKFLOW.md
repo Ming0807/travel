@@ -482,6 +482,8 @@ Current implementation pattern:
 - attraction, photo spot, route, story, and restaurant forms share the same error summary and save bar behavior
 - attraction edit uses a visual page-matched editor with a public page map for Header, Gallery, Overview, Location, QR flow, Related content, and Publish readiness
 - attraction section forms include helper text for slug, province, district, sustainability category, and visitor capacity so admins understand data-quality impact before publishing
+- attraction category editing supports up to four categories. The primary category appears on cards and drives dashboard grouping; secondary categories improve public and admin filtering. Published attractions require one active primary category.
+- attraction lists show the primary category plus a secondary-category count. Attraction exports include both the primary category and the complete ordered category set.
 - the attraction visual editor provides direct actions for public URL preview, media management, and QR/check-in code management from the editor toolbar
 - the global Media Library is framed as an official asset manager and picker with search, drag/drop upload, file-rule copy, and clear separation from tourist uploads and generated certificate files
 - content media managers show cover, active, and missing-alt readiness so public images can be checked from the content editor before publishing

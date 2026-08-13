@@ -83,6 +83,18 @@ const attractionRow = {
   longitude: 101.28,
   provinces: { province_name_th: "ยะลา", province_name_en: "Yala" },
   attraction_types: { type_name_th: "วัฒนธรรม", type_name_en: "Culture" },
+  attraction_type_assignments: [
+    {
+      is_primary: true,
+      display_order: 0,
+      attraction_types: { type_name_th: null, type_name_en: "Culture" },
+    },
+    {
+      is_primary: false,
+      display_order: 1,
+      attraction_types: { type_name_th: null, type_name_en: "History" },
+    },
+  ],
   content_media: [
     {
       storage_path: "attractions/cover.webp",
@@ -113,6 +125,7 @@ describe("getPublicAttractionDetail", () => {
       slug: "yala-old-town",
       name: "ย่านเมืองเก่ายะลา",
       attractionType: "วัฒนธรรม",
+      attractionTypes: ["Culture", "History"],
       openingHours: "08:00-17:00",
       mainImage: { url: "/site-media/attractions/cover.webp", alt: "อาคารเก่า" },
       thingsToDo: [],

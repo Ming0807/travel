@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseAdminAttractionMutationFormData } from "@/lib/validation/admin-attraction";
+import {
+  getAttractionPublishCategoryError,
+  parseAdminAttractionMutationFormData,
+} from "@/lib/validation/admin-attraction";
 
 function validForm() {
   const form = new FormData();
@@ -11,6 +14,12 @@ function validForm() {
 }
 
 describe("attraction category mutation validation", () => {
+  it("blocks a publish transition without a primary category", () => {
+    expect(getAttractionPublishCategoryError(false, null)).toBeTruthy();
+    expect(getAttractionPublishCategoryError(false, 3)).toBeNull();
+    expect(getAttractionPublishCategoryError(true, null)).toBeNull();
+  });
+
   it("normalizes duplicate category values while preserving order", () => {
     const form = validForm();
     form.append("attractionTypeIds", "3");

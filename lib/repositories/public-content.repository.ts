@@ -151,6 +151,7 @@ export type PublicAttractionDetail = {
   name: string;
   province: string;
   attractionType: string;
+  attractionTypes: string[];
   description: string;
   mainImage: PublicAttractionImage | null;
   gallery: PublicAttractionImage[];
@@ -518,7 +519,6 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
       liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
     );
     const buildBaseQuery = () => {
-      const attractionTypesRelation = options?.type ? "attraction_types!inner" : "attraction_types";
       let q = supabase
         .from("attractions")
         .select(`
@@ -531,7 +531,10 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
           latitude,
           longitude,
           provinces!inner (province_name_th, province_name_en),
-          ${attractionTypesRelation} (type_name_th, type_name_en),
+          attraction_types (type_name_th, type_name_en),
+          category_filter:attraction_type_assignments!inner (
+            attraction_types!inner (type_name_en, is_active)
+          ),
           content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
         `)
         .eq("is_published", true)
@@ -550,7 +553,9 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
       }
 
       if (options?.type) {
-        q = q.eq('attraction_types.type_name_en', options.type);
+        q = q
+          .eq("category_filter.attraction_types.type_name_en", options.type)
+          .eq("category_filter.attraction_types.is_active", true);
       }
 
       return q;
@@ -620,7 +625,6 @@ export async function listPublicAttractionPage(
     input.province,
     liveProvinces.map((province) => ({ province_name_en: province.nameEn })),
   );
-  const attractionTypesRelation = input.type ? "attraction_types!inner" : "attraction_types";
   let query = supabase
     .from("attractions")
     .select(`
@@ -634,7 +638,10 @@ export async function listPublicAttractionPage(
       longitude,
       provinces!inner (province_name_th, province_name_en),
       districts (district_name_th, district_name_en),
-      ${attractionTypesRelation} (type_name_th, type_name_en),
+      attraction_types (type_name_th, type_name_en),
+      category_filter:attraction_type_assignments!inner (
+        attraction_types!inner (type_name_en, is_active)
+      ),
       content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
     `, { count: "exact" })
     .eq("is_published", true)
@@ -653,7 +660,9 @@ export async function listPublicAttractionPage(
   }
 
   if (input.type) {
-    query = query.eq("attraction_types.type_name_en", input.type);
+    query = query
+      .eq("category_filter.attraction_types.type_name_en", input.type)
+      .eq("category_filter.attraction_types.is_active", true);
   }
 
   const from = (page - 1) * pageSize;
@@ -706,6 +715,11 @@ async function loadAttractionDetail(
         longitude,
         provinces (province_name_th, province_name_en),
         attraction_types (type_name_th, type_name_en),
+        attraction_type_assignments (
+          is_primary,
+          display_order,
+          attraction_types (type_name_th, type_name_en)
+        ),
         content_media (storage_path, media_type, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order)
       `)
       .eq("slug", slug);
@@ -732,6 +746,20 @@ async function loadAttractionDetail(
       : [];
     const publicMedia = selectPublicAttractionMedia(media);
     const attractionType = one(row.attraction_types);
+    const primaryAttractionType = text(attractionType?.type_name_th, text(attractionType?.type_name_en));
+    const assignedAttractionTypes = records(row.attraction_type_assignments)
+      .sort((left, right) => Number(Boolean(right.is_primary)) - Number(Boolean(left.is_primary))
+        || numberValue(left.display_order) - numberValue(right.display_order))
+      .map((assignment) => {
+        const category = one(assignment.attraction_types);
+        return text(category?.type_name_th, text(category?.type_name_en));
+      })
+      .filter(Boolean);
+    const attractionTypes = Array.from(new Set(
+      assignedAttractionTypes.length > 0
+        ? assignedAttractionTypes
+        : [primaryAttractionType].filter(Boolean),
+    ));
     const attractionId = numberValue(row.attraction_id);
 
     const baseDetail: PublicAttractionDetail = {
@@ -739,7 +767,8 @@ async function loadAttractionDetail(
       slug: text(row.slug, slug),
       name,
       province: text(province?.province_name_th, text(province?.province_name_en)),
-      attractionType: text(attractionType?.type_name_th, text(attractionType?.type_name_en)),
+      attractionType: primaryAttractionType,
+      attractionTypes,
       description: text(row.description_th, text(row.description_en, text(row.short_description_th, text(row.short_description_en)))),
       mainImage: publicMedia.mainImage,
       gallery: publicMedia.gallery,
