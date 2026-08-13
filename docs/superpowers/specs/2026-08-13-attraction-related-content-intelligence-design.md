@@ -122,6 +122,17 @@ Related content is managed in one workspace instead of four unrelated drawers. T
 
 There is no fake drag handle. Search results never load every attraction, restaurant, accommodation, or story at once. Thai labels are primary; internal entity names remain implementation details.
 
+The attraction editor also enforces single field ownership:
+
+- Header owns names, slug, and short descriptions;
+- Content owns descriptions, history, travel tips, and directions copy;
+- Location owns address, coordinates, opening hours, and contact details;
+- Settings owns geography, categories, capacity, active state, and publication state;
+- Media owns cover, gallery, and virtual-tour media; and
+- Related content owns only the four relationship sections and their modes.
+
+The create screen collects the minimum metadata needed to create a draft. It is not a second full CMS form. No edit workspace asks the admin to enter the same value in multiple drawers.
+
 ## Data Model
 
 Add `attraction_related_content_settings` with one row per attraction and content type:

@@ -121,6 +121,22 @@
 - [ ] Run Testing Library tests and `impeccable` detection.
 - [ ] Commit the admin UX independently.
 
+### Task 7A: Attraction form ownership and duplicate-entry cleanup
+
+**Files:**
+- Modify: `components/admin/attractions/visual-editor/AttractionVisualEditor.tsx`
+- Modify: `components/admin/attractions/visual-editor/SectionForms.tsx`
+- Modify: `components/admin/attractions/AttractionForm.tsx` only if the draft-create boundary is unclear
+- Test: `tests/unit/attraction-editor-field-ownership.test.ts`
+
+- [ ] Inventory every attraction mutation field and assign exactly one edit workspace owner.
+- [ ] Ensure draft creation asks only for minimum identity, geography, primary category, and initial status.
+- [ ] Remove duplicate visible controls and misleading helper copy; use links or summaries when another workspace owns the value.
+- [ ] Ensure content, category, status, media, and related-content saves cannot overwrite fields owned by another workspace with stale hidden values.
+- [ ] Keep the ownership labels and public-page map understandable on mobile.
+- [ ] Add a source-contract regression test for duplicate field names across edit workspaces.
+- [ ] Commit the ownership cleanup separately.
+
 ### Task 8: Public section presentation
 
 **Files:**
