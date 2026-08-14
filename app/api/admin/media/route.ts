@@ -13,6 +13,10 @@ import {
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { rateLimit } from "@/lib/utils/rate-limit";
+import {
+  normalizeAdminMediaAssetForClient,
+  type AdminMediaAssetClientRow,
+} from "@/lib/media/admin-media-contract";
 
 export const runtime = "nodejs";
 
@@ -21,26 +25,11 @@ const MEDIA_ASSET_QUALITY = 80;
 const MEDIA_ASSET_THUMBNAIL_WIDTH = 400;
 const MEDIA_ASSET_THUMBNAIL_QUALITY = 70;
 
-type MediaAssetRow = Record<string, unknown> & {
-  storage_path: string;
-  thumbnail_storage_path?: string | null;
-};
-
-function toMediaAssetRow(asset: unknown): MediaAssetRow {
-  const record = asset && typeof asset === "object" ? asset as Record<string, unknown> : {};
-  return {
-    ...record,
-    storage_path: typeof record.storage_path === "string" ? record.storage_path : "",
-    thumbnail_storage_path:
-      typeof record.thumbnail_storage_path === "string" ? record.thumbnail_storage_path : null,
-  };
-}
-
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unexpected error";
 }
 
-function withMediaUrls(asset: MediaAssetRow) {
+function withMediaUrls(asset: AdminMediaAssetClientRow) {
   return {
     ...asset,
     url: siteMediaImageUrl(asset.storage_path) ?? "",
@@ -115,7 +104,7 @@ export async function GET(req: NextRequest) {
       throw error;
     }
 
-    const assets = (data ?? []).map((asset) => withMediaUrls(toMediaAssetRow(asset)));
+    const assets = (data ?? []).map((asset) => withMediaUrls(normalizeAdminMediaAssetForClient(asset)));
 
     return NextResponse.json(assets);
   } catch (error: unknown) {
@@ -246,11 +235,13 @@ export async function POST(req: NextRequest) {
       throw dbError;
     }
 
+    const clientAsset = withMediaUrls(normalizeAdminMediaAssetForClient(asset));
+
     await logAdminAction({
       adminId: guard.adminId,
       action: "media.library_upload",
       entityType: "media_asset",
-      entityId: asset && typeof asset === "object" && "id" in asset ? String(asset.id) : storagePath,
+      entityId: clientAsset.id || storagePath,
       details: {
         category,
         contentType: mainImage.contentType,
@@ -263,9 +254,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      asset: {
-        ...withMediaUrls(toMediaAssetRow(asset)),
-      },
+      asset: clientAsset,
     });
   } catch (error: unknown) {
     console.error("Media upload error:", error);

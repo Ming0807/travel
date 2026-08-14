@@ -65,8 +65,11 @@ export async function createRestaurantAction(_prevState: ActionResult<{ id: numb
     const created = await createAdminRestaurant(parsed.data);
 
     // Link cover media if provided
+    const coverStoragePath = formData.get("coverStoragePath");
     const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
-    if (coverMediaId && Number.isFinite(coverMediaId)) {
+    if (typeof coverStoragePath === "string" && coverStoragePath.trim() !== "") {
+      await linkMediaToEntityByStoragePath(coverStoragePath.trim(), "restaurant", created.restaurant_id);
+    } else if (coverMediaId && Number.isFinite(coverMediaId)) {
       await linkMediaToEntity(coverMediaId, "restaurant", created.restaurant_id);
     }
 

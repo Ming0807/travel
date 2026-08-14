@@ -38,6 +38,7 @@ const FIELD_LABELS = {
   latitude: "Latitude",
   longitude: "Longitude",
   coverImageUrl: "รูปภาพปก",
+  coverMediaId: "รูปภาพปก",
   categoryIds: "หมวดหมู่ร้านอาหาร",
 };
 
@@ -51,6 +52,8 @@ export function RestaurantForm({
   const isEditing = !!restaurant;
   const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
   const [coverMediaId, setCoverMediaId] = useState<number | null>(null);
+  const [coverStoragePath, setCoverStoragePath] = useState("");
+  const [coverSelectionError, setCoverSelectionError] = useState("");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const action = isEditing ? updateRestaurantAction.bind(null, restaurant.restaurant_id) : createRestaurantAction;
 
@@ -77,7 +80,7 @@ export function RestaurantForm({
           title="สร้างร้านอาหารสำเร็จ!"
           description="ระบบได้บันทึกข้อมูลร้านอาหารใหม่ของคุณเรียบร้อยแล้ว คุณสามารถจัดการรูปภาพหรือกลับไปยังหน้ารายการได้"
           actions={[
-            { label: "อัปโหลดรูปภาพร้านอาหาร", href: `/admin/restaurants/${newId}`, primary: true, icon: Image },
+            { label: "อัปโหลดรูปภาพร้านอาหาร", href: `/admin/restaurants/${newId}/media`, primary: true, icon: Image },
             { label: "กลับไปหน้ารายการ", href: "/admin/restaurants", primary: false, icon: List }
           ]}
         />
@@ -184,6 +187,8 @@ export function RestaurantForm({
                         onClick={() => {
                           setCoverPreviewUrl("");
                           setCoverMediaId(null);
+                          setCoverStoragePath("");
+                          setCoverSelectionError("");
                         }}
                         className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
                       >
@@ -193,6 +198,8 @@ export function RestaurantForm({
                   </div>
                 </div>
                 <input type="hidden" name="coverMediaId" value={coverMediaId ?? ""} />
+                <input type="hidden" name="coverStoragePath" value={coverStoragePath} />
+                {coverSelectionError ? <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{coverSelectionError}</p> : null}
               </label>
             </div>
           </AdminFormSection>
@@ -217,7 +224,11 @@ export function RestaurantForm({
         onClose={() => setIsPickerOpen(false)}
         onSelectAsset={(asset) => {
           const id = Number(asset.id);
-          setCoverMediaId(id);
+          setCoverMediaId(Number.isSafeInteger(id) && id > 0 ? id : null);
+          setCoverStoragePath(asset.storage_path);
+          setCoverSelectionError(asset.storage_path
+            ? ""
+            : "รูปนี้ไม่มีข้อมูลไฟล์ที่ใช้งานได้ กรุณาเลือกรูปอื่น");
           setCoverPreviewUrl(asset.url);
         }}
         onSelect={(url) => setCoverPreviewUrl(url)}
