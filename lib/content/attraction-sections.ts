@@ -2,6 +2,7 @@ export type AttractionContentLocale = "th" | "en";
 
 export type AttractionSectionKey =
   | "overview"
+  | "history"
   | "things_to_do"
   | "where_to_stay"
   | "food_drink"
@@ -25,6 +26,7 @@ export type AttractionSectionNavItem = AttractionSectionDefinition & {
 
 type AttractionSectionContent = {
   description?: string | null;
+  history?: string | null;
   thingsToDo?: unknown[] | null;
   whereToStay?: unknown[] | null;
   foodAndDrink?: unknown[] | null;
@@ -46,6 +48,13 @@ export const ATTRACTION_SECTION_DEFINITIONS: AttractionSectionDefinition[] = [
     required: true,
     labels: { th: "ภาพรวม", en: "Overview" },
     shortLabels: { th: "ภาพรวม", en: "Overview" },
+  },
+  {
+    key: "history",
+    id: "history",
+    required: false,
+    labels: { th: "ประวัติและเรื่องเล่า", en: "History & Stories" },
+    shortLabels: { th: "ประวัติ", en: "History" },
   },
   {
     key: "things_to_do",
@@ -125,6 +134,8 @@ export function buildAttractionSectionNavigation(
     switch (section.key) {
       case "overview":
         return Boolean(content.description?.trim());
+      case "history":
+        return Boolean(content.history?.trim());
       case "things_to_do":
         return Boolean(content.thingsToDo?.length);
       case "where_to_stay":

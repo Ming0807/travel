@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { updateAttractionSectionAction } from "@/app/actions/admin-attraction-actions";
 import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
@@ -28,12 +29,15 @@ function useAttractionSectionAction(
   section: AttractionEditSection,
   onClose: () => void,
 ) {
+  const router = useRouter();
   const action = updateAttractionSectionAction.bind(null, attraction.attraction_id, section);
   const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
 
   useEffect(() => {
-    if (state?.success) onClose();
-  }, [state?.success, onClose]);
+    if (!state?.success) return;
+    router.refresh();
+    onClose();
+  }, [state?.success, onClose, router]);
 
   return { state, formAction, isPending };
 }
@@ -78,13 +82,16 @@ export function ContentForm({ attraction, onClose }: SectionFormProps) {
 
       <div className="space-y-8">
         <div className="space-y-5">
-          <h3 className="border-b border-slate-100 pb-2 font-bold text-slate-800">เนื้อหาภาษาไทย (Thai Content)</h3>
+          <div className="border-b border-slate-200 pb-3">
+            <h3 className="font-bold text-slate-800">เนื้อหาภาษาไทย</h3>
+            <p className={helpClass}>ภาพรวมและประวัติจะแสดงเป็นคนละส่วนบนหน้าสาธารณะ เพื่อให้ผู้อ่านค้นหาข้อมูลได้ง่าย</p>
+          </div>
           <label className="block">
             <span className="text-sm font-bold text-slate-600">คำอธิบายสั้น (Short Description)</span>
             <textarea className={`${textareaClass} min-h-[96px]`} defaultValue={attraction.short_description_th ?? ""} maxLength={500} name="shortDescriptionTh" />
           </label>
-          <FormRichText imageLayoutControls label="รายละเอียด (Full Description)" name="descriptionTh" defaultValue={attraction.description_th ?? ""} minHeight={200} />
-          <FormRichText imageLayoutControls label="ประวัติ / เรื่องเล่า (History & Story)" name="historyTh" defaultValue={attraction.history_th ?? ""} minHeight={200} />
+          <FormRichText imageLayoutControls label="ภาพรวมสถานที่" name="descriptionTh" defaultValue={attraction.description_th ?? ""} minHeight={200} />
+          <FormRichText imageLayoutControls label="ประวัติ / เรื่องเล่า" name="historyTh" defaultValue={attraction.history_th ?? ""} minHeight={200} />
           <label className="block">
             <span className="text-sm font-bold text-slate-600">ข้อแนะนำการเดินทาง (Travel Tips)</span>
             <textarea className={`${textareaClass} min-h-[110px]`} defaultValue={attraction.travel_tips_th ?? ""} maxLength={5000} name="travelTipsTh" />
@@ -96,13 +103,13 @@ export function ContentForm({ attraction, onClose }: SectionFormProps) {
         </div>
 
         <div className="space-y-5">
-          <h3 className="border-b border-slate-100 pb-2 font-bold text-slate-800">เนื้อหาภาษาอังกฤษ (English Content)</h3>
+          <h3 className="border-b border-slate-200 pb-3 font-bold text-slate-800">เนื้อหาภาษาอังกฤษ (ไม่บังคับ)</h3>
           <label className="block">
             <span className="text-sm font-bold text-slate-600">คำอธิบายสั้น (Short Description)</span>
             <textarea className={`${textareaClass} min-h-[96px]`} defaultValue={attraction.short_description_en ?? ""} maxLength={500} name="shortDescriptionEn" />
           </label>
-          <FormRichText imageLayoutControls label="รายละเอียด (Full Description)" name="descriptionEn" defaultValue={attraction.description_en ?? ""} minHeight={200} />
-          <FormRichText imageLayoutControls label="ประวัติ / เรื่องเล่า (History & Story)" name="historyEn" defaultValue={attraction.history_en ?? ""} minHeight={200} />
+          <FormRichText imageLayoutControls label="ภาพรวมสถานที่ (Overview)" name="descriptionEn" defaultValue={attraction.description_en ?? ""} minHeight={200} />
+          <FormRichText imageLayoutControls label="ประวัติ / เรื่องเล่า (History & Stories)" name="historyEn" defaultValue={attraction.history_en ?? ""} minHeight={200} />
           <label className="block">
             <span className="text-sm font-bold text-slate-600">ข้อแนะนำการเดินทาง (Travel Tips)</span>
             <textarea className={`${textareaClass} min-h-[110px]`} defaultValue={attraction.travel_tips_en ?? ""} maxLength={5000} name="travelTipsEn" />
@@ -114,7 +121,7 @@ export function ContentForm({ attraction, onClose }: SectionFormProps) {
         </div>
       </div>
 
-      <AdminSaveBar onCancel={onClose} isPending={isPending} submitLabel="บันทึกเนื้อหา" />
+      <AdminSaveBar onCancel={onClose} isPending={isPending} submitLabel="บันทึกเนื้อหาและเรื่องเล่า" />
     </form>
   );
 }

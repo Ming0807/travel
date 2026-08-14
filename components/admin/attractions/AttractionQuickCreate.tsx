@@ -68,7 +68,7 @@ export function AttractionQuickCreate({
           </div>
           <h2 className="mt-4 text-2xl font-black text-[#202020]">สร้างสถานที่ท่องเที่ยวใหม่</h2>
           <p className="mt-2 text-sm text-slate-500">
-            กรอกข้อมูลพื้นฐานเพื่อสร้างฉบับร่าง (Draft) ก่อน จากนั้นระบบจะพาท่านไปยัง Visual Editor เพื่อใส่รูปและเนื้อหา
+            กรอกข้อมูลพื้นฐานเพื่อสร้างฉบับร่างก่อน ระบบจะพาไปใส่รูป ภาพรวม ประวัติ และเรื่องเล่าใน Visual Editor โดยไม่ต้องกรอกข้อมูลเดิมซ้ำ
           </p>
         </div>
 
@@ -168,7 +168,7 @@ export function AttractionQuickCreate({
           <h3 className="mt-2 text-base font-black text-slate-900">สร้างฉบับร่างก่อน ค่อยจัดหน้าทีหลัง</h3>
           <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
             {[
-              { icon: FileText, text: "เพิ่มรายละเอียด, คำอธิบายสั้น, ข้อแนะนำ และการเดินทาง" },
+              { icon: FileText, text: "เพิ่มภาพรวม ประวัติ / เรื่องเล่า ข้อแนะนำ และการเดินทาง" },
               { icon: ImageSquare, text: "อัปโหลดรูปภาพหน้าปกและแกลเลอรี" },
               { icon: MapPinLine, text: "ระบุพิกัดแผนที่ อำเภอ และข้อมูลความยั่งยืน" },
               { icon: QrCode, text: "สร้างจุดถ่ายรูปและ QR เช็คอิน เมื่อข้อมูลหลักพร้อม" },

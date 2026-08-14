@@ -97,6 +97,8 @@ const attractionRow = {
   short_description_en: null,
   description_th: "เรื่องราวของย่านเมืองเก่า",
   description_en: null,
+  history_th: "ย่านแห่งนี้เติบโตจากชุมชนการค้าดั้งเดิม",
+  history_en: null,
   travel_tips_th: "พกร่ม",
   how_to_get_there_th: "เดินทางจากตัวเมือง",
   address_text: "อำเภอเมืองยะลา",
@@ -159,6 +161,7 @@ describe("getPublicAttractionDetail", () => {
       name: "ย่านเมืองเก่ายะลา",
       attractionType: "วัฒนธรรม",
       attractionTypes: ["Culture", "History"],
+      history: "ย่านแห่งนี้เติบโตจากชุมชนการค้าดั้งเดิม",
       openingHours: "08:00-17:00",
       mainImage: { url: "/site-media/attractions/cover.webp", alt: "อาคารเก่า" },
       thingsToDo: [],
@@ -180,6 +183,8 @@ describe("getPublicAttractionDetail", () => {
     expect(state.attractionSelects[0]).toContain("province_id");
     expect(state.attractionSelects[0]).toContain("district_id");
     expect(state.attractionSelects[0]).toContain("attraction_type_id");
+    expect(state.attractionSelects[0]).toContain("history_th");
+    expect(state.attractionSelects[0]).toContain("history_en");
   });
 
   it("fails optional related sections closed when their settings cannot be read", async () => {

@@ -28,6 +28,7 @@ describe("attraction section navigation", () => {
     const sections = buildAttractionSectionNavigation(
       {
         description: "A public overview",
+        history: "A local history",
         thingsToDo: [{ id: "a" }],
         foodAndDrink: [{ id: "r" }],
         whereToStay: [{ id: "h" }],
@@ -39,6 +40,7 @@ describe("attraction section navigation", () => {
 
     expect(sections.map((section) => section.key)).toEqual([
       "overview",
+      "history",
       "things_to_do",
       "food_drink",
       "where_to_stay",
@@ -50,6 +52,8 @@ describe("attraction section navigation", () => {
   });
 
   it("returns localized section labels", () => {
+    expect(getAttractionSectionLabel("history", "th")).toBe("ประวัติและเรื่องเล่า");
+    expect(getAttractionSectionLabel("history", "en")).toBe("History & Stories");
     expect(getAttractionSectionLabel("food_drink", "th")).toBe("อาหารและเครื่องดื่ม");
     expect(getAttractionSectionLabel("food_drink", "en")).toBe("Food & Drink");
     expect(getAttractionSectionLabel("articles", "en", "short")).toBe("Articles");

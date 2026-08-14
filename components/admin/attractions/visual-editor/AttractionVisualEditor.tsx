@@ -276,6 +276,7 @@ export function AttractionVisualEditor({
   const previewSections = buildAttractionSectionNavigation(
     {
       description,
+      history: attraction.history_th,
       thingsToDo: publicThingsToDo,
       whereToStay: publicWhereToStay,
       foodAndDrink: publicFoodAndDrink,
@@ -287,7 +288,11 @@ export function AttractionVisualEditor({
   );
   const photoSpotCount = attraction.photo_spot_count ?? 0;
   const checkinCodeCount = attraction.checkin_code_count ?? 0;
-  const hasPublicText = Boolean(attraction.short_description_th || attraction.description_th);
+  const hasPublicText = Boolean(
+    attraction.short_description_th
+    || attraction.description_th
+    || attraction.history_th,
+  );
   const hasLocationDetails = Boolean(attraction.address_text || attraction.how_to_get_there_th || (attraction.latitude !== null && attraction.longitude !== null));
   const hasRelatedContent = relatedSettings.some((setting) =>
     setting.mode === "automatic"
@@ -315,11 +320,11 @@ export function AttractionVisualEditor({
     },
     {
       id: "content",
-      label: sectionLabel("overview"),
-      publicSection: `${sectionLabel("overview")}, ${sectionLabel("travel_tips")}`,
+      label: "เนื้อหาและเรื่องเล่า",
+      publicSection: `${sectionLabel("overview")}, ${sectionLabel("history")}, ${sectionLabel("travel_tips")}`,
       complete: hasPublicText,
-      help: hasPublicText ? "มีเนื้อหาคำอธิบายสถานที่แล้ว" : "เพิ่มคำอธิบายสั้น หรือ รายละเอียดแบบเต็มภาษาไทย",
-      actionLabel: "แก้ไขเนื้อหา",
+      help: hasPublicText ? "มีภาพรวมหรือประวัติสำหรับหน้าสาธารณะแล้ว" : "เพิ่มภาพรวม ประวัติ หรือเรื่องเล่าภาษาไทย",
+      actionLabel: "แก้ไขเนื้อหาและเรื่องเล่า",
       targetSection: "content",
     },
     {
@@ -459,7 +464,7 @@ export function AttractionVisualEditor({
             <AttractionTabs sections={previewSections} mobileLabel="เลือกส่วนของหน้า" />
 
             {/* Overview / Content Block */}
-            <EditableBlock id="content" label="เนื้อหา" isActive={activeSection === "content"} onEdit={() => setActiveSection("content")}>
+            <EditableBlock id="content" label="เนื้อหาและเรื่องเล่า" isActive={activeSection === "content"} onEdit={() => setActiveSection("content")}>
               <div className="space-y-12">
                 <section id="overview" className="scroll-mt-24">
                   <h2 className="mb-4 text-2xl font-bold text-slate-800">{sectionLabel("overview")}</h2>
@@ -485,12 +490,12 @@ export function AttractionVisualEditor({
                       dangerouslySetInnerHTML={{ __html: richContentPreview.descriptionTh }}
                     />
                   ) : (
-                    <p className="text-sm italic text-slate-400">ยังไม่มีคำอธิบายฉบับเต็ม กด “แก้ไข เนื้อหา” เพื่อเพิ่มข้อมูล</p>
+                    <p className="text-sm italic text-slate-400">ยังไม่มีภาพรวมฉบับเต็ม กด “แก้ไข เนื้อหาและเรื่องเล่า” เพื่อเพิ่มข้อมูล</p>
                   )}
                 </section>
 
                 <section id="history" className="scroll-mt-24">
-                  <h2 className="mb-4 text-2xl font-bold text-slate-800">ประวัติศาสตร์ / เรื่องเล่า</h2>
+                  <h2 className="mb-4 text-2xl font-bold text-slate-800">{sectionLabel("history")}</h2>
                   {richContentPreview.historyTh ? (
                     <div
                       className="rich-content-media prose prose-lg max-w-[72ch] prose-headings:font-black prose-headings:text-slate-800 prose-p:leading-8 prose-p:text-slate-700 prose-a:font-bold prose-a:text-[#0A6B62] prose-img:h-auto prose-img:rounded-lg pointer-events-none"
@@ -733,7 +738,7 @@ export function AttractionVisualEditor({
       <Drawer
         isOpen={activeSection === "content"}
         onClose={() => setActiveSection(null)}
-        title="แก้ไขเนื้อหา (Content)"
+        title="แก้ไขเนื้อหาและเรื่องเล่า"
         size="lg"
       >
         <ContentForm attraction={attraction} onClose={() => setActiveSection(null)} />

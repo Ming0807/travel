@@ -34,7 +34,9 @@ export async function generateMetadata({ params }: AttractionDetailPageProps): P
   const attraction = await loadAttraction(slug);
   if (!attraction) return { title: "ไม่พบสถานที่ท่องเที่ยว" };
 
-  const description = plainTextFromLegacyHtml(sanitizeAdminRichHtml(attraction.description)) || `ข้อมูลการเดินทางและรีวิวของ ${attraction.name} จังหวัด${attraction.province}`;
+  const description = plainTextFromLegacyHtml(
+    sanitizeAdminRichHtml(attraction.description || attraction.history),
+  ) || `ข้อมูลการเดินทางและรีวิวของ ${attraction.name} จังหวัด${attraction.province}`;
   return {
     title: attraction.name,
     description: description.slice(0, 160),
@@ -94,6 +96,13 @@ export default async function AttractionDetailPage({ params }: AttractionDetailP
                 <section id="overview" className="scroll-mt-36">
                   <h2 className="text-2xl font-bold text-[var(--public-ink)]">{sectionLabel("overview")}</h2>
                   <AttractionRichContent html={data.description} className="mt-4" />
+                </section>
+              ) : null}
+
+              {data.history ? (
+                <section id="history" className="scroll-mt-36">
+                  <h2 className="text-2xl font-bold text-[var(--public-ink)]">{sectionLabel("history")}</h2>
+                  <AttractionRichContent html={data.history} className="mt-4" />
                 </section>
               ) : null}
 

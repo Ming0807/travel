@@ -169,6 +169,7 @@ export type PublicAttractionDetail = {
   attractionType: string;
   attractionTypes: string[];
   description: string;
+  history: string;
   mainImage: PublicAttractionImage | null;
   gallery: PublicAttractionImage[];
   virtualTour: PublicAttractionVirtualTour | null;
@@ -730,6 +731,8 @@ async function loadAttractionDetail(
         short_description_en,
         description_th,
         description_en,
+        history_th,
+        history_en,
         travel_tips_th,
         how_to_get_there_th,
         address_text,
@@ -797,6 +800,7 @@ async function loadAttractionDetail(
       attractionType: primaryAttractionType,
       attractionTypes,
       description: text(row.description_th, text(row.description_en, text(row.short_description_th, text(row.short_description_en)))),
+      history: text(row.history_th, text(row.history_en)),
       mainImage: publicMedia.mainImage,
       gallery: publicMedia.gallery,
       virtualTour: publicMedia.virtualTour,

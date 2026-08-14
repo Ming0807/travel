@@ -90,7 +90,7 @@ The MVP version of this module includes:
 - Search by attraction name
 - Cover image
 - Attraction description
-- Attraction history
+- Attraction history as a distinct section that appears only when content exists
 - Map/location display
 - Photo spot list or call-to-action
 - Certificate call-to-action
