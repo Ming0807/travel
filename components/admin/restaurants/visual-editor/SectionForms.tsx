@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ImageSquare, Trash } from "@phosphor-icons/react";
 import { updateRestaurantAction } from "@/app/actions/admin-restaurant-actions";
 import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
@@ -30,29 +32,60 @@ function toFiniteMediaId(value: unknown): number | null {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-export function HeaderForm({ restaurant, onClose }: SectionFormProps) {
+function SectionFooter({
+  isPending,
+  onClose,
+  submitLabel,
+}: {
+  isPending: boolean;
+  onClose: () => void;
+  submitLabel: string;
+}) {
+  return (
+    <div className="shrink-0 px-4 sm:px-6">
+      <AdminSaveBar
+        isPending={isPending}
+        onCancel={onClose}
+        submitLabel={submitLabel}
+      />
+    </div>
+  );
+}
+
+export function HeaderForm({
+  restaurant,
+  onClose,
+  coverMediaId: initialCoverMediaId,
+  coverMediaUrl: initialCoverMediaUrl,
+  onCoverChange,
+}: SectionFormProps) {
+  const router = useRouter();
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
   const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, {
     success: false,
   });
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState(initialCoverMediaUrl ?? "");
+  const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(initialCoverMediaId));
+  const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");
+  const [coverStoragePath, setCoverStoragePath] = useState("");
+  const [coverSelectionError, setCoverSelectionError] = useState("");
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
-    if (state?.success) onClose();
-  }, [state?.success, onClose]);
+    if (!state?.success) return;
+    onCoverChange?.(currentMediaId, coverPreviewUrl || null);
+    router.refresh();
+    onClose();
+  }, [coverPreviewUrl, currentMediaId, onClose, onCoverChange, router, state?.success]);
 
   return (
     <form action={formAction} className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
-        
-        {/* We must pass hidden fields for ALL other required data so it doesn't get erased by the updateAction (since it expects a full schema or we use a partial update). 
-            Wait, updateRestaurantAction expects the full schema. So we MUST include all fields as hidden if we only show partial forms. */}
+
         <input type="hidden" name="provinceId" value={restaurant.province_id} />
         <input type="hidden" name="isActive" value={restaurant.is_active ? "true" : "false"} />
         <input type="hidden" name="isPublished" value={restaurant.is_published ? "true" : "false"} />
-        <input type="hidden" name="slug" value={restaurant.slug} />
-
-        {/* Instead of passing all hidden fields, it's better to render them or assume the action allows partial. Wait, adminRestaurantMutationSchema uses .partial()? No, it's a full schema. We must include everything! */}
         <input type="hidden" name="descriptionTh" value={restaurant.description_th ?? ""} />
         <input type="hidden" name="descriptionEn" value={restaurant.description_en ?? ""} />
         <input type="hidden" name="addressText" value={restaurant.address_text ?? ""} />
@@ -61,40 +94,117 @@ export function HeaderForm({ restaurant, onClose }: SectionFormProps) {
         <input type="hidden" name="openingHours" value={restaurant.opening_hours ?? ""} />
         <input type="hidden" name="contactInfo" value={restaurant.contact_info ?? ""} />
         <CategoryInputs restaurant={restaurant} />
-        <input type="hidden" name="coverMediaId" value="" />
+        <input type="hidden" name="coverMediaId" value={currentMediaId ?? ""} />
+        <input type="hidden" name="coverMediaAction" value={coverMediaAction} />
+        <input type="hidden" name="coverStoragePath" value={coverStoragePath} />
 
-        <div className="space-y-4">
+        <div className="space-y-5">
+          <section aria-labelledby="restaurant-cover-heading">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 id="restaurant-cover-heading" className="text-sm font-black text-slate-800">รูปภาพปก</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">ภาพนี้จะแสดงด้านบนของหน้าร้านอาหาร เลือกภาพแนวนอนที่เห็นร้านหรืออาหารได้ชัดเจน</p>
+              </div>
+              <ImageSquare aria-hidden="true" className="shrink-0 text-[var(--admin-accent)]" size={22} weight="duotone" />
+            </div>
+            <div className="mt-3 overflow-hidden rounded-[var(--admin-radius-panel)] border border-slate-300 bg-slate-50">
+              <div className="aspect-video bg-slate-100">
+                {coverPreviewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={coverPreviewUrl} alt="ตัวอย่างรูปภาพปกร้านอาหาร" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 px-5 text-center text-sm font-bold text-slate-500">
+                    <ImageSquare aria-hidden="true" size={28} weight="duotone" />
+                    ยังไม่มีรูปภาพปก
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 border-t border-slate-200 bg-white p-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setIsPickerOpen(true)}
+                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--admin-radius-control)] bg-[var(--admin-accent)] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[var(--admin-accent-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)]"
+                >
+                  <ImageSquare aria-hidden="true" size={18} weight="bold" />
+                  เลือกจาก Media Library
+                </button>
+                {coverPreviewUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoverPreviewUrl("");
+                      setCurrentMediaId(null);
+                      setCoverMediaAction("clear");
+                      setCoverStoragePath("");
+                      setCoverSelectionError("");
+                    }}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)]"
+                  >
+                    <Trash aria-hidden="true" size={17} weight="bold" />
+                    เอารูปออก
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            {coverSelectionError ? <p role="alert" className="mt-2 text-sm font-bold text-rose-700">{coverSelectionError}</p> : null}
+          </section>
+
+          <div className="border-t border-slate-200 pt-5">
+            <h3 className="text-sm font-black text-slate-800">ชื่อและลิงก์สาธารณะ</h3>
+          </div>
           <label className="block">
             <span className="text-sm font-bold text-slate-700">ชื่อภาษาไทย *</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.name_th ?? ""} name="nameTh" required />
+            <input className="mt-2 min-h-11 w-full rounded-[var(--admin-radius-control)] border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm" defaultValue={restaurant.name_th ?? ""} name="nameTh" required />
           </label>
           <label className="block">
             <span className="text-sm font-bold text-slate-700">ชื่อภาษาอังกฤษ</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.name_en ?? ""} name="nameEn" />
+            <input className="mt-2 min-h-11 w-full rounded-[var(--admin-radius-control)] border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm" defaultValue={restaurant.name_en ?? ""} name="nameEn" />
           </label>
-          {/* Allow editing Slug here too because it's part of Header/Identity */}
           <label className="block">
             <span className="text-sm font-bold text-slate-700">Slug *</span>
-            <input className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.slug ?? ""} name="slug" required />
+            <input className="mt-2 min-h-11 w-full rounded-[var(--admin-radius-control)] border border-slate-300 px-3 py-2.5 text-base outline-none focus:border-[var(--admin-accent)] focus:ring-2 focus:ring-[var(--admin-accent)]/15 sm:text-sm" defaultValue={restaurant.slug ?? ""} name="slug" required />
+            <p className="mt-1 text-xs leading-5 text-slate-500">ใช้ตัวอักษรอังกฤษตัวเล็ก ตัวเลข และขีดกลาง เช่น `lae-pha-ban-na-tham`</p>
           </label>
         </div>
       </div>
-      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
-        <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกข้อมูลหลัก" />
-      </div>
+      <SectionFooter isPending={isPending} onClose={onClose} submitLabel="บันทึกข้อมูลหลักและรูปภาพ" />
+
+      <MediaPickerModal
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelectAsset={(asset) => {
+          const mediaId = toFiniteMediaId(asset.id);
+          if (!asset.storage_path) {
+            setCoverSelectionError("รูปนี้ไม่มีข้อมูลไฟล์ที่ใช้งานได้ กรุณาเลือกรูปอื่น");
+            return;
+          }
+          setCurrentMediaId(mediaId);
+          setCoverPreviewUrl(asset.url);
+          setCoverStoragePath(asset.storage_path);
+          setCoverMediaAction("set");
+          setCoverSelectionError("");
+        }}
+        onSelect={() => {}}
+        title="เลือกรูปภาพปกร้านอาหาร"
+      />
     </form>
   );
 }
 
 export function ContentForm({ restaurant, onClose }: SectionFormProps) {
+  const router = useRouter();
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
   const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
 
-  useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
+  useEffect(() => {
+    if (!state?.success) return;
+    router.refresh();
+    onClose();
+  }, [onClose, router, state?.success]);
 
   return (
     <form action={formAction} className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* Hidden required fields */}
@@ -123,22 +233,25 @@ export function ContentForm({ restaurant, onClose }: SectionFormProps) {
           </label>
         </div>
       </div>
-      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
-        <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกเนื้อหา" />
-      </div>
+      <SectionFooter isPending={isPending} onClose={onClose} submitLabel="บันทึกเนื้อหา" />
     </form>
   );
 }
 
 export function LocationForm({ restaurant, onClose }: SectionFormProps) {
+  const router = useRouter();
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
   const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
 
-  useEffect(() => { if (state?.success) onClose(); }, [state?.success, onClose]);
+  useEffect(() => {
+    if (!state?.success) return;
+    router.refresh();
+    onClose();
+  }, [onClose, router, state?.success]);
 
   return (
     <form action={formAction} className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* Hidden fields */}
@@ -158,7 +271,7 @@ export function LocationForm({ restaurant, onClose }: SectionFormProps) {
             <span className="text-sm font-bold text-slate-700">ที่อยู่</span>
             <textarea className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.address_text ?? ""} name="addressText" rows={3} />
           </label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-sm font-bold text-slate-700">Latitude</span>
               <input type="number" step="0.0000001" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.latitude ?? ""} name="latitude" />
@@ -178,32 +291,25 @@ export function LocationForm({ restaurant, onClose }: SectionFormProps) {
           </label>
         </div>
       </div>
-      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
-        <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกพิกัด" />
-      </div>
+      <SectionFooter isPending={isPending} onClose={onClose} submitLabel="บันทึกพิกัด" />
     </form>
   );
 }
 
-export function SettingsForm({ restaurant, provinces = [], categories = [], onClose, coverMediaId: cmId, coverMediaUrl: cmUrl, onCoverChange }: SectionFormProps) {
+export function SettingsForm({ restaurant, provinces = [], categories = [], onClose }: SectionFormProps) {
+  const router = useRouter();
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
   const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState(cmUrl ?? "");
-  const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
-  const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");
-  const [coverStoragePath, setCoverStoragePath] = useState("");
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   useEffect(() => {
-    if (state?.success) {
-      if (onCoverChange) onCoverChange(currentMediaId, coverPreviewUrl || null);
-      onClose();
-    }
-  }, [coverPreviewUrl, currentMediaId, onClose, onCoverChange, state?.success]);
+    if (!state?.success) return;
+    router.refresh();
+    onClose();
+  }, [onClose, router, state?.success]);
 
   return (
     <form action={formAction} className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
         <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
         
         {/* Hidden fields */}
@@ -242,71 +348,11 @@ export function SettingsForm({ restaurant, provinces = [], categories = [], onCl
             selectedCategoryIds={restaurant.category_ids}
             error={state.fieldErrors?.categoryIds?.[0]}
           />
-          
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">รูปภาพปก (Cover Image)</span>
-            <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-              <div className="aspect-video bg-slate-100">
-                {coverPreviewUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={coverPreviewUrl} alt="Cover preview" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
-                    ยังไม่ได้เลือกรูปภาพ
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col gap-2 p-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => setIsPickerOpen(true)}
-                  className="min-h-10 flex-1 rounded-lg bg-[#073F37] px-3 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62]"
-                >
-                  เลือกจาก Media Library
-                </button>
-                {coverPreviewUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                       setCoverPreviewUrl("");
-                       setCurrentMediaId(null);
-                       setCoverMediaAction("clear");
-                       setCoverStoragePath("");
-                     }}
-                    className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
-                  >
-                    เอาออก
-                  </button>
-                ) : null}
-              </div>
-            </div>
-            <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-              ใช้ปุ่ม &ldquo;เลือกจาก Media Library&rdquo; ด้านบนเพื่อเลือกรูปภาพ การวาง URL ด้วยตนเองไม่รองรับในระบบปัจจุบัน
-            </div>
-          </label>
-
-          <input type="hidden" name="coverMediaId" value={currentMediaId ? String(currentMediaId) : ""} />
-          <input type="hidden" name="coverMediaAction" value={coverMediaAction} />
-          <input type="hidden" name="coverStoragePath" value={coverStoragePath} />
+          <input type="hidden" name="coverMediaId" value="" />
+          <input type="hidden" name="coverMediaAction" value="none" />
         </div>
       </div>
-      <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
-        <AdminSaveBar cancelHref="#" isPending={isPending} onCancel={onClose} submitLabel="บันทึกการตั้งค่า" />
-      </div>
-
-      <MediaPickerModal
-        isOpen={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
-        onSelectAsset={(asset) => {
-          const mediaId = toFiniteMediaId(asset.id);
-          setCurrentMediaId(mediaId);
-          setCoverPreviewUrl(asset.url);
-          setCoverStoragePath(asset.storage_path);
-          setCoverMediaAction("set");
-        }}
-        onSelect={() => {}}
-        title="เลือกรูปภาพปก"
-      />
+      <SectionFooter isPending={isPending} onClose={onClose} submitLabel="บันทึกการตั้งค่า" />
     </form>
   );
 }

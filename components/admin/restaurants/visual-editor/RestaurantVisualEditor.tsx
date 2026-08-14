@@ -41,8 +41,8 @@ export function RestaurantVisualEditor({
   coverMediaUrl: initialCoverMediaUrl,
 }: RestaurantVisualEditorProps) {
   const [activeSection, setActiveSection] = useState<EditorSection>(null);
-  const [coverMediaId] = useState(initialCoverMediaId ?? null);
-  const [coverMediaUrl] = useState(initialCoverMediaUrl ?? null);
+  const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId ?? null);
+  const [coverMediaUrl, setCoverMediaUrl] = useState(initialCoverMediaUrl ?? null);
 
   const provinceName = provinces.find((p) => p.id === restaurant.province_id)?.label ?? "ไม่ระบุจังหวัด";
   const name = restaurant.name_th || "ยังไม่มีชื่อ";
@@ -51,25 +51,27 @@ export function RestaurantVisualEditor({
   return (
     <div className="relative min-h-screen bg-background pb-20">
       {/* Editor Toolbar */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/80 px-6 py-4 backdrop-blur-md">
-        <div className="flex items-center gap-4">
-          <Link href="/admin/restaurants" className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+      <div className="sticky top-0 z-30 flex min-w-0 items-center justify-between gap-2 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-md sm:gap-4 sm:px-6 sm:py-4">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <Link aria-label="กลับไปหน้ารายการร้านอาหาร" href="/admin/restaurants" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--admin-radius-control)] bg-slate-100 text-slate-600 transition hover:bg-slate-200">
             <ArrowLeft size={20} weight="bold" />
           </Link>
-          <div>
-            <h1 className="text-lg font-black text-slate-800">Visual Editor: {name}</h1>
-            <p className="text-xs font-bold text-slate-500">คุณกำลังแก้ไขหน้าตาแบบเดียวกับที่แสดงผลจริง</p>
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-black text-slate-800 sm:text-lg">แก้ไขร้านอาหาร: {name}</h1>
+            <p className="hidden text-xs font-bold text-slate-500 sm:block">แก้ไขแต่ละส่วนจากตำแหน่งเดียวกับหน้าสาธารณะ</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="hidden rounded-[var(--admin-radius-control)] bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700 md:block">
             สถานะ: {restaurant.is_published ? "เผยแพร่แล้ว" : "ยังไม่เผยแพร่"}
           </div>
           <button 
+            type="button"
+            aria-label="ตั้งค่า / สถานะ"
             onClick={() => setActiveSection("settings")}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="min-h-10 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)] sm:px-4"
           >
-            ตั้งค่า / สถานะ
+            ตั้งค่า<span className="hidden sm:inline"> / สถานะ</span>
           </button>
         </div>
       </div>
@@ -233,9 +235,20 @@ export function RestaurantVisualEditor({
       <Drawer
         isOpen={activeSection === "header"}
         onClose={() => setActiveSection(null)}
-        title="แก้ไขข้อมูลหลัก (Header)" bodyClassName="p-0"
+        title="แก้ไขข้อมูลหลักและรูปภาพปก"
+        size="lg"
+        bodyClassName="p-0"
       >
-        <HeaderForm restaurant={restaurant} onClose={() => setActiveSection(null)} />
+        <HeaderForm
+          restaurant={restaurant}
+          onClose={() => setActiveSection(null)}
+          coverMediaId={coverMediaId}
+          coverMediaUrl={coverMediaUrl}
+          onCoverChange={(mediaId, mediaUrl) => {
+            setCoverMediaId(mediaId);
+            setCoverMediaUrl(mediaUrl);
+          }}
+        />
       </Drawer>
 
       <Drawer
@@ -266,8 +279,6 @@ export function RestaurantVisualEditor({
           provinces={provinces}
           categories={categories}
           onClose={() => setActiveSection(null)}
-          coverMediaId={coverMediaId}
-          coverMediaUrl={coverMediaUrl}
         />
       </Drawer>
 

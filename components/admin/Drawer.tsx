@@ -96,7 +96,7 @@ export function Drawer({ isOpen, onClose, title, children, size = "md", bodyClas
         aria-modal="true"
         aria-labelledby={titleId}
         onKeyDown={handleFocusTrap}
-        className={`relative flex h-[100dvh] w-full flex-col bg-white shadow-[-8px_0_24px_rgba(15,23,42,0.18)] ${sizeClasses[size]}`}
+        className={`relative flex h-[100dvh] min-w-0 w-full flex-col overflow-x-hidden bg-white shadow-[-8px_0_24px_rgba(15,23,42,0.18)] ${sizeClasses[size]}`}
       >
         <div className="flex min-h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-5 sm:py-4">
           <h2 className="text-lg font-black text-[#202020]" id={titleId}>{title}</h2>
@@ -110,7 +110,7 @@ export function Drawer({ isOpen, onClose, title, children, size = "md", bodyClas
             <X size={20} weight="bold" aria-hidden="true" />
           </button>
         </div>
-        <div className={bodyClassName ? `min-h-0 flex-1 overscroll-contain overflow-y-auto ${bodyClassName}` : "min-h-0 flex-1 overscroll-contain overflow-y-auto p-4 sm:p-6"}>
+        <div className={bodyClassName ? `min-h-0 min-w-0 flex-1 overscroll-contain overflow-x-hidden overflow-y-auto ${bodyClassName}` : "min-h-0 min-w-0 flex-1 overscroll-contain overflow-x-hidden overflow-y-auto p-4 sm:p-6"}>
           {children}
         </div>
       </div>

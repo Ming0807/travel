@@ -115,7 +115,7 @@ export async function updateRestaurantAction(restaurantId: number, _prevState: A
       await clearCoverMediaForEntity("restaurant", updated.restaurant_id);
     } else if (coverMediaAction === "set" && typeof coverStoragePath === "string" && coverStoragePath.trim() !== "") {
       await linkMediaToEntityByStoragePath(coverStoragePath.trim(), "restaurant", updated.restaurant_id);
-    } else if (coverMediaId && Number.isFinite(coverMediaId)) {
+    } else if ((coverMediaAction === null || coverMediaAction === "") && coverMediaId && Number.isFinite(coverMediaId)) {
       await linkMediaToEntity(coverMediaId, "restaurant", updated.restaurant_id);
     }
 
