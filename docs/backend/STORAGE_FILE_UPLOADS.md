@@ -474,7 +474,7 @@ Server-side validation after the request reaches the application:
 5 MB
 ```
 
-These limits protect different boundaries. The client accepts high-resolution phone photos, converts them to a maximum 1920px WebP, and refuses to send the original file if conversion fails. The server validates and processes the prepared upload again. Vercel rejects Function request bodies above 4.5MB before application code can compress them.
+These limits protect different boundaries. The client accepts high-resolution phone photos, resizes them to a maximum 1920px, prefers WebP, and falls back to JPEG when iOS WebKit returns PNG for an unsupported WebP export. It refuses to send the original file if preparation fails. The server validates and processes the prepared upload again. Vercel rejects Function request bodies above 4.5MB before application code can compress them.
 
 ## 9.3 Validation
 
@@ -484,7 +484,7 @@ Client-side:
 file exists
 source size limit (50MB)
 source MIME/extension (JPG, PNG, WebP, HEIC/HEIF)
-decode + resize + WebP conversion
+decode + resize + WebP/JPEG normalization
 prepared upload target (3.5MB)
 preview
 preparing/uploading/error/retry states
@@ -585,9 +585,9 @@ Never use EXIF for hidden tracking.
 
 | Step | Status | Detail |
 |---|---|---|
-| Client resize before request | ✅ Implemented | `lib/media/client-photo-compression.ts` uses progressive 1920/1600/1280/1080px WebP attempts and a 3.5MB target. |
+| Client resize before request | ✅ Implemented | `lib/media/client-photo-compression.ts` uses progressive 1920/1600/1280/1080px attempts, prefers WebP, falls back to JPEG for WebKit compatibility, and enforces a 3.5MB target. |
 | Server resize (max 1920px) | ✅ Implemented | `lib/services/photo-upload.service.ts` decodes with Sharp, enforces a pixel guard, rotates, and resizes. |
-| WebP conversion | ✅ Implemented | Client conversion reduces network payload; the server converts again at quality 80 and strips metadata before storage. |
+| Canonical WebP conversion | ✅ Implemented | Client WebP/JPEG normalization reduces network payload; the server converts again to WebP at quality 80 and strips metadata before storage. |
 | Tourist story image upload | ✅ Hardened | `app/api/upload/route.ts` requires a signed-in tourist identity, rate-limits requests, validates JPG/PNG/WebP + max size, strips metadata via WebP conversion, and stores a 1200px public story image under `/site-media/...` |
 | EXIF stripping | ✅ Implicit | sharp strips EXIF by default when converting to WebP |
 | `sharp` in dependencies | ✅ Confirmed | `package.json`: `"sharp": "^0.34.5"` |

@@ -11,6 +11,12 @@ const ACCEPTED_SOURCE_TYPES = new Set([
   "image/heif",
 ]);
 
+const PREPARED_FILE_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
 const COMPRESSION_ATTEMPTS = [
   { maxDimension: 1920, quality: 0.82 },
   { maxDimension: 1600, quality: 0.76 },
@@ -107,7 +113,7 @@ async function loadDrawablePhoto(file: File): Promise<DrawablePhoto> {
   });
 }
 
-function encodeCanvas(canvas: HTMLCanvasElement, quality: number) {
+function exportCanvas(canvas: HTMLCanvasElement, type: string, quality: number) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -117,10 +123,23 @@ function encodeCanvas(canvas: HTMLCanvasElement, quality: number) {
         }
         resolve(blob);
       },
-      "image/webp",
+      type,
       quality,
     );
   });
+}
+
+async function encodeCanvas(canvas: HTMLCanvasElement, quality: number) {
+  const preferred = await exportCanvas(canvas, "image/webp", quality);
+  if (preferred.type === "image/webp") return preferred;
+
+  // Browsers may legally return PNG when the requested encoder is unavailable.
+  // JPEG is universally suitable for camera photos and avoids oversized PNG
+  // fallbacks seen in iOS WebKit while keeping the upload below platform limits.
+  const fallback = await exportCanvas(canvas, "image/jpeg", quality);
+  if (PREPARED_FILE_EXTENSIONS[fallback.type]) return fallback;
+
+  throw new Error("เบราว์เซอร์ไม่สามารถเตรียมรูปสำหรับอัปโหลดได้ กรุณาลองใช้ Safari เวอร์ชันล่าสุดหรือเลือกรูป JPG");
 }
 
 export async function prepareVisitPhotoForUpload(file: File): Promise<PreparedVisitPhoto> {
@@ -140,22 +159,34 @@ export async function prepareVisitPhotoForUpload(file: File): Promise<PreparedVi
       canvas.width = dimensions.width;
       canvas.height = dimensions.height;
 
-      const context = canvas.getContext("2d", { alpha: false });
-      if (!context) throw new Error("เบราว์เซอร์ไม่รองรับการย่อรูป กรุณาลองเปิดด้วย Safari หรือ Chrome เวอร์ชันล่าสุด");
+      try {
+        const context = canvas.getContext("2d", { alpha: false });
+        if (!context) throw new Error("เบราว์เซอร์ไม่รองรับการย่อรูป กรุณาลองเปิดด้วย Safari หรือ Chrome เวอร์ชันล่าสุด");
 
-      context.drawImage(drawable.source, 0, 0, dimensions.width, dimensions.height);
-      const blob = await encodeCanvas(canvas, attempt.quality);
-      const prepared = new File([blob], "visit-photo.webp", {
-        type: blob.type === "image/webp" ? "image/webp" : blob.type,
-        lastModified: Date.now(),
-      });
+        context.drawImage(drawable.source, 0, 0, dimensions.width, dimensions.height);
+        const blob = await encodeCanvas(canvas, attempt.quality);
+        const extension = PREPARED_FILE_EXTENSIONS[blob.type];
+        if (!extension) {
+          throw new Error("เบราว์เซอร์สร้างไฟล์รูปที่ระบบไม่รองรับ กรุณาเลือกรูป JPG");
+        }
 
-      if (prepared.type === "image/webp" && prepared.size <= VISIT_PHOTO_UPLOAD_TARGET_BYTES) {
-        return {
-          file: prepared,
-          originalBytes: file.size,
-          uploadBytes: prepared.size,
-        };
+        const prepared = new File([blob], `visit-photo.${extension}`, {
+          type: blob.type,
+          lastModified: Date.now(),
+        });
+
+        if (prepared.size <= VISIT_PHOTO_UPLOAD_TARGET_BYTES) {
+          return {
+            file: prepared,
+            originalBytes: file.size,
+            uploadBytes: prepared.size,
+          };
+        }
+      } finally {
+        // Release backing pixels between attempts. WebKit does not always
+        // collect discarded canvases promptly on memory-constrained iPhones.
+        canvas.width = 1;
+        canvas.height = 1;
       }
     }
 
