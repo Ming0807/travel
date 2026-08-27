@@ -1,3 +1,4 @@
+import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 export interface PublicPaginationProps {
@@ -10,8 +11,14 @@ export interface PublicPaginationProps {
   pageLabel?: (page: number) => string;
 }
 
-const paginationLinkClasses =
-  "inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--public-radius-control)] border border-black/15 px-3 text-sm font-semibold text-[var(--public-ink)] hover:border-[var(--public-teal)] hover:text-[var(--public-teal)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]";
+const paginationBaseClasses =
+  "inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-3.5 text-xs font-black transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral";
+
+const paginationInactiveClasses =
+  `${paginationBaseClasses} border border-ink/15 bg-white text-ink hover:border-coral hover:text-coral hover:bg-orange-50/60`;
+
+const paginationActiveClasses =
+  `${paginationBaseClasses} border border-transparent bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xs`;
 
 type PageItem = number | "ellipsis";
 
@@ -57,24 +64,36 @@ export function PublicPagination({
   const pageItems = getPageItems(currentPage, normalizedPageCount);
 
   return (
-    <nav aria-label={label} className="mt-8">
-      <ol className="flex flex-wrap items-center justify-center gap-2">
+    <nav aria-label={label} className="mt-10">
+      <ol className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
         <li>
           {currentPage > 1 ? (
-            <Link href={createHref(currentPage - 1)} className={paginationLinkClasses} aria-label={previousLabel}>
-              {previousLabel}
+            <Link
+              href={createHref(currentPage - 1)}
+              className={paginationInactiveClasses}
+              aria-label={previousLabel}
+            >
+              <CaretLeft size={16} weight="bold" aria-hidden="true" />
             </Link>
           ) : (
-            <span className={`${paginationLinkClasses} cursor-not-allowed opacity-50`} aria-disabled="true" aria-label={previousLabel}>
-              {previousLabel}
+            <span
+              className={`${paginationInactiveClasses} cursor-not-allowed opacity-40`}
+              aria-disabled="true"
+              aria-label={previousLabel}
+            >
+              <CaretLeft size={16} weight="bold" aria-hidden="true" />
             </span>
           )}
         </li>
+
         {pageItems.map((pageItem, index) => {
           if (pageItem === "ellipsis") {
             return (
               <li key={`ellipsis-${index}`}>
-                <span aria-hidden="true" className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm text-[var(--public-ink)]">
+                <span
+                  aria-hidden="true"
+                  className="inline-flex min-h-11 min-w-8 items-center justify-center text-xs font-bold text-muted"
+                >
                   …
                 </span>
               </li>
@@ -86,7 +105,7 @@ export function PublicPagination({
             <li key={pageItem}>
               <Link
                 href={createHref(pageItem)}
-                className={current ? `${paginationLinkClasses} border-[var(--public-teal)] bg-[var(--public-teal)] text-white` : paginationLinkClasses}
+                className={current ? paginationActiveClasses : paginationInactiveClasses}
                 aria-current={current ? "page" : undefined}
                 aria-label={pageLabel(pageItem)}
               >
@@ -95,14 +114,23 @@ export function PublicPagination({
             </li>
           );
         })}
+
         <li>
           {currentPage < normalizedPageCount ? (
-            <Link href={createHref(currentPage + 1)} className={paginationLinkClasses} aria-label={nextLabel}>
-              {nextLabel}
+            <Link
+              href={createHref(currentPage + 1)}
+              className={paginationInactiveClasses}
+              aria-label={nextLabel}
+            >
+              <CaretRight size={16} weight="bold" aria-hidden="true" />
             </Link>
           ) : (
-            <span className={`${paginationLinkClasses} cursor-not-allowed opacity-50`} aria-disabled="true" aria-label={nextLabel}>
-              {nextLabel}
+            <span
+              className={`${paginationInactiveClasses} cursor-not-allowed opacity-40`}
+              aria-disabled="true"
+              aria-label={nextLabel}
+            >
+              <CaretRight size={16} weight="bold" aria-hidden="true" />
             </span>
           )}
         </li>

@@ -4,13 +4,12 @@ import { redirect } from "next/navigation";
 import { AttractionDirectoryClient } from "@/components/attractions/AttractionDirectoryClient";
 import { AttractionDiscoveryCta } from "@/components/attractions/AttractionDiscoveryCta";
 import { AttractionDiscoveryFilters } from "@/components/attractions/AttractionDiscoveryFilters";
+import { AttractionHero } from "@/components/attractions/AttractionHero";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicButton } from "@/components/public/PublicButton";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicPagination } from "@/components/public/PublicPagination";
 import { PublicEmptyState } from "@/components/public/PublicStates";
-import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
-import { PublicDirectoryToolbar } from "@/components/public/directory/PublicDirectoryToolbar";
 import { PublicResultSummary } from "@/components/public/directory/PublicResultSummary";
 import { launchSafeAttractionsCopy, safeAttractionsBannerHref } from "@/lib/attractions/discovery-copy";
 import { resolveAttractionTypeOptions } from "@/lib/attractions/discovery-query";
@@ -66,11 +65,11 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
     listPublicAttractionPage({ query, type: requestedType, page, pageSize: 12 }),
     settingsService.getSetting("attractions_page_hero", {
       title: "สถานที่ท่องเที่ยวในจังหวัดยะลา",
-      description: "ค้นหาสถานที่ที่เหมาะกับแผนเดินทางของคุณจากข้อมูลที่เผยแพร่แล้ว",
+      description: "ค้นพบสถานที่ท่องเที่ยวที่น่าประทับใจในจังหวัดยะลา วัฒนธรรม ธรรมชาติ และวิถีชีวิตที่มีเอกลักษณ์",
     }),
     settingsService.getSetting("attractions_page_banner", {
       title: "วางแผนต่อจากสถานที่ที่เลือก",
-      subtitle: "ดูเส้นทางที่เชื่อมสถานที่ในยะลาเพื่อจัดทริปได้ง่ายขึ้น",
+      subtitle: "สร้างเส้นทางท่องเที่ยวในแบบของคุณ เลือกสถานที่ที่สนใจ แล้วให้เราช่วยวางแผนการเดินทางที่ดีที่สุด",
       linkText: "ดูเส้นทางแนะนำ",
       linkUrl: "/routes",
       image: "",
@@ -98,44 +97,55 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
   const title = launchSafeAttractionsCopy(heroSettings.title, "สถานที่ท่องเที่ยวในจังหวัดยะลา");
   const description = launchSafeAttractionsCopy(
     heroSettings.description,
-    "ค้นหาสถานที่ที่เหมาะกับแผนเดินทางของคุณจากข้อมูลที่เผยแพร่แล้ว",
+    "ค้นพบสถานที่ท่องเที่ยวที่น่าประทับใจในจังหวัดยะลา วัฒนธรรม ธรรมชาติ และวิถีชีวิตที่มีเอกลักษณ์",
   );
   const hasFilters = Boolean(query || selectedType);
   const selectedTypeLabel = typeOptions.find((option) => option.value === selectedType)?.label;
   const featured = selectFeaturedAttraction(attractionPage.items);
 
   return (
-    <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
+    <div className="min-h-screen bg-[#FAF7F2] text-ink">
+      {/* 1. Panoramic Hero Section */}
+      <AttractionHero
+        title={title}
+        description={description}
+      />
+
+      {/* 2. Floating Search and Filter Bar */}
+      <AttractionDiscoveryFilters
+        query={query}
+        selectedType={selectedType}
+        typeOptions={typeOptions}
+      />
+
+      {/* 3. Main Discovery Workspace Frame */}
       <PublicPageFrame variant="directory">
-        <PublicDirectoryIntro
-          breadcrumbs={[{ label: "หน้าแรก", href: "/" }, { label: "สถานที่ท่องเที่ยว" }]}
-          title={title}
-          description={description}
-          scope="ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา"
-        />
+        {hasFilters ? (
+          <div role="status" className="mb-6 rounded-xl border border-orange-100 bg-white px-4 py-2.5 text-xs font-bold text-muted shadow-xs">
+            <span className="font-black text-coral">ตัวกรองที่ใช้:</span>
+            {query ? ` คำค้น “${query}”` : ""}
+            {query && selectedTypeLabel ? "," : ""}
+            {selectedTypeLabel ? ` ประเภท ${selectedTypeLabel}` : ""}
+          </div>
+        ) : null}
 
-        <div className="mt-7">
-          <PublicDirectoryToolbar label="ค้นหาและกรองสถานที่">
-            <AttractionDiscoveryFilters query={query} selectedType={selectedType} typeOptions={typeOptions} />
-          </PublicDirectoryToolbar>
-          {hasFilters ? (
-            <p role="status" className="mt-3 text-sm leading-6 text-black/65">
-              <span className="font-semibold text-[var(--public-ink)]">ตัวกรองที่ใช้:</span>
-              {query ? ` คำค้น “${query}”` : ""}
-              {query && selectedTypeLabel ? "," : ""}
-              {selectedTypeLabel ? ` ประเภท ${selectedTypeLabel}` : ""}
-            </p>
-          ) : null}
-        </div>
-
-        <section aria-labelledby="attraction-results-heading" className="mt-9">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-4">
+        <section aria-labelledby="attraction-results-heading" className="mt-4 sm:mt-6">
+          {/* Section Heading & Result Summary */}
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-orange-100/80 pb-4">
             <div>
-              <h2 id="attraction-results-heading" className="text-2xl font-bold">สถานที่ที่ค้นพบ</h2>
-              <PublicResultSummary count={attractionPage.total} noun="สถานที่" className="mt-1" />
+              <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
+                <span className="text-amber-500">❖</span>
+                <span>{hasFilters ? "ผลการค้นหา" : "สถานที่แนะนำ"}</span>
+                <span className="text-amber-500">❖</span>
+              </div>
+              <h2 id="attraction-results-heading" className="mt-1 text-2xl font-black text-ink sm:text-3xl">
+                {hasFilters ? "รายการสถานที่ที่ตรงกับเงื่อนไข" : "สถานที่แนะนำ"}
+              </h2>
+              <PublicResultSummary count={attractionPage.total} noun="สถานที่" className="mt-1 font-bold text-muted" />
             </div>
+
             {attractionPage.pageCount > 1 ? (
-              <p className="text-sm font-semibold text-black/60">
+              <p className="text-xs font-bold text-muted">
                 หน้า {attractionPage.page.toLocaleString("th-TH")} จาก {attractionPage.pageCount.toLocaleString("th-TH")}
               </p>
             ) : null}
@@ -143,9 +153,10 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
 
           {attractionPage.items.length > 0 ? (
             <>
-              <div className="mt-6">
-                <AttractionDirectoryClient items={attractionPage.items} featuredSlug={featured?.slug ?? null} />
-              </div>
+              <AttractionDirectoryClient
+                items={attractionPage.items}
+                featuredSlug={featured?.slug ?? null}
+              />
               <PublicPagination
                 page={attractionPage.page}
                 pageCount={attractionPage.pageCount}
@@ -153,7 +164,7 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
               />
             </>
           ) : (
-            <div className="mt-6">
+            <div className="mt-8">
               <PublicEmptyState
                 title={hasFilters ? "ไม่พบสถานที่ที่ตรงกับตัวกรอง" : "ยังไม่มีสถานที่ที่เผยแพร่"}
                 description={hasFilters ? "ลองเปลี่ยนคำค้นหรือเลือกประเภทอื่น แล้วค้นหาอีกครั้ง" : "เมื่อทีมงานเผยแพร่ข้อมูลสถานที่ รายการจะปรากฏที่หน้านี้"}
@@ -163,14 +174,17 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
           )}
         </section>
 
+        {/* 4. Trip Planning Bottom Callout Banner */}
         <AttractionDiscoveryCta
           title={launchSafeAttractionsCopy(bannerSettings.title, "วางแผนต่อจากสถานที่ที่เลือก")}
-          subtitle={launchSafeAttractionsCopy(bannerSettings.subtitle, "ดูเส้นทางที่เชื่อมสถานที่ในยะลาเพื่อจัดทริปได้ง่ายขึ้น")}
+          subtitle={launchSafeAttractionsCopy(bannerSettings.subtitle, "สร้างเส้นทางท่องเที่ยวในแบบของคุณ เลือกสถานที่ที่สนใจ แล้วให้เราช่วยวางแผนการเดินทางที่ดีที่สุด")}
           linkText={launchSafeAttractionsCopy(bannerSettings.linkText, "ดูเส้นทางแนะนำ")}
           linkUrl={safeAttractionsBannerHref(bannerSettings.linkUrl)}
           image={bannerSettings.image}
         />
       </PublicPageFrame>
+
+      {/* 5. Footer */}
       <SiteFooter />
     </div>
   );
