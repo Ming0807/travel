@@ -24,18 +24,19 @@ describe("Homepage discovery entry", () => {
     expect(screen.queryByLabelText(/carousel/i)).not.toBeInTheDocument();
   });
 
-  it("uses one responsive priority image across mobile and desktop", () => {
+  it("uses one full-bleed responsive priority image across mobile and desktop", () => {
     render(<HomepageHero images={["general/hero.webp"]} />);
 
     const heroImage = screen.getByRole("img", { name: "บรรยากาศการท่องเที่ยวจังหวัดยะลา" });
     const imageFrame = heroImage.parentElement;
+    const hero = heroImage.closest("section");
 
     expect(screen.getAllByRole("img", { name: "บรรยากาศการท่องเที่ยวจังหวัดยะลา" })).toHaveLength(1);
-    expect(imageFrame).toHaveClass("absolute", "inset-0", "lg:left-[46%]");
-    expect(heroImage).toHaveAttribute(
-      "sizes",
-      "(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 54vw",
-    );
+    expect(hero).toHaveAttribute("data-hero-layout", "full-bleed");
+    expect(imageFrame).toHaveClass("absolute", "inset-0");
+    expect(imageFrame).not.toHaveClass("lg:left-[46%]");
+    expect(heroImage).toHaveAttribute("sizes", "100vw");
+    expect(screen.getByTestId("homepage-hero-veil")).toBeInTheDocument();
   });
 
   it("provides four value items and five real quick discovery routes", () => {

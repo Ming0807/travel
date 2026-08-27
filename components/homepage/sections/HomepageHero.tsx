@@ -53,45 +53,48 @@ export function HomepageHero({
     : stripMarkup(description) || "เช็กอินสถานที่สำคัญ สะสมตราประทับ รับใบประกาศดิจิทัล และร่วมเรียนรู้วิถีชีวิตวัฒนธรรมยะลาไปด้วยกัน";
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-r from-[#FFFDF9] via-[#FAF6F0] to-[#F5EFE6] text-ink">
-      {/* Background Watermark Mandala Pattern */}
-      <div className="pointer-events-none absolute -left-20 top-0 h-[480px] w-[480px] rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-orange-500/5 to-transparent blur-2xl" />
-
-      <div className="relative mx-auto min-h-[460px] max-w-7xl px-4 pt-8 sm:px-6 sm:pt-12 lg:min-h-[500px] lg:px-8 lg:pt-16">
-        {/* Right Photographic Image */}
-        <div className="absolute inset-0 lg:left-[46%]">
-          {img0 ? (
-            <Image
-              src={img0}
-              alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา"
-              fill
-              preload={true}
-              fetchPriority="high"
-              className="object-cover object-center"
-              sizes="(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 54vw"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center bg-gradient-to-br from-amber-500/20 via-orange-500/30 to-amber-600/40 p-6 text-center text-ink">
-              <div className="flex flex-col items-center gap-2">
-                <Compass size={48} weight="fill" className="text-coral" />
-                <p className="text-sm font-bold text-ink/80">ท่องเที่ยวยะลา ดินแดนใต้สุดแดนสยาม</p>
-              </div>
+    <section
+      data-hero-layout="full-bleed"
+      className="relative isolate overflow-hidden bg-[#FFFDF9] text-ink"
+    >
+      <div className="absolute inset-0" data-testid="homepage-hero-background">
+        {img0 ? (
+          <Image
+            src={img0}
+            alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา"
+            fill
+            preload={true}
+            fetchPriority="high"
+            className="object-cover object-[68%_center] sm:object-[66%_center] lg:object-[70%_center]"
+            sizes="100vw"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-end bg-gradient-to-br from-amber-500/20 via-orange-500/30 to-amber-600/40 p-8 text-center text-ink lg:pr-[16vw]">
+            <div className="flex flex-col items-center gap-2">
+              <Compass size={48} weight="fill" className="text-coral" />
+              <p className="text-sm font-bold text-ink/80">ท่องเที่ยวยะลา ดินแดนใต้สุดแดนสยาม</p>
             </div>
-          )}
-          {/* Smooth blend overlay from left cream to right image */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FFFDF9] via-[#FAF6F0]/90 to-transparent lg:via-[#FAF6F0]/60" />
-          <div className="absolute inset-0 bg-gradient-to-t from-orange-500/30 via-transparent to-transparent" />
-        </div>
+          </div>
+        )}
+
+        <div
+          data-testid="homepage-hero-veil"
+          className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,253,249,0.99)_0%,rgba(255,250,245,0.96)_58%,rgba(255,248,239,0.42)_100%)] sm:bg-[linear-gradient(90deg,rgba(255,253,249,0.99)_0%,rgba(255,251,246,0.97)_36%,rgba(255,249,241,0.76)_55%,rgba(255,248,239,0.18)_78%,rgba(255,248,239,0.04)_100%)]"
+        />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-orange-500/25 via-orange-400/5 to-transparent" />
+      </div>
+
+      <div className="relative mx-auto min-h-[500px] max-w-7xl px-4 pt-10 sm:min-h-[520px] sm:px-6 sm:pt-14 lg:min-h-[560px] lg:px-8 lg:pt-20">
 
         {/* Left-Aligned Headline & CTA Actions */}
-        <div className="relative z-10 max-w-2xl pb-16 lg:pb-24">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-coral sm:text-sm">
+        <div className="relative z-10 max-w-2xl pb-24 lg:pb-28">
+          <p className="text-xs font-black uppercase text-coral sm:text-sm">
             {cleanSubtitle}
           </p>
 
-          <h1 className="mt-3 text-3xl font-black leading-[1.2] tracking-tight text-ink sm:text-4xl lg:text-[3.25rem]">
+          <h1 className="mt-3 text-3xl font-black leading-[1.2] text-ink sm:text-4xl lg:text-[3.25rem]">
             <span className="block text-ink">เปิดประสบการณ์</span>
-            <span className="block mt-1">
+            <span className="mt-1 block text-balance">
               <HeroTitle title={cleanTitle} />
             </span>
           </h1>
@@ -120,7 +123,7 @@ export function HomepageHero({
       </div>
 
       {/* Swooping Dynamic Orange Gradient Wave Transition */}
-      <div className="relative -mt-6 w-full overflow-hidden leading-none sm:-mt-10 lg:-mt-14">
+      <div className="relative z-10 -mt-8 w-full overflow-hidden leading-none sm:-mt-12 lg:-mt-16">
         <svg
           viewBox="0 0 1440 140"
           fill="none"

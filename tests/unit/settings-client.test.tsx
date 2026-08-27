@@ -20,14 +20,32 @@ vi.mock("next/link", () => ({
 
 // Mock MediaPickerModal to avoid full render
 vi.mock("@/components/admin/media/MediaPickerModal", () => ({
-  MediaPickerModal: ({ isOpen, onClose, onSelect, title }: {
+  MediaPickerModal: ({ isOpen, onClose, onSelect, onSelectAsset, title }: {
     isOpen: boolean;
     onClose: () => void;
     onSelect: (url: string) => void;
+    onSelectAsset?: (asset: {
+      id: string;
+      url: string;
+      file_name: string;
+      storage_path: string;
+      mime_type: string;
+      category: string;
+    }) => void;
     title: string;
   }) => isOpen ? (
     <div role="dialog" aria-label={title}>
-      <button onClick={() => onSelect("https://example.com/test.jpg")}>Pick</button>
+      <button onClick={() => {
+        onSelect("/site-media/general/test.webp");
+        onSelectAsset?.({
+          id: "11111111-1111-4111-8111-111111111111",
+          url: "/site-media/general/test.webp",
+          file_name: "test.webp",
+          storage_path: "general/test.webp",
+          mime_type: "image/webp",
+          category: "General",
+        });
+      }}>Pick</button>
       <button onClick={onClose}>Close picker</button>
     </div>
   ) : null,
@@ -158,6 +176,50 @@ describe("SettingsClient", () => {
 
     expect(screen.getByText("เลือกภาพ Hero แล้ว กดบันทึกเพื่อเผยแพร่การเปลี่ยนแปลง")).toBeInTheDocument();
     expect(screen.getByText(/บันทึก 1 รายการ/)).toBeInTheDocument();
+  });
+
+  it("restores a cached saved hero image after refresh", async () => {
+    const originalComplete = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "complete");
+    Object.defineProperty(HTMLImageElement.prototype, "complete", { configurable: true, get: () => true });
+
+    try {
+      const persistedSettings = EMPTY_SETTINGS.map((setting) =>
+        setting.setting_key === "homepage_hero"
+          ? {
+              ...setting,
+              setting_value: {
+                title: "Hero Title",
+                subtitle: "",
+                description: "",
+                images: ["general/saved-hero.webp", "", ""],
+              },
+            }
+          : setting,
+      );
+
+      render(<SettingsClient initialSettings={persistedSettings} />);
+
+      const preview = screen.getByRole("img", { name: "Hero image 1 preview" });
+      expect(preview).toHaveAttribute("src", "/site-media/general/saved-hero.webp");
+      await waitFor(() => expect(preview).toHaveClass("opacity-100"));
+    } finally {
+      if (originalComplete) {
+        Object.defineProperty(HTMLImageElement.prototype, "complete", originalComplete);
+      }
+    }
+  });
+
+  it("saves the stable storage path instead of a rendered media URL", async () => {
+    render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
+
+    await userEvent.click(screen.getAllByRole("button", { name: "เลือกภาพ" })[0]);
+    await userEvent.click(screen.getByRole("button", { name: "Pick" }));
+    await userEvent.click(screen.getByText(/บันทึก 1 รายการ/));
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    const request = mockFetch.mock.calls[0]?.[1] as RequestInit;
+    const payload = JSON.parse(String(request.body)) as { value: { images: string[] } };
+    expect(payload.value.images[0]).toBe("general/test.webp");
   });
 
   it("resets group to defaults", async () => {

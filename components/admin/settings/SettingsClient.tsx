@@ -140,6 +140,7 @@ function createInitialSettings(rows: SiteSettingRow[]) {
 }
 
 function imagePreviewUrl(path: string) {
+  if (path.startsWith("/api/") || path.startsWith("/site-media/")) return path;
   const siteMediaUrl = siteMediaImageUrl(path);
   if (siteMediaUrl) return siteMediaUrl;
   if (!path) return "";
@@ -538,6 +539,10 @@ export function SettingsClient({
         onClose={() => setPickerTarget(null)}
         onSelect={(url) => {
           handleMediaSelect(url);
+          setPickerTarget(null);
+        }}
+        onSelectAsset={(asset) => {
+          handleMediaSelect(asset.storage_path || asset.url);
           setPickerTarget(null);
         }}
         title="เลือกภาพจาก Media Library"
@@ -965,28 +970,18 @@ function ImageField({
   onPick: () => void;
   onRemove: () => void;
 }) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-
   return (
     <div>
       <p className="text-sm font-black text-slate-700">{label}</p>
       <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
         <div className="relative aspect-video bg-slate-100">
           {value ? (
-            <>
-              {/* Shimmer placeholder */}
-              {!imageLoaded ? (
-                <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100" />
-              ) : null}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imagePreviewUrl(value)}
-                alt=""
-                className={`h-full w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-                onLoad={() => setImageLoaded(true)}
-                onError={() => setImageLoaded(true)}
-              />
-            </>
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={imagePreviewUrl(value)}
+              alt={`${label} preview`}
+              className="h-full w-full object-cover opacity-100"
+            />
           ) : (
             <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
               ยังไม่ได้เลือกภาพ
