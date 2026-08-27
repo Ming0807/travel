@@ -25,7 +25,11 @@
 | `PHASE_13A_CLOUDINARY_STORAGE_DEPLOYMENT.md` | Completed | Cloudinary-first Vercel storage with future university-storage path |
 | `PHASE_16A_STORY_CMS_RECOMMENDATION_DASHBOARD_UX.md` | In progress (P2) | Full Story CMS, explainable recommendations, operational admin home, and analytical dashboard UX |
 | `PHASE_16B_YALA_ADMIN_ANALYTICS_PRODUCTION.md` | In progress (P2) | Yala-first launch scope, privacy-safe engagement, command center, and production analytics |
-| `PHASE_18_RESEARCH_EVALUATION_LAYER.md` | Planned / advisor approval required (P0 before field collection) | Versioned research consent, real-vs-simulated separation, system evaluation, operator decision tasks, and de-identified research analytics |
+| `PHASE_18_RESEARCH_EVALUATION_LAYER.md` | Core technical implementation complete | Versioned research consent, real-vs-simulated separation, system evaluation, operator decision tasks, and de-identified research analytics |
+| `PHASE_20_PUBLIC_HOMEPAGE_VISUAL_FIDELITY.md` | Ready for delegated implementation | Reference-led public homepage visual redesign with production logic preserved |
+| `PHASE_21_RESEARCH_PILOT_ACTIVATION.md` | Advisor direction approved / activation gated | Instrument freeze, ethics confirmation, pilot QA, and controlled field activation |
+| `PHASE_22_ATTRACTION_LEVEL_ANALYTICS.md` | Planned | Per-attraction operational, funnel, tourism, satisfaction, and improvement analytics |
+| `PHASE_23_NFC_CHECKIN_CHANNEL.md` | Planned | NFC entry through the canonical QR/check-in flow with channel analytics and tag governance |
 
 ## Immediate Priority
 
@@ -49,8 +53,17 @@ Phase 16A is active and its Story CMS/recommendation foundation is implemented t
 
 ## Research Readiness
 
-Phase 18 is planned but must not begin implementation or final field collection until the advisor approves the research scope, instruments, sampling/power approach, consent procedure, and analysis plan.
+The advisor has approved the research direction. Phase 18's generic technical foundation is implemented. Phase 21 now governs instrument freeze, ethics confirmation, pilot QA, and final field activation; no final collection begins until those gates are documented.
 
 - `docs/research/RESEARCH_BLUEPRINT.md`
 - `docs/superpowers/specs/2026-08-08-research-evaluation-layer-design.md`
 - `tasks/PHASE_18_RESEARCH_EVALUATION_LAYER.md`
+- `tasks/PHASE_21_RESEARCH_PILOT_ACTIVATION.md`
+
+## Public Experience and Entry Channels
+
+Phase 20 is the next delegated visual batch. It changes public presentation only and must preserve production logic. Phase 22 adds decision-grade per-attraction analytics. Phase 23 adds NFC as a second physical entry channel into the same canonical check-in flow.
+
+- `tasks/PHASE_20_PUBLIC_HOMEPAGE_VISUAL_FIDELITY.md`
+- `tasks/PHASE_22_ATTRACTION_LEVEL_ANALYTICS.md`
+- `tasks/PHASE_23_NFC_CHECKIN_CHANNEL.md`

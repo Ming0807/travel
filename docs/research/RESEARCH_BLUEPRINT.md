@@ -1,6 +1,6 @@
 # Research Blueprint: Smart Tourism Data and Decision Support
 
-Status: Technical foundation approved by the project owner; final protocol, instrument activation, and field data collection remain subject to advisor/ethics approval
+Status: Research direction approved by the advisor; technical foundation implemented; instrument freeze, ethics confirmation, pilot activation, and final field collection remain gated
 
 Version: 0.1
 
@@ -8,7 +8,7 @@ Date: 2026-08-08
 
 System: Southern Border Tourism Data & Intelligence Platform
 
-Implementation note (2026-08-09): The generic, inactive, versioned research infrastructure and production attraction-improvement workflow are implemented for technical review. No final questionnaire/task wording is seeded, no production study is activated, and no field collection may begin until advisor/ethics approval, cognitive pretest, pilot, and version freeze are recorded.
+Implementation note (2026-08-27): The advisor has approved the research direction previously defined in this blueprint. The generic, inactive, versioned research infrastructure and production attraction-improvement workflow are implemented. No final questionnaire/task version may be published and no final field collection may begin until the required ethics/administrative confirmation, cognitive pretest, pilot review, and version freeze are recorded.
 
 ## 1. Executive Decision
 
