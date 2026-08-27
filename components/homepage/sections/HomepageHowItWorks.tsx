@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  CaretRight,
   Camera,
   QrCode,
   Stamp,
@@ -8,19 +9,19 @@ import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryL
 
 const STEPS = [
   {
-    number: "01",
+    number: "1",
     title: "สแกน QR ที่สถานที่",
     description: "เปิดหน้าเช็กอินและกรอกข้อมูลสั้น ๆ เท่าที่จำเป็น ไม่ต้องติดตั้งแอป",
     icon: QrCode,
   },
   {
-    number: "02",
+    number: "2",
     title: "ถ่ายหรือเลือกรูป",
     description: "เลือกรูปความทรงจำ ปรับใบประกาศ แล้วดาวน์โหลดเก็บไว้ได้ทันที",
     icon: Camera,
   },
   {
-    number: "03",
+    number: "3",
     title: "สะสมตราและคะแนน",
     description: "รับตราประจำสถานที่ ดู Digital Passport และเลือกให้ข้อมูลเพิ่มเติมได้โดยสมัครใจ",
     icon: Stamp,
@@ -39,33 +40,60 @@ export function HomepageHowItWorks({
   description = "รับคุณค่าก่อน แล้วค่อยเลือกแบ่งปันข้อมูลเพื่อช่วยพัฒนาการท่องเที่ยวยะลา",
 }: HomepageHowItWorksProps) {
   return (
-    <section id="how-it-works" aria-labelledby="homepage-journey-heading" className="border-y border-ink/10 bg-cream px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+    <section id="how-it-works" aria-labelledby="homepage-journey-heading" className="border-t border-ink/10 bg-cream px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.65fr)] lg:items-end">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-coral">Digital Passport</p>
-            <h2 id="homepage-journey-heading" className="mt-2 text-2xl font-black leading-tight text-ink sm:text-3xl">
-              {title}
-            </h2>
-            {subtitle ? <p className="mt-2 text-base font-black text-teal">{subtitle}</p> : null}
-            <p className="mt-4 max-w-xl text-sm leading-6 text-muted">{description}</p>
-            <PublicCheckinEntryLink aria-label="ทดลองใช้งานเช็กอิน" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[6px] bg-coral px-5 text-sm font-black text-white transition-colors hover:bg-coral/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2">
-              เริ่มเช็กอิน <ArrowRight aria-hidden="true" weight="bold" />
-            </PublicCheckinEntryLink>
+        {/* Centered Thai Ornamental Heading */}
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
+            <span className="h-px w-6 bg-coral/40"></span>
+            <span>❖ วิธีการใช้งาน ❖</span>
+            <span className="h-px w-6 bg-coral/40"></span>
           </div>
+          <h2 id="homepage-journey-heading" className="mt-2 text-2xl font-black text-ink sm:text-3xl lg:text-4xl">
+            {title}
+          </h2>
+          {subtitle ? <p className="mt-1 text-sm font-bold text-teal sm:text-base">{subtitle}</p> : null}
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{description}</p>
+        </div>
 
-          <ol className="grid overflow-hidden rounded-[8px] border border-ink/10 bg-white sm:grid-cols-3">
-            {STEPS.map(({ number, title: stepTitle, description: stepDescription, icon: Icon }, index) => (
-              <li key={number} className={`relative p-5 sm:p-6 ${index > 0 ? "border-t border-ink/10 sm:border-l sm:border-t-0" : ""}`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-coral">{number}</span>
-                  <Icon aria-hidden="true" size={24} weight="duotone" className="text-teal" />
+        {/* 3-Step Horizontal Sequence on Desktop */}
+        <ol className="mt-10 grid gap-4 sm:grid-cols-3 sm:gap-6 lg:mt-12">
+          {STEPS.map(({ number, title: stepTitle, description: stepDescription, icon: Icon }, index) => (
+            <li
+              key={number}
+              className="relative flex flex-col items-center rounded-[8px] border border-ink/10 bg-white p-6 text-center shadow-xs transition-all hover:border-coral/40 hover:shadow-card sm:p-7"
+            >
+              {/* Connector arrow on desktop */}
+              {index < STEPS.length - 1 ? (
+                <div className="pointer-events-none absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-ink/10 bg-white p-1 text-coral sm:block lg:-right-4">
+                  <CaretRight size={14} weight="bold" />
                 </div>
-                <h3 className="mt-6 text-base font-black text-ink">{stepTitle}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted">{stepDescription}</p>
-              </li>
-            ))}
-          </ol>
+              ) : null}
+
+              {/* Circular Step Badge & Icon */}
+              <div className="relative">
+                <div className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-b from-orange-400 to-coral text-white shadow-xs">
+                  <Icon aria-hidden="true" size={30} weight="fill" />
+                </div>
+                <span className="absolute -top-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-ink text-xs font-black text-white shadow-xs">
+                  {number}
+                </span>
+              </div>
+
+              <h3 className="mt-5 text-base font-black text-ink sm:text-lg">{stepTitle}</h3>
+              <p className="mt-2 text-xs leading-relaxed text-muted sm:text-sm">{stepDescription}</p>
+            </li>
+          ))}
+        </ol>
+
+        {/* Bottom CTA */}
+        <div className="mt-8 text-center">
+          <PublicCheckinEntryLink
+            aria-label="ทดลองใช้งานเช็กอิน"
+            className="inline-flex min-h-11 items-center gap-2 rounded-[6px] bg-coral px-6 text-sm font-black text-white shadow-xs transition-all hover:bg-[#C95C3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+          >
+            เริ่มเช็กอิน <ArrowRight aria-hidden="true" weight="bold" />
+          </PublicCheckinEntryLink>
         </div>
       </div>
     </section>

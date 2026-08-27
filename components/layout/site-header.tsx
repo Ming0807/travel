@@ -48,7 +48,6 @@ const navGroups = [
 export function SiteHeader({ appName }: SiteHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const dropdownTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const dropdownPanelRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -68,15 +67,6 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
       mobileMenuTriggerRef.current?.focus();
     }
     setMobileMenuOpen(false);
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -128,13 +118,8 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [closeMobileMenu, mobileMenuOpen]);
 
-  const desktopHeaderClass = scrolled
-    ? "bg-cream/90 backdrop-blur-md border-ink/5 shadow-sm"
-    : "bg-transparent border-transparent shadow-none";
-
-  const mobileHeaderClass = scrolled
-    ? "bg-cream/90 backdrop-blur-md border-ink/5 shadow-sm"
-    : "bg-transparent border-transparent shadow-none";
+  const desktopHeaderClass = "bg-white/95 backdrop-blur-md border-ink/10 shadow-[0_1px_3px_rgba(0,0,0,0.05)]";
+  const mobileHeaderClass = "bg-white/95 backdrop-blur-md border-ink/10 shadow-[0_1px_3px_rgba(0,0,0,0.05)]";
 
   // Keep all hooks above this route guard so navigation can change safely.
   if (shouldHidePublicChrome(pathname)) {
@@ -147,24 +132,24 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           DESKTOP / TABLET HEADER
       ═══════════════════════════════════ */}
       <header
-        className={`sticky top-0 z-50 hidden border-b transition-all duration-300 lg:block ${desktopHeaderClass}`}
+        className={`sticky top-0 z-50 hidden border-b transition-all duration-200 lg:block ${desktopHeaderClass}`}
       >
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           {/* Logo */}
           <div className="flex-1 flex justify-start">
             <Link href="/" className="flex items-center gap-3 group" aria-label={`${appName} home`}>
-              <div className="grid h-10 w-10 place-items-center rounded-[6px] bg-ink group-hover:bg-coral transition-colors">
-                <Compass weight="fill" size={20} className="text-white" />
+              <div className="grid h-10 w-10 place-items-center rounded-[6px] bg-coral text-white shadow-xs group-hover:bg-[#C95C3F] transition-colors">
+                <Compass weight="fill" size={22} className="text-white" />
               </div>
               <div className="leading-tight">
-                <p className="text-lg font-bold tracking-tight text-ink uppercase">ท่องเที่ยวชายแดนใต้</p>
-                <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">Digital Passport</p>
+                <p className="text-base font-black tracking-tight text-ink uppercase">ท่องเที่ยวชายแดนใต้</p>
+                <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Digital Passport</p>
               </div>
             </Link>
           </div>
 
           {/* Navigation */}
-          <nav className="flex items-center justify-center gap-6" aria-label="เมนูหลัก">
+          <nav className="flex items-center justify-center gap-7" aria-label="เมนูหลัก">
             {navGroups.map((group) => {
               if (group.type === "link") {
                 const isActive = pathname === group.href;
@@ -172,8 +157,8 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
                   <Link
                     key={group.href}
                     href={group.href!}
-                    className={`text-sm font-semibold transition-colors ${
-                      isActive ? "text-coral border-b-2 border-coral pb-1" : "text-ink hover:text-coral pb-1 border-b-2 border-transparent"
+                    className={`text-sm font-bold transition-colors ${
+                      isActive ? "text-coral" : "text-ink hover:text-coral"
                     }`}
                   >
                     {group.label}
@@ -202,18 +187,18 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
                           closeDropdown(true);
                         }
                       }}
-                      className={`flex items-center gap-1 rounded-[6px] text-sm font-semibold transition-colors ${
-                        isActive ? "text-coral border-b-2 border-coral pb-1" : "text-ink hover:text-coral pb-1 border-b-2 border-transparent"
+                      className={`flex items-center gap-1.5 rounded-[6px] text-sm font-bold transition-colors ${
+                        isActive ? "text-coral" : "text-ink hover:text-coral"
                       }`}
                     >
                       {group.label}
-                      <CaretDown weight="bold" className={openDropdown === group.label ? "rotate-180" : undefined} />
+                      <CaretDown weight="bold" size={14} className={openDropdown === group.label ? "rotate-180" : undefined} />
                     </button>
                     {openDropdown === group.label && <div
                       ref={(element) => { dropdownPanelRefs.current[group.label] = element; }}
                       className="absolute left-0 top-full z-10 pt-2"
                     >
-                      <div id={`public-dropdown-${group.label}`} role="menu" className="flex w-48 flex-col overflow-hidden rounded-[8px] border border-ink/5 bg-white p-2 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div id={`public-dropdown-${group.label}`} role="menu" className="flex w-48 flex-col overflow-hidden rounded-[8px] border border-ink/10 bg-white p-1.5 shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
                         {group.items?.map((item, index) => {
                           const isItemActive = pathname === item.href;
                           return (
@@ -223,8 +208,8 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
                               ref={(element) => { if (index === 0) dropdownItemRefs.current[group.label] = element; }}
                               role="menuitem"
                               onClick={() => closeDropdown()}
-                              className={`rounded-[6px] px-4 py-2.5 text-sm font-semibold transition-colors ${
-                                isItemActive ? "bg-coral/10 text-coral" : "text-ink hover:bg-ink/5 hover:text-coral"
+                              className={`rounded-[6px] px-3.5 py-2 text-sm font-semibold transition-colors ${
+                                isItemActive ? "bg-coral/10 text-coral" : "text-ink hover:bg-cream hover:text-coral"
                               }`}
                             >
                               {item.label}
@@ -240,7 +225,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex-1 flex items-center justify-end gap-4">
+          <div className="flex-1 flex items-center justify-end gap-3.5">
             <PublicGlobalSearch />
             
             <div className="h-4 w-px bg-ink/10"></div>
@@ -248,9 +233,9 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
             <UserNavMenu />
 
             <PublicCheckinEntryLink
-              className="ml-2 inline-flex min-h-11 items-center whitespace-nowrap rounded-[6px] bg-coral px-5 text-sm font-bold text-[var(--public-ink)] transition-colors hover:bg-coral/90"
+              className="inline-flex min-h-10 items-center whitespace-nowrap rounded-[6px] bg-coral px-4 text-sm font-black text-white shadow-xs transition-colors hover:bg-[#C95C3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
             >
-              รับใบประกาศ
+              สแกน QR เช็กอิน
             </PublicCheckinEntryLink>
           </div>
         </div>
@@ -260,48 +245,48 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           MOBILE HEADER
       ═══════════════════════════════════ */}
       <header
-        className={`sticky top-0 z-50 border-b px-4 py-3 transition-all duration-300 lg:hidden ${mobileHeaderClass}`}
+        className={`sticky top-0 z-50 border-b px-4 py-2.5 transition-all duration-200 lg:hidden ${mobileHeaderClass}`}
       >
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label={`${appName} home`}>
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] bg-ink">
-              <Compass weight="fill" size={20} className="text-white" />
+          <Link href="/" className="flex items-center gap-2.5 shrink-0" aria-label={`${appName} home`}>
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[6px] bg-coral text-white shadow-xs">
+              <Compass weight="fill" size={19} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-base font-bold tracking-tight text-ink uppercase leading-none truncate">ท่องเที่ยวชายแดนใต้</p>
-              <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mt-0.5 truncate">Digital Passport</p>
+              <p className="text-sm font-black tracking-tight text-ink uppercase leading-none truncate">ท่องเที่ยวชายแดนใต้</p>
+              <p className="text-[9px] font-bold text-muted uppercase tracking-widest mt-0.5 truncate">Digital Passport</p>
             </div>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <PublicGlobalSearch onOpen={() => closeMobileMenu()} />
             <button
               type="button"
               ref={mobileMenuTriggerRef}
               id="public-mobile-menu-trigger"
               aria-controls="public-mobile-menu"
-              className="grid h-11 w-11 place-items-center rounded-[6px] text-ink hover:bg-ink/5"
+              className="grid h-10 w-10 place-items-center rounded-[6px] text-ink hover:bg-cream"
               onClick={() => mobileMenuOpen ? closeMobileMenu(true) : setMobileMenuOpen(true)}
               aria-expanded={mobileMenuOpen}
               aria-label={mobileMenuOpen ? "ปิดเมนู" : "เปิดเมนู"}
             >
-              {mobileMenuOpen ? <X size={24} /> : <List size={24} />}
+              {mobileMenuOpen ? <X size={22} /> : <List size={22} />}
             </button>
           </div>
         </div>
 
         {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <nav id="public-mobile-menu" aria-labelledby="public-mobile-menu-trigger" className="absolute left-0 right-0 top-full border-b border-ink/5 bg-cream px-4 py-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
-            <ul className="flex flex-col gap-2">
+          <nav id="public-mobile-menu" aria-labelledby="public-mobile-menu-trigger" className="absolute left-0 right-0 top-full border-b border-ink/10 bg-white px-4 py-4 shadow-xl animate-in fade-in slide-in-from-top-2 duration-150">
+            <ul className="flex flex-col gap-1.5">
               {navGroups.map((group) => {
                 if (group.type === "link") {
                   return (
                     <li key={group.href}>
                       <Link
                         href={group.href!}
-                        className={`block rounded-[6px] px-4 py-3 text-sm font-bold ${
-                          pathname === group.href ? "bg-coral/10 text-coral" : "text-ink hover:bg-ink/5"
+                        className={`block rounded-[6px] px-3.5 py-2.5 text-sm font-bold ${
+                          pathname === group.href ? "bg-coral/10 text-coral" : "text-ink hover:bg-cream"
                         }`}
                         onClick={() => closeMobileMenu()}
                       >
@@ -311,17 +296,17 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
                   );
                 } else {
                   return (
-                    <li key={group.label} className="mt-2">
-                      <div className="px-4 pb-2 pt-1 text-xs font-bold uppercase tracking-wider text-muted">
+                    <li key={group.label} className="mt-1">
+                      <div className="px-3.5 pb-1 pt-1.5 text-xs font-black uppercase tracking-wider text-muted">
                         {group.label}
                       </div>
-                      <ul className="flex flex-col gap-1 pl-4 border-l-2 border-ink/5 ml-4">
+                      <ul className="flex flex-col gap-1 pl-3 border-l-2 border-ink/10 ml-3.5">
                         {group.items?.map(item => (
                           <li key={item.href}>
                             <Link
                               href={item.href}
-                              className={`block rounded-[6px] px-4 py-2.5 text-sm font-bold ${
-                                pathname === item.href ? "bg-coral/10 text-coral" : "text-ink hover:bg-ink/5"
+                              className={`block rounded-[6px] px-3 py-2 text-sm font-semibold ${
+                                pathname === item.href ? "bg-coral/10 text-coral" : "text-ink hover:bg-cream"
                               }`}
                               onClick={() => closeMobileMenu()}
                             >
@@ -341,7 +326,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               <UserNavMenu mobile={true} />
               <li>
                 <PublicCheckinEntryLink
-                  className="mt-2 block rounded-[6px] bg-coral px-4 py-3 text-center text-sm font-bold text-[var(--public-ink)] shadow-sm"
+                  className="mt-2 block rounded-[6px] bg-coral px-4 py-3 text-center text-sm font-black text-white shadow-xs"
                   onClick={() => closeMobileMenu()}
                 >
                   สแกนรับใบประกาศ
