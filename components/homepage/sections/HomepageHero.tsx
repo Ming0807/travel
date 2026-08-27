@@ -55,8 +55,9 @@ export function HomepageHero({
   return (
     <section
       data-hero-layout="full-bleed"
-      className="relative isolate overflow-hidden bg-[#FFFDF9] text-ink"
+      className="relative isolate overflow-hidden bg-gradient-to-b from-[#FFFDF9] via-[#FAF6F0] to-[#F5EFE6] text-ink"
     >
+      {/* Background Image Layer */}
       <div className="absolute inset-0" data-testid="homepage-hero-background">
         {img0 ? (
           <Image
@@ -65,7 +66,7 @@ export function HomepageHero({
             fill
             preload={true}
             fetchPriority="high"
-            className="object-cover object-[68%_center] sm:object-[66%_center] lg:object-[70%_center]"
+            className="object-cover object-[70%_center] sm:object-[66%_center] lg:object-[70%_center]"
             sizes="100vw"
           />
         ) : (
@@ -77,59 +78,60 @@ export function HomepageHero({
           </div>
         )}
 
+        {/* Ambient Gradient Veil: Highly tuned for mobile transparency and desktop wide fade */}
         <div
           data-testid="homepage-hero-veil"
-          className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,253,249,0.99)_0%,rgba(255,250,245,0.96)_58%,rgba(255,248,239,0.42)_100%)] sm:bg-[linear-gradient(90deg,rgba(255,253,249,0.99)_0%,rgba(255,251,246,0.97)_36%,rgba(255,249,241,0.76)_55%,rgba(255,248,239,0.18)_78%,rgba(255,248,239,0.04)_100%)]"
+          className="absolute inset-0 bg-gradient-to-t from-[#FFFDF9] via-[#FFFDF9]/85 to-[#FFFDF9]/40 sm:bg-[linear-gradient(90deg,rgba(255,253,249,0.99)_0%,rgba(255,251,246,0.97)_38%,rgba(255,249,241,0.76)_56%,rgba(255,248,239,0.22)_78%,rgba(255,248,239,0.05)_100%)]"
         />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-orange-500/25 via-orange-400/5 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-orange-500/20 via-orange-400/5 to-transparent" />
       </div>
 
-      <div className="relative mx-auto min-h-[500px] max-w-7xl px-4 pt-10 sm:min-h-[520px] sm:px-6 sm:pt-14 lg:min-h-[560px] lg:px-8 lg:pt-20">
-
+      <div className="relative mx-auto min-h-[460px] max-w-7xl px-4 pt-8 sm:min-h-[520px] sm:px-6 sm:pt-14 lg:min-h-[560px] lg:px-8 lg:pt-20">
         {/* Left-Aligned Headline & CTA Actions */}
-        <div className="relative z-10 max-w-2xl pb-24 lg:pb-28">
-          <p className="text-xs font-black uppercase text-coral sm:text-sm">
-            {cleanSubtitle}
-          </p>
+        <div className="relative z-10 max-w-2xl pb-16 sm:pb-24 lg:pb-28">
+          {/* Eyebrow Tag */}
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-coral/20 bg-coral/10 px-3.5 py-1 text-[11px] font-black uppercase tracking-wider text-coral backdrop-blur-xs sm:text-xs">
+            <Compass size={14} weight="fill" className="text-coral" />
+            <span>{cleanSubtitle}</span>
+          </div>
 
-          <h1 className="mt-3 text-3xl font-black leading-[1.2] text-ink sm:text-4xl lg:text-[3.25rem]">
+          <h1 className="mt-3.5 text-2xl font-black leading-[1.22] text-ink sm:text-4xl lg:text-[3.25rem]">
             <span className="block text-ink">เปิดประสบการณ์</span>
             <span className="mt-1 block text-balance">
               <HeroTitle title={cleanTitle} />
             </span>
           </h1>
 
-          <p className="mt-4 max-w-lg text-sm font-medium leading-relaxed text-ink/75 sm:text-base">
+          <p className="mt-3.5 max-w-lg text-xs font-medium leading-relaxed text-ink/80 sm:mt-4 sm:text-base">
             {cleanDescription}
           </p>
 
-          {/* Action Buttons Matching Reference */}
-          <div className="mt-8 flex flex-wrap items-center gap-3.5">
-            <PublicCheckinEntryLink className="inline-flex min-h-12 items-center gap-2.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-7 text-sm font-black text-white shadow-lg shadow-orange-500/30 transition-all hover:scale-105 hover:shadow-orange-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-coral">
+          {/* Action Buttons: Responsive Stack / Row */}
+          <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center sm:gap-3.5">
+            <PublicCheckinEntryLink className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-orange-500 via-coral to-amber-500 px-7 text-sm font-black text-white shadow-lg shadow-orange-500/30 transition-all hover:scale-105 hover:shadow-orange-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-coral">
               <QrCode size={20} weight="bold" />
               <span>สแกน QR เช็กอิน</span>
             </PublicCheckinEntryLink>
 
             <Link
               href="/attractions"
-              className="inline-flex min-h-12 items-center gap-2 rounded-full border border-ink/15 bg-white/90 px-6 text-sm font-bold text-ink shadow-xs backdrop-blur-xs transition-all hover:border-coral hover:bg-white hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-ink/15 bg-white/90 px-6 text-sm font-bold text-ink shadow-xs backdrop-blur-xs transition-all hover:border-coral hover:bg-white hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
             >
               <Compass size={19} weight="bold" className="text-coral" />
               <span>ดูสถานที่ทั้งหมด</span>
             </Link>
           </div>
-
         </div>
       </div>
 
       {/* Swooping Dynamic Orange Gradient Wave Transition */}
-      <div className="relative z-10 -mt-8 w-full overflow-hidden leading-none sm:-mt-12 lg:-mt-16">
+      <div className="relative z-10 -mt-6 w-full overflow-hidden leading-none sm:-mt-12 lg:-mt-16">
         <svg
           viewBox="0 0 1440 140"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
-          className="h-16 w-full sm:h-24 lg:h-32"
+          className="h-14 w-full sm:h-24 lg:h-32"
         >
           {/* Orange gradient wave ribbon */}
           <path

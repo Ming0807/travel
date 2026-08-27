@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   ArrowRight,
+  Compass,
   MapPin,
   MapTrifold,
   Star,
@@ -29,6 +30,7 @@ export function HomepageDiscoveryWorkspace({
 }: HomepageDiscoveryWorkspaceProps) {
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
   const categories = useMemo(
+
     () => Array.from(new Set(attractions.map((attraction) => attraction.category).filter(Boolean))),
     [attractions],
   );
@@ -159,81 +161,119 @@ export function HomepageDiscoveryWorkspace({
         </div>
 
         {/* Full-Width Supporting Section: Map & Suggested Routes */}
-        <div className="mt-12 grid gap-5 rounded-2xl border border-orange-100 bg-[#FFF9F2] p-4 shadow-sm shadow-orange-500/5 sm:p-6 lg:grid-cols-2">
-          {/* Map Preview */}
-          <section className="overflow-hidden rounded-xl border border-orange-100 bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
-              <div className="flex items-center gap-2">
-                <MapTrifold aria-hidden="true" size={18} className="text-coral" />
-                <h2 className="text-sm font-black text-ink sm:text-base">แผนที่สถานที่แนะนำ</h2>
+        <div className="mt-16 overflow-hidden rounded-3xl border border-orange-100 bg-[#FFFDF9] p-6 shadow-xl shadow-orange-500/5 sm:p-8">
+          <div className="flex flex-col gap-2 border-b border-orange-100 pb-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
+                <span className="text-amber-500">❖</span>
+                <span>สำรวจเชิงพื้นที่และเส้นทาง</span>
+                <span className="text-amber-500">❖</span>
               </div>
-              {mappedAttraction ? (
-                <span className="text-xs font-bold text-muted">{mappedAttraction.name}</span>
-              ) : null}
+              <h2 className="mt-2 text-xl font-black text-ink sm:text-2xl lg:text-3xl">แผนที่และเส้นทางท่องเที่ยวแนะนำ</h2>
+              <p className="mt-1 text-xs text-muted sm:text-sm">ค้นพบหมุดหมายสำคัญ และเส้นทางท่องเที่ยวเชิงวัฒนธรรมที่เชื่อมต่อถึงกัน</p>
             </div>
-            {mapEmbedUrl && mappedAttraction ? (
-              <>
-                <iframe
-                  title={`แผนที่${mappedAttraction.name}`}
-                  src={mapEmbedUrl}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  className="h-64 w-full border-0 sm:h-72"
-                />
-                <a
-                  href={mapExternalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex min-h-11 items-center justify-between border-t border-orange-100 px-5 text-xs font-black text-coral hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
-                >
-                  เปิดแผนที่ {mappedAttraction.name} <ArrowRight aria-hidden="true" />
-                </a>
-              </>
-            ) : (
-              <div className="p-6 text-center">
-                <p className="text-sm text-muted">แผนที่จะแสดงเมื่อสถานที่มีพิกัดที่ผ่านการตรวจสอบในระบบ</p>
-                <Link href="/attractions" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-black text-teal hover:text-coral">
-                  เปิดรายชื่อสถานที่ <ArrowRight aria-hidden="true" />
+            <Link
+              href="/routes"
+              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 self-start text-xs font-black text-coral hover:underline sm:self-auto"
+            >
+              ดูเส้นทางทั้งหมด <ArrowRight aria-hidden="true" weight="bold" />
+            </Link>
+          </div>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            {/* Map Preview Card */}
+            <section className="flex flex-col justify-between overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-xs">
+              <div className="flex items-center justify-between border-b border-orange-100/80 bg-orange-50/40 px-5 py-3.5">
+                <div className="flex items-center gap-2">
+                  <MapTrifold aria-hidden="true" size={18} className="text-coral" weight="fill" />
+                  <h3 className="text-sm font-black text-ink">แผนที่สถานที่ไฮไลต์</h3>
+                </div>
+                {mappedAttraction ? (
+                  <span className="rounded-full bg-coral/10 px-2.5 py-0.5 text-[11px] font-bold text-coral">{mappedAttraction.name}</span>
+                ) : null}
+              </div>
+
+              {mapEmbedUrl && mappedAttraction ? (
+                <>
+                  <iframe
+                    title={`แผนที่${mappedAttraction.name}`}
+                    src={mapEmbedUrl}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="h-64 w-full border-0 sm:h-72"
+                  />
+                  <a
+                    href={mapExternalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex min-h-12 items-center justify-between border-t border-orange-100 bg-orange-50/30 px-5 text-xs font-black text-coral transition-colors hover:bg-orange-100/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
+                  >
+                    <span>เปิดแผนที่นำทาง {mappedAttraction.name}</span>
+                    <ArrowRight aria-hidden="true" weight="bold" />
+                  </a>
+                </>
+              ) : (
+                <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-orange-50 text-coral">
+                    <MapTrifold aria-hidden="true" size={24} weight="fill" />
+                  </div>
+                  <p className="mt-3 text-xs font-bold text-ink sm:text-sm">แผนที่และพิกัดนำทาง</p>
+                  <p className="mt-1 max-w-xs text-[11px] text-muted">เลือกดูสถานที่ท่องเที่ยวเพื่อเปิดแผนที่และเส้นทางนำทางจริงในพื้นที่</p>
+                  <Link href="/attractions" className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-coral/30 bg-coral/5 px-4 text-xs font-black text-coral transition-colors hover:bg-coral hover:text-white">
+                    เปิดรายชื่อสถานที่ <ArrowRight aria-hidden="true" weight="bold" />
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            {/* Suggested Routes Card */}
+            <section className="flex flex-col justify-between overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-xs">
+              <div className="flex items-center justify-between border-b border-orange-100/80 bg-orange-50/40 px-5 py-3.5">
+                <div className="flex items-center gap-2">
+                  <Compass aria-hidden="true" size={18} className="text-coral" weight="fill" />
+                  <h3 className="text-sm font-black text-ink">ทริปแนะนำประจำฤดูกาล</h3>
+                </div>
+                <Link href="/routes" className="text-xs font-bold text-coral hover:underline">
+                  ดูทั้งหมด
                 </Link>
               </div>
-            )}
-          </section>
 
-          {/* Suggested Routes */}
-          <section className="overflow-hidden rounded-xl border border-orange-100 bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
-              <h2 className="text-sm font-black text-ink sm:text-base">เส้นทางท่องเที่ยวแนะนำ</h2>
-              <Link href="/routes" className="text-xs font-black text-coral hover:text-ink">
-                ดูทั้งหมด
-              </Link>
-            </div>
-            {routes.length > 0 ? (
-              <div className="divide-y divide-ink/10">
-                {routes.slice(0, 4).map((route, index) => (
-                  <Link
-                    key={route.slug}
-                    href={`/routes/${route.slug}`}
-                    className="flex min-h-16 items-center gap-4 px-5 py-3.5 transition-colors hover:bg-orange-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
-                  >
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-orange-50 text-xs font-black text-coral">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="line-clamp-1 text-sm font-black text-ink">{route.name}</p>
-                      <p className="mt-1 text-xs font-bold text-coral">{route.days} วัน · {route.stopCount} จุดแวะ</p>
-                    </div>
-                    <ArrowRight aria-hidden="true" className="shrink-0 text-muted" />
+              {routes.length > 0 ? (
+                <div className="divide-y divide-orange-100/60 p-2">
+                  {routes.slice(0, 4).map((route, index) => (
+                    <Link
+                      key={route.slug}
+                      href={`/routes/${route.slug}`}
+                      className="group flex min-h-16 items-center gap-4 rounded-xl px-4 py-3 transition-colors hover:bg-orange-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
+                    >
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-500/20 text-xs font-black text-coral group-hover:bg-coral group-hover:text-white transition-colors">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-1 text-sm font-black text-ink group-hover:text-coral transition-colors">{route.name}</p>
+                        <p className="mt-0.5 text-xs font-bold text-coral">{route.days} วัน · {route.stopCount} จุดแวะ</p>
+                      </div>
+                      <ArrowRight aria-hidden="true" className="shrink-0 text-muted transition-transform group-hover:translate-x-1 group-hover:text-coral" />
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-orange-50 text-coral">
+                    <Compass aria-hidden="true" size={24} weight="fill" />
+                  </div>
+                  <p className="mt-3 text-xs font-bold text-ink sm:text-sm">
+                    {routesUnavailable
+                      ? "ยังโหลดเส้นทางแนะนำไม่ได้ในขณะนี้"
+                      : "เส้นทางที่เผยแพร่แล้วจะแสดงที่นี่"}
+                  </p>
+                  <Link href="/routes" className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-coral/30 bg-coral/5 px-4 text-xs font-black text-coral transition-colors hover:bg-coral hover:text-white">
+                    เปิดหน้ารวมเส้นทาง <ArrowRight aria-hidden="true" weight="bold" />
                   </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="p-6 text-center text-sm text-muted">
-                {routesUnavailable
-                  ? "ยังโหลดเส้นทางแนะนำไม่ได้ในขณะนี้ เปิดหน้ารวมเพื่อลองอีกครั้ง"
-                  : "เส้นทางที่เผยแพร่แล้วจะแสดงที่นี่"}
-              </p>
-            )}
-          </section>
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       </div>
     </section>
