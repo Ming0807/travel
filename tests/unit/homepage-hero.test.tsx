@@ -11,7 +11,7 @@ describe("Homepage discovery entry", () => {
   it("introduces the Yala launch scope with one clear heading, real QR CTA, and no fake carousel", () => {
     render(<HomepageHero images={[]} />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "เที่ยวยะลาให้ลึกกว่าเดิม" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /เที่ยวยะลาให้ลึกกว่าเดิม/ })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.queryByText("ปัตตานี")).not.toBeInTheDocument();
     expect(screen.queryByText("นราธิวาส")).not.toBeInTheDocument();

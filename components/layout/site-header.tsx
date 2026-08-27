@@ -138,12 +138,12 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           {/* Logo */}
           <div className="flex-1 flex justify-start">
             <Link href="/" className="flex items-center gap-3 group" aria-label={`${appName} home`}>
-              <div className="grid h-10 w-10 place-items-center rounded-[6px] bg-coral text-white shadow-xs group-hover:bg-[#C95C3F] transition-colors">
-                <Compass weight="fill" size={22} className="text-white" />
+              <div className="grid h-10 w-10 place-items-center rounded-[8px] bg-gradient-to-br from-amber-400 to-coral text-white shadow-xs group-hover:scale-105 transition-transform">
+                <Compass weight="fill" size={24} className="text-white" />
               </div>
               <div className="leading-tight">
-                <p className="text-base font-black tracking-tight text-ink uppercase">ท่องเที่ยวชายแดนใต้</p>
-                <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Digital Passport</p>
+                <p className="text-base font-black tracking-tight text-ink">ท่องเที่ยวยะลา</p>
+                <p className="text-[10px] font-semibold text-muted tracking-wider">สแกน · เช็กอิน · รับใบประกาศ</p>
               </div>
             </Link>
           </div>
@@ -227,16 +227,21 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           {/* Right Actions */}
           <div className="flex-1 flex items-center justify-end gap-3.5">
             <PublicGlobalSearch />
-            
+
             <div className="h-4 w-px bg-ink/10"></div>
 
             <UserNavMenu />
 
             <PublicCheckinEntryLink
-              className="inline-flex min-h-10 items-center whitespace-nowrap rounded-[6px] bg-coral px-4 text-sm font-black text-white shadow-xs transition-colors hover:bg-[#C95C3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+              className="inline-flex min-h-10 items-center whitespace-nowrap rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 text-sm font-black text-white shadow-sm transition-all hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
             >
               สแกน QR เช็กอิน
             </PublicCheckinEntryLink>
+
+            <span className="inline-flex items-center gap-1 rounded-full border border-ink/15 px-3 py-1 text-xs font-bold text-ink">
+              TH
+              <CaretDown size={11} weight="bold" className="text-muted" />
+            </span>
           </div>
         </div>
       </header>
@@ -249,12 +254,12 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
       >
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 shrink-0" aria-label={`${appName} home`}>
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[6px] bg-coral text-white shadow-xs">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[6px] bg-gradient-to-br from-amber-400 to-coral text-white shadow-xs">
               <Compass weight="fill" size={19} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-black tracking-tight text-ink uppercase leading-none truncate">ท่องเที่ยวชายแดนใต้</p>
-              <p className="text-[9px] font-bold text-muted uppercase tracking-widest mt-0.5 truncate">Digital Passport</p>
+              <p className="text-sm font-black tracking-tight text-ink leading-none truncate">ท่องเที่ยวยะลา</p>
+              <p className="text-[9px] font-semibold text-muted tracking-wider mt-0.5 truncate">สแกน · เช็กอิน · รับใบประกาศ</p>
             </div>
           </Link>
 

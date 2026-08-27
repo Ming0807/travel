@@ -17,28 +17,31 @@ const FOUR_VALUES = [
   {
     type: "checkin",
     label: "สแกน QR เช็กอิน",
-    description: "บันทึกการเดินทาง ณ จุดเช็กอินจริงในยะลา",
+    description: "สแกน QR Code ณ สถานที่ เพื่อบันทึกการเยี่ยมชม",
     icon: QrCode,
   },
   {
     type: "link",
     href: "/passport",
-    label: "Digital Passport",
-    description: "สะสมตราประทับดิจิทัลประจำสถานที่",
+    label: "สะสมตราประทับ",
+    badgeText: "Digital Passport",
+    description: "สะสมตราประทับดิจิทัล จากทุกสถานที่ที่คุณไป",
     icon: Stamp,
   },
   {
     type: "link",
     href: "/passport",
-    label: "ใบประกาศดิจิทัล",
-    description: "รับเกียรติบัตรการเดินทางเฉพาะคุณ",
+    label: "รับใบประกาศนียบัตร",
+    badgeText: "ใบประกาศดิจิทัล",
+    description: "รับใบประกาศนียบัตร เมื่อทำครบตามเงื่อนไข",
     icon: Certificate,
   },
   {
     type: "link",
     href: "/dashboard",
-    label: "แบบสำรวจเพื่อการพัฒนา",
-    description: "ร่วมให้ข้อมูลเพื่อพัฒนาการท่องเที่ยวอย่างยั่งยืน",
+    label: "ประเมินความพึงพอใจ",
+    badgeText: "แบบสำรวจเพื่อการพัฒนา",
+    description: "ร่วมแสดงความคิดเห็น ช่วยพัฒนาการท่องเที่ยว",
     icon: ChatTeardropText,
   },
 ] as const;
@@ -78,25 +81,25 @@ const DISCOVERY_DESTINATIONS = [
 
 export function HomepageQuickActions() {
   return (
-    <section aria-label="คุณค่าหลักและการสำรวจยะลา" className="bg-background px-4 pb-8 pt-2 sm:px-6 lg:px-8 lg:pb-10">
+    <section aria-label="คุณค่าหลักและการสำรวจยะลา" className="relative -mt-6 z-20 bg-transparent px-4 pb-8 pt-0 sm:-mt-10 sm:px-6 lg:-mt-14 lg:px-8 lg:pb-12">
       <div className="mx-auto max-w-7xl">
         {/* Four-Value Action Band */}
-        <div className="grid grid-cols-2 gap-3.5 sm:gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">
           {FOUR_VALUES.map((item) => {
             const Icon = item.icon;
             if (item.type === "checkin") {
               return (
                 <PublicCheckinEntryLink
                   key={item.label}
-                  className="group flex flex-col items-center rounded-[8px] border border-ink/10 bg-white p-4 text-center shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-coral/40 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral sm:p-5"
+                  className="group flex flex-col items-center rounded-2xl border border-ink/5 bg-white p-6 text-center shadow-lg shadow-orange-500/5 transition-all duration-300 hover:-translate-y-1 hover:border-coral/40 hover:shadow-xl hover:shadow-orange-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral sm:p-7"
                 >
-                  <div className="grid h-12 w-12 place-items-center rounded-full bg-coral text-white shadow-xs transition-transform duration-200 group-hover:scale-110 sm:h-14 sm:w-14">
-                    <Icon aria-hidden="true" size={26} weight="fill" />
+                  <div className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-amber-400 via-orange-500 to-coral text-white shadow-md shadow-orange-500/30 transition-transform duration-300 group-hover:scale-110 sm:h-16 sm:w-16">
+                    <Icon aria-hidden="true" size={28} weight="fill" />
                   </div>
-                  <h3 className="mt-3 text-sm font-black text-ink transition-colors group-hover:text-coral sm:text-base">
+                  <h3 className="mt-4 text-base font-black text-ink transition-colors group-hover:text-coral sm:text-lg">
                     {item.label}
                   </h3>
-                  <p className="mt-1 line-clamp-2 text-[11px] font-semibold text-muted sm:text-xs">
+                  <p className="mt-2 line-clamp-2 text-xs font-medium leading-relaxed text-muted">
                     {item.description}
                   </p>
                 </PublicCheckinEntryLink>
@@ -106,15 +109,18 @@ export function HomepageQuickActions() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="group flex flex-col items-center rounded-[8px] border border-ink/10 bg-white p-4 text-center shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-coral/40 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral sm:p-5"
+                className="group flex flex-col items-center rounded-2xl border border-ink/5 bg-white p-6 text-center shadow-lg shadow-orange-500/5 transition-all duration-300 hover:-translate-y-1 hover:border-coral/40 hover:shadow-xl hover:shadow-orange-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral sm:p-7"
               >
-                <div className="grid h-12 w-12 place-items-center rounded-full bg-coral text-white shadow-xs transition-transform duration-200 group-hover:scale-110 sm:h-14 sm:w-14">
-                  <Icon aria-hidden="true" size={26} weight="fill" />
+                <div className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-amber-400 via-orange-500 to-coral text-white shadow-md shadow-orange-500/30 transition-transform duration-300 group-hover:scale-110 sm:h-16 sm:w-16">
+                  <Icon aria-hidden="true" size={28} weight="fill" />
                 </div>
-                <h3 className="mt-3 text-sm font-black text-ink transition-colors group-hover:text-coral sm:text-base">
+                <h3 className="mt-4 text-base font-black text-ink transition-colors group-hover:text-coral sm:text-lg">
                   {item.label}
                 </h3>
-                <p className="mt-1 line-clamp-2 text-[11px] font-semibold text-muted sm:text-xs">
+                {item.badgeText ? (
+                  <span className="sr-only">{item.badgeText}</span>
+                ) : null}
+                <p className="mt-2 line-clamp-2 text-xs font-medium leading-relaxed text-muted">
                   {item.description}
                 </p>
               </Link>
@@ -123,7 +129,7 @@ export function HomepageQuickActions() {
         </div>
 
         {/* Compact Five-Destination Discovery Navigation */}
-        <div className="mt-6 rounded-[8px] border border-ink/10 bg-cream p-3 sm:p-4">
+        <div className="mt-6 rounded-xl border border-ink/10 bg-cream/70 p-3 sm:p-4 backdrop-blur-xs">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 px-1 text-xs font-black uppercase tracking-wider text-ink">
               <Compass size={16} weight="fill" className="text-coral" />
@@ -136,7 +142,7 @@ export function HomepageQuickActions() {
                   <Link
                     key={dest.href}
                     href={dest.href}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-[6px] border border-ink/10 bg-white px-3 py-1.5 text-xs font-bold text-ink shadow-2xs transition-colors hover:border-coral hover:bg-coral/5 hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-ink/10 bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-2xs transition-all hover:border-coral hover:bg-coral/5 hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
                   >
                     <Icon aria-hidden="true" size={15} weight="bold" className="text-coral" />
                     <span>{dest.label}</span>

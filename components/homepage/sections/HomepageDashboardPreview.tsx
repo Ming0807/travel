@@ -30,52 +30,57 @@ export async function HomepageDashboardPreview({
   const imageUrl = siteMediaImageUrl(previewImage);
 
   return (
-    <section id="dashboard" aria-labelledby="homepage-statistics-heading" className="border-t border-ink/10 bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+    <section id="dashboard" aria-labelledby="homepage-statistics-heading" className="border-t border-ink/10 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-8 lg:grid-cols-[1fr_1.15fr] lg:items-center lg:gap-12">
+        <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr] lg:items-center lg:gap-14">
           {/* Left Column: Mission & Purpose */}
           <div className="flex flex-col justify-center">
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-coral">ข้อมูลสาธารณะจากระบบ</p>
-            <h2 id="homepage-statistics-heading" className="mt-2 text-2xl font-black leading-tight text-ink sm:text-3xl lg:text-4xl">
-              เที่ยวยะลา เรียนรู้ สืบสาน <span className="text-coral">วัฒนธรรมท้องถิ่น</span>
+            <h2 id="homepage-statistics-heading" className="text-3xl font-black leading-tight text-ink sm:text-4xl">
+              เที่ยวยะลา เรียนรู้ สืบสาน <br />
+              <span className="text-coral">
+                วัฒนธรรมท้องถิ่น
+              </span>
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-muted sm:text-base">
-              ภาพรวมการท่องเที่ยวที่บันทึกแล้ว ตัวเลขสรุปจากการเช็กอิน การสร้างใบประกาศ และแบบสำรวจที่ผู้ใช้สมัครใจตอบ ไม่ใช่จำนวนผู้เข้าชมเว็บไซต์
+              โครงการนี้จัดทำขึ้นเพื่อส่งเสริมการท่องเที่ยวเชิงวัฒนธรรม และอนุรักษ์มรดกทางศิลปวัฒนธรรมของยะลา ผ่านการใช้เทคโนโลยีดิจิทัลที่ทันสมัย
             </p>
 
             {/* 3 Factual Purpose Points */}
             <div className="mt-8 grid grid-cols-3 gap-3 border-t border-ink/10 pt-6 sm:gap-4">
-              <div className="flex flex-col items-center rounded-[8px] bg-cream p-3 text-center sm:p-4">
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-coral/10 text-coral">
+              <div className="flex flex-col items-center rounded-xl border border-orange-200/60 bg-[#FFFDF9] p-3.5 text-center shadow-2xs sm:p-4">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-orange-50 text-coral">
                   <CheckCircle aria-hidden="true" size={22} weight="fill" />
                 </div>
-                <p className="mt-2 text-xs font-black text-ink">ข้อมูลจากกิจกรรมจริง</p>
+                <p className="mt-2.5 text-xs font-black text-ink">ข้อมูลจากกิจกรรมจริง</p>
               </div>
 
-              <div className="flex flex-col items-center rounded-[8px] bg-cream p-3 text-center sm:p-4">
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-coral/10 text-coral">
+              <div className="flex flex-col items-center rounded-xl border border-orange-200/60 bg-[#FFFDF9] p-3.5 text-center shadow-2xs sm:p-4">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-orange-50 text-coral">
                   <UserCheck aria-hidden="true" size={22} weight="fill" />
                 </div>
-                <p className="mt-2 text-xs font-black text-ink">เลือกตอบข้อมูลเพิ่มเติม</p>
+                <p className="mt-2.5 text-xs font-black text-ink">เลือกตอบข้อมูลเพิ่มเติม</p>
               </div>
 
-              <div className="flex flex-col items-center rounded-[8px] bg-cream p-3 text-center sm:p-4">
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-coral/10 text-coral">
+              <div className="flex flex-col items-center rounded-xl border border-orange-200/60 bg-[#FFFDF9] p-3.5 text-center shadow-2xs sm:p-4">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-orange-50 text-coral">
                   <ChartLineUp aria-hidden="true" size={22} weight="fill" />
                 </div>
-                <p className="mt-2 text-xs font-black text-ink">นำเสนอข้อมูลเป็นภาพรวม</p>
+                <p className="mt-2.5 text-xs font-black text-ink">นำเสนอข้อมูลเป็นภาพรวม</p>
               </div>
             </div>
 
-            <div className="mt-6">
-              <Link href="/dashboard" className="inline-flex min-h-11 items-center gap-2 text-sm font-black text-teal hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
+            <div className="mt-6 flex items-center justify-between">
+              <p className="text-[11px] font-medium text-muted">
+                *ตัวเลขสรุปจากการเช็กอินจริง ไม่ใช่จำนวนผู้เข้าชมเว็บไซต์
+              </p>
+              <Link href="/dashboard" className="inline-flex min-h-10 items-center gap-1.5 text-xs font-black text-coral hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
                 ดูสถิติฉบับเต็ม <ArrowRight aria-hidden="true" weight="bold" />
               </Link>
             </div>
           </div>
 
           {/* Right Column: Evidence Card */}
-          <div className="overflow-hidden rounded-[8px] border border-ink/10 bg-cream shadow-card">
+          <div className="overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-xl shadow-orange-500/10">
             {/* Visual Header Frame */}
             <div className="relative aspect-[16/9] w-full overflow-hidden bg-ink">
               {imageUrl ? (
@@ -83,20 +88,20 @@ export async function HomepageDashboardPreview({
                   src={imageUrl}
                   alt="ภาพบรรยากาศการท่องเที่ยวและข้อมูลยะลา"
                   fill
-                  className="object-cover opacity-75"
+                  className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 550px"
                 />
               ) : null}
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent" />
               <div className="relative z-10 flex h-full flex-col justify-end p-6 text-white">
-                <p className="text-xs font-bold uppercase tracking-wider text-coral">Southern Border Data &amp; Intelligence</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-300">Southern Border Data &amp; Intelligence</p>
                 <p className="mt-1 text-lg font-black sm:text-xl">ข้อมูลจริงเพื่อการวางแผนท่องเที่ยวอย่างยั่งยืน</p>
               </div>
             </div>
 
             {/* Bottom Coral Evidence Bar with Real KPIs */}
             {analytics ? (
-              <dl className="grid grid-cols-2 divide-x divide-y divide-white/15 bg-coral text-white sm:grid-cols-4 sm:divide-y-0">
+              <dl className="grid grid-cols-2 divide-x divide-y divide-white/15 bg-gradient-to-r from-orange-600 via-coral to-amber-600 text-white sm:grid-cols-4 sm:divide-y-0">
                 {KPI_DEFINITIONS.map(({ key, label, icon: Icon }) => (
                   <div key={key} className="flex flex-col items-center p-4 text-center sm:p-5">
                     <Icon aria-hidden="true" size={24} weight="fill" className="text-white/90" />
@@ -108,7 +113,7 @@ export async function HomepageDashboardPreview({
                 ))}
               </dl>
             ) : (
-              <div className="bg-coral p-6 text-center text-white">
+              <div className="bg-gradient-to-r from-orange-600 via-coral to-amber-600 p-6 text-center text-white">
                 <p role="status" className="text-sm font-bold text-white/90">
                   ข้อมูลสถิติยังไม่พร้อมใช้งานชั่วคราว กรุณากลับมาดูอีกครั้ง
                 </p>

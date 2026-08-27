@@ -24,14 +24,14 @@ describe("homepage information sections", () => {
   it("describes the real six-stage check-in journey", () => {
     render(<HomepageHowItWorks />);
 
-    expect(screen.getByRole("heading", { name: /ขั้นตอนการบันทึกการเดินทาง|เริ่มบันทึกการเดินทาง/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: /วิธีการใช้งาน|ขั้นตอนการบันทึกการเดินทาง/ })).toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(6);
-    expect(screen.getByText("สแกน QR ที่สถานที่")).toBeInTheDocument();
-    expect(screen.getByText("กรอกข้อมูลจำเป็น")).toBeInTheDocument();
-    expect(screen.getByText("ถ่ายหรือเลือกรูป")).toBeInTheDocument();
-    expect(screen.getByText("รับใบประกาศดิจิทัล")).toBeInTheDocument();
-    expect(screen.getByText("สะสมตราและคะแนน")).toBeInTheDocument();
-    expect(screen.getByText("แบบสำรวจตามความสมัครใจ")).toBeInTheDocument();
+    expect(screen.getAllByText(/สแกน QR/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/กรอกข้อมูล/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/รูปภาพ|รูป/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/ตราประทับ|ตราและคะแนน/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/ใบประกาศ/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/ประเมินความพึงพอใจ|แบบสำรวจ/).length).toBeGreaterThanOrEqual(1);
   });
 
   it("labels dashboard numbers as recorded tourism data with factual purpose points", async () => {

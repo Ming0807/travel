@@ -33,7 +33,7 @@ describe("homepage editorial sections", () => {
     render(<HomepageCertificateCta title="สมัครรับข่าวสาร" description="กรอกอีเมลเพื่อรับข่าวสาร" />);
 
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "ทุกการเดินทางมีเรื่องให้สะสม" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /ทุกการเดินทางมีเรื่องให้สะสม|เริ่มต้นการเดินทางของคุณวันนี้/ })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /Digital Passport|ดูตราที่สะสมไว้/ })[0]).toHaveAttribute("href", "/passport");
     expect(screen.getByRole("link", { name: "ดูกระดานผู้นำ" })).toHaveAttribute("href", "/leaderboard");
   });

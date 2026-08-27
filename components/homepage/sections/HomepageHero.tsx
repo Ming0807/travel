@@ -1,8 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Compass, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { Compass, QrCode } from "@phosphor-icons/react/dist/ssr";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
-import { HomepageSearch } from "@/components/homepage/HomepageSearch";
 import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 
 function stripMarkup(value: string) {
@@ -12,13 +11,21 @@ function stripMarkup(value: string) {
 function HeroTitle({ title }: { title: string }) {
   const [before, after] = title.split("ยะลา", 2);
   if (after === undefined) return <>{title}</>;
-  return <>{before}<span className="text-coral">ยะลา</span>{after}</>;
+  return (
+    <>
+      {before}
+      <span className="text-coral">
+        ยะลา
+      </span>
+      {after}
+    </>
+  );
 }
 
 export function HomepageHero({
   title = "เที่ยวยะลาให้ลึกกว่าเดิม",
-  subtitle = "วางแผนการเดินทางในจังหวัดยะลา",
-  description = "ค้นพบสถานที่ท่องเที่ยว อาหารท้องถิ่น เส้นทางน่าสนใจ และเรื่องราวจากผู้คนในพื้นที่ เพื่อให้ทุกการเดินทางมีความหมายมากขึ้น",
+  subtitle = "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์",
+  description = "เช็กอินสถานที่สำคัญ สะสมตราประทับ รับใบประกาศดิจิทัล และร่วมเรียนรู้วิถีชีวิตวัฒนธรรมยะลาไปด้วยกัน",
   images = [
     "",
     "",
@@ -39,68 +46,117 @@ export function HomepageHero({
     ? "เที่ยวยะลาให้ลึกกว่าเดิม"
     : stripMarkup(title) || "เที่ยวยะลาให้ลึกกว่าเดิม";
   const cleanSubtitle = /ปัตตานี|นราธิวาส/.test(subtitle)
-    ? "วางแผนการเดินทางในจังหวัดยะลา"
-    : stripMarkup(subtitle);
+    ? "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์"
+    : stripMarkup(subtitle) || "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์";
   const cleanDescription = /ปัตตานี|นราธิวาส/.test(description)
-    ? "ค้นพบสถานที่ท่องเที่ยว อาหารท้องถิ่น เส้นทางน่าสนใจ และเรื่องราวจากผู้คนในยะลา เพื่อให้ทุกการเดินทางมีความหมายมากขึ้น"
-    : stripMarkup(description);
+    ? "เช็กอินสถานที่สำคัญ สะสมตราประทับ รับใบประกาศดิจิทัล และร่วมเรียนรู้วิถีชีวิตวัฒนธรรมยะลาไปด้วยกัน"
+    : stripMarkup(description) || "เช็กอินสถานที่สำคัญ สะสมตราประทับ รับใบประกาศดิจิทัล และร่วมเรียนรู้วิถีชีวิตวัฒนธรรมยะลาไปด้วยกัน";
 
   return (
-    <section className="relative bg-background px-3 pb-8 pt-3 text-ink sm:px-6 sm:pt-6 lg:px-8 lg:pb-12">
-      <div className="mx-auto max-w-7xl">
-        <div className="relative min-h-[440px] overflow-hidden rounded-[8px] border border-ink/10 bg-ink shadow-soft lg:grid lg:min-h-[420px] lg:grid-cols-[0.92fr_1.08fr] lg:bg-white">
-          <div className="absolute inset-0 lg:left-[46%]">
-            {img0 ? (
-              <Image
-                src={img0}
-                alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา"
-                fill
-                preload={true}
-                fetchPriority="high"
-                className="object-cover"
-                sizes="(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 54vw"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center bg-gradient-to-br from-teal via-ink to-ink p-6 text-center text-white">
-                <div className="flex flex-col items-center gap-2">
-                  <Compass size={48} weight="fill" className="text-coral" />
-                  <p className="text-sm font-bold text-white/90">ท่องเที่ยวยะลา ดินแดนใต้สุดแดนสยาม</p>
-                </div>
+    <section className="relative overflow-hidden bg-gradient-to-r from-[#FFFDF9] via-[#FAF6F0] to-[#F5EFE6] text-ink">
+      {/* Background Watermark Mandala Pattern */}
+      <div className="pointer-events-none absolute -left-20 top-0 h-[480px] w-[480px] rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-orange-500/5 to-transparent blur-2xl" />
+
+      <div className="relative mx-auto min-h-[460px] max-w-7xl px-4 pt-8 sm:px-6 sm:pt-12 lg:min-h-[500px] lg:px-8 lg:pt-16">
+        {/* Right Photographic Image */}
+        <div className="absolute inset-0 lg:left-[46%]">
+          {img0 ? (
+            <Image
+              src={img0}
+              alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา"
+              fill
+              preload={true}
+              fetchPriority="high"
+              className="object-cover object-center"
+              sizes="(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 54vw"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center bg-gradient-to-br from-amber-500/20 via-orange-500/30 to-amber-600/40 p-6 text-center text-ink">
+              <div className="flex flex-col items-center gap-2">
+                <Compass size={48} weight="fill" className="text-coral" />
+                <p className="text-sm font-bold text-ink/80">ท่องเที่ยวยะลา ดินแดนใต้สุดแดนสยาม</p>
               </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/80 to-ink/20 lg:hidden" />
-          </div>
-
-          <div className="relative z-10 flex flex-col justify-center px-6 py-10 text-white sm:px-10 lg:px-14 lg:text-ink">
-            {cleanSubtitle ? <p className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-coral">{cleanSubtitle}</p> : null}
-            <h1 className="max-w-xl text-[2rem] font-black leading-[1.22] tracking-tight sm:text-4xl lg:text-5xl">
-              <HeroTitle title={cleanTitle} />
-            </h1>
-            <p className="mt-4 max-w-xl text-sm font-medium leading-relaxed text-white/85 sm:text-base lg:text-muted">
-              {cleanDescription}
-            </p>
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <PublicCheckinEntryLink className="inline-flex min-h-11 items-center gap-2 rounded-[6px] bg-coral px-5 text-sm font-black text-white shadow-xs transition-all hover:bg-[#C95C3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-coral">
-                สแกน QR เช็กอิน <ArrowRight aria-hidden="true" weight="bold" />
-              </PublicCheckinEntryLink>
-              <Link href="/attractions" className="inline-flex min-h-11 items-center gap-2 rounded-[6px] border border-white/60 bg-white/10 px-5 text-sm font-bold text-white backdrop-blur-xs transition-colors hover:bg-white hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral lg:border-ink/20 lg:bg-transparent lg:text-ink">
-                <MapPin aria-hidden="true" size={20} /> ดูสถานที่ทั้งหมด
-              </Link>
             </div>
-          </div>
-
-          {/* Curved Transition Wave at Bottom */}
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 hidden h-8 overflow-hidden lg:block">
-            <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="h-full w-full fill-background">
-              <path d="M0,0 C300,90 900,90 1200,0 L1200,120 L0,120 Z"></path>
-            </svg>
-          </div>
+          )}
+          {/* Smooth blend overlay from left cream to right image */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FFFDF9] via-[#FAF6F0]/90 to-transparent lg:via-[#FAF6F0]/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-orange-500/30 via-transparent to-transparent" />
         </div>
 
-        {/* Search bar overlapping lower hero edge */}
-        <div className="relative z-20 mx-auto -mt-7 w-[calc(100%_-_1.5rem)] max-w-5xl sm:-mt-8">
-          <HomepageSearch />
+        {/* Left-Aligned Headline & CTA Actions */}
+        <div className="relative z-10 max-w-2xl pb-16 lg:pb-24">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-coral sm:text-sm">
+            {cleanSubtitle}
+          </p>
+
+          <h1 className="mt-3 text-3xl font-black leading-[1.2] tracking-tight text-ink sm:text-4xl lg:text-[3.25rem]">
+            <span className="block text-ink">เปิดประสบการณ์</span>
+            <span className="block mt-1">
+              <HeroTitle title={cleanTitle} />
+            </span>
+          </h1>
+
+          <p className="mt-4 max-w-lg text-sm font-medium leading-relaxed text-ink/75 sm:text-base">
+            {cleanDescription}
+          </p>
+
+          {/* Action Buttons Matching Reference */}
+          <div className="mt-8 flex flex-wrap items-center gap-3.5">
+            <PublicCheckinEntryLink className="inline-flex min-h-12 items-center gap-2.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-7 text-sm font-black text-white shadow-lg shadow-orange-500/30 transition-all hover:scale-105 hover:shadow-orange-500/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-coral">
+              <QrCode size={20} weight="bold" />
+              <span>สแกน QR เช็กอิน</span>
+            </PublicCheckinEntryLink>
+
+            <Link
+              href="/attractions"
+              className="inline-flex min-h-12 items-center gap-2 rounded-full border border-ink/15 bg-white/90 px-6 text-sm font-bold text-ink shadow-xs backdrop-blur-xs transition-all hover:border-coral hover:bg-white hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+            >
+              <Compass size={19} weight="bold" className="text-coral" />
+              <span>ดูสถานที่ทั้งหมด</span>
+            </Link>
+          </div>
+
+          {/* Carousel Indicator Dots */}
+          <div className="mt-10 flex items-center gap-2" aria-hidden="true">
+            <span className="h-2 w-6 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 shadow-xs" />
+            <span className="h-2 w-2 rounded-full bg-ink/20" />
+            <span className="h-2 w-2 rounded-full bg-ink/20" />
+          </div>
         </div>
+      </div>
+
+      {/* Swooping Dynamic Orange Gradient Wave Transition */}
+      <div className="relative -mt-6 w-full overflow-hidden leading-none sm:-mt-10 lg:-mt-14">
+        <svg
+          viewBox="0 0 1440 140"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          className="h-16 w-full sm:h-24 lg:h-32"
+        >
+          {/* Orange gradient wave ribbon */}
+          <path
+            d="M0,40 C320,120 720,-20 1440,70 L1440,140 L0,140 Z"
+            className="fill-orange-500/20"
+          />
+          <path
+            d="M0,65 C380,130 820,10 1440,85 L1440,140 L0,140 Z"
+            className="fill-gradient-orange"
+            fill="url(#hero-wave-gradient)"
+          />
+          {/* Foreground white background transition */}
+          <path
+            d="M0,90 C420,140 920,40 1440,105 L1440,140 L0,140 Z"
+            className="fill-background"
+          />
+          <defs>
+            <linearGradient id="hero-wave-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#F97316" />
+              <stop offset="50%" stopColor="#FB923C" />
+              <stop offset="100%" stopColor="#F59E0B" />
+            </linearGradient>
+          </defs>
+        </svg>
       </div>
     </section>
   );
