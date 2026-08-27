@@ -29,14 +29,14 @@ const FOUR_VALUES = [
     icon: Stamp,
   },
   {
-    type: "info",
+    type: "checkin",
     label: "รับใบประกาศนียบัตร",
     badgeText: "ใบประกาศดิจิทัล",
     description: "รับใบประกาศนียบัตร เมื่อทำครบตามเงื่อนไข",
     icon: Certificate,
   },
   {
-    type: "info",
+    type: "checkin",
     label: "ประเมินความพึงพอใจ",
     badgeText: "แบบสำรวจเพื่อการพัฒนา",
     description: "ร่วมแสดงความคิดเห็น ช่วยพัฒนาการท่องเที่ยว",
@@ -97,6 +97,9 @@ export function HomepageQuickActions() {
                   <h3 className="mt-4 text-base font-black text-ink transition-colors group-hover:text-coral sm:text-lg">
                     {item.label}
                   </h3>
+                  {"badgeText" in item ? (
+                    <span className="mt-1 text-[11px] font-bold text-coral">{item.badgeText}</span>
+                  ) : null}
                   <p className="mt-2 line-clamp-2 text-xs font-medium leading-relaxed text-muted">
                     {item.description}
                   </p>
@@ -116,7 +119,7 @@ export function HomepageQuickActions() {
                   {item.label}
                 </h3>
                 {item.badgeText ? (
-                  <span className="sr-only">{item.badgeText}</span>
+                  <span className="mt-1 text-[11px] font-bold text-coral">{item.badgeText}</span>
                 ) : null}
                 <p className="mt-2 line-clamp-2 text-xs font-medium leading-relaxed text-muted">
                   {item.description}
@@ -124,23 +127,7 @@ export function HomepageQuickActions() {
               </Link>
             );
 
-            return (
-              <article
-                key={item.label}
-                className="flex flex-col items-center rounded-2xl border border-ink/5 bg-white p-6 text-center shadow-lg shadow-orange-500/5 sm:p-7"
-              >
-                <div className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-amber-400 via-orange-500 to-coral text-white shadow-md shadow-orange-500/30 sm:h-16 sm:w-16">
-                  <Icon aria-hidden="true" size={28} weight="fill" />
-                </div>
-                <h3 className="mt-4 text-base font-black text-ink sm:text-lg">
-                  {item.label}
-                </h3>
-                {item.badgeText ? <span className="sr-only">{item.badgeText}</span> : null}
-                <p className="mt-2 line-clamp-2 text-xs font-medium leading-relaxed text-muted">
-                  {item.description}
-                </p>
-              </article>
-            );
+            return null;
           })}
         </div>
 

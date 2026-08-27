@@ -15,11 +15,11 @@ export async function SiteFooter() {
   ]);
 
   return (
-    <footer className="border-t border-ink/10 bg-[#FAF7F2] px-4 pb-28 pt-14 sm:px-6 lg:px-8 lg:pb-12">
+    <footer className="border-t border-ink/10 bg-[#FAF7F2] px-4 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-12 lg:px-8 lg:pb-12 lg:pt-14">
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr_1fr_1.2fr]">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-[1.3fr_1fr_1fr_1.2fr] lg:gap-10">
           {/* Brand & Social Column */}
-          <div>
+          <div className="col-span-2 lg:col-span-1">
             <div className="flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-amber-400 to-coral text-white shadow-xs">
                 <Compass aria-hidden="true" weight="fill" size={24} />
@@ -88,7 +88,7 @@ export async function SiteFooter() {
           </div>
 
           {/* Contact Column */}
-          <div>
+          <div className="col-span-2 border-t border-ink/10 pt-6 lg:col-span-1 lg:border-t-0 lg:pt-0">
             <h2 className="text-sm font-black uppercase tracking-wider text-ink">ติดต่อเรา</h2>
             <ul className="mt-4 space-y-2.5 text-xs font-semibold text-muted sm:text-sm">
               {contact.phone ? <li className="flex items-center gap-2">
@@ -110,9 +110,13 @@ export async function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-2 border-t border-ink/10 pt-6 text-center text-xs font-medium text-muted sm:flex-row sm:items-center sm:justify-between sm:text-left">
-          <p>{footerInfo.copyright}</p>
-          <p>ขอบเขตนำร่อง: จังหวัดยะลา</p>
+        <div className="mt-8 flex flex-col items-center gap-2 border-t border-ink/10 pt-4 text-center text-[11px] font-medium text-muted sm:mt-10 sm:flex-row sm:justify-between sm:pt-5 sm:text-left lg:mt-12 lg:pt-6">
+          {footerInfo.copyright ? <p className="max-w-2xl leading-5">{footerInfo.copyright}</p> : null}
+          <p className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap leading-4">
+            <span className="h-1.5 w-1.5 rounded-full bg-coral" aria-hidden="true" />
+            <span>ขอบเขตนำร่อง:</span>
+            <span className="font-black text-ink">จังหวัดยะลา</span>
+          </p>
         </div>
       </div>
     </footer>

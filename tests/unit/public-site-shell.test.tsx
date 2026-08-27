@@ -56,7 +56,8 @@ describe("public site shell", () => {
 
   it("keeps the public footer Yala-first and free of admin links", async () => {
     render(await SiteFooter());
-    expect(screen.getByText("ขอบเขตนำร่อง: จังหวัดยะลา")).toBeInTheDocument();
+    expect(screen.getByText("ขอบเขตนำร่อง:")).toBeInTheDocument();
+    expect(screen.getByText("จังหวัดยะลา")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Digital Passport" })).toHaveAttribute("href", "/passport");
     expect(screen.queryByRole("link", { name: /แอดมิน|แดชบอร์ด/ })).not.toBeInTheDocument();
     expect(screen.queryByText("ปัตตานี")).not.toBeInTheDocument();

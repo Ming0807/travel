@@ -53,15 +53,15 @@ export function HomepageDiscoveryWorkspace({
       <div className="mx-auto max-w-7xl">
         {/* Section Header */}
         <div className="mb-8 text-center sm:mb-10">
-          <div className="inline-flex items-center gap-3 text-xs font-black uppercase tracking-widest text-coral">
-            <span className="text-amber-500">❖ ───</span>
+          <div className="inline-flex items-center gap-3 text-sm font-black text-coral">
+            <span className="h-0.5 w-8 bg-coral" aria-hidden="true" />
             <span>สถานที่น่าสนใจ</span>
-            <span className="text-amber-500">─── ❖</span>
+            <span className="h-0.5 w-8 bg-coral" aria-hidden="true" />
           </div>
           <h2 id="homepage-discovery-heading" className="mt-3 text-2xl font-black text-ink sm:text-3xl lg:text-4xl">
             วางแผนเที่ยวในยะลา
           </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-xs font-bold text-muted sm:text-sm">
+          <p className="mx-auto mt-2 max-w-2xl text-sm font-medium text-muted">
             สำรวจจากข้อมูลจริง
           </p>
         </div>
@@ -95,7 +95,7 @@ export function HomepageDiscoveryWorkspace({
                   <Link
                     key={attraction.slug}
                     href={`/attractions/${attraction.slug}`}
-                    className="group relative flex aspect-[3/4] snap-start flex-col justify-end overflow-hidden rounded-2xl border border-ink/10 bg-ink shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-orange-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+                    className="group relative flex aspect-[3/4] snap-start flex-col justify-end overflow-hidden rounded-xl bg-ink shadow-sm transition-transform duration-200 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
                   >
                     {/* Background Image */}
                     {attraction.imageUrl ? (
@@ -154,45 +154,34 @@ export function HomepageDiscoveryWorkspace({
         <div className="mt-10 text-center">
           <Link
             href="/attractions"
-            className="inline-flex min-h-12 items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-9 text-sm font-black text-white shadow-md shadow-orange-500/25 transition-all hover:scale-105 hover:shadow-orange-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+            className="inline-flex min-h-12 items-center gap-2 rounded-lg bg-coral px-8 text-sm font-black text-white transition-colors hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
           >
             ดูสถานที่ทั้งหมด <ArrowRight aria-hidden="true" weight="bold" />
           </Link>
         </div>
 
         {/* Full-Width Supporting Section: Map & Suggested Routes */}
-        <div className="mt-16 overflow-hidden rounded-3xl border border-orange-100 bg-[#FFFDF9] p-6 shadow-xl shadow-orange-500/5 sm:p-8">
-          <div className="flex flex-col gap-2 border-b border-orange-100 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-16 border-t border-ink/10 pt-12 sm:mt-20 sm:pt-16">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
-                <span className="text-amber-500">❖</span>
+              <div className="inline-flex items-center gap-3 text-sm font-black text-coral">
+                <span className="h-0.5 w-8 bg-coral" aria-hidden="true" />
                 <span>สำรวจเชิงพื้นที่และเส้นทาง</span>
-                <span className="text-amber-500">❖</span>
               </div>
-              <h2 className="mt-2 text-xl font-black text-ink sm:text-2xl lg:text-3xl">แผนที่และเส้นทางท่องเที่ยวแนะนำ</h2>
-              <p className="mt-1 text-xs text-muted sm:text-sm">ค้นพบหมุดหมายสำคัญ และเส้นทางท่องเที่ยวเชิงวัฒนธรรมที่เชื่อมต่อถึงกัน</p>
+              <h2 className="mt-3 text-2xl font-black text-ink sm:text-3xl">แผนที่และเส้นทางท่องเที่ยวแนะนำ</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">ค้นพบหมุดหมายสำคัญ และเส้นทางท่องเที่ยวเชิงวัฒนธรรมที่เชื่อมต่อถึงกัน</p>
             </div>
             <Link
               href="/routes"
-              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 self-start text-xs font-black text-coral hover:underline sm:self-auto"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 self-start text-sm font-black text-coral hover:underline sm:self-auto"
             >
               ดูเส้นทางทั้งหมด <ArrowRight aria-hidden="true" weight="bold" />
             </Link>
           </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <div className="mt-8 grid overflow-hidden rounded-xl bg-ink shadow-[0_18px_50px_rgba(24,24,27,0.14)] lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.55fr)]">
             {/* Map Preview Card */}
-            <section className="flex flex-col justify-between overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-xs">
-              <div className="flex items-center justify-between border-b border-orange-100/80 bg-orange-50/40 px-5 py-3.5">
-                <div className="flex items-center gap-2">
-                  <MapTrifold aria-hidden="true" size={18} className="text-coral" weight="fill" />
-                  <h3 className="text-sm font-black text-ink">แผนที่สถานที่ไฮไลต์</h3>
-                </div>
-                {mappedAttraction ? (
-                  <span className="rounded-full bg-coral/10 px-2.5 py-0.5 text-[11px] font-bold text-coral">{mappedAttraction.name}</span>
-                ) : null}
-              </div>
-
+            <section className="relative min-h-[320px] min-w-0 overflow-hidden bg-[#F4EEE7] sm:min-h-[380px] lg:min-h-[430px]">
               {mapEmbedUrl && mappedAttraction ? (
                 <>
                   <iframe
@@ -200,26 +189,31 @@ export function HomepageDiscoveryWorkspace({
                     src={mapEmbedUrl}
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    className="h-64 w-full border-0 sm:h-72"
+                    className="absolute inset-0 h-full w-full border-0"
                   />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-ink/30 to-transparent" aria-hidden="true" />
+                  <div className="absolute left-4 top-4 flex max-w-[calc(100%-2rem)] items-center gap-2 rounded-lg bg-white/95 px-3 py-2 text-xs font-black text-ink shadow-lg backdrop-blur-sm sm:left-5 sm:top-5 sm:text-sm">
+                    <MapPin aria-hidden="true" size={17} className="shrink-0 text-coral" weight="fill" />
+                    <span className="truncate">{mappedAttraction.name}</span>
+                  </div>
                   <a
                     href={mapExternalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex min-h-12 items-center justify-between border-t border-orange-100 bg-orange-50/30 px-5 text-xs font-black text-coral transition-colors hover:bg-orange-100/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
+                    className="absolute inset-x-4 bottom-4 flex min-h-12 items-center justify-between rounded-lg bg-white px-4 text-sm font-black text-ink shadow-xl transition-colors hover:bg-coral hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 sm:inset-x-auto sm:bottom-5 sm:left-5 sm:min-w-72"
                   >
-                    <span>เปิดแผนที่นำทาง {mappedAttraction.name}</span>
+                    <span>เปิดแผนที่และนำทาง</span>
                     <ArrowRight aria-hidden="true" weight="bold" />
                   </a>
                 </>
               ) : (
-                <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-orange-50 text-coral">
+                <div className="flex min-h-[320px] flex-col items-center justify-center bg-[linear-gradient(135deg,#FFF7ED_0%,#F4EEE7_100%)] p-8 text-center sm:min-h-[380px] lg:min-h-[430px]">
+                  <div className="grid h-12 w-12 place-items-center rounded-lg bg-white text-coral shadow-sm">
                     <MapTrifold aria-hidden="true" size={24} weight="fill" />
                   </div>
                   <p className="mt-3 text-xs font-bold text-ink sm:text-sm">แผนที่และพิกัดนำทาง</p>
                   <p className="mt-1 max-w-xs text-[11px] text-muted">เลือกดูสถานที่ท่องเที่ยวเพื่อเปิดแผนที่และเส้นทางนำทางจริงในพื้นที่</p>
-                  <Link href="/attractions" className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-coral/30 bg-coral/5 px-4 text-xs font-black text-coral transition-colors hover:bg-coral hover:text-white">
+                  <Link href="/attractions" className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg bg-coral px-4 text-xs font-black text-white transition-colors hover:bg-orange-600">
                     เปิดรายชื่อสถานที่ <ArrowRight aria-hidden="true" weight="bold" />
                   </Link>
                 </div>
@@ -227,47 +221,48 @@ export function HomepageDiscoveryWorkspace({
             </section>
 
             {/* Suggested Routes Card */}
-            <section className="flex flex-col justify-between overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-xs">
-              <div className="flex items-center justify-between border-b border-orange-100/80 bg-orange-50/40 px-5 py-3.5">
+            <section className="flex min-w-0 flex-col overflow-hidden bg-ink text-white">
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
                 <div className="flex items-center gap-2">
                   <Compass aria-hidden="true" size={18} className="text-coral" weight="fill" />
-                  <h3 className="text-sm font-black text-ink">ทริปแนะนำประจำฤดูกาล</h3>
+                  <h3 className="text-sm font-black text-white">ทริปแนะนำประจำฤดูกาล</h3>
                 </div>
-                <Link href="/routes" className="text-xs font-bold text-coral hover:underline">
+                <Link href="/routes" className="text-xs font-bold text-orange-300 hover:text-white">
                   ดูทั้งหมด
                 </Link>
               </div>
 
               {routes.length > 0 ? (
-                <div className="divide-y divide-orange-100/60 p-2">
+                <div className="divide-y divide-white/10 px-3 py-2">
                   {routes.slice(0, 4).map((route, index) => (
                     <Link
                       key={route.slug}
                       href={`/routes/${route.slug}`}
-                      className="group flex min-h-16 items-center gap-4 rounded-xl px-4 py-3 transition-colors hover:bg-orange-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
+                      className="group flex min-h-20 items-center gap-4 rounded-lg px-2 py-3 transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
                     >
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-500/20 text-xs font-black text-coral group-hover:bg-coral group-hover:text-white transition-colors">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-orange-100 text-xs font-black text-coral transition-colors group-hover:bg-coral group-hover:text-white">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="line-clamp-1 text-sm font-black text-ink group-hover:text-coral transition-colors">{route.name}</p>
-                        <p className="mt-0.5 text-xs font-bold text-coral">{route.days} วัน · {route.stopCount} จุดแวะ</p>
+                        <p className="line-clamp-1 text-sm font-black text-white transition-colors group-hover:text-orange-300">{route.name}</p>
+                        <p className="mt-0.5 text-xs font-bold text-orange-300">{route.days} วัน · {route.stopCount} จุดแวะ</p>
                       </div>
-                      <ArrowRight aria-hidden="true" className="shrink-0 text-muted transition-transform group-hover:translate-x-1 group-hover:text-coral" />
+                      <ArrowRight aria-hidden="true" className="shrink-0 text-white/40 transition-transform group-hover:translate-x-1 group-hover:text-orange-300" />
                     </Link>
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-orange-50 text-coral">
+                <div className="flex flex-1 flex-col items-center justify-center px-7 py-12 text-center lg:py-8">
+                  <div className="grid h-12 w-12 place-items-center rounded-lg bg-white/10 text-orange-300">
                     <Compass aria-hidden="true" size={24} weight="fill" />
                   </div>
-                  <p className="mt-3 text-xs font-bold text-ink sm:text-sm">
+                  <p className="mt-4 text-sm font-black text-white">
                     {routesUnavailable
                       ? "ยังโหลดเส้นทางแนะนำไม่ได้ในขณะนี้"
                       : "เส้นทางที่เผยแพร่แล้วจะแสดงที่นี่"}
                   </p>
-                  <Link href="/routes" className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-coral/30 bg-coral/5 px-4 text-xs font-black text-coral transition-colors hover:bg-coral hover:text-white">
+                  <p className="mt-2 max-w-xs text-xs leading-5 text-white/60">เลือกเส้นทางตามเวลาและจุดแวะ เพื่อวางแผนทริปได้ง่ายขึ้น</p>
+                  <Link href="/routes" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-coral px-4 text-xs font-black text-white transition-colors hover:bg-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-ink">
                     เปิดหน้ารวมเส้นทาง <ArrowRight aria-hidden="true" weight="bold" />
                   </Link>
                 </div>

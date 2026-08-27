@@ -47,8 +47,8 @@ describe("Homepage discovery entry", () => {
     expect(screen.getByText("Digital Passport")).toBeInTheDocument();
     expect(screen.getByText("ใบประกาศดิจิทัล")).toBeInTheDocument();
     expect(screen.getByText("แบบสำรวจเพื่อการพัฒนา")).toBeInTheDocument();
-    expect(screen.getByText("รับใบประกาศนียบัตร").closest("a")).toBeNull();
-    expect(screen.getByText("ประเมินความพึงพอใจ").closest("a")).toBeNull();
+    expect(screen.getByText("รับใบประกาศนียบัตร").closest("a")).toHaveAttribute("href", "/checkin/try");
+    expect(screen.getByText("ประเมินความพึงพอใจ").closest("a")).toHaveAttribute("href", "/checkin/try");
 
     // Five preserved discovery destination routes
     expect(screen.getByRole("link", { name: "สถานที่" })).toHaveAttribute("href", "/attractions");
