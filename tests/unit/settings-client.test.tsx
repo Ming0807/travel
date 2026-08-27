@@ -150,6 +150,16 @@ describe("SettingsClient", () => {
     });
   });
 
+  it("marks a selected hero image as pending save", async () => {
+    render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
+
+    await userEvent.click(screen.getAllByRole("button", { name: "เลือกภาพ" })[0]);
+    await userEvent.click(screen.getByRole("button", { name: "Pick" }));
+
+    expect(screen.getByText("เลือกภาพ Hero แล้ว กดบันทึกเพื่อเผยแพร่การเปลี่ยนแปลง")).toBeInTheDocument();
+    expect(screen.getByText(/บันทึก 1 รายการ/)).toBeInTheDocument();
+  });
+
   it("resets group to defaults", async () => {
     render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
     await userEvent.click(screen.getByText("รีเซ็ตเป็นค่าเริ่มต้น"));

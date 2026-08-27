@@ -426,7 +426,9 @@ export function MediaLibrary({
       });
 
       if (result.data.asset) {
-        if (isServerManaged) {
+        if (mode === "pick" && onSelect) {
+          onSelect(result.data.asset.url, result.data.asset);
+        } else if (isServerManaged) {
           window.location.reload();
         } else {
           setAssets((current) => [result.data.asset!, ...current]);
@@ -835,14 +837,15 @@ export function MediaLibrary({
               const readiness = getAssetReadiness(asset);
               const isPickMode = mode === "pick";
               const archived = isArchived(asset);
+              const assetKey = asset.id || asset.storage_path;
 
               if (isPickMode) {
-                return <MediaPickerAssetCard key={asset.id} asset={asset} onSelect={onSelect} />;
+                return <MediaPickerAssetCard key={assetKey} asset={asset} onSelect={onSelect} />;
               }
 
               return (
                 <article
-                  key={asset.id}
+                  key={assetKey}
                   onClick={() => isPickMode && !archived && onSelect?.(asset.url, asset)}
                   onKeyDown={(e) => {
                     if (isPickMode && !archived && (e.key === "Enter" || e.key === " ")) {

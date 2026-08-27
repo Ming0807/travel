@@ -332,6 +332,7 @@ export function SettingsClient({
 
     if (pickerTarget.key === "homepage_hero" && pickerTarget.field === "images" && pickerTarget.index !== undefined) {
       updateHeroImage(pickerTarget.index, url);
+      setStatus({ type: "info", message: "เลือกภาพ Hero แล้ว กดบันทึกเพื่อเผยแพร่การเปลี่ยนแปลง" });
       return;
     }
 
@@ -345,10 +346,12 @@ export function SettingsClient({
         };
       });
       markDirty("about_team");
+      setStatus({ type: "info", message: "เลือกภาพแล้ว กดบันทึกเพื่อเผยแพร่การเปลี่ยนแปลง" });
       return;
     }
 
     updateSettingObject(pickerTarget.key, { [pickerTarget.field]: url });
+    setStatus({ type: "info", message: "เลือกภาพแล้ว กดบันทึกเพื่อเผยแพร่การเปลี่ยนแปลง" });
   }
 
   return (
