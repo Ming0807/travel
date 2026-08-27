@@ -65,12 +65,16 @@ export async function Homepage() {
       .then((items) => ({ items, unavailable: false }))
       .catch(() => ({ items: [], unavailable: true })),
   ]);
+  const dashboardPreviewImage = heroSettings.images?.[1]
+    || attractions.find((attraction) => attraction.imageUrl)?.imageUrl
+    || heroSettings.images?.[0]
+    || "";
 
   return (
     <>
       <HomepageHero {...heroSettings} />
       <HomepageQuickActions />
-      <HomepageDashboardPreview />
+      <HomepageDashboardPreview previewImage={dashboardPreviewImage} />
       <HomepageHowItWorks {...howItWorksSettings} />
       <HomepageDiscoveryWorkspace
         attractions={attractions}

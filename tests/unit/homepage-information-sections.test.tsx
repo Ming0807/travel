@@ -56,4 +56,16 @@ describe("homepage information sections", () => {
     expect(screen.getByRole("status")).toHaveTextContent("ข้อมูลสถิติยังไม่พร้อมใช้งานชั่วคราว");
     expect(screen.queryByText("0.0")).not.toBeInTheDocument();
   });
+
+  it("uses an already-resolved public attraction image in the evidence panel", async () => {
+    render(await HomepageDashboardPreview({ previewImage: "/api/media/image?path=content-media%2Fattraction.webp" }));
+
+    const imageSrc = screen
+      .getByRole("img", { name: "ภาพบรรยากาศการท่องเที่ยวและข้อมูลยะลา" })
+      .getAttribute("src");
+
+    expect(decodeURIComponent(imageSrc ?? "")).toContain(
+      "/api/media/image?path=content-media%2Fattraction.webp",
+    );
+  });
 });

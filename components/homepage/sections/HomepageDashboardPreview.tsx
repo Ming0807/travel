@@ -21,13 +21,15 @@ const KPI_DEFINITIONS = [
 ] as const;
 
 export async function HomepageDashboardPreview({
-  previewImage = "general/hero.webp",
+  previewImage = "",
 }: {
   previewImage?: string;
 } = {}) {
   const analytics = await getPublicDashboardAnalytics({}).catch(() => null);
   const values = new Map(analytics?.kpis.map((kpi) => [kpi.key, kpi.value]) ?? []);
-  const imageUrl = siteMediaImageUrl(previewImage);
+  const imageUrl = previewImage.startsWith("/") || /^https?:\/\//i.test(previewImage)
+    ? previewImage
+    : siteMediaImageUrl(previewImage);
 
   return (
     <section id="dashboard" aria-labelledby="homepage-statistics-heading" className="border-t border-ink/10 bg-white px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
@@ -91,7 +93,9 @@ export async function HomepageDashboardPreview({
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 550px"
                 />
-              ) : null}
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-100 via-orange-50 to-coral/20" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent" />
               <div className="relative z-10 flex h-full flex-col justify-end p-6 text-white">
                 <p className="text-xs font-bold uppercase tracking-wider text-amber-300">Southern Border Data &amp; Intelligence</p>

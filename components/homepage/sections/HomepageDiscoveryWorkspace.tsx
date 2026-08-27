@@ -83,17 +83,17 @@ export function HomepageDiscoveryWorkspace({
           ))}
         </div>
 
-        {/* Prominent Reference-Style Attraction Cards (5 columns on large screen) */}
+        {/* Five cards remain visible on desktop; additional CMS selections stay reachable by horizontal scroll. */}
         {displayAttractions.length > 0 ? (
           <div className="relative mt-8">
-            <div className="grid grid-cols-2 gap-3.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
-              {displayAttractions.slice(0, 5).map((attraction) => {
+            <div className="hide-scrollbar grid snap-x snap-mandatory auto-cols-[78%] grid-flow-col gap-3.5 overflow-x-auto pb-3 sm:auto-cols-[44%] sm:gap-4 md:auto-cols-[31%] lg:auto-cols-[calc((100%_-_4rem)/5)]">
+              {displayAttractions.map((attraction) => {
                 const hasRating = typeof attraction.rating === "number" && (attraction.reviewCount ?? 0) > 0;
                 return (
                   <Link
                     key={attraction.slug}
                     href={`/attractions/${attraction.slug}`}
-                    className="group relative flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-2xl border border-ink/10 bg-ink shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-orange-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+                    className="group relative flex aspect-[3/4] snap-start flex-col justify-end overflow-hidden rounded-2xl border border-ink/10 bg-ink shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-orange-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
                   >
                     {/* Background Image */}
                     {attraction.imageUrl ? (
@@ -159,13 +159,13 @@ export function HomepageDiscoveryWorkspace({
         </div>
 
         {/* Full-Width Supporting Section: Map & Suggested Routes */}
-        <div className="mt-12 grid gap-6 border-t border-ink/10 pt-10 lg:grid-cols-2">
+        <div className="mt-12 grid gap-5 rounded-2xl border border-orange-100 bg-[#FFF9F2] p-4 shadow-sm shadow-orange-500/5 sm:p-6 lg:grid-cols-2">
           {/* Map Preview */}
-          <section className="overflow-hidden rounded-[8px] border border-ink/10 bg-white shadow-xs">
-            <div className="flex items-center justify-between border-b border-ink/10 px-5 py-3.5">
+          <section className="overflow-hidden rounded-xl border border-orange-100 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
               <div className="flex items-center gap-2">
                 <MapTrifold aria-hidden="true" size={18} className="text-coral" />
-                <h2 className="text-sm font-black text-ink">แผนที่ท่องเที่ยวแนะนำ</h2>
+                <h2 className="text-sm font-black text-ink sm:text-base">แผนที่สถานที่แนะนำ</h2>
               </div>
               {mappedAttraction ? (
                 <span className="text-xs font-bold text-muted">{mappedAttraction.name}</span>
@@ -184,7 +184,7 @@ export function HomepageDiscoveryWorkspace({
                   href={mapExternalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex min-h-11 items-center justify-between border-t border-ink/10 px-5 text-xs font-black text-teal hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
+                  className="flex min-h-11 items-center justify-between border-t border-orange-100 px-5 text-xs font-black text-coral hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
                 >
                   เปิดแผนที่ {mappedAttraction.name} <ArrowRight aria-hidden="true" />
                 </a>
@@ -200,21 +200,24 @@ export function HomepageDiscoveryWorkspace({
           </section>
 
           {/* Suggested Routes */}
-          <section className="overflow-hidden rounded-[8px] border border-ink/10 bg-white shadow-xs">
-            <div className="flex items-center justify-between border-b border-ink/10 px-5 py-3.5">
-              <h2 className="text-sm font-black text-ink">เส้นทางท่องเที่ยวแนะนำ</h2>
-              <Link href="/routes" className="text-xs font-black text-teal hover:text-coral">
+          <section className="overflow-hidden rounded-xl border border-orange-100 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-orange-100 px-5 py-4">
+              <h2 className="text-sm font-black text-ink sm:text-base">เส้นทางท่องเที่ยวแนะนำ</h2>
+              <Link href="/routes" className="text-xs font-black text-coral hover:text-ink">
                 ดูทั้งหมด
               </Link>
             </div>
             {routes.length > 0 ? (
               <div className="divide-y divide-ink/10">
-                {routes.slice(0, 4).map((route) => (
+                {routes.slice(0, 4).map((route, index) => (
                   <Link
                     key={route.slug}
                     href={`/routes/${route.slug}`}
-                    className="flex min-h-16 items-center gap-4 px-5 py-3.5 transition-colors hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
+                    className="flex min-h-16 items-center gap-4 px-5 py-3.5 transition-colors hover:bg-orange-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral"
                   >
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-orange-50 text-xs font-black text-coral">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
                     <div className="min-w-0 flex-1">
                       <p className="line-clamp-1 text-sm font-black text-ink">{route.name}</p>
                       <p className="mt-1 text-xs font-bold text-coral">{route.days} วัน · {route.stopCount} จุดแวะ</p>

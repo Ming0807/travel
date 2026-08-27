@@ -23,25 +23,26 @@ export function HomepageStories({
   const sideStories = storyCards.slice(1);
 
   return (
-    <section id="stories" aria-labelledby="homepage-stories-heading" className="border-t border-ink/10 bg-cream px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+    <section id="stories" aria-labelledby="homepage-stories-heading" className="border-t border-orange-100 bg-[#FFFDF9] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
       <div className="mx-auto max-w-7xl">
-        <div className="flex flex-col gap-4 border-b border-ink/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
-              <span className="h-px w-6 bg-coral/40"></span>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-3 text-xs font-black uppercase tracking-widest text-coral">
+              <span className="text-amber-500">❖ ───</span>
               <span>บทความและเรื่องราว</span>
+              <span className="text-amber-500">─── ❖</span>
             </div>
-            <h2 id="homepage-stories-heading" className="mt-2 text-2xl font-black text-ink sm:text-3xl lg:text-4xl">{title}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{subtitle}</p>
+            <h2 id="homepage-stories-heading" className="mt-3 text-2xl font-black text-ink sm:text-3xl lg:text-4xl">{title}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted sm:text-base">{subtitle}</p>
           </div>
-          <Link href="/stories" className="inline-flex min-h-11 items-center gap-2 text-sm font-black text-teal transition-colors hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
+          <Link href="/stories" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-coral/30 bg-white px-5 text-sm font-black text-coral transition-colors hover:bg-coral hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
             {buttonText} <ArrowRight aria-hidden="true" weight="bold" />
           </Link>
         </div>
 
         {featuredStory ? (
-          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
-            <Link href={`/stories/${featuredStory.id}`} className="group grid overflow-hidden rounded-[8px] border border-ink/10 bg-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-coral/40 hover:shadow-card sm:grid-cols-[minmax(0,1.15fr)_minmax(240px,0.85fr)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
+          <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
+            <Link href={`/stories/${featuredStory.id}`} className="group grid overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-lg shadow-orange-500/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-coral/40 hover:shadow-xl sm:grid-cols-[minmax(0,1.15fr)_minmax(240px,0.85fr)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
               <div className="relative aspect-[16/10] min-h-56 bg-cream sm:aspect-auto overflow-hidden">
                 {featuredStory.imageUrl ? (
                   <Image src={featuredStory.imageUrl} alt={storyImageAlt(featuredStory.title)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, (max-width: 1280px) 55vw, 600px" />
@@ -49,7 +50,7 @@ export function HomepageStories({
                   <div className="flex h-full items-center justify-center px-5 text-center text-sm font-bold text-muted">ยังไม่มีภาพจาก CMS</div>
                 )}
               </div>
-              <div className="flex flex-col justify-between p-6 sm:p-7">
+              <div className="flex flex-col justify-between p-6 sm:p-8">
                 <div>
                   <p className="text-xs font-black uppercase tracking-wider text-coral">เรื่องเด่น · {featuredStory.category}</p>
                   <h3 className="mt-2.5 text-xl font-black leading-snug text-ink transition-colors group-hover:text-coral sm:text-2xl">{featuredStory.title}</h3>
@@ -62,10 +63,10 @@ export function HomepageStories({
               </div>
             </Link>
 
-            <div className="divide-y divide-ink/10 rounded-[8px] border border-ink/10 bg-white p-4 shadow-xs">
+            <div className="divide-y divide-orange-100 rounded-2xl border border-orange-100 bg-white p-4 shadow-lg shadow-orange-500/5">
               {sideStories.map((story) => (
                 <Link key={story.id} href={`/stories/${story.id}`} className="group grid min-h-28 grid-cols-[96px_minmax(0,1fr)] gap-4 py-3.5 first:pt-1 last:pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral">
-                  <div className="relative overflow-hidden rounded-[6px] bg-cream">
+                  <div className="relative overflow-hidden rounded-lg bg-cream">
                     {story.imageUrl ? (
                       <Image src={story.imageUrl} alt={storyImageAlt(story.title)} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="96px" />
                     ) : (
@@ -82,7 +83,7 @@ export function HomepageStories({
             </div>
           </div>
         ) : (
-          <div className="mt-8 rounded-[8px] border border-dashed border-ink/20 bg-white p-8 text-center">
+          <div className="mt-8 rounded-2xl border border-dashed border-orange-200 bg-white p-8 text-center">
             <p className="text-sm font-bold text-muted">เรื่องที่เผยแพร่จาก CMS จะปรากฏที่นี่</p>
             <Link href="/stories" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-black text-teal hover:text-coral">เปิดหน้ารวมเรื่องราว <ArrowRight aria-hidden="true" /></Link>
           </div>

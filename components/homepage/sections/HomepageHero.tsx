@@ -116,12 +116,6 @@ export function HomepageHero({
             </Link>
           </div>
 
-          {/* Carousel Indicator Dots */}
-          <div className="mt-10 flex items-center gap-2" aria-hidden="true">
-            <span className="h-2 w-6 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 shadow-xs" />
-            <span className="h-2 w-2 rounded-full bg-ink/20" />
-            <span className="h-2 w-2 rounded-full bg-ink/20" />
-          </div>
         </div>
       </div>
 

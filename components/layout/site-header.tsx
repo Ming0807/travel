@@ -233,15 +233,11 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
             <UserNavMenu />
 
             <PublicCheckinEntryLink
-              className="inline-flex min-h-10 items-center whitespace-nowrap rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 text-sm font-black text-white shadow-sm transition-all hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+              aria-label="สแกน QR เช็กอิน รับใบประกาศ"
+              className="inline-flex min-h-10 items-center whitespace-nowrap rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 text-sm font-black text-[var(--public-ink)] shadow-sm transition-all hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
             >
               สแกน QR เช็กอิน
             </PublicCheckinEntryLink>
-
-            <span className="inline-flex items-center gap-1 rounded-full border border-ink/15 px-3 py-1 text-xs font-bold text-ink">
-              TH
-              <CaretDown size={11} weight="bold" className="text-muted" />
-            </span>
           </div>
         </div>
       </header>
@@ -331,7 +327,8 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               <UserNavMenu mobile={true} />
               <li>
                 <PublicCheckinEntryLink
-                  className="mt-2 block rounded-[6px] bg-coral px-4 py-3 text-center text-sm font-black text-white shadow-xs"
+                  aria-label="สแกน QR เช็กอิน รับใบประกาศ"
+                  className="mt-2 block rounded-[6px] bg-coral px-4 py-3 text-center text-sm font-black text-[var(--public-ink)] shadow-xs"
                   onClick={() => closeMobileMenu()}
                 >
                   สแกนรับใบประกาศ
