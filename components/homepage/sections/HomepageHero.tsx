@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ImageSquare, MapTrifold } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Compass, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import { HomepageSearch } from "@/components/homepage/HomepageSearch";
+import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 
 function stripMarkup(value: string) {
   return value.replace(/<br\s*\/?\s*>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -21,8 +22,8 @@ export function HomepageHero({
   images = [
     "",
     "",
-    ""
-  ]
+    "",
+  ],
 }: {
   title?: string;
   subtitle?: string;
@@ -54,12 +55,18 @@ export function HomepageHero({
                 src={img0}
                 alt="บรรยากาศการท่องเที่ยวจังหวัดยะลา"
                 fill
-                priority
+                preload={true}
+                fetchPriority="high"
                 className="object-cover"
                 sizes="(max-width: 639px) calc(100vw - 1.5rem), (max-width: 1023px) calc(100vw - 3rem), 54vw"
               />
             ) : (
-              <div className="flex h-full items-center justify-center bg-teal text-white"><ImageSquare size={52} aria-hidden="true" /></div>
+              <div className="flex h-full items-center justify-center bg-gradient-to-br from-teal via-ink to-ink p-6 text-center text-white">
+                <div className="flex flex-col items-center gap-2">
+                  <Compass size={48} weight="fill" className="text-coral" />
+                  <p className="text-sm font-bold text-white/90">ท่องเที่ยวยะลา ดินแดนใต้สุดแดนสยาม</p>
+                </div>
+              </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/80 to-ink/20 lg:hidden" />
           </div>
@@ -73,19 +80,12 @@ export function HomepageHero({
               {cleanDescription}
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Link href="/attractions" className="inline-flex min-h-11 items-center gap-2 rounded-[6px] bg-coral px-5 text-sm font-black text-white shadow-xs transition-all hover:bg-[#C95C3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-coral">
-                ค้นหาสถานที่ <ArrowRight aria-hidden="true" weight="bold" />
+              <PublicCheckinEntryLink className="inline-flex min-h-11 items-center gap-2 rounded-[6px] bg-coral px-5 text-sm font-black text-white shadow-xs transition-all hover:bg-[#C95C3F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-coral">
+                สแกน QR เช็กอิน <ArrowRight aria-hidden="true" weight="bold" />
+              </PublicCheckinEntryLink>
+              <Link href="/attractions" className="inline-flex min-h-11 items-center gap-2 rounded-[6px] border border-white/60 bg-white/10 px-5 text-sm font-bold text-white backdrop-blur-xs transition-colors hover:bg-white hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral lg:border-ink/20 lg:bg-transparent lg:text-ink">
+                <MapPin aria-hidden="true" size={20} /> ดูสถานที่ทั้งหมด
               </Link>
-              <Link href="/routes" className="inline-flex min-h-11 items-center gap-2 rounded-[6px] border border-white/60 bg-white/10 px-5 text-sm font-bold text-white backdrop-blur-xs transition-colors hover:bg-white hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral lg:border-ink/20 lg:bg-transparent lg:text-ink">
-                <MapTrifold aria-hidden="true" size={20} /> ดูเส้นทางแนะนำ
-              </Link>
-            </div>
-            
-            {/* Carousel Indicators */}
-            <div className="mt-8 flex items-center gap-2" aria-hidden="true">
-              <span className="h-2 w-6 rounded-full bg-coral"></span>
-              <span className="h-2 w-2 rounded-full bg-white/50 lg:bg-ink/20"></span>
-              <span className="h-2 w-2 rounded-full bg-white/50 lg:bg-ink/20"></span>
             </div>
           </div>
 
@@ -98,7 +98,7 @@ export function HomepageHero({
         </div>
 
         {/* Search bar overlapping lower hero edge */}
-        <div className="relative z-20 mx-auto -mt-7 w-[calc(100%-1.5rem)] max-w-5xl sm:-mt-8">
+        <div className="relative z-20 mx-auto -mt-7 w-[calc(100%_-_1.5rem)] max-w-5xl sm:-mt-8">
           <HomepageSearch />
         </div>
       </div>

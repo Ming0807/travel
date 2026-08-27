@@ -29,10 +29,10 @@ describe("Homepage composition", () => {
     expect(ids).toEqual([
       "hero",
       "quick-actions",
-      "discovery",
-      "journey",
-      "stories",
       "statistics",
+      "journey",
+      "discovery",
+      "stories",
       "passport-cta",
       "footer",
     ]);

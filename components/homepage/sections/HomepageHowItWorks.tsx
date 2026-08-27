@@ -1,7 +1,9 @@
 import {
   ArrowRight,
-  CaretRight,
   Camera,
+  Certificate,
+  ChatTeardropText,
+  NotePencil,
   QrCode,
   Stamp,
 } from "@phosphor-icons/react/dist/ssr";
@@ -11,20 +13,38 @@ const STEPS = [
   {
     number: "1",
     title: "สแกน QR ที่สถานที่",
-    description: "เปิดหน้าเช็กอินและกรอกข้อมูลสั้น ๆ เท่าที่จำเป็น ไม่ต้องติดตั้งแอป",
+    description: "สแกน QR ณ จุดท่องเที่ยวเพื่อเปิดหน้าบันทึกการเดินทาง",
     icon: QrCode,
   },
   {
     number: "2",
-    title: "ถ่ายหรือเลือกรูป",
-    description: "เลือกรูปความทรงจำ ปรับใบประกาศ แล้วดาวน์โหลดเก็บไว้ได้ทันที",
-    icon: Camera,
+    title: "กรอกข้อมูลจำเป็น",
+    description: "ระบุชื่อและข้อมูลพื้นฐานสั้น ๆ ไม่ต้องโหลดแอป",
+    icon: NotePencil,
   },
   {
     number: "3",
+    title: "ถ่ายหรือเลือกรูป",
+    description: "เลือกรูปความทรงจำ เพื่อประกอบบนใบประกาศดิจิทัล",
+    icon: Camera,
+  },
+  {
+    number: "4",
+    title: "รับใบประกาศดิจิทัล",
+    description: "ดาวน์โหลดเกียรติบัตรการเดินทางเฉพาะคุณเก็บไว้ทันที",
+    icon: Certificate,
+  },
+  {
+    number: "5",
     title: "สะสมตราและคะแนน",
-    description: "รับตราประจำสถานที่ ดู Digital Passport และเลือกให้ข้อมูลเพิ่มเติมได้โดยสมัครใจ",
+    description: "รับตราประจำสถานที่ลงใน Digital Passport ของคุณ",
     icon: Stamp,
+  },
+  {
+    number: "6",
+    title: "แบบสำรวจตามความสมัครใจ",
+    description: "ร่วมสะท้อนความคิดเห็นเพื่อพัฒนาการท่องเที่ยวยะลา",
+    icon: ChatTeardropText,
   },
 ] as const;
 
@@ -35,7 +55,7 @@ type HomepageHowItWorksProps = {
 };
 
 export function HomepageHowItWorks({
-  title = "เริ่มบันทึกการเดินทางได้ใน 3 ขั้นตอน",
+  title = "ขั้นตอนการบันทึกการเดินทาง",
   subtitle,
   description = "รับคุณค่าก่อน แล้วค่อยเลือกแบ่งปันข้อมูลเพื่อช่วยพัฒนาการท่องเที่ยวยะลา",
 }: HomepageHowItWorksProps) {
@@ -46,7 +66,7 @@ export function HomepageHowItWorks({
         <div className="text-center">
           <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
             <span className="h-px w-6 bg-coral/40"></span>
-            <span>❖ วิธีการใช้งาน ❖</span>
+            <span>❖ ขั้นตอนการใช้งาน ❖</span>
             <span className="h-px w-6 bg-coral/40"></span>
           </div>
           <h2 id="homepage-journey-heading" className="mt-2 text-2xl font-black text-ink sm:text-3xl lg:text-4xl">
@@ -56,32 +76,25 @@ export function HomepageHowItWorks({
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{description}</p>
         </div>
 
-        {/* 3-Step Horizontal Sequence on Desktop */}
-        <ol className="mt-10 grid gap-4 sm:grid-cols-3 sm:gap-6 lg:mt-12">
-          {STEPS.map(({ number, title: stepTitle, description: stepDescription, icon: Icon }, index) => (
+        {/* 6-Step Horizontal Sequence */}
+        <ol className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:gap-3.5">
+          {STEPS.map(({ number, title: stepTitle, description: stepDescription, icon: Icon }) => (
             <li
               key={number}
-              className="relative flex flex-col items-center rounded-[8px] border border-ink/10 bg-white p-6 text-center shadow-xs transition-all hover:border-coral/40 hover:shadow-card sm:p-7"
+              className="relative flex flex-col items-center rounded-[8px] border border-ink/10 bg-white p-4 text-center shadow-xs transition-all hover:border-coral/40 hover:shadow-card sm:p-5"
             >
-              {/* Connector arrow on desktop */}
-              {index < STEPS.length - 1 ? (
-                <div className="pointer-events-none absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-ink/10 bg-white p-1 text-coral sm:block lg:-right-4">
-                  <CaretRight size={14} weight="bold" />
-                </div>
-              ) : null}
-
               {/* Circular Step Badge & Icon */}
               <div className="relative">
-                <div className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-b from-orange-400 to-coral text-white shadow-xs">
-                  <Icon aria-hidden="true" size={30} weight="fill" />
+                <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-b from-orange-400 to-coral text-white shadow-xs sm:h-14 sm:w-14">
+                  <Icon aria-hidden="true" size={24} weight="fill" />
                 </div>
-                <span className="absolute -top-1 -right-1 grid h-6 w-6 place-items-center rounded-full bg-ink text-xs font-black text-white shadow-xs">
+                <span className="absolute -top-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-ink text-[10px] font-black text-white shadow-xs sm:h-6 sm:w-6 sm:text-xs">
                   {number}
                 </span>
               </div>
 
-              <h3 className="mt-5 text-base font-black text-ink sm:text-lg">{stepTitle}</h3>
-              <p className="mt-2 text-xs leading-relaxed text-muted sm:text-sm">{stepDescription}</p>
+              <h3 className="mt-3 text-xs font-black text-ink sm:text-sm">{stepTitle}</h3>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-muted sm:text-xs">{stepDescription}</p>
             </li>
           ))}
         </ol>

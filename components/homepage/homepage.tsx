@@ -70,19 +70,19 @@ export async function Homepage() {
     <>
       <HomepageHero {...heroSettings} />
       <HomepageQuickActions />
+      <HomepageDashboardPreview />
+      <HomepageHowItWorks {...howItWorksSettings} />
       <HomepageDiscoveryWorkspace
         attractions={attractions}
         routes={routeState.items}
         routesUnavailable={routeState.unavailable}
       />
-      <HomepageHowItWorks {...howItWorksSettings} />
       <HomepageStories
         stories={stories}
         title={storiesSettings.title}
         subtitle={storiesSettings.subtitle}
         buttonText={storiesSettings.buttonText}
       />
-      <HomepageDashboardPreview />
       <HomepageCertificateCta {...ctaSettings} />
       <HomepageFooter />
     </>

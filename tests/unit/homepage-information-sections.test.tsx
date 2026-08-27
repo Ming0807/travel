@@ -21,23 +21,31 @@ describe("homepage information sections", () => {
     });
   });
 
-  it("describes the real three-step check-in journey", () => {
+  it("describes the real six-stage check-in journey", () => {
     render(<HomepageHowItWorks />);
 
-    expect(screen.getByRole("heading", { name: "เริ่มบันทึกการเดินทางได้ใน 3 ขั้นตอน" })).toBeInTheDocument();
-    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(screen.getByRole("heading", { name: /ขั้นตอนการบันทึกการเดินทาง|เริ่มบันทึกการเดินทาง/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(6);
     expect(screen.getByText("สแกน QR ที่สถานที่")).toBeInTheDocument();
+    expect(screen.getByText("กรอกข้อมูลจำเป็น")).toBeInTheDocument();
     expect(screen.getByText("ถ่ายหรือเลือกรูป")).toBeInTheDocument();
+    expect(screen.getByText("รับใบประกาศดิจิทัล")).toBeInTheDocument();
     expect(screen.getByText("สะสมตราและคะแนน")).toBeInTheDocument();
+    expect(screen.getByText("แบบสำรวจตามความสมัครใจ")).toBeInTheDocument();
   });
 
-  it("labels dashboard numbers as recorded tourism data", async () => {
+  it("labels dashboard numbers as recorded tourism data with factual purpose points", async () => {
     render(await HomepageDashboardPreview());
 
     expect(screen.getByText("ไม่ใช่จำนวนผู้เข้าชมเว็บไซต์", { exact: false })).toBeInTheDocument();
     expect(screen.queryByText(/Live Data|เรียลไทม์/i)).not.toBeInTheDocument();
     expect(screen.getByText("340")).toBeInTheDocument();
     expect(screen.getByText("4.6")).toBeInTheDocument();
+
+    // Visual contract: Factual wording
+    expect(screen.getByText("ข้อมูลจากกิจกรรมจริง")).toBeInTheDocument();
+    expect(screen.getByText("เลือกตอบข้อมูลเพิ่มเติม")).toBeInTheDocument();
+    expect(screen.getByText("นำเสนอข้อมูลเป็นภาพรวม")).toBeInTheDocument();
   });
 
   it("keeps the homepage available when public analytics cannot be loaded", async () => {

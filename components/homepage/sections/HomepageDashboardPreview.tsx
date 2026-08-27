@@ -1,14 +1,17 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
   Certificate,
+  CheckCircle,
+  ChartLineUp,
   MapPinLine,
-  Plant,
-  ShieldCheck,
   Star,
+  UserCheck,
   UsersThree,
 } from "@phosphor-icons/react/dist/ssr";
 import { getPublicDashboardAnalytics } from "@/lib/services/dashboard.service";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 const KPI_DEFINITIONS = [
   { key: "tourist_profiles", label: "โปรไฟล์นักท่องเที่ยว", hint: "ผู้ใช้ที่ระบบบันทึกแล้ว", icon: UsersThree },
@@ -17,9 +20,14 @@ const KPI_DEFINITIONS = [
   { key: "average_satisfaction", label: "ความพึงพอใจเฉลี่ย", hint: "จากแบบสำรวจ", icon: Star },
 ] as const;
 
-export async function HomepageDashboardPreview() {
+export async function HomepageDashboardPreview({
+  previewImage = "general/hero.webp",
+}: {
+  previewImage?: string;
+} = {}) {
   const analytics = await getPublicDashboardAnalytics({}).catch(() => null);
   const values = new Map(analytics?.kpis.map((kpi) => [kpi.key, kpi.value]) ?? []);
+  const imageUrl = siteMediaImageUrl(previewImage);
 
   return (
     <section id="dashboard" aria-labelledby="homepage-statistics-heading" className="border-t border-ink/10 bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
@@ -35,27 +43,27 @@ export async function HomepageDashboardPreview() {
               ภาพรวมการท่องเที่ยวที่บันทึกแล้ว ตัวเลขสรุปจากการเช็กอิน การสร้างใบประกาศ และแบบสำรวจที่ผู้ใช้สมัครใจตอบ ไม่ใช่จำนวนผู้เข้าชมเว็บไซต์
             </p>
 
-            {/* 3 Value badges */}
+            {/* 3 Factual Purpose Points */}
             <div className="mt-8 grid grid-cols-3 gap-3 border-t border-ink/10 pt-6 sm:gap-4">
               <div className="flex flex-col items-center rounded-[8px] bg-cream p-3 text-center sm:p-4">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-coral/10 text-coral">
-                  <ShieldCheck aria-hidden="true" size={22} weight="fill" />
+                  <CheckCircle aria-hidden="true" size={22} weight="fill" />
                 </div>
-                <p className="mt-2 text-xs font-black text-ink">แหล่งท่องเที่ยวคุณภาพ</p>
+                <p className="mt-2 text-xs font-black text-ink">ข้อมูลจากกิจกรรมจริง</p>
               </div>
 
               <div className="flex flex-col items-center rounded-[8px] bg-cream p-3 text-center sm:p-4">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-coral/10 text-coral">
-                  <Star aria-hidden="true" size={22} weight="fill" />
+                  <UserCheck aria-hidden="true" size={22} weight="fill" />
                 </div>
-                <p className="mt-2 text-xs font-black text-ink">ปลอดภัยเชื่อถือได้</p>
+                <p className="mt-2 text-xs font-black text-ink">เลือกตอบข้อมูลเพิ่มเติม</p>
               </div>
 
               <div className="flex flex-col items-center rounded-[8px] bg-cream p-3 text-center sm:p-4">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-coral/10 text-coral">
-                  <Plant aria-hidden="true" size={22} weight="fill" />
+                  <ChartLineUp aria-hidden="true" size={22} weight="fill" />
                 </div>
-                <p className="mt-2 text-xs font-black text-ink">ร่วมอนุรักษ์วัฒนธรรม</p>
+                <p className="mt-2 text-xs font-black text-ink">นำเสนอข้อมูลเป็นภาพรวม</p>
               </div>
             </div>
 
@@ -69,8 +77,17 @@ export async function HomepageDashboardPreview() {
           {/* Right Column: Evidence Card */}
           <div className="overflow-hidden rounded-[8px] border border-ink/10 bg-cream shadow-card">
             {/* Visual Header Frame */}
-            <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-ink/90 via-ink/75 to-teal/90">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-coral/30 via-transparent to-transparent"></div>
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-ink">
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
+                  alt="ภาพบรรยากาศการท่องเที่ยวและข้อมูลยะลา"
+                  fill
+                  className="object-cover opacity-75"
+                  sizes="(max-width: 1024px) 100vw, 550px"
+                />
+              ) : null}
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/50 to-transparent" />
               <div className="relative z-10 flex h-full flex-col justify-end p-6 text-white">
                 <p className="text-xs font-bold uppercase tracking-wider text-coral">Southern Border Data &amp; Intelligence</p>
                 <p className="mt-1 text-lg font-black sm:text-xl">ข้อมูลจริงเพื่อการวางแผนท่องเที่ยวอย่างยั่งยืน</p>

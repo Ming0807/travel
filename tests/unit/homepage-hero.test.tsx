@@ -8,13 +8,20 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("Homepage discovery entry", () => {
-  it("introduces the Yala launch scope with one clear heading", () => {
+  it("introduces the Yala launch scope with one clear heading, real QR CTA, and no fake carousel", () => {
     render(<HomepageHero images={[]} />);
 
     expect(screen.getByRole("heading", { level: 1, name: "เที่ยวยะลาให้ลึกกว่าเดิม" })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.queryByText("ปัตตานี")).not.toBeInTheDocument();
     expect(screen.queryByText("นราธิวาส")).not.toBeInTheDocument();
+
+    // Visual contract: Primary action must be PublicCheckinEntryLink ("สแกน QR เช็กอิน")
+    expect(screen.getByRole("link", { name: /สแกน QR เช็กอิน/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ดูสถานที่ทั้งหมด/ })).toHaveAttribute("href", "/attractions");
+
+    // Visual contract: No fake carousel indicators
+    expect(screen.queryByLabelText(/carousel/i)).not.toBeInTheDocument();
   });
 
   it("uses one responsive priority image across mobile and desktop", () => {
@@ -31,13 +38,20 @@ describe("Homepage discovery entry", () => {
     );
   });
 
-  it("provides five real quick discovery routes", () => {
+  it("provides four value items and five real quick discovery routes", () => {
     render(<HomepageQuickActions />);
 
-    expect(screen.getByRole("link", { name: /สถานที่/ })).toHaveAttribute("href", "/attractions");
-    expect(screen.getByRole("link", { name: /ร้านอาหาร/ })).toHaveAttribute("href", "/restaurants");
-    expect(screen.getByRole("link", { name: /ที่พัก/ })).toHaveAttribute("href", "/accommodations");
-    expect(screen.getByRole("link", { name: /เส้นทาง/ })).toHaveAttribute("href", "/routes");
-    expect(screen.getByRole("link", { name: /เรื่องราว/ })).toHaveAttribute("href", "/stories");
+    // Four-value action band items
+    expect(screen.getByText("สแกน QR เช็กอิน")).toBeInTheDocument();
+    expect(screen.getByText("Digital Passport")).toBeInTheDocument();
+    expect(screen.getByText("ใบประกาศดิจิทัล")).toBeInTheDocument();
+    expect(screen.getByText("แบบสำรวจเพื่อการพัฒนา")).toBeInTheDocument();
+
+    // Five preserved discovery destination routes
+    expect(screen.getByRole("link", { name: "สถานที่" })).toHaveAttribute("href", "/attractions");
+    expect(screen.getByRole("link", { name: "ร้านอาหาร" })).toHaveAttribute("href", "/restaurants");
+    expect(screen.getByRole("link", { name: "ที่พัก" })).toHaveAttribute("href", "/accommodations");
+    expect(screen.getByRole("link", { name: "เส้นทาง" })).toHaveAttribute("href", "/routes");
+    expect(screen.getByRole("link", { name: "เรื่องราว" })).toHaveAttribute("href", "/stories");
   });
 });

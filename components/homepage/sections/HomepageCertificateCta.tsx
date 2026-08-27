@@ -29,10 +29,10 @@ export function HomepageCertificateCta({
 
   return (
     <section aria-labelledby="homepage-passport-heading" className="border-t border-ink/10 bg-white px-4 py-12 pb-24 sm:px-6 lg:px-8 lg:py-16">
-      <div className="relative mx-auto grid max-w-7xl overflow-hidden rounded-[8px] bg-gradient-to-r from-coral via-[#EB7B5D] to-orange-500 text-white shadow-card lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="relative mx-auto grid max-w-7xl overflow-hidden rounded-[8px] bg-gradient-to-r from-coral via-[#EB7B5D] to-orange-500 text-white shadow-card lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* Subtle Watermark Pattern */}
         <div className="pointer-events-none absolute inset-0 opacity-10 woven-pattern" />
-        
+
         {imageSrc ? (
           <Image src={imageSrc} alt="" fill className="object-cover opacity-15" sizes="(max-width: 1280px) 100vw, 1280px" />
         ) : null}
@@ -64,23 +64,12 @@ export function HomepageCertificateCta({
           </div>
         </div>
 
-        {/* Right Phone Mockup Illustration Frame */}
-        <div className="relative z-10 hidden border-l border-white/20 p-8 lg:flex lg:flex-col lg:items-center lg:justify-center">
-          <div className="w-52 rounded-2xl border-4 border-white/40 bg-white p-3 shadow-2xl">
-            <div className="rounded-xl border border-ink/10 bg-cream p-4 text-center text-ink">
-              <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-coral/15 text-coral">
-                <Stamp aria-hidden="true" size={28} weight="fill" />
-              </div>
-              <p className="mt-2 text-xs font-black text-ink">Digital Passport</p>
-              <p className="mt-0.5 text-[10px] font-bold text-muted">สะสมตราประจำสถานที่</p>
-              <div className="mt-3 rounded-[6px] bg-coral/10 py-1.5 text-[11px] font-black text-coral">
-                สแกน QR เช็กอิน
-              </div>
-            </div>
-          </div>
+        {/* Right Stamp Visual Panel */}
+        <div className="relative z-10 hidden border-l border-white/20 p-10 lg:flex lg:flex-col lg:justify-between">
+          <Stamp aria-hidden="true" size={72} weight="duotone" className="text-white/80" />
           <Link
             href="/passport"
-            className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-white/90 hover:text-white"
+            className="inline-flex min-h-11 items-center justify-between border-t border-white/35 pt-4 text-sm font-black text-white hover:text-ink"
           >
             ดูตราที่สะสมไว้ <ArrowRight aria-hidden="true" weight="bold" />
           </Link>
