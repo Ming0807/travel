@@ -31,10 +31,11 @@ describe("public directory adoption", () => {
       "utf8",
     );
 
-    expect(source).toContain("AccommodationDirectoryHero");
-    expect(source).toContain("AccommodationFeaturedResult");
-    expect(source).toContain("AccommodationResultCard");
-    expect(source).toContain('variant="listing"');
+    expect(source).toContain("AccommodationHero");
+    expect(source).toContain("AccommodationDiscoveryFilters");
+    expect(source).toContain("AccommodationDirectoryClient");
+    expect(source).toContain('variant="directory"');
+    expect(source).not.toContain("PublicDirectoryIntro");
   });
 
   it("keeps the approved restaurant hero and the real planning workspace", () => {

@@ -1,25 +1,19 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import {
-  ACCOMMODATION_TYPES,
-  AccommodationFilterBar,
-} from "@/components/accommodations/AccommodationFilterBar";
-import { AccommodationDirectoryHero } from "@/components/accommodations/AccommodationDirectoryHero";
-import {
-  AccommodationFeaturedResult,
-  AccommodationResultCard,
-} from "@/components/accommodations/AccommodationResultCard";
-import { AccommodationTypeRail } from "@/components/accommodations/AccommodationTypeRail";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicButton } from "@/components/public/PublicButton";
-import { PublicCtaBand } from "@/components/public/PublicCtaBand";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicPagination } from "@/components/public/PublicPagination";
 import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
-import { PublicDirectoryToolbar } from "@/components/public/directory/PublicDirectoryToolbar";
+import { AccommodationDirectoryClient } from "@/components/accommodations/AccommodationDirectoryClient";
+import { AccommodationDiscoveryCta } from "@/components/accommodations/AccommodationDiscoveryCta";
+import { AccommodationDiscoveryFilters } from "@/components/accommodations/AccommodationDiscoveryFilters";
+import {
+  ACCOMMODATION_TYPES,
+} from "@/components/accommodations/AccommodationFilterBar";
+import { AccommodationHero } from "@/components/accommodations/AccommodationHero";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
-import { selectFeaturedHospitality } from "@/lib/hospitality/featured-result";
-import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { accommodationTypeLabel } from "@/lib/hospitality/labels";
 import {
   listPublicAccommodationPage,
   PUBLIC_HOSPITALITY_MAX_PAGE,
@@ -101,7 +95,7 @@ export default async function AccommodationsPage({
   }
 
   const settingsService = new SettingsService();
-  const [accommodationPage, heroSettings, ctaSettings, homepageHeroSettings, liveProvinces] = await Promise.all([
+  const [accommodationPage, heroSettings, ctaSettings, liveProvinces] = await Promise.all([
     listPublicAccommodationPage({
       query,
       accommodationType,
@@ -111,17 +105,16 @@ export default async function AccommodationsPage({
     }),
     settingsService.getSetting("accommodations_page_hero", {
       title: "ที่พักในจังหวัดยะลา",
-      description: "เปรียบเทียบประเภทและช่วงราคาจากข้อมูลที่ผู้ดูแลเผยแพร่",
+      description: "เปรียบเทียบประเภทที่พัก ช่วงราคา และเลือกที่พักที่เหมาะกับแผนการเดินทางของคุณ",
       image: "",
     }),
     settingsService.getSetting("accommodations_page_cta", {
-      title: "ต้องการเพิ่มข้อมูลที่พัก?",
-      subtitle: "ส่งข้อมูลให้ทีมงานตรวจสอบก่อนเผยแพร่บนแพลตฟอร์ม",
-      linkText: "ติดต่อทีมงาน",
-      linkUrl: "/contact",
+      title: "วางแผนที่พักให้เหมาะกับทริปของคุณ",
+      subtitle: "เลือกประเภทที่พักให้ตรงกับสไตล์และงบประมาณ เพื่อการเดินทางที่คุ้มค่าและประทับใจ",
+      linkText: "ค้นหาเส้นทางท่องเที่ยว",
+      linkUrl: "/routes",
       image: "",
     }),
-    settingsService.getSetting("homepage_hero", { images: [] as string[] }),
     listLiveDestinationProvinces(),
   ]);
 
@@ -149,69 +142,83 @@ export default async function AccommodationsPage({
   const title = launchSafeAttractionsCopy(heroSettings.title, "ที่พักในจังหวัดยะลา");
   const description = launchSafeAttractionsCopy(
     heroSettings.description,
-    "เปรียบเทียบประเภทและช่วงราคาจากข้อมูลที่ผู้ดูแลเผยแพร่",
+    "เปรียบเทียบประเภทที่พัก ช่วงราคา และเลือกที่พักที่เหมาะกับแผนการเดินทางของคุณ",
   );
   const hasFilters = Boolean(query || accommodationType || province);
-  const featuredAccommodation = page === 1 ? selectFeaturedHospitality(accommodationPage.items) : null;
-  const standardAccommodations = featuredAccommodation
-    ? accommodationPage.items.filter((accommodation) => accommodation.slug !== featuredAccommodation.slug)
-    : accommodationPage.items;
-  const managedDirectoryImage = siteMediaImageUrl(heroSettings.image);
-  const homepageFallbackImage = siteMediaImageUrl(homepageHeroSettings.images?.[0]);
-  const heroImageUrl = featuredAccommodation?.imageUrl || managedDirectoryImage || homepageFallbackImage;
-  const heroUsesDirectoryFallback = !featuredAccommodation?.imageUrl;
+  const selectedTypeLabel = accommodationType ? accommodationTypeLabel(accommodationType) : undefined;
 
   return (
-    <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
-      <PublicPageFrame variant="listing" className="pb-16 pt-5 sm:pt-7">
-        <AccommodationDirectoryHero
-          title={title}
-          description={description}
-          scope="ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา"
-          imageUrl={heroImageUrl}
-          imageAlt={featuredAccommodation?.imageAlt || "ภาพบรรยากาศการท่องเที่ยวในจังหวัดยะลา"}
-          imageContext={heroUsesDirectoryFallback && heroImageUrl ? "ภาพบรรยากาศจังหวัดยะลา" : undefined}
-        />
+    <div className="min-h-screen bg-[#FAF7F2] text-ink">
+      {/* 1. Panoramic Hero Section */}
+      <AccommodationHero
+        title={title}
+        description={description}
+        image={heroSettings.image}
+      />
 
-        <div className="border-x border-b border-black/10 bg-white">
-          <PublicDirectoryToolbar label="ค้นหาและกรองที่พัก" className="rounded-none border-0 border-b border-black/10">
-            <AccommodationFilterBar query={query} accommodationType={accommodationType} province={province} provinces={provinceOptions} />
-          </PublicDirectoryToolbar>
-          <AccommodationTypeRail
-            query={query}
-            selectedType={accommodationType}
-            province={province}
-            types={ACCOMMODATION_TYPES}
-          />
-        </div>
+      {/* 2. Floating Search and Filter Bar */}
+      <AccommodationDiscoveryFilters
+        query={query}
+        accommodationType={accommodationType}
+        province={province}
+        provinces={provinceOptions}
+        types={ACCOMMODATION_TYPES}
+      />
 
-        <section aria-labelledby="accommodation-results-heading" className="mt-9">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-4">
+      {/* 3. Main Discovery Workspace Frame */}
+      <PublicPageFrame variant="directory">
+        {hasFilters ? (
+          <div role="status" className="mb-6 rounded-xl border border-orange-100 bg-white px-4 py-2.5 text-xs font-bold text-muted shadow-xs">
+            <span className="font-black text-coral">ตัวกรองที่ใช้:</span>
+            {query ? ` คำค้น “${query}”` : ""}
+            {query && selectedTypeLabel ? "," : ""}
+            {selectedTypeLabel ? ` ประเภท ${selectedTypeLabel}` : ""}
+          </div>
+        ) : null}
+
+        <section aria-labelledby="accommodation-results-heading" className="mt-4 sm:mt-6">
+          {/* Section Heading & Result Summary */}
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-orange-100/80 pb-4">
             <div>
-              <h2 id="accommodation-results-heading" className="text-2xl font-black sm:text-3xl">ที่พักที่ค้นพบ</h2>
-              <p className="mt-1 text-sm leading-6 text-black/65" aria-live="polite">
+              <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
+                <span className="text-amber-500">❖</span>
+                <span>{hasFilters ? "ผลการค้นหา" : "ที่พักที่ค้นพบ"}</span>
+                <span className="text-amber-500">❖</span>
+              </div>
+              <h2 id="accommodation-results-heading" className="mt-1 text-2xl font-black text-ink sm:text-3xl">
+                {hasFilters ? "รายการที่พักที่ตรงกับเงื่อนไข" : "ที่พักที่ค้นพบ"}
+              </h2>
+              <p className="mt-1 text-xs font-bold text-muted" aria-live="polite">
                 {accommodationPage.state === "unavailable"
                   ? "ยังไม่สามารถสรุปจำนวนที่พักได้"
                   : `พบทั้งหมด ${accommodationPage.total.toLocaleString("th-TH")} แห่ง${hasFilters ? " ตามตัวกรองที่เลือก" : " ในจังหวัดยะลา"}`}
               </p>
             </div>
+
             {accommodationPage.pageCount > 1 ? (
-              <p className="text-sm font-semibold text-black/65">
+              <p className="text-xs font-bold text-muted">
                 หน้า {accommodationPage.page.toLocaleString("th-TH")} จาก {accommodationPage.pageCount.toLocaleString("th-TH")}
               </p>
             ) : null}
           </div>
 
           {accommodationPage.state === "unavailable" ? (
-            <div className="mt-6">
+            <div className="mt-8">
               <PublicErrorState
                 title="โหลดรายการที่พักไม่ได้ในขณะนี้"
                 description="กรุณาลองใหม่อีกครั้ง ระบบจะไม่แสดงว่าไม่มีที่พักเมื่อฐานข้อมูลไม่พร้อม"
-                action={<PublicButton href={accommodationHref({ query, accommodationType, province })} variant="secondary">ลองโหลดอีกครั้ง</PublicButton>}
+                action={
+                  <PublicButton
+                    href={accommodationHref({ query, accommodationType, province })}
+                    variant="secondary"
+                  >
+                    ลองโหลดอีกครั้ง
+                  </PublicButton>
+                }
               />
             </div>
           ) : accommodationPage.items.length === 0 ? (
-            <div className="mt-6">
+            <div className="mt-8">
               <PublicEmptyState
                 title={hasFilters ? "ไม่พบที่พักที่ตรงกับตัวกรอง" : "ยังไม่มีที่พักที่เผยแพร่"}
                 description={hasFilters ? "ลองเปลี่ยนคำค้นหรือประเภทที่พัก" : "เมื่อทีมงานเผยแพร่ข้อมูล รายการจะปรากฏที่หน้านี้"}
@@ -220,39 +227,48 @@ export default async function AccommodationsPage({
             </div>
           ) : (
             <>
-              {featuredAccommodation && featuredAccommodation.imageUrl ? (
-                <div className="mt-6">
-                  <AccommodationFeaturedResult accommodation={featuredAccommodation} />
-                </div>
-              ) : null}
-              {standardAccommodations.length > 0 ? (
-                <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {standardAccommodations.map((accommodation, index) => (
-                    <AccommodationResultCard
-                      key={accommodation.slug}
-                      accommodation={accommodation}
-                      priority={!featuredAccommodation && index === 0}
-                    />
-                  ))}
-                </div>
-              ) : null}
+              <AccommodationDirectoryClient items={accommodationPage.items} />
               <PublicPagination
                 page={accommodationPage.page}
                 pageCount={accommodationPage.pageCount}
-                createHref={(nextPage) => accommodationHref({ query, accommodationType, province, page: nextPage })}
+                createHref={(nextPage) => accommodationHref({
+                  query,
+                  accommodationType,
+                  province,
+                  page: nextPage,
+                })}
               />
             </>
           )}
         </section>
 
-        <PublicCtaBand
-          title={launchSafeAttractionsCopy(ctaSettings.title, "ต้องการเพิ่มข้อมูลที่พัก?")}
-          description={launchSafeAttractionsCopy(ctaSettings.subtitle, "ส่งข้อมูลให้ทีมงานตรวจสอบก่อนเผยแพร่บนแพลตฟอร์ม")}
-          linkText={launchSafeAttractionsCopy(ctaSettings.linkText, "ติดต่อทีมงาน")}
-          linkUrl={safeInternalHref(ctaSettings.linkUrl, "/contact")}
+        {/* 4. Travel Route Planning Bottom Callout Banner */}
+        <AccommodationDiscoveryCta
+          title={
+            !ctaSettings.title || ctaSettings.title.includes("เจ้าของ") || ctaSettings.title.includes("เพิ่มข้อมูล")
+              ? "วางแผนที่พักให้เหมาะกับทริปของคุณ"
+              : launchSafeAttractionsCopy(ctaSettings.title, "วางแผนที่พักให้เหมาะกับทริปของคุณ")
+          }
+          subtitle={
+            !ctaSettings.subtitle || ctaSettings.subtitle.includes("เจ้าของ") || ctaSettings.subtitle.includes("ตรวจสอบ")
+              ? "เลือกประเภทที่พักให้ตรงกับสไตล์และงบประมาณ เพื่อการเดินทางที่คุ้มค่าและประทับใจ"
+              : launchSafeAttractionsCopy(ctaSettings.subtitle, "เลือกประเภทที่พักให้ตรงกับสไตล์และงบประมาณ เพื่อการเดินทางที่คุ้มค่าและประทับใจ")
+          }
+          linkText={
+            !ctaSettings.linkText || ctaSettings.linkText.includes("ติดต่อ") || ctaSettings.linkText.includes("ลงทะเบียน")
+              ? "ค้นหาเส้นทางท่องเที่ยว"
+              : launchSafeAttractionsCopy(ctaSettings.linkText, "ค้นหาเส้นทางท่องเที่ยว")
+          }
+          linkUrl={
+            !ctaSettings.linkUrl || ctaSettings.linkUrl.includes("contact")
+              ? "/routes"
+              : safeInternalHref(ctaSettings.linkUrl, "/routes")
+          }
           image={ctaSettings.image}
         />
       </PublicPageFrame>
+
+      {/* 5. Footer */}
       <SiteFooter />
     </div>
   );

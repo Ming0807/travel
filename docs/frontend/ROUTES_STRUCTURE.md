@@ -187,10 +187,11 @@ labels are Thai-first while category slugs remain stable for server filtering.
 Mobile filters use a single disclosure control and preserve the same GET query
 contract as desktop.
 
-The accommodation result area uses an orange/white/black editorial hierarchy:
-one verified featured result when eligible, then a responsive compact-card
-grid. The hero remains an independently managed directory surface; redesigning
-the result grid must not replace its content or settings contract.
+The accommodation result area uses an image-forward discovery layout with orange, white, and ink design tokens:
+a panoramic photographic hero with 4 value capsules, an elevated floating search and filter toolbar with quick type chips,
+a responsive 3-column accommodation grid with truthful price range and type badges, a functional sticky sidebar with route
+exploration, verified QR check-in entry (/checkin/try), and travel stories (/stories), and a bottom travel planning CTA band.
+The hero and bottom CTA remain independently managed directory surfaces from Admin Settings CMS.
 
 Admin category management lives at `/admin/restaurants/categories`. One restaurant may have multiple ordered categories. Draft records may be uncategorized, but publishing requires at least one active category. Categories referenced by restaurants are archived rather than hard-deleted.
 
