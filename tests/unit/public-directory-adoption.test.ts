@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest";
 const directoryPages = [
   "app/(public)/stories/page.tsx",
   "app/(public)/routes/page.tsx",
-  "app/(public)/restaurants/page.tsx",
   "app/(public)/360-vista/page.tsx",
 ];
 
@@ -36,5 +35,18 @@ describe("public directory adoption", () => {
     expect(source).toContain("AccommodationFeaturedResult");
     expect(source).toContain("AccommodationResultCard");
     expect(source).toContain('variant="listing"');
+  });
+
+  it("keeps the approved restaurant hero and the real planning workspace", () => {
+    const source = readFileSync(
+      resolve(process.cwd(), "app/(public)/restaurants/page.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("RestaurantHero");
+    expect(source).toContain("RestaurantDiscoveryFilters");
+    expect(source).toContain("RestaurantDirectoryClient");
+    expect(source).toContain('variant="directory"');
+    expect(source).not.toContain("PublicDirectoryIntro");
   });
 });

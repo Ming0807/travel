@@ -3,13 +3,24 @@
 import { TripShortlistBar } from "@/components/trip-shortlist/TripShortlistBar";
 import { TripShortlistProvider } from "@/components/trip-shortlist/TripShortlistProvider";
 import type { PublicRestaurantCard } from "@/lib/repositories/public-content.repository";
+import { createRestaurantPlanHref } from "@/lib/trip-shortlist/navigation";
+import { RESTAURANT_SHORTLIST_KEY } from "@/lib/trip-shortlist/storage";
 import { RestaurantDiscoveryCard } from "./RestaurantDiscoveryCard";
+import { RestaurantDiscoveryCta } from "./RestaurantDiscoveryCta";
 import { RestaurantSidebar } from "./RestaurantSidebar";
 
 export function RestaurantDirectoryClient({
   items,
+  cta,
 }: {
   items: PublicRestaurantCard[];
+  cta?: {
+    title: string;
+    subtitle: string;
+    linkText: string;
+    linkUrl: string;
+    image?: string | null;
+  };
 }) {
   const shortlistItems = items.map((item) => ({
     slug: item.slug,
@@ -20,7 +31,7 @@ export function RestaurantDirectoryClient({
   }));
 
   return (
-    <TripShortlistProvider>
+    <TripShortlistProvider storageKey={RESTAURANT_SHORTLIST_KEY} itemNoun="ร้านอาหาร">
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
         {/* Restaurant Cards Grid */}
         <div className="min-w-0">
@@ -41,7 +52,13 @@ export function RestaurantDirectoryClient({
         </div>
       </div>
 
-      <TripShortlistBar />
+      {cta ? <RestaurantDiscoveryCta {...cta} /> : null}
+
+      <TripShortlistBar
+        itemLabel="ร้านอาหารที่บันทึก"
+        actionLabel="วางแผนมื้อ"
+        createHref={createRestaurantPlanHref}
+      />
     </TripShortlistProvider>
   );
 }

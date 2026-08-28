@@ -21,15 +21,23 @@ interface TripShortlistContextValue {
 
 const TripShortlistContext = createContext<TripShortlistContextValue | null>(null);
 
-function readStoredSlugs() {
+function readStoredSlugs(storageKey: string) {
   try {
-    return parseTripShortlist(window.localStorage.getItem(TRIP_SHORTLIST_KEY));
+    return parseTripShortlist(window.localStorage.getItem(storageKey));
   } catch {
     return [];
   }
 }
 
-export function TripShortlistProvider({ children }: { children: ReactNode }) {
+export function TripShortlistProvider({
+  children,
+  storageKey = TRIP_SHORTLIST_KEY,
+  itemNoun = "สถานที่",
+}: {
+  children: ReactNode;
+  storageKey?: string;
+  itemNoun?: string;
+}) {
   const [slugs, setSlugs] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [announcement, setAnnouncement] = useState("");
@@ -38,28 +46,28 @@ export function TripShortlistProvider({ children }: { children: ReactNode }) {
     let active = true;
     queueMicrotask(() => {
       if (!active) return;
-      setSlugs(readStoredSlugs());
+      setSlugs(readStoredSlugs(storageKey));
       setHydrated(true);
     });
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === TRIP_SHORTLIST_KEY) setSlugs(parseTripShortlist(event.newValue));
+      if (event.key === storageKey) setSlugs(parseTripShortlist(event.newValue));
     };
     window.addEventListener("storage", handleStorage);
     return () => {
       active = false;
       window.removeEventListener("storage", handleStorage);
     };
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
     if (!hydrated) return;
     try {
-      window.localStorage.setItem(TRIP_SHORTLIST_KEY, serializeTripShortlist(slugs));
+      window.localStorage.setItem(storageKey, serializeTripShortlist(slugs));
     } catch {
       // The shortlist remains usable for this page when browser storage is unavailable.
     }
-  }, [hydrated, slugs]);
+  }, [hydrated, slugs, storageKey]);
 
   const remove = useCallback((slug: string, label: string) => {
     setSlugs((current) => current.filter((item) => item !== slug));
@@ -76,18 +84,18 @@ export function TripShortlistProvider({ children }: { children: ReactNode }) {
         return current.filter((item) => item !== normalizedSlug);
       }
       if (current.length >= TRIP_SHORTLIST_LIMIT) {
-        setAnnouncement(`บันทึกได้สูงสุด ${TRIP_SHORTLIST_LIMIT} สถานที่`);
+        setAnnouncement(`บันทึกได้สูงสุด ${TRIP_SHORTLIST_LIMIT} ${itemNoun}`);
         return current;
       }
       setAnnouncement(`บันทึก${label}ไว้ในทริปแล้ว`);
       return [...current, normalizedSlug];
     });
-  }, []);
+  }, [itemNoun]);
 
   const clear = useCallback(() => {
     setSlugs([]);
-    setAnnouncement("ล้างสถานที่ในทริปแล้ว");
-  }, []);
+    setAnnouncement(`ล้าง${itemNoun}ที่บันทึกไว้แล้ว`);
+  }, [itemNoun]);
 
   const value = useMemo<TripShortlistContextValue>(
     () => ({

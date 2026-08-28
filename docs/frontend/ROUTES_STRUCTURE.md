@@ -72,6 +72,13 @@ only attractions that are still active and published, preserves the selected
 order, and can open up to ten stops in Google Maps. This is a planning handoff,
 not a claim that the platform optimizes or generates an itinerary.
 
+`/restaurants` keeps an independent guest shortlist under a separate browser
+storage key so restaurant choices cannot replace attraction choices. The meal
+planning handoff uses `/routes?restaurants=<slug,...>`, resolves only active,
+published restaurant records in the launch scope, preserves the selected order,
+and exposes restaurant details plus real Google Maps links. It does not claim to
+optimize a food route, make a reservation, or persist an account itinerary.
+
 ---
 
 ## 2. Route Design Principles
@@ -152,7 +159,7 @@ Recommended:
 ## 2.6 Public Hospitality Discovery
 
 `/restaurants` and `/accommodations` use URL-driven server filtering and exact
-database totals. Search, type, province, and page values must remain together
+database totals. Search, category, province, and page values must remain together
 when filters change. Pagination operates over the full published launch-scope
 dataset instead of a client-filtered first page.
 
@@ -168,16 +175,17 @@ claims, and amenities must not render unless their production data contracts
 exist. Listing covers use managed media only; stale third-party stock URLs are
 not public card media.
 
-Restaurants use the Market Street Directory composition: a horizontal primary
-category navigator, a desktop category rail, and compact rows grouped from the
-current server-paginated result page. Group headings never claim full-dataset
-category totals. Unknown published food types remain visible in the `อื่น ๆ`
-group. The first accommodation with valid managed media may still be shown as
-a featured result; accommodation records without media stay in the standard
-grid and use a named missing-image state. Controlled food and accommodation
-category labels are Thai-first while category slugs remain stable for server
-filtering. Mobile filters use a
-single disclosure control and preserve the same GET query contract as desktop.
+Restaurants use an image-forward discovery grid with a sticky desktop planning
+rail and a compact mobile shortlist bar. Search and managed category filtering
+use the server URL contract; the interface must not expose unsupported district,
+rating, review, halal, opening-state, reservation, or newsletter behavior.
+Unknown published food types remain visible through truthful fallback labels.
+The first accommodation with valid managed media may still be shown as a
+featured result; accommodation records without media stay in the standard grid
+and use a named missing-image state. Controlled food and accommodation category
+labels are Thai-first while category slugs remain stable for server filtering.
+Mobile filters use a single disclosure control and preserve the same GET query
+contract as desktop.
 
 The accommodation result area uses an orange/white/black editorial hierarchy:
 one verified featured result when eligible, then a responsive compact-card

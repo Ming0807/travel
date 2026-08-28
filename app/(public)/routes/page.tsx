@@ -7,9 +7,10 @@ import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicSt
 import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
 import { PublicResultSummary } from "@/components/public/directory/PublicResultSummary";
 import { PublicRouteCard } from "@/components/routes/PublicRouteCard";
+import { SelectedRestaurantPlan } from "@/components/routes/SelectedRestaurantPlan";
 import { SelectedTripPlan } from "@/components/routes/SelectedTripPlan";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
-import { listPublicAttractionCards, listPublicRoutes } from "@/lib/repositories/public-content.repository";
+import { listPublicAttractionCards, listPublicRestaurants, listPublicRoutes } from "@/lib/repositories/public-content.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 import { parseTripPlanSelection } from "@/lib/trip-shortlist/navigation";
 
@@ -27,8 +28,10 @@ export default async function RoutesPage({ searchParams }: { searchParams: Promi
   const resolvedParams = await searchParams;
   const selectedParam = typeof resolvedParams.selected === "string" ? resolvedParams.selected : undefined;
   const selectedSlugs = parseTripPlanSelection(selectedParam);
+  const restaurantParam = typeof resolvedParams.restaurants === "string" ? resolvedParams.restaurants : undefined;
+  const selectedRestaurantSlugs = parseTripPlanSelection(restaurantParam);
   const settingsService = new SettingsService();
-  const [routeState, heroSettings, selectedAttractions] = await Promise.all([
+  const [routeState, heroSettings, selectedAttractions, selectedRestaurants] = await Promise.all([
     listPublicRoutes(24)
       .then((items) => ({ items, loadError: false }))
       .catch(() => ({ items: [], loadError: true })),
@@ -43,6 +46,9 @@ export default async function RoutesPage({ searchParams }: { searchParams: Promi
           includeReviewSummaries: false,
           preferThumbnails: true,
         })
+      : Promise.resolve([]),
+    selectedRestaurantSlugs.length > 0
+      ? listPublicRestaurants({ featuredSlugs: selectedRestaurantSlugs })
       : Promise.resolve([]),
   ]);
   const routes = routeState.items;
@@ -59,10 +65,11 @@ export default async function RoutesPage({ searchParams }: { searchParams: Promi
           breadcrumbs={[{ label: "หน้าแรก", href: "/" }, { label: "เส้นทางแนะนำ" }]}
           title={title}
           description={description}
-          scope="ทุกจุดแวะเชื่อมกับหน้าสถานที่ที่เผยแพร่จริง"
+          scope="รายการที่เลือกเชื่อมกับเนื้อหาที่เผยแพร่จริง"
         />
 
         {selectedSlugs.length > 0 ? <SelectedTripPlan attractions={selectedAttractions} /> : null}
+        {selectedRestaurantSlugs.length > 0 ? <SelectedRestaurantPlan restaurants={selectedRestaurants} /> : null}
 
         <section aria-labelledby="routes-result-heading" className="mt-9">
           <div className="border-b border-black/10 pb-4">

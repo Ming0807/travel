@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookmarkSimple, CaretRight, ForkKnife, Sparkle, Star } from "@phosphor-icons/react/dist/ssr";
+import { BookmarkSimple, CaretRight, ForkKnife, MapTrifold, SlidersHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 export interface RestaurantHeroProps {
@@ -14,13 +14,13 @@ export function RestaurantHero({
   description = "ค้นหาร้านอร่อยท้องถิ่นและเมนูขึ้นชื่อ เลือกมื้อที่ใช่สำหรับการเดินทางของคุณ",
   image,
 }: RestaurantHeroProps) {
-  const heroImageUrl = siteMediaImageUrl(image) || "/site-media/general/hero-2.webp";
+  const heroImageUrl = siteMediaImageUrl(image);
 
   const featureBadges = [
-    { icon: Star, label: "อร่อยปลอดภัย", sublabel: "ได้มาตรฐานฮาลาล" },
-    { icon: ForkKnife, label: "คัดสรรร้านเด็ด", sublabel: "โดยคนท้องถิ่น" },
-    { icon: Sparkle, label: "รีวิวจริง", sublabel: "น่าเชื่อถือ" },
-    { icon: BookmarkSimple, label: "บันทึกและวางแผน", sublabel: "มื้ออร่อยได้ง่าย" },
+    { icon: ForkKnife, label: "ข้อมูลร้านที่เผยแพร่", sublabel: "จากระบบจัดการเนื้อหา" },
+    { icon: SlidersHorizontal, label: "ค้นหาตามหมวด", sublabel: "จากร้านในจังหวัดยะลา" },
+    { icon: BookmarkSimple, label: "บันทึกร้านที่สนใจ", sublabel: "แยกจากทริปสถานที่" },
+    { icon: MapTrifold, label: "เปิดเส้นทางร้าน", sublabel: "ผ่าน Google Maps" },
   ];
 
   return (
@@ -47,7 +47,6 @@ export function RestaurantHero({
       <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#24130A]/95 via-[#24130A]/75 to-transparent" />
 
       {/* Decorative Thai Geometric Motif Accent */}
-      <div className="pointer-events-none absolute -right-16 -top-16 z-0 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
       <div className="pointer-events-none absolute right-12 top-12 z-0 hidden text-amber-400/15 lg:block">
         <svg width="200" height="200" viewBox="0 0 100 100" fill="currentColor">
           <path d="M50 0 L61 39 L100 50 L61 61 L50 100 L39 61 L0 50 L39 39 Z" opacity="0.4" />

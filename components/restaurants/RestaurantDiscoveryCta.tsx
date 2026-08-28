@@ -1,9 +1,11 @@
 "use client";
 
-import { ArrowRight, Car, ForkKnife, MapPin, ShareNetwork, Sparkle } from "@phosphor-icons/react";
+import { ArrowRight, ForkKnife, ListNumbers, MapPin, PencilSimpleLine, Sparkle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
+import { useTripShortlist } from "@/components/trip-shortlist/TripShortlistProvider";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { createRestaurantPlanHref } from "@/lib/trip-shortlist/navigation";
 
 export function RestaurantDiscoveryCta({
   title,
@@ -19,12 +21,15 @@ export function RestaurantDiscoveryCta({
   image?: string | null;
 }) {
   const resolvedImageUrl = siteMediaImageUrl(image);
+  const { slugs, hydrated } = useTripShortlist();
+  const selectedCount = hydrated ? slugs.length : 0;
+  const planningHref = selectedCount > 0 ? createRestaurantPlanHref(slugs) : "#restaurant-results-heading";
 
   const foodBenefits = [
-    { icon: ForkKnife, text: "เลือกมื้ออร่อยที่ใช่ ตามสไตล์คุณ" },
-    { icon: Car, text: "จัดเส้นทางเชื่อมร้านอร่อย" },
-    { icon: MapPin, text: "บันทึกมื้อโปรดลงทริป" },
-    { icon: ShareNetwork, text: "แชร์เส้นทางกับเพื่อน" },
+    { icon: ListNumbers, text: "เรียงร้านตามลำดับที่บันทึก" },
+    { icon: MapPin, text: "เปิดร้านจริงใน Google Maps" },
+    { icon: ForkKnife, text: "ดูรายละเอียดก่อนเลือกมื้อ" },
+    { icon: PencilSimpleLine, text: "กลับมาแก้รายการได้ทุกเมื่อ" },
   ];
 
   return (
@@ -70,18 +75,18 @@ export function RestaurantDiscoveryCta({
           {/* Action Buttons */}
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
-              href={linkUrl}
+              href={planningHref}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 text-xs font-black text-white shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] hover:shadow-orange-500/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
             >
-              <span>{linkText || "เริ่มวางแผนมื้ออร่อย"}</span>
+              <span>{selectedCount > 0 ? `วางแผนจาก ${selectedCount.toLocaleString("th-TH")} ร้าน` : "เลือกร้านจากรายการด้านบน"}</span>
               <ArrowRight aria-hidden="true" size={15} weight="bold" />
             </Link>
 
             <Link
-              href="/routes"
+              href={linkUrl}
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-orange-200 bg-white px-5 text-xs font-bold text-coral transition-colors hover:bg-orange-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
             >
-              ดูเส้นทางยอดนิยม
+              {linkText}
             </Link>
           </div>
         </div>

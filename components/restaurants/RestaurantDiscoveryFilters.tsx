@@ -25,6 +25,15 @@ export function RestaurantDiscoveryFilters({
   const selectedCategory = categorySlug || foodType;
   const hasFilters = Boolean(query || selectedCategory || province);
 
+  const categoryHref = (category?: string) => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (category) params.set(categoryParam, category);
+    if (province) params.set("province", province);
+    const value = params.toString();
+    return value ? `/restaurants?${value}` : "/restaurants";
+  };
+
   return (
     <div className="relative -mt-8 z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="rounded-2xl border border-orange-100/90 bg-white p-4 shadow-xl shadow-orange-500/5 sm:p-6">
@@ -50,7 +59,8 @@ export function RestaurantDiscoveryFilters({
           method="GET"
           className={mobileOpen ? "mt-4 block" : "hidden sm:block"}
         >
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1.8fr)_minmax(180px,1fr)_minmax(160px,0.9fr)_auto]">
+          {province ? <input type="hidden" name="province" value={province} /> : null}
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)_auto]">
             {/* Search Input */}
             <div className="relative">
               <label htmlFor="restaurant-search" className="sr-only">
@@ -89,21 +99,6 @@ export function RestaurantDiscoveryFilters({
               </select>
             </div>
 
-            {/* District / Scope Visual Selector (Disabled to preserve Yala scope) */}
-            <div className="relative hidden sm:block">
-              <label htmlFor="restaurant-district" className="sr-only">
-                อำเภอ
-              </label>
-              <select
-                id="restaurant-district"
-                disabled
-                defaultValue="all"
-                className="w-full min-h-12 cursor-not-allowed rounded-xl border border-ink/10 bg-black/5 px-3.5 text-sm font-semibold text-muted"
-              >
-                <option value="all">ทุกอำเภอ (จ.ยะลา)</option>
-              </select>
-            </div>
-
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
               <button
@@ -133,7 +128,7 @@ export function RestaurantDiscoveryFilters({
           <div className="hide-scrollbar flex items-center gap-2 overflow-x-auto pb-1 text-xs">
             <span className="shrink-0 font-bold text-muted">ค้นหายอดนิยม:</span>
             <Link
-              href="/restaurants"
+              href={categoryHref()}
               className={
                 !selectedCategory
                   ? "min-h-8 shrink-0 inline-flex items-center rounded-full px-3 py-1 font-bold bg-coral/10 text-coral border border-coral/30"
@@ -144,9 +139,7 @@ export function RestaurantDiscoveryFilters({
             </Link>
             {categoryOptions.map((opt) => {
               const isActive = selectedCategory === opt.value;
-              const href = isActive
-                ? "/restaurants"
-                : `/restaurants?${categoryParam}=${encodeURIComponent(opt.value)}`;
+              const href = categoryHref(isActive ? undefined : opt.value);
               return (
                 <Link
                   key={opt.value}
@@ -168,7 +161,7 @@ export function RestaurantDiscoveryFilters({
             className="inline-flex min-h-8 shrink-0 items-center justify-center gap-1.5 self-end rounded-full border border-orange-200 bg-orange-50/60 px-3.5 py-1 text-xs font-black text-coral transition-colors hover:bg-coral hover:text-white sm:self-auto"
           >
             <MapTrifold size={15} weight="bold" aria-hidden="true" />
-            <span>แผนที่</span>
+            <span>ดูเส้นทาง</span>
           </Link>
         </div>
       </div>

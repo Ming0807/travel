@@ -27,6 +27,13 @@ export function createTripPlanHref(slugs: readonly string[]) {
     : "/routes";
 }
 
+export function createRestaurantPlanHref(slugs: readonly string[]) {
+  const selected = normalizeTripPlanSlugs(slugs);
+  return selected.length > 0
+    ? `/routes?restaurants=${selected.map(encodeURIComponent).join(",")}`
+    : "/routes";
+}
+
 function mapQuery(stop: TripMapStop) {
   if (
     typeof stop.latitude === "number"

@@ -6,7 +6,6 @@ import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicPagination } from "@/components/public/PublicPagination";
 import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
 import { RestaurantDirectoryClient } from "@/components/restaurants/RestaurantDirectoryClient";
-import { RestaurantDiscoveryCta } from "@/components/restaurants/RestaurantDiscoveryCta";
 import { RestaurantDiscoveryFilters } from "@/components/restaurants/RestaurantDiscoveryFilters";
 import { RestaurantHero } from "@/components/restaurants/RestaurantHero";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
@@ -169,6 +168,7 @@ export default async function RestaurantsPage({
       <RestaurantHero
         title={title}
         description={description}
+        image={restaurantPage.items.find((item) => item.imageUrl)?.imageUrl ?? undefined}
       />
 
       {/* 2. Floating Search and Filter Bar */}
@@ -198,11 +198,11 @@ export default async function RestaurantsPage({
             <div>
               <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
                 <span className="text-amber-500">❖</span>
-                <span>{hasFilters ? "ผลการค้นหา" : "ร้านอาหารแนะนำ"}</span>
+                <span>{hasFilters ? "ผลการค้นหา" : "ร้านอาหารที่ค้นพบ"}</span>
                 <span className="text-amber-500">❖</span>
               </div>
               <h2 id="restaurant-results-heading" className="mt-1 text-2xl font-black text-ink sm:text-3xl">
-                {hasFilters ? "รายการร้านอาหารที่ตรงกับเงื่อนไข" : "ร้านอาหารแนะนำ"}
+                {hasFilters ? "รายการร้านอาหารที่ตรงกับเงื่อนไข" : "ร้านอาหารที่ค้นพบ"}
               </h2>
               <p className="mt-1 text-xs font-bold text-muted" aria-live="polite">
                 {restaurantPage.state === "unavailable"
@@ -243,7 +243,24 @@ export default async function RestaurantsPage({
             </div>
           ) : (
             <>
-              <RestaurantDirectoryClient items={restaurantPage.items} />
+              <RestaurantDirectoryClient
+                items={restaurantPage.items}
+                cta={{
+                  title: !ctaSettings.title || ctaSettings.title.includes("เจ้าของ") || ctaSettings.title.includes("เพิ่มข้อมูล")
+                    ? "วางแผนมื้ออร่อยของคุณ"
+                    : launchSafeAttractionsCopy(ctaSettings.title, "วางแผนมื้ออร่อยของคุณ"),
+                  subtitle: !ctaSettings.subtitle || ctaSettings.subtitle.includes("เจ้าของ") || ctaSettings.subtitle.includes("ตรวจสอบ")
+                    ? "เลือกร้านที่สนใจ แล้วเปิดรายละเอียดและเส้นทางจริงผ่าน Google Maps"
+                    : launchSafeAttractionsCopy(ctaSettings.subtitle, "เลือกร้านที่สนใจ แล้วเปิดรายละเอียดและเส้นทางจริงผ่าน Google Maps"),
+                  linkText: !ctaSettings.linkText || ctaSettings.linkText.includes("ติดต่อ") || ctaSettings.linkText.includes("ลงทะเบียน")
+                    ? "ดูเส้นทางแนะนำ"
+                    : launchSafeAttractionsCopy(ctaSettings.linkText, "ดูเส้นทางแนะนำ"),
+                  linkUrl: !ctaSettings.linkUrl || ctaSettings.linkUrl.includes("contact")
+                    ? "/routes"
+                    : safeInternalHref(ctaSettings.linkUrl, "/routes"),
+                  image: ctaSettings.image,
+                }}
+              />
               <PublicPagination
                 page={restaurantPage.page}
                 pageCount={restaurantPage.pageCount}
@@ -259,30 +276,6 @@ export default async function RestaurantsPage({
           )}
         </section>
 
-        {/* 4. Food Route Planning Bottom Callout Banner */}
-        <RestaurantDiscoveryCta
-          title={
-            !ctaSettings.title || ctaSettings.title.includes("เจ้าของ") || ctaSettings.title.includes("เพิ่มข้อมูล")
-              ? "วางแผนมื้ออร่อยของคุณ"
-              : launchSafeAttractionsCopy(ctaSettings.title, "วางแผนมื้ออร่อยของคุณ")
-          }
-          subtitle={
-            !ctaSettings.subtitle || ctaSettings.subtitle.includes("เจ้าของ") || ctaSettings.subtitle.includes("ตรวจสอบ")
-              ? "สร้างเส้นทางกินเที่ยวในจังหวัดยะลาในแบบของคุณ เลือกมื้ออร่อย จัดเส้นทาง และแพลนทริปได้ง่าย ๆ"
-              : launchSafeAttractionsCopy(ctaSettings.subtitle, "สร้างเส้นทางกินเที่ยวในจังหวัดยะลาในแบบของคุณ เลือกมื้ออร่อย จัดเส้นทาง และแพลนทริปได้ง่าย ๆ")
-          }
-          linkText={
-            !ctaSettings.linkText || ctaSettings.linkText.includes("ติดต่อ") || ctaSettings.linkText.includes("ลงทะเบียน")
-              ? "เริ่มวางแผนมื้ออร่อย"
-              : launchSafeAttractionsCopy(ctaSettings.linkText, "เริ่มวางแผนมื้ออร่อย")
-          }
-          linkUrl={
-            !ctaSettings.linkUrl || ctaSettings.linkUrl.includes("contact")
-              ? "/routes"
-              : safeInternalHref(ctaSettings.linkUrl, "/routes")
-          }
-          image={ctaSettings.image}
-        />
       </PublicPageFrame>
 
       {/* 5. Footer */}

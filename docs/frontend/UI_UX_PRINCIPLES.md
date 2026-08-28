@@ -181,6 +181,10 @@ Rules:
   and is not presented as a saved account itinerary.
 - Attraction shortlist planning resolves only currently published records and
   may hand the ordered stops to Google Maps; it must not claim route optimization.
+- Restaurant choices use a separate browser shortlist. The planning handoff
+  resolves only active, published restaurant records, preserves their order, and
+  offers real detail and Google Maps links without claiming route optimization,
+  reservations, account persistence, or newsletter subscription.
 - Mobile directory pages keep enough bottom safe area for the global navigation
   and any shortlist action bar.
 - `/360-vista` identifies external providers and explains the privacy boundary
@@ -188,10 +192,10 @@ Rules:
 - Restaurant and accommodation directories translate controlled type codes to
   Thai-first labels, keep unknown values visible as a truthful fallback, and
   expose every currently supported type in the server-side filter.
-- Restaurant results use compact horizontal rows and editorial groups so the
-  directory remains useful when image coverage is low. Category counts, meal
-  suitability, ratings, and opening state are omitted until complete data
-  contracts exist.
+- Restaurant results use image-forward cards plus a sticky desktop planning rail
+  and a compact mobile action bar. Missing images remain explicit. District,
+  category counts, meal suitability, ratings, reviews, halal claims, opening
+  state, and newsletter success are omitted until complete data contracts exist.
 - Hospitality results separate image, title, and explicit detail actions so
   keyboard and touch users can predict what each target opens. Accommodation
   featured cards are allowed only when their managed image exists.

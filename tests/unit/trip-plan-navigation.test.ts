@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createGoogleMapsTripHref,
+  createRestaurantPlanHref,
   createTripPlanHref,
   parseTripPlanSelection,
 } from "@/lib/trip-shortlist/navigation";
@@ -18,6 +19,9 @@ describe("trip planning navigation", () => {
     expect(createTripPlanHref(["wat-kuha-phimuk", "yala-city-pillar"]))
       .toBe("/routes?selected=wat-kuha-phimuk,yala-city-pillar");
     expect(createTripPlanHref([])).toBe("/routes");
+    expect(createRestaurantPlanHref(["local-kitchen", "morning-roti"]))
+      .toBe("/routes?restaurants=local-kitchen,morning-roti");
+    expect(createRestaurantPlanHref([])).toBe("/routes");
   });
 
   it("creates Google Maps search and multi-stop directions URLs", () => {

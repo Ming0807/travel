@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, Star } from "@phosphor-icons/react";
+import { MapPin } from "@phosphor-icons/react";
 import Link from "next/link";
 
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
@@ -102,17 +102,8 @@ export function RestaurantDiscoveryCard({
           </p>
         )}
 
-        {/* Rating and Review Placeholder */}
-        <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-muted">
-          <span className="inline-flex items-center gap-1 text-amber-500 font-black">
-            <Star size={14} weight="fill" className="text-amber-400" aria-hidden="true" />
-            <span>4.8</span>
-          </span>
-          <span>(รีวิวจากนักเดินทาง)</span>
-        </div>
-
         {/* Footer 2-Button Action Bar */}
-        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-orange-100/60 pt-3">
+        <div className="mt-auto grid grid-cols-2 gap-2 border-t border-orange-100/60 pt-3">
           <Link
             href={href}
             className="inline-flex min-h-10 items-center justify-center rounded-lg border border-ink/15 bg-white px-3 text-xs font-bold text-ink transition-colors hover:border-coral hover:bg-orange-50/50 hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"

@@ -1668,7 +1668,7 @@ function mapRestaurantRow(
     foodType: categories[0]?.nameEn ?? categories[0]?.name ?? text(row.food_type, "Local"),
     description: text(row.description_th, text(row.description_en, "")),
     imageUrl: publicManagedImage(row, thumbnailByStoragePath),
-    imageAlt: `${name} restaurant image`,
+    imageAlt: `ภาพร้าน${name}`,
     categories,
     latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
     longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),

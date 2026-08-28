@@ -1,4 +1,5 @@
 export const TRIP_SHORTLIST_KEY = "southern-border-trip-shortlist";
+export const RESTAURANT_SHORTLIST_KEY = "southern-border-restaurant-shortlist";
 export const TRIP_SHORTLIST_LIMIT = 20;
 
 type StoredTripShortlist = {
