@@ -4,7 +4,19 @@ import { BookmarkSimple } from "@phosphor-icons/react";
 
 import { useTripShortlist } from "./TripShortlistProvider";
 
-export function TripShortlistButton({ slug, label, className }: { slug: string; label: string; className?: string }) {
+export function TripShortlistButton({
+  slug,
+  label,
+  className,
+  showLabel = true,
+  customLabel,
+}: {
+  slug: string;
+  label: string;
+  className?: string;
+  showLabel?: boolean;
+  customLabel?: { default: string; selected: string };
+}) {
   const { has, hydrated, toggle } = useTripShortlist();
   const selected = hydrated && has(slug);
   const accessibleLabel = selected ? `นำ${label}ออกจากทริป` : `บันทึก${label}ไว้ในทริป`;
@@ -22,7 +34,13 @@ export function TripShortlistButton({ slug, label, className }: { slug: string; 
       } ${className ?? ""}`.trim()}
     >
       <BookmarkSimple aria-hidden="true" size={18} weight={selected ? "fill" : "regular"} />
-      <span className="hidden sm:inline">{selected ? "บันทึกแล้ว" : "เก็บไว้ในทริป"}</span>
+      {showLabel ? (
+        <span className="hidden sm:inline">
+          {selected
+            ? (customLabel?.selected ?? "บันทึกแล้ว")
+            : (customLabel?.default ?? "เก็บไว้ในทริป")}
+        </span>
+      ) : null}
     </button>
   );
 }

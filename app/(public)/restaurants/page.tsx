@@ -2,18 +2,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicButton } from "@/components/public/PublicButton";
-import { PublicCtaBand } from "@/components/public/PublicCtaBand";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicPagination } from "@/components/public/PublicPagination";
 import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
-import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
-import { PublicDirectoryToolbar } from "@/components/public/directory/PublicDirectoryToolbar";
-import { RestaurantFilterBar } from "@/components/restaurants/RestaurantFilterBar";
-import { RestaurantCategoryNav } from "@/components/restaurants/RestaurantCategoryNav";
-import { RestaurantDirectoryItem } from "@/components/restaurants/RestaurantDirectoryItem";
-import { RestaurantCategoryRail } from "@/components/restaurants/RestaurantCategoryRail";
+import { RestaurantDirectoryClient } from "@/components/restaurants/RestaurantDirectoryClient";
+import { RestaurantDiscoveryCta } from "@/components/restaurants/RestaurantDiscoveryCta";
+import { RestaurantDiscoveryFilters } from "@/components/restaurants/RestaurantDiscoveryFilters";
+import { RestaurantHero } from "@/components/restaurants/RestaurantHero";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
-import { groupRestaurantsForDirectory } from "@/lib/hospitality/restaurant-directory";
 import {
   listAvailablePublicRestaurantCategories,
   listPublicRestaurantPage,
@@ -105,13 +101,13 @@ export default async function RestaurantsPage({
     listAvailablePublicRestaurantCategories({ province: requestedProvince }),
     settingsService.getSetting("restaurants_page_hero", {
       title: "ร้านอาหารในจังหวัดยะลา",
-      description: "ค้นหาร้านอาหารท้องถิ่นและเลือกมื้อที่เหมาะกับแผนเดินทางของคุณ",
+      description: "ค้นหาร้านอร่อยท้องถิ่นและเมนูขึ้นชื่อ เลือกมื้อที่ใช่สำหรับการเดินทางของคุณ",
     }),
     settingsService.getSetting("restaurants_page_cta", {
-      title: "ต้องการเพิ่มข้อมูลร้านอาหาร?",
-      subtitle: "ส่งข้อมูลให้ทีมงานตรวจสอบก่อนเผยแพร่บนแพลตฟอร์ม",
-      linkText: "ติดต่อทีมงาน",
-      linkUrl: "/contact",
+      title: "วางแผนมื้ออร่อยของคุณ",
+      subtitle: "สร้างเส้นทางกินเที่ยวในจังหวัดยะลาในแบบของคุณ เลือกมื้ออร่อย จัดเส้นทาง และแพลนทริปได้ง่าย ๆ",
+      linkText: "เริ่มวางแผนมื้ออร่อย",
+      linkUrl: "/routes",
       image: "",
     }),
     listLiveDestinationProvinces(),
@@ -161,84 +157,84 @@ export default async function RestaurantsPage({
   const title = launchSafeAttractionsCopy(heroSettings.title, "ร้านอาหารในจังหวัดยะลา");
   const description = launchSafeAttractionsCopy(
     heroSettings.description,
-    "ค้นหาร้านอาหารท้องถิ่นและเลือกมื้อที่เหมาะกับแผนเดินทางของคุณ",
+    "ค้นหาร้านอร่อยท้องถิ่นและเมนูขึ้นชื่อ เลือกมื้อที่ใช่สำหรับการเดินทางของคุณ",
   );
   const hasFilters = Boolean(query || categorySlug || legacyFoodType || province);
-  const restaurantGroups = groupRestaurantsForDirectory(restaurantPage.items);
   const categoryOptions = categoryAvailability.items.map((category) => ({ value: category.slug, label: category.name }));
-  const categoryNavItems = [
-    { value: "", label: "ทั้งหมด", href: restaurantHref({ query, province }) },
-    ...categoryAvailability.items.filter((category) => category.isFeatured).map((category) => ({
-      value: category.slug,
-      label: category.name,
-      href: restaurantHref({ query, categorySlug: category.slug, province }),
-    })),
-  ];
-  const sidebarCategoryItems = [
-    { value: "", label: "ร้านอาหารทั้งหมด" },
-    ...categoryOptions,
-  ].map((option) => ({
-    ...option,
-    href: restaurantHref({ query, categorySlug: option.value || undefined, province }),
-  }));
-  const hasSidebarCategories = sidebarCategoryItems.length > 1;
+  const selectedCategoryLabel = categoryOptions.find((opt) => opt.value === (categorySlug || legacyFoodType))?.label;
 
   return (
-    <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
-      <PublicPageFrame variant="directory">
-        <PublicDirectoryIntro
-          breadcrumbs={[{ label: "หน้าแรก", href: "/" }, { label: "ร้านอาหาร" }]}
-          title={title}
-          description={description}
-          scope="ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา"
-        />
+    <div className="min-h-screen bg-[#FAF7F2] text-ink">
+      {/* 1. Panoramic Hero Section */}
+      <RestaurantHero
+        title={title}
+        description={description}
+      />
 
-        {categoryNavItems.length > 1 ? (
-          <div className="mt-7">
-            <RestaurantCategoryNav activeValue={categorySlug} items={categoryNavItems} />
+      {/* 2. Floating Search and Filter Bar */}
+      <RestaurantDiscoveryFilters
+        query={query}
+        categorySlug={categorySlug}
+        foodType={legacyFoodType}
+        province={province}
+        categoryOptions={categoryOptions}
+        categoryParam={legacyFoodType ? "foodType" : "category"}
+      />
+
+      {/* 3. Main Discovery Workspace Frame */}
+      <PublicPageFrame variant="directory">
+        {hasFilters ? (
+          <div role="status" className="mb-6 rounded-xl border border-orange-100 bg-white px-4 py-2.5 text-xs font-bold text-muted shadow-xs">
+            <span className="font-black text-coral">ตัวกรองที่ใช้:</span>
+            {query ? ` คำค้น “${query}”` : ""}
+            {query && selectedCategoryLabel ? "," : ""}
+            {selectedCategoryLabel ? ` หมวดหมู่ ${selectedCategoryLabel}` : ""}
           </div>
         ) : null}
 
-        <div className="mt-5">
-          <PublicDirectoryToolbar label="ค้นหาและกรองร้านอาหาร">
-            <RestaurantFilterBar
-              query={query}
-              categorySlug={categorySlug}
-              foodType={legacyFoodType}
-              province={province}
-              provinces={provinceOptions}
-              categories={legacyFoodType ? undefined : categoryOptions}
-            />
-          </PublicDirectoryToolbar>
-        </div>
-
-        <section aria-labelledby="restaurant-results-heading" className="mt-8">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-black/10 pb-4">
+        <section aria-labelledby="restaurant-results-heading" className="mt-4 sm:mt-6">
+          {/* Section Heading & Result Summary */}
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-orange-100/80 pb-4">
             <div>
-              <h2 id="restaurant-results-heading" className="text-2xl font-bold">ร้านอาหารที่ค้นพบ</h2>
-              <p className="mt-1 text-sm leading-6 text-black/65" aria-live="polite">
+              <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
+                <span className="text-amber-500">❖</span>
+                <span>{hasFilters ? "ผลการค้นหา" : "ร้านอาหารแนะนำ"}</span>
+                <span className="text-amber-500">❖</span>
+              </div>
+              <h2 id="restaurant-results-heading" className="mt-1 text-2xl font-black text-ink sm:text-3xl">
+                {hasFilters ? "รายการร้านอาหารที่ตรงกับเงื่อนไข" : "ร้านอาหารแนะนำ"}
+              </h2>
+              <p className="mt-1 text-xs font-bold text-muted" aria-live="polite">
                 {restaurantPage.state === "unavailable"
                   ? "ยังไม่สามารถสรุปจำนวนร้านอาหารได้"
                   : `พบทั้งหมด ${restaurantPage.total.toLocaleString("th-TH")} ร้าน${hasFilters ? " ตามตัวกรองที่เลือก" : " ในจังหวัดยะลา"}`}
               </p>
             </div>
+
             {restaurantPage.pageCount > 1 ? (
-              <p className="text-sm font-semibold text-black/65">
+              <p className="text-xs font-bold text-muted">
                 หน้า {restaurantPage.page.toLocaleString("th-TH")} จาก {restaurantPage.pageCount.toLocaleString("th-TH")}
               </p>
             ) : null}
           </div>
 
           {restaurantPage.state === "unavailable" ? (
-            <div className="mt-6">
+            <div className="mt-8">
               <PublicErrorState
                 title="โหลดรายการร้านอาหารไม่ได้ในขณะนี้"
                 description="กรุณาลองใหม่อีกครั้ง ระบบจะไม่แสดงว่าไม่มีร้านเมื่อฐานข้อมูลไม่พร้อม"
-                action={<PublicButton href={restaurantHref({ query, categorySlug, foodType: legacyFoodType, province })} variant="secondary">ลองโหลดอีกครั้ง</PublicButton>}
+                action={
+                  <PublicButton
+                    href={restaurantHref({ query, categorySlug, foodType: legacyFoodType, province })}
+                    variant="secondary"
+                  >
+                    ลองโหลดอีกครั้ง
+                  </PublicButton>
+                }
               />
             </div>
           ) : restaurantPage.items.length === 0 ? (
-            <div className="mt-6">
+            <div className="mt-8">
               <PublicEmptyState
                 title={hasFilters ? "ไม่พบร้านอาหารที่ตรงกับตัวกรอง" : "ยังไม่มีร้านอาหารที่เผยแพร่"}
                 description={hasFilters ? "ลองเปลี่ยนคำค้นหรือประเภทอาหาร" : "เมื่อทีมงานเผยแพร่ข้อมูล รายการจะปรากฏที่หน้านี้"}
@@ -247,56 +243,49 @@ export default async function RestaurantsPage({
             </div>
           ) : (
             <>
-              <div className={hasSidebarCategories
-                ? "mt-6 xl:grid xl:grid-cols-[13rem_minmax(0,1fr)] xl:gap-8"
-                : "mt-6"
-              }>
-                {hasSidebarCategories ? <aside aria-label="หมวดหมู่ร้านอาหาร" className="hidden xl:block">
-                  <RestaurantCategoryRail items={sidebarCategoryItems} activeValue={categorySlug} />
-                </aside> : null}
-                <div className="min-w-0">
-                  {restaurantGroups.map((group, groupIndex) => (
-                    <section
-                      key={group.key}
-                      aria-labelledby={`restaurant-group-${group.key}`}
-                      className="border-b border-black/10 py-6 first:pt-0 last:border-b-0"
-                    >
-                      <div className="mb-2">
-                        <h3 id={`restaurant-group-${group.key}`} className="text-lg font-bold text-[var(--public-teal)]">
-                          {group.title}
-                        </h3>
-                        <p className="mt-1 text-sm leading-6 text-black/55">{group.description}</p>
-                      </div>
-                      <div className="grid min-w-0 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-                        {group.items.map((restaurant, itemIndex) => (
-                          <RestaurantDirectoryItem
-                            key={restaurant.slug}
-                            restaurant={restaurant}
-                            priority={groupIndex === 0 && itemIndex === 0}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  ))}
-                  <PublicPagination
-                    page={restaurantPage.page}
-                    pageCount={restaurantPage.pageCount}
-                    createHref={(nextPage) => restaurantHref({ query, categorySlug, foodType: legacyFoodType, province, page: nextPage })}
-                  />
-                </div>
-              </div>
+              <RestaurantDirectoryClient items={restaurantPage.items} />
+              <PublicPagination
+                page={restaurantPage.page}
+                pageCount={restaurantPage.pageCount}
+                createHref={(nextPage) => restaurantHref({
+                  query,
+                  categorySlug,
+                  foodType: legacyFoodType,
+                  province,
+                  page: nextPage,
+                })}
+              />
             </>
           )}
         </section>
 
-        <PublicCtaBand
-          title={launchSafeAttractionsCopy(ctaSettings.title, "ต้องการเพิ่มข้อมูลร้านอาหาร?")}
-          description={launchSafeAttractionsCopy(ctaSettings.subtitle, "ส่งข้อมูลให้ทีมงานตรวจสอบก่อนเผยแพร่บนแพลตฟอร์ม")}
-          linkText={launchSafeAttractionsCopy(ctaSettings.linkText, "ติดต่อทีมงาน")}
-          linkUrl={safeInternalHref(ctaSettings.linkUrl, "/contact")}
+        {/* 4. Food Route Planning Bottom Callout Banner */}
+        <RestaurantDiscoveryCta
+          title={
+            !ctaSettings.title || ctaSettings.title.includes("เจ้าของ") || ctaSettings.title.includes("เพิ่มข้อมูล")
+              ? "วางแผนมื้ออร่อยของคุณ"
+              : launchSafeAttractionsCopy(ctaSettings.title, "วางแผนมื้ออร่อยของคุณ")
+          }
+          subtitle={
+            !ctaSettings.subtitle || ctaSettings.subtitle.includes("เจ้าของ") || ctaSettings.subtitle.includes("ตรวจสอบ")
+              ? "สร้างเส้นทางกินเที่ยวในจังหวัดยะลาในแบบของคุณ เลือกมื้ออร่อย จัดเส้นทาง และแพลนทริปได้ง่าย ๆ"
+              : launchSafeAttractionsCopy(ctaSettings.subtitle, "สร้างเส้นทางกินเที่ยวในจังหวัดยะลาในแบบของคุณ เลือกมื้ออร่อย จัดเส้นทาง และแพลนทริปได้ง่าย ๆ")
+          }
+          linkText={
+            !ctaSettings.linkText || ctaSettings.linkText.includes("ติดต่อ") || ctaSettings.linkText.includes("ลงทะเบียน")
+              ? "เริ่มวางแผนมื้ออร่อย"
+              : launchSafeAttractionsCopy(ctaSettings.linkText, "เริ่มวางแผนมื้ออร่อย")
+          }
+          linkUrl={
+            !ctaSettings.linkUrl || ctaSettings.linkUrl.includes("contact")
+              ? "/routes"
+              : safeInternalHref(ctaSettings.linkUrl, "/routes")
+          }
           image={ctaSettings.image}
         />
       </PublicPageFrame>
+
+      {/* 5. Footer */}
       <SiteFooter />
     </div>
   );
