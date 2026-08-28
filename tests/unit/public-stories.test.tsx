@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { PublicStoryCard } from "@/components/stories/PublicStoryCard";
+import { StoryHero } from "@/components/stories/StoryHero";
+import { StoryDiscoveryFilters } from "@/components/stories/StoryDiscoveryFilters";
+import { StoryEditorialCta } from "@/components/stories/StoryEditorialCta";
 import {
   LegacyStoryContent,
   StoryDocumentRenderer,
@@ -29,6 +32,25 @@ const story: PublicStoryCardData = {
   primaryTopic: { key: "community", name: "ชุมชน" },
 };
 
+const storyNoImage: PublicStoryCardData = {
+  storyId: 8,
+  id: "betong-food-guide",
+  title: "คู่มือของกินเบตง",
+  excerpt: "ชิมไก่เบตงและผักน้ำ",
+  province: "ยะลา",
+  date: "15 ส.ค. 2569",
+  publishedAt: "2026-08-15T00:00:00.000Z",
+  updatedAt: null,
+  imageUrl: null,
+  imageAlt: "คู่มือของกินเบตง",
+  category: "อาหาร",
+  authorType: "admin",
+  authorName: "กองบรรณาธิการ",
+  readingMinutes: 3,
+  primaryLanguage: "th",
+  primaryTopic: { key: "food", name: "อาหาร" },
+};
+
 describe("public story presentation", () => {
   it("labels the lead item as latest and uses its managed thumbnail", () => {
     render(<PublicStoryCard story={story} featured label="เรื่องล่าสุด" />);
@@ -41,6 +63,92 @@ describe("public story presentation", () => {
     );
     expect(image).toHaveAttribute("loading", "eager");
     expect(screen.queryByText(/featured|เรื่องเด่น/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /อ่านเรื่องราวฉบับเต็ม/ })).toHaveAttribute(
+      "href",
+      "/stories/yala-local-story",
+    );
+  });
+
+  it("renders standard PublicStoryCard with topic badge, author source, and link", () => {
+    render(<PublicStoryCard story={story} />);
+
+    expect(screen.getByRole("heading", { name: story.title })).toBeInTheDocument();
+    expect(screen.getByText("ชุมชน")).toBeInTheDocument();
+    expect(screen.getByText("จากนักเดินทาง")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: `อ่านเรื่องราว ${story.title}` })).toHaveAttribute(
+      "href",
+      "/stories/yala-local-story",
+    );
+  });
+
+  it("renders PublicStoryCard with missing image fallback gracefully", () => {
+    render(<PublicStoryCard story={storyNoImage} />);
+
+    expect(screen.getByRole("heading", { name: storyNoImage.title })).toBeInTheDocument();
+    expect(screen.getByText("อาหารและของกินถิ่นใต้")).toBeInTheDocument();
+    expect(screen.getByText("กองบรรณาธิการ")).toBeInTheDocument();
+  });
+
+  it("renders StoryHero with breadcrumbs, feature capsules, and participation links", () => {
+    render(
+      <StoryHero
+        title="เรื่องราวจากยะลา"
+        description="อ่านพื้นที่ผ่านผู้คน อาหาร วัฒนธรรม"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "เรื่องราวจากยะลา" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "หน้าแรก" })).toHaveAttribute("href", "/");
+    expect(screen.getByText("บทความและบันทึก")).toBeInTheDocument();
+    expect(screen.getByText("กองบรรณาธิการ")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /แบ่งปันเรื่องราวของคุณ/ })).toHaveAttribute(
+      "href",
+      "/stories/share",
+    );
+    expect(screen.getByRole("link", { name: "เรื่องราวของฉัน" })).toHaveAttribute(
+      "href",
+      "/profile",
+    );
+  });
+
+  it("renders StoryDiscoveryFilters preserving query params and author source tabs", () => {
+    render(
+      <StoryDiscoveryFilters
+        query={{
+          search: "เบตง",
+          topic: "food",
+          authorType: "tourist",
+          page: 1,
+          pageSize: 12,
+        }}
+        topics={[
+          { key: "food", name: "อาหาร" },
+          { key: "culture", name: "วัฒนธรรม" },
+        ]}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText("ค้นหาชื่อเรื่องหรือคำสำคัญ...")).toHaveValue("เบตง");
+    expect(screen.getByRole("button", { name: "ค้นหา" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ล้างตัวกรอง/ })).toHaveAttribute("href", "/stories");
+
+    const touristTab = screen.getByRole("link", { name: "จากนักเดินทาง" });
+    expect(touristTab).toHaveAttribute("aria-current", "page");
+  });
+
+  it("renders StoryEditorialCta with submission workflow steps and valid links", () => {
+    render(<StoryEditorialCta />);
+
+    expect(screen.getByRole("heading", { name: "ร่วมแบ่งปันเรื่องราวของคุณ" })).toBeInTheDocument();
+    expect(screen.getByText(/เรื่องราวที่ส่งเข้ามาจะได้รับการตรวจสอบจากทีมงาน/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /เริ่มเขียนเรื่องราว/ })).toHaveAttribute(
+      "href",
+      "/stories/share",
+    );
+    expect(screen.getByRole("link", { name: "ดูเส้นทางท่องเที่ยวแนะนำ" })).toHaveAttribute(
+      "href",
+      "/routes",
+    );
   });
 
   it("renders legacy HTML as inert text instead of injecting markup", () => {
@@ -68,7 +176,7 @@ describe("public story presentation", () => {
     expect(screen.getByText("ย่อหน้าแรก")).toBeInTheDocument();
     expect(screen.getByText("ย่อหน้าที่สอง")).toBeInTheDocument();
     expect(container.querySelectorAll("p")).toHaveLength(2);
-    expect(container).not.toHaveTextContent("\\n");
+    expect(container.textContent).not.toContain("\\n");
   });
 
   it("does not crash on an out-of-range legacy numeric entity", () => {

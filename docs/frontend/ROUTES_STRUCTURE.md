@@ -239,6 +239,19 @@ the other public directories. Its cards retain the real media behavior and
 must distinguish managed panorama media from an external provider before the
 visitor opens it.
 
+## 2.9 Public Stories Editorial Discovery
+
+`/stories` operates as a production editorial tourism discovery hub designed with warm amber,
+cream `#FAF7F2`, and dark ink tones.
+
+The page structure comprises:
+- **Panoramic Editorial Hero**: Atmospheric hero with real managed cover media, breadcrumbs (`หน้าแรก > เรื่องราว`), title and subtitle from CMS settings, and 4 factual feature capsules (`บทความและบันทึก`, `คัดสรรโดยกองบรรณาธิการ`, `แบ่งปันจากนักเดินทาง`, `เรื่องเล่าท้องถิ่น`).
+- **Elevated Floating Filter Toolbar**: Responsive toolbar (`-mt-8`) with server search (`q`), topic dropdown, segmented author source tabs (`ทั้งหมด`, `จากกองบรรณาธิการ`, `จากนักเดินทาง`), and quick topic filter chips.
+- **Latest Story Spotlight Cover**: Highlighted lead story card on page 1 without filters, showcasing large cover photo (or topic-themed artistic placeholder), category badge, province pin, date, reading time estimate, and full read action without duplicate in the grid below.
+- **2-Column Discovery Workspace**: Responsive story grid with image zoom hover effects and artistic topic placeholders for image-less records, alongside a desktop sticky sidebar with traveler submission CTA (`/stories/share`), digital passport QR check-in (`/checkin/try`), and connected route discovery (`/routes`).
+- **Editorial Submission Banner**: Bottom participation band inviting travelers to write stories, clearly explaining that submissions undergo editorial review before publishing.
+- **Truthful Analytics & Contracts**: Preserves engagement impressions/clicks tracking (`surface: "story_hub"`), handles unavailable vs empty states gracefully, and avoids fake metrics (no fake view counts, fake likes, or simulated reviews).
+
 Admin users need precise record management.
 
 ---

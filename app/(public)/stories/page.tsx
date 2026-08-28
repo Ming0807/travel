@@ -1,16 +1,14 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import {
-  ArrowLeft,
-  ArrowRight,
-  MagnifyingGlass,
-  PenNib,
-} from "@phosphor-icons/react/dist/ssr";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { PublicButton } from "@/components/public/PublicButton";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
-import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
-import { PublicStoryCard } from "@/components/stories/PublicStoryCard";
+import { PublicPagination } from "@/components/public/PublicPagination";
+import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicStates";
+import { StoryDirectoryClient } from "@/components/stories/StoryDirectoryClient";
+import { StoryDiscoveryFilters } from "@/components/stories/StoryDiscoveryFilters";
+import { StoryEditorialCta } from "@/components/stories/StoryEditorialCta";
+import { StoryHero } from "@/components/stories/StoryHero";
 import {
   listPublicStoryPage,
   listPublicStoryTopics,
@@ -48,6 +46,7 @@ export default async function StoriesPage({
     value: province.nameEn,
     label: province.nameTh,
   }));
+  const showProvinceFilter = provinceOptions.length > 1;
   const query = {
     ...parsedQuery,
     province: provinceOptions.some(
@@ -61,9 +60,10 @@ export default async function StoriesPage({
     listPublicStoryPage(query),
     listPublicStoryTopics(),
     settingsService.getSetting("stories_page_hero", {
-      title: "เรื่องราวจากยะลา",
+      title: "เรื่องราวและแรงบันดาลใจ สำหรับทุกการเดินทาง",
       description:
-        "อ่านพื้นที่ผ่านผู้คน อาหาร วัฒนธรรม และประสบการณ์จากนักเดินทาง",
+        "อ่านพื้นที่ผ่านผู้คน อาหาร วัฒนธรรม และประสบการณ์จากนักเดินทางในยะลา",
+      image: "",
     }),
   ]);
 
@@ -94,176 +94,128 @@ export default async function StoriesPage({
     "อ่านพื้นที่ผ่านผู้คน อาหาร วัฒนธรรม และประสบการณ์จากนักเดินทางในยะลา",
   );
 
+  const activeTopicLabel = query.topic
+    ? topics.find((t) => t.key === query.topic)?.name || query.topic
+    : undefined;
+
+  const activeAuthorLabel = query.authorType === "admin"
+    ? "จากกองบรรณาธิการ"
+    : query.authorType === "tourist"
+      ? "จากนักเดินทาง"
+      : undefined;
+
   return (
-    <div className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
+    <div className="min-h-screen bg-[#FAF7F2] text-ink">
+      {/* 1. Panoramic Editorial Hero Banner */}
+      <StoryHero
+        title={heroTitle}
+        description={heroDescription}
+        image={heroSettings.image}
+      />
+
+      {/* 2. Floating Search and Filter Toolbar */}
+      <StoryDiscoveryFilters
+        query={query}
+        topics={topics}
+        provinces={provinceOptions}
+      />
+
+      {/* 3. Main Discovery Workspace Frame */}
       <PublicPageFrame variant="directory">
-        <PublicDirectoryIntro
-          breadcrumbs={[{ label: "หน้าแรก", href: "/" }, { label: "เรื่องราว" }]}
-          title={heroTitle}
-          description={heroDescription}
-          scope="บทความและประสบการณ์ที่ผ่านการเผยแพร่"
-        />
-        <div className="mt-5 flex flex-wrap gap-3">
-            <Link
-              href="/profile"
-              className="inline-flex min-h-11 items-center justify-center rounded-[var(--public-radius-control)] border border-black/15 bg-white px-4 text-sm font-black hover:border-[var(--public-teal)] hover:text-[var(--public-teal)]"
-            >
-              เรื่องราวของฉัน
-            </Link>
-            <Link
-              href="/stories/share"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--public-radius-control)] bg-[var(--public-coral)] px-5 text-sm font-black text-white hover:bg-[#C95739]"
-            >
-              <PenNib size={18} weight="bold" aria-hidden="true" />
-              แบ่งปันเรื่องราว
-            </Link>
-        </div>
-
-        <section className="mt-7 rounded-[var(--public-radius-panel)] border border-black/10 bg-white p-4 sm:p-5" aria-labelledby="story-filter-title">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="story-filter-title" className="text-base font-black">
-              ค้นหาเรื่องที่อยากอ่าน
-            </h2>
-            {hasFilters ? (
-              <Link href="/stories" className="inline-flex min-h-11 items-center text-sm font-black text-[var(--public-teal)] hover:text-[var(--public-coral)]">
-                ล้างตัวกรองทั้งหมด
-              </Link>
-            ) : null}
+        {hasFilters ? (
+          <div role="status" className="mb-6 rounded-xl border border-orange-100 bg-white px-4 py-2.5 text-xs font-bold text-muted shadow-xs">
+            <span className="font-black text-coral">ตัวกรองที่ใช้:</span>
+            {query.search ? ` คำค้น “${query.search}”` : ""}
+            {query.search && activeTopicLabel ? "," : ""}
+            {activeTopicLabel ? ` หัวข้อ ${activeTopicLabel}` : ""}
+            {(query.search || activeTopicLabel) && activeAuthorLabel ? "," : ""}
+            {activeAuthorLabel ? ` ผู้เขียน ${activeAuthorLabel}` : ""}
           </div>
-          <form
-            action="/stories"
-            method="get"
-            className={`mt-4 grid gap-3 ${
-              provinceOptions.length > 1
-                ? "md:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(170px,.65fr)_minmax(170px,.65fr)_auto]"
-                : "md:grid-cols-[minmax(0,1.6fr)_minmax(180px,.7fr)_auto]"
-            }`}
-          >
-            <label className="relative">
-              <span className="sr-only">ค้นหาจากชื่อหรือคำโปรยเรื่องราว</span>
-              <MagnifyingGlass size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/45" aria-hidden="true" />
-              <input
-                type="search"
-                name="q"
-                defaultValue={query.search}
-                placeholder="ค้นหาชื่อเรื่องหรือคำสำคัญ"
-                className="min-h-11 w-full rounded-[var(--public-radius-control)] border border-black/15 bg-white pl-10 pr-3 text-sm outline-none focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/15"
-              />
-            </label>
-            <label>
-              <span className="sr-only">เลือกหัวข้อ</span>
-              <select
-                name="topic"
-                defaultValue={query.topic ?? ""}
-                className="min-h-11 w-full rounded-[var(--public-radius-control)] border border-black/15 bg-white px-3 text-sm font-semibold outline-none focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/15"
-              >
-                <option value="">ทุกหัวข้อ</option>
-                {topics.map((topic) => <option key={topic.key} value={topic.key}>{topic.name}</option>)}
-              </select>
-            </label>
-            {provinceOptions.length > 1 ? (
-              <label>
-                <span className="sr-only">เลือกจังหวัด</span>
-                <select
-                  name="province"
-                  defaultValue={query.province ?? ""}
-                  className="min-h-11 w-full rounded-[var(--public-radius-control)] border border-black/15 bg-white px-3 text-sm font-semibold outline-none focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/15"
-                >
-                  <option value="">ทุกจังหวัดที่เปิดให้บริการ</option>
-                  {provinceOptions.map((province) => (
-                    <option key={province.value} value={province.value}>{province.label}</option>
-                  ))}
-                </select>
-              </label>
-            ) : query.province ? (
-              <input type="hidden" name="province" value={query.province} />
-            ) : null}
-            {query.authorType ? <input type="hidden" name="type" value={query.authorType} /> : null}
-            <button type="submit" className="min-h-11 rounded-[var(--public-radius-control)] bg-[var(--public-ink)] px-5 text-sm font-black text-white hover:bg-black" aria-label="ค้นหาเรื่องราว">
-              ค้นหา
-            </button>
-          </form>
+        ) : null}
 
-          <nav aria-label="กรองตามประเภทผู้เขียน" className="mt-4 flex gap-2 overflow-x-auto pb-1">
-            {[
-              { value: undefined, label: "ทั้งหมด" },
-              { value: "admin" as const, label: "จากกองบรรณาธิการ" },
-              { value: "tourist" as const, label: "จากนักเดินทาง" },
-            ].map((item) => {
-              const active = query.authorType === item.value;
-              return (
-                <Link
-                  key={item.label}
-                  href={buildPublicStoryHref(query, { authorType: item.value })}
-                  aria-current={active ? "page" : undefined}
-                  className={`inline-flex min-h-11 shrink-0 items-center rounded-[var(--public-radius-control)] px-4 text-sm font-black ${active ? "bg-[var(--public-teal)] text-white" : "border border-black/15 bg-white text-black/65 hover:border-[var(--public-teal)] hover:text-[var(--public-teal)]"}`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </section>
-
-        <section className="mt-10" aria-labelledby="story-results-heading">
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-black/10 pb-4">
+        <section aria-labelledby="story-results-heading" className="mt-4 sm:mt-6">
+          {/* Section Heading & Result Summary */}
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-orange-100/80 pb-4">
             <div>
-              <h2 id="story-results-heading" className="text-2xl font-black">เรื่องที่ค้นพบ</h2>
-              <p className="mt-1 text-sm leading-6 text-black/60" aria-live="polite">
-                พบ {storyPage.total.toLocaleString("th-TH")} เรื่อง{hasFilters ? " ตามตัวกรองที่เลือก" : " ที่เผยแพร่แล้ว"}
+              <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-coral">
+                <span className="text-amber-500">❖</span>
+                <span>{hasFilters ? "ผลการค้นหา" : "เรื่องราวที่ค้นพบ"}</span>
+                <span className="text-amber-500">❖</span>
+              </div>
+              <h2 id="story-results-heading" className="mt-1 text-2xl font-black text-ink sm:text-3xl">
+                {hasFilters ? "เรื่องราวที่ตรงกับเงื่อนไข" : "เรื่องที่ค้นพบ"}
+              </h2>
+              <p className="mt-1 text-xs font-bold text-muted" aria-live="polite">
+                {storyPage.loadError
+                  ? "ยังไม่สามารถสรุปจำนวนเรื่องราวได้"
+                  : `พบทั้งหมด ${storyPage.total.toLocaleString("th-TH")} เรื่อง${hasFilters ? " ตามตัวกรองที่เลือก" : " ที่เผยแพร่แล้ว"}`}
               </p>
             </div>
-            {storyPage.totalPages > 1 ? <p className="text-sm font-semibold text-black/60">หน้า {storyPage.page.toLocaleString("th-TH")} จาก {storyPage.totalPages.toLocaleString("th-TH")}</p> : null}
+
+            {storyPage.totalPages > 1 ? (
+              <p className="text-xs font-bold text-muted">
+                หน้า {storyPage.page.toLocaleString("th-TH")} จาก {storyPage.totalPages.toLocaleString("th-TH")}
+              </p>
+            ) : null}
           </div>
 
           {storyPage.loadError ? (
-            <div className="mt-6 border-y border-rose-200 bg-rose-50 py-14 text-center" role="alert">
-              <h3 className="text-xl font-black text-rose-950">ยังโหลดเรื่องราวไม่ได้</h3>
-              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-rose-800">ระบบเชื่อมต่อข้อมูลไม่สำเร็จ ตัวกรองของคุณยังคงอยู่และสามารถลองใหม่ได้</p>
-              <a href={buildPublicStoryHref(query, { page: query.page })} className="mt-6 inline-flex min-h-11 items-center rounded-[var(--public-radius-control)] bg-rose-900 px-5 text-sm font-black text-white">ลองโหลดอีกครั้ง</a>
+            <div className="mt-8">
+              <PublicErrorState
+                title="โหลดรายการเรื่องราวไม่ได้ในขณะนี้"
+                description="กรุณาลองใหม่อีกครั้ง ระบบจะไม่แสดงว่าไม่มีเรื่องราวเมื่อการเชื่อมต่อมีปัญหา"
+                action={
+                  <PublicButton
+                    href={buildPublicStoryHref(query, { page: query.page })}
+                    variant="secondary"
+                  >
+                    ลองโหลดอีกครั้ง
+                  </PublicButton>
+                }
+              />
             </div>
           ) : storyPage.items.length === 0 ? (
-            <div className="mt-6 border-y border-black/10 py-16 text-center">
-              <PenNib size={40} weight="light" className="mx-auto text-black/35" aria-hidden="true" />
-              <h3 className="mt-5 text-2xl font-black">{hasFilters ? "ยังไม่พบเรื่องราวตามตัวกรองนี้" : "ยังไม่มีเรื่องราวที่เผยแพร่"}</h3>
-              <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-black/60">{hasFilters ? "ลองเปลี่ยนคำค้น หัวข้อ หรือประเภทผู้เขียน" : "เมื่อทีมงานตรวจสอบและเผยแพร่เรื่องราว รายการจะปรากฏที่นี่"}</p>
-              <Link href={hasFilters ? "/stories" : "/stories/share"} className="mt-7 inline-flex min-h-11 items-center rounded-[var(--public-radius-control)] bg-[var(--public-coral)] px-5 text-sm font-black text-white">
-                {hasFilters ? "ล้างตัวกรอง" : "ส่งเรื่องให้ทีมตรวจสอบ"}
-              </Link>
+            <div className="mt-8">
+              <PublicEmptyState
+                title={hasFilters ? "ยังไม่พบเรื่องราวตามตัวกรองนี้" : "ยังไม่มีเรื่องราวที่เผยแพร่"}
+                description={hasFilters ? "ลองเปลี่ยนคำค้น หัวข้อ หรือประเภทผู้เขียน" : "เมื่อทีมงานตรวจสอบและเผยแพร่เรื่องราว รายการจะปรากฏที่นี่"}
+                action={
+                  hasFilters ? (
+                    <PublicButton href="/stories" variant="secondary">
+                      ล้างตัวกรอง
+                    </PublicButton>
+                  ) : (
+                    <PublicButton href="/stories/share" variant="secondary">
+                      ส่งเรื่องให้ทีมตรวจสอบ
+                    </PublicButton>
+                  )
+                }
+              />
             </div>
           ) : (
             <>
-              {latestStory ? (
-                <div className="mt-7">
-                  <PublicStoryCard story={latestStory} featured label="เรื่องล่าสุด" tracking={engagementEnabled ? { surface: "story_hub", position: 1 } : undefined} />
-                </div>
-              ) : null}
-              {stories.length > 0 ? (
-                <div className="mt-8 grid gap-x-7 gap-y-10 md:grid-cols-2 lg:grid-cols-3" aria-label="รายการเรื่องราว">
-                  {stories.map((story, index) => (
-                    <PublicStoryCard key={story.id} story={story} tracking={engagementEnabled ? { surface: "story_hub", position: index + (latestStory ? 2 : 1) } : undefined} />
-                  ))}
-                </div>
-              ) : null}
+              {/* Directory Client with Spotlight Cover and 2-Column Grid + Sidebar */}
+              <StoryDirectoryClient
+                latestStory={latestStory}
+                stories={stories}
+                engagementEnabled={engagementEnabled}
+              />
+
+              {/* Numbered Pagination */}
+              <PublicPagination
+                page={storyPage.page}
+                pageCount={storyPage.totalPages}
+                createHref={(nextPage) => buildPublicStoryHref(query, { page: nextPage })}
+              />
             </>
           )}
         </section>
 
-        {storyPage.totalPages > 1 ? (
-          <nav aria-label="เปลี่ยนหน้ารายการเรื่องราว" className="mt-14 flex items-center justify-between border-t border-black/10 pt-7">
-            {storyPage.page > 1 ? (
-              <Link href={buildPublicStoryHref(query, { page: storyPage.page - 1 })} className="inline-flex min-h-11 items-center gap-2 rounded-[var(--public-radius-control)] border border-black/15 bg-white px-4 text-sm font-black hover:border-[var(--public-teal)]">
-                <ArrowLeft size={17} weight="bold" aria-hidden="true" /> หน้าก่อน
-              </Link>
-            ) : <span />}
-            {storyPage.page < storyPage.totalPages ? (
-              <Link href={buildPublicStoryHref(query, { page: storyPage.page + 1 })} className="inline-flex min-h-11 items-center gap-2 rounded-[var(--public-radius-control)] bg-[var(--public-ink)] px-4 text-sm font-black text-white hover:bg-black">
-                หน้าถัดไป <ArrowRight size={17} weight="bold" aria-hidden="true" />
-              </Link>
-            ) : <span />}
-          </nav>
-        ) : null}
+        {/* 4. Editorial Bottom Participation Banner */}
+        <StoryEditorialCta />
       </PublicPageFrame>
+
+      {/* 5. Footer */}
       <SiteFooter />
     </div>
   );
