@@ -14,6 +14,7 @@ import {
 import { AccommodationHero } from "@/components/accommodations/AccommodationHero";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
 import { accommodationTypeLabel } from "@/lib/hospitality/labels";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import {
   listPublicAccommodationPage,
   PUBLIC_HOSPITALITY_MAX_PAGE,
@@ -105,12 +106,12 @@ export default async function AccommodationsPage({
     }),
     settingsService.getSetting("accommodations_page_hero", {
       title: "ที่พักในจังหวัดยะลา",
-      description: "เปรียบเทียบประเภทที่พัก ช่วงราคา และเลือกที่พักที่เหมาะกับแผนการเดินทางของคุณ",
+      description: "ค้นหาที่พักจากประเภท จังหวัด และช่วงราคาที่ผู้ดูแลเผยแพร่",
       image: "",
     }),
     settingsService.getSetting("accommodations_page_cta", {
       title: "วางแผนที่พักให้เหมาะกับทริปของคุณ",
-      subtitle: "เลือกประเภทที่พักให้ตรงกับสไตล์และงบประมาณ เพื่อการเดินทางที่คุ้มค่าและประทับใจ",
+      subtitle: "เลือกประเภทและช่วงราคาที่ตรงกับแผนการเดินทาง แล้วดูเส้นทางที่ทีมงานเผยแพร่",
       linkText: "ค้นหาเส้นทางท่องเที่ยว",
       linkUrl: "/routes",
       image: "",
@@ -142,10 +143,16 @@ export default async function AccommodationsPage({
   const title = launchSafeAttractionsCopy(heroSettings.title, "ที่พักในจังหวัดยะลา");
   const description = launchSafeAttractionsCopy(
     heroSettings.description,
-    "เปรียบเทียบประเภทที่พัก ช่วงราคา และเลือกที่พักที่เหมาะกับแผนการเดินทางของคุณ",
+    "ค้นหาที่พักจากประเภท จังหวัด และช่วงราคาที่ผู้ดูแลเผยแพร่",
   );
   const hasFilters = Boolean(query || accommodationType || province);
   const selectedTypeLabel = accommodationType ? accommodationTypeLabel(accommodationType) : undefined;
+  const firstAccommodationWithImage = accommodationPage.items.find((item) => item.imageUrl);
+  const managedHeroImageUrl = siteMediaImageUrl(heroSettings.image);
+  const heroImageUrl = managedHeroImageUrl || firstAccommodationWithImage?.imageUrl;
+  const heroImageAlt = managedHeroImageUrl
+    ? "ภาพบรรยากาศที่พักในจังหวัดยะลา"
+    : firstAccommodationWithImage?.imageAlt || "ภาพบรรยากาศที่พักในจังหวัดยะลา";
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-ink">
@@ -153,7 +160,8 @@ export default async function AccommodationsPage({
       <AccommodationHero
         title={title}
         description={description}
-        image={heroSettings.image}
+        imageUrl={heroImageUrl}
+        imageAlt={heroImageAlt}
       />
 
       {/* 2. Floating Search and Filter Bar */}
@@ -161,7 +169,6 @@ export default async function AccommodationsPage({
         query={query}
         accommodationType={accommodationType}
         province={province}
-        provinces={provinceOptions}
         types={ACCOMMODATION_TYPES}
       />
 
@@ -251,8 +258,8 @@ export default async function AccommodationsPage({
           }
           subtitle={
             !ctaSettings.subtitle || ctaSettings.subtitle.includes("เจ้าของ") || ctaSettings.subtitle.includes("ตรวจสอบ")
-              ? "เลือกประเภทที่พักให้ตรงกับสไตล์และงบประมาณ เพื่อการเดินทางที่คุ้มค่าและประทับใจ"
-              : launchSafeAttractionsCopy(ctaSettings.subtitle, "เลือกประเภทที่พักให้ตรงกับสไตล์และงบประมาณ เพื่อการเดินทางที่คุ้มค่าและประทับใจ")
+              ? "เลือกประเภทและช่วงราคาที่ตรงกับแผนการเดินทาง แล้วดูเส้นทางที่ทีมงานเผยแพร่"
+              : launchSafeAttractionsCopy(ctaSettings.subtitle, "เลือกประเภทและช่วงราคาที่ตรงกับแผนการเดินทาง แล้วดูเส้นทางที่ทีมงานเผยแพร่")
           }
           linkText={
             !ctaSettings.linkText || ctaSettings.linkText.includes("ติดต่อ") || ctaSettings.linkText.includes("ลงทะเบียน")

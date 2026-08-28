@@ -9,7 +9,6 @@ export interface AccommodationDiscoveryFiltersProps {
   query?: string;
   accommodationType?: string;
   province?: string;
-  provinces?: Array<{ value: string; label: string }>;
   types?: ReadonlyArray<{ value: string; label: string }>;
 }
 
@@ -17,11 +16,19 @@ export function AccommodationDiscoveryFilters({
   query,
   accommodationType,
   province,
-  provinces: _provinces = [],
   types = ACCOMMODATION_TYPES,
 }: AccommodationDiscoveryFiltersProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const hasFilters = Boolean(query || accommodationType || province);
+
+  const typeHref = (type?: string) => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (type) params.set("accommodationType", type);
+    if (province) params.set("province", province);
+    const queryString = params.toString();
+    return queryString ? `/accommodations?${queryString}` : "/accommodations";
+  };
 
   return (
     <div className="relative -mt-8 z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -48,7 +55,8 @@ export function AccommodationDiscoveryFilters({
           method="GET"
           className={mobileOpen ? "mt-4 block" : "hidden sm:block"}
         >
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1.8fr)_minmax(180px,1fr)_minmax(160px,0.9fr)_auto]">
+          {province ? <input type="hidden" name="province" value={province} /> : null}
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)_auto]">
             {/* Search Input */}
             <div className="relative">
               <label htmlFor="accommodation-search" className="sr-only">
@@ -87,21 +95,6 @@ export function AccommodationDiscoveryFilters({
               </select>
             </div>
 
-            {/* District / Scope Selector (Disabled to preserve Yala scope) */}
-            <div className="relative hidden sm:block">
-              <label htmlFor="accommodation-district" className="sr-only">
-                อำเภอ
-              </label>
-              <select
-                id="accommodation-district"
-                disabled
-                defaultValue="all"
-                className="w-full min-h-12 cursor-not-allowed rounded-xl border border-ink/10 bg-black/5 px-3.5 text-sm font-semibold text-muted"
-              >
-                <option value="all">ทุกอำเภอ (จ.ยะลา)</option>
-              </select>
-            </div>
-
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
               <button
@@ -131,7 +124,7 @@ export function AccommodationDiscoveryFilters({
           <div className="hide-scrollbar flex items-center gap-2 overflow-x-auto pb-1 text-xs">
             <span className="shrink-0 font-bold text-muted">ค้นหายอดนิยม:</span>
             <Link
-              href={query ? `/accommodations?q=${encodeURIComponent(query)}` : "/accommodations"}
+              href={typeHref()}
               className={
                 !accommodationType
                   ? "min-h-8 shrink-0 inline-flex items-center rounded-full px-3 py-1 font-bold bg-coral/10 text-coral border border-coral/30"
@@ -142,12 +135,7 @@ export function AccommodationDiscoveryFilters({
             </Link>
             {types.map((opt) => {
               const isActive = accommodationType === opt.value;
-              const params = new URLSearchParams();
-              if (query) params.set("q", query);
-              if (!isActive) params.set("accommodationType", opt.value);
-              if (province) params.set("province", province);
-              const queryString = params.toString();
-              const href = queryString ? `/accommodations?${queryString}` : "/accommodations";
+              const href = typeHref(isActive ? undefined : opt.value);
 
               return (
                 <Link
@@ -170,7 +158,7 @@ export function AccommodationDiscoveryFilters({
             className="inline-flex min-h-8 shrink-0 items-center justify-center gap-1.5 self-end rounded-full border border-orange-200 bg-orange-50/60 px-3.5 py-1 text-xs font-black text-coral transition-colors hover:bg-coral hover:text-white sm:self-auto"
           >
             <MapTrifold size={15} weight="bold" aria-hidden="true" />
-            <span>แผนที่</span>
+            <span>ดูเส้นทาง</span>
           </Link>
         </div>
       </div>

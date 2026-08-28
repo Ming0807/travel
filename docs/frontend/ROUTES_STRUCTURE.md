@@ -188,10 +188,14 @@ Mobile filters use a single disclosure control and preserve the same GET query
 contract as desktop.
 
 The accommodation result area uses an image-forward discovery layout with orange, white, and ink design tokens:
-a panoramic photographic hero with 4 value capsules, an elevated floating search and filter toolbar with quick type chips,
-a responsive 3-column accommodation grid with truthful price range and type badges, a functional sticky sidebar with route
-exploration, verified QR check-in entry (/checkin/try), and travel stories (/stories), and a bottom travel planning CTA band.
-The hero and bottom CTA remain independently managed directory surfaces from Admin Settings CMS.
+a panoramic photographic hero with 4 factual data capsules, an elevated floating search and type filter toolbar,
+a responsive 3-column accommodation grid, a functional sticky sidebar with route exploration, verified QR check-in entry
+(`/checkin/try`), and travel stories (`/stories`), and a bottom travel planning CTA band. The page does not expose district,
+proximity, booking, availability, review, newsletter, reward, or itinerary-generation controls until those production data
+contracts exist. Symbol-only price values such as `฿฿` are labelled as a price level; textual or numeric values are labelled
+as a stored price range. The hero and bottom CTA remain independently managed directory surfaces from Admin Settings CMS.
+When no CMS hero image is configured, the hero may use the first real managed image from the current published result set;
+it must not rely on a hardcoded storage file that may not exist.
 
 Admin category management lives at `/admin/restaurants/categories`. One restaurant may have multiple ordered categories. Draft records may be uncategorized, but publishing requires at least one active category. Categories referenced by restaurants are archived rather than hard-deleted.
 

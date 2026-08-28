@@ -17,6 +17,13 @@ function accommodationBadgeColor(type: string) {
   return "bg-coral text-white";
 }
 
+function accommodationPrice(value?: string) {
+  const normalized = value?.trim();
+  if (!normalized) return { label: "ช่วงราคา", value: "ยังไม่ระบุช่วงราคา" };
+  if (/^[฿$€£¥]{1,4}$/.test(normalized)) return { label: "ระดับราคา", value: normalized };
+  return { label: "ช่วงราคา", value: normalized };
+}
+
 export function AccommodationDiscoveryCard({
   accommodation,
   priority = false,
@@ -27,6 +34,7 @@ export function AccommodationDiscoveryCard({
   const href = `/accommodations/${accommodation.slug}`;
   const typeLabel = accommodationTypeLabel(accommodation.accommodationType);
   const displayImage = accommodation.thumbnailUrl || accommodation.imageUrl;
+  const price = accommodationPrice(accommodation.priceRange);
 
   return (
     <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-orange-100/80 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-coral/40 hover:shadow-xl hover:shadow-orange-500/10">
@@ -96,9 +104,9 @@ export function AccommodationDiscoveryCard({
         {/* Real Price Range (Truthful data from DB, no fake rating/reviews) */}
         <div className="mt-3.5 flex items-center gap-1.5 text-xs font-bold text-ink">
           <Wallet size={15} weight="bold" className="shrink-0 text-coral" aria-hidden="true" />
-          <span className="text-muted">ช่วงราคา:</span>
+          <span className="text-muted">{price.label}:</span>
           <span className="font-black text-ink">
-            {accommodation.priceRange || "ยังไม่ระบุช่วงราคา"}
+            {price.value}
           </span>
         </div>
 

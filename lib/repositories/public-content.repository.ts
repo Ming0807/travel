@@ -2221,7 +2221,7 @@ function mapAccommodationRow(
     description: text(row.description_th, text(row.description_en, "")),
     imageUrl: publicManagedImage(row),
     thumbnailUrl: publicManagedImage(row, thumbnailByStoragePath),
-    imageAlt: `${name} accommodation image`,
+    imageAlt: `ภาพที่พัก${name}`,
     priceRange: text(row.price_range),
     latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
     longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),

@@ -65,8 +65,8 @@ describe("accommodation directory UI", () => {
 
     expect(screen.getByRole("heading", { name: /ที่พัก.*ในจังหวัดยะลา/ })).toBeInTheDocument();
     expect(screen.getByText("หน้าแรก")).toBeInTheDocument();
-    expect(screen.getByText("คัดสรรโดย")).toBeInTheDocument();
-    expect(screen.getByText("ผู้ดูแลระบบ")).toBeInTheDocument();
+    expect(screen.getByText("ข้อมูลที่เผยแพร่")).toBeInTheDocument();
+    expect(screen.getByText(/โดยผู้ดูแลระบบ/)).toBeInTheDocument();
     expect(screen.queryByText(/จองทันที|ว่างพร้อมจอง|ดาวน์โหลดแอป/)).not.toBeInTheDocument();
   });
 
@@ -96,11 +96,12 @@ describe("accommodation directory UI", () => {
     );
   });
 
-  it("renders AccommodationDiscoveryFilters preserving query across chips and map action", () => {
+  it("renders AccommodationDiscoveryFilters preserving query and province across real actions", () => {
     render(
       <AccommodationDiscoveryFilters
         query="เมืองยะลา"
         accommodationType="Hotel"
+        province="Yala"
         types={[
           { value: "Hotel", label: "โรงแรม" },
           { value: "Resort", label: "รีสอร์ต" },
@@ -110,10 +111,13 @@ describe("accommodation directory UI", () => {
 
     expect(screen.getByPlaceholderText("ค้นหาชื่อที่พัก หรือคำที่สนใจ...")).toHaveValue("เมืองยะลา");
     expect(screen.getByRole("button", { name: "ค้นหาที่พัก" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "แผนที่" })).toHaveAttribute("href", "/routes");
+    expect(screen.getByRole("link", { name: "ดูเส้นทาง" })).toHaveAttribute("href", "/routes");
+    expect(screen.queryByRole("combobox", { name: /อำเภอ/ })).not.toBeInTheDocument();
+    expect(document.querySelector('input[name="province"]')).toHaveValue("Yala");
 
     const hotelChip = screen.getByRole("link", { name: "โรงแรม" });
-    expect(hotelChip).toBeInTheDocument();
+    expect(hotelChip.getAttribute("href")).toContain("q=%E0%B9%80%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%87%E0%B8%A2%E0%B8%B0%E0%B8%A5%E0%B8%B2");
+    expect(hotelChip.getAttribute("href")).toContain("province=Yala");
   });
 
   it("renders the featured result as verified accommodation information without booking claims", () => {
@@ -169,6 +173,17 @@ describe("accommodation directory UI", () => {
     expect(screen.getByText(`ยังไม่มีภาพของ${accommodationNoPriceNoImage.name}`)).toBeInTheDocument();
   });
 
+  it("labels symbolic price data as a level instead of a numeric range", () => {
+    render(
+      <AccommodationDiscoveryCard
+        accommodation={{ ...accommodation, priceRange: "฿฿" }}
+      />,
+    );
+
+    expect(screen.getByText("ระดับราคา:")).toBeInTheDocument();
+    expect(screen.getByText("฿฿")).toBeInTheDocument();
+  });
+
   it("renders AccommodationSidebar with valid public checkin entry and functional route/story links", () => {
     render(<AccommodationSidebar />);
 
@@ -184,6 +199,7 @@ describe("accommodation directory UI", () => {
       "href",
       "/stories",
     );
+    expect(screen.queryByText(/ของรางวัลพิเศษ/)).not.toBeInTheDocument();
   });
 
   it("renders AccommodationDiscoveryCta with truthful benefits and route exploration link", () => {
@@ -197,7 +213,8 @@ describe("accommodation directory UI", () => {
     );
 
     expect(screen.getByRole("heading", { name: "วางแผนที่พักให้เหมาะกับทริปของคุณ" })).toBeInTheDocument();
-    expect(screen.getByText("เปรียบเทียบช่วงราคาชัดเจน")).toBeInTheDocument();
+    expect(screen.getByText("อ่านช่วงราคาที่ผู้ดูแลระบุ")).toBeInTheDocument();
+    expect(screen.queryByText(/ใกล้แหล่งท่องเที่ยว|จัดเส้นทางให้อัตโนมัติ/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /ค้นหาเส้นทางท่องเที่ยว/ })).toHaveAttribute(
       "href",
       "/routes",

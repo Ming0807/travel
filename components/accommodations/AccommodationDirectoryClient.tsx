@@ -18,7 +18,7 @@ export function AccommodationDirectoryClient({
             <AccommodationDiscoveryCard
               key={accommodation.slug}
               accommodation={accommodation}
-              priority={idx < 3}
+              priority={idx === 0}
             />
           ))}
         </div>

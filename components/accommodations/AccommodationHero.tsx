@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CaretRight, CheckCircle, Heart, House, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, Database, Funnel, MapPin, Wallet } from "@phosphor-icons/react/dist/ssr";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 export interface AccommodationHeroProps {
@@ -15,20 +15,20 @@ export interface AccommodationHeroProps {
 
 export function AccommodationHero({
   title = "ที่พักในจังหวัดยะลา",
-  description = "เปรียบเทียบประเภทที่พัก ช่วงราคา และเลือกที่พักที่เหมาะกับแผนการเดินทางของคุณ",
+  description = "ค้นหาที่พักจากประเภท จังหวัด และช่วงราคาที่ผู้ดูแลเผยแพร่",
   scope: _scope = "ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา",
   image,
   imageUrl: directImageUrl,
   imageAlt = "บรรยากาศที่พักและการท่องเที่ยวในจังหวัดยะลา",
   imageContext: _imageContext,
 }: AccommodationHeroProps) {
-  const resolvedImageUrl = directImageUrl || siteMediaImageUrl(image) || "/site-media/general/hero-1.webp";
+  const resolvedImageUrl = directImageUrl || siteMediaImageUrl(image);
 
   const featureBadges = [
-    { icon: CheckCircle, label: "คัดสรรโดย", sublabel: "ผู้ดูแลระบบ" },
-    { icon: House, label: "บรรยากาศ", sublabel: "น่าพักผ่อน" },
-    { icon: MapPin, label: "ทำเลเดินทาง", sublabel: "สะดวกสบาย" },
-    { icon: Heart, label: "เหมาะกับทุกสไตล์", sublabel: "การพักผ่อน" },
+    { icon: Database, label: "ข้อมูลที่เผยแพร่", sublabel: "โดยผู้ดูแลระบบ" },
+    { icon: Funnel, label: "ค้นหาตามประเภท", sublabel: "โรงแรม รีสอร์ต และอื่น ๆ" },
+    { icon: MapPin, label: "ขอบเขตข้อมูล", sublabel: "จังหวัดยะลา" },
+    { icon: Wallet, label: "ช่วงราคา", sublabel: "แสดงตามข้อมูลที่มี" },
   ];
 
   return (
@@ -55,7 +55,6 @@ export function AccommodationHero({
       <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#1E1B18]/95 via-[#1E1B18]/75 to-transparent" />
 
       {/* Decorative Thai Geometric Motif Accent */}
-      <div className="pointer-events-none absolute -right-16 -top-16 z-0 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl" />
       <div className="pointer-events-none absolute right-12 top-12 z-0 hidden text-amber-400/15 lg:block">
         <svg width="200" height="200" viewBox="0 0 100 100" fill="currentColor">
           <path d="M50 0 L61 39 L100 50 L61 61 L50 100 L39 61 L0 50 L39 39 Z" opacity="0.4" />
@@ -106,11 +105,11 @@ export function AccommodationHero({
 
           {/* 4 Feature Badges Strip */}
           <div className="mt-8 grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:gap-3.5">
-            {featureBadges.map((badge, idx) => {
+            {featureBadges.map((badge) => {
               const Icon = badge.icon;
               return (
                 <div
-                  key={idx}
+                  key={badge.label}
                   className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 backdrop-blur-md transition-all hover:bg-white/20"
                 >
                   <div className="grid size-6 place-items-center rounded-full bg-orange-500 text-white shadow-xs">
