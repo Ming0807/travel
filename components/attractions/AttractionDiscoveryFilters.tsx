@@ -8,16 +8,29 @@ import type { PublicSelectOption } from "@/components/public/PublicFields";
 export interface AttractionDiscoveryFiltersProps {
   query?: string;
   selectedType?: string;
+  selectedDistrict?: string;
   typeOptions: PublicSelectOption[];
+  districtOptions: PublicSelectOption[];
 }
 
 export function AttractionDiscoveryFilters({
   query,
   selectedType,
+  selectedDistrict,
   typeOptions,
+  districtOptions,
 }: AttractionDiscoveryFiltersProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const hasFilters = Boolean(query || selectedType);
+  const hasFilters = Boolean(query || selectedType || selectedDistrict);
+
+  const typeHref = (type?: string) => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (type) params.set("type", type);
+    if (selectedDistrict) params.set("district", selectedDistrict);
+    const value = params.toString();
+    return value ? `/attractions?${value}` : "/attractions";
+  };
 
   return (
     <div className="relative -mt-8 z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -83,18 +96,21 @@ export function AttractionDiscoveryFilters({
               </select>
             </div>
 
-            {/* District / Scope Visual Selector (Disabled to preserve Yala scope) */}
-            <div className="relative hidden sm:block">
+            {/* District Select */}
+            <div className="relative">
               <label htmlFor="attraction-district" className="sr-only">
                 อำเภอ
               </label>
               <select
                 id="attraction-district"
-                disabled
-                defaultValue="all"
-                className="w-full min-h-12 cursor-not-allowed rounded-xl border border-ink/10 bg-black/5 px-3.5 text-sm font-semibold text-muted"
+                name="district"
+                defaultValue={selectedDistrict ?? ""}
+                className="w-full min-h-12 rounded-xl border border-ink/15 bg-cream/40 px-3.5 text-sm font-semibold text-ink transition-all focus:border-coral focus:bg-white focus:outline-none focus:ring-2 focus:ring-coral/20"
               >
-                <option value="all">ทุกอำเภอ (จ.ยะลา)</option>
+                <option value="">ทุกอำเภอ (จ.ยะลา)</option>
+                {districtOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </div>
 
@@ -127,7 +143,7 @@ export function AttractionDiscoveryFilters({
           <div className="hide-scrollbar flex items-center gap-2 overflow-x-auto pb-1 text-xs">
             <span className="shrink-0 font-bold text-muted">ค้นหายอดนิยม:</span>
             <Link
-              href="/attractions"
+              href={typeHref()}
               className={
                 !selectedType
                   ? "min-h-8 shrink-0 inline-flex items-center rounded-full px-3 py-1 font-bold bg-coral/10 text-coral border border-coral/30"
@@ -138,7 +154,7 @@ export function AttractionDiscoveryFilters({
             </Link>
             {typeOptions.map((opt) => {
               const isActive = selectedType === opt.value;
-              const href = isActive ? "/attractions" : `/attractions?type=${encodeURIComponent(opt.value)}`;
+              const href = typeHref(isActive ? undefined : opt.value);
               return (
                 <Link
                   key={opt.value}
@@ -160,7 +176,7 @@ export function AttractionDiscoveryFilters({
             className="inline-flex min-h-8 shrink-0 items-center justify-center gap-1.5 self-end rounded-full border border-orange-200 bg-orange-50/60 px-3.5 py-1 text-xs font-black text-coral transition-colors hover:bg-coral hover:text-white sm:self-auto"
           >
             <MapTrifold size={15} weight="bold" aria-hidden="true" />
-            <span>แผนที่</span>
+            <span>ดูเส้นทาง</span>
           </Link>
         </div>
       </div>

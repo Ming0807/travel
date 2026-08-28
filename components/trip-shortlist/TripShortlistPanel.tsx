@@ -4,6 +4,7 @@ import { ArrowRight, BookmarkSimple, MapPin, Trash } from "@phosphor-icons/react
 import Image from "next/image";
 import Link from "next/link";
 
+import { createTripPlanHref } from "@/lib/trip-shortlist/navigation";
 import { useTripShortlist } from "./TripShortlistProvider";
 
 export interface TripShortlistItem {
@@ -22,6 +23,7 @@ export function TripShortlistPanel({ items }: { items: TripShortlistItem[] }) {
   const { slugs, hydrated, remove, clear } = useTripShortlist();
   const visibleItems = items.filter((item) => slugs.includes(item.slug));
   const count = hydrated ? slugs.length : 0;
+  const planningHref = createTripPlanHref(slugs);
 
   return (
     <aside
@@ -106,10 +108,10 @@ export function TripShortlistPanel({ items }: { items: TripShortlistItem[] }) {
       )}
 
       <Link
-        href="/routes"
+        href={planningHref}
         className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 text-xs font-black text-white shadow-xs transition-opacity hover:opacity-95"
       >
-        <span>ดูเส้นทางแนะนำ</span>
+        <span>{count > 0 ? "วางแผนจากรายการนี้" : "ดูเส้นทางแนะนำ"}</span>
         <ArrowRight aria-hidden="true" size={15} weight="bold" />
       </Link>
     </aside>

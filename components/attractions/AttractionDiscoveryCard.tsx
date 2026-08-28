@@ -3,6 +3,7 @@
 import { MapPin, QrCode, Star } from "@phosphor-icons/react";
 import Link from "next/link";
 
+import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
 import { PublicMissingImage } from "@/components/public/directory/PublicMissingImage";
 import { TripShortlistButton } from "@/components/trip-shortlist/TripShortlistButton";
@@ -128,13 +129,12 @@ export function AttractionDiscoveryCard({
           >
             ดูรายละเอียด
           </Link>
-          <Link
-            href={`/c/${attraction.slug}`}
+          <PublicCheckinEntryLink
             className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-3 text-xs font-black text-white shadow-xs transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
           >
             <QrCode size={15} weight="bold" aria-hidden="true" />
-            <span>เช็กอิน</span>
-          </Link>
+            <span>เริ่มเช็กอิน</span>
+          </PublicCheckinEntryLink>
         </div>
       </div>
     </article>

@@ -72,6 +72,7 @@ export type PublicAttractionCard = Omit<AttractionCard, "rating" | "reviewCount"
 export type PublicAttractionPageInput = {
   query?: string;
   province?: "Yala";
+  districtId?: number;
   type?: string;
   page: number;
   pageSize: number;
@@ -82,6 +83,11 @@ export type PublicAttractionPage = {
   total: number;
   page: number;
   pageCount: number;
+};
+
+export type PublicAttractionDistrictOption = {
+  value: string;
+  label: string;
 };
 
 export type PublicStoryCard = {
@@ -682,6 +688,10 @@ export async function listPublicAttractionPage(
     query = query.eq("provinces.province_name_en", provinceFilter);
   }
 
+  if (Number.isSafeInteger(input.districtId) && Number(input.districtId) > 0) {
+    query = query.eq("district_id", Number(input.districtId));
+  }
+
   if (input.type) {
     query = query
       .eq("category_filter.attraction_types.type_name_en", input.type)
@@ -711,6 +721,28 @@ export async function listPublicAttractionPage(
     page,
     pageCount: total > 0 ? Math.ceil(total / pageSize) : 0,
   };
+}
+
+export async function listPublicAttractionDistrictOptions(): Promise<PublicAttractionDistrictOption[]> {
+  const supabase = await createSupabaseServerClient();
+  const liveProvinceIds = await listLiveDestinationProvinceIds();
+  if (liveProvinceIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("districts")
+    .select("district_id, district_name_th, district_name_en")
+    .in("province_id", liveProvinceIds)
+    .eq("is_active", true)
+    .order("district_name_th", { ascending: true });
+
+  if (error) throw new Error("PUBLIC_ATTRACTION_DISTRICTS_FAILED");
+
+  return ((data ?? []) as DbRecord[])
+    .map((row) => ({
+      value: String(numberValue(row.district_id, 0)),
+      label: text(row.district_name_th, text(row.district_name_en)),
+    }))
+    .filter((option) => option.value !== "0" && option.label.length > 0);
 }
 
 async function loadAttractionDetail(

@@ -62,10 +62,15 @@ their job is reading or inspecting one record, not comparing a directory.
 
 Restaurant category navigation is derived from `restaurant_categories` and assignments to active, published restaurants in the current destination scope. Empty categories are omitted. Featured categories appear in the top navigation; every non-empty active category appears in the desktop sidebar and mobile filter. Category URLs use `category=<slug>`. Legacy `foodType` links redirect to a managed category when possible.
 
-`/attractions` also supports a guest-only "ทริปของฉัน" shortlist. It stores at
-most 20 attraction slugs in versioned browser local storage, does not create a
-tourist or research record, and links to the real `/routes` directory for the
-next planning step. It must never claim to generate an itinerary.
+`/attractions` uses one consistent result grid rather than promoting an arbitrary
+first record. Search, managed attraction type, and live-destination district are
+server-side URL filters and remain active across pagination. The page also
+supports a guest-only "ทริปของฉัน" shortlist. It stores at most 20 attraction
+slugs in versioned browser local storage and does not create a tourist or
+research record. The next step sends the selected slugs to `/routes`, resolves
+only attractions that are still active and published, preserves the selected
+order, and can open up to ten stops in Google Maps. This is a planning handoff,
+not a claim that the platform optimizes or generates an itinerary.
 
 ---
 

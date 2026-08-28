@@ -86,8 +86,11 @@ describe("trip shortlist UI", () => {
 
     expect(await screen.findByText("เขื่อนบางลาง")).toBeVisible();
     expect(screen.getAllByText("1 สถานที่ในทริป")).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: "ดูเส้นทางแนะนำ" })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: "ดูเส้นทางแนะนำ" })[0]).toHaveAttribute("href", "/routes");
+    expect(screen.getAllByRole("link", { name: "วางแผนจากรายการนี้" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "วางแผนจากรายการนี้" })[0]).toHaveAttribute(
+      "href",
+      "/routes?selected=bang-lang-dam",
+    );
     expect(screen.queryByText("สร้างเส้นทาง")).not.toBeInTheDocument();
   });
 });

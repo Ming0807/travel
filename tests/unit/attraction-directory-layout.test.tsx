@@ -24,7 +24,7 @@ function attraction(slug: string, name: string, imageUrl: string | null): Public
 }
 
 describe("attraction directory layout", () => {
-  it("renders one eligible featured attraction, standard results, and real save actions", () => {
+  it("renders every attraction in one consistent grid with real save actions", () => {
     render(
       <AttractionDirectoryClient
         items={[
@@ -32,11 +32,11 @@ describe("attraction directory layout", () => {
           attraction("aiyerweng-skywalk", "สกายวอล์คอัยเยอร์เวง", "/site-media/aiyerweng.webp"),
           attraction("yala-city-pillar", "ศาลหลักเมืองยะลา", "/site-media/city-pillar.webp"),
         ]}
-        featuredSlug="aiyerweng-skywalk"
       />,
     );
 
-    expect(screen.getByText("สถานที่แนะนำ")).toBeVisible();
+    expect(screen.queryByText("สถานที่แนะนำ")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(3);
     expect(screen.getAllByRole("link", { name: /สกายวอล์คอัยเยอร์เวง/ })[0]).toHaveAttribute("href", "/attractions/aiyerweng-skywalk");
     expect(screen.getByRole("button", { name: "บันทึกสกายวอล์คอัยเยอร์เวงไว้ในทริป" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("img", { name: "ยังไม่มีภาพของเขื่อนบางลาง" })).toBeVisible();
@@ -48,7 +48,6 @@ describe("attraction directory layout", () => {
     render(
       <AttractionDirectoryClient
         items={[attraction("bang-lang-dam", "เขื่อนบางลาง", null)]}
-        featuredSlug={null}
       />,
     );
 

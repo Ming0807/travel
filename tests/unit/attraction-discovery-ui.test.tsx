@@ -38,11 +38,14 @@ describe("AttractionDiscoveryFilters", () => {
           { value: "Nature", label: "ธรรมชาติ" },
           { value: "Culture", label: "วัฒนธรรม" },
         ]}
+        selectedDistrict="7"
+        districtOptions={[{ value: "7", label: "เบตง" }]}
       />,
     );
 
     expect(screen.getByLabelText("ค้นหาสถานที่")).toHaveValue("ทะเลหมอก");
     expect(screen.getByLabelText("ประเภทสถานที่")).toHaveValue("Nature");
+    expect(screen.getByLabelText("อำเภอ")).toHaveValue("7");
     expect(screen.getByRole("button", { name: "ค้นหาสถานที่" })).toHaveAttribute("type", "submit");
     expect(screen.getByRole("link", { name: "ล้างตัวกรอง" })).toHaveAttribute("href", "/attractions");
     expect(container.querySelector('input[name="page"]')).not.toBeInTheDocument();
@@ -50,7 +53,7 @@ describe("AttractionDiscoveryFilters", () => {
   });
 
   it("does not show a clear action before the user applies a filter", () => {
-    render(<AttractionDiscoveryFilters typeOptions={[]} />);
+    render(<AttractionDiscoveryFilters typeOptions={[]} districtOptions={[]} />);
 
     expect(screen.queryByRole("link", { name: "ล้างตัวกรอง" })).not.toBeInTheDocument();
   });
@@ -110,13 +113,15 @@ describe("resolveAttractionTypeOptions", () => {
 describe("AttractionDiscoveryCta", () => {
   it("renders every CMS-managed banner field on the public page", () => {
     render(
-      <AttractionDiscoveryCta
-        title="วางแผนต่อจากสถานที่ที่เลือก"
-        subtitle="ดูเส้นทางที่เชื่อมสถานที่ในยะลา"
-        linkText="ดูเส้นทางแนะนำ"
-        linkUrl="/routes"
-        image="general/routes-banner.webp"
-      />,
+      <TripShortlistProvider>
+        <AttractionDiscoveryCta
+          title="วางแผนต่อจากสถานที่ที่เลือก"
+          subtitle="ดูเส้นทางที่เชื่อมสถานที่ในยะลา"
+          linkText="ดูเส้นทางแนะนำ"
+          linkUrl="/routes"
+          image="general/routes-banner.webp"
+        />
+      </TripShortlistProvider>,
     );
 
     expect(screen.getByRole("heading", { name: "วางแผนต่อจากสถานที่ที่เลือก" })).toBeInTheDocument();

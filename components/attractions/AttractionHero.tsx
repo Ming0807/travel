@@ -7,20 +7,22 @@ export interface AttractionHeroProps {
   title?: string;
   description?: string;
   image?: string;
+  scope?: string;
 }
 
 export function AttractionHero({
   title = "สถานที่ท่องเที่ยวในจังหวัดยะลา",
   description = "ค้นพบสถานที่ท่องเที่ยวที่น่าประทับใจในจังหวัดยะลา วัฒนธรรม ธรรมชาติ และวิถีชีวิตที่มีเอกลักษณ์",
   image,
+  scope,
 }: AttractionHeroProps) {
-  const heroImageUrl = siteMediaImageUrl(image) || "/site-media/general/hero-1.webp";
+  const heroImageUrl = siteMediaImageUrl(image);
 
   const featureBadges = [
-    { icon: Sparkle, label: "สถานที่คัดสรร", sublabel: "คุณภาพ" },
-    { icon: ClockCounterClockwise, label: "ข้อมูลอัปเดต", sublabel: "เป็นปัจจุบัน" },
-    { icon: MapPin, label: "เช็กอินสะสมแต้ม", sublabel: "รับสิทธิประโยชน์" },
-    { icon: ShieldCheck, label: "ปลอดภัย", sublabel: "เดินทางอุ่นใจ" },
+    { icon: Sparkle, label: "สถานที่เผยแพร่", sublabel: "โดยทีมงาน" },
+    { icon: ClockCounterClockwise, label: "ข้อมูลสำหรับ", sublabel: "เตรียมเดินทาง" },
+    { icon: MapPin, label: "เช็กอินหน้างาน", sublabel: "สะสมตราและคะแนน" },
+    { icon: ShieldCheck, label: "ตรวจรายละเอียด", sublabel: "ก่อนออกเดินทาง" },
   ];
 
   return (
@@ -32,7 +34,8 @@ export function AttractionHero({
             src={heroImageUrl}
             alt="ทิวทัศน์สถานที่ท่องเที่ยวจังหวัดยะลา"
             fill
-            priority
+            loading="eager"
+            fetchPriority="high"
             className="object-cover object-[center_35%]"
             sizes="100vw"
           />
@@ -86,6 +89,8 @@ export function AttractionHero({
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/90 sm:text-base lg:text-lg">
             {description}
           </p>
+
+          {scope ? <p className="mt-3 text-xs font-bold text-amber-200">{scope}</p> : null}
 
           {/* 4 Feature Badges Strip */}
           <div className="mt-8 grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:gap-3.5">

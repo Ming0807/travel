@@ -7,9 +7,11 @@ import { PublicEmptyState, PublicErrorState } from "@/components/public/PublicSt
 import { PublicDirectoryIntro } from "@/components/public/directory/PublicDirectoryIntro";
 import { PublicResultSummary } from "@/components/public/directory/PublicResultSummary";
 import { PublicRouteCard } from "@/components/routes/PublicRouteCard";
+import { SelectedTripPlan } from "@/components/routes/SelectedTripPlan";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
-import { listPublicRoutes } from "@/lib/repositories/public-content.repository";
+import { listPublicAttractionCards, listPublicRoutes } from "@/lib/repositories/public-content.repository";
 import { SettingsService } from "@/lib/services/settings.service";
+import { parseTripPlanSelection } from "@/lib/trip-shortlist/navigation";
 
 export const revalidate = 60;
 
@@ -19,9 +21,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/routes" },
 };
 
-export default async function RoutesPage() {
+type SearchParams = Record<string, string | string[] | undefined>;
+
+export default async function RoutesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedParams = await searchParams;
+  const selectedParam = typeof resolvedParams.selected === "string" ? resolvedParams.selected : undefined;
+  const selectedSlugs = parseTripPlanSelection(selectedParam);
   const settingsService = new SettingsService();
-  const [routeState, heroSettings] = await Promise.all([
+  const [routeState, heroSettings, selectedAttractions] = await Promise.all([
     listPublicRoutes(24)
       .then((items) => ({ items, loadError: false }))
       .catch(() => ({ items: [], loadError: true })),
@@ -29,6 +36,14 @@ export default async function RoutesPage() {
       title: "เส้นทางท่องเที่ยวแนะนำในยะลา",
       description: "เลือกแผนการเดินทางจากจุดแวะที่ทีมงานจัดลำดับไว้ แล้วเปิดรายละเอียดของแต่ละสถานที่ก่อนออกเดินทาง",
     }),
+    selectedSlugs.length > 0
+      ? listPublicAttractionCards(selectedSlugs.length, {
+          featuredSlugs: selectedSlugs,
+          exactFeaturedOnly: true,
+          includeReviewSummaries: false,
+          preferThumbnails: true,
+        })
+      : Promise.resolve([]),
   ]);
   const routes = routeState.items;
   const title = launchSafeAttractionsCopy(heroSettings.title, "เส้นทางท่องเที่ยวแนะนำในยะลา");
@@ -46,6 +61,8 @@ export default async function RoutesPage() {
           description={description}
           scope="ทุกจุดแวะเชื่อมกับหน้าสถานที่ที่เผยแพร่จริง"
         />
+
+        {selectedSlugs.length > 0 ? <SelectedTripPlan attractions={selectedAttractions} /> : null}
 
         <section aria-labelledby="routes-result-heading" className="mt-9">
           <div className="border-b border-black/10 pb-4">

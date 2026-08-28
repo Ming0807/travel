@@ -4,6 +4,7 @@ vi.mock("server-only", () => ({}));
 
 const {
   attractionQuery,
+  districtQuery,
   mediaQuery,
   reviewQuery,
   supabaseClient,
@@ -17,11 +18,13 @@ const {
   };
 
   const attractions = builder(["select", "eq", "in", "or", "order", "range"]);
+  const districts = builder(["select", "in", "eq", "order"]);
   const media = builder(["select", "in"]);
   const reviews = builder(["select", "in", "eq", "is"]);
   const client = {
     from: vi.fn((table: string) => {
       if (table === "attractions") return attractions;
+      if (table === "districts") return districts;
       if (table === "media_assets") return media;
       if (table === "reviews") return reviews;
       throw new Error(`Unexpected table: ${table}`);
@@ -30,6 +33,7 @@ const {
 
   return {
     attractionQuery: attractions,
+    districtQuery: districts,
     mediaQuery: media,
     reviewQuery: reviews,
     supabaseClient: client,
@@ -47,7 +51,7 @@ vi.mock("@/lib/repositories/destination-scope.repository", () => ({
   listLiveDestinationProvinceIds: vi.fn().mockResolvedValue([1]),
 }));
 
-import { listPublicAttractionPage } from "@/lib/repositories/public-content.repository";
+import { listPublicAttractionDistrictOptions, listPublicAttractionPage } from "@/lib/repositories/public-content.repository";
 
 const attractionRow = {
   attraction_id: 11,
@@ -81,6 +85,10 @@ describe("listPublicAttractionPage", () => {
     ["select", "eq", "in", "or", "order"].forEach((method) => {
       attractionQuery[method].mockReturnValue(attractionQuery);
     });
+    ["select", "in", "eq"].forEach((method) => {
+      districtQuery[method].mockReturnValue(districtQuery);
+    });
+    districtQuery.order.mockResolvedValue({ data: [], error: null });
     mediaQuery.select.mockReturnValue(mediaQuery);
     reviewQuery.select.mockReturnValue(reviewQuery);
     reviewQuery.in.mockReturnValue(reviewQuery);
@@ -101,6 +109,7 @@ describe("listPublicAttractionPage", () => {
     const result = await listPublicAttractionPage({
       query: "น้ำตก%_,",
       province: "Yala",
+      districtId: 7,
       type: "Nature",
       page: 2,
       pageSize: 6,
@@ -120,6 +129,7 @@ describe("listPublicAttractionPage", () => {
     expect(attractionQuery.eq).toHaveBeenCalledWith("is_active", true);
     expect(attractionQuery.in).toHaveBeenCalledWith("province_id", [1]);
     expect(attractionQuery.eq).toHaveBeenCalledWith("provinces.province_name_en", "Yala");
+    expect(attractionQuery.eq).toHaveBeenCalledWith("district_id", 7);
     expect(attractionQuery.select).toHaveBeenCalledWith(
       expect.stringContaining("category_filter:attraction_type_assignments!inner"),
       { count: "exact" },
@@ -223,5 +233,24 @@ describe("listPublicAttractionPage", () => {
     await expect(
       listPublicAttractionPage({ page: 1, pageSize: 12 }),
     ).rejects.toThrow("PUBLIC_ATTRACTION_LIST_FAILED");
+  });
+
+  it("lists active districts only inside the live destination scope", async () => {
+    districtQuery.order.mockResolvedValue({
+      data: [
+        { district_id: 7, district_name_th: "เบตง", district_name_en: "Betong" },
+        { district_id: 8, district_name_th: "", district_name_en: "Bannang Sata" },
+      ],
+      error: null,
+    });
+
+    const result = await listPublicAttractionDistrictOptions();
+
+    expect(districtQuery.in).toHaveBeenCalledWith("province_id", [1]);
+    expect(districtQuery.eq).toHaveBeenCalledWith("is_active", true);
+    expect(result).toEqual([
+      { value: "7", label: "เบตง" },
+      { value: "8", label: "Bannang Sata" },
+    ]);
   });
 });

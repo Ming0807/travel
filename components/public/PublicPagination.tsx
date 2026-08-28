@@ -74,6 +74,7 @@ export function PublicPagination({
               aria-label={previousLabel}
             >
               <CaretLeft size={16} weight="bold" aria-hidden="true" />
+              <span className="sr-only">{previousLabel}</span>
             </Link>
           ) : (
             <span
@@ -82,6 +83,7 @@ export function PublicPagination({
               aria-label={previousLabel}
             >
               <CaretLeft size={16} weight="bold" aria-hidden="true" />
+              <span className="sr-only" aria-disabled="true">{previousLabel}</span>
             </span>
           )}
         </li>
@@ -123,6 +125,7 @@ export function PublicPagination({
               aria-label={nextLabel}
             >
               <CaretRight size={16} weight="bold" aria-hidden="true" />
+              <span className="sr-only">{nextLabel}</span>
             </Link>
           ) : (
             <span
@@ -131,6 +134,7 @@ export function PublicPagination({
               aria-label={nextLabel}
             >
               <CaretRight size={16} weight="bold" aria-hidden="true" />
+              <span className="sr-only" aria-disabled="true">{nextLabel}</span>
             </span>
           )}
         </li>

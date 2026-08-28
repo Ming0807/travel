@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AttractionDirectoryClient } from "@/components/attractions/AttractionDirectoryClient";
-import { AttractionDiscoveryCta } from "@/components/attractions/AttractionDiscoveryCta";
 import { AttractionDiscoveryFilters } from "@/components/attractions/AttractionDiscoveryFilters";
 import { AttractionHero } from "@/components/attractions/AttractionHero";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -11,10 +10,9 @@ import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicPagination } from "@/components/public/PublicPagination";
 import { PublicEmptyState } from "@/components/public/PublicStates";
 import { PublicResultSummary } from "@/components/public/directory/PublicResultSummary";
-import { launchSafeAttractionsCopy, safeAttractionsBannerHref } from "@/lib/attractions/discovery-copy";
+import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
 import { resolveAttractionTypeOptions } from "@/lib/attractions/discovery-query";
-import { selectFeaturedAttraction } from "@/lib/attractions/featured-result";
-import { listPublicAttractionPage, PUBLIC_ATTRACTION_MAX_PAGE } from "@/lib/repositories/public-content.repository";
+import { listPublicAttractionDistrictOptions, listPublicAttractionPage, PUBLIC_ATTRACTION_MAX_PAGE } from "@/lib/repositories/public-content.repository";
 import { SettingsService } from "@/lib/services/settings.service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -38,10 +36,17 @@ function parsePage(value?: string) {
   return Number.isSafeInteger(parsed) && parsed > 0 && parsed <= PUBLIC_ATTRACTION_MAX_PAGE ? parsed : 1;
 }
 
-function attractionDiscoveryHref({ query, type, page }: { query?: string; type?: string; page?: number }) {
+function parsePositiveId(value?: string) {
+  if (!value || !/^\d+$/.test(value)) return undefined;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function attractionDiscoveryHref({ query, type, district, page }: { query?: string; type?: string; district?: string; page?: number }) {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   if (type) params.set("type", type);
+  if (district) params.set("district", district);
   if (page && page > 1) params.set("page", String(page));
   const queryString = params.toString();
   return queryString ? `/attractions?${queryString}` : "/attractions";
@@ -53,16 +58,19 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
   const requestedType = getParam(resolvedParams, "type");
   const requestedProvince = getParam(resolvedParams, "province");
   const requestedPage = getParam(resolvedParams, "page");
+  const requestedDistrict = getParam(resolvedParams, "district");
+  const districtId = parsePositiveId(requestedDistrict);
   const page = parsePage(requestedPage);
 
   if (requestedProvince || (requestedPage !== undefined && requestedPage !== String(page))) {
-    redirect(attractionDiscoveryHref({ query, type: requestedType, page }));
+    redirect(attractionDiscoveryHref({ query, type: requestedType, district: requestedDistrict, page }));
   }
+  if (requestedDistrict && !districtId) redirect(attractionDiscoveryHref({ query, type: requestedType, page }));
 
   const settingsService = new SettingsService();
   const supabase = await createSupabaseServerClient();
-  const [attractionPage, heroSettings, bannerSettings, typesResult] = await Promise.all([
-    listPublicAttractionPage({ query, type: requestedType, page, pageSize: 12 }),
+  const [attractionPage, heroSettings, bannerSettings, typesResult, districtOptions] = await Promise.all([
+    listPublicAttractionPage({ query, type: requestedType, districtId, page, pageSize: 12 }),
     settingsService.getSetting("attractions_page_hero", {
       title: "สถานที่ท่องเที่ยวในจังหวัดยะลา",
       description: "ค้นพบสถานที่ท่องเที่ยวที่น่าประทับใจในจังหวัดยะลา วัฒนธรรม ธรรมชาติ และวิถีชีวิตที่มีเอกลักษณ์",
@@ -80,16 +88,20 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
       .eq("is_active", true)
       .order("display_order", { ascending: true, nullsFirst: false })
       .order("type_name_th", { ascending: true }),
+    listPublicAttractionDistrictOptions(),
   ]);
 
   const typeOptions = resolveAttractionTypeOptions(typesResult.data ?? [], typesResult.error);
   const selectedType = typeOptions.some((option) => option.value === requestedType) ? requestedType : undefined;
+  const selectedDistrict = districtOptions.some((option) => option.value === requestedDistrict) ? requestedDistrict : undefined;
 
-  if (requestedType && !selectedType) redirect(attractionDiscoveryHref({ query }));
+  if (requestedType && !selectedType) redirect(attractionDiscoveryHref({ query, district: selectedDistrict }));
+  if (requestedDistrict && !selectedDistrict) redirect(attractionDiscoveryHref({ query, type: selectedType }));
   if (page > Math.max(attractionPage.pageCount, 1)) {
     redirect(attractionDiscoveryHref({
       query,
       type: selectedType,
+      district: selectedDistrict,
       page: attractionPage.pageCount > 1 ? attractionPage.pageCount : undefined,
     }));
   }
@@ -99,9 +111,10 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
     heroSettings.description,
     "ค้นพบสถานที่ท่องเที่ยวที่น่าประทับใจในจังหวัดยะลา วัฒนธรรม ธรรมชาติ และวิถีชีวิตที่มีเอกลักษณ์",
   );
-  const hasFilters = Boolean(query || selectedType);
+  const hasFilters = Boolean(query || selectedType || selectedDistrict);
   const selectedTypeLabel = typeOptions.find((option) => option.value === selectedType)?.label;
-  const featured = selectFeaturedAttraction(attractionPage.items);
+  const selectedDistrictLabel = districtOptions.find((option) => option.value === selectedDistrict)?.label;
+  const heroImage = attractionPage.items.find((item) => item.imageUrl)?.imageUrl ?? undefined;
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-ink">
@@ -109,13 +122,17 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
       <AttractionHero
         title={title}
         description={description}
+        image={heroImage}
+        scope="ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา"
       />
 
       {/* 2. Floating Search and Filter Bar */}
       <AttractionDiscoveryFilters
         query={query}
         selectedType={selectedType}
+        selectedDistrict={selectedDistrict}
         typeOptions={typeOptions}
+        districtOptions={districtOptions}
       />
 
       {/* 3. Main Discovery Workspace Frame */}
@@ -126,6 +143,8 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
             {query ? ` คำค้น “${query}”` : ""}
             {query && selectedTypeLabel ? "," : ""}
             {selectedTypeLabel ? ` ประเภท ${selectedTypeLabel}` : ""}
+            {(query || selectedTypeLabel) && selectedDistrictLabel ? "," : ""}
+            {selectedDistrictLabel ? ` อำเภอ ${selectedDistrictLabel}` : ""}
           </div>
         ) : null}
 
@@ -155,12 +174,18 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
             <>
               <AttractionDirectoryClient
                 items={attractionPage.items}
-                featuredSlug={featured?.slug ?? null}
+                cta={{
+                  title: launchSafeAttractionsCopy(bannerSettings.title, "วางแผนต่อจากสถานที่ที่เลือก"),
+                  subtitle: launchSafeAttractionsCopy(bannerSettings.subtitle, "สร้างเส้นทางท่องเที่ยวในแบบของคุณ เลือกสถานที่ที่สนใจ แล้วเปิดจุดแวะต่อใน Google Maps"),
+                  linkText: launchSafeAttractionsCopy(bannerSettings.linkText, "ดูเส้นทางแนะนำ"),
+                  linkUrl: "/routes",
+                  image: bannerSettings.image,
+                }}
               />
               <PublicPagination
                 page={attractionPage.page}
                 pageCount={attractionPage.pageCount}
-                createHref={(nextPage) => attractionDiscoveryHref({ query, type: selectedType, page: nextPage })}
+                createHref={(nextPage) => attractionDiscoveryHref({ query, type: selectedType, district: selectedDistrict, page: nextPage })}
               />
             </>
           ) : (
@@ -174,14 +199,6 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
           )}
         </section>
 
-        {/* 4. Trip Planning Bottom Callout Banner */}
-        <AttractionDiscoveryCta
-          title={launchSafeAttractionsCopy(bannerSettings.title, "วางแผนต่อจากสถานที่ที่เลือก")}
-          subtitle={launchSafeAttractionsCopy(bannerSettings.subtitle, "สร้างเส้นทางท่องเที่ยวในแบบของคุณ เลือกสถานที่ที่สนใจ แล้วให้เราช่วยวางแผนการเดินทางที่ดีที่สุด")}
-          linkText={launchSafeAttractionsCopy(bannerSettings.linkText, "ดูเส้นทางแนะนำ")}
-          linkUrl={safeAttractionsBannerHref(bannerSettings.linkUrl)}
-          image={bannerSettings.image}
-        />
       </PublicPageFrame>
 
       {/* 5. Footer */}

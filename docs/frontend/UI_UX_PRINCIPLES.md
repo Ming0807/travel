@@ -179,6 +179,8 @@ Rules:
 - Save-to-trip is a separate button from the detail link and announces its state.
 - The guest shortlist stays on the current browser, is capped at 20 attractions,
   and is not presented as a saved account itinerary.
+- Attraction shortlist planning resolves only currently published records and
+  may hand the ordered stops to Google Maps; it must not claim route optimization.
 - Mobile directory pages keep enough bottom safe area for the global navigation
   and any shortlist action bar.
 - `/360-vista` identifies external providers and explains the privacy boundary

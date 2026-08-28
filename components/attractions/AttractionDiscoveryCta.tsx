@@ -1,9 +1,11 @@
 "use client";
 
-import { ArrowRight, Clock, Compass, MapPin, ShareNetwork, Sparkle } from "@phosphor-icons/react";
+import { ArrowRight, Compass, ListNumbers, MapPin, PencilSimpleLine, Signpost } from "@phosphor-icons/react";
 import Link from "next/link";
+import { useTripShortlist } from "@/components/trip-shortlist/TripShortlistProvider";
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { createTripPlanHref } from "@/lib/trip-shortlist/navigation";
 
 export function AttractionDiscoveryCta({
   title,
@@ -19,12 +21,15 @@ export function AttractionDiscoveryCta({
   image?: string | null;
 }) {
   const resolvedImageUrl = siteMediaImageUrl(image);
+  const { slugs, hydrated } = useTripShortlist();
+  const selectedCount = hydrated ? slugs.length : 0;
+  const planningHref = selectedCount > 0 ? createTripPlanHref(slugs) : linkUrl;
 
   const routeBenefits = [
-    { icon: MapPin, text: "แนะนำเส้นทางที่เหมาะสม" },
-    { icon: Clock, text: "ประหยัดเวลาและค่าใช้จ่าย" },
-    { icon: Sparkle, text: "ข้อมูลอัปเดตแบบเรียลไทม์" },
-    { icon: ShareNetwork, text: "แชร์แผนการเดินทางกับเพื่อน" },
+    { icon: ListNumbers, text: "เรียงตามลำดับที่คุณเลือก" },
+    { icon: MapPin, text: "เปิดจุดแวะใน Google Maps" },
+    { icon: Signpost, text: "ดูเส้นทางที่เผยแพร่แล้ว" },
+    { icon: PencilSimpleLine, text: "กลับไปแก้รายการได้ทุกเมื่อ" },
   ];
 
   return (
@@ -70,10 +75,10 @@ export function AttractionDiscoveryCta({
           {/* Action Buttons */}
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
-              href={linkUrl}
+              href={planningHref}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 text-xs font-black text-white shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] hover:shadow-orange-500/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
             >
-              <span>{linkText || "ดูเส้นทางแนะนำ"}</span>
+              <span>{selectedCount > 0 ? `วางแผนจาก ${selectedCount.toLocaleString("th-TH")} สถานที่` : (linkText || "ดูเส้นทางแนะนำ")}</span>
               <ArrowRight aria-hidden="true" size={15} weight="bold" />
             </Link>
 
