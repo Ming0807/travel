@@ -46,7 +46,7 @@ export function StoryDiscoveryFilters({
             aria-expanded={mobileOpen}
             aria-controls="story-filter-form"
             onClick={() => setMobileOpen((open) => !open)}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50/70 px-3 py-1.5 text-xs font-bold text-coral transition-colors hover:bg-orange-100"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50/70 px-3 py-1.5 text-xs font-bold text-coral transition-colors hover:bg-orange-100"
           >
             <Funnel aria-hidden="true" size={16} weight="bold" />
             {mobileOpen ? "ซ่อนตัวกรอง" : "เปิดตัวกรอง"}
@@ -171,8 +171,8 @@ export function StoryDiscoveryFilters({
                   aria-current={active ? "page" : undefined}
                   className={
                     active
-                      ? "min-h-8 shrink-0 inline-flex items-center rounded-lg px-3.5 py-1 font-black bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xs"
-                      : "min-h-8 shrink-0 inline-flex items-center rounded-lg px-3.5 py-1 font-semibold text-ink/75 hover:text-coral transition-colors"
+                      ? "inline-flex min-h-11 shrink-0 items-center rounded-lg bg-coral px-3.5 py-1 font-black text-white shadow-xs sm:min-h-8"
+                      : "inline-flex min-h-11 shrink-0 items-center rounded-lg px-3.5 py-1 font-semibold text-ink/75 transition-colors hover:text-coral sm:min-h-8"
                   }
                 >
                   {item.label}
@@ -190,8 +190,8 @@ export function StoryDiscoveryFilters({
               href={buildPublicStoryHref(query, { topic: undefined })}
               className={
                 !query.topic
-                  ? "min-h-7 shrink-0 inline-flex items-center rounded-full px-3 py-0.5 font-bold bg-coral/15 text-coral border border-coral/30"
-                  : "min-h-7 shrink-0 inline-flex items-center rounded-full px-3 py-0.5 font-semibold bg-cream text-ink/75 hover:bg-orange-50 hover:text-coral border border-ink/5"
+                  ? "inline-flex min-h-11 shrink-0 items-center rounded-full border border-coral/30 bg-coral/15 px-3 py-0.5 font-bold text-coral sm:min-h-8"
+                  : "inline-flex min-h-11 shrink-0 items-center rounded-full border border-ink/5 bg-cream px-3 py-0.5 font-semibold text-ink/75 hover:bg-orange-50 hover:text-coral sm:min-h-8"
               }
             >
               ทั้งหมด
@@ -206,8 +206,8 @@ export function StoryDiscoveryFilters({
                   })}
                   className={
                     isActive
-                      ? "min-h-7 shrink-0 inline-flex items-center rounded-full px-3 py-0.5 font-bold bg-coral/15 text-coral border border-coral/40"
-                      : "min-h-7 shrink-0 inline-flex items-center rounded-full px-3 py-0.5 font-semibold bg-cream text-ink/75 hover:bg-orange-50 hover:text-coral border border-ink/5"
+                      ? "inline-flex min-h-11 shrink-0 items-center rounded-full border border-coral/40 bg-coral/15 px-3 py-0.5 font-bold text-coral sm:min-h-8"
+                      : "inline-flex min-h-11 shrink-0 items-center rounded-full border border-ink/5 bg-cream px-3 py-0.5 font-semibold text-ink/75 hover:bg-orange-50 hover:text-coral sm:min-h-8"
                   }
                 >
                   {topic.name}

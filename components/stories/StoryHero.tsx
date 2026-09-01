@@ -6,14 +6,13 @@ import {
   CheckCircle,
   MapPin,
   PenNib,
-  User,
+  Users,
 } from "@phosphor-icons/react/dist/ssr";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 
 export interface StoryHeroProps {
   title?: string;
   description?: string;
-  scope?: string;
   image?: string | null;
   imageUrl?: string | null;
   imageAlt?: string;
@@ -22,21 +21,19 @@ export interface StoryHeroProps {
 export function StoryHero({
   title = "เรื่องราวจากยะลา",
   description = "อ่านพื้นที่ผ่านผู้คน อาหาร วัฒนธรรม และประสบการณ์จากนักเดินทางในยะลา",
-  scope: _scope = "บทความและประสบการณ์ที่ผ่านการเผยแพร่",
   image,
   imageUrl: directImageUrl,
   imageAlt = "เรื่องราวและบรรยากาศการท่องเที่ยวในจังหวัดยะลา",
 }: StoryHeroProps) {
   const resolvedImageUrl =
     directImageUrl ||
-    siteMediaImageUrl(image) ||
-    "/site-media/general/hero-1.webp";
+    siteMediaImageUrl(image);
 
   const featureBadges = [
-    { icon: BookOpen, label: "บทความและบันทึก", sublabel: "ประสบการณ์จริง" },
-    { icon: CheckCircle, label: "คัดสรรโดย", sublabel: "กองบรรณาธิการ" },
-    { icon: User, label: "แบ่งปันจาก", sublabel: "นักเดินทาง" },
-    { icon: MapPin, label: "เรื่องเล่าท้องถิ่น", sublabel: "ยะลาและชายแดนใต้" },
+    { icon: BookOpen, label: "เนื้อหาที่เผยแพร่", sublabel: "อ่านได้จากระบบ" },
+    { icon: CheckCircle, label: "ผ่านการตรวจ", sublabel: "ก่อนเผยแพร่" },
+    { icon: Users, label: "แหล่งเรื่องราว", sublabel: "ทีมงานและนักเดินทาง" },
+    { icon: MapPin, label: "ขอบเขตนำร่อง", sublabel: "จังหวัดยะลา" },
   ];
 
   return (
@@ -45,7 +42,10 @@ export function StoryHero({
       className="relative isolate overflow-hidden bg-gradient-to-r from-[#1A1815] via-[#26211C] to-[#342A20] text-white"
     >
       {/* Background Photography Layer */}
-      <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity">
+      <div
+        className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity"
+        style={{ position: "absolute" }}
+      >
         {resolvedImageUrl ? (
           <Image
             src={resolvedImageUrl}
@@ -61,15 +61,6 @@ export function StoryHero({
       {/* Ambient Gradient Overlays */}
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#141210] via-transparent to-black/40" />
       <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#1A1815]/95 via-[#1A1815]/80 to-transparent" />
-
-      {/* Decorative Thai Motif Watermark */}
-      <div className="pointer-events-none absolute -right-16 -top-16 z-0 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute right-12 top-12 z-0 hidden text-amber-400/15 lg:block">
-        <svg width="200" height="200" viewBox="0 0 100 100" fill="currentColor">
-          <path d="M50 0 L61 39 L100 50 L61 61 L50 100 L39 61 L0 50 L39 39 Z" opacity="0.35" />
-          <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
-        </svg>
-      </div>
 
       {/* Hero Content Container */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 sm:pb-20 sm:pt-10 lg:px-8 lg:pb-24">
@@ -125,11 +116,11 @@ export function StoryHero({
 
           {/* 4 Feature Badges Strip */}
           <div className="mt-8 grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:gap-3.5">
-            {featureBadges.map((badge, idx) => {
+            {featureBadges.map((badge) => {
               const Icon = badge.icon;
               return (
                 <div
-                  key={idx}
+                  key={badge.label}
                   className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 backdrop-blur-md transition-all hover:bg-white/20"
                 >
                   <div className="grid size-6 place-items-center rounded-full bg-orange-500 text-white shadow-xs">

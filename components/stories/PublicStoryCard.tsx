@@ -23,7 +23,9 @@ export function PublicStoryCard({
   reason?: string;
   tracking?: StoryCardTracking;
 }) {
-  const displayImage = story.thumbnailUrl || story.imageUrl;
+  const displayImage = featured
+    ? story.imageUrl || story.thumbnailUrl
+    : story.thumbnailUrl || story.imageUrl;
   const href = `/stories/${story.id}`;
 
   const content = featured ? (
@@ -122,7 +124,6 @@ export function PublicStoryCard({
                 alt={story.imageAlt || story.title}
                 fill
                 priority
-                loading="eager"
                 sizes="(max-width: 1024px) 100vw, 520px"
                 className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
               />

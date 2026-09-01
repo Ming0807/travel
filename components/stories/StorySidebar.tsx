@@ -2,6 +2,7 @@
 
 import { Compass, MapTrifold, PenNib, QrCode, User } from "@phosphor-icons/react";
 import Link from "next/link";
+import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 
 export function StorySidebar() {
   return (
@@ -50,28 +51,24 @@ export function StorySidebar() {
 
       {/* Card 2: Digital Passport / Stamp Checkin */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 p-5 text-white shadow-lg">
-        <div className="pointer-events-none absolute -right-6 -top-6 size-28 rounded-full bg-white/10 blur-xl" />
-        <div className="pointer-events-none absolute -bottom-6 -left-6 size-28 rounded-full bg-black/10 blur-xl" />
-
         <div className="relative z-10">
           <div className="inline-flex size-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-xs">
             <QrCode size={24} weight="bold" className="text-white" />
           </div>
 
           <h3 className="mt-3 text-base font-black tracking-tight text-white">
-            เช็กอินตามรอยเรื่องราว
+            เช็กอินเมื่อถึงจุดที่รองรับ
           </h3>
           <p className="mt-1 text-xs leading-relaxed text-white/90">
-            สแกน QR เช็กอินสะสมดิจิทัลสแตมป์ตามจุดท่องเที่ยวที่แนะนำในบทความ
+            ใช้ QR ณ จุดเช็กอินที่กำหนด เพื่อบันทึกการเยี่ยมชมและสะสมตราดิจิทัลตามเงื่อนไข
           </p>
 
-          <Link
-            href="/checkin/try"
-            className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-white px-4 text-xs font-black text-coral shadow-sm transition-transform hover:scale-[1.02]"
+          <PublicCheckinEntryLink
+            className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white px-4 text-xs font-black text-coral shadow-sm transition-transform hover:scale-[1.02]"
           >
             <QrCode size={16} weight="bold" />
             <span>สแกน QR เพื่อเช็กอิน</span>
-          </Link>
+          </PublicCheckinEntryLink>
         </div>
       </div>
 
@@ -86,12 +83,12 @@ export function StorySidebar() {
           </div>
           <div>
             <h3 className="text-sm font-black text-ink">เส้นทางท่องเที่ยวยะลา</h3>
-            <p className="text-[11px] font-bold text-muted">เชื่อมโยงเรื่องราวสู่ทริปจริง</p>
+            <p className="text-[11px] font-bold text-muted">ตรวจจุดแวะที่เผยแพร่ในระบบ</p>
           </div>
         </div>
 
         <p className="mt-2.5 text-xs text-muted leading-relaxed">
-          ค้นหาเส้นทางแนะนำที่ร้อยเรียงสถานที่ท่องเที่ยว ร้านอาหาร และที่พักในยะลา
+          ดูรายละเอียดเส้นทางและจุดแวะที่ทีมงานเผยแพร่ เพื่อใช้ประกอบการวางแผนเดินทางในยะลา
         </p>
 
         <Link

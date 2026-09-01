@@ -195,6 +195,7 @@ describe("public story repository pagination", () => {
     });
 
     expect(result.items[0]?.imageUrl).toBeNull();
+    expect(result.items[0]?.readingMinutes).toBeNull();
   });
 
   it("loads canonical structured content for a published story detail", async () => {

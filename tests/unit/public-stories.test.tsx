@@ -52,16 +52,16 @@ const storyNoImage: PublicStoryCardData = {
 };
 
 describe("public story presentation", () => {
-  it("labels the lead item as latest and uses its managed thumbnail", () => {
+  it("labels the lead item as latest and uses its full managed image", () => {
     render(<PublicStoryCard story={story} featured label="เรื่องล่าสุด" />);
 
     expect(screen.getByText("เรื่องล่าสุด")).toBeInTheDocument();
     const image = screen.getByRole("img", { name: "วิวเมืองยะลา" });
     expect(image).toHaveAttribute(
       "src",
-      expect.stringContaining("thumb.webp"),
+      expect.stringContaining("full.webp"),
     );
-    expect(image).toHaveAttribute("loading", "eager");
+    expect(image).not.toHaveAttribute("loading", "lazy");
     expect(screen.queryByText(/featured|เรื่องเด่น/i)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /อ่านเรื่องราวฉบับเต็ม/ })).toHaveAttribute(
       "href",
@@ -99,8 +99,8 @@ describe("public story presentation", () => {
 
     expect(screen.getByRole("heading", { name: "เรื่องราวจากยะลา" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "หน้าแรก" })).toHaveAttribute("href", "/");
-    expect(screen.getByText("บทความและบันทึก")).toBeInTheDocument();
-    expect(screen.getByText("กองบรรณาธิการ")).toBeInTheDocument();
+    expect(screen.getByText("เนื้อหาที่เผยแพร่")).toBeInTheDocument();
+    expect(screen.getByText("จังหวัดยะลา")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /แบ่งปันเรื่องราวของคุณ/ })).toHaveAttribute(
       "href",
       "/stories/share",
@@ -118,12 +118,17 @@ describe("public story presentation", () => {
           search: "เบตง",
           topic: "food",
           authorType: "tourist",
+          province: "Yala",
           page: 1,
           pageSize: 12,
         }}
         topics={[
           { key: "food", name: "อาหาร" },
           { key: "culture", name: "วัฒนธรรม" },
+        ]}
+        provinces={[
+          { value: "Yala", label: "ยะลา" },
+          { value: "Pattani", label: "ปัตตานี" },
         ]}
       />,
     );
@@ -134,20 +139,30 @@ describe("public story presentation", () => {
 
     const touristTab = screen.getByRole("link", { name: "จากนักเดินทาง" });
     expect(touristTab).toHaveAttribute("aria-current", "page");
+    expect(touristTab.getAttribute("href")).toContain("q=%E0%B9%80%E0%B8%9A%E0%B8%95%E0%B8%87");
+    expect(touristTab.getAttribute("href")).toContain("province=Yala");
+    expect(touristTab.getAttribute("href")).toContain("topic=food");
   });
 
-  it("renders StoryEditorialCta with submission workflow steps and valid links", () => {
-    render(<StoryEditorialCta />);
+  it("renders StoryEditorialCta from CMS values with valid links", () => {
+    render(
+      <StoryEditorialCta
+        title="เรื่องเล่าจากชุมชน"
+        subtitle="อ่านเนื้อหาที่ผ่านการเผยแพร่"
+        linkText="ดูเรื่องทั้งหมด"
+        linkUrl="/stories?topic=community"
+      />,
+    );
 
-    expect(screen.getByRole("heading", { name: "ร่วมแบ่งปันเรื่องราวของคุณ" })).toBeInTheDocument();
-    expect(screen.getByText(/เรื่องราวที่ส่งเข้ามาจะได้รับการตรวจสอบจากทีมงาน/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /เริ่มเขียนเรื่องราว/ })).toHaveAttribute(
+    expect(screen.getByRole("heading", { name: "เรื่องเล่าจากชุมชน" })).toBeInTheDocument();
+    expect(screen.getByText("อ่านเนื้อหาที่ผ่านการเผยแพร่")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ดูเรื่องทั้งหมด/ })).toHaveAttribute(
+      "href",
+      "/stories?topic=community",
+    );
+    expect(screen.getByRole("link", { name: /แบ่งปันเรื่องราว/ })).toHaveAttribute(
       "href",
       "/stories/share",
-    );
-    expect(screen.getByRole("link", { name: "ดูเส้นทางท่องเที่ยวแนะนำ" })).toHaveAttribute(
-      "href",
-      "/routes",
     );
   });
 

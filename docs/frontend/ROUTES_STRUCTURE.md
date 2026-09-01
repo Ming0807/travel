@@ -245,11 +245,11 @@ visitor opens it.
 cream `#FAF7F2`, and dark ink tones.
 
 The page structure comprises:
-- **Panoramic Editorial Hero**: Atmospheric hero with real managed cover media, breadcrumbs (`หน้าแรก > เรื่องราว`), title and subtitle from CMS settings, and 4 factual feature capsules (`บทความและบันทึก`, `คัดสรรโดยกองบรรณาธิการ`, `แบ่งปันจากนักเดินทาง`, `เรื่องเล่าท้องถิ่น`).
+- **Panoramic Editorial Hero**: Uses the first published story cover available in the current result, breadcrumbs (`หน้าแรก > เรื่องราว`), title and subtitle from CMS settings, and factual capsules describing published content, review status, content sources, and the Yala pilot scope. It does not fall back to an unrelated stock path.
 - **Elevated Floating Filter Toolbar**: Responsive toolbar (`-mt-8`) with server search (`q`), topic dropdown, segmented author source tabs (`ทั้งหมด`, `จากกองบรรณาธิการ`, `จากนักเดินทาง`), and quick topic filter chips.
-- **Latest Story Spotlight Cover**: Highlighted lead story card on page 1 without filters, showcasing large cover photo (or topic-themed artistic placeholder), category badge, province pin, date, reading time estimate, and full read action without duplicate in the grid below.
-- **2-Column Discovery Workspace**: Responsive story grid with image zoom hover effects and artistic topic placeholders for image-less records, alongside a desktop sticky sidebar with traveler submission CTA (`/stories/share`), digital passport QR check-in (`/checkin/try`), and connected route discovery (`/routes`).
-- **Editorial Submission Banner**: Bottom participation band inviting travelers to write stories, clearly explaining that submissions undergo editorial review before publishing.
+- **Latest Story Spotlight Cover**: Highlights the newest published story on unfiltered page 1 with its full managed cover, or an explicit no-image topic placeholder. Reading time appears only when the record contains a valid estimate, and the lead story is not duplicated in the grid.
+- **2-Column Discovery Workspace**: Responsive story grid alongside a desktop sticky sidebar with traveler submission (`/stories/share`), the shared public QR entry flow, and independently published route discovery (`/routes`). The UI does not claim that a story is linked to a check-in point or route unless that relationship exists in data.
+- **CMS-backed Editorial Banner**: Reads title, subtitle, button text, button URL, and optional image from `stories_page_cta`, while retaining a real secondary action for story submission.
 - **Truthful Analytics & Contracts**: Preserves engagement impressions/clicks tracking (`surface: "story_hub"`), handles unavailable vs empty states gracefully, and avoids fake metrics (no fake view counts, fake likes, or simulated reviews).
 
 Admin users need precise record management.

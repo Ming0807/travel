@@ -25,7 +25,7 @@ import { SettingsService } from "@/lib/services/settings.service";
 export const metadata: Metadata = {
   title: "เรื่องราวจากยะลา | ท่องเที่ยวชายแดนใต้",
   description:
-    "บทความ คู่มือ และประสบการณ์จริงจากจังหวัดยะลา ซึ่งผ่านการเผยแพร่ในระบบแล้ว",
+    "บทความ คู่มือ และเรื่องราวจากจังหวัดยะลา ซึ่งผ่านการเผยแพร่ในระบบแล้ว",
   alternates: { canonical: "/stories" },
 };
 
@@ -46,7 +46,6 @@ export default async function StoriesPage({
     value: province.nameEn,
     label: province.nameTh,
   }));
-  const showProvinceFilter = provinceOptions.length > 1;
   const query = {
     ...parsedQuery,
     province: provinceOptions.some(
@@ -55,16 +54,28 @@ export default async function StoriesPage({
       ? parsedQuery.province
       : undefined,
   };
+  const hasFilters = Boolean(
+    query.search || query.province || query.topic || query.authorType,
+  );
   const settingsService = new SettingsService();
-  const [storyPage, topics, heroSettings] = await Promise.all([
+  const [storyPage, topics, heroSettings, ctaSettings, heroFallbackPage] = await Promise.all([
     listPublicStoryPage(query),
     listPublicStoryTopics(),
     settingsService.getSetting("stories_page_hero", {
       title: "เรื่องราวและแรงบันดาลใจ สำหรับทุกการเดินทาง",
       description:
         "อ่านพื้นที่ผ่านผู้คน อาหาร วัฒนธรรม และประสบการณ์จากนักเดินทางในยะลา",
+    }),
+    settingsService.getSetting("stories_page_cta", {
+      title: "อ่านเรื่องราวเพิ่มเติม",
+      subtitle: "ค้นพบมุมมองใหม่ของพื้นที่",
+      linkText: "ดูเรื่องราว",
+      linkUrl: "/stories",
       image: "",
     }),
+    hasFilters
+      ? listPublicStoryPage({ page: 1, pageSize: 12 })
+      : Promise.resolve(null),
   ]);
 
   if (
@@ -79,12 +90,13 @@ export default async function StoriesPage({
     );
   }
 
-  const hasFilters = Boolean(
-    query.search || query.province || query.topic || query.authorType,
-  );
   const showLatest = !hasFilters && query.page === 1 && storyPage.items.length > 0;
   const latestStory = showLatest ? storyPage.items[0] : null;
   const stories = showLatest ? storyPage.items.slice(1) : storyPage.items;
+  const heroStory =
+    storyPage.items.find((story) => story.imageUrl || story.thumbnailUrl) ??
+    heroFallbackPage?.items.find((story) => story.imageUrl || story.thumbnailUrl) ??
+    null;
   const heroTitle = launchSafeAttractionsCopy(
     plainTextFromLegacyHtml(heroSettings.title),
     "เรื่องราวจากยะลา",
@@ -110,14 +122,15 @@ export default async function StoriesPage({
       <StoryHero
         title={heroTitle}
         description={heroDescription}
-        image={heroSettings.image}
+        imageUrl={heroStory?.imageUrl ?? heroStory?.thumbnailUrl ?? null}
+        imageAlt={heroStory?.imageAlt}
       />
 
       {/* 2. Floating Search and Filter Toolbar */}
       <StoryDiscoveryFilters
         query={query}
         topics={topics}
-        provinces={provinceOptions}
+        provinces={provinceOptions.length > 1 ? provinceOptions : []}
       />
 
       {/* 3. Main Discovery Workspace Frame */}
@@ -212,7 +225,28 @@ export default async function StoriesPage({
         </section>
 
         {/* 4. Editorial Bottom Participation Banner */}
-        <StoryEditorialCta />
+        <StoryEditorialCta
+          title={launchSafeAttractionsCopy(
+            plainTextFromLegacyHtml(ctaSettings.title),
+            "อ่านและแบ่งปันเรื่องราวจากยะลา",
+          )}
+          subtitle={launchSafeAttractionsCopy(
+            plainTextFromLegacyHtml(ctaSettings.subtitle),
+            "ค้นหาเรื่องที่สนใจ หรือส่งบันทึกการเดินทางให้ทีมงานตรวจสอบก่อนเผยแพร่",
+          )}
+          linkText={launchSafeAttractionsCopy(
+            plainTextFromLegacyHtml(ctaSettings.linkText),
+            "ดูเรื่องราวทั้งหมด",
+          )}
+          linkUrl={
+            typeof ctaSettings.linkUrl === "string" &&
+            ctaSettings.linkUrl.startsWith("/") &&
+            !ctaSettings.linkUrl.startsWith("//")
+              ? ctaSettings.linkUrl
+              : "/stories"
+          }
+          image={ctaSettings.image}
+        />
       </PublicPageFrame>
 
       {/* 5. Footer */}

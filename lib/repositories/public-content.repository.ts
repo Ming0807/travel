@@ -105,7 +105,7 @@ export type PublicStoryCard = {
   category: string;
   authorType: string;
   authorName: string;
-  readingMinutes: number;
+  readingMinutes: number | null;
   primaryLanguage: string;
   primaryTopic: { key: string; name: string } | null;
   status?: string;
@@ -507,7 +507,10 @@ function mapStory(
     category: primaryTopicName || text(row.category, "เรื่องราว"),
     authorType: text(row.author_type, "admin"),
     authorName: row.author_type === "tourist" ? "นักเดินทาง" : "กองบรรณาธิการ",
-    readingMinutes: Math.max(1, numberValue(row.reading_minutes, 1)),
+    readingMinutes:
+      numberValue(row.reading_minutes, 0) > 0
+        ? Math.ceil(numberValue(row.reading_minutes, 0))
+        : null,
     primaryLanguage: text(row.primary_language, "th"),
     primaryTopic: primaryTopic
       ? {
