@@ -1,6 +1,6 @@
 # Phase 22: Attraction-Level Analytics and Improvement Evidence
 
-Status: Planned
+Status: Implementation complete locally; migration application, authenticated visual QA, and production data validation pending
 
 Priority: P1 decision support
 
@@ -24,49 +24,51 @@ Allow authorized staff to analyze each attraction independently and translate vi
 
 ### Task 22.1: Metric Contract
 
-- [ ] Define every attraction metric, unit, denominator, date field, source table, filters, missing-data rule, and decision use.
+- [x] Define every attraction metric, unit, denominator, date field, source table, filters, missing-data rule, and decision use.
 
 ### Task 22.2: Query and Index Audit
 
-- [ ] Audit existing summary views, repository queries, indexes, and collection-mode filters before adding schema.
+- [x] Audit existing summary views, repository queries, indexes, and collection-mode filters before adding schema.
 
 ### Task 22.3: Tested Read Models
 
-- [ ] Implement typed, permission-aware attraction analytics read models with calculation regression tests.
+- [x] Implement typed, permission-aware attraction analytics read models with calculation regression tests.
 
 ### Task 22.4: Attraction Overview
 
-- [ ] Build attraction selection, date/campaign/mode/channel filters, KPI summary, coverage, and comparison context.
+- [x] Build attraction selection, date/campaign/mode/channel filters, KPI summary, coverage, and comparison context.
 
 ### Task 22.5: Funnel and Engagement
 
-- [ ] Add unique-tourist/visit-safe entry, check-in, photo, certificate, survey, research, stamp, and repeat-visit analysis.
+- [x] Add unique-tourist/visit-safe entry, check-in, photo, certificate, reward, survey, research, and repeat-visit analysis.
 
 ### Task 22.6: Tourist and Travel Behavior
 
-- [ ] Add privacy-safe origin, age, language, companion, transport, overnight, purpose, and time distributions.
+- [x] Add privacy-safe origin, age, language, companion, transport, overnight, purpose, and time distributions.
 
 ### Task 22.7: Expense, Satisfaction, and Feedback
 
-- [ ] Add self-reported expense, satisfaction dimensions, revisit/recommendation, comment coverage, and issue categories.
+- [x] Add self-reported expense, satisfaction dimensions, revisit/recommendation, comment coverage, and issue categories.
 
 ### Task 22.8: Improvement Workflow
 
-- [ ] Connect evidence to reviewed issue, owner, action, baseline, due date, status, evidence, and follow-up monitoring.
+- [x] Connect evidence to the existing reviewed issue/action workflow, including owner, baseline, due date, status, evidence, and follow-up monitoring.
 
 ### Task 22.9: Export and Privacy
 
-- [ ] Add permission-checked de-identified exports with small-sample suppression and filter metadata.
+- [x] Add permission-checked aggregated exports with small-sample suppression, scope qualification, audit log, and filter metadata.
 
 ### Task 22.10: Performance and QA
 
-- [ ] Verify query plans, indexes, no-data/low-sample states, responsive charts, metric parity, and production build.
+- [x] Add bounded reads, attraction indexes, honest no-data/low-sample states, responsive layouts, and metric-contract tests.
+- [ ] Apply the migration, verify production query plans/data parity, and complete authenticated desktop/mobile visual QA.
 
 ## Analytics Rules
 
 - Every metric states unit, denominator, date field, source table, calculation, and missing-data rule.
 - Suppress or qualify small samples; never imply representativeness or causality.
 - Exclude simulated and internal pilot records by default from field-tourism claims.
+- Treat entry channel as `unknown` until a server-verifiable QR/NFC contract exists; never trust a hidden client field as attribution evidence.
 - Support CSV/XLSX export only through existing permission and privacy boundaries.
 - Drill-down may show operational records only to authorized roles; public analytics remain aggregated.
 

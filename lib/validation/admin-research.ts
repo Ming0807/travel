@@ -43,6 +43,7 @@ export const adminResearchCollectionModeSchema = z.enum([
   "simulated_usability",
   "pilot_internal",
 ]);
+export const adminResearchStudyKindSchema = z.enum(["pilot", "final_collection"]);
 export const adminResearchParticipantTypeSchema = z.enum([
   "tourist",
   "operator",
@@ -87,6 +88,8 @@ export const adminResearchStudyDraftCreateSchema = z
     withdrawalTh: z.string().trim().min(1),
     contactEmail: z.email().max(320),
     scopeCode: z.string().trim().min(1).max(100),
+    studyKind: adminResearchStudyKindSchema.default("pilot"),
+    sourcePilotStudyId: uuidSchema.nullable().optional(),
     status: z.literal("draft").default("draft"),
     startsAt: optionalDateTimeSchema,
     endsAt: optionalDateTimeSchema,
@@ -96,7 +99,60 @@ export const adminResearchStudyDraftCreateSchema = z
   .superRefine((value, context) => {
     addDateOrderingIssue(value.startsAt, value.endsAt, context, "endsAt", "Study end must be after study start.");
     addRetentionIssue(value.endsAt, value.retentionUntil, context);
+    if (value.studyKind === "final_collection" && !value.sourcePilotStudyId) {
+      context.addIssue({ code: "custom", path: ["sourcePilotStudyId"], message: "Final collection must reference its source Pilot." });
+    }
+    if (value.studyKind === "pilot" && value.sourcePilotStudyId) {
+      context.addIssue({ code: "custom", path: ["sourcePilotStudyId"], message: "A Pilot cannot reference another Pilot as its source." });
+    }
   });
+
+export const adminResearchActivationEvidenceSchema = z.object({
+  studyId: uuidSchema,
+  evidenceType: z.enum(["expert_review", "cognitive_pretest", "mobile_flow_qa"]),
+  versionNumber: z.number().int().positive(),
+  status: z.enum(["passed", "failed", "not_required"]),
+  evidenceDate: isoDateSchema,
+  reference: z.string().trim().min(1).max(500),
+  summary: z.string().trim().min(1).max(4000),
+  participantCount: z.number().int().min(0).max(10000).nullable().optional(),
+  medianCompletionSeconds: z.number().int().min(0).max(86400).nullable().optional(),
+  abandonmentRate: z.number().min(0).max(100).nullable().optional(),
+  missingnessRate: z.number().min(0).max(100).nullable().optional(),
+}).strict();
+
+export const adminResearchFreezeSnapshotSchema = z.object({
+  studyId: uuidSchema,
+  scoringVersion: z.string().trim().min(1).max(50),
+  retentionVersion: z.string().trim().min(1).max(50),
+  withdrawalVersion: z.string().trim().min(1).max(50),
+  languageVersion: z.string().trim().min(1).max(50),
+  inclusionVersion: z.string().trim().min(1).max(50),
+  applicationRevision: z.string().trim().min(1).max(100),
+  databaseRevision: z.string().trim().min(1).max(100),
+  confirmImmutable: z.literal(true),
+}).strict();
+
+export const adminResearchPilotReviewSchema = z.object({
+  studyId: uuidSchema,
+  decision: z.enum(["revise", "repeat_pilot", "ready_for_field"]),
+  reviewedSessionCount: z.number().int().min(0).max(10000),
+  medianCompletionSeconds: z.number().int().min(0).max(86400).nullable().optional(),
+  abandonmentRate: z.number().min(0).max(100).nullable().optional(),
+  missingnessRate: z.number().min(0).max(100).nullable().optional(),
+  reliabilityNote: z.string().trim().min(1).max(4000),
+  decisionRationale: z.string().trim().min(1).max(4000),
+}).strict().superRefine((value, context) => {
+  if (value.decision !== "ready_for_field") return;
+  if (value.reviewedSessionCount < 1) {
+    context.addIssue({ code: "custom", path: ["reviewedSessionCount"], message: "A field-ready decision requires at least one reviewed session." });
+  }
+  for (const key of ["medianCompletionSeconds", "abandonmentRate", "missingnessRate"] as const) {
+    if (value[key] === null || value[key] === undefined) {
+      context.addIssue({ code: "custom", path: [key], message: "A field-ready decision requires the complete pilot quality summary." });
+    }
+  }
+});
 
 export const adminResearchStudyDraftUpdateSchema = z
   .object({
@@ -215,6 +271,11 @@ export const adminResearchApprovalSchema = z
     ethicsReviewStatus: z.enum(["not_required", "approved"]),
     ethicsApprovedAt: optionalDateTimeSchema,
     approvalReference: z.string().trim().min(3).max(500),
+    approvedTitleTh: z.string().trim().min(1).max(255),
+    approvedGeographicBoundary: z.string().trim().min(1).max(1000),
+    approvedObjectives: z.array(z.string().trim().min(1).max(1000)).min(1).max(20),
+    approvedResearchQuestions: z.array(z.string().trim().min(1).max(1000)).min(1).max(20),
+    analysisWording: z.enum(["exploratory", "descriptive_associational", "confirmatory"]),
     confirmRecordedEvidence: z.literal(true),
   })
   .strict()
@@ -352,6 +413,9 @@ function addRetentionIssue(
 }
 
 export type AdminResearchStudyDraftCreateInput = z.infer<typeof adminResearchStudyDraftCreateSchema>;
+export type AdminResearchActivationEvidenceInput = z.infer<typeof adminResearchActivationEvidenceSchema>;
+export type AdminResearchFreezeSnapshotInput = z.infer<typeof adminResearchFreezeSnapshotSchema>;
+export type AdminResearchPilotReviewInput = z.infer<typeof adminResearchPilotReviewSchema>;
 export type AdminResearchStudyDraftUpdateInput = z.infer<typeof adminResearchStudyDraftUpdateSchema>;
 export type AdminResearchInstrumentDraftInput = z.infer<typeof adminResearchInstrumentDraftSchema>;
 export type AdminResearchItemCreateInput = z.infer<typeof adminResearchItemCreateSchema>;

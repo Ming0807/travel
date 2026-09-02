@@ -635,6 +635,7 @@ This is the main transactional tourism data table.
 | overnight_status | varchar(50) | no | same_day, overnight, unknown |
 | nights | integer | no | Number of nights |
 | completion_status | varchar(50) | yes | Flow status |
+| entry_channel | varchar(30) | yes | Observed entry source: `qr`, `nfc`, `direct`, `admin_import`, or `unknown`; historical rows remain `unknown` when attribution is unsupported |
 | created_at | timestamptz | yes | Record creation time |
 | updated_at | timestamptz | no | Last update time |
 
@@ -1716,7 +1717,7 @@ Phase 18 adds a versioned research boundary without changing normal tourist reco
 
 | Table | Purpose | Important constraints |
 |---|---|---|
-| `research_studies` | Protocol, notice, consent versions, geographic scope, approval gate, retention, lifecycle | Activation requires recorded advisor/ethics gate and freezes protocol fields |
+| `research_studies` | Protocol, notice, consent versions, geographic scope, approval gate, retention, lifecycle | Separates `pilot` and `final_collection`; stores the exact approved title, boundary, objectives, RQs, and analysis wording |
 | `research_instruments` | Versioned instrument per participant audience | Published versions are immutable and must be frozen |
 | `research_items` | Typed items and construct mapping | One typed answer format; item code unique inside instrument |
 | `research_checkin_codes` | Explicit study-to-QR deployment and collection mode | One active study per check-in code |
@@ -1726,6 +1727,9 @@ Phase 18 adds a versioned research boundary without changing normal tourist reco
 | `research_answers` | Typed item answer | Exactly one of integer, text, or boolean is non-null |
 | `research_operator_tasks` | Versioned dashboard decision task | Published task and scoring rule are immutable |
 | `research_operator_task_attempts` | Start/end, rationale, confidence, reviewer outcome and evidence quality | One attempt per session and task; completed attempts require outcome |
+| `research_activation_evidence` | Versioned expert review, cognitive pretest, and mobile-flow QA evidence | Append-only; the latest version of every required evidence type must pass or be documented as not required |
+| `research_freeze_snapshots` | Immutable protocol, instrument, task, scoring, retention, language, inclusion, application, and database manifest | One snapshot per study; update and delete are blocked by a database trigger |
+| `research_pilot_reviews` | Pilot quality review and activation decision | Append-only; the latest decision controls whether a linked final collection may activate |
 | `attraction_feedback_issues` | Human-reviewed production feedback issue | Unique attraction/dimension/category/baseline evidence bundle |
 | `attraction_improvement_actions` | Owned improvement work with due date and follow-up metric | One active action per issue; status transitions are controlled |
 | `attraction_improvement_events` | Immutable workflow audit trail | Links issue/action events without tourist identity |
@@ -1737,6 +1741,9 @@ Migrations, in order:
 1. `20260808000000_add_research_core.sql`
 2. `20260808001000_harden_research_data_quality.sql`
 3. `20260808002000_add_attraction_improvement_workflow.sql`
+4. `20260901000000_activate_research_pilot_and_attraction_analytics.sql`
+
+The Phase 21 migration adds no study, participant, evidence, or response seed rows. Approval evidence and pilot decisions must be entered only after the corresponding real activity occurs. A Pilot cannot create `field_observation` sessions, and a final-collection study cannot create simulated or internal-pilot sessions.
 
 ---
 

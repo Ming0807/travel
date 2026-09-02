@@ -4,6 +4,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
 
 export type ResearchStudyStatus = "draft" | "active" | "paused" | "closed" | "archived";
+export type ResearchStudyKind = "pilot" | "final_collection";
 export type ResearchParticipantType = "tourist" | "operator" | "attraction_manager";
 export type ResearchCollectionMode = "field_observation" | "simulated_usability" | "pilot_internal";
 
@@ -21,6 +22,8 @@ export type AdminResearchStudy = {
   withdrawalTh: string;
   contactEmail: string;
   scopeCode: string;
+  studyKind: ResearchStudyKind;
+  sourcePilotStudyId: string | null;
   status: ResearchStudyStatus;
   startsAt: string | null;
   endsAt: string | null;
@@ -30,10 +33,57 @@ export type AdminResearchStudy = {
   ethicsApprovedAt: string | null;
   approvalReference: string | null;
   approvalRecordedBy: string | null;
+  approvedTitleTh: string | null;
+  approvedGeographicBoundary: string | null;
+  approvedObjectives: string[];
+  approvedResearchQuestions: string[];
+  analysisWording: "exploratory" | "descriptive_associational" | "confirmatory" | null;
   frozenAt: string | null;
   ownerAdminId: string;
   createdAt: string;
   updatedAt: string | null;
+};
+
+export type AdminResearchActivationEvidence = {
+  evidenceId: string;
+  studyId: string;
+  evidenceType: "expert_review" | "cognitive_pretest" | "mobile_flow_qa";
+  versionNumber: number;
+  status: "passed" | "failed" | "not_required";
+  evidenceDate: string;
+  reference: string;
+  summary: string;
+  participantCount: number | null;
+  medianCompletionSeconds: number | null;
+  abandonmentRate: number | null;
+  missingnessRate: number | null;
+  recordedAt: string;
+};
+
+export type AdminResearchFreezeSnapshot = {
+  snapshotId: string;
+  studyId: string;
+  scoringVersion: string;
+  retentionVersion: string;
+  withdrawalVersion: string;
+  languageVersion: string;
+  inclusionVersion: string;
+  applicationRevision: string;
+  databaseRevision: string;
+  frozenAt: string;
+};
+
+export type AdminResearchPilotReview = {
+  pilotReviewId: string;
+  pilotStudyId: string;
+  decision: "revise" | "repeat_pilot" | "ready_for_field";
+  reviewedSessionCount: number;
+  medianCompletionSeconds: number | null;
+  abandonmentRate: number | null;
+  missingnessRate: number | null;
+  reliabilityNote: string;
+  decisionRationale: string;
+  reviewedAt: string;
 };
 
 export type AdminResearchStudySummary = AdminResearchStudy & {
@@ -107,6 +157,10 @@ export type AdminResearchStudyDetail = {
   items: AdminResearchItem[];
   deployments: AdminResearchDeployment[];
   operatorTasks: AdminResearchOperatorTask[];
+  activationEvidence: AdminResearchActivationEvidence[];
+  freezeSnapshot: AdminResearchFreezeSnapshot | null;
+  pilotReviews: AdminResearchPilotReview[];
+  sourcePilotReadyForField: boolean;
 };
 
 export type ResearchAnalyticsSessionRow = {
@@ -222,10 +276,12 @@ export type ResearchAnalyticsQuery = {
 export type ResearchStudyDraftPayload = Omit<AdminResearchStudy,
   "researchStudyId" | "status" | "advisorApprovedAt" | "ethicsReviewStatus" |
   "ethicsApprovedAt" | "approvalReference" | "approvalRecordedBy" | "frozenAt" |
+  "approvedTitleTh" | "approvedGeographicBoundary" | "approvedObjectives" |
+  "approvedResearchQuestions" | "analysisWording" |
   "createdAt" | "updatedAt"
 >;
 
-const STUDY_COLUMNS = "research_study_id, study_code, title_th, title_en, protocol_version, consent_version, notice_version, purpose_th, participation_th, privacy_th, withdrawal_th, contact_email, scope_code, status, starts_at, ends_at, retention_until, advisor_approved_at, ethics_review_status, ethics_approved_at, approval_reference, approval_recorded_by, frozen_at, owner_admin_id, created_at, updated_at";
+const STUDY_COLUMNS = "research_study_id, study_code, title_th, title_en, protocol_version, consent_version, notice_version, purpose_th, participation_th, privacy_th, withdrawal_th, contact_email, scope_code, study_kind, source_pilot_study_id, status, starts_at, ends_at, retention_until, advisor_approved_at, ethics_review_status, ethics_approved_at, approval_reference, approval_recorded_by, approved_title_th, approved_geographic_boundary, approved_objectives, approved_research_questions, analysis_wording, frozen_at, owner_admin_id, created_at, updated_at";
 
 function mapStudy(raw: unknown): AdminResearchStudy {
   const row = asRecord(raw);
@@ -243,6 +299,8 @@ function mapStudy(raw: unknown): AdminResearchStudy {
     withdrawalTh: stringValue(row.withdrawal_th),
     contactEmail: stringValue(row.contact_email),
     scopeCode: stringValue(row.scope_code),
+    studyKind: stringValue(row.study_kind) as ResearchStudyKind,
+    sourcePilotStudyId: nullableString(row.source_pilot_study_id),
     status: stringValue(row.status) as AdminResearchStudy["status"],
     startsAt: nullableString(row.starts_at),
     endsAt: nullableString(row.ends_at),
@@ -252,10 +310,66 @@ function mapStudy(raw: unknown): AdminResearchStudy {
     ethicsApprovedAt: nullableString(row.ethics_approved_at),
     approvalReference: nullableString(row.approval_reference),
     approvalRecordedBy: nullableString(row.approval_recorded_by),
+    approvedTitleTh: nullableString(row.approved_title_th),
+    approvedGeographicBoundary: nullableString(row.approved_geographic_boundary),
+    approvedObjectives: Array.isArray(row.approved_objectives) ? row.approved_objectives.filter((value): value is string => typeof value === "string") : [],
+    approvedResearchQuestions: Array.isArray(row.approved_research_questions) ? row.approved_research_questions.filter((value): value is string => typeof value === "string") : [],
+    analysisWording: nullableString(row.analysis_wording) as AdminResearchStudy["analysisWording"],
     frozenAt: nullableString(row.frozen_at),
     ownerAdminId: stringValue(row.owner_admin_id),
     createdAt: stringValue(row.created_at),
     updatedAt: nullableString(row.updated_at),
+  };
+}
+
+function mapActivationEvidence(raw: unknown): AdminResearchActivationEvidence {
+  const row = asRecord(raw);
+  return {
+    evidenceId: stringValue(row.research_activation_evidence_id),
+    studyId: stringValue(row.study_id),
+    evidenceType: stringValue(row.evidence_type) as AdminResearchActivationEvidence["evidenceType"],
+    versionNumber: numberValue(row.version_number),
+    status: stringValue(row.status) as AdminResearchActivationEvidence["status"],
+    evidenceDate: stringValue(row.evidence_date),
+    reference: stringValue(row.reference),
+    summary: stringValue(row.summary),
+    participantCount: nullableNumber(row.participant_count),
+    medianCompletionSeconds: nullableNumber(row.median_completion_seconds),
+    abandonmentRate: nullableNumber(row.abandonment_rate),
+    missingnessRate: nullableNumber(row.missingness_rate),
+    recordedAt: stringValue(row.recorded_at),
+  };
+}
+
+function mapFreezeSnapshot(raw: unknown): AdminResearchFreezeSnapshot {
+  const row = asRecord(raw);
+  return {
+    snapshotId: stringValue(row.research_freeze_snapshot_id),
+    studyId: stringValue(row.study_id),
+    scoringVersion: stringValue(row.scoring_version),
+    retentionVersion: stringValue(row.retention_version),
+    withdrawalVersion: stringValue(row.withdrawal_version),
+    languageVersion: stringValue(row.language_version),
+    inclusionVersion: stringValue(row.inclusion_version),
+    applicationRevision: stringValue(row.application_revision),
+    databaseRevision: stringValue(row.database_revision),
+    frozenAt: stringValue(row.frozen_at),
+  };
+}
+
+function mapPilotReview(raw: unknown): AdminResearchPilotReview {
+  const row = asRecord(raw);
+  return {
+    pilotReviewId: stringValue(row.research_pilot_review_id),
+    pilotStudyId: stringValue(row.pilot_study_id),
+    decision: stringValue(row.decision) as AdminResearchPilotReview["decision"],
+    reviewedSessionCount: numberValue(row.reviewed_session_count),
+    medianCompletionSeconds: nullableNumber(row.median_completion_seconds),
+    abandonmentRate: nullableNumber(row.abandonment_rate),
+    missingnessRate: nullableNumber(row.missingness_rate),
+    reliabilityNote: stringValue(row.reliability_note),
+    decisionRationale: stringValue(row.decision_rationale),
+    reviewedAt: stringValue(row.reviewed_at),
   };
 }
 
@@ -353,12 +467,35 @@ export async function getAdminResearchStudyDetail(studyId: string): Promise<Admi
   const { data: studyData, error: studyError } = await supabase.from("research_studies").select(STUDY_COLUMNS).eq("research_study_id", studyId).maybeSingle();
   if (studyError) throw new Error("ADMIN_RESEARCH_STUDY_READ_FAILED");
   if (!studyData) return null;
-  const [{ data: instrumentData, error: instrumentError }, { data: deploymentData, error: deploymentError }, { data: taskData, error: taskError }] = await Promise.all([
+  const mappedStudy = mapStudy(studyData);
+  const [
+    { data: instrumentData, error: instrumentError },
+    { data: deploymentData, error: deploymentError },
+    { data: taskData, error: taskError },
+    { data: evidenceData, error: evidenceError },
+    { data: freezeData, error: freezeError },
+    { data: pilotReviewData, error: pilotReviewError },
+  ] = await Promise.all([
     supabase.from("research_instruments").select("*").eq("study_id", studyId).order("version_number", { ascending: false }),
     supabase.from("research_checkin_codes").select("study_id, checkin_code_id, default_collection_mode, is_active, starts_at, ends_at, checkin_codes(code, label, attractions(name_th))").eq("study_id", studyId).order("created_at", { ascending: false }),
     supabase.from("research_operator_tasks").select("*").eq("study_id", studyId).order("display_order", { ascending: true }),
+    supabase.from("research_activation_evidence").select("*").eq("study_id", studyId).order("recorded_at", { ascending: false }),
+    supabase.from("research_freeze_snapshots").select("*").eq("study_id", studyId).maybeSingle(),
+    supabase.from("research_pilot_reviews").select("*").eq("pilot_study_id", studyId).order("reviewed_at", { ascending: false }),
   ]);
-  if (instrumentError || deploymentError || taskError) throw new Error("ADMIN_RESEARCH_CONFIGURATION_READ_FAILED");
+  if (instrumentError || deploymentError || taskError || evidenceError || freezeError || pilotReviewError) throw new Error("ADMIN_RESEARCH_CONFIGURATION_READ_FAILED");
+  let sourcePilotReadyForField = false;
+  if (mappedStudy.sourcePilotStudyId) {
+    const { data: sourceReview, error: sourceReviewError } = await supabase
+      .from("research_pilot_reviews")
+      .select("decision")
+      .eq("pilot_study_id", mappedStudy.sourcePilotStudyId)
+      .order("reviewed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (sourceReviewError) throw new Error("ADMIN_RESEARCH_SOURCE_PILOT_READ_FAILED");
+    sourcePilotReadyForField = asRecord(sourceReview).decision === "ready_for_field";
+  }
   const instruments = (instrumentData ?? []).map(mapInstrument);
   const items = await loadByIds(
     instruments.map((instrument) => instrument.researchInstrumentId),
@@ -382,11 +519,15 @@ export async function getAdminResearchStudyDetail(studyId: string): Promise<Admi
     } satisfies AdminResearchDeployment;
   });
   return {
-    study: mapStudy(studyData),
+    study: mappedStudy,
     instruments,
     items: items.map(mapItem),
     deployments,
     operatorTasks: (taskData ?? []).map(mapOperatorTask),
+    activationEvidence: (evidenceData ?? []).map(mapActivationEvidence),
+    freezeSnapshot: freezeData ? mapFreezeSnapshot(freezeData) : null,
+    pilotReviews: (pilotReviewData ?? []).map(mapPilotReview),
+    sourcePilotReadyForField,
   };
 }
 
@@ -421,6 +562,8 @@ export async function createResearchStudyDraft(input: ResearchStudyDraftPayload)
     withdrawal_th: input.withdrawalTh,
     contact_email: input.contactEmail,
     scope_code: input.scopeCode,
+    study_kind: input.studyKind,
+    source_pilot_study_id: input.sourcePilotStudyId,
     starts_at: input.startsAt,
     ends_at: input.endsAt,
     retention_until: input.retentionUntil,
@@ -453,7 +596,7 @@ export async function updateResearchStudyDraft(studyId: string, input: Omit<Rese
   return mapStudy(data);
 }
 
-export async function recordResearchApproval(input: { studyId: string; advisorApprovedAt: string; ethicsReviewStatus: "not_required" | "approved"; ethicsApprovedAt: string | null; approvalReference: string; recordedBy: string }) {
+export async function recordResearchApproval(input: { studyId: string; advisorApprovedAt: string; ethicsReviewStatus: "not_required" | "approved"; ethicsApprovedAt: string | null; approvalReference: string; approvedTitleTh: string; approvedGeographicBoundary: string; approvedObjectives: string[]; approvedResearchQuestions: string[]; analysisWording: "exploratory" | "descriptive_associational" | "confirmatory"; recordedBy: string }) {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase.from("research_studies").update({
     advisor_approved_at: input.advisorApprovedAt,
@@ -461,6 +604,11 @@ export async function recordResearchApproval(input: { studyId: string; advisorAp
     ethics_approved_at: input.ethicsApprovedAt,
     approval_reference: input.approvalReference,
     approval_recorded_by: input.recordedBy,
+    approved_title_th: input.approvedTitleTh,
+    approved_geographic_boundary: input.approvedGeographicBoundary,
+    approved_objectives: input.approvedObjectives,
+    approved_research_questions: input.approvedResearchQuestions,
+    analysis_wording: input.analysisWording,
   }).eq("research_study_id", input.studyId).eq("status", "draft").select("research_study_id").maybeSingle();
   if (error || !data) throw new Error("ADMIN_RESEARCH_APPROVAL_UPDATE_FAILED");
 }
@@ -655,6 +803,103 @@ export async function upsertResearchDeployment(input: { studyId: string; checkin
     created_by: input.createdBy,
   }, { onConflict: "study_id,checkin_code_id" });
   if (error) throw new Error(error.code === "23505" ? "RESEARCH_CHECKIN_ALREADY_ACTIVE" : "ADMIN_RESEARCH_DEPLOYMENT_SAVE_FAILED");
+}
+
+export async function insertResearchActivationEvidence(input: {
+  studyId: string;
+  evidenceType: AdminResearchActivationEvidence["evidenceType"];
+  versionNumber: number;
+  status: AdminResearchActivationEvidence["status"];
+  evidenceDate: string;
+  reference: string;
+  summary: string;
+  participantCount: number | null;
+  medianCompletionSeconds: number | null;
+  abandonmentRate: number | null;
+  missingnessRate: number | null;
+  recordedBy: string;
+}) {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.from("research_activation_evidence").insert({
+    study_id: input.studyId,
+    evidence_type: input.evidenceType,
+    version_number: input.versionNumber,
+    status: input.status,
+    evidence_date: input.evidenceDate,
+    reference: input.reference,
+    summary: input.summary,
+    participant_count: input.participantCount,
+    median_completion_seconds: input.medianCompletionSeconds,
+    abandonment_rate: input.abandonmentRate,
+    missingness_rate: input.missingnessRate,
+    recorded_by: input.recordedBy,
+  }).select("*").single();
+  if (error) throw new Error(error.code === "23505" ? "RESEARCH_EVIDENCE_VERSION_DUPLICATE" : "ADMIN_RESEARCH_EVIDENCE_CREATE_FAILED");
+  return mapActivationEvidence(data);
+}
+
+export async function insertResearchFreezeSnapshot(input: {
+  studyId: string;
+  protocolVersion: string;
+  consentVersion: string;
+  noticeVersion: string;
+  instrumentManifest: unknown[];
+  taskManifest: unknown[];
+  scoringVersion: string;
+  retentionVersion: string;
+  withdrawalVersion: string;
+  languageVersion: string;
+  inclusionVersion: string;
+  applicationRevision: string;
+  databaseRevision: string;
+  frozenBy: string;
+}) {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.from("research_freeze_snapshots").insert({
+    study_id: input.studyId,
+    protocol_version: input.protocolVersion,
+    consent_version: input.consentVersion,
+    notice_version: input.noticeVersion,
+    instrument_manifest: input.instrumentManifest,
+    task_manifest: input.taskManifest,
+    scoring_version: input.scoringVersion,
+    retention_version: input.retentionVersion,
+    withdrawal_version: input.withdrawalVersion,
+    language_version: input.languageVersion,
+    inclusion_version: input.inclusionVersion,
+    application_revision: input.applicationRevision,
+    database_revision: input.databaseRevision,
+    frozen_by: input.frozenBy,
+  }).select("*").single();
+  if (error) throw new Error(error.code === "23505" ? "RESEARCH_FREEZE_ALREADY_EXISTS" : "ADMIN_RESEARCH_FREEZE_CREATE_FAILED");
+  return mapFreezeSnapshot(data);
+}
+
+export async function insertResearchPilotReview(input: {
+  pilotStudyId: string;
+  decision: AdminResearchPilotReview["decision"];
+  reviewedSessionCount: number;
+  medianCompletionSeconds: number | null;
+  abandonmentRate: number | null;
+  missingnessRate: number | null;
+  reliabilityNote: string;
+  decisionRationale: string;
+  reviewedBy: string;
+}) {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase.from("research_pilot_reviews").insert({
+    pilot_study_id: input.pilotStudyId,
+    decision: input.decision,
+    reviewed_session_count: input.reviewedSessionCount,
+    median_completion_seconds: input.medianCompletionSeconds,
+    abandonment_rate: input.abandonmentRate,
+    missingness_rate: input.missingnessRate,
+    reliability_note: input.reliabilityNote,
+    decision_rationale: input.decisionRationale,
+    reviewed_by: input.reviewedBy,
+  }).select("*").single();
+  if (error) throw new Error("ADMIN_RESEARCH_PILOT_REVIEW_CREATE_FAILED");
+  return mapPilotReview(data);
 }
 
 export async function activateResearchStudy(studyId: string) {

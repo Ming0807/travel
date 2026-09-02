@@ -12,7 +12,10 @@ import {
   createAdminResearchStudy,
   publishAdminResearchInstrument,
   publishAdminResearchOperatorTask,
+  freezeAdminResearchStudy,
+  recordAdminResearchActivationEvidence,
   recordAdminResearchApproval,
+  recordAdminResearchPilotReview,
   saveAdminResearchDeployment,
   transitionAdminResearchStudy,
 } from "@/lib/services/admin-research.service";
@@ -25,6 +28,13 @@ function text(formData: FormData, key: string) {
 function positiveInt(formData: FormData, key: string) {
   const value = Number(formData.get(key));
   return Number.isInteger(value) && value > 0 ? value : 0;
+}
+
+function optionalNumber(formData: FormData, key: string) {
+  const raw = text(formData, key);
+  if (!raw) return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : undefined;
 }
 
 function dayToIso(value: string, end = false): string | undefined {
@@ -52,6 +62,8 @@ export async function createResearchStudyAction(formData: FormData) {
       withdrawalTh: text(formData, "withdrawalTh"),
       contactEmail: text(formData, "contactEmail"),
       scopeCode: text(formData, "scopeCode"),
+      studyKind: text(formData, "studyKind") === "final_collection" ? "final_collection" : "pilot",
+      sourcePilotStudyId: text(formData, "sourcePilotStudyId") || null,
       status: "draft",
       startsAt: dayToIso(text(formData, "startsAt")),
       endsAt: dayToIso(text(formData, "endsAt"), true),
@@ -62,6 +74,80 @@ export async function createResearchStudyAction(formData: FormData) {
     redirect("/admin/research?result=study_failed");
   }
   redirect(detailPath(studyId, "study_created"));
+}
+
+export async function recordResearchActivationEvidenceAction(formData: FormData) {
+  const studyId = text(formData, "studyId");
+  let result = "activation_evidence_recorded";
+  try {
+    const rawType = text(formData, "evidenceType");
+    const evidenceType = rawType === "cognitive_pretest" || rawType === "mobile_flow_qa" ? rawType : "expert_review";
+    const rawStatus = text(formData, "status");
+    const status = rawStatus === "failed" || rawStatus === "not_required" ? rawStatus : "passed";
+    await recordAdminResearchActivationEvidence({
+      studyId,
+      evidenceType,
+      versionNumber: positiveInt(formData, "versionNumber"),
+      status,
+      evidenceDate: text(formData, "evidenceDate"),
+      reference: text(formData, "reference"),
+      summary: text(formData, "summary"),
+      participantCount: optionalNumber(formData, "participantCount"),
+      medianCompletionSeconds: optionalNumber(formData, "medianCompletionSeconds"),
+      abandonmentRate: optionalNumber(formData, "abandonmentRate"),
+      missingnessRate: optionalNumber(formData, "missingnessRate"),
+    });
+  } catch {
+    result = "activation_evidence_failed";
+  }
+  revalidatePath(`/admin/research/${studyId}`);
+  redirect(detailPath(studyId, result));
+}
+
+export async function freezeResearchStudyAction(formData: FormData) {
+  const studyId = text(formData, "studyId");
+  let result = "freeze_snapshot_recorded";
+  try {
+    if (formData.get("confirmImmutable") !== "true") throw new Error("CONFIRM_REQUIRED");
+    await freezeAdminResearchStudy({
+      studyId,
+      scoringVersion: text(formData, "scoringVersion"),
+      retentionVersion: text(formData, "retentionVersion"),
+      withdrawalVersion: text(formData, "withdrawalVersion"),
+      languageVersion: text(formData, "languageVersion"),
+      inclusionVersion: text(formData, "inclusionVersion"),
+      applicationRevision: text(formData, "applicationRevision"),
+      databaseRevision: text(formData, "databaseRevision"),
+      confirmImmutable: true,
+    });
+  } catch {
+    result = "freeze_snapshot_failed";
+  }
+  revalidatePath(`/admin/research/${studyId}`);
+  redirect(detailPath(studyId, result));
+}
+
+export async function recordResearchPilotReviewAction(formData: FormData) {
+  const studyId = text(formData, "studyId");
+  let result = "pilot_review_recorded";
+  try {
+    const rawDecision = text(formData, "decision");
+    const decision = rawDecision === "repeat_pilot" || rawDecision === "ready_for_field" ? rawDecision : "revise";
+    await recordAdminResearchPilotReview({
+      studyId,
+      decision,
+      reviewedSessionCount: Number(formData.get("reviewedSessionCount")),
+      medianCompletionSeconds: optionalNumber(formData, "medianCompletionSeconds"),
+      abandonmentRate: optionalNumber(formData, "abandonmentRate"),
+      missingnessRate: optionalNumber(formData, "missingnessRate"),
+      reliabilityNote: text(formData, "reliabilityNote"),
+      decisionRationale: text(formData, "decisionRationale"),
+    });
+  } catch {
+    result = "pilot_review_failed";
+  }
+  revalidatePath(`/admin/research/${studyId}`);
+  redirect(detailPath(studyId, result));
 }
 
 export async function recordResearchApprovalAction(formData: FormData) {
@@ -76,6 +162,13 @@ export async function recordResearchApprovalAction(formData: FormData) {
       ethicsReviewStatus,
       ethicsApprovedAt: ethicsReviewStatus === "approved" ? dayToIso(text(formData, "ethicsApprovedAt")) : undefined,
       approvalReference: text(formData, "approvalReference"),
+      approvedTitleTh: text(formData, "approvedTitleTh"),
+      approvedGeographicBoundary: text(formData, "approvedGeographicBoundary"),
+      approvedObjectives: text(formData, "approvedObjectives").split(/\r?\n/).map((value) => value.trim()).filter(Boolean),
+      approvedResearchQuestions: text(formData, "approvedResearchQuestions").split(/\r?\n/).map((value) => value.trim()).filter(Boolean),
+      analysisWording: (["exploratory", "confirmatory"] as const).includes(text(formData, "analysisWording") as "exploratory" | "confirmatory")
+        ? text(formData, "analysisWording") as "exploratory" | "confirmatory"
+        : "descriptive_associational",
       confirmRecordedEvidence: true,
     });
   } catch {

@@ -18,10 +18,11 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { ResearchAnalyticsWorkspace } from "@/components/admin/research/ResearchAnalyticsWorkspace";
+import { ResearchActivationControlCenter } from "@/components/admin/research/ResearchActivationControlCenter";
 import { ResearchOperatorAssessmentQueue } from "@/components/admin/research/ResearchOperatorAssessmentQueue";
 import { requirePermission } from "@/lib/auth/guards";
 import { getAdminResearchStudyWorkspace } from "@/lib/services/admin-research.service";
-import { adminResearchAnalyticsFiltersSchema } from "@/lib/validation/admin-research";
+import { adminResearchAnalyticsFiltersSchema, type AdminResearchAnalyticsFilters } from "@/lib/validation/admin-research";
 
 export const metadata: Metadata = { title: "Research Workspace | ผู้ดูแลระบบ" };
 export const dynamic = "force-dynamic";
@@ -42,6 +43,9 @@ const RESULT_MESSAGES: Record<string, { tone: "success" | "error"; text: string 
   deployment_saved: { tone: "success", text: "บันทึกจุดเก็บข้อมูลแล้ว" },
   study_activated: { tone: "success", text: "เปิดเก็บข้อมูลแล้ว ระบบล็อก protocol รุ่นนี้เรียบร้อย" },
   study_status_updated: { tone: "success", text: "อัปเดตสถานะโครงการแล้ว" },
+  activation_evidence_recorded: { tone: "success", text: "บันทึกหลักฐานความพร้อมแล้ว" },
+  freeze_snapshot_recorded: { tone: "success", text: "บันทึก Version freeze snapshot แบบแก้ไขย้อนหลังไม่ได้แล้ว" },
+  pilot_review_recorded: { tone: "success", text: "บันทึกผลวิเคราะห์และคำตัดสิน Pilot แล้ว" },
   approval_failed: { tone: "error", text: "ยังบันทึกหลักฐานอนุมัติไม่ได้ ตรวจวันที่ เลขอ้างอิง และการยืนยัน" },
   instrument_failed: { tone: "error", text: "ยังสร้างแบบประเมินไม่ได้ รหัสหรือหมายเลขรุ่นอาจซ้ำ" },
   item_failed: { tone: "error", text: "ยังเพิ่มข้อคำถามไม่ได้ ตรวจรหัส ลำดับ ชนิดคำตอบ และตัวเลือก" },
@@ -52,6 +56,9 @@ const RESULT_MESSAGES: Record<string, { tone: "success" | "error"; text: string 
   deployment_failed: { tone: "error", text: "ยังผูกจุด QR ไม่ได้ จุดนี้อาจถูกใช้โดยโครงการ active อื่น" },
   activation_failed: { tone: "error", text: "ยังเปิดเก็บข้อมูลไม่ได้ กรุณาปิดรายการความพร้อมทุกข้อก่อน" },
   study_status_failed: { tone: "error", text: "ยังเปลี่ยนสถานะไม่ได้ ลำดับสถานะไม่ถูกต้องหรือโครงการยังไม่พร้อม" },
+  activation_evidence_failed: { tone: "error", text: "ยังบันทึกหลักฐานไม่ได้ ตรวจรุ่น วันที่ ค่าสถิติ และข้อมูลอ้างอิง" },
+  freeze_snapshot_failed: { tone: "error", text: "ยัง Freeze ไม่ได้ ต้องเผยแพร่เครื่องมือทั้งหมดและกรอกเวอร์ชันให้ครบ" },
+  pilot_review_failed: { tone: "error", text: "ยังสรุป Pilot ไม่ได้ ต้องพักหรือปิด Pilot และกรอกหลักฐานการตัดสินใจให้ครบ" },
 };
 
 function one(value: string | string[] | undefined) {
@@ -87,10 +94,11 @@ export default async function AdminResearchStudyPage({ params, searchParams }: {
     collectionModes: rawModes,
     minCellThreshold: 10,
   });
-  const filters = parsedFilters.success ? parsedFilters.data : { studyId: id, ...defaults, collectionModes: ["field_observation" as const], minCellThreshold: 10 as const };
-  const workspace = await getAdminResearchStudyWorkspace(id, filters);
+  const requestedFilters: AdminResearchAnalyticsFilters = parsedFilters.success ? parsedFilters.data : { studyId: id, ...defaults, collectionModes: ["field_observation"], minCellThreshold: 10 };
+  const workspace = await getAdminResearchStudyWorkspace(id, requestedFilters, !query.mode);
   if (!workspace) notFound();
   const { detail, readiness, canActivate, canManage, checkinCodes, operatorAssessments, analytics } = workspace;
+  const filters = workspace.analyticsFilters ?? requestedFilters;
   const result = one(query.result);
   const message = result ? RESULT_MESSAGES[result] : null;
   const isDraft = detail.study.status === "draft";
@@ -113,6 +121,8 @@ export default async function AdminResearchStudyPage({ params, searchParams }: {
             {readiness.map((item) => <div key={item.key} className="flex items-start gap-3 px-5 py-3"><span className={`mt-0.5 flex size-6 shrink-0 items-center justify-center ${item.ready ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-500"}`}>{item.ready ? <Check aria-hidden="true" weight="bold" /> : <X aria-hidden="true" weight="bold" />}</span><div><p className="text-sm font-bold">{item.label}</p>{!item.ready ? <p className="mt-0.5 text-xs text-slate-500">{item.blockingReason}</p> : null}</div></div>)}
           </div>
         </section>
+
+        <ResearchActivationControlCenter detail={detail} canManage={canManage} canFreeze={readiness.filter((item) => !["freeze_snapshot", "pilot_decision"].includes(item.key)).every((item) => item.ready)} />
 
         <section className="border border-[var(--admin-border)] bg-white p-5" aria-labelledby="analytics-filter-heading">
           <h2 id="analytics-filter-heading" className="text-lg font-black">ขอบเขตการวิเคราะห์</h2>
@@ -162,22 +172,30 @@ export default async function AdminResearchStudyPage({ params, searchParams }: {
 
         {canManage && isDraft ? (
           <section className="grid gap-6 xl:grid-cols-2">
-            <form action={recordResearchApprovalAction} className="border border-[var(--admin-border)] bg-white p-5">
+            <form action={recordResearchApprovalAction} className="border border-[var(--admin-border)] bg-white p-5 xl:col-span-2">
               <input type="hidden" name="studyId" value={id} />
-              <h2 className="text-lg font-black">บันทึก approval gate</h2><p className="mt-1 text-sm leading-6 text-slate-600">บันทึกจากหลักฐานจริงเท่านั้น การติ๊กยืนยันไม่ใช่การขออนุมัติแทนอาจารย์หรือคณะกรรมการ</p>
-              <label className="mt-4 block text-sm font-bold">วันที่อาจารย์ที่ปรึกษาอนุมัติ<input type="date" name="advisorApprovedAt" required className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
-              <label className="mt-4 block text-sm font-bold">สถานะจริยธรรม<select name="ethicsReviewStatus" required className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="not_required">ตรวจแล้ว ไม่เข้าข่ายต้องขอ</option><option value="approved">ได้รับอนุมัติแล้ว</option></select></label>
-              <label className="mt-4 block text-sm font-bold">วันที่อนุมัติจริยธรรม (เมื่อเลือกได้รับอนุมัติ)<input type="date" name="ethicsApprovedAt" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
-              <label className="mt-4 block text-sm font-bold">เลขอ้างอิง/ตำแหน่งไฟล์หลักฐาน<input name="approvalReference" required maxLength={500} className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
+              <h2 className="text-lg font-black">บันทึกขอบเขตที่ได้รับอนุมัติ</h2>
+              <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-600">คัดลอกจากเอกสารที่อาจารย์อนุมัติจริง ระบบเก็บ snapshot นี้เพื่อป้องกันการเปลี่ยนชื่อ วัตถุประสงค์ หรือคำถามวิจัยระหว่างเก็บข้อมูล</p>
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <label className="text-sm font-bold lg:col-span-2">ชื่อโครงการภาษาไทยที่อนุมัติ<input name="approvedTitleTh" required maxLength={255} defaultValue={detail.study.approvedTitleTh ?? detail.study.titleTh} className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
+                <label className="text-sm font-bold lg:col-span-2">ขอบเขตพื้นที่และกลุ่มที่ศึกษา<textarea name="approvedGeographicBoundary" required maxLength={1000} rows={3} defaultValue={detail.study.approvedGeographicBoundary ?? ""} placeholder="เช่น อำเภอเมืองยะลา สถานที่นำร่อง 2-3 แห่ง และกลุ่มผู้เข้าร่วมตามเกณฑ์คัดเข้า" className="mt-2 w-full border border-slate-300 px-3 py-2 font-normal" /></label>
+                <label className="text-sm font-bold">วัตถุประสงค์ที่อนุมัติ <span className="font-normal text-slate-500">(บรรทัดละ 1 ข้อ)</span><textarea name="approvedObjectives" required rows={5} defaultValue={detail.study.approvedObjectives.join("\n")} className="mt-2 w-full border border-slate-300 px-3 py-2 font-normal" /></label>
+                <label className="text-sm font-bold">คำถามวิจัยที่อนุมัติ <span className="font-normal text-slate-500">(บรรทัดละ 1 ข้อ)</span><textarea name="approvedResearchQuestions" required rows={5} defaultValue={detail.study.approvedResearchQuestions.join("\n")} className="mt-2 w-full border border-slate-300 px-3 py-2 font-normal" /></label>
+                <label className="text-sm font-bold">ระดับถ้อยคำในการวิเคราะห์<select name="analysisWording" required defaultValue={detail.study.analysisWording ?? "descriptive_associational"} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="exploratory">สำรวจเบื้องต้น</option><option value="descriptive_associational">พรรณนาและวิเคราะห์ความสัมพันธ์</option><option value="confirmatory">ทดสอบสมมติฐานตามแผนที่อนุมัติ</option></select></label>
+                <label className="text-sm font-bold">วันที่อาจารย์ที่ปรึกษาอนุมัติ<input type="date" name="advisorApprovedAt" required defaultValue={detail.study.advisorApprovedAt?.slice(0, 10)} className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
+                <label className="text-sm font-bold">สถานะจริยธรรม<select name="ethicsReviewStatus" required defaultValue={detail.study.ethicsReviewStatus} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="not_required">ตรวจแล้ว ไม่เข้าข่ายต้องขอ</option><option value="approved">ได้รับอนุมัติแล้ว</option></select></label>
+                <label className="text-sm font-bold">วันที่อนุมัติจริยธรรม (เมื่อได้รับอนุมัติ)<input type="date" name="ethicsApprovedAt" defaultValue={detail.study.ethicsApprovedAt?.slice(0, 10)} className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
+                <label className="text-sm font-bold lg:col-span-2">เลขอ้างอิงหรือตำแหน่งไฟล์หลักฐาน<input name="approvalReference" required maxLength={500} defaultValue={detail.study.approvalReference ?? ""} className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
+              </div>
               <label className="mt-4 flex min-h-11 items-start gap-3 text-sm font-bold"><input type="checkbox" name="confirmRecordedEvidence" value="true" required className="mt-1" /> ฉันตรวจหลักฐานต้นฉบับและบันทึกข้อมูลตรงตามเอกสาร</label>
               <button type="submit" className="mt-4 min-h-11 w-full bg-[#202020] px-4 font-black text-white hover:bg-[#B94727]">บันทึกหลักฐานอนุมัติ</button>
             </form>
 
-            <form action={saveResearchDeploymentAction} className="border border-[var(--admin-border)] bg-white p-5">
+            <form action={saveResearchDeploymentAction} className="border border-[var(--admin-border)] bg-white p-5 xl:col-span-2">
               <input type="hidden" name="studyId" value={id} />
               <h2 className="text-lg font-black">ผูกจุด QR สำหรับเก็บข้อมูล</h2><p className="mt-1 text-sm leading-6 text-slate-600">จุด QR หนึ่งจุดเปิดใช้งานได้กับ study เดียว ป้องกันการปน collection mode</p>
               <label className="mt-4 block text-sm font-bold">จุด QR<select name="checkinCodeId" required className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="">เลือกจุด QR</option>{checkinCodes.map((code) => <option key={code.checkinCodeId} value={code.checkinCodeId}>{code.code} · {code.attractionNameTh ?? code.label ?? "ไม่ระบุสถานที่"}</option>)}</select></label>
-              <label className="mt-4 block text-sm font-bold">Collection mode<select name="collectionMode" defaultValue="field_observation" className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{Object.entries(MODE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              <label className="mt-4 block text-sm font-bold">Collection mode<select name="collectionMode" defaultValue={detail.study.studyKind === "pilot" ? "pilot_internal" : "field_observation"} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{Object.entries(MODE_LABELS).filter(([value]) => detail.study.studyKind === "pilot" ? value !== "field_observation" : value === "field_observation").map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
               <div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="text-sm font-bold">เริ่มใช้ (ไม่บังคับ)<input type="date" name="startsAt" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label><label className="text-sm font-bold">สิ้นสุด (ไม่บังคับ)<input type="date" name="endsAt" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label></div>
               <label className="mt-4 flex min-h-11 items-center gap-3 text-sm font-bold"><input type="checkbox" name="isActive" value="true" defaultChecked /> เปิดรับ consent ที่จุดนี้เมื่อ study active</label>
               <button type="submit" className="mt-4 min-h-11 w-full bg-[#202020] px-4 font-black text-white hover:bg-[#B94727]">บันทึกจุดเก็บข้อมูล</button>

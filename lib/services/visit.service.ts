@@ -7,12 +7,14 @@ export async function initiateVisit(params: {
   attractionId: number;
   photoSpotId?: number | null;
   checkinCodeId?: number | null;
+  entryChannel?: "qr" | "nfc" | "direct" | "unknown";
 }): Promise<string> {
   const visitId = await createVisitRepo({
     touristId: params.touristId,
     attractionId: params.attractionId,
     photoSpotId: params.photoSpotId,
     checkinCodeId: params.checkinCodeId,
+    entryChannel: params.entryChannel,
     completionStatus: "minimal_form_completed", // Marked as minimal form completed since they just submitted it
   });
 

@@ -18,6 +18,7 @@ const STATUS_LABELS = {
   closed: "ปิดการเก็บข้อมูล",
   archived: "เก็บถาวร",
 } as const;
+const KIND_LABELS = { pilot: "Pilot ควบคุม", final_collection: "เก็บข้อมูลจริง" } as const;
 
 const RESULT_MESSAGES: Record<string, string> = {
   study_failed: "ยังสร้างโครงการวิจัยไม่ได้ กรุณาตรวจข้อมูล รหัสโครงการ และช่วงเวลา",
@@ -55,14 +56,14 @@ export default async function AdminResearchPage({ searchParams }: { searchParams
         </section>
 
         <section className="border border-[var(--admin-border)] bg-white" aria-labelledby="study-list-heading">
-          <div className="border-b border-[var(--admin-border)] px-5 py-4"><h2 id="study-list-heading" className="text-lg font-black">โครงการและสถานะความพร้อม</h2><p className="mt-1 text-sm text-slate-600">ค่าเริ่มต้นของ analytics ใช้เฉพาะ field observation; ข้อมูลจำลองและ pilot ต้องเลือกอย่างชัดเจน</p></div>
+          <div className="border-b border-[var(--admin-border)] px-5 py-4"><h2 id="study-list-heading" className="text-lg font-black">โครงการและสถานะความพร้อม</h2><p className="mt-1 text-sm text-slate-600">Analytics เลือก collection mode ตามชนิดโครงการอัตโนมัติ และไม่รวม Pilot เข้ากับข้อสรุปภาคสนาม</p></div>
           {studies.length === 0 ? (
             <div className="px-5 py-12 text-center"><p className="font-bold">ยังไม่มีโครงการวิจัย</p><p className="mt-1 text-sm text-slate-600">สร้างได้เฉพาะฉบับร่าง และต้องผ่าน approval gate ก่อนเปิดเก็บข้อมูล</p></div>
           ) : (
             <div className="divide-y divide-[var(--admin-border)]">
               {studies.map((study) => (
                 <article key={study.researchStudyId} className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center">
-                  <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-black text-[#202020]">{study.titleTh}</h3><span className="border border-slate-300 px-2 py-1 text-xs font-bold text-slate-700">{STATUS_LABELS[study.status]}</span></div><p className="mt-1 font-mono text-xs text-slate-500">{study.studyCode} · protocol {study.protocolVersion}</p></div>
+                  <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-black text-[#202020]">{study.titleTh}</h3><span className="border border-slate-300 px-2 py-1 text-xs font-bold text-slate-700">{STATUS_LABELS[study.status]}</span><span className="border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-bold text-[#9A3412]">{KIND_LABELS[study.studyKind]}</span></div><p className="mt-1 font-mono text-xs text-slate-500">{study.studyCode} · protocol {study.protocolVersion}</p></div>
                   <dl className="grid grid-cols-3 gap-5 text-center text-xs"><div><dt className="text-slate-500">แบบประเมิน</dt><dd className="mt-1 text-lg font-black">{study.instrumentCount}</dd></div><div><dt className="text-slate-500">จุดเก็บข้อมูล</dt><dd className="mt-1 text-lg font-black">{study.activeDeploymentCount}</dd></div><div><dt className="text-slate-500">ผู้ยินยอม</dt><dd className="mt-1 text-lg font-black">{study.sessionCount}</dd></div></dl>
                   <Link href={`/admin/research/${study.researchStudyId}`} className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#202020] px-4 text-sm font-bold text-white hover:bg-[#B94727]">เปิด workspace <ArrowRight aria-hidden="true" /></Link>
                 </article>
@@ -80,6 +81,8 @@ export default async function AdminResearchPage({ searchParams }: { searchParams
               <label className="text-sm font-bold">รหัสโครงการ<input name="studyCode" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="yala-field-2026" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-mono font-normal" /></label>
               <label className="text-sm font-bold">Protocol version<input name="protocolVersion" required placeholder="protocol-1" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
               <label className="text-sm font-bold">ขอบเขตการศึกษา<input name="scopeCode" required placeholder="yala-city-pilot" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
+              <label className="text-sm font-bold">ประเภทโครงการ<select name="studyKind" defaultValue="pilot" className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="pilot">Pilot ควบคุม (เริ่มจากตัวเลือกนี้)</option><option value="final_collection">Final collection</option></select></label>
+              <label className="text-sm font-bold">Pilot ต้นทางสำหรับ Final<select name="sourcePilotStudyId" defaultValue="" className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="">ไม่ใช้สำหรับ Pilot / ต้องเลือกสำหรับ Final</option>{studies.filter((study) => study.studyKind === "pilot").map((study) => <option key={study.researchStudyId} value={study.researchStudyId}>{study.titleTh} ({study.studyCode})</option>)}</select></label>
               <label className="text-sm font-bold">Consent version<input name="consentVersion" required placeholder="consent-1" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
               <label className="text-sm font-bold">Notice version<input name="noticeVersion" required placeholder="notice-1" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
               <label className="text-sm font-bold sm:col-span-2">วัตถุประสงค์ที่ผู้เข้าร่วมจะเห็น<textarea name="purposeTh" required rows={3} className="mt-2 w-full border border-slate-300 px-3 py-2 font-normal" /></label>

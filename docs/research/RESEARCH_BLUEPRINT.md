@@ -371,6 +371,9 @@ Create the research layer only after the protocol and instrument receive advisor
 | `research_answers` | Item-level Likert or text answer | Validation by item type and scale range |
 | `research_operator_tasks` | Versioned decision tasks | Expected evidence and scoring rule |
 | `research_operator_attempts` | Task outcome per operator session | Success, elapsed time, confidence, notes/code |
+| `research_activation_evidence` | Expert review, cognitive pretest, and mobile-flow QA evidence | Versioned evidence with date, reference, outcome, and bounded quality indicators |
+| `research_freeze_snapshots` | Immutable manifest of every approved collection dependency | One snapshot per study; database blocks update/delete and post-freeze protocol mutation |
+| `research_pilot_reviews` | Pilot analysis and decision | `ready_for_field` is required before a linked final-collection study may activate |
 
 ### 16.2 Production attraction-management tables
 
@@ -386,6 +389,8 @@ Research sessions may measure whether stakeholders can use this production workf
 ### 16.3 Relationships
 
 - A research session may link to one operational visit; operator sessions have no visit.
+- A Pilot study accepts only `pilot_internal` or `simulated_usability`; a final-collection study accepts only `field_observation`.
+- Final collection must reference a Pilot with a documented `ready_for_field` decision. The system must never create that evidence automatically.
 - A visit remains an operational record and must not become a research record merely because it exists.
 - Research QR deployment should use a join table between studies and check-in codes rather than reusing the current orphan `checkin_codes.campaign_id` without a real foreign key.
 - Funnel correlation should become a typed session relationship. The current JSON `metadata.session_id` is useful operationally but insufficient as the sole research key.

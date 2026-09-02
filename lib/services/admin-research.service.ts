@@ -13,21 +13,27 @@ import type {
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import {
   adminResearchAnalyticsFiltersSchema,
+  adminResearchActivationEvidenceSchema,
   adminResearchApprovalSchema,
   adminResearchDeploymentSchema,
   adminResearchInstrumentDraftSchema,
+  adminResearchFreezeSnapshotSchema,
   adminResearchItemCreateSchema,
   adminResearchOperatorTaskDraftSchema,
   adminResearchOperatorAssessmentSchema,
+  adminResearchPilotReviewSchema,
   adminResearchStudyActivationSchema,
   adminResearchStudyDraftCreateSchema,
   type AdminResearchAnalyticsFilters,
+  type AdminResearchActivationEvidenceInput,
   type AdminResearchApprovalInput,
   type AdminResearchDeploymentInput,
   type AdminResearchInstrumentDraftInput,
+  type AdminResearchFreezeSnapshotInput,
   type AdminResearchItemCreateInput,
   type AdminResearchOperatorTaskDraftInput,
   type AdminResearchOperatorAssessmentInput,
+  type AdminResearchPilotReviewInput,
   type AdminResearchStudyDraftCreateInput,
 } from "@/lib/validation/admin-research";
 import { redactResearchFreeText } from "@/lib/validation/research";
@@ -63,20 +69,27 @@ export function assessResearchReadiness(detail: AdminResearchStudyDetail): Resea
   const publishedTourist = touristInstruments.some((instrument) => instrument.status === "published" && instrument.frozenAt);
   const hasDraftConfiguration = detail.instruments.some((instrument) => instrument.status === "draft")
     || detail.operatorTasks.some((task) => task.status === "draft");
-  const stakeholderAudiences = (["operator", "attraction_manager"] as const).filter((audience) =>
-    detail.instruments.some((instrument) => instrument.audience === audience)
-    || detail.operatorTasks.some((task) => task.audience === audience),
-  );
-  const stakeholderReady = stakeholderAudiences.length > 0 && stakeholderAudiences.every((audience) =>
+  const stakeholderAudiences = ["operator", "attraction_manager"] as const;
+  const stakeholderReady = stakeholderAudiences.every((audience) =>
     detail.instruments.some((instrument) => instrument.audience === audience && instrument.status === "published" && instrument.frozenAt)
     && detail.operatorTasks.some((task) => task.audience === audience && task.status === "published" && task.frozenAt),
   );
+  const evidenceReady = (evidenceType: "expert_review" | "cognitive_pretest" | "mobile_flow_qa") => {
+    const latest = detail.activationEvidence
+      .filter((evidence) => evidence.evidenceType === evidenceType)
+      .sort((left, right) => right.versionNumber - left.versionNumber || right.recordedAt.localeCompare(left.recordedAt))[0];
+    return Boolean(latest && ["passed", "not_required"].includes(latest.status));
+  };
+  const pilotDeploymentReady = detail.deployments.some((deployment) =>
+    deployment.isActive && ["pilot_internal", "simulated_usability"].includes(deployment.collectionMode),
+  ) && !detail.deployments.some((deployment) => deployment.isActive && deployment.collectionMode === "field_observation");
+  const finalDeploymentReady = detail.deployments.some((deployment) => deployment.isActive && deployment.collectionMode === "field_observation");
   return [
     {
       key: "advisor",
       label: "หลักฐานอนุมัติจากอาจารย์ที่ปรึกษา",
-      ready: Boolean(study.advisorApprovedAt && study.approvalReference && study.approvalRecordedBy),
-      blockingReason: "ต้องบันทึกวันที่และเลขอ้างอิงหลักฐานอนุมัติ",
+      ready: Boolean(study.advisorApprovedAt && study.approvalReference && study.approvalRecordedBy && study.approvedTitleTh && study.approvedGeographicBoundary && study.approvedObjectives.length > 0 && study.approvedResearchQuestions.length > 0 && study.analysisWording),
+      blockingReason: "ต้องบันทึกวันที่ หลักฐาน ชื่อ ขอบเขต วัตถุประสงค์ RQ และระดับถ้อยคำที่อนุมัติ",
     },
     {
       key: "ethics",
@@ -104,21 +117,53 @@ export function assessResearchReadiness(detail: AdminResearchStudyDetail): Resea
     },
     {
       key: "deployment",
-      label: "จุด QR สำหรับเก็บข้อมูลที่เปิดใช้งาน",
-      ready: detail.deployments.some((deployment) => deployment.isActive),
-      blockingReason: "ต้องผูกจุด QR อย่างน้อย 1 จุดและเปิดใช้งาน",
+      label: detail.study.studyKind === "pilot" ? "จุดทดสอบแบบควบคุม" : "จุดเก็บข้อมูลภาคสนาม",
+      ready: detail.study.studyKind === "pilot" ? pilotDeploymentReady : finalDeploymentReady,
+      blockingReason: detail.study.studyKind === "pilot"
+        ? "Pilot เปิดได้เฉพาะ pilot_internal หรือ simulated_usability และห้ามเปิด field_observation"
+        : "ต้องมีจุดเก็บข้อมูล field_observation อย่างน้อย 1 จุด",
     },
     {
       key: "stakeholder",
       label: "แบบประเมินและโจทย์ตัดสินใจสำหรับผู้มีส่วนได้ส่วนเสีย",
       ready: stakeholderReady,
-      blockingReason: "ต้องมีอย่างน้อยหนึ่งกลุ่มระหว่างผู้ประกอบการหรือผู้ดูแลสถานที่ พร้อมทั้งแบบประเมินและโจทย์ที่เผยแพร่แล้ว",
+      blockingReason: "ต้องมีแบบประเมินและโจทย์ที่เผยแพร่แล้วครบทั้งผู้ประกอบการและผู้ดูแลสถานที่",
     },
     {
       key: "drafts",
       label: "ไม่มีแบบประเมินหรืองานทดสอบฉบับร่างค้างอยู่",
       ready: !hasDraftConfiguration,
       blockingReason: "เผยแพร่หรือยกเลิกฉบับร่างทั้งหมดก่อนเริ่มเก็บข้อมูล",
+    },
+    {
+      key: "expert_review",
+      label: "ผู้เชี่ยวชาญตรวจเครื่องมือ",
+      ready: detail.study.studyKind === "final_collection" || evidenceReady("expert_review"),
+      blockingReason: "ต้องบันทึกผล expert review รุ่นที่ใช้ใน Pilot",
+    },
+    {
+      key: "cognitive_pretest",
+      label: "Cognitive pretest และภาระผู้เข้าร่วม",
+      ready: detail.study.studyKind === "final_collection" || evidenceReady("cognitive_pretest"),
+      blockingReason: "ต้องบันทึกผล pretest รวมเวลาและปัญหาความเข้าใจ",
+    },
+    {
+      key: "mobile_qa",
+      label: "Mobile E2E: ยินยอม ปฏิเสธ ทำต่อ ส่งซ้ำ และถอนตัว",
+      ready: detail.study.studyKind === "final_collection" || evidenceReady("mobile_flow_qa"),
+      blockingReason: "ต้องบันทึกผลทดสอบ flow บนอุปกรณ์มือถือก่อนเปิด Pilot",
+    },
+    {
+      key: "freeze_snapshot",
+      label: "Version freeze snapshot แบบแก้ไขย้อนหลังไม่ได้",
+      ready: Boolean(detail.freezeSnapshot),
+      blockingReason: "ต้องบันทึก manifest ของ protocol, consent, instrument, task และเวอร์ชันระบบ",
+    },
+    {
+      key: "pilot_decision",
+      label: "ผล Pilot อนุมัติให้เก็บข้อมูลภาคสนาม",
+      ready: detail.study.studyKind === "pilot" || detail.sourcePilotReadyForField,
+      blockingReason: "ต้องเชื่อม Pilot ที่มีผล ready_for_field ก่อนเปิด final collection",
     },
   ];
 }
@@ -132,19 +177,31 @@ export function assertResearchStudyScope(studyId: string, filterStudyId: string)
   if (studyId !== filterStudyId) fail("STUDY_SCOPE_MISMATCH", "ขอบเขตการวิเคราะห์ไม่ตรงกับโครงการวิจัย");
 }
 
-export async function getAdminResearchStudyWorkspace(studyId: string, filters?: AdminResearchAnalyticsFilters) {
+export async function getAdminResearchStudyWorkspace(
+  studyId: string,
+  filters?: AdminResearchAnalyticsFilters,
+  useStudyDefaultCollectionMode = false,
+) {
   const guard = await requirePermission("research.read");
   if (filters) assertResearchStudyScope(studyId, filters.studyId);
   const detail = await repository.getAdminResearchStudyDetail(studyId);
   if (!detail) return null;
+  const analyticsFilters: AdminResearchAnalyticsFilters | undefined = filters && useStudyDefaultCollectionMode
+    ? {
+      ...filters,
+      collectionModes: detail.study.studyKind === "pilot"
+        ? ["pilot_internal", "simulated_usability"]
+        : ["field_observation"],
+    }
+    : filters;
   const readiness = assessResearchReadiness(detail);
   const canManage = guard.actor.permissions.includes("research.manage");
   const [checkinCodes, operatorAssessments, analytics] = await Promise.all([
     canManage ? repository.listAvailableResearchCheckinCodes() : Promise.resolve([]),
     canManage ? repository.listResearchOperatorAssessments(studyId) : Promise.resolve([]),
-    filters ? getResearchAnalytics(filters) : Promise.resolve(null),
+    analyticsFilters ? getResearchAnalytics(analyticsFilters) : Promise.resolve(null),
   ]);
-  return { detail, readiness, canActivate: readiness.every((item) => item.ready), canManage, checkinCodes, operatorAssessments, analytics };
+  return { detail, readiness, canActivate: readiness.every((item) => item.ready), canManage, checkinCodes, operatorAssessments, analytics, analyticsFilters };
 }
 
 export async function getAdminResearchOperatorStart(
@@ -167,6 +224,7 @@ export async function getAdminResearchOperatorStart(
     withdrawalTh: detail.study.withdrawalTh,
     contactEmail: detail.study.contactEmail,
     retentionUntil: detail.study.retentionUntil,
+    studyKind: detail.study.studyKind,
     participantType,
     estimatedMinutes: (instrument.estimatedMinutes ?? 4) + tasks.reduce((sum, task) => sum + (task.maximumMinutes ?? 5), 0),
     taskCount: tasks.length,
@@ -355,6 +413,7 @@ export async function createAdminResearchStudy(input: AdminResearchStudyDraftCre
     startsAt: parsed.data.startsAt ?? null,
     endsAt: parsed.data.endsAt ?? null,
     retentionUntil: parsed.data.retentionUntil ?? null,
+    sourcePilotStudyId: parsed.data.sourcePilotStudyId ?? null,
     ownerAdminId: guard.actor.adminId,
   });
   await logAuditAction({ actor: guard.actor, action: "research.study.create", entityType: "research_study", entityId: study.researchStudyId, newValues: { studyCode: study.studyCode, protocolVersion: study.protocolVersion } });
@@ -371,6 +430,11 @@ export async function recordAdminResearchApproval(input: AdminResearchApprovalIn
     ethicsReviewStatus: parsed.data.ethicsReviewStatus,
     ethicsApprovedAt: parsed.data.ethicsApprovedAt ?? null,
     approvalReference: parsed.data.approvalReference,
+    approvedTitleTh: parsed.data.approvedTitleTh,
+    approvedGeographicBoundary: parsed.data.approvedGeographicBoundary,
+    approvedObjectives: parsed.data.approvedObjectives,
+    approvedResearchQuestions: parsed.data.approvedResearchQuestions,
+    analysisWording: parsed.data.analysisWording,
     recordedBy: guard.actor.adminId,
   });
   await logAuditAction({ actor: guard.actor, action: "research.study.approval_record", entityType: "research_study", entityId: parsed.data.studyId, metadata: { ethicsReviewStatus: parsed.data.ethicsReviewStatus } });
@@ -427,6 +491,14 @@ export async function saveAdminResearchDeployment(input: AdminResearchDeployment
   const guard = await requirePermission("research.manage");
   const parsed = adminResearchDeploymentSchema.safeParse(input);
   if (!parsed.success) fail("VALIDATION_ERROR", "ข้อมูลจุดเก็บข้อมูลไม่ถูกต้อง");
+  const detail = await repository.getAdminResearchStudyDetail(parsed.data.studyId);
+  if (!detail || detail.study.status !== "draft") fail("STUDY_FROZEN", "แก้จุดเก็บข้อมูลได้เฉพาะโครงการฉบับร่าง");
+  if (detail.study.studyKind === "pilot" && parsed.data.isActive && parsed.data.collectionMode === "field_observation") {
+    fail("PILOT_FIELD_MODE_BLOCKED", "Pilot ห้ามเปิดจุดเก็บข้อมูลแบบ field_observation");
+  }
+  if (detail.study.studyKind === "final_collection" && parsed.data.isActive && parsed.data.collectionMode !== "field_observation") {
+    fail("FINAL_NON_FIELD_MODE_BLOCKED", "Final collection เปิดได้เฉพาะ field_observation");
+  }
   await repository.upsertResearchDeployment({
     studyId: parsed.data.studyId,
     checkinCodeId: parsed.data.checkinCodeId,
@@ -437,6 +509,96 @@ export async function saveAdminResearchDeployment(input: AdminResearchDeployment
     createdBy: guard.actor.adminId,
   });
   await logAuditAction({ actor: guard.actor, action: "research.deployment.save", entityType: "research_study", entityId: parsed.data.studyId, metadata: { checkinCodeId: parsed.data.checkinCodeId, collectionMode: parsed.data.collectionMode, isActive: parsed.data.isActive } });
+}
+
+export async function recordAdminResearchActivationEvidence(input: AdminResearchActivationEvidenceInput) {
+  const guard = await requirePermission("research.manage");
+  const parsed = adminResearchActivationEvidenceSchema.safeParse(input);
+  if (!parsed.success) fail("VALIDATION_ERROR", "หลักฐานความพร้อมไม่ถูกต้อง");
+  const detail = await repository.getAdminResearchStudyDetail(parsed.data.studyId);
+  if (!detail || detail.study.status !== "draft" || detail.study.studyKind !== "pilot") {
+    fail("EVIDENCE_NOT_EDITABLE", "บันทึกหลักฐานได้เฉพาะ Pilot ฉบับร่าง");
+  }
+  const evidence = await repository.insertResearchActivationEvidence({
+    ...parsed.data,
+    participantCount: parsed.data.participantCount ?? null,
+    medianCompletionSeconds: parsed.data.medianCompletionSeconds ?? null,
+    abandonmentRate: parsed.data.abandonmentRate ?? null,
+    missingnessRate: parsed.data.missingnessRate ?? null,
+    recordedBy: guard.actor.adminId,
+  });
+  await logAuditAction({
+    actor: guard.actor,
+    action: "research.activation_evidence.record",
+    entityType: "research_activation_evidence",
+    entityId: evidence.evidenceId,
+    metadata: { studyId: parsed.data.studyId, evidenceType: parsed.data.evidenceType, version: parsed.data.versionNumber, status: parsed.data.status },
+  });
+  return evidence;
+}
+
+export async function freezeAdminResearchStudy(input: AdminResearchFreezeSnapshotInput) {
+  const guard = await requirePermission("research.manage");
+  const parsed = adminResearchFreezeSnapshotSchema.safeParse(input);
+  if (!parsed.success) fail("VALIDATION_ERROR", "ข้อมูล version freeze ไม่ครบ");
+  const detail = await repository.getAdminResearchStudyDetail(parsed.data.studyId);
+  if (!detail || detail.study.status !== "draft") fail("STUDY_NOT_DRAFT", "ล็อกรุ่นได้เฉพาะโครงการฉบับร่าง");
+  if (detail.freezeSnapshot) fail("FREEZE_EXISTS", "โครงการนี้มี freeze snapshot แล้ว");
+  const preFreezeBlockers = assessResearchReadiness(detail).filter((item) =>
+    !item.ready && !["freeze_snapshot", "pilot_decision"].includes(item.key),
+  );
+  if (preFreezeBlockers.length > 0) {
+    fail("PRE_FREEZE_NOT_READY", preFreezeBlockers.map((item) => item.blockingReason).join("; "));
+  }
+  if (detail.instruments.some((instrument) => instrument.status === "draft") || detail.operatorTasks.some((task) => task.status === "draft")) {
+    fail("DRAFT_CONFIGURATION_EXISTS", "ต้องเผยแพร่หรือยกเลิกฉบับร่างทั้งหมดก่อนล็อกรุ่น");
+  }
+  const snapshot = await repository.insertResearchFreezeSnapshot({
+    studyId: parsed.data.studyId,
+    protocolVersion: detail.study.protocolVersion,
+    consentVersion: detail.study.consentVersion,
+    noticeVersion: detail.study.noticeVersion,
+    instrumentManifest: detail.instruments.filter((item) => item.status === "published").map((item) => ({
+      instrumentKey: item.instrumentKey,
+      versionNumber: item.versionNumber,
+      audience: item.audience,
+      itemCodes: detail.items.filter((question) => question.instrumentId === item.researchInstrumentId).map((question) => question.itemCode),
+    })),
+    taskManifest: detail.operatorTasks.filter((item) => item.status === "published").map((item) => ({ taskCode: item.taskCode, versionNumber: item.versionNumber, audience: item.audience })),
+    scoringVersion: parsed.data.scoringVersion,
+    retentionVersion: parsed.data.retentionVersion,
+    withdrawalVersion: parsed.data.withdrawalVersion,
+    languageVersion: parsed.data.languageVersion,
+    inclusionVersion: parsed.data.inclusionVersion,
+    applicationRevision: parsed.data.applicationRevision,
+    databaseRevision: parsed.data.databaseRevision,
+    frozenBy: guard.actor.adminId,
+  });
+  await logAuditAction({ actor: guard.actor, action: "research.study.freeze_snapshot", entityType: "research_freeze_snapshot", entityId: snapshot.snapshotId, metadata: { studyId: parsed.data.studyId, immutable: true } });
+  return snapshot;
+}
+
+export async function recordAdminResearchPilotReview(input: AdminResearchPilotReviewInput) {
+  const guard = await requirePermission("research.manage");
+  const parsed = adminResearchPilotReviewSchema.safeParse(input);
+  if (!parsed.success) fail("VALIDATION_ERROR", "ผลสรุป Pilot ไม่ถูกต้อง");
+  const detail = await repository.getAdminResearchStudyDetail(parsed.data.studyId);
+  if (!detail || detail.study.studyKind !== "pilot" || !["paused", "closed"].includes(detail.study.status)) {
+    fail("PILOT_REVIEW_NOT_READY", "ต้องพักหรือปิด Pilot ก่อนสรุปผล");
+  }
+  const review = await repository.insertResearchPilotReview({
+    pilotStudyId: parsed.data.studyId,
+    decision: parsed.data.decision,
+    reviewedSessionCount: parsed.data.reviewedSessionCount,
+    medianCompletionSeconds: parsed.data.medianCompletionSeconds ?? null,
+    abandonmentRate: parsed.data.abandonmentRate ?? null,
+    missingnessRate: parsed.data.missingnessRate ?? null,
+    reliabilityNote: parsed.data.reliabilityNote,
+    decisionRationale: parsed.data.decisionRationale,
+    reviewedBy: guard.actor.adminId,
+  });
+  await logAuditAction({ actor: guard.actor, action: "research.pilot.review", entityType: "research_pilot_review", entityId: review.pilotReviewId, metadata: { studyId: parsed.data.studyId, decision: parsed.data.decision, reviewedSessionCount: parsed.data.reviewedSessionCount } });
+  return review;
 }
 
 export async function createAdminResearchOperatorTask(input: AdminResearchOperatorTaskDraftInput) {

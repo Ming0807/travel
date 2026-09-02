@@ -341,6 +341,12 @@ export async function acceptFacilitatedResearchOperator(input: ResearchOperatorA
   if (!detail || detail.study.studyCode !== parsed.studyCode || detail.study.status !== "active") {
     throw serviceError("INVITATION_UNAVAILABLE");
   }
+  if (detail.study.studyKind === "pilot" && parsed.collectionMode === "field_observation") {
+    throw serviceError("INVITATION_UNAVAILABLE");
+  }
+  if (detail.study.studyKind === "final_collection" && parsed.collectionMode !== "field_observation") {
+    throw serviceError("INVITATION_UNAVAILABLE");
+  }
   const credentials = createResearchCredentials("00000000-0000-4000-8000-000000000000");
   let result: Awaited<ReturnType<typeof acceptResearchOperatorInvitationRpc>>;
   try {

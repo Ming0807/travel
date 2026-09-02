@@ -6,6 +6,7 @@ export async function createVisit(params: {
   attractionId: number;
   photoSpotId?: number | null;
   checkinCodeId?: number | null;
+  entryChannel?: "qr" | "nfc" | "direct" | "unknown";
   completionStatus: string;
 }) {
   const supabase = createSupabaseServiceRoleClient();
@@ -20,6 +21,7 @@ export async function createVisit(params: {
       attraction_id: params.attractionId,
       photo_spot_id: params.photoSpotId || null,
       checkin_code_id: params.checkinCodeId || null,
+      entry_channel: params.entryChannel ?? "unknown",
       completion_status: params.completionStatus,
     })
     .select("visit_id")

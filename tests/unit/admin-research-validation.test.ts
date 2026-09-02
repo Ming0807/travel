@@ -20,6 +20,13 @@ const studyId = "11111111-1111-4111-8111-111111111111";
 const instrumentId = "22222222-2222-4222-8222-222222222222";
 const taskId = "33333333-3333-4333-8333-333333333333";
 const sessionId = "44444444-4444-4444-8444-444444444444";
+const approvedScope = {
+  approvedTitleTh: "การพัฒนาและประเมินแพลตฟอร์ม Smart Tourism",
+  approvedGeographicBoundary: "พื้นที่นำร่องในอำเภอเมืองยะลา",
+  approvedObjectives: ["ประเมินคุณภาพระบบ", "วิเคราะห์ข้อมูลเพื่อสนับสนุนการตัดสินใจ"],
+  approvedResearchQuestions: ["ระบบมีคุณภาพในระดับใด", "ข้อมูลช่วยตัดสินใจได้หรือไม่"],
+  analysisWording: "descriptive_associational" as const,
+};
 
 const studyDraft = {
   studyCode: "yala-field-2026",
@@ -51,6 +58,9 @@ describe("admin research validation", () => {
 
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.status).toBe("draft");
+    expect(adminResearchStudyDraftCreateSchema.safeParse({ ...studyDraft, studyKind: "final_collection" }).success).toBe(false);
+    expect(adminResearchStudyDraftCreateSchema.safeParse({ ...studyDraft, studyKind: "final_collection", sourcePilotStudyId: studyId }).success).toBe(true);
+    expect(adminResearchStudyDraftCreateSchema.safeParse({ ...studyDraft, studyKind: "pilot", sourcePilotStudyId: studyId }).success).toBe(false);
   });
 
   it("rejects invalid study dates, contact details, unknown fields, and active draft status", () => {
@@ -201,6 +211,7 @@ describe("admin research validation", () => {
       advisorApprovedAt: "2026-08-15T09:00:00+07:00",
       ethicsReviewStatus: "not_required",
       approvalReference: "บันทึกอาจารย์ที่ปรึกษา 15/08/2569",
+      ...approvedScope,
       confirmRecordedEvidence: true,
     }).success).toBe(true);
     expect(adminResearchApprovalSchema.safeParse({
@@ -208,6 +219,16 @@ describe("admin research validation", () => {
       advisorApprovedAt: "2026-08-15T09:00:00+07:00",
       ethicsReviewStatus: "approved",
       approvalReference: "REC-2026-001",
+      ...approvedScope,
+      confirmRecordedEvidence: true,
+    }).success).toBe(false);
+    expect(adminResearchApprovalSchema.safeParse({
+      studyId,
+      advisorApprovedAt: "2026-08-15T09:00:00+07:00",
+      ethicsReviewStatus: "not_required",
+      approvalReference: "APPROVAL-2026-001",
+      ...approvedScope,
+      approvedResearchQuestions: [],
       confirmRecordedEvidence: true,
     }).success).toBe(false);
   });

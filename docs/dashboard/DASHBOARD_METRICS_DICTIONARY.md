@@ -217,6 +217,38 @@ Do not show misleading 0.
 
 ## 5. Common Filter Rules
 
+## 5.1 Attraction Intelligence Scope (Phase 22)
+
+The attraction workspace requires one `attraction_id` and uses `visits.visit_date` for its reporting period.
+
+Default evidence scope:
+
+```text
+include = operational visits without a research session
+include = final_collection + field_observation
+exclude = pilot study records
+exclude = pilot_internal
+exclude = simulated_usability
+```
+
+An administrator may explicitly select pilot or simulated data for QA, but the interface and export must label that scope and must not present it as a field-tourism claim.
+
+| Metric key | Unit | Denominator | Source | Missing-data rule | Decision use |
+| --- | --- | --- | --- | --- | --- |
+| `attraction_unique_tourists` | system profile | none | `visits.tourist_id` | deduplicate only within selected scope | approximate distinct platform users, not verified persons |
+| `attraction_visits` | visit record | none | `visits` | exclude rows outside evidence scope | observed platform activity at the attraction |
+| `attraction_repeat_visits` | visit record | selected unique profiles | `visits` | visits minus unique profiles, minimum zero | monitor repeat activity without claiming loyalty causation |
+| `attraction_certificate_visits` | visit record | selected visits | `certificates.visit_id` | count a visit once when one or more certificates exist | reward-flow completion |
+| `attraction_stamp_visits` | visit record | selected visits | `tourist_stamps.visit_id` | count only `earned` stamps and a visit once | passport engagement |
+| `attraction_survey_rate` | percentage | selected visits | `satisfaction_surveys`, `visits` | `null` when visits = 0 | feedback coverage, not satisfaction quality |
+| `attraction_satisfaction_*` | mean score 1-5 | non-null responses for that dimension | `satisfaction_surveys` | do not replace null with zero; suppress mean when `n < 10` | identify dimensions for reviewed improvement evidence |
+| `attraction_expense_range` | response category | expense responses | `visit_expenses`, `spending_ranges` | exclude unanswered values; suppress small categories | describe self-reported spending patterns, never business revenue |
+| `attraction_funnel_*` | unique visit/session | previous attributable stage | `funnel_events`, operational tables | entry stage is unavailable when it cannot be linked to an included visit | locate workflow friction without inflating event retries |
+
+Campaign filtering uses `checkin_codes.campaign_id`. Entry-channel filtering uses `visits.entry_channel`; records remain `unknown` when evidence does not support QR, NFC, direct, or import attribution. Phase 22 does not trust a client form field for channel attribution; Phase 23 must add a server-verifiable entry contract before QR/NFC labels are populated.
+
+All segmented distributions suppress categories below `n=10`. Each satisfaction dimension keeps an independent denominator. Peer comparison is unavailable when campaign, check-in point, or entry-channel filters make the peer scope non-comparable.
+
 Most metrics should support:
 
 ```text
