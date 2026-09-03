@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import {
   Area,
@@ -12,6 +13,7 @@ import {
 } from "recharts";
 import { ChartLineUp } from "@phosphor-icons/react/dist/ssr";
 import { NoDataState } from "@/components/dashboard/NoDataState";
+import { buildAttractionImprovementHref, type AttractionImprovementContext } from "@/lib/dashboard/attraction-improvement-links";
 import type { TrendPoint } from "@/types/dashboard";
 
 function formatDateLabel(raw: string): string {
@@ -31,7 +33,13 @@ function formatDateFull(raw: string): string {
   });
 }
 
-export function TrendChart({ points }: { points: TrendPoint[] }) {
+function formatDateActionLabel(raw: string): string {
+  const date = new Date(`${raw}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return raw;
+  return `${formatDateLabel(raw)} ${date.getUTCFullYear() + 543}`;
+}
+
+export function TrendChart({ points, improvementContext }: { points: TrendPoint[]; improvementContext?: AttractionImprovementContext }) {
   const total = useMemo(() => points.reduce((sum, point) => sum + point.value, 0), [points]);
   const peak = useMemo(() => points.reduce<TrendPoint | null>((best, point) => (
     best === null || point.value > best.value ? point : best
@@ -122,13 +130,14 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
         <div className="max-h-56 overflow-auto">
           <table aria-label="ข้อมูลแนวโน้มรายการเข้าชม" className="w-full min-w-80 text-sm">
             <thead className="sticky top-0 bg-white text-left text-xs text-slate-600">
-              <tr className="border-b border-slate-200"><th className="py-2 pr-4">วันที่</th><th className="py-2 text-right">รายการเข้าชม</th></tr>
+              <tr className="border-b border-slate-200"><th className="py-2 pr-4">วันที่</th><th className="py-2 text-right">รายการเข้าชม</th>{improvementContext ? <th className="py-2 pl-4 text-right">ดำเนินการ</th> : null}</tr>
             </thead>
             <tbody>
               {points.map((point) => (
                 <tr key={`trend-row-${point.label}`} className="border-b border-slate-100">
                   <td className="py-2 pr-4 text-slate-700">{formatDateFull(point.label)}</td>
                   <td className="py-2 text-right font-semibold tabular-nums text-slate-950">{point.value.toLocaleString("th-TH")}</td>
+                  {improvementContext ? <td className="py-2 pl-4 text-right"><Link aria-label={`เปิดร่างประเด็นจากข้อมูล ${formatDateActionLabel(point.label)}`} href={buildAttractionImprovementHref(improvementContext, { source: "trend_point", dimension: "overall", metric: "visits", value: point.value, date: point.label })} className="inline-flex min-h-11 items-center text-xs font-bold text-[#B94727] underline underline-offset-4">เปิดร่าง</Link></td> : null}
                 </tr>
               ))}
             </tbody>

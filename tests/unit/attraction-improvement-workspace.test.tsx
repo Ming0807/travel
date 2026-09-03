@@ -232,4 +232,48 @@ describe("AttractionImprovementWorkspace regressions", () => {
     expect(text).not.toContain("storage/private/tourist-001/photo.jpg");
     expect(within(container).queryByText(/tourist-001|private\/photo/)).not.toBeInTheDocument();
   });
+
+  it("shows baseline, ownership, deadline, follow-up, and outcome in one timeline", () => {
+    renderWorkspace({ workspace: {
+      candidate: qualifyFeedbackCandidate(metrics()),
+      issues: [issue()],
+      actions: [{ ...action("verified"), completionEvidenceNote: "Installed bilingual signs." }],
+      history: [
+        ...history(),
+        {
+          historyId: "00000000-0000-4000-8000-000000000005",
+          feedbackIssueId: ids.issue,
+          improvementActionId: ids.action,
+          fromStatus: "completed",
+          toStatus: "verified",
+          changedBy: ids.owner,
+          note: "Follow-up score improved and was reviewed.",
+          createdAt: "2026-04-01T00:00:00.000Z",
+        },
+      ],
+      owners,
+      rules: FEEDBACK_RULES,
+    } });
+
+    const timeline = screen.getByRole("region", { name: "ไทม์ไลน์การปรับปรุง ภาพรวม" });
+    expect(within(timeline).getByText("Baseline")).toBeInTheDocument();
+    expect(within(timeline).getAllByText(/ผู้รับผิดชอบทดสอบ/).length).toBeGreaterThan(0);
+    expect(within(timeline).getByText(/ช่วงติดตามผล/)).toBeInTheDocument();
+    expect(within(timeline).getByText(/Installed bilingual signs/)).toBeInTheDocument();
+    expect(within(timeline).getByText(/Follow-up score improved and was reviewed/)).toBeInTheDocument();
+  });
+
+  it("prefills a reviewed issue draft from aggregate analytics context", () => {
+    renderWorkspace({
+      draft: {
+        source: "low_score",
+        category: "safety",
+        note: "ร่างจากคะแนนความปลอดภัยเฉลี่ย 2.80 / 5 (ข้อมูลรวมเท่านั้น)",
+      },
+    });
+
+    expect(screen.getByText(/ร่างจากข้อมูลวิเคราะห์รวม/)).toBeInTheDocument();
+    expect(screen.getByLabelText("จัดหมวดประเด็น")).toHaveValue("safety");
+    expect(screen.getByLabelText("เหตุผลการพิจารณา")).toHaveValue("ร่างจากคะแนนความปลอดภัยเฉลี่ย 2.80 / 5 (ข้อมูลรวมเท่านั้น)");
+  });
 });

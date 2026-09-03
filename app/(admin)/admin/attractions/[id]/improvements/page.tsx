@@ -5,6 +5,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AttractionImprovementWorkspace } from "@/components/admin/attractions/AttractionImprovementWorkspace";
 import { hasPermission, requirePermission } from "@/lib/auth/guards";
+import { parseAttractionIssueDraft } from "@/lib/dashboard/attraction-improvement-draft";
 import { getAdminAttractionById } from "@/lib/repositories/admin-attraction.repository";
 import {
   FEEDBACK_RULES,
@@ -71,6 +72,7 @@ export default async function AttractionImprovementsPage({
     comparisonEnd: one(query.comparisonEnd) ?? dateDefaults.comparisonEnd,
   });
   const scope = scopeResult.success ? scopeResult.data : { attractionId, ...dateDefaults };
+  const draft = parseAttractionIssueDraft(query, scope, dimension);
 
   let workspace;
   let loadError = false;
@@ -119,6 +121,7 @@ export default async function AttractionImprovementsPage({
             canReview={hasPermission(guard.actor, "attraction_feedback.issue_review")}
             canManage={hasPermission(guard.actor, "attraction_improvement.manage")}
             canVerify={hasPermission(guard.actor, "attraction_improvement.verify")}
+            draft={draft}
           />
         )}
       </div>

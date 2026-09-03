@@ -126,19 +126,126 @@ function scoreMetric(visits: Row[], key: string, label: string) {
   return { key, label, sampleSize: values.length, value: suppressed ? null : average(values), suppressed };
 }
 
-function benchmark(rows: Row[], attractionId: number, scope: AttractionAnalyticsFilters["evidenceScope"]) {
-  const included = rows.filter((row) => visitMatchesEvidenceScope(row, scope));
-  const counts = new Map<number, number>();
-  included.forEach((row) => {
-    const id = Number(row.attraction_id);
-    if (Number.isFinite(id)) counts.set(id, (counts.get(id) ?? 0) + 1);
+type PeerComparisonScope = Pick<
+  AttractionAnalyticsFilters,
+  "attractionId" | "dateFrom" | "dateTo" | "evidenceScope"
+> & {
+  provinceId: number;
+  attractionTypeId: number;
+};
+
+function privacySafeScore(visits: Row[], key: string) {
+  const values = visits
+    .flatMap((visit) => relations(visit, "satisfaction_surveys"))
+    .map((survey) => nullableNumber(survey[key]))
+    .filter((value): value is number => value !== null);
+  const suppressed = values.length > 0 && values.length < ATTRACTION_SMALL_CELL_THRESHOLD;
+  return { value: suppressed ? null : average(values), sampleSize: values.length, suppressed };
+}
+
+function privacySafeYesRate(visits: Row[], key: string) {
+  const answers = visits
+    .flatMap((visit) => relations(visit, "satisfaction_surveys"))
+    .map((survey) => nullableString(survey[key]))
+    .filter((answer): answer is string => answer !== null);
+  const suppressed = answers.length > 0 && answers.length < ATTRACTION_SMALL_CELL_THRESHOLD;
+  return {
+    value: suppressed || answers.length === 0
+      ? null
+      : round((answers.filter((answer) => answer === "yes").length / answers.length) * 100),
+    sampleSize: answers.length,
+    suppressed,
+  };
+}
+
+function privacySafeTopExpense(visits: Row[], relationKey: "expense_categories" | "spending_ranges", labelKey: string) {
+  const labels = visits
+    .flatMap((visit) => relations(visit, "visit_expenses"))
+    .map((expense) => nullableString(relation(expense, relationKey)?.[labelKey]));
+  const answered = labels.filter((label): label is string => label !== null);
+  const counts = new Map<string, number>();
+  answered.forEach((label) => counts.set(label, (counts.get(label) ?? 0) + 1));
+  const top = [...counts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "th"))[0];
+  const suppressed = answered.length > 0 && (!top || top[1] < ATTRACTION_SMALL_CELL_THRESHOLD);
+  return { label: suppressed ? null : top?.[0] ?? null, sampleSize: answered.length, suppressed };
+}
+
+function visitCompletionRate(visits: Row[], predicate: (visit: Row) => boolean) {
+  return visits.length > 0 ? round((visits.filter(predicate).length / visits.length) * 100) : null;
+}
+
+export function isOpenFeedbackIssue(status: string) {
+  return status === "open";
+}
+
+export function buildAttractionPeerComparison(rows: Row[], scope: PeerComparisonScope) {
+  const eligibleRows = rows.filter((row) => {
+    if (!visitMatchesEvidenceScope(row, scope.evidenceScope)) return false;
+    const attraction = relation(row, "attractions");
+    return attraction?.is_active !== false
+      && Number(attraction?.province_id) === scope.provinceId
+      && Number(attraction?.attraction_type_id) === scope.attractionTypeId;
   });
-  const selectedVisits = counts.get(attractionId) ?? 0;
-  const peers = [...counts.entries()].filter(([id]) => id !== attractionId).map(([, count]) => count).sort((a, b) => a - b);
-  const middle = Math.floor(peers.length / 2);
-  const peerMedian = peers.length === 0 ? null : peers.length % 2 ? peers[middle] : (peers[middle - 1] + peers[middle]) / 2;
-  const rank = [...counts.entries()].sort((a, b) => b[1] - a[1]).findIndex(([id]) => id === attractionId) + 1;
-  return { selectedVisits, peerMedian, peerCount: peers.length, rank: rank > 0 ? rank : null, comparable: peers.length >= 2 };
+  const grouped = new Map<number, Row[]>();
+  eligibleRows.forEach((row) => {
+    const attractionId = Number(row.attraction_id);
+    if (!Number.isFinite(attractionId)) return;
+    grouped.set(attractionId, [...(grouped.get(attractionId) ?? []), row]);
+  });
+
+  function summarize(attractionId: number, visits: Row[]) {
+    const attraction = relation(visits[0] ?? {}, "attractions");
+    const surveyedVisits = visits.filter((visit) => hasChild(visit, "satisfaction_surveys"));
+    return {
+      attractionId,
+      nameTh: nullableString(attraction?.name_th) ?? `สถานที่ ${attractionId}`,
+      visits: visits.length,
+      surveyResponses: surveyedVisits.length,
+      surveyCoverage: visits.length > 0 ? round((surveyedVisits.length / visits.length) * 100) : null,
+      overallSatisfaction: privacySafeScore(visits, "overall_score"),
+      satisfaction: [
+        { key: "safety_score", label: "ความปลอดภัย", ...privacySafeScore(visits, "safety_score") },
+        { key: "cleanliness_score", label: "ความสะอาด", ...privacySafeScore(visits, "cleanliness_score") },
+        { key: "accessibility_score", label: "การเข้าถึง", ...privacySafeScore(visits, "accessibility_score") },
+        { key: "information_score", label: "ข้อมูลและป้าย", ...privacySafeScore(visits, "information_score") },
+        { key: "value_score", label: "ความคุ้มค่า", ...privacySafeScore(visits, "value_score") },
+      ],
+      revisitRate: privacySafeYesRate(visits, "revisit_intention"),
+      recommendRate: privacySafeYesRate(visits, "recommend_intention"),
+      photoCompletion: visitCompletionRate(visits, (visit) => hasChild(visit, "visit_photos")),
+      certificateCompletion: visitCompletionRate(visits, (visit) => hasChild(visit, "certificates")),
+      stampCompletion: visitCompletionRate(visits, (visit) => relations(visit, "tourist_stamps").some((stamp) => stamp.status === "earned")),
+      surveyCompletion: visitCompletionRate(visits, (visit) => hasChild(visit, "satisfaction_surveys")),
+      researchCompletion: visitCompletionRate(visits, hasSubmittedResearch),
+      topExpenseRange: privacySafeTopExpense(visits, "spending_ranges", "range_label_th"),
+      topExpenseCategory: privacySafeTopExpense(visits, "expense_categories", "name_th"),
+    };
+  }
+
+  const selectedRows = grouped.get(scope.attractionId) ?? [];
+  const eligiblePeers = [...grouped.entries()]
+    .filter(([attractionId, visits]) => attractionId !== scope.attractionId && visits.length >= ATTRACTION_SMALL_CELL_THRESHOLD)
+    .map(([attractionId, visits]) => summarize(attractionId, visits))
+    .sort((left, right) => right.visits - left.visits || left.nameTh.localeCompare(right.nameTh, "th"));
+  const rankPopulation = [
+    ...(selectedRows.length > 0 ? [{ attractionId: scope.attractionId, visits: selectedRows.length }] : []),
+    ...eligiblePeers.map((peer) => ({ attractionId: peer.attractionId, visits: peer.visits })),
+  ].sort((left, right) => right.visits - left.visits || left.attractionId - right.attractionId);
+  const selectedRank = rankPopulation.findIndex((row) => row.attractionId === scope.attractionId);
+
+  return {
+    status: eligiblePeers.length >= 2 ? "ready" as const : "insufficient_peers" as const,
+    unavailableReason: null,
+    eligibilityNote: `จังหวัดเดียวกัน ประเภทหลักเดียวกัน ช่วง ${scope.dateFrom} ถึง ${scope.dateTo} และมีอย่างน้อย ${ATTRACTION_SMALL_CELL_THRESHOLD} Visits`,
+    dateFrom: scope.dateFrom,
+    dateTo: scope.dateTo,
+    dateAligned: true,
+    eligiblePeerCount: eligiblePeers.length,
+    rankDenominator: rankPopulation.length,
+    selectedRank: selectedRank >= 0 ? selectedRank + 1 : null,
+    selected: selectedRows.length > 0 ? summarize(scope.attractionId, selectedRows) : null,
+    peers: eligiblePeers.slice(0, 3),
+  };
 }
 
 export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) {
@@ -182,9 +289,35 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
   ]);
   const actions = issues.length > 0 ? await feedbackRepository.listActionsForIssues(issues.map((issue) => issue.feedbackIssueId)) : issueActions;
   const funnel = buildAttractionFunnel(visits, rows.funnelEvents);
-  const benchmarkData = parsed.data.campaignId || parsed.data.checkinCodeId || parsed.data.entryChannel || rows.truncated
-    ? { selectedVisits: visits.length, peerMedian: null, peerCount: 0, rank: null, comparable: false }
-    : benchmark(rows.peerVisits, parsed.data.attractionId, parsed.data.evidenceScope);
+  const comparisonBlockedReason = parsed.data.campaignId || parsed.data.checkinCodeId || parsed.data.entryChannel
+    ? "ตัวกรอง Campaign จุดเช็กอิน หรือช่องทางเข้าไม่สามารถใช้กับ peer ทุกแห่งอย่างเท่าเทียม"
+    : rows.truncated
+      ? "ข้อมูลอย่างน้อยหนึ่งชุดเกินขีดจำกัดการอ่านสด"
+      : rows.attraction.attractionTypeId === null
+        ? "สถานที่นี้ยังไม่มีประเภทหลักสำหรับกำหนดกลุ่มเทียบ"
+        : null;
+  const peerComparison = comparisonBlockedReason || rows.attraction.attractionTypeId === null
+    ? {
+        status: "unavailable" as const,
+        unavailableReason: comparisonBlockedReason,
+        eligibilityNote: "เปรียบเทียบเฉพาะสถานที่เปิดใช้งานในจังหวัดและประเภทหลักเดียวกัน",
+        dateFrom: parsed.data.dateFrom,
+        dateTo: parsed.data.dateTo,
+        dateAligned: true,
+        eligiblePeerCount: 0,
+        rankDenominator: 0,
+        selectedRank: null,
+        selected: null,
+        peers: [],
+      }
+    : buildAttractionPeerComparison(rows.peerVisits, {
+        attractionId: parsed.data.attractionId,
+        provinceId: rows.attraction.provinceId,
+        attractionTypeId: rows.attraction.attractionTypeId,
+        dateFrom: parsed.data.dateFrom,
+        dateTo: parsed.data.dateTo,
+        evidenceScope: parsed.data.evidenceScope,
+      });
   const biggestDrop = funnel.filter((stage) => stage.dropOffFromPrevious !== null).sort((left, right) => (right.dropOffFromPrevious ?? 0) - (left.dropOffFromPrevious ?? 0))[0] ?? null;
   const scopedInsights = [
     surveys.length < ATTRACTION_SMALL_CELL_THRESHOLD
@@ -247,10 +380,10 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
         ? "รวม Operational visits และ final field_observation; ตัด pilot_internal, simulated_usability และ Pilot study ออกจากข้อสรุปหลัก"
         : "ขอบเขตนี้เปิดเพื่อการตรวจสอบภายใน ห้ามใช้แทนข้อสรุปภาคสนามโดยไม่ระบุ collection mode",
     },
-    benchmark: benchmarkData,
+    peerComparison,
     improvements: {
       issueCount: issues.length,
-      openIssueCount: issues.filter((issue) => !["closed", "rejected"].includes(issue.status)).length,
+      openIssueCount: issues.filter((issue) => isOpenFeedbackIssue(issue.status)).length,
       actionCount: actions.length,
       overdueActionCount: actions.filter((action) => !["completed", "verified", "cancelled"].includes(action.status) && action.dueDate < new Date().toISOString().slice(0, 10)).length,
       recentIssues: issues.slice(0, 5).map((issue) => ({ id: issue.feedbackIssueId, dimension: issue.issueDimension, category: issue.issueCategory, status: issue.status, responseCount: issue.responseCount, currentScore: issue.currentScore })),

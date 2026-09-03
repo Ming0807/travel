@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildAttractionDistribution,
   buildAttractionFunnel,
+  buildAttractionPeerComparison,
+  isOpenFeedbackIssue,
   visitMatchesEvidenceScope,
 } from "@/lib/services/attraction-analytics.service";
 import {
@@ -109,6 +111,12 @@ describe("Phase 21 research activation", () => {
 });
 
 describe("Phase 22 attraction evidence scope", () => {
+  it("does not count dismissed or closed feedback issues as open work", () => {
+    expect(isOpenFeedbackIssue("open")).toBe(true);
+    expect(isOpenFeedbackIssue("dismissed")).toBe(false);
+    expect(isOpenFeedbackIssue("closed")).toBe(false);
+  });
+
   it("excludes pilot and simulated records from default field claims", () => {
     expect(visitMatchesEvidenceScope({}, "field_claim")).toBe(true);
     expect(visitMatchesEvidenceScope(researchVisit("pilot", "field_observation"), "field_claim")).toBe(false);
@@ -143,7 +151,8 @@ describe("Phase 22 attraction evidence scope", () => {
   it("limits attraction options and peer comparisons to the active destination boundary", () => {
     expect(analyticsRepository).toContain("listLiveDestinationProvinceIds");
     expect(analyticsRepository).toMatch(/\.in\("province_id", liveProvinceIds\)/);
-    expect(analyticsRepository).toMatch(/\.in\("attractions\.province_id", liveProvinceIds\)/);
+    expect(analyticsRepository).toMatch(/\.eq\("attractions\.province_id", selectedProvinceId\)/);
+    expect(analyticsRepository).toMatch(/\.eq\("attractions\.attraction_type_id", selectedAttractionTypeId\)/);
   });
 
   it("blocks aggregate export when bounded live reads are incomplete", () => {
@@ -189,5 +198,72 @@ describe("Phase 22 attraction evidence scope", () => {
     expect(funnel[0]).toMatchObject({ key: "entry", available: false, conversionFromPrevious: null });
     expect(funnel.map((stage) => stage.count)).toEqual([1, 3, 2, 2, 2, 1, 1]);
     expect(funnel.slice(2).every((stage, index, stages) => index === 0 || stage.count <= stages[index - 1].count)).toBe(true);
+  });
+
+  it("compares at most three privacy-eligible peers with the same province, type, dates, and evidence scope", () => {
+    const visit = (attractionId: number, name: string, overrides: Record<string, unknown> = {}) => ({
+      attraction_id: attractionId,
+      attractions: { attraction_id: attractionId, name_th: name, province_id: 1, attraction_type_id: 7, is_active: true },
+      satisfaction_surveys: [{ overall_score: 4, revisit_intention: "yes", recommend_intention: "yes" }],
+      certificates: [{}],
+      visit_photos: [{}],
+      tourist_stamps: [{ status: "earned" }],
+      visit_expenses: [{ spending_ranges: { range_label_th: "501-1,000 บาท" }, expense_categories: { name_th: "อาหาร" } }],
+      ...overrides,
+    });
+    const rows = [
+      ...Array.from({ length: 12 }, () => visit(1, "สถานที่หลัก")),
+      ...Array.from({ length: 18 }, () => visit(2, "เพื่อน A")),
+      ...Array.from({ length: 16 }, () => visit(3, "เพื่อน B")),
+      ...Array.from({ length: 14 }, () => visit(4, "เพื่อน C")),
+      ...Array.from({ length: 13 }, () => visit(5, "เพื่อน D")),
+      ...Array.from({ length: 20 }, () => visit(6, "คนละประเภท", { attractions: { attraction_id: 6, name_th: "คนละประเภท", province_id: 1, attraction_type_id: 8, is_active: true } })),
+      ...Array.from({ length: 9 }, () => visit(7, "ฐานต่ำกว่าเกณฑ์")),
+    ];
+
+    const result = buildAttractionPeerComparison(rows, {
+      attractionId: 1,
+      provinceId: 1,
+      attractionTypeId: 7,
+      dateFrom: "2026-08-01",
+      dateTo: "2026-08-31",
+      evidenceScope: "field_claim",
+    });
+
+    expect(result.status).toBe("ready");
+    expect(result.peers.map((peer) => peer.nameTh)).toEqual(["เพื่อน A", "เพื่อน B", "เพื่อน C"]);
+    expect(result.eligiblePeerCount).toBe(4);
+    expect(result.rankDenominator).toBe(5);
+    expect(result.dateAligned).toBe(true);
+    expect(result.peers[0]).toMatchObject({
+      visits: 18,
+      surveyCoverage: 100,
+      overallSatisfaction: { value: 4, sampleSize: 18, suppressed: false },
+      certificateCompletion: 100,
+      revisitRate: { value: 100, sampleSize: 18, suppressed: false },
+      topExpenseCategory: { label: "อาหาร", sampleSize: 18, suppressed: false },
+    });
+  });
+
+  it("withholds peer survey signals below the privacy threshold", () => {
+    const rows = Array.from({ length: 12 }, (_, index) => ({
+      attraction_id: 2,
+      attractions: { attraction_id: 2, name_th: "เพื่อน A", province_id: 1, attraction_type_id: 7, is_active: true },
+      satisfaction_surveys: index < 6 ? [{ overall_score: 4, revisit_intention: "yes" }] : [],
+      visit_expenses: index < 5 ? [{ expense_categories: { name_th: "อาหาร" } }] : [],
+    }));
+
+    const result = buildAttractionPeerComparison(rows, {
+      attractionId: 1,
+      provinceId: 1,
+      attractionTypeId: 7,
+      dateFrom: "2026-08-01",
+      dateTo: "2026-08-31",
+      evidenceScope: "field_claim",
+    });
+
+    expect(result.peers[0].overallSatisfaction).toEqual({ value: null, sampleSize: 6, suppressed: true });
+    expect(result.peers[0].revisitRate).toEqual({ value: null, sampleSize: 6, suppressed: true });
+    expect(result.peers[0].topExpenseCategory).toEqual({ label: null, sampleSize: 5, suppressed: true });
   });
 });

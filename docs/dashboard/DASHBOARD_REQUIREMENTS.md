@@ -1265,3 +1265,7 @@ generated-at timestamp
 ```
 
 Do not copy private comments, tourist identifiers, contact information, or media paths into the issue draft.
+
+For attraction workbench drafts, the URL contract is limited to validated aggregate context (`dateStart`, `dateEnd`, `dimension`, `draftSource`, `draftMetric`, `draftValue`, and an optional aggregate `draftDate`). A deep link prefills a review form only; it does not bypass qualification rules, permissions, or human review.
+
+The improvement timeline keeps the stored baseline, review decision, assigned owner, due date, overdue state, follow-up window, implementation evidence, status history, and required verification outcome together. These are auditable descriptive records; a verification note is not causal proof of improvement.

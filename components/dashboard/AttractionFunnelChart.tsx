@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useSyncExternalStore } from "react";
+import { ArrowSquareOut } from "@phosphor-icons/react/dist/ssr";
 import { Cell, Funnel, FunnelChart as RechartsFunnelChart, ResponsiveContainer, Tooltip } from "recharts";
 
+import { buildAttractionImprovementHref, type AttractionImprovementContext } from "@/lib/dashboard/attraction-improvement-links";
 import type { AttractionAnalyticsViewModel } from "@/lib/services/attraction-analytics.service";
 
 type FunnelStages = AttractionAnalyticsViewModel["funnel"];
@@ -25,7 +28,7 @@ function percentage(value: number | null) {
   return value === null ? "ยังคำนวณไม่ได้" : `${value.toLocaleString("th-TH")}%`;
 }
 
-export function AttractionFunnelChart({ stages }: { stages: FunnelStages }) {
+export function AttractionFunnelChart({ stages, improvementContext }: { stages: FunnelStages; improvementContext?: AttractionImprovementContext }) {
   const showDesktopChart = useSyncExternalStore(subscribeToDesktop, getDesktopSnapshot, () => false);
   const availableStages = stages.filter((stage) => stage.available);
   const peakCount = Math.max(...availableStages.map((stage) => stage.count), 0);
@@ -68,7 +71,10 @@ export function AttractionFunnelChart({ stages }: { stages: FunnelStages }) {
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-3"><div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-sm bg-slate-100" aria-label={`${stage.label} ${stage.available ? stage.count.toLocaleString("th-TH") : "ไม่พร้อมแสดง"}`} role="img"><div className="h-full rounded-sm" style={{ width: `${width}%`, backgroundColor: stage.available ? FUNNEL_COLORS[index % FUNNEL_COLORS.length] : "#94A3B8" }} /></div><span className="w-12 shrink-0 text-right text-xs font-bold tabular-nums text-slate-700">{stage.available ? `${Math.round(width)}%` : "N/A"}</span></div>
-                    <p className="mt-1.5 text-xs leading-5 text-slate-600">{index === 0 || stage.conversionFromPrevious === null ? stage.note ?? "จุดเริ่มต้นของฐานที่คำนวณได้" : `ผ่าน ${percentage(stage.conversionFromPrevious)} · หลุด ${percentage(stage.dropOffFromPrevious)}`}</p>
+                    <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs leading-5 text-slate-600">{index === 0 || stage.conversionFromPrevious === null ? stage.note ?? "จุดเริ่มต้นของฐานที่คำนวณได้" : `ผ่าน ${percentage(stage.conversionFromPrevious)} · หลุด ${percentage(stage.dropOffFromPrevious)}`}</p>
+                      {improvementContext && stage.dropOffFromPrevious !== null && stage.dropOffFromPrevious > 0 ? <Link aria-label={`เปิดร่างประเด็นจากขั้น ${stage.label}`} href={buildAttractionImprovementHref(improvementContext, { source: "funnel_dropoff", dimension: "overall", metric: stage.key, value: stage.dropOffFromPrevious })} className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-[#B94727] underline underline-offset-4"><ArrowSquareOut aria-hidden="true" /> เปิดร่าง</Link> : null}
+                    </div>
                   </div>
                 </li>
               );

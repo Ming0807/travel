@@ -15,6 +15,7 @@ import {
 
 import { AttractionDistributionChart } from "@/components/dashboard/AttractionDistributionChart";
 import { AttractionFunnelChart } from "@/components/dashboard/AttractionFunnelChart";
+import { AttractionPeerComparison } from "@/components/dashboard/AttractionPeerComparison";
 import { AttractionScoreChart } from "@/components/dashboard/AttractionScoreChart";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { ExportButton } from "@/components/admin/ExportButton";
@@ -52,6 +53,12 @@ function Kpi({ icon, label, valueText, note }: { icon: React.ReactNode; label: s
 }
 
 export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyticsViewModel }) {
+  const improvementContext = {
+    attractionId: data.attraction.attractionId,
+    dateStart: data.filters.dateFrom,
+    dateEnd: data.filters.dateTo,
+  };
+
   return (
     <div className="space-y-6">
       <section className="border border-slate-200 bg-white" aria-labelledby="attraction-intelligence-heading">
@@ -80,11 +87,21 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
         <Kpi icon={<ClipboardText size={22} weight="fill" />} label="แบบสำรวจท่องเที่ยว" valueText={value(data.kpis.surveyResponses)} note={`Coverage ${value(data.kpis.surveyRate, "%")}`} />
         <Kpi icon={<ChartBar size={22} weight="fill" />} label="แบบประเมินงานวิจัย" valueText={value(data.kpis.researchEvaluations)} note="นับเฉพาะ response ที่ส่งสมบูรณ์" />
         <Kpi icon={<Repeat size={22} weight="fill" />} label="การเข้าชมซ้ำ" valueText={value(data.kpis.repeatVisits)} note="Visit ส่วนเกินจากโปรไฟล์ไม่ซ้ำในช่วงนี้" />
-        <Kpi icon={<MapPin size={22} weight="fill" />} label="อันดับเทียบสถานที่ที่มีข้อมูล" valueText={data.benchmark.comparable && data.benchmark.rank ? `#${data.benchmark.rank}` : "ยังเทียบไม่ได้"} note={data.benchmark.comparable ? `มัธยฐานเพื่อนเทียบ ${data.benchmark.peerMedian} Visits` : "ตัวกรองหรือฐานเพื่อนเทียบยังไม่เหมาะสม"} />
+        <Kpi
+          icon={<MapPin size={22} weight="fill" />}
+          label="อันดับในกลุ่มสถานที่ที่เข้าเกณฑ์"
+          valueText={data.peerComparison.selectedRank !== null ? `#${data.peerComparison.selectedRank}` : "ยังเทียบไม่ได้"}
+          note={data.peerComparison.rankDenominator > 0 ? `จาก ${data.peerComparison.rankDenominator.toLocaleString("th-TH")} สถานที่ในฐานเดียวกัน` : "ยังไม่มีกลุ่มเทียบที่ใช้เกณฑ์เดียวกัน"}
+        />
       </section>
 
+      <AttractionPeerComparison
+        comparison={data.peerComparison}
+        attractionTypeName={data.attraction.attractionTypeNameTh}
+      />
+
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,.65fr)]">
-        <TrendChart points={data.trend} />
+        <TrendChart points={data.trend} improvementContext={improvementContext} />
         <div className="rounded-md border border-slate-200 bg-white p-5">
           <h2 className="text-lg font-black">คุณภาพและ Coverage</h2>
           <p className="mt-1 text-sm text-slate-600">บอกว่าฐานข้อมูลตอบคำถามได้ครอบคลุมเพียงใด ไม่ใช้แทนคะแนนผลงานสถานที่</p>
@@ -98,7 +115,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
         </div>
       </section>
 
-      <AttractionFunnelChart stages={data.funnel} />
+      <AttractionFunnelChart stages={data.funnel} improvementContext={improvementContext} />
 
       <section aria-labelledby="audience-heading">
         <div className="mb-4"><h2 id="audience-heading" className="text-xl font-black">ใครมา และเดินทางอย่างไร</h2><p className="mt-1 text-sm text-slate-600">มิติประชากรนับโปรไฟล์ไม่ซ้ำ ส่วนพฤติกรรมเดินทางนับ Visit ที่ตอบมิตินั้น</p></div>
@@ -115,7 +132,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
       </section>
 
       <section className="grid items-start gap-4 xl:grid-cols-2" aria-label="คุณภาพประสบการณ์และความตั้งใจ">
-        <AttractionScoreChart metrics={data.satisfaction} />
+        <AttractionScoreChart metrics={data.satisfaction} improvementContext={improvementContext} />
         <div className="grid gap-4 sm:grid-cols-2">
           <AttractionDistributionChart title="ตั้งใจกลับมา" description="ฐาน: คำตอบ revisit intention" rows={data.intentions.revisit} />
           <AttractionDistributionChart title="ตั้งใจแนะนำ" description="ฐาน: คำตอบ recommendation intention" rows={data.intentions.recommend} />

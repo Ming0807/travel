@@ -16,6 +16,7 @@ import type {
   IssueStatus,
   getAttractionImprovementWorkspace,
 } from "@/lib/services/attraction-feedback.service";
+import type { AttractionIssueDraft } from "@/lib/dashboard/attraction-improvement-draft";
 import { redactFeedbackOperationalText } from "@/lib/validation/attraction-feedback";
 
 type Workspace = Awaited<ReturnType<typeof getAttractionImprovementWorkspace>>;
@@ -56,6 +57,18 @@ const ACTION_STATUS_LABELS: Record<ActionStatus, string> = {
   cancelled: "ยกเลิก",
 };
 
+const FOLLOW_UP_METRIC_LABELS: Record<ImprovementAction["followUpMetric"], string> = {
+  overall_score: "คะแนนภาพรวม",
+  facility_score: "สิ่งอำนวยความสะดวก",
+  cleanliness_score: "ความสะอาด",
+  safety_score: "ความปลอดภัย",
+  accessibility_score: "การเข้าถึง",
+  information_score: "ข้อมูลและป้าย",
+  value_score: "ความคุ้มค่า",
+  response_coverage: "อัตราการตอบ",
+  structured_recurrence_count: "จำนวนคะแนนต่ำซ้ำ",
+};
+
 const HISTORY_STATUS_LABELS: Record<string, string> = {
   ...ISSUE_STATUS_LABELS,
   ...ACTION_STATUS_LABELS,
@@ -86,24 +99,47 @@ function candidateStatusClass(qualifies: boolean) {
   return "border-slate-300 bg-slate-50 text-slate-700";
 }
 
-function HistoryList({ history, owners }: { history: ImprovementHistory[]; owners: ImprovementOwner[] }) {
-  if (history.length === 0) return <p className="text-sm text-slate-600">ยังไม่มีประวัติการเปลี่ยนสถานะ</p>;
+function ImprovementTimeline({ issue, actions, history, owners }: { issue: AttractionFeedbackIssue; actions: ImprovementAction[]; history: ImprovementHistory[]; owners: ImprovementOwner[] }) {
   const ownerNames = new Map(owners.map((owner) => [owner.adminId, owner.displayName]));
+  const today = new Date().toISOString().slice(0, 10);
   return (
-    <ol className="divide-y divide-slate-200 border-y border-slate-200">
-      {history.map((entry) => (
-        <li key={entry.historyId} className="grid gap-1 py-3 text-sm sm:grid-cols-[10rem_1fr]">
-          <time className="font-semibold text-slate-600">{new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.createdAt))}</time>
-          <div>
-            <p className="font-bold text-ink">
-              {entry.fromStatus ? `${HISTORY_STATUS_LABELS[entry.fromStatus] ?? entry.fromStatus} → ` : ""}
-              {HISTORY_STATUS_LABELS[entry.toStatus] ?? entry.toStatus}
-            </p>
-            <p className="mt-1 text-slate-600">โดย {ownerNames.get(entry.changedBy) ?? "ผู้ดูแลระบบ"}{entry.note ? `: ${entry.note}` : ""}</p>
-          </div>
+    <section className="mt-5 border-t border-slate-200 pt-5" role="region" aria-label={`ไทม์ไลน์การปรับปรุง ${DIMENSION_LABELS[issue.issueDimension]}`}>
+      <h4 className="font-black text-slate-950">ไทม์ไลน์การปรับปรุง</h4>
+      <p className="mt-1 text-sm text-slate-600">เรียงหลักฐานตั้งแต่ Baseline ไปจนถึงผลติดตาม เพื่อให้ตรวจสอบย้อนหลังได้ในบริบทเดียว</p>
+      <ol className="relative mt-4 space-y-5 border-l border-slate-300 pl-6">
+        <li className="relative text-sm">
+          <span className="absolute -left-[1.72rem] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-[#B94727] ring-1 ring-[#B94727]" aria-hidden="true" />
+          <p className="font-black text-slate-950">Baseline</p>
+          <p className="mt-1 leading-6 text-slate-600">{formatDate(issue.baselineStart)} ถึง {formatDate(issue.baselineEnd)} · คะแนน {formatScore(issue.currentScore)} · n={issue.responseCount.toLocaleString("th-TH")} จาก {issue.visitCount.toLocaleString("th-TH")} Visits</p>
         </li>
-      ))}
-    </ol>
+        <li className="relative text-sm">
+          <span className="absolute -left-[1.72rem] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-amber-600 ring-1 ring-amber-600" aria-hidden="true" />
+          <p className="font-black text-slate-950">พิจารณาประเด็น</p>
+          <p className="mt-1 leading-6 text-slate-600">{formatDate(issue.reviewedAt)} · {ISSUE_STATUS_LABELS[issue.status]}{issue.reviewNote ? ` · ${issue.reviewNote}` : ""}</p>
+        </li>
+        {actions.map((action) => {
+          const actionHistory = history.filter((entry) => entry.improvementActionId === action.improvementActionId).sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+          const verifiedEntry = [...actionHistory].reverse().find((entry) => entry.toStatus === "verified");
+          const overdue = !["completed", "verified", "cancelled"].includes(action.status) && action.dueDate < today;
+          return (
+            <li key={action.improvementActionId} className="relative text-sm">
+              <span className={`absolute -left-[1.72rem] top-1.5 h-3 w-3 rounded-full border-2 border-white ring-1 ${action.status === "verified" ? "bg-emerald-700 ring-emerald-700" : overdue ? "bg-rose-700 ring-rose-700" : "bg-slate-700 ring-slate-700"}`} aria-hidden="true" />
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-black text-slate-950">{action.title}</p>
+                <span className="border border-slate-300 bg-white px-2 py-0.5 text-xs font-bold">{ACTION_STATUS_LABELS[action.status]}</span>
+                {overdue ? <span className="bg-rose-700 px-2 py-0.5 text-xs font-bold text-white">เลยกำหนด</span> : null}
+              </div>
+              <p className="mt-1 leading-6 text-slate-600">ผู้รับผิดชอบ {ownerNames.get(action.ownerAdminId) ?? "ไม่พบผู้ดูแล"} · กำหนดเสร็จ {formatDate(action.dueDate)}</p>
+              <p className="leading-6 text-slate-600">ช่วงติดตามผล {formatDate(action.followUpStart)} ถึง {formatDate(action.followUpEnd)} · ตัวชี้วัด {FOLLOW_UP_METRIC_LABELS[action.followUpMetric]}</p>
+              {action.completionEvidenceNote ? <p className="mt-2 bg-emerald-50 px-3 py-2 leading-6 text-emerald-950">หลักฐานการดำเนินงาน: {redactFeedbackOperationalText(action.completionEvidenceNote)}</p> : null}
+              {verifiedEntry ? <p className="mt-2 bg-slate-100 px-3 py-2 leading-6 text-slate-800">ผลลัพธ์ที่ตรวจแล้ว: {verifiedEntry.note ? redactFeedbackOperationalText(verifiedEntry.note) : "ยืนยันการติดตามแล้ว แต่ยังไม่มีบันทึกสรุปผล"}</p> : null}
+              {actionHistory.length > 0 ? <div className="mt-2 space-y-1 text-xs text-slate-500">{actionHistory.map((entry) => <p key={entry.historyId}><time>{new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.createdAt))}</time> · {entry.fromStatus ? `${HISTORY_STATUS_LABELS[entry.fromStatus] ?? entry.fromStatus} → ` : ""}{HISTORY_STATUS_LABELS[entry.toStatus] ?? entry.toStatus} · {ownerNames.get(entry.changedBy) ?? "ผู้ดูแลระบบ"}</p>)}</div> : null}
+            </li>
+          );
+        })}
+        {actions.length === 0 ? <li className="relative text-sm text-slate-600"><span className="absolute -left-[1.72rem] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-slate-300 ring-1 ring-slate-300" aria-hidden="true" />ยังไม่มีแผนงานที่ได้รับมอบหมาย</li> : null}
+      </ol>
+    </section>
   );
 }
 
@@ -118,10 +154,10 @@ function ActionTransitionForms({
   canManage: boolean;
   canVerify: boolean;
 }) {
-  const options: Array<{ status: ActionStatus; label: string; evidence?: boolean; destructive?: boolean }> = [];
+  const options: Array<{ status: ActionStatus; label: string; evidence?: boolean; destructive?: boolean; outcome?: boolean }> = [];
   if (action.status === "planned" && canManage) options.push({ status: "in_progress", label: "เริ่มดำเนินการ" }, { status: "cancelled", label: "ยกเลิกแผน", destructive: true });
   if (action.status === "in_progress" && canManage) options.push({ status: "completed", label: "บันทึกว่าดำเนินการเสร็จ", evidence: true }, { status: "cancelled", label: "ยกเลิกแผน", destructive: true });
-  if (action.status === "completed" && canVerify) options.push({ status: "verified", label: "ยืนยันผลติดตาม" });
+  if (action.status === "completed" && canVerify) options.push({ status: "verified", label: "ยืนยันผลติดตาม", outcome: true });
   if (options.length === 0) return null;
 
   return (
@@ -132,10 +168,10 @@ function ActionTransitionForms({
           <input type="hidden" name="actionId" value={action.improvementActionId} />
           <input type="hidden" name="toStatus" value={option.status} />
           <label className="block text-xs font-bold text-slate-700">
-            {option.evidence ? "หลักฐานการดำเนินงาน" : option.destructive ? "เหตุผลที่ยกเลิก" : "บันทึกเพิ่มเติม (ไม่บังคับ)"}
+            {option.evidence ? "หลักฐานการดำเนินงาน" : option.destructive ? "เหตุผลที่ยกเลิก" : option.outcome ? "ผลการติดตามและข้อจำกัด" : "บันทึกเพิ่มเติม (ไม่บังคับ)"}
             <textarea
               name={option.evidence ? "completionEvidenceNote" : "note"}
-              required={option.evidence || option.destructive}
+              required={option.evidence || option.destructive || option.outcome}
               maxLength={option.evidence ? 4000 : 2000}
               rows={3}
               className="mt-2 w-full border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:border-[var(--admin-accent)]"
@@ -240,10 +276,7 @@ function ImprovementIssue({
         </form>
       ) : null}
 
-      <details className="mt-5">
-        <summary className="cursor-pointer text-sm font-bold text-slate-700">ดูประวัติการดำเนินงาน</summary>
-        <div className="mt-3"><HistoryList history={history} owners={owners} /></div>
-      </details>
+      <ImprovementTimeline issue={issue} actions={actions} history={history} owners={owners} />
     </article>
   );
 }
@@ -257,6 +290,7 @@ export function AttractionImprovementWorkspace({
   canReview,
   canManage,
   canVerify,
+  draft,
 }: {
   attractionId: number;
   workspace: Workspace;
@@ -266,6 +300,7 @@ export function AttractionImprovementWorkspace({
   canReview: boolean;
   canManage: boolean;
   canVerify: boolean;
+  draft?: AttractionIssueDraft;
 }) {
   const message = result ? RESULT_MESSAGES[result] : null;
   const candidate = workspace.candidate;
@@ -294,15 +329,16 @@ export function AttractionImprovementWorkspace({
 
         {candidate.qualifies && canReview ? (
           <form action={reviewAttractionFeedbackAction} className="mt-5 grid gap-4 sm:grid-cols-2">
+            {draft ? <div className="border border-orange-200 bg-orange-50 p-3 text-sm leading-6 text-orange-950 sm:col-span-2"><strong>ร่างจากข้อมูลวิเคราะห์รวม:</strong> ระบบกรอกบริบทเบื้องต้นให้แล้ว ผู้มีสิทธิ์ยังต้องตรวจเกณฑ์ เลือกหมวด และยืนยันก่อนสร้างประเด็นจริง</div> : null}
             <input type="hidden" name="attractionId" value={attractionId} />
             <input type="hidden" name="dateStart" value={scope.dateStart} />
             <input type="hidden" name="dateEnd" value={scope.dateEnd} />
             <input type="hidden" name="comparisonStart" value={scope.comparisonStart ?? ""} />
             <input type="hidden" name="comparisonEnd" value={scope.comparisonEnd ?? ""} />
             <input type="hidden" name="issueDimension" value={dimension} />
-            <label className="block text-sm font-bold">จัดหมวดประเด็น<select name="issueCategory" required defaultValue={dimension === "overall" ? "service" : dimension === "information" ? "information_signage" : dimension} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{Object.entries(CATEGORY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+            <label className="block text-sm font-bold">จัดหมวดประเด็น<select name="issueCategory" required defaultValue={draft?.category ?? (dimension === "overall" ? "service" : dimension === "information" ? "information_signage" : dimension)} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{Object.entries(CATEGORY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
             <label className="block text-sm font-bold">ผลการพิจารณา<select name="decision" required defaultValue="accept" className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="accept">รับเป็นประเด็นปรับปรุง</option><option value="dismiss">ไม่รับเป็นประเด็น</option></select></label>
-            <label className="block text-sm font-bold sm:col-span-2">เหตุผลการพิจารณา<textarea name="reviewNote" maxLength={2000} rows={3} className="mt-2 w-full border border-slate-300 px-3 py-2 font-normal" placeholder="ระบุบริบทหรือข้อจำกัดของข้อมูล โดยไม่คัดลอกข้อมูลส่วนบุคคล" /></label>
+            <label className="block text-sm font-bold sm:col-span-2">เหตุผลการพิจารณา<textarea name="reviewNote" defaultValue={draft?.note} maxLength={2000} rows={3} className="mt-2 w-full border border-slate-300 px-3 py-2 font-normal" placeholder="ระบุบริบทหรือข้อจำกัดของข้อมูล โดยไม่คัดลอกข้อมูลส่วนบุคคล" /></label>
             <button type="submit" className="min-h-11 bg-[#202020] px-4 font-black text-white hover:bg-[#B94727] sm:col-span-2">บันทึกผลการพิจารณา</button>
           </form>
         ) : null}

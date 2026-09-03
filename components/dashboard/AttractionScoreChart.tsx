@@ -1,15 +1,28 @@
 "use client";
 
+import Link from "next/link";
 import { useId } from "react";
+import { ArrowSquareOut } from "@phosphor-icons/react/dist/ssr";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { buildAttractionImprovementHref, type AttractionImprovementContext } from "@/lib/dashboard/attraction-improvement-links";
 import type { AttractionAnalyticsViewModel } from "@/lib/services/attraction-analytics.service";
 
 type ScoreMetric = AttractionAnalyticsViewModel["satisfaction"][number];
 
 const SCORE_COLORS = ["#D94717", "#0A6B62", "#D6A13D", "#3E7A4F", "#64748B", "#E78A6D", "#4F8E88"];
+const LOW_SCORE_THRESHOLD = 3;
+const DIMENSION_BY_SCORE_KEY: Record<string, string> = {
+  overall_score: "overall",
+  facility_score: "facility",
+  cleanliness_score: "cleanliness",
+  safety_score: "safety",
+  accessibility_score: "accessibility",
+  information_score: "information",
+  value_score: "value",
+};
 
-export function AttractionScoreChart({ metrics }: { metrics: ScoreMetric[] }) {
+export function AttractionScoreChart({ metrics, improvementContext }: { metrics: ScoreMetric[]; improvementContext?: AttractionImprovementContext }) {
   const headingId = useId();
   const chartData = metrics.filter((metric) => !metric.suppressed && metric.value !== null).map((metric) => ({ ...metric, score: metric.value ?? 0, displayValue: `${metric.value?.toFixed(2)} / 5` }));
   const chartHeight = Math.max(260, chartData.length * 48 + 44);
@@ -44,7 +57,11 @@ export function AttractionScoreChart({ metrics }: { metrics: ScoreMetric[] }) {
       <details className="mt-3 border-t border-slate-100 pt-2">
         <summary className="min-h-11 cursor-pointer py-2 text-xs font-semibold text-[#B94727]">ดูฐานคำตอบรายมิติ</summary>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-96 text-sm"><thead><tr className="border-b border-slate-200 text-left text-xs text-slate-500"><th className="py-2 pr-4">มิติ</th><th className="py-2 text-right">ฐาน</th><th className="py-2 text-right">คะแนน</th></tr></thead><tbody>{metrics.map((metric) => <tr key={`score-table-${metric.key}`} className="border-b border-slate-100"><td className="py-2 pr-4">{metric.label}</td><td className="py-2 text-right tabular-nums">n={metric.sampleSize.toLocaleString("th-TH")}</td><td className="py-2 text-right font-bold tabular-nums">{metric.suppressed ? "ปกปิด" : metric.value === null ? "N/A" : `${metric.value.toFixed(2)} / 5`}</td></tr>)}</tbody></table>
+          <table className="w-full min-w-[34rem] text-sm"><thead><tr className="border-b border-slate-200 text-left text-xs text-slate-500"><th className="py-2 pr-4">มิติ</th><th className="py-2 text-right">ฐาน</th><th className="py-2 text-right">คะแนน</th>{improvementContext ? <th className="py-2 pl-4 text-right">ดำเนินการ</th> : null}</tr></thead><tbody>{metrics.map((metric) => {
+            const dimension = DIMENSION_BY_SCORE_KEY[metric.key];
+            const canDraft = Boolean(improvementContext && dimension && !metric.suppressed && metric.value !== null && metric.value <= LOW_SCORE_THRESHOLD);
+            return <tr key={`score-table-${metric.key}`} className="border-b border-slate-100"><td className="py-2 pr-4">{metric.label}</td><td className="py-2 text-right tabular-nums">n={metric.sampleSize.toLocaleString("th-TH")}</td><td className="py-2 text-right font-bold tabular-nums">{metric.suppressed ? "ปกปิด" : metric.value === null ? "N/A" : `${metric.value.toFixed(2)} / 5`}</td>{improvementContext ? <td className="py-2 pl-4 text-right">{canDraft && metric.value !== null ? <Link aria-label={`เปิดร่างประเด็น ${metric.label}`} href={buildAttractionImprovementHref(improvementContext, { source: "low_score", dimension, metric: metric.key, value: metric.value })} className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-[#B94727] underline underline-offset-4"><ArrowSquareOut aria-hidden="true" /> เปิดร่าง</Link> : <span className="text-slate-400">-</span>}</td> : null}</tr>;
+          })}</tbody></table>
         </div>
       </details>
     </section>

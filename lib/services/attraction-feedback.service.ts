@@ -282,6 +282,7 @@ function assertActionTransition(from: ActionStatus, to: ActionStatus, evidence: 
   if (!allowed) fail("INVALID_ACTION_TRANSITION", `Cannot transition action from ${from} to ${to}.`);
   if (to === "completed" && !evidence?.trim()) fail("COMPLETION_EVIDENCE_REQUIRED", "Completion evidence is required.");
   if (to === "cancelled" && !note?.trim()) fail("CANCELLATION_NOTE_REQUIRED", "Cancellation note is required.");
+  if (to === "verified" && !note?.trim()) fail("VERIFICATION_OUTCOME_REQUIRED", "A verification outcome note is required.");
 }
 
 export class AttractionFeedbackService {

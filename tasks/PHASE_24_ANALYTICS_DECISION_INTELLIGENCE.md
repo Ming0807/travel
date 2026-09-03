@@ -1,6 +1,6 @@
 # Phase 24: Production Analytics Decision Intelligence
 
-Status: Planned; Phase 24.1 is the next engineering task
+Status: In progress; Tasks 24.3-24.5 have production slices implemented and verified
 
 Priority: P1 production decision support and research readiness
 
@@ -107,11 +107,11 @@ The first screen of every area uses the same reading order:
 
 ### Task 24.5: Attraction Comparison Workbench
 
-- [ ] Retain the complete Phase 22 single-attraction view and add comparison against up to three eligible attractions.
-- [ ] Compare visits, survey coverage, satisfaction dimensions, revisit/recommendation intent, funnel completion, and self-reported spending signals.
-- [ ] Show peer eligibility, rank denominator, date alignment, and suppression status beside every comparison.
-- [ ] Allow a chart point, low score, or funnel drop-off to open a prefilled reviewed issue draft without copying private comments.
-- [ ] Show open actions, owner, due date, overdue status, baseline, follow-up evidence, and outcome in one timeline.
+- [x] Retain the complete Phase 22 single-attraction view and add comparison against up to three eligible attractions.
+- [x] Compare visits, survey coverage, satisfaction dimensions, revisit/recommendation intent, funnel completion, and self-reported spending signals.
+- [x] Show peer eligibility, rank denominator, date alignment, and suppression status beside every comparison.
+- [x] Allow a chart point, low score, or funnel drop-off to open a prefilled reviewed issue draft without copying private comments.
+- [x] Show open actions, owner, due date, overdue status, baseline, follow-up evidence, and outcome in one timeline.
 
 **Acceptance:** an attraction manager can move from a supported finding to an assigned action and later compare follow-up evidence without leaving the workflow context.
 

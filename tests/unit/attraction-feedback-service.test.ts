@@ -226,6 +226,7 @@ describe("AttractionFeedbackService permissions and workflow", () => {
   it("requires completion evidence and accepts only supported transitions", () => {
     expect(() => assertActionTransition("planned", "verified", "evidence", "note")).toThrow(/Cannot transition action/);
     expect(() => assertActionTransition("in_progress", "completed", "", "note")).toThrow(/Completion evidence/);
+    expect(() => assertActionTransition("completed", "verified", "evidence", "")).toThrow(/verification outcome/i);
     expect(ACTION_STATUSES).toEqual(["planned", "in_progress", "completed", "verified", "cancelled"]);
   });
 });

@@ -249,6 +249,14 @@ Campaign filtering uses `checkin_codes.campaign_id`. Entry-channel filtering use
 
 All segmented distributions suppress categories below `n=10`. Each satisfaction dimension keeps an independent denominator. Peer comparison is unavailable when campaign, check-in point, or entry-channel filters make the peer scope non-comparable.
 
+### Attraction peer comparison contract
+
+An eligible peer must be active, belong to the same province and primary attraction type, use the same `visits.visit_date` range and evidence scope, and contain at least `10` eligible Visit records. The selected attraction is compared with at most three displayed peers; `eligiblePeerCount` and the rank denominator describe the full eligible population, not only the displayed columns.
+
+The comparison exposes Visits, survey coverage, satisfaction dimensions, revisit/recommend intent, photo/certificate/stamp/survey/research completion, and top self-reported expense signals. Satisfaction, intention, and expense cells keep their own answer counts and are suppressed below `n=10`. Missing cells remain unavailable rather than becoming zero. Peer reads are bounded; truncation disables the comparison instead of returning a partial rank.
+
+This is descriptive operational context. It is not a quality league table, causal comparison, official tourist count, business revenue, or proof that one attraction performs better because of a particular intervention.
+
 Most metrics should support:
 
 ```text
