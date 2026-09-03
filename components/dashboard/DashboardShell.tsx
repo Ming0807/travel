@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Info } from "@phosphor-icons/react/dist/ssr";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
@@ -9,6 +9,15 @@ import type { DashboardViewModel } from "@/types/dashboard";
 
 function filtersSig(filters: DashboardViewModel["filters"]): string {
   return `${filters.dateFrom}-${filters.dateTo}-${filters.provinceId ?? ""}-${filters.attractionId ?? ""}`;
+}
+
+function DashboardControlsFallback() {
+  return (
+    <div aria-label="กำลังเตรียมตัวกรองข้อมูล" className="space-y-3">
+      <div className="h-11 animate-pulse rounded-md border border-slate-200 bg-slate-50" />
+      <div className="h-16 animate-pulse rounded-md border border-slate-200 bg-white" />
+    </div>
+  );
 }
 
 export function DashboardShell({
@@ -33,8 +42,10 @@ export function DashboardShell({
           page={page}
           summaryRefreshTimestamp={data.summaryRefreshTimestamp}
         />
-        <DashboardTabs />
-        <DashboardFilters filters={data.filters} options={data.referenceOptions} />
+        <Suspense fallback={<DashboardControlsFallback />}>
+          <DashboardTabs />
+          <DashboardFilters filters={data.filters} options={data.referenceOptions} />
+        </Suspense>
 
         {children}
 

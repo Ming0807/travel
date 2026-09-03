@@ -6,12 +6,15 @@ import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { DonutChartCard } from "@/components/dashboard/DonutChartCard";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
+import { KpiCard } from "@/components/dashboard/KpiCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { localizeDashboardKpi } from "@/components/dashboard/dashboard-localization";
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 
+const mockPathname = vi.hoisted(() => ({ current: "/admin/dashboard/expenses" }));
+
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/admin/dashboard/expenses",
+  usePathname: () => mockPathname.current,
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -106,6 +109,7 @@ describe("dashboard export privacy interactions", () => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  mockPathname.current = "/admin/dashboard/expenses";
 });
 
 describe("Dashboard UX ภาษาไทย", () => {
@@ -208,6 +212,35 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(screen.getByText("คะแนน: 3-5")).toBeInTheDocument();
   });
 
+  it("เปิดเปรียบเทียบช่วงก่อนหน้าได้โดยไม่เพิ่มภาระ query เป็นค่าเริ่มต้น", () => {
+    mockPathname.current = "/admin/dashboard";
+    const { unmount } = render(
+      <DashboardFilters
+        filters={{ dateFrom: "2026-07-01", dateTo: "2026-07-31" }}
+        options={{
+          provinces: [], districts: [], attractions: [], attractionTypes: [],
+          originCountries: [], originProvinces: [], ageGroups: [], transportModes: [], travelPurposes: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("checkbox", { name: /เทียบช่วงก่อนหน้า/ })).not.toBeChecked();
+
+    unmount();
+    render(
+      <DashboardFilters
+        filters={{ dateFrom: "2026-07-01", dateTo: "2026-07-31", comparisonMode: "previous_period" }}
+        options={{
+          provinces: [], districts: [], attractions: [], attractionTypes: [],
+          originCountries: [], originProvinces: [], ageGroups: [], transportModes: [], travelPurposes: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("checkbox", { name: /เทียบช่วงก่อนหน้า/ })).toBeChecked();
+    expect(screen.getByText(/31 พ.ค. 2569 - 30 มิ.ย. 2569/)).toBeInTheDocument();
+  });
+
   it("แสดงกราฟแท่งพร้อมตารางข้อมูลที่เข้าถึงได้", () => {
     const { container } = render(
       <BarChartCard
@@ -221,6 +254,40 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getAllByText("12").length).toBeGreaterThan(0);
     expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
+  });
+
+  it("แสดงผลต่าง KPI แบบเป็นกลางและไม่สร้างร้อยละเมื่อฐานเดิมเป็นศูนย์", () => {
+    const metric = {
+      key: "total_visits",
+      label: "Total visits",
+      value: "12",
+      rawValue: 12,
+      valueType: "count" as const,
+      definition: "Visit records",
+    };
+    const { rerender } = render(
+      <KpiCard
+        metric={metric}
+        comparison={{ currentValue: 12, previousValue: 10, absoluteChange: 2, percentChange: 20, direction: "up" }}
+      />,
+    );
+    expect(screen.getByText("เพิ่มขึ้น 20% จากช่วงก่อน")).toBeInTheDocument();
+
+    rerender(
+      <KpiCard
+        metric={{ ...metric, valueType: "percentage", rawValue: 0.6, value: "60%" }}
+        comparison={{ currentValue: 0.6, previousValue: 0.5, absoluteChange: 0.1, percentChange: 20, direction: "up" }}
+      />,
+    );
+    expect(screen.getByText("เพิ่มขึ้น 10 จุดร้อยละจากช่วงก่อน")).toBeInTheDocument();
+
+    rerender(
+      <KpiCard
+        metric={metric}
+        comparison={{ currentValue: 12, previousValue: 0, absoluteChange: 12, percentChange: null, direction: "unavailable" }}
+      />,
+    );
+    expect(screen.getByText("ช่วงก่อน 0 · ไม่คำนวณร้อยละ")).toBeInTheDocument();
   });
 
   it("แสดงกราฟโดนัทพร้อมคำไทยและตารางข้อมูลที่ตรวจสอบได้", () => {

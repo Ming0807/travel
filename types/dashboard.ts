@@ -1,6 +1,7 @@
 export type DashboardFilters = {
   dateFrom: string;
   dateTo: string;
+  comparisonMode?: "previous_period";
   provinceId?: number;
   districtId?: number;
   attractionId?: number;
@@ -12,6 +13,23 @@ export type DashboardFilters = {
   travelPurposeId?: number;
   satisfactionMin?: number;
   satisfactionMax?: number;
+};
+
+export type DashboardMetricComparison = {
+  currentValue: number | null;
+  previousValue: number | null;
+  absoluteChange: number | null;
+  percentChange: number | null;
+  direction: "up" | "down" | "flat" | "unavailable";
+};
+
+export type DashboardComparison = {
+  mode: "previous_period";
+  dateFrom: string;
+  dateTo: string;
+  status: "ready" | "unavailable";
+  unavailableReason: string | null;
+  metrics: Record<string, DashboardMetricComparison>;
 };
 
 export type DashboardReferenceOption = {
@@ -98,6 +116,7 @@ export type InsightCardData = {
 
 export type DashboardViewModel = {
   filters: DashboardFilters;
+  comparison?: DashboardComparison | null;
   generatedAt: string;
   dataSource: "live_database" | "pre_aggregated";
   summaryRefreshTimestamp: string | null;

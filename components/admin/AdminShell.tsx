@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { AdminAccessProvider } from "@/components/admin/AdminAccessContext";
@@ -16,6 +16,14 @@ type AdminShellProps = {
   admin?: AdminShellAdmin | null;
 };
 
+function AdminSidebarFallback() {
+  return <aside aria-hidden="true" className="sticky top-0 hidden h-screen w-[236px] shrink-0 border-r border-[var(--admin-border)] bg-[#FBFBFA] lg:block" />;
+}
+
+function AdminTopbarFallback() {
+  return <div aria-hidden="true" className="h-16 shrink-0 border-b border-[var(--admin-border)] bg-white" />;
+}
+
 export function AdminShell({ children, admin }: AdminShellProps) {
   return (
     <AdminAccessProvider initialAdmin={admin}>
@@ -27,9 +35,13 @@ export function AdminShell({ children, admin }: AdminShellProps) {
           ข้ามไปยังเนื้อหาหลัก
         </a>
         <div className="flex min-h-screen">
-          <AdminSidebar />
+          <Suspense fallback={<AdminSidebarFallback />}>
+            <AdminSidebar />
+          </Suspense>
           <div className="flex min-w-0 flex-1 flex-col">
-            <AdminTopbar displayName={admin?.displayName} email={admin?.email} />
+            <Suspense fallback={<AdminTopbarFallback />}>
+              <AdminTopbar displayName={admin?.displayName} email={admin?.email} />
+            </Suspense>
             <main id="admin-main-content" className="flex-1 px-4 py-5 outline-none md:px-5 lg:px-6 xl:px-7">
               {children}
             </main>

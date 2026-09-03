@@ -2426,3 +2426,20 @@ The report scope is resolved from the active province master row named `ยะ�
 `Yala`; it does not hardcode a database ID. The displayed data-as-of timestamp is
 the processing time, not the latest event timestamp. Public output must not
 contain viewer identity, raw respondent records, comments, IDs, or private URLs.
+
+---
+
+## 47. Executive Previous-Period Comparison
+
+The protected executive dashboard can optionally compare its current date range
+with the immediately preceding range of equal inclusive calendar length. This
+mode is disabled by default and is not available on the public evidence report.
+
+| Comparison | Calculation | Unavailable when |
+|---|---|---|
+| Count KPI | `(current - previous) / abs(previous) * 100` | previous is zero, either value is missing, or either query is truncated |
+| Rate KPI | `(current rate - previous rate) * 100` percentage points | either rate is missing or either query is truncated |
+
+The current dashboard remains available if the optional prior-period query
+fails. Directional wording is descriptive only and must not be interpreted as
+causal, statistically significant, or inherently positive/negative.

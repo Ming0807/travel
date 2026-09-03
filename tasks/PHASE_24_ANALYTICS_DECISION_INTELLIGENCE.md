@@ -88,8 +88,10 @@ The first screen of every area uses the same reading order:
 - [ ] Replace raw numeric IDs with searchable controlled options.
 - [x] Preserve and safely translate the validated shared scope across dashboard tabs, desktop sidebar, and mobile navigation.
 - [ ] Preserve all applied filters across export, drill-down, and browser history.
-- [ ] Add active-filter chips, clear-one, clear-all, and named presets for field evidence, pilot QA, and previous-period comparison.
-- [ ] Add comparison contracts for current vs previous period and attraction vs eligible peer median.
+- [x] Add active-filter chips with clear-one and clear-all behavior.
+- [ ] Add named presets for field evidence and pilot QA.
+- [x] Add an opt-in current-vs-previous-period contract with equal inclusive date ranges and safe zero/null handling.
+- [ ] Add attraction comparison against the eligible peer median.
 
 **Acceptance:** the same URL reproduces the same scope, exports match the visible scope, and invalid or unauthorized filters fail safely.
 

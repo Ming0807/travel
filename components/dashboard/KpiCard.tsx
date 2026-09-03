@@ -4,7 +4,7 @@ import { localizeDashboardKpi } from "@/components/dashboard/dashboard-localizat
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
-import type { DashboardKpi, TrendPoint } from "@/types/dashboard";
+import type { DashboardKpi, DashboardMetricComparison, KpiValueType, TrendPoint } from "@/types/dashboard";
 
 function metricIcon(key: string): ReactNode {
   const className = "h-5 w-5";
@@ -37,8 +37,28 @@ function Sparkline({ data }: { data: TrendPoint[] }) {
   );
 }
 
+function comparisonText(comparison: DashboardMetricComparison, valueType: KpiValueType) {
+  if (comparison.currentValue === null || comparison.previousValue === null) return "ยังไม่มีฐานเปรียบเทียบ";
+  if (valueType === "percentage" && comparison.absoluteChange !== null) {
+    const pointChange = comparison.absoluteChange * 100;
+    if (pointChange === 0) return "คงที่จากช่วงก่อน";
+    return `${pointChange > 0 ? "เพิ่มขึ้น" : "ลดลง"} ${Math.abs(pointChange).toLocaleString("th-TH", { maximumFractionDigits: 1 })} จุดร้อยละจากช่วงก่อน`;
+  }
+  if (valueType === "rating" && comparison.absoluteChange !== null) {
+    if (comparison.absoluteChange === 0) return "คงที่จากช่วงก่อน";
+    return `${comparison.absoluteChange > 0 ? "เพิ่มขึ้น" : "ลดลง"} ${Math.abs(comparison.absoluteChange).toLocaleString("th-TH", { maximumFractionDigits: 1 })} คะแนนจากช่วงก่อน`;
+  }
+  if (comparison.percentChange === null) {
+    return `ช่วงก่อน ${comparison.previousValue.toLocaleString("th-TH")} · ไม่คำนวณร้อยละ`;
+  }
+  if (comparison.direction === "flat") return "คงที่จากช่วงก่อน";
+  const action = comparison.direction === "up" ? "เพิ่มขึ้น" : "ลดลง";
+  return `${action} ${Math.abs(comparison.percentChange).toLocaleString("th-TH", { maximumFractionDigits: 1 })}% จากช่วงก่อน`;
+}
+
 export function KpiCard({
   metric,
+  comparison,
   sparklineData,
   index = 0,
   sampleCount,
@@ -46,6 +66,7 @@ export function KpiCard({
   variant = "card",
 }: {
   metric: DashboardKpi;
+  comparison?: DashboardMetricComparison;
   sparklineData?: TrendPoint[];
   index?: number;
   sampleCount?: number;
@@ -107,6 +128,11 @@ export function KpiCard({
       </div>
       {metric.note && !noData ? <p className="mt-2 line-clamp-1 text-[11px] leading-4 text-slate-500">{metric.note}</p> : null}
       {!metric.note && context && !noData ? <p className="mt-2 line-clamp-1 text-[11px] leading-4 text-slate-500">{context}</p> : null}
+      {comparison && !noData ? (
+        <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] font-semibold leading-4 text-slate-600">
+          {comparisonText(comparison, metric.valueType)}
+        </p>
+      ) : null}
       {sampleCount !== undefined && sampleCount < DASHBOARD_MIN_SAMPLE_SIZE && !noData ? <div className="mt-3"><SmallSampleWarning count={sampleCount} label={sampleLabel} /></div> : null}
       {sparklineData && !noData ? <div className="mt-2"><Sparkline data={sparklineData} /></div> : null}
     </article>

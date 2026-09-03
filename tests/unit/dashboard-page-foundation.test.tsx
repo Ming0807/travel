@@ -103,7 +103,7 @@ describe("dashboard page foundation", () => {
 
     expect(buildDashboardNavigationHref(
       "/admin/dashboard/tourists",
-      "dateFrom=2026-07-01&dateTo=2026-07-31&attractionId=9&evidenceScope=pilot_only",
-    )).toBe("/admin/dashboard/tourists?date_from=2026-07-01&date_to=2026-07-31&attraction_id=9");
+      "dateFrom=2026-07-01&dateTo=2026-07-31&attractionId=9&compare=previous_period&evidenceScope=pilot_only",
+    )).toBe("/admin/dashboard/tourists?date_from=2026-07-01&date_to=2026-07-31&attraction_id=9&compare=previous_period");
   });
 });

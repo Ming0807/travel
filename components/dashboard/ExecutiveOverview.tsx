@@ -25,6 +25,7 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
             key={metric.key}
             index={index}
             metric={metric}
+            comparison={data.comparison?.status === "ready" ? data.comparison.metrics[metric.key] : undefined}
             sparklineData={metric.key === "total_visits" ? data.executive.visitTrend : undefined}
             variant="band"
           />

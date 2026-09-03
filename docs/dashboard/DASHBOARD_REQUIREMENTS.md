@@ -1246,6 +1246,9 @@ drill-down and metric definition
 - A comparison displays its baseline, denominator, and eligibility note beside the result.
 - Descriptive differences must not be labelled statistically significant unless a separately approved statistical method is implemented and documented.
 - Suppressed, stale, or truncated results cannot generate directional narrative or action priority automatically.
+- Previous-period loading is opt-in so normal dashboard requests do not double query cost.
+- Percentage change is unavailable when the previous value is zero or either period has no value; zero is never substituted for missing data.
+- A failed optional comparison query must not hide an otherwise valid current-period dashboard.
 
 ### 35.3 Shared Action Contract
 

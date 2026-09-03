@@ -27,6 +27,7 @@ const mockFilterResult = vi.hoisted<{
     dateFrom: string;
     dateTo: string;
     ageGroup?: string;
+    comparisonMode?: "previous_period";
   } | undefined;
   error?: MockDashboardFilterError;
 }>(() => ({
@@ -71,7 +72,7 @@ vi.mock("@/lib/repositories/dashboard.repository", () => ({
 // 4. Import the service under test
 // ──────────────────────────────────────────────
 import { getDashboardAnalytics, DashboardServiceError } from "@/lib/services/dashboard.service";
-import type { DashboardRepositoryPayload } from "@/lib/repositories/dashboard.repository";
+import { getDashboardRepositoryPayload, type DashboardRepositoryPayload } from "@/lib/repositories/dashboard.repository";
 import type { DashboardReferenceOptions } from "@/types/dashboard";
 
 // ──────────────────────────────────────────────
@@ -351,6 +352,39 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     expect(result.insights).toHaveLength(1);
     expect(result.insights[0].category).toBe("data_quality");
     expect(result.insights[0].title).toBe("Survey sample limitation");
+  });
+
+  it("queries the previous equal-length period only when comparison is enabled", async () => {
+    mockPayload.current = makePayload({
+      visits: [visitRow()],
+      certificates: [certificateRow()],
+      surveys: [surveyRow()],
+    });
+
+    await getDashboardAnalytics({});
+    expect(getDashboardRepositoryPayload).toHaveBeenCalledTimes(1);
+
+    vi.clearAllMocks();
+    mockFilterResult.data = {
+      dateFrom: "2026-05-01",
+      dateTo: "2026-05-31",
+      comparisonMode: "previous_period",
+    };
+    const result = await getDashboardAnalytics({ compare: "previous_period" });
+
+    expect(getDashboardRepositoryPayload).toHaveBeenCalledTimes(2);
+    expect(getDashboardRepositoryPayload).toHaveBeenNthCalledWith(2, {
+      dateFrom: "2026-03-31",
+      dateTo: "2026-04-30",
+      comparisonMode: undefined,
+    }, "executive");
+    expect(result.comparison).toMatchObject({
+      mode: "previous_period",
+      dateFrom: "2026-03-31",
+      dateTo: "2026-04-30",
+      status: "ready",
+    });
+    expect(result.comparison?.metrics.total_visits.direction).toBe("flat");
   });
 
   it("returns data quality warnings when empty satisfaction and expense data exist", async () => {

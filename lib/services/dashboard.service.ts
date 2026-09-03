@@ -22,6 +22,7 @@ import {
   safeRate
 } from "@/lib/services/dashboard-math";
 import { buildDashboardAlerts } from "@/lib/services/dashboard-alert.service";
+import { compareDashboardKpis, getPreviousDashboardPeriod } from "@/lib/services/dashboard-comparison";
 import { parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 import type {
   DashboardFilters,
@@ -652,7 +653,7 @@ export async function getPublicDashboardAnalytics(searchParams: RawSearchParams,
     );
   }
 
-  return buildDashboardResponse(parsed.data as DashboardFilters, activeTab, {
+  return buildDashboardResponse({ ...parsed.data as DashboardFilters, comparisonMode: undefined }, activeTab, {
     displayName: "Public Viewer",
     email: "",
     permissions: []
@@ -660,12 +661,30 @@ export async function getPublicDashboardAnalytics(searchParams: RawSearchParams,
 }
 
 async function buildDashboardResponse(filters: DashboardFilters, activeTab: string, viewer: DashboardViewModel['viewer']): Promise<DashboardViewModel> {
-  let payload: DashboardRepositoryPayload;
-  try {
-    payload = await getDashboardRepositoryPayload(filters, activeTab);
-  } catch {
+  let comparisonPayload: DashboardRepositoryPayload | null = null;
+  let comparisonQueryFailed = false;
+  const comparisonPeriod = filters.comparisonMode === "previous_period" && activeTab === "executive"
+    ? getPreviousDashboardPeriod(filters.dateFrom, filters.dateTo)
+    : null;
+
+  const [currentResult, comparisonResult] = await Promise.allSettled([
+    getDashboardRepositoryPayload(filters, activeTab),
+    comparisonPeriod
+      ? getDashboardRepositoryPayload({
+          ...filters,
+          dateFrom: comparisonPeriod.dateFrom,
+          dateTo: comparisonPeriod.dateTo,
+          comparisonMode: undefined,
+        }, activeTab)
+      : Promise.resolve(null),
+  ]);
+
+  if (currentResult.status === "rejected") {
     throw new DashboardServiceError("QUERY_FAILED", "Could not load dashboard data. Please try again.");
   }
+  const payload = currentResult.value;
+  if (comparisonResult.status === "fulfilled") comparisonPayload = comparisonResult.value;
+  else comparisonQueryFailed = true;
 
   const visits = getVisitRows(payload);
   const topAttractions = buildTopAttractions(visits, payload.certificates, payload.surveys);
@@ -708,9 +727,38 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
 
   const visitTrend = buildVisitTrend(visits);
 
+  const comparison = comparisonPeriod ? (() => {
+    const comparisonIsTruncated = payload.isTruncated || Boolean(comparisonPayload?.isTruncated);
+    const previousVisits = comparisonPayload ? getVisitRows(comparisonPayload) : [];
+    const previousTourists = new Set(previousVisits.map((visit) => stringValue(visit.tourist_id)).filter(Boolean));
+    const previousMetrics = comparisonPayload && !comparisonIsTruncated ? [
+      { key: "tourist_profiles", rawValue: previousTourists.size },
+      { key: "total_visits", rawValue: previousVisits.length },
+      { key: "certificates_generated", rawValue: comparisonPayload.certificates.length },
+      { key: "survey_completion_rate", rawValue: safeRate(comparisonPayload.surveys.length, comparisonPayload.certificates.length) },
+    ] : [];
+    const status = comparisonPayload && !comparisonIsTruncated ? "ready" as const : "unavailable" as const;
+
+    return {
+      mode: "previous_period" as const,
+      dateFrom: comparisonPeriod.dateFrom,
+      dateTo: comparisonPeriod.dateTo,
+      status,
+      unavailableReason: comparisonQueryFailed
+        ? "ไม่สามารถโหลดข้อมูลช่วงก่อนหน้าได้"
+        : comparisonIsTruncated
+          ? "ข้อมูลช่วงใดช่วงหนึ่งเกินขีดจำกัด จึงไม่แสดงผลต่าง"
+          : null,
+      metrics: compareDashboardKpis(kpis, previousMetrics),
+    };
+  })() : null;
+
   const dataQualityWarnings: string[] = [];
   if (payload.isTruncated) {
     dataQualityWarnings.push(`ข้อมูลถึงขีดจำกัด ${DASHBOARD_ROW_LIMIT.toLocaleString("th-TH")} รายการ กรุณาเลือกช่วงเวลาหรือตัวกรองให้แคบลงเพื่อให้ผลแม่นยำขึ้น`);
+  }
+  if (comparison?.status === "unavailable" && comparison.unavailableReason) {
+    dataQualityWarnings.push(`การเปรียบเทียบช่วงก่อนหน้าไม่พร้อมใช้งาน: ${comparison.unavailableReason}`);
   }
   if (funnelFiltersUnsupported) {
     dataQualityWarnings.push(
@@ -736,6 +784,7 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
 
   const viewModel: Omit<DashboardViewModel, 'dashboardAlerts'> = {
     filters,
+    comparison,
     generatedAt: new Date().toISOString(),
     dataSource: "live_database",
     summaryRefreshTimestamp: null,

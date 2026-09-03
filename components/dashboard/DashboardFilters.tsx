@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CaretDown, FunnelSimple, X } from "@phosphor-icons/react/dist/ssr";
+import { getPreviousDashboardPeriod } from "@/lib/services/dashboard-comparison";
 import type { DashboardFilters, DashboardReferenceOption, DashboardReferenceOptions } from "@/types/dashboard";
 
 type DashboardFiltersProps = {
@@ -82,11 +83,22 @@ function optionLabel(options: DashboardReferenceOption[], value: number | string
   return options.find((option) => option.value === String(value))?.label ?? String(value);
 }
 
+function formatThaiDate(value: string) {
+  return new Intl.DateTimeFormat("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T00:00:00.000Z`));
+}
+
 export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const supportsComparison = pathname === "/admin/dashboard";
+  const previousPeriod = getPreviousDashboardPeriod(filters.dateFrom, filters.dateTo);
   const satisfactionLabel = filters.satisfactionMin !== undefined || filters.satisfactionMax !== undefined
     ? `${filters.satisfactionMin ?? 1}-${filters.satisfactionMax ?? 5}`
     : null;
@@ -174,6 +186,19 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
 
             <button className="min-h-10 shrink-0 rounded-[5px] bg-[#171717] px-4 text-sm font-bold text-white transition-colors hover:bg-[#B94727] focus:outline-none focus:ring-2 focus:ring-[#B94727] focus:ring-offset-2" type="submit">อัปเดตข้อมูล</button>
 
+            {supportsComparison ? (
+              <label className="flex min-h-10 shrink-0 cursor-pointer items-center gap-2 rounded-[5px] border border-slate-300 px-3 text-xs font-bold text-slate-700 transition-colors hover:border-[#E8B8A8]">
+                <input
+                  className="h-4 w-4 accent-[#B94727]"
+                  defaultChecked={filters.comparisonMode === "previous_period"}
+                  name="compare"
+                  type="checkbox"
+                  value="previous_period"
+                />
+                <span>เทียบช่วงก่อนหน้า</span>
+              </label>
+            ) : filters.comparisonMode ? <input name="compare" type="hidden" value={filters.comparisonMode} /> : null}
+
             <div className="relative shrink-0">
               <button
                 aria-controls="dashboard-advanced-filters"
@@ -216,6 +241,12 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
           </form>
         </div>
       </div>
+
+      {supportsComparison && filters.comparisonMode === "previous_period" && previousPeriod ? (
+        <div className="border-t border-[#F0C8BB] bg-[#FFF7F3] px-3 py-2 text-xs leading-5 text-[#71301F] sm:px-4">
+          เปรียบเทียบกับช่วงก่อนหน้าที่มีจำนวนวันเท่ากัน: {formatThaiDate(previousPeriod.dateFrom)} - {formatThaiDate(previousPeriod.dateTo)}
+        </div>
+      ) : null}
 
       {activeFilters.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 px-3 py-2 sm:px-4" aria-label="ตัวกรองที่ใช้อยู่">

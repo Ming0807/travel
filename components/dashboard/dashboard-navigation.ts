@@ -45,6 +45,7 @@ const SHARED_SCOPE_KEYS = [
   ["travel_purpose_id", "travelPurposeId"],
   ["satisfaction_min", "satisfactionMin"],
   ["satisfaction_max", "satisfactionMax"],
+  ["compare", "comparisonMode"],
 ] as const;
 
 function scopeValue(params: URLSearchParams, snakeKey: string, camelKey: string) {

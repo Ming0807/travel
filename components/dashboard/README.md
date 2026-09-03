@@ -23,6 +23,9 @@ The active design source is `docs/frontend/DASHBOARD_UI_SPEC.md`. The implementa
 - `DashboardPageHeader` owns the decision-oriented page title, date scope, data source, freshness timestamp, and page actions for the protected dashboard routes.
 - `DashboardPageFailure` maps validation, authentication, permission, and query failures to distinct recovery copy. A service failure must not be presented as an empty dataset.
 - `DashboardShell` composes the page foundation, navigation, shared filters, content, interpretation note, and alerts. New dimension pages must provide a typed `page` key instead of creating another local header.
+- `DashboardShell` owns the `Suspense` boundary for navigation and filters because both read request search parameters in Client Components under Next.js 16 prerendering.
 - `dashboard-navigation` is the single source for protected analytics route order, full sidebar labels, compact tab labels, and icons. Desktop and mobile navigation must not define separate analytics vocabulary.
 - `buildDashboardNavigationHref` carries only whitelisted analytics scope between pages and translates the shared snake-case query contract to the attraction workspace camel-case contract. Unsupported query parameters are intentionally dropped.
 - `DashboardFilters` keeps date, province, and attraction as the primary scope. District, attraction type, audience, travel behavior, and satisfaction filters live in the advanced panel; every applied dimension must also appear as a removable chip.
+- Executive previous-period comparison is opt-in. It uses the immediately preceding equal-length calendar range, does not run on the public evidence page, and keeps current-period results visible if the optional comparison query fails.
+- KPI count deltas use relative percentage change. Rate deltas use percentage points. Missing, zero-baseline, or truncated evidence cannot produce a directional percentage.

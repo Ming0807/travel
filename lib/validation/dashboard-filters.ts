@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DASHBOARD_DATE_RANGE_MAX_DAYS } from "@/constants/dashboard-metrics";
+export { getPreviousDashboardPeriod } from "@/lib/services/dashboard-comparison";
 
 type RawSearchParams = Record<string, string | string[] | undefined>;
 
@@ -46,6 +47,7 @@ export const dashboardFiltersSchema = z
   .object({
     dateFrom: dashboardDateSchema,
     dateTo: dashboardDateSchema,
+    comparisonMode: z.literal("previous_period").optional(),
     provinceId: optionalPositiveId,
     districtId: optionalPositiveId,
     attractionId: optionalPositiveId,
@@ -104,6 +106,7 @@ export function normalizeDashboardSearchParams(searchParams: RawSearchParams, no
   return {
     dateFrom: firstValue(searchParams.date_from) ?? firstValue(searchParams.dateFrom) ?? defaults.dateFrom,
     dateTo: firstValue(searchParams.date_to) ?? firstValue(searchParams.dateTo) ?? defaults.dateTo,
+    comparisonMode: firstValue(searchParams.compare) ?? firstValue(searchParams.comparisonMode),
     provinceId: firstValue(searchParams.province_id) ?? firstValue(searchParams.provinceId),
     districtId: firstValue(searchParams.district_id) ?? firstValue(searchParams.districtId),
     attractionId: firstValue(searchParams.attraction_id) ?? firstValue(searchParams.attractionId),
