@@ -169,9 +169,10 @@ describe("public dashboard evidence page", () => {
   it("renders an accessible table alternative for every charted trend", async () => {
     vi.mocked(publicDashboardService.getPublicDashboardEvidence).mockResolvedValue(makeEvidence());
 
-    render(await PublicDashboardPage());
+    const { container } = render(await PublicDashboardPage());
 
     const table = screen.getByRole("table", { name: "แนวโน้มรายการเข้าชมที่บันทึก" });
+    expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
     expect(within(table).getByRole("columnheader", { name: "วันที่" })).toBeInTheDocument();
     expect(within(table).getByRole("columnheader", { name: "รายการเข้าชม" })).toBeInTheDocument();
     expect(within(table).getByText("น้อยกว่า 5")).toBeInTheDocument();

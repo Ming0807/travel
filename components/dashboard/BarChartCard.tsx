@@ -1,9 +1,14 @@
+"use client";
+
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { localizeDashboardLabel } from "@/components/dashboard/dashboard-localization";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { NoDataState } from "@/components/dashboard/NoDataState";
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import type { DistributionItem } from "@/types/dashboard";
+
+const BAR_COLORS = ["#D94717", "#0A6B62", "#D6A13D", "#3E7A4F", "#64748B", "#E78A6D", "#4F8E88", "#A97B22"];
 
 type BarChartCardProps = {
   title: string;
@@ -16,12 +21,19 @@ type BarChartCardProps = {
 
 export function BarChartCard({ title, definition, data, emptyDescription, sampleCount, sampleLabel = "คำตอบ" }: BarChartCardProps) {
   const visible = data.slice(0, 8);
-  const max = Math.max(...visible.map((item) => item.value), 0);
+  const chartData = visible.map((item) => ({
+    ...item,
+    displayLabel: localizeDashboardLabel(item.label),
+    displayValue: item.percent !== null
+      ? `${item.value.toLocaleString("th-TH")} (${Math.round(item.percent * 100)}%)`
+      : item.value.toLocaleString("th-TH"),
+  }));
+  const chartHeight = Math.max(220, visible.length * 48 + 36);
 
   return (
-    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4">
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="text-base font-bold text-slate-900">{title}</h2>
+    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+        <h2 className="text-base font-black text-slate-950">{title}</h2>
         <MetricTooltip definition={definition} />
       </div>
       {visible.length === 0 ? (
@@ -29,31 +41,26 @@ export function BarChartCard({ title, definition, data, emptyDescription, sample
       ) : (
         <>
           {sampleCount !== undefined && sampleCount < DASHBOARD_MIN_SAMPLE_SIZE ? <div className="mt-3"><SmallSampleWarning count={sampleCount} label={sampleLabel} /></div> : null}
-          <div className="mt-4 space-y-3">
-            {visible.map((item, index) => {
-              const width = max > 0 ? Math.max((item.value / max) * 100, 2) : 0;
-              return (
-                <div key={`${item.label}-${index}`}>
-                  <div className="mb-1 flex items-start justify-between gap-3 text-sm">
-                    <span className="min-w-0 break-words font-medium text-slate-700">
-                      <span className="block">{localizeDashboardLabel(item.label)}</span>
-                      {item.note ? <span className="mt-0.5 block text-xs font-normal text-slate-500">{item.note}</span> : null}
-                    </span>
-                    <span className="shrink-0 font-bold tabular-nums text-slate-900">{item.value.toLocaleString("th-TH")}{item.percent !== null ? ` (${Math.round(item.percent * 100)}%)` : ""}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-sm bg-slate-100" role="img" aria-label={`${localizeDashboardLabel(item.label)} ${item.value.toLocaleString("th-TH")}`}>
-                    <div className={`h-full rounded-sm ${index === 0 ? "bg-[#B94727]" : "bg-[#475569]"}`} style={{ width: `${width}%` }} />
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mt-4 min-w-0" data-chart-engine="recharts" role="img" aria-label={`กราฟแท่ง ${title}`} style={{ height: chartHeight }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: chartHeight }}>
+              <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 58, bottom: 4, left: 0 }}>
+                <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} />
+                <YAxis type="category" dataKey="displayLabel" axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11, fontWeight: 700 }} width={112} />
+                <Tooltip cursor={{ fill: "#F8FAFC" }} contentStyle={{ background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: 5, boxShadow: "0 4px 8px rgba(15,23,42,0.10)", fontSize: 12 }} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} รายการ`, "จำนวน"]} />
+                <Bar dataKey="value" barSize={18} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+                  {chartData.map((item, index) => <Cell key={`bar-${item.label}-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />)}
+                  <LabelList dataKey="displayValue" position="right" fill="#0F172A" fontSize={11} fontWeight={800} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          <details className="mt-4 border-t border-slate-100 pt-3">
-            <summary className="cursor-pointer text-xs font-semibold text-[#B94727]">ดูเป็นตารางข้อมูล</summary>
-            <div className="mt-2 overflow-x-auto">
+          <details className="mt-3 border-t border-slate-100 pt-3">
+            <summary className="min-h-11 cursor-pointer py-2 text-xs font-semibold text-[#B94727]">ดูเป็นตารางข้อมูล</summary>
+            <div className="overflow-x-auto">
               <table className="w-full min-w-80 text-sm">
-                <thead><tr className="border-b border-slate-200 text-left text-xs text-slate-500"><th className="py-2 pr-4">รายการ</th><th className="py-2 text-right">จำนวน</th></tr></thead>
-                <tbody>{visible.map((item) => <tr key={`table-${item.label}`} className="border-b border-slate-100"><td className="py-2 pr-4">{localizeDashboardLabel(item.label)}</td><td className="py-2 text-right tabular-nums">{item.value.toLocaleString("th-TH")}</td></tr>)}</tbody>
+                <thead><tr className="border-b border-slate-200 text-left text-xs text-slate-500"><th className="py-2 pr-4">รายการ</th><th className="py-2 pr-4">ฐานข้อมูล</th><th className="py-2 text-right">จำนวน</th></tr></thead>
+                <tbody>{visible.map((item, index) => <tr key={`table-${item.label}-${index}`} className="border-b border-slate-100"><td className="py-2 pr-4">{localizeDashboardLabel(item.label)}</td><td className="py-2 pr-4 text-xs text-slate-500">{item.note ?? "-"}</td><td className="py-2 text-right tabular-nums">{item.value.toLocaleString("th-TH")}</td></tr>)}</tbody>
               </table>
             </div>
           </details>

@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/auth/guards";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { ExecutiveDashboardHeader } from "@/components/dashboard/ExecutiveDashboardHeader";
 import { NoDataState } from "@/components/dashboard/NoDataState";
 import { DashboardServiceError, getDashboardAnalytics } from "@/lib/services/dashboard.service";
 
@@ -41,7 +42,7 @@ export default async function AdminDashboardPage({ searchParams = {} }: Dashboar
   }
 
   return (
-    <DashboardShell data={data}>
+    <DashboardShell data={data} header={<ExecutiveDashboardHeader data={data} />}>
       <ErrorBoundary fallbackTitle="ไม่สามารถแสดงภาพรวมได้" fallbackDescription="ส่วนแสดงผลพบข้อผิดพลาด กรุณารีเฟรชหน้าแล้วลองอีกครั้ง">
         <ExecutiveOverview data={data} />
       </ErrorBoundary>

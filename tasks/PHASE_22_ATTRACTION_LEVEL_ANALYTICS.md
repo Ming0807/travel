@@ -1,6 +1,6 @@
 # Phase 22: Attraction-Level Analytics and Improvement Evidence
 
-Status: Implementation complete locally; migration application, authenticated visual QA, and production data validation pending
+Status: Implementation, migration application, authenticated responsive QA, production data validation, and export privacy smoke complete; production query-plan verification awaits a working Supabase Session Pooler connection
 
 Priority: P1 decision support
 
@@ -61,7 +61,10 @@ Allow authorized staff to analyze each attraction independently and translate vi
 ### Task 22.10: Performance and QA
 
 - [x] Add bounded reads, attraction indexes, honest no-data/low-sample states, responsive layouts, and metric-contract tests.
-- [ ] Apply the migration, verify production query plans/data parity, and complete authenticated desktop/mobile visual QA.
+- [x] Render attraction distributions, the visit-safe funnel, and satisfaction dimensions with Recharts while excluding privacy-suppressed cells from plotted values and retaining accessible tables.
+- [x] Apply the migration and verify the Phase 21/22 schema through authenticated Supabase REST reads.
+- [x] Validate production data parity, entry-channel filters, low-sample suppression, aggregate CSV export, and authenticated desktop/mobile layouts.
+- [ ] Verify production query plans after replacing the IPv6-only direct database URL with the exact Session Pooler URL from Supabase Connect.
 
 ## Analytics Rules
 

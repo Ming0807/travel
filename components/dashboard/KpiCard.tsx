@@ -16,6 +16,14 @@ function metricIcon(key: string): ReactNode {
   return <ChartBar aria-hidden="true" className={className} weight="fill" />;
 }
 
+function metricContext(key: string): string | null {
+  if (key === "tourist_profiles") return "โปรไฟล์ที่เชื่อมกับการเยี่ยมชม";
+  if (key === "total_visits") return "รายการที่ผ่านขั้นข้อมูลขั้นต่ำ";
+  if (key === "certificates_generated") return "ใบประกาศที่สร้างสำเร็จ";
+  if (key === "survey_completion_rate") return "เทียบกับใบประกาศที่สร้าง";
+  return null;
+}
+
 function Sparkline({ data }: { data: TrendPoint[] }) {
   if (data.length < 2) return null;
   const values = data.map((point) => point.value);
@@ -45,6 +53,7 @@ export function KpiCard({
   variant?: "card" | "band";
 }) {
   const localized = localizeDashboardKpi(metric);
+  const context = metricContext(metric.key);
   const noData = metric.value === "No data" || metric.value === "N/A" || metric.value === "ยังไม่มีข้อมูล";
   const bandTheme = [
     {
@@ -69,36 +78,37 @@ export function KpiCard({
     },
   ][index % 4];
   const containerClass = variant === "band"
-    ? `relative min-h-36 min-w-0 overflow-hidden rounded-md border bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] sm:p-5 ${bandTheme.border}`
-    : `relative min-w-0 overflow-hidden rounded-md border bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] ${noData ? "border-dashed border-slate-300" : "border-slate-200"}`;
+    ? "relative min-h-[8.25rem] min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white p-4"
+    : `relative min-w-0 overflow-hidden rounded-md border bg-white p-4 ${noData ? "border-dashed border-slate-300" : "border-slate-200"}`;
 
   return (
     <article data-dashboard-kpi={metric.key} className={containerClass}>
       {!noData ? (
         <span
           aria-hidden="true"
-          className={`absolute inset-x-0 top-0 h-0.5 ${variant === "band" ? bandTheme.rule : "bg-[#B94727]"}`}
+          className={`absolute inset-x-0 bottom-0 h-1 ${variant === "band" ? bandTheme.rule : "bg-[#B94727]"}`}
         />
       ) : null}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <h3 className="text-sm font-bold leading-5 text-slate-700">{localized.label}</h3>
+            <h3 className="text-[13px] font-bold leading-5 text-slate-700">{localized.label}</h3>
             <MetricTooltip definition={localized.definition} />
           </div>
           {noData ? (
             <p className="mt-3 flex items-center gap-1.5 text-sm font-bold text-slate-600"><WarningCircle aria-hidden="true" size={16} />ยังไม่มีข้อมูล</p>
           ) : (
-            <p className="mt-3 break-words text-3xl font-black leading-none tabular-nums text-slate-950">{localized.value}</p>
+            <p className="mt-2 break-words text-[2rem] font-black leading-none tabular-nums text-slate-950">{localized.value}</p>
           )}
         </div>
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${variant === "band" ? bandTheme.icon : "border-[#F0C8BB] bg-[#FFF7F3] text-[#B94727]"}`}>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${variant === "band" ? bandTheme.icon : "border-[#F0C8BB] bg-[#FFF7F3] text-[#B94727]"}`}>
           {metricIcon(metric.key)}
         </span>
       </div>
-      {metric.note && !noData ? <p className="mt-3 text-xs leading-5 text-slate-600">{metric.note}</p> : null}
+      {metric.note && !noData ? <p className="mt-2 line-clamp-1 text-[11px] leading-4 text-slate-500">{metric.note}</p> : null}
+      {!metric.note && context && !noData ? <p className="mt-2 line-clamp-1 text-[11px] leading-4 text-slate-500">{context}</p> : null}
       {sampleCount !== undefined && sampleCount < DASHBOARD_MIN_SAMPLE_SIZE && !noData ? <div className="mt-3"><SmallSampleWarning count={sampleCount} label={sampleLabel} /></div> : null}
-      {sparklineData && !noData ? <div className="mt-3 border-t border-slate-100 pt-2"><Sparkline data={sparklineData} /></div> : null}
+      {sparklineData && !noData ? <div className="mt-2"><Sparkline data={sparklineData} /></div> : null}
     </article>
   );
 }

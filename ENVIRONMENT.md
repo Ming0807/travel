@@ -23,9 +23,10 @@ Never commit real secrets to the repository.
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | **Yes** | — | Supabase project URL (public) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **Yes** | — | Supabase anonymous key (public) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | **Preferred** | — | Current Supabase browser key (`sb_publishable_...`). Used before the legacy anon key when both are configured. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Legacy fallback | — | Legacy Supabase anonymous key. It may be omitted after every environment has the publishable key. |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Yes** | — | Supabase service role key (server-only, never expose to browser) |
-| `SUPABASE_DATABASE_URL` | **Yes** | — | PostgreSQL connection string for migration/maintenance tools. Prefer the exact Session Pooler URL from Supabase Connect when the direct host is IPv6-only. |
+| `SUPABASE_DATABASE_URL` | No for app runtime; **yes for database tools** | — | Server-only PostgreSQL connection string for migration/maintenance tools. Do not add it to Vercel unless a deployed job explicitly needs a database connection. Prefer the exact Session Pooler URL from Supabase Connect when the direct host is IPv6-only. Never prefix it with `NEXT_PUBLIC_`. |
 
 ---
 
@@ -103,8 +104,11 @@ Never commit real secrets to the repository.
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+# Optional temporary fallback during migration:
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
+# Local/CI database tools only:
 SUPABASE_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 
 # Storage (use supabase locally, cloudinary on Vercel)
@@ -119,9 +123,8 @@ APP_ENV=local
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
-SUPABASE_DATABASE_URL=postgresql://...
 
 # Cloudinary
 STORAGE_PROVIDER=cloudinary
@@ -140,7 +143,7 @@ HEALTH_CHECK_SECRET=use-a-long-random-server-secret
 
 ## Privacy and Security Notes
 
-1. **Server-only variables** (`SUPABASE_SERVICE_ROLE_KEY`, `CLOUDINARY_API_SECRET`, `LINE_CHANNEL_SECRET`, `UNIVERSITY_STORAGE_ACCESS_TOKEN`) must **never** be prefixed with `NEXT_PUBLIC_`.
+1. **Server-only variables** (`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DATABASE_URL`, `CLOUDINARY_API_SECRET`, `LINE_CHANNEL_SECRET`, `UNIVERSITY_STORAGE_ACCESS_TOKEN`) must **never** be prefixed with `NEXT_PUBLIC_`.
 2. **Database stores references**, not permanent signed URLs. Signed URLs are generated on-demand with TTL.
 3. **Private file references** (`cloudinary:image:authenticated:v123:png:folder/file`) are internal identifiers and must not be exposed in public API responses.
 4. **Tourist uploads** go through the storage adapter (`lib/storage/private-files.ts`), never directly to Cloudinary or Supabase from the browser.

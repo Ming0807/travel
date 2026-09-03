@@ -92,12 +92,19 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
 
       <div className="grid gap-px border-t border-[var(--admin-border)] bg-[var(--admin-border)] lg:grid-cols-2">
         <div className="bg-white p-5">
-          <div className="flex items-start gap-3"><span className={`flex size-10 shrink-0 items-center justify-center ${detail.freezeSnapshot ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-600"}`}><LockKey aria-hidden="true" /></span><div><h3 className="font-black">Version freeze snapshot</h3><p className="mt-1 text-sm text-slate-600">ล็อก manifest เครื่องมือและเวอร์ชันระบบที่ใช้จริง</p></div></div>
+          <div className="flex items-start gap-3">
+            <span className={`flex size-10 shrink-0 items-center justify-center ${detail.freezeSnapshot ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-600"}`}><LockKey aria-hidden="true" /></span>
+            <div><h3 className="font-black">Version freeze snapshot</h3><p className="mt-1 text-sm text-slate-600">ล็อก manifest เครื่องมือและเวอร์ชันระบบที่ใช้จริง</p></div>
+          </div>
           {detail.freezeSnapshot ? <dl className="mt-4 grid gap-2 text-xs sm:grid-cols-2"><div><dt className="text-slate-500">Application</dt><dd className="font-mono font-bold">{detail.freezeSnapshot.applicationRevision}</dd></div><div><dt className="text-slate-500">Database</dt><dd className="font-mono font-bold">{detail.freezeSnapshot.databaseRevision}</dd></div><div><dt className="text-slate-500">Scoring</dt><dd className="font-bold">{detail.freezeSnapshot.scoringVersion}</dd></div><div><dt className="text-slate-500">Frozen</dt><dd className="font-bold">{new Date(detail.freezeSnapshot.frozenAt).toLocaleString("th-TH")}</dd></div></dl> : null}
         </div>
         <div className="bg-white p-5">
           <h3 className="font-black">ผลตัดสินจาก Pilot</h3>
-          {detail.study.studyKind === "final_collection" ? <p className={`mt-3 border p-3 text-sm font-bold ${detail.sourcePilotReadyForField ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}>{detail.sourcePilotReadyForField ? "Pilot ต้นทางอนุมัติ ready_for_field แล้ว" : "ยังไม่มีผล ready_for_field จาก Pilot ต้นทาง"}</p> : detail.pilotReviews.length > 0 ? <div className="mt-3"><p className="text-xl font-black text-[#B94727]">{DECISION_LABELS[detail.pilotReviews[0].decision]}</p><p className="mt-1 text-sm text-slate-600">ฐาน {detail.pilotReviews[0].reviewedSessionCount.toLocaleString("th-TH")} sessions · abandonment {metric(detail.pilotReviews[0].abandonmentRate, "%")}</p></div> : <p className="mt-3 text-sm text-slate-600">สรุปผลได้หลังพักหรือปิด Pilot</p>}
+          {detail.study.studyKind === "final_collection" ? (
+            <p className={`mt-3 border p-3 text-sm font-bold ${detail.sourcePilotReadyForField ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}>{detail.sourcePilotReadyForField ? "Pilot ต้นทางอนุมัติ ready_for_field แล้ว" : "ยังไม่มีผล ready_for_field จาก Pilot ต้นทาง"}</p>
+          ) : detail.pilotReviews.length > 0 ? (
+            <div className="mt-3"><p className="text-xl font-black text-[#B94727]">{DECISION_LABELS[detail.pilotReviews[0].decision]}</p><p className="mt-1 text-sm text-slate-600">ฐาน {detail.pilotReviews[0].reviewedSessionCount.toLocaleString("th-TH")} sessions · abandonment {metric(detail.pilotReviews[0].abandonmentRate, "%")}</p></div>
+          ) : <p className="mt-3 text-sm text-slate-600">สรุปผลได้หลังพักหรือปิด Pilot</p>}
         </div>
       </div>
 

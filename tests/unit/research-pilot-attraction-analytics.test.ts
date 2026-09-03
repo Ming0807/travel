@@ -18,7 +18,9 @@ const studyId = "11111111-1111-4111-8111-111111111111";
 const migration = readFileSync(resolve(process.cwd(), "supabase/migrations/20260901000000_activate_research_pilot_and_attraction_analytics.sql"), "utf8");
 const analyticsRepository = readFileSync(resolve(process.cwd(), "lib/repositories/attraction-analytics.repository.ts"), "utf8");
 const analyticsWorkspace = readFileSync(resolve(process.cwd(), "components/dashboard/AttractionAnalyticsWorkspace.tsx"), "utf8");
+const distributionChart = readFileSync(resolve(process.cwd(), "components/dashboard/AttractionDistributionChart.tsx"), "utf8");
 const analyticsExportRoute = readFileSync(resolve(process.cwd(), "app/api/admin/dashboard/attractions/export/route.ts"), "utf8");
+const analyticsService = readFileSync(resolve(process.cwd(), "lib/services/attraction-analytics.service.ts"), "utf8");
 
 function researchVisit(studyKind: "pilot" | "final_collection", collectionMode: "field_observation" | "simulated_usability" | "pilot_internal") {
   return {
@@ -147,6 +149,21 @@ describe("Phase 22 attraction evidence scope", () => {
   it("blocks aggregate export when bounded live reads are incomplete", () => {
     expect(analyticsWorkspace).toContain("!data.quality.truncated");
     expect(analyticsExportRoute).toMatch(/data\.quality\.truncated[\s\S]*status:\s*409/);
+  });
+
+  it("uses Recharts for attraction distributions and never plots privacy-suppressed cells", () => {
+    expect(analyticsWorkspace).toContain("<AttractionDistributionChart");
+    expect(analyticsWorkspace).toContain("<AttractionFunnelChart");
+    expect(analyticsWorkspace).toContain("<AttractionScoreChart");
+    expect(distributionChart).toContain('data-chart-engine="recharts"');
+    expect(distributionChart).toMatch(/rows\.filter\(\(row\) => !row\.suppressed/);
+    expect(distributionChart).not.toContain('row.suppressed ? "20%"');
+  });
+
+  it("defines each satisfaction dimension once", () => {
+    const satisfactionBlock = analyticsService.match(/const satisfaction = \[([\s\S]*?)\n  \];/)?.[1] ?? "";
+    expect(satisfactionBlock.match(/scoreMetric\(/g)).toHaveLength(7);
+    expect(satisfactionBlock.match(/"value_score"/g)).toHaveLength(1);
   });
 
   it("uses answered records as each distribution denominator and suppresses small cells", () => {

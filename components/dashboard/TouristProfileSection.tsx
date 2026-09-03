@@ -18,7 +18,7 @@ function IdentityContext({ items }: { items: DistributionItem[] }) {
   const visible = positive.slice(0, 5);
 
   return (
-    <section className="h-full rounded-md border border-slate-200 bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)]">
+    <section className="h-full rounded-md border border-slate-200 bg-white p-4 sm:p-5">
       <h2 className="text-base font-bold text-slate-900">บริบทวิธีเข้าใช้งาน</h2>
       <p className="mt-1 text-sm leading-6 text-slate-500">ใช้ดูช่องทางที่โปรไฟล์เชื่อมกับระบบ หนึ่งโปรไฟล์อาจมีมากกว่าหนึ่งวิธีเข้าใช้งาน</p>
       {positive.length === 0 ? (

@@ -1,11 +1,11 @@
 import { ArrowClockwise, ChartBar, Star, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
+import { DonutChartCard } from "@/components/dashboard/DonutChartCard";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { SatisfactionDetailTable } from "@/components/dashboard/SatisfactionDetailTable";
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
-import { StackedDistributionCard } from "@/components/dashboard/StackedDistributionCard";
 import { SurveyRecordsLink } from "@/components/dashboard/SurveyRecordsLink";
 import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import type { DashboardViewModel, DistributionItem } from "@/types/dashboard";
@@ -99,7 +99,7 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
       </div>
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-        <StackedDistributionCard data={data.satisfaction.distribution} definition="สัดส่วนการให้คะแนนความพึงพอใจโดยรวมในแต่ละระดับ" emptyDescription="ยังไม่มีการกระจายคะแนนความพึงพอใจ" title="การกระจายคะแนนโดยรวม" />
+        <DonutChartCard data={data.satisfaction.distribution} definition="สัดส่วนการให้คะแนนความพึงพอใจโดยรวมในแต่ละระดับ" emptyDescription="ยังไม่มีการกระจายคะแนนความพึงพอใจ" sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" title="การกระจายคะแนนโดยรวม" />
         <BarChartCard data={byAttraction} definition="คะแนนเฉลี่ยแยกตามสถานที่ ควรพิจารณาควบคู่กับจำนวนผู้ตอบ และยังไม่ใช้สรุปเชิงแนะนำเมื่อสถานที่นั้นมีคำตอบต่ำกว่า 30 รายการ" emptyDescription="ยังไม่มีคะแนนที่แยกตามสถานที่" title="ความพึงพอใจแยกตามสถานที่" />
       </div>
 

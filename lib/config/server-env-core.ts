@@ -7,7 +7,7 @@ const serverEnvSchema = z.object({
   APP_SUPPORTED_LOCALES: z.string().default("th,en"),
   APP_TIMEZONE: z.string().default("Asia/Bangkok"),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  SUPABASE_DATABASE_URL: z.string().min(1),
+  SUPABASE_DATABASE_URL: z.string().min(1).optional(),
   MAX_UPLOAD_IMAGE_SIZE_MB: z.coerce.number().positive().default(5),
   ALLOWED_TOURIST_IMAGE_MIME_TYPES: z.string().default("image/jpeg,image/png,image/webp"),
   CERTIFICATE_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(600),

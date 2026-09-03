@@ -4,6 +4,7 @@ import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { DonutChartCard } from "@/components/dashboard/DonutChartCard";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { localizeDashboardKpi } from "@/components/dashboard/dashboard-localization";
@@ -140,7 +141,7 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByLabelText("ตั้งแต่วันที่").closest("#dashboard-filter-form")).toHaveClass("block");
     expect(screen.getByLabelText("ตั้งแต่วันที่")).toBeVisible();
-    expect(screen.getByRole("button", { name: "นำตัวกรองไปใช้" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "อัปเดตข้อมูล" })).toBeVisible();
   });
 
   it("เปิดแถบตัวกรองอัตโนมัติบนหน้าจอ desktop", async () => {
@@ -171,7 +172,7 @@ describe("Dashboard UX ภาษาไทย", () => {
   });
 
   it("แสดงกราฟแท่งพร้อมตารางข้อมูลที่เข้าถึงได้", () => {
-    render(
+    const { container } = render(
       <BarChartCard
         title="การเข้าชมแยกตามจังหวัด"
         definition="จำนวนรายการเข้าชม"
@@ -182,10 +183,26 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(screen.getByRole("heading", { name: "การเข้าชมแยกตามจังหวัด" })).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getAllByText("12").length).toBeGreaterThan(0);
+    expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
+  });
+
+  it("แสดงกราฟโดนัทพร้อมคำไทยและตารางข้อมูลที่ตรวจสอบได้", () => {
+    const { container } = render(
+      <DonutChartCard
+        title="ช่องทางระบุตัวตน"
+        definition="จำนวนโปรไฟล์ตามช่องทาง"
+        emptyDescription="ยังไม่มีข้อมูล"
+        data={[{ label: "anonymous_device", value: 8, percent: 0.8 }]}
+      />,
+    );
+
+    expect(screen.getAllByText("ใช้งานแบบผู้เยี่ยมชม").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("table", { name: "ข้อมูลช่องทางระบุตัวตน" })).toBeInTheDocument();
+    expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
   });
 
   it("แสดงกราฟแนวโน้มพร้อมผลรวมและตารางข้อมูลที่ตรวจสอบได้", () => {
-    render(
+    const { container } = render(
       <TrendChart
         points={[
           { label: "2026-07-01", value: 4 },
@@ -196,8 +213,11 @@ describe("Dashboard UX ภาษาไทย", () => {
 
     expect(screen.getByText("รวมในช่วงที่เลือก")).toBeInTheDocument();
     expect(screen.getByText("11 ครั้ง")).toBeInTheDocument();
+    expect(screen.getByText(/ไม่ใช่ยอดเปิดหน้าเว็บสาธารณะ/)).toBeInTheDocument();
+    expect(screen.getByText(/ไม่ใช่จำนวนสแกน QR/)).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ข้อมูลแนวโน้มรายการเข้าชม" })).toBeInTheDocument();
     expect(screen.getAllByText("7").length).toBeGreaterThan(0);
+    expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
   });
 
   it("ยุบการแจ้งเตือนเป็นค่าเริ่มต้นและจำกัดข้อความบนหน้าหลัก", () => {

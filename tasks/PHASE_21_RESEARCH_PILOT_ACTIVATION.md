@@ -1,6 +1,6 @@
 # Phase 21: Research Pilot Activation
 
-Status: Technical activation controls implemented locally; real approval evidence, pretest, mobile-device QA, controlled Pilot, and final field activation remain operational work
+Status: Technical activation controls implemented and the Supabase schema verified; real approval evidence, pretest, mobile-device QA, controlled Pilot, and final field activation remain operational work
 
 Priority: P0 before final research data collection
 

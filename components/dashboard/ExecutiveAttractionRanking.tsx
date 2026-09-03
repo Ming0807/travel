@@ -19,7 +19,7 @@ export function ExecutiveAttractionRanking({
   return (
     <section
       aria-labelledby="executive-attraction-ranking-heading"
-      className="h-full min-w-0 rounded-md border border-slate-200 bg-white shadow-[0_4px_8px_rgba(15,23,42,0.05)]"
+      className="h-full min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white"
     >
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-3.5 sm:px-5">
         <div>

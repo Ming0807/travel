@@ -115,24 +115,29 @@ Recommended structure:
 
 ```text
 Page Header
-Compact Data Context Strip
-Collapsible Global Filter Bar
+Compact Global Filter Bar
 Four Executive KPI Cards
-Visit Trend and Engagement Funnel
-Top Attractions and Experience Quality
-Planning Insight Cards
+Visit Trend and Decision Support Summary
+Engagement Funnel and Attraction Performance Matrix
+Data Coverage and Quality Strip
 Export Actions
 ```
 
 ### 6.1 Current visual system
 
 - Thai-first operational interface with near-black text, white surfaces, and brand orange for active states and priority actions.
-- Panels use a small `4-6px` corner radius and a restrained translucent shadow; no decorative gradients or oversized marketing composition.
-- The data-context strip shows date range, source, freshness, and analytical sample before any KPI. Method notes remain available in a disclosure instead of occupying the first viewport.
-- Filters are URL-driven and collapsed by default. Their summary always exposes the selected date range and active-filter count.
+- Panels use a restrained `4-8px` corner radius with clear borders. Chart lines and progress bars may use rounded ends for legibility, without turning controls into decorative capsules.
+- Data source and methodology remain available in a compact footer disclosure instead of occupying the first viewport.
+- Filters are URL-driven, visible as one compact command row on desktop, and collapsed behind an explicit mobile control. Their summary exposes the selected date range and active-filter count.
 - The executive band contains exactly four KPIs: tourist profiles, visits, generated certificates, and survey completion. Detailed metrics stay in their dedicated tabs.
 - A visit sparkline must never be presented as the trend of tourist profiles or certificates.
-- The main cockpit pairs visit trend with QR-to-certificate-to-survey conversion, then pairs top attractions with satisfaction, revisit intention, and recommendation intention.
+- The main cockpit pairs visit trend with existing decision-support insights, then compares the QR-to-certificate-to-survey funnel with an attraction performance matrix in the same row.
+- The attraction matrix uses recorded visits on the horizontal axis and valid satisfaction scores on the vertical axis. On mobile, it becomes a ranked summary so labels remain readable.
+- The quality strip shows survey coverage, expense completeness, average satisfaction, and processing time without inventing period comparisons.
+- The visit-trend subtitle must state that the metric counts successfully recorded `visits`; it is neither public page views nor QR scan events.
+- Shared bar, donut, and stacked-distribution components use the same coral, deep-teal, muted-gold, green, and slate visual vocabulary across detailed dashboard pages without changing metric formulas.
+- Interactive line, bar, donut, funnel, scatter, and research-construct charts use the existing `Recharts` dependency with animation disabled for stable reporting. Every chart keeps a text legend, detail list, or table equivalent and must not expose privacy-suppressed values.
+- The public evidence dashboard and attraction-level analytics use the same chart engine. Suppressed public cells remain in qualified tables where permitted but are never represented by placeholder bars, points, or inferred values.
 - Province comparison is omitted from the executive view while Yala is the only active rollout province; a one-bar comparison would imply analytical value that is not present. Province analysis remains available when multi-province data is activated.
 - Charts retain a readable table view so reviewers can validate values and assistive technology can access the same data.
 - Desktop layouts prioritize comparison; mobile layouts stack without horizontal page overflow while tabs remain horizontally scrollable.

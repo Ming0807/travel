@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import { ExecutiveExperienceSummary } from "@/components/dashboard/ExecutiveExperienceSummary";
 import { ExecutiveFunnelSummary } from "@/components/dashboard/ExecutiveFunnelSummary";
 import { ExecutiveAttractionRanking } from "@/components/dashboard/ExecutiveAttractionRanking";
+import { ExecutiveDecisionSummary } from "@/components/dashboard/ExecutiveDecisionSummary";
+import { ExecutiveAttractionMatrix } from "@/components/dashboard/ExecutiveAttractionMatrix";
+import { ExecutiveQualityStrip } from "@/components/dashboard/ExecutiveQualityStrip";
 import type { DashboardViewModel, FunnelStage } from "@/types/dashboard";
 
 function stage(key: string, count: number): FunnelStage {
@@ -43,6 +46,82 @@ const satisfaction: DashboardViewModel["satisfaction"] = {
 };
 
 describe("Executive analytics cockpit", () => {
+  it("สรุปคุณภาพและความครอบคลุมข้อมูลเป็นแถบกะทัดรัด", () => {
+    render(
+      <ExecutiveQualityStrip
+        expense={{ responseCount: 20, spendingRangeResponseCount: 15 }}
+        generatedAt="2026-09-03T10:20:00.000Z"
+        satisfaction={satisfaction}
+        surveyCompletionRate={0.625}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: "คุณภาพและความครอบคลุมข้อมูล" })).toBeInTheDocument();
+    expect(screen.getByText("ความครอบคลุมแบบสำรวจ")).toBeInTheDocument();
+    expect(screen.getByText("63%")).toBeInTheDocument();
+    expect(screen.getByText("ความครบถ้วนข้อมูลค่าใช้จ่าย")).toBeInTheDocument();
+    expect(screen.getByText("75%")).toBeInTheDocument();
+  });
+
+  it("แสดงผลงานรายสถานที่เป็น matrix จากจำนวนเข้าชมและคะแนนจริง", () => {
+    render(
+      <ExecutiveAttractionMatrix
+        attractions={[{
+          rank: 1,
+          attractionName: "สกายวอล์คอัยเยอร์เวง",
+          provinceName: "ยะลา",
+          visitCount: 120,
+          certificateCount: 84,
+          averageSatisfaction: 4.7,
+          surveyResponseCount: 42,
+        }]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "ผลงานรายสถานที่" })).toBeInTheDocument();
+    expect(screen.getByText("รายการเยี่ยมชมที่บันทึก")).toBeInTheDocument();
+    expect(screen.getByText("คะแนนความพึงพอใจ")).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "ข้อมูลผลงานรายสถานที่" })).toBeInTheDocument();
+  });
+
+  it("สรุปหลักฐานและขั้นถัดไปจาก insight เดิมโดยไม่สร้างตัวเลขใหม่", () => {
+    render(
+      <ExecutiveDecisionSummary
+        insights={[{
+          title: "ควรติดตามคุณภาพข้อมูล",
+          category: "data_quality",
+          description: "คำตอบแบบสำรวจยังมีจำนวนน้อย",
+          evidence: "มีคำตอบ 12 รายการจากการเข้าชมที่บันทึก",
+          suggestedAction: "เก็บข้อมูลเพิ่มก่อนสรุปผล",
+          confidence: "low",
+        }]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "ประเด็นเพื่อการตัดสินใจ" })).toBeInTheDocument();
+    expect(screen.getByText("มีคำตอบ 12 รายการจากการเข้าชมที่บันทึก")).toBeInTheDocument();
+    expect(screen.getByText("เก็บข้อมูลเพิ่มก่อนสรุปผล")).toBeInTheDocument();
+    expect(screen.getByText("ความเชื่อมั่นต่ำ")).toBeInTheDocument();
+  });
+
+  it("แปล insight จาก service เป็นข้อความไทยก่อนแสดงบนหน้าภาพรวม", () => {
+    render(
+      <ExecutiveDecisionSummary
+        insights={[{
+          title: "Improvement priority",
+          category: "improvement",
+          description: "Attraction A has high visits and low satisfaction",
+          evidence: "120 visits and 3.2 satisfaction",
+          suggestedAction: "Review service quality",
+          confidence: "medium",
+        }]}
+      />,
+    );
+
+    expect(screen.getByText("สถานที่ที่ควรให้ความสำคัญในการปรับปรุง")).toBeInTheDocument();
+    expect(screen.queryByText("Improvement priority")).not.toBeInTheDocument();
+  });
+
   it("แสดงตารางจัดอันดับสถานที่พร้อมตัวชี้วัดที่ตรวจสอบย้อนกลับได้", () => {
     render(
       <ExecutiveAttractionRanking

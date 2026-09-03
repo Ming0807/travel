@@ -17,7 +17,7 @@ function ConcentrationContext({ attractions, visitCount }: { attractions: Ranked
   const leaderShare = leader !== null && visitCount > 0 ? leader.visitCount / visitCount : null;
 
   return (
-    <section className="h-full rounded-md border border-slate-200 bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)]">
+    <section className="h-full rounded-md border border-slate-200 bg-white p-4 sm:p-5">
       <h2 className="text-base font-bold text-slate-900">การกระจายการเข้าชม</h2>
       <p className="mt-1 text-sm leading-6 text-slate-500">ช่วยอ่านว่าสถานที่อันดับหนึ่งมีน้ำหนักเท่าใดในชุดอันดับที่กำลังแสดง</p>
       {leader === null || leaderShare === null ? (

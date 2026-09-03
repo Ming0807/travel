@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePublicEnv } from "@/lib/config/public-env";
+import { getSupabasePublicKey, parsePublicEnv } from "@/lib/config/public-env";
 import { parseServerEnv } from "@/lib/config/server-env-core";
 
 const validPublicEnv = {
@@ -37,6 +37,33 @@ describe("environment validation", () => {
     ).toThrow("Public environment configuration is invalid");
   });
 
+  it("accepts the Supabase publishable key without the legacy anon key", () => {
+    const { NEXT_PUBLIC_SUPABASE_ANON_KEY: _legacyKey, ...withoutLegacyKey } = validPublicEnv;
+    const parsed = parsePublicEnv({
+      ...withoutLegacyKey,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+    });
+
+    expect(getSupabasePublicKey(parsed)).toBe("sb_publishable_test");
+  });
+
+  it("prefers the Supabase publishable key during the legacy-key transition", () => {
+    const parsed = parsePublicEnv({
+      ...validPublicEnv,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+    });
+
+    expect(getSupabasePublicKey(parsed)).toBe("sb_publishable_test");
+  });
+
+  it("rejects public Supabase configuration without either supported API key", () => {
+    const { NEXT_PUBLIC_SUPABASE_ANON_KEY: _legacyKey, ...withoutSupabaseKey } = validPublicEnv;
+
+    expect(() => parsePublicEnv(withoutSupabaseKey)).toThrow(
+      "Public environment configuration is invalid",
+    );
+  });
+
   it("parses server-only environment variables without exposing public keys", () => {
     const parsed = parseServerEnv(validServerEnv);
 
@@ -49,6 +76,13 @@ describe("environment validation", () => {
     delete withoutServiceRole.SUPABASE_SERVICE_ROLE_KEY;
 
     expect(() => parseServerEnv(withoutServiceRole)).toThrow("Server environment configuration is invalid");
+  });
+
+  it("does not require a direct database credential for the application runtime", () => {
+    const withoutDatabaseUrl: Record<string, string | undefined> = { ...validServerEnv };
+    delete withoutDatabaseUrl.SUPABASE_DATABASE_URL;
+
+    expect(parseServerEnv(withoutDatabaseUrl).SUPABASE_DATABASE_URL).toBeUndefined();
   });
 
   it("requires Cloudinary secrets only when Cloudinary storage is selected", () => {

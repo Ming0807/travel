@@ -62,10 +62,10 @@ function NavGroup({ group, pathname }: { group: NavGroupType; pathname: string }
 
           return (
             <Link
-              className={`flex min-h-10 items-center justify-between rounded-[4px] px-3 py-2 text-[13px] font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#E77455] ${
+              className={`flex min-h-10 items-center justify-between rounded-[4px] border px-3 py-2 text-[13px] font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#E77455] ${
                 isActive
-                  ? "bg-[#D94717] text-white shadow-[0_2px_6px_rgba(217,71,23,0.18)]"
-                  : "text-slate-600 hover:bg-white hover:text-[#202020]"
+                  ? "border-[#F0C8BB] bg-[#FFF0EA] text-[#B94727] shadow-[0_2px_6px_rgba(217,71,23,0.08)]"
+                  : "border-transparent text-slate-600 hover:bg-white hover:text-[#202020]"
               }`}
               href={item.href}
               key={item.href}

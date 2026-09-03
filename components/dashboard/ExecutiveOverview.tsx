@@ -1,10 +1,8 @@
-import { ExecutiveAttractionRanking } from "@/components/dashboard/ExecutiveAttractionRanking";
-import { ExecutiveExperienceSummary } from "@/components/dashboard/ExecutiveExperienceSummary";
+import { ExecutiveAttractionMatrix } from "@/components/dashboard/ExecutiveAttractionMatrix";
 import { ExecutiveFunnelSummary } from "@/components/dashboard/ExecutiveFunnelSummary";
-import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
-import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
+import { ExecutiveDecisionSummary } from "@/components/dashboard/ExecutiveDecisionSummary";
+import { ExecutiveQualityStrip } from "@/components/dashboard/ExecutiveQualityStrip";
 import { KpiCard } from "@/components/dashboard/KpiCard";
-import { NoDataState } from "@/components/dashboard/NoDataState";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import type { DashboardViewModel } from "@/types/dashboard";
 
@@ -17,57 +15,57 @@ const PRIMARY_KPIS = [
 
 export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
   const primaryMetrics = PRIMARY_KPIS.map((key) => data.kpis.find((metric) => metric.key === key)).filter((metric): metric is DashboardViewModel["kpis"][number] => Boolean(metric));
+  const surveyCompletionRate = data.kpis.find((metric) => metric.key === "survey_completion_rate")?.rawValue ?? null;
 
   return (
     <section className="space-y-4" aria-labelledby="executive-overview-heading">
-      <div className="border-b border-slate-200 pb-4">
-        <AnalyticsSectionHeader
-          actions={<ExportCsvButton />}
-          description="ติดตามรายการเข้าชม ประสิทธิภาพการเก็บข้อมูล และคุณภาพประสบการณ์ในช่วงที่เลือก"
-          headingId="executive-overview-heading"
-          title="ภาพรวมสำหรับผู้บริหาร"
-        />
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="ตัวชี้วัดหลัก">
         {primaryMetrics.map((metric, index) => (
           <KpiCard
             key={metric.key}
             index={index}
             metric={metric}
+            sparklineData={metric.key === "total_visits" ? data.executive.visitTrend : undefined}
             variant="band"
           />
         ))}
       </div>
 
-      <div className="grid min-w-0 items-stretch gap-4 xl:grid-cols-[minmax(0,1.9fr)_minmax(19rem,0.82fr)]">
+      <div className="grid min-w-0 items-stretch gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(20rem,0.9fr)]">
         <div className="min-w-0">
           <TrendChart points={data.executive.visitTrend} />
         </div>
         <div className="min-w-0">
+          <ExecutiveDecisionSummary insights={data.insights} />
+        </div>
+      </div>
+
+      <div className="grid min-w-0 items-stretch gap-4 xl:grid-cols-2">
+        <div className="min-w-0">
           <ExecutiveFunnelSummary stages={data.funnel.stages} />
         </div>
+        <div className="min-w-0">
+          <ExecutiveAttractionMatrix attractions={data.executive.topAttractions} />
+        </div>
       </div>
 
-      <div className="grid min-w-0 items-stretch gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(22rem,0.9fr)]">
-        <div className="min-w-0">
-          <ExecutiveAttractionRanking attractions={data.executive.topAttractions} />
-        </div>
-        <div className="min-w-0">
-          <ExecutiveExperienceSummary satisfaction={data.satisfaction} />
-        </div>
-      </div>
+      <ExecutiveQualityStrip
+        expense={data.expense}
+        generatedAt={data.summaryRefreshTimestamp ?? data.generatedAt}
+        satisfaction={data.satisfaction}
+        surveyCompletionRate={surveyCompletionRate}
+      />
 
       {data.dataQualityWarnings.length > 0 ? (
-        <details className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
-          <summary className="min-h-11 cursor-pointer py-2 text-sm font-bold text-amber-900">
-            ข้อจำกัดของข้อมูล {data.dataQualityWarnings.length} รายการ
+        <details className="rounded-md border border-amber-200 bg-[#FFFBEB] px-4 py-2.5">
+          <summary className="min-h-10 cursor-pointer py-2 text-sm font-bold text-amber-950">
+            คุณภาพข้อมูล: มีข้อควรระวัง {data.dataQualityWarnings.length} รายการ
           </summary>
-          <div className="mt-2 grid gap-2 md:grid-cols-2">
+          <ul className="border-t border-amber-200 py-2 text-sm leading-6 text-amber-950">
             {data.dataQualityWarnings.map((warning) => (
-              <NoDataState key={warning} title="ข้อจำกัดของข้อมูล" description={warning} />
+              <li key={warning} className="py-1">• {warning}</li>
             ))}
-          </div>
+          </ul>
         </details>
       ) : null}
     </section>

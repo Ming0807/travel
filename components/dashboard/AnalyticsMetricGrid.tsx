@@ -44,10 +44,10 @@ export function AnalyticsMetricGrid({
 
         return (
           <div
-            className={`relative min-h-28 min-w-0 overflow-hidden rounded-[5px] border bg-white p-4 shadow-[0_4px_8px_rgba(15,23,42,0.05)] ${tone.border}`}
+            className={`relative min-h-28 min-w-0 overflow-hidden rounded-md border bg-white p-4 ${tone.border}`}
             key={item.label}
           >
-            <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-0.5 ${tone.rule}`} />
+            <span aria-hidden="true" className={`absolute left-4 top-0 h-1 w-10 rounded-b-md ${tone.rule}`} />
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <dt className="text-xs font-bold leading-5 text-slate-600">{item.label}</dt>
@@ -55,7 +55,7 @@ export function AnalyticsMetricGrid({
                   {item.value}
                 </dd>
               </div>
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[5px] border ${tone.icon}`}>
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${tone.icon}`}>
                 {item.icon}
               </span>
             </div>

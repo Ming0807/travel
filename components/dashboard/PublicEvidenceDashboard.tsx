@@ -1,18 +1,16 @@
 import {
   CalendarBlank,
-  ChartBar,
   CheckCircle,
   Database,
   Info,
   MapPin,
   ShieldCheck,
-  TrendUp,
   WarningCircle,
 } from "@phosphor-icons/react/dist/ssr";
-import type {
-  PublicDashboardEvidence,
-  PublicEvidenceDistributionGroup,
-} from "@/types/public-dashboard";
+import { PublicEvidenceDistributionChart } from "@/components/dashboard/PublicEvidenceDistributionChart";
+import { PublicEvidenceSatisfactionChart } from "@/components/dashboard/PublicEvidenceSatisfactionChart";
+import { PublicEvidenceTrendChart } from "@/components/dashboard/PublicEvidenceTrendChart";
+import type { PublicDashboardEvidence } from "@/types/public-dashboard";
 
 function formatThaiDate(value: string) {
   const date = new Date(`${value}T00:00:00.000Z`);
@@ -54,66 +52,7 @@ function SampleNote({ status, sampleSize, minimum }: {
   return <span>ยังไม่มีฐานข้อมูล</span>;
 }
 
-function DistributionTable({ group }: { group: PublicEvidenceDistributionGroup }) {
-  const maxValue = Math.max(1, ...group.items.map((item) => item.value ?? 0));
-
-  return (
-    <article className="min-w-0 border-t border-ink/10 pt-5 first:border-t-0 first:pt-0">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h3 className="text-base font-black text-ink">{group.label}</h3>
-          <p className="mt-1 text-xs leading-5 text-muted">{group.definition}</p>
-        </div>
-        <p className="shrink-0 text-xs font-bold text-teal">แหล่งข้อมูล: {group.source}</p>
-      </div>
-
-      <div className="mt-4 space-y-3" aria-hidden="true">
-        {group.items.map((item) => (
-          <div key={item.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-            <div className="min-w-0">
-              <div className="mb-1.5 flex items-center justify-between gap-3 text-xs font-bold text-ink">
-                <span className="truncate">{item.label}</span>
-                <span className="shrink-0 tabular-nums">{item.displayValue}</span>
-              </div>
-              <div className="h-2 overflow-hidden bg-ink/[0.06]">
-                <div
-                  className={item.status === "available" ? "h-full bg-teal" : "h-full bg-coral/60"}
-                  style={{ width: item.value === null ? "12%" : `${Math.max(6, (item.value / maxValue) * 100)}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[420px] border-collapse text-left text-sm" aria-label={`ตาราง${group.label}`}>
-          <thead className="border-y border-ink/10 bg-background text-xs text-muted">
-            <tr>
-              <th className="px-3 py-2.5 font-bold">กลุ่ม</th>
-              <th className="px-3 py-2.5 text-right font-bold">จำนวน</th>
-              <th className="px-3 py-2.5 text-right font-bold">สัดส่วน</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-ink/10">
-            {group.items.map((item) => (
-              <tr key={item.label}>
-                <th scope="row" className="px-3 py-3 font-bold text-ink">{item.label}</th>
-                <td className="px-3 py-3 text-right tabular-nums text-ink">{item.displayValue}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-muted">
-                  {item.percent === null ? "ไม่แสดง" : `${Math.round(item.percent * 100)}%`}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </article>
-  );
-}
-
 export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboardEvidence }) {
-  const maxTrend = Math.max(1, ...evidence.trend.map((point) => point.value ?? 0));
   const hasProfileData = evidence.visitorProfile.length > 0;
   const hasBehaviorData = evidence.travelBehavior.length > 0;
 
@@ -181,49 +120,7 @@ export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboar
       <section aria-labelledby="visit-trend-heading" className="px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-7 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.55fr)]">
-            <article className="min-w-0 border border-ink/10 bg-white p-5 sm:p-7">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-black uppercase text-teal">Recorded visits</p>
-                  <h2 id="visit-trend-heading" className="mt-2 text-2xl font-black">แนวโน้มรายการเข้าชมที่บันทึก</h2>
-                  <p className="mt-2 text-sm leading-6 text-muted">หน่วยคือรายการ visit ที่เกิดหลังผู้ใช้กรอกข้อมูลขั้นต่ำและยินยอม ไม่ใช่ยอดเข้าหน้าเว็บ</p>
-                </div>
-                <TrendUp aria-hidden="true" size={28} className="shrink-0 text-coral" />
-              </div>
-
-              {evidence.trend.length > 0 ? (
-                <>
-                  <div className="mt-7 flex h-52 items-end gap-2 border-b border-l border-ink/15 px-3 pt-4" aria-hidden="true">
-                    {evidence.trend.map((point) => (
-                      <div key={point.isoDate} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2 self-stretch">
-                        <span className="text-xs font-black tabular-nums text-ink">{point.displayValue}</span>
-                        <div
-                          className={point.status === "available" ? "w-full max-w-10 bg-teal" : "w-full max-w-10 bg-coral/45"}
-                          style={{ height: point.value === null ? "10%" : `${Math.max(10, (point.value / maxTrend) * 82)}%` }}
-                        />
-                        <span className="w-full truncate text-center text-[11px] font-bold text-muted">{point.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-6 overflow-x-auto">
-                    <table className="w-full min-w-[420px] border-collapse text-left text-sm" aria-label="แนวโน้มรายการเข้าชมที่บันทึก">
-                      <thead className="border-y border-ink/10 bg-background text-xs text-muted"><tr><th className="px-3 py-2.5 font-bold">วันที่</th><th className="px-3 py-2.5 text-right font-bold">รายการเข้าชม</th><th className="px-3 py-2.5 text-right font-bold">สถานะข้อมูล</th></tr></thead>
-                      <tbody className="divide-y divide-ink/10">
-                        {evidence.trend.map((point) => (
-                          <tr key={point.isoDate}><th scope="row" className="px-3 py-3 font-bold">{point.label}</th><td className="px-3 py-3 text-right tabular-nums">{point.displayValue}</td><td className="px-3 py-3 text-right text-muted">{point.status === "suppressed" ? "ปกปิด cell เล็ก" : point.status === "no_data" ? "ไม่มีรายการ" : "แสดงได้"}</td></tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              ) : (
-                <div className="mt-7 border border-dashed border-ink/20 bg-background px-5 py-12 text-center">
-                  <ChartBar aria-hidden="true" size={30} className="mx-auto text-ink/35" />
-                  <p className="mt-3 font-black">ยังไม่มีรายการเข้าชมในช่วงข้อมูลนี้</p>
-                  <p className="mt-2 text-sm text-muted">ระบบจะเริ่มแสดงแนวโน้มเมื่อมี visit ที่บันทึกสำเร็จ</p>
-                </div>
-              )}
-            </article>
+            <PublicEvidenceTrendChart points={evidence.trend} />
 
             <aside className="min-w-0 border border-ink/10 bg-ink p-6 text-white">
               <ShieldCheck aria-hidden="true" size={30} className="text-coral" weight="duotone" />
@@ -243,15 +140,15 @@ export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboar
           <div className="min-w-0">
             <p className="text-xs font-black uppercase text-coral">Visitor profile</p>
             <h2 className="mt-2 text-2xl font-black">ภาพรวมผู้เข้าร่วม</h2>
-            <div className="mt-6 space-y-7">
-              {hasProfileData ? evidence.visitorProfile.map((group) => <DistributionTable key={group.key} group={group} />) : <p className="border border-dashed border-ink/20 bg-background p-6 text-sm text-muted">ยังไม่มีข้อมูลโปรไฟล์ที่ผ่านเกณฑ์เผยแพร่</p>}
+            <div className="mt-6 space-y-4">
+              {hasProfileData ? evidence.visitorProfile.map((group) => <PublicEvidenceDistributionChart key={group.key} group={group} />) : <p className="border border-dashed border-ink/20 bg-background p-6 text-sm text-muted">ยังไม่มีข้อมูลโปรไฟล์ที่ผ่านเกณฑ์เผยแพร่</p>}
             </div>
           </div>
           <div className="min-w-0">
             <p className="text-xs font-black uppercase text-teal">Travel behavior</p>
             <h2 className="mt-2 text-2xl font-black">พฤติกรรมการเดินทาง</h2>
-            <div className="mt-6 space-y-7">
-              {hasBehaviorData ? evidence.travelBehavior.map((group) => <DistributionTable key={group.key} group={group} />) : <p className="border border-dashed border-ink/20 bg-background p-6 text-sm text-muted">ยังไม่มีคำตอบแบบสำรวจที่ผ่านเกณฑ์เผยแพร่</p>}
+            <div className="mt-6 space-y-4">
+              {hasBehaviorData ? evidence.travelBehavior.map((group) => <PublicEvidenceDistributionChart key={group.key} group={group} />) : <p className="border border-dashed border-ink/20 bg-background p-6 text-sm text-muted">ยังไม่มีคำตอบแบบสำรวจที่ผ่านเกณฑ์เผยแพร่</p>}
             </div>
           </div>
         </div>
@@ -278,19 +175,7 @@ export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboar
               ) : <p className="mt-6 border border-dashed border-ink/20 bg-white p-6 text-sm text-muted">ยังไม่มีสถานที่ที่ผ่านเกณฑ์เผยแพร่ในช่วงข้อมูลนี้</p>}
             </article>
 
-            <article className="min-w-0 border border-ink/10 bg-white p-6">
-              <p className="text-xs font-black uppercase text-teal">Experience quality</p>
-              <h2 className="mt-2 text-2xl font-black">คุณภาพประสบการณ์</h2>
-              <p className="mt-2 text-sm leading-6 text-muted">คะแนน 1-5 จากแบบสำรวจโดยสมัครใจ Missing data ไม่ถูกนับเป็นศูนย์</p>
-              <dl className="mt-6 divide-y divide-ink/10 border-y border-ink/10">
-                {evidence.satisfaction.map((item) => (
-                  <div key={item.key} className="flex items-center justify-between gap-4 py-3.5">
-                    <dt className="font-bold">{item.label}</dt>
-                    <dd className="text-right"><span className="font-black tabular-nums">{item.displayValue}</span><span className="block text-xs text-muted"><SampleNote status={item.status} sampleSize={item.sampleSize} minimum={evidence.thresholds.interpretationMinimum} /></span></dd>
-                  </div>
-                ))}
-              </dl>
-            </article>
+            <PublicEvidenceSatisfactionChart items={evidence.satisfaction} minimum={evidence.thresholds.interpretationMinimum} />
           </div>
         </div>
       </section>
