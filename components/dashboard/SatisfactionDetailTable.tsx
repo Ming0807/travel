@@ -41,6 +41,7 @@ type SatisfactionDetailTableProps = {
   overallResponseCount: number;
   dimensionScores: DimensionScores;
   dimensionResponseCounts?: DimensionResponseCounts;
+  surveyRecordCount?: number;
 };
 
 export function SatisfactionDetailTable({
@@ -49,6 +50,7 @@ export function SatisfactionDetailTable({
   overallResponseCount,
   dimensionScores,
   dimensionResponseCounts,
+  surveyRecordCount = overallResponseCount,
 }: SatisfactionDetailTableProps) {
   const dimensions = [
     { key: "overall", label: "คะแนนโดยรวม", value: overallAverage, responses: overallResponseCount },
@@ -72,16 +74,21 @@ export function SatisfactionDetailTable({
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2">
         <div className="min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white">
           <div className="overflow-x-auto">
-            <table aria-label="คะแนนประสบการณ์รายมิติ" className="w-full min-w-[520px] text-sm">
-              <thead><tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600"><th className="px-4 py-3">มิติประสบการณ์</th><th className="px-4 py-3 text-right">คะแนนเฉลี่ย</th><th className="px-4 py-3 text-right">จำนวนคำตอบ</th><th className="px-4 py-3">สถานะ</th></tr></thead>
+            <table aria-label="คะแนนประสบการณ์รายมิติ" className="w-full min-w-[720px] text-sm">
+              <thead><tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600"><th className="px-4 py-3">มิติประสบการณ์</th><th className="px-4 py-3 text-right">คะแนนเฉลี่ย</th><th className="px-4 py-3 text-right">ตอบ/ทั้งหมด</th><th className="px-4 py-3 text-right">Coverage</th><th className="px-4 py-3 text-right">ขาด</th><th className="px-4 py-3">สถานะ</th></tr></thead>
               <tbody>
                 {dimensions.map((dimension) => {
                   const state = ratingState(dimension.value, dimension.responses);
+                  const answered = dimension.responses ?? 0;
+                  const missing = Math.max(surveyRecordCount - answered, 0);
+                  const coverage = surveyRecordCount > 0 ? answered / surveyRecordCount : null;
                   return (
                     <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50" key={dimension.key}>
                       <td className="px-4 py-3 font-semibold text-slate-800">{dimension.label}</td>
                       <td className="px-4 py-3 text-right font-bold tabular-nums text-slate-900">{formatRating(dimension.value)}</td>
-                      <td className="px-4 py-3 text-right tabular-nums text-slate-600">{dimension.responses === null ? "ไม่ระบุ" : formatNumber(dimension.responses)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-600">{dimension.responses === null ? "ไม่ระบุ" : `${formatNumber(answered)} / ${formatNumber(surveyRecordCount)}`}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-600">{coverage === null ? "ยังคำนวณไม่ได้" : `${(coverage * 100).toFixed(1)}%`}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-600">{formatNumber(missing)}</td>
                       <td className="px-4 py-3"><span className={`inline-flex rounded-sm px-2 py-1 text-xs font-semibold ${state.className}`}>{state.label}</span></td>
                     </tr>
                   );

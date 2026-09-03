@@ -1,6 +1,6 @@
 # Phase 24: Production Analytics Decision Intelligence
 
-Status: In progress; Tasks 24.3-24.5 have production slices implemented and verified
+Status: In progress; Tasks 24.3-24.6 have production slices implemented and verified
 
 Priority: P1 production decision support and research readiness
 
@@ -117,11 +117,11 @@ The first screen of every area uses the same reading order:
 
 ### Task 24.6: Audience, Journey, Experience, and Economic Modules
 
-- [ ] Standardize chart selection: line/area for time, horizontal bar for ranked categories, funnel for ordered stages, scatter/quadrant for attraction decisions, and bullet/progress visuals for coverage or targets.
-- [ ] Add click-through from aggregate marks to a privacy-safe filtered detail table for authorized roles.
-- [ ] Pair each distribution with response coverage, missing rate, sample strength, and plain-language interpretation.
-- [ ] Add segment comparison only when both groups pass privacy and minimum-sample rules.
-- [ ] Keep expenses explicitly self-reported and show range/category coverage before interpretation.
+- [x] Standardize chart selection: line/area for time, horizontal bar for ranked categories, funnel for ordered stages, scatter/quadrant for attraction decisions, and bullet/progress visuals for coverage or targets.
+- [x] Add click-through from aggregate marks to a privacy-safe filtered detail table for authorized roles.
+- [x] Pair each distribution with response coverage, missing rate, sample strength, and plain-language interpretation.
+- [x] Add segment comparison only when both groups pass privacy and minimum-sample rules.
+- [x] Keep expenses explicitly self-reported and show range/category coverage before interpretation.
 
 **Acceptance:** each module answers a distinct planning question, uses the correct denominator, and avoids redundant charts.
 

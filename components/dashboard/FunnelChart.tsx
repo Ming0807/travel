@@ -44,7 +44,7 @@ function formatRate(value: number | null): string {
   return safeValue === null ? "ยังคำนวณไม่ได้" : `${Math.round(safeValue * 100)}%`;
 }
 
-export function FunnelChart({ stages }: { stages: FunnelStage[] }) {
+export function FunnelChart({ stages, selectedStageKey, onSelectStage }: { stages: FunnelStage[]; selectedStageKey?: string | null; onSelectStage?: (key: string) => void }) {
   const showDesktopChart = useSyncExternalStore(subscribeToDesktop, getDesktopSnapshot, () => false);
   const peakCount = Math.max(...stages.map((stage) => stage.count), 0);
   const chartData = stages.map((stage, index) => ({
@@ -69,7 +69,7 @@ export function FunnelChart({ stages }: { stages: FunnelStage[] }) {
             <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 280, height: 432 }}>
               <RechartsFunnelChart>
                 <Tooltip contentStyle={{ background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: 5, boxShadow: "0 4px 8px rgba(15,23,42,0.10)", fontSize: 12 }} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} เหตุการณ์`, "จำนวน"]} />
-                <Funnel dataKey="value" data={chartData} isAnimationActive={false}>
+                <Funnel dataKey="value" data={chartData} isAnimationActive={false} cursor={onSelectStage ? "pointer" : undefined} onClick={(_entry, index) => onSelectStage?.(stages[index]?.key ?? "")}>
                   {chartData.map((stage) => <Cell key={`funnel-${stage.key}`} fill={stage.fill} stroke="#FFFFFF" strokeWidth={2} />)}
                 </Funnel>
               </RechartsFunnelChart>
@@ -81,9 +81,11 @@ export function FunnelChart({ stages }: { stages: FunnelStage[] }) {
               const conversion = index === 0 ? null : validRate(stage.conversionFromPrevious);
               const dropOff = index === 0 ? null : validRate(stage.dropOffFromPrevious);
               return (
-                <li className="grid gap-2 py-3 sm:grid-cols-[minmax(155px,0.8fr)_minmax(0,1.2fr)] sm:items-center" key={stage.key}>
+                <li className={`py-1 ${selectedStageKey === stage.key ? "bg-orange-50" : ""}`} key={stage.key}>
+                  <button className="grid min-h-11 w-full gap-2 px-2 py-2 text-left sm:grid-cols-[minmax(155px,0.8fr)_minmax(0,1.2fr)] sm:items-center" type="button" onClick={() => onSelectStage?.(stage.key)} aria-pressed={selectedStageKey === stage.key} aria-label={`ดูรายละเอียดเฉพาะ ${funnelStageLabel(stage)}`}>
                   <div className="flex items-start gap-2.5"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black text-white" style={{ backgroundColor: FUNNEL_COLORS[index % FUNNEL_COLORS.length] }}>{index + 1}</span><div className="min-w-0"><p className="break-words text-sm font-bold text-slate-800">{funnelStageLabel(stage)}</p><p className="text-xs tabular-nums text-slate-600">{stage.count.toLocaleString("th-TH")} เหตุการณ์</p></div></div>
                   <div className="min-w-0"><div className="flex items-center gap-3"><div aria-label={`${funnelStageLabel(stage)} ${stage.count.toLocaleString("th-TH")} เหตุการณ์`} className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-sm bg-slate-100" role="img"><div className="h-full rounded-sm" style={{ width: `${width}%`, backgroundColor: FUNNEL_COLORS[index % FUNNEL_COLORS.length] }} /></div><span className="w-10 shrink-0 text-right text-xs font-bold tabular-nums text-slate-700">{Math.round(width)}%</span></div>{index > 0 ? <p className="mt-1.5 text-xs leading-5 text-slate-600">ผ่าน {formatRate(conversion)} · ออก {formatRate(dropOff)}</p> : <p className="mt-1.5 text-xs text-slate-500">ขั้นเริ่มต้นของชุดข้อมูล</p>}</div>
+                  </button>
                 </li>
               );
             })}

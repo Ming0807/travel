@@ -248,12 +248,21 @@ describe("Dashboard UX ภาษาไทย", () => {
         definition="จำนวนรายการเข้าชม"
         emptyDescription="ยังไม่มีข้อมูล"
         data={[{ label: "Pattani", value: 12, percent: 0.6 }]}
+        denominatorCount={20}
+        interpretation="ปัตตานีมีสัดส่วนสูงสุดในคำตอบที่ระบุ"
+        sampleCount={12}
       />,
     );
     expect(screen.getByRole("heading", { name: "การเข้าชมแยกตามจังหวัด" })).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getAllByText("12").length).toBeGreaterThan(0);
     expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
+    expect(screen.getByText("ตอบ 12 / 20")).toBeInTheDocument();
+    expect(screen.getByText("ขาด 8 (40.0%)")).toBeInTheDocument();
+    expect(screen.getByText("หลักฐานจำกัด")).toBeInTheDocument();
+    expect(screen.getByText("ปัตตานีมีสัดส่วนสูงสุดในคำตอบที่ระบุ")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "ดูรายละเอียดเฉพาะ Pattani" }));
+    expect(screen.getByText("กำลังดูเฉพาะ Pattani")).toBeInTheDocument();
   });
 
   it("แสดงผลต่าง KPI แบบเป็นกลางและไม่สร้างร้อยละเมื่อฐานเดิมเป็นศูนย์", () => {

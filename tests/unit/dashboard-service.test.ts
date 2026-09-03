@@ -863,6 +863,43 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     expect(result.satisfaction.distribution).toHaveLength(3);
   });
 
+  it("exposes honest module denominators and compares age segments only above the threshold", async () => {
+    const ageSurvey = (surveyId: number, ageGroup: string, score: number) => surveyRow({
+      survey_id: surveyId,
+      overall_score: score,
+      visits: [{
+        visit_date: "2026-05-01",
+        attraction_id: 1,
+        tourist_id: `t-${surveyId}`,
+        tourists: [{ origin_country_id: 1, origin_province_id: null, age_group: ageGroup }],
+        attractions: [{ attraction_id: 1, name_th: "หาดทรายขาว", province_id: 1, district_id: 1, attraction_type_id: 1, provinces: [{ province_name_th: "ยะลา" }] }],
+      }],
+    });
+    const surveys = [
+      ...Array.from({ length: 35 }, (_, index) => ageSurvey(index + 1, "25-34", 4)),
+      ...Array.from({ length: 32 }, (_, index) => ageSurvey(index + 101, "35-44", 3)),
+    ];
+    mockPayload.current = makePayload({
+      visits: [visitRow({ tourist_id: "t1" }), visitRow({ visit_id: 2, tourist_id: "t2" })],
+      surveys,
+      expenses: [expenseRow()],
+    });
+
+    const result = await getDashboardAnalytics({});
+
+    expect(result.touristProfile.recordCount).toBe(2);
+    expect(result.travelBehavior.recordCount).toBe(2);
+    expect(result.expense.eligibleSurveyCount).toBe(67);
+    expect(result.satisfaction.surveyRecordCount).toBe(67);
+    expect(result.satisfaction.ageGroupComparison).toMatchObject({
+      status: "ready",
+      groups: [
+        { label: "25-34", sampleSize: 35, mean: 4 },
+        { label: "35-44", sampleSize: 32, mean: 3 },
+      ],
+    });
+  });
+
   // ── 6i. Funnel ──────────────────────────────
 
   it("builds all 9 funnel stages with correct counts and conversion rates", async () => {

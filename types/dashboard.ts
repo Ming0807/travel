@@ -139,6 +139,8 @@ export type DashboardViewModel = {
     topAttractions: RankedAttraction[];
   };
   touristProfile: {
+    recordCount?: number;
+    originProvinceEligibleCount?: number;
     originCountries: DistributionItem[];
     originProvinces: DistributionItem[];
     ageGroups: DistributionItem[];
@@ -146,6 +148,7 @@ export type DashboardViewModel = {
     identityProviders: DistributionItem[];
   };
   travelBehavior: {
+    recordCount?: number;
     companionTypes: DistributionItem[];
     transportModes: DistributionItem[];
     travelPurposes: DistributionItem[];
@@ -156,6 +159,7 @@ export type DashboardViewModel = {
     answeredNightsCount: number;
   };
   expense: {
+    eligibleSurveyCount?: number;
     spendingRanges: DistributionItem[];
     expenseCategories: DistributionItem[];
     estimatedMin: number | null;
@@ -167,6 +171,7 @@ export type DashboardViewModel = {
     methodologyNote: string;
   };
   satisfaction: {
+    surveyRecordCount?: number;
     averageOverall: number | null;
     responseCount: number;
     distribution: DistributionItem[];
@@ -191,6 +196,10 @@ export type DashboardViewModel = {
     revisitAnsweredCount: number;
     recommendIntentionRate: number | null;
     recommendAnsweredCount: number;
+    ageGroupComparison?: {
+      status: "ready" | "insufficient" | "unavailable";
+      groups: Array<{ label: string; sampleSize: number; mean: number | null; suppressed: boolean }>;
+    };
   };
   funnel: {
     stages: FunnelStage[];

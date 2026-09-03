@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ExpenseSection } from "@/components/dashboard/ExpenseSection";
 import { FunnelSection } from "@/components/dashboard/FunnelSection";
@@ -158,6 +158,8 @@ describe("Outcome analytics detailed layouts", () => {
     expect(screen.getAllByText("ยังไม่มีข้อมูล").length).toBeGreaterThanOrEqual(3);
     expect(screen.queryByText(/0(?:\.0)? \/ 5/)).not.toBeInTheDocument();
     expect(screen.getByRole("table", { name: "คะแนนประสบการณ์รายมิติ" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "ตอบ/ทั้งหมด" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Coverage" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ความพึงพอใจแยกตามสถานที่" })).toBeInTheDocument();
   });
 
@@ -188,6 +190,8 @@ describe("Outcome analytics detailed layouts", () => {
     expect(within(interpretation).getByText(/จุดที่ออกมากที่สุด/)).toBeInTheDocument();
     expect(screen.getAllByText(/ไม่ใช่จำนวนบุคคล/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("table", { name: "รายละเอียดเหตุการณ์แต่ละขั้น" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "ดูรายละเอียดเฉพาะ ส่งข้อมูลขั้นต่ำ" }));
+    expect(screen.getByText("กำลังดูเฉพาะ ส่งข้อมูลขั้นต่ำ")).toBeInTheDocument();
   });
 
   it("ไม่สร้างอัตรา funnel เมื่อฐานคำนวณไม่ถูกต้อง", () => {

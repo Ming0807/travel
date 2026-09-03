@@ -6,6 +6,7 @@ import { localizeDashboardLabel } from "@/components/dashboard/dashboard-localiz
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { TouristDetailTable } from "@/components/dashboard/TouristDetailTable";
 import type { DashboardViewModel, DistributionItem } from "@/types/dashboard";
+import { buildDistributionInterpretation } from "@/lib/dashboard/distribution-evidence";
 
 const CONTEXT_COLORS = ["#B94727", "#171717", "#D6A13D", "#0A6B62", "#3B82F6"];
 
@@ -50,7 +51,11 @@ export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
   const profileMetric = data.kpis.find((metric) => metric.key === "tourist_profiles");
   const originResponseCount = total(data.touristProfile.originCountries);
   const profileCount = typeof profileMetric?.rawValue === "number" ? profileMetric.rawValue : originResponseCount;
+  const denominator = data.touristProfile.recordCount ?? profileCount;
   const provinceResponseCount = total(data.touristProfile.originProvinces);
+  const thaiProfileCount = data.touristProfile.originProvinceEligibleCount
+    ?? data.touristProfile.originCountries.find((item) => /^(ไทย|ประเทศไทย|Thailand)$/i.test(item.label))?.value
+    ?? provinceResponseCount;
   const ageResponseCount = total(data.touristProfile.ageGroups);
   const languageResponseCount = total(data.touristProfile.preferredLanguages);
   const kpis = [
@@ -73,7 +78,7 @@ export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-12">
         <div role="region" aria-label="หลักฐานประเทศต้นทาง" className="min-w-0 xl:col-span-8">
-          <BarChartCard data={data.touristProfile.originCountries} definition="จำนวนโปรไฟล์ที่มีรายการเข้าชม แยกตามประเทศต้นทางที่ผู้ใช้ระบุ" emptyDescription="ยังไม่มีข้อมูลประเทศต้นทางสำหรับตัวกรองที่เลือก" title="ประเทศต้นทาง" sampleCount={originResponseCount} sampleLabel="โปรไฟล์ที่ระบุประเทศ" />
+          <BarChartCard data={data.touristProfile.originCountries} definition="จำนวนโปรไฟล์ที่มีรายการเข้าชม แยกตามประเทศต้นทางที่ผู้ใช้ระบุ" emptyDescription="ยังไม่มีข้อมูลประเทศต้นทางสำหรับตัวกรองที่เลือก" title="ประเทศต้นทาง" sampleCount={originResponseCount} sampleLabel="โปรไฟล์ที่ระบุประเทศ" denominatorCount={denominator} interpretation={buildDistributionInterpretation(data.touristProfile.originCountries, { answeredCount: originResponseCount, denominatorCount: denominator })} />
         </div>
         <div role="region" aria-label="บริบทวิธีเข้าใช้งาน" className="min-w-0 xl:col-span-4">
           <IdentityContext items={data.touristProfile.identityProviders} />
@@ -81,9 +86,9 @@ export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
       </div>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-3">
-        <BarChartCard data={data.touristProfile.originProvinces} definition="จำนวนโปรไฟล์จากประเทศไทย แยกตามจังหวัดต้นทางที่ผู้ใช้ระบุ" emptyDescription="ยังไม่มีข้อมูลจังหวัดต้นทางในประเทศไทย" title="จังหวัดต้นทางในประเทศไทย" sampleCount={provinceResponseCount} sampleLabel="โปรไฟล์ที่ระบุจังหวัด" />
-        <BarChartCard data={data.touristProfile.ageGroups} definition="การกระจายช่วงอายุที่ผู้ใช้เลือก ระบบไม่เก็บวันเกิดแบบละเอียด" emptyDescription="ยังไม่มีข้อมูลช่วงอายุ" title="ช่วงอายุ" sampleCount={ageResponseCount} sampleLabel="โปรไฟล์ที่ระบุช่วงอายุ" />
-        <BarChartCard data={data.touristProfile.preferredLanguages} definition="ภาษาที่ผู้ใช้เลือกใช้ในระบบเมื่อมีข้อมูล" emptyDescription="ยังไม่มีข้อมูลภาษาที่ต้องการ" title="ภาษาที่ต้องการ" sampleCount={languageResponseCount} sampleLabel="โปรไฟล์ที่ระบุภาษา" />
+        <BarChartCard data={data.touristProfile.originProvinces} definition="จำนวนโปรไฟล์จากประเทศไทย แยกตามจังหวัดต้นทางที่ผู้ใช้ระบุ" emptyDescription="ยังไม่มีข้อมูลจังหวัดต้นทางในประเทศไทย" title="จังหวัดต้นทางในประเทศไทย" sampleCount={provinceResponseCount} sampleLabel="โปรไฟล์ที่ระบุจังหวัด" denominatorCount={thaiProfileCount} interpretation={buildDistributionInterpretation(data.touristProfile.originProvinces, { answeredCount: provinceResponseCount, denominatorCount: thaiProfileCount })} />
+        <BarChartCard data={data.touristProfile.ageGroups} definition="การกระจายช่วงอายุที่ผู้ใช้เลือก ระบบไม่เก็บวันเกิดแบบละเอียด" emptyDescription="ยังไม่มีข้อมูลช่วงอายุ" title="ช่วงอายุ" sampleCount={ageResponseCount} sampleLabel="โปรไฟล์ที่ระบุช่วงอายุ" denominatorCount={denominator} interpretation={buildDistributionInterpretation(data.touristProfile.ageGroups, { answeredCount: ageResponseCount, denominatorCount: denominator })} />
+        <BarChartCard data={data.touristProfile.preferredLanguages} definition="ภาษาที่ผู้ใช้เลือกใช้ในระบบเมื่อมีข้อมูล" emptyDescription="ยังไม่มีข้อมูลภาษาที่ต้องการ" title="ภาษาที่ต้องการ" sampleCount={languageResponseCount} sampleLabel="โปรไฟล์ที่ระบุภาษา" denominatorCount={denominator} interpretation={buildDistributionInterpretation(data.touristProfile.preferredLanguages, { answeredCount: languageResponseCount, denominatorCount: denominator })} />
       </div>
 
       <TouristDetailTable {...data.touristProfile} />

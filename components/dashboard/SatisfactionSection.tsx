@@ -9,6 +9,8 @@ import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import { SurveyRecordsLink } from "@/components/dashboard/SurveyRecordsLink";
 import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import type { DashboardViewModel, DistributionItem } from "@/types/dashboard";
+import { buildDistributionInterpretation } from "@/lib/dashboard/distribution-evidence";
+import { SatisfactionSegmentComparison } from "@/components/dashboard/SatisfactionSegmentComparison";
 
 function formatPercent(value: number | null): string {
   return value === null ? "ยังไม่มีข้อมูล" : `${Math.round(value * 100)}%`;
@@ -21,6 +23,7 @@ type SatisfactionDimension = {
 };
 
 export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
+  const surveyRecordCount = data.satisfaction.surveyRecordCount ?? data.satisfaction.responseCount;
   const dimensions: SatisfactionDimension[] = [
     { label: "ความปลอดภัย", value: data.satisfaction.safetyAverage, responseCount: data.satisfaction.safetyResponseCount },
     { label: "ความสะอาด", value: data.satisfaction.cleanlinessAverage, responseCount: data.satisfaction.cleanlinessResponseCount },
@@ -31,6 +34,8 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
   const chartDimensions: DistributionItem[] = dimensions
     .filter((dimension): dimension is SatisfactionDimension & { value: number } => dimension.value !== null)
     .map((dimension) => ({ label: dimension.label, value: dimension.value, percent: dimension.value / 5, note: `${dimension.responseCount.toLocaleString("th-TH")} คำตอบ` }));
+  const dimensionResponseCounts = dimensions.filter((item) => item.responseCount > 0).map((item) => item.responseCount);
+  const dimensionResponseFloor = dimensionResponseCounts.length > 0 ? Math.min(...dimensionResponseCounts) : 0;
   const weakestDimension = dimensions
     .filter((dimension): dimension is SatisfactionDimension & { value: number } => (
       dimension.value !== null && dimension.responseCount >= DASHBOARD_MIN_SAMPLE_SIZE
@@ -71,7 +76,7 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-12">
         <div aria-label="หลักฐานความพึงพอใจ" className="min-w-0 xl:col-span-8" role="region">
-          <BarChartCard data={chartDimensions} definition="คะแนนเฉลี่ยรายด้านจาก 1 ถึง 5 คำนวณเฉพาะคำตอบที่มีข้อมูล" emptyDescription="ยังไม่มีคะแนนความพึงพอใจรายด้าน" title="คุณภาพประสบการณ์รายด้าน" sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" />
+          <BarChartCard data={chartDimensions} definition="คะแนนเฉลี่ยรายด้านจาก 1 ถึง 5 คำนวณเฉพาะคำตอบที่มีข้อมูล แต่ละแท่งระบุฐานคำตอบของมิตินั้น" emptyDescription="ยังไม่มีคะแนนความพึงพอใจรายด้าน" title="คุณภาพประสบการณ์รายด้าน" sampleCount={dimensionResponseFloor} sampleLabel="ฐานคำตอบต่ำสุดรายมิติ" />
         </div>
 
         <aside aria-label="การตีความประสบการณ์" className="min-w-0 rounded-md border border-slate-200 bg-white p-4 xl:col-span-4" role="region">
@@ -99,9 +104,11 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
       </div>
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-        <DonutChartCard data={data.satisfaction.distribution} definition="สัดส่วนการให้คะแนนความพึงพอใจโดยรวมในแต่ละระดับ" emptyDescription="ยังไม่มีการกระจายคะแนนความพึงพอใจ" sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" title="การกระจายคะแนนโดยรวม" />
+        <DonutChartCard data={data.satisfaction.distribution} definition="สัดส่วนการให้คะแนนความพึงพอใจโดยรวมในแต่ละระดับ" emptyDescription="ยังไม่มีการกระจายคะแนนความพึงพอใจ" sampleCount={data.satisfaction.responseCount} sampleLabel="คำตอบความพึงพอใจ" denominatorCount={surveyRecordCount} interpretation={buildDistributionInterpretation(data.satisfaction.distribution, { answeredCount: data.satisfaction.responseCount, denominatorCount: surveyRecordCount })} title="การกระจายคะแนนโดยรวม" />
         <BarChartCard data={byAttraction} definition="คะแนนเฉลี่ยแยกตามสถานที่ ควรพิจารณาควบคู่กับจำนวนผู้ตอบ และยังไม่ใช้สรุปเชิงแนะนำเมื่อสถานที่นั้นมีคำตอบต่ำกว่า 30 รายการ" emptyDescription="ยังไม่มีคะแนนที่แยกตามสถานที่" title="ความพึงพอใจแยกตามสถานที่" />
       </div>
+
+      {data.satisfaction.ageGroupComparison ? <SatisfactionSegmentComparison comparison={data.satisfaction.ageGroupComparison} /> : null}
 
       <SatisfactionDetailTable
         byAttraction={data.satisfaction.byAttraction}
@@ -123,6 +130,7 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
         }}
         overallAverage={data.satisfaction.averageOverall}
         overallResponseCount={data.satisfaction.responseCount}
+        surveyRecordCount={surveyRecordCount}
       />
     </section>
   );

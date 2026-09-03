@@ -10,8 +10,10 @@ function formatPercent(value: number | null): string {
   return safeValue === null ? "ยังคำนวณไม่ได้" : `${(safeValue * 100).toFixed(1)}%`;
 }
 
-export function FunnelDetailTable({ stages }: { stages: FunnelStage[] }) {
+export function FunnelDetailTable({ stages, selectedStageKey, onSelectStage }: { stages: FunnelStage[]; selectedStageKey?: string | null; onSelectStage?: (key: string | null) => void }) {
   const peakCount = Math.max(...stages.map((stage) => stage.count), 0);
+  const visibleStages = selectedStageKey ? stages.filter((stage) => stage.key === selectedStageKey) : stages;
+  const selectedStage = stages.find((stage) => stage.key === selectedStageKey);
 
   return (
     <section aria-labelledby="funnel-detail-heading" className="space-y-3">
@@ -20,13 +22,15 @@ export function FunnelDetailTable({ stages }: { stages: FunnelStage[] }) {
         <p className="mt-1 text-sm text-slate-600">ใช้ตรวจจำนวนเหตุการณ์ นิยาม และอัตราระหว่างขั้น โดยไม่อนุมานว่าเป็นจำนวนผู้ใช้ไม่ซ้ำ</p>
       </div>
       <div className="min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white">
+        {selectedStage ? <div className="flex flex-wrap items-center justify-between gap-2 border-b border-orange-200 bg-orange-50 px-4 py-2 text-xs text-orange-950"><strong>กำลังดูเฉพาะ {funnelStageLabel(selectedStage)}</strong><button className="min-h-8 px-2 font-bold underline underline-offset-2" onClick={() => onSelectStage?.(null)} type="button">แสดงทั้งหมด</button></div> : null}
         <div className="overflow-x-auto">
           <table aria-label="รายละเอียดเหตุการณ์แต่ละขั้น" className="w-full min-w-[760px] text-sm">
             <thead><tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600"><th className="px-4 py-3">ขั้นตอน</th><th className="px-4 py-3 text-right">เหตุการณ์</th><th className="px-4 py-3 text-right">เทียบขั้นสูงสุด</th><th className="px-4 py-3 text-right">อัตราผ่าน</th><th className="px-4 py-3 text-right">อัตราออก</th><th className="px-4 py-3">นิยาม</th></tr></thead>
             <tbody>
               {stages.length === 0 ? (
                 <tr><td className="px-4 py-8 text-center text-slate-600" colSpan={6}>ยังไม่มีเหตุการณ์สำหรับตัวกรองที่เลือก</td></tr>
-              ) : stages.map((stage, index) => {
+              ) : visibleStages.map((stage) => {
+                const index = stages.findIndex((item) => item.key === stage.key);
                 const shareOfPeak = peakCount > 0 ? stage.count / peakCount : null;
                 return (
                   <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50" key={stage.key}>

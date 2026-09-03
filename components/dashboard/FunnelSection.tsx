@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { ArrowDown, Certificate, CheckCircle, QrCode, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { AnalyticsMetricGrid } from "@/components/dashboard/AnalyticsMetricGrid";
 import { AnalyticsSectionHeader } from "@/components/dashboard/AnalyticsSectionHeader";
@@ -28,6 +31,7 @@ function stageAction(key: string): string {
 }
 
 export function FunnelSection({ data }: { data: DashboardViewModel }) {
+  const [selectedStageKey, setSelectedStageKey] = useState<string | null>(null);
   const qrStage = stageByKey(data.funnel.stages, "qr_scanned");
   const certificateStage = stageByKey(data.funnel.stages, "certificate_generated");
   const surveyStage = stageByKey(data.funnel.stages, "survey_completed");
@@ -57,7 +61,7 @@ export function FunnelSection({ data }: { data: DashboardViewModel }) {
       <AnalyticsMetricGrid items={kpis} label="ตัวชี้วัดเส้นทางการใช้งาน" />
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-12">
-        <div aria-label="หลักฐานเส้นทางการใช้งาน" className="min-w-0 xl:col-span-8" role="region"><FunnelChart stages={data.funnel.stages} /></div>
+        <div aria-label="หลักฐานเส้นทางการใช้งาน" className="min-w-0 xl:col-span-8" role="region"><FunnelChart stages={data.funnel.stages} selectedStageKey={selectedStageKey} onSelectStage={setSelectedStageKey} /></div>
         <aside aria-label="การตีความเส้นทางการใช้งาน" className="min-w-0 rounded-md border border-slate-200 bg-white p-4 xl:col-span-4" role="region">
           <div className="flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-rose-50 text-rose-700"><ArrowDown aria-hidden="true" size={20} weight="bold" /></span>
@@ -77,7 +81,7 @@ export function FunnelSection({ data }: { data: DashboardViewModel }) {
         </aside>
       </div>
 
-      <FunnelDetailTable stages={data.funnel.stages} />
+      <FunnelDetailTable stages={data.funnel.stages} selectedStageKey={selectedStageKey} onSelectStage={setSelectedStageKey} />
 
       <p className="rounded-md bg-slate-100 px-4 py-3 text-xs leading-5 text-slate-700">ข้อจำกัด: เหตุการณ์ของบุคคลเดียวอาจเกิดซ้ำได้ ตัวเลขหน้านี้จึงไม่ใช่จำนวนบุคคลไม่ซ้ำ และการสแกน QR ไม่ใช่รายการเข้าชม</p>
     </section>

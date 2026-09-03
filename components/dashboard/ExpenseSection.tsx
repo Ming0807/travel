@@ -7,6 +7,7 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { SurveyRecordsLink } from "@/components/dashboard/SurveyRecordsLink";
 import { formatEstimatedSpending } from "@/lib/services/dashboard-math";
 import type { DashboardViewModel, DistributionItem } from "@/types/dashboard";
+import { buildDistributionInterpretation } from "@/lib/dashboard/distribution-evidence";
 
 function highest(items: DistributionItem[]): DistributionItem | null {
   return items.reduce<DistributionItem | null>((current, item) => (
@@ -18,6 +19,7 @@ export function ExpenseSection({ data }: { data: DashboardViewModel }) {
   const topRange = highest(data.expense.spendingRanges);
   const topCategory = highest(data.expense.expenseCategories);
   const spendingRangeResponseCount = data.expense.spendingRangeResponseCount;
+  const eligibleSurveyCount = data.expense.eligibleSurveyCount ?? data.expense.responseCount;
 
   return (
     <section aria-labelledby="expense-heading" className="space-y-5">
@@ -36,7 +38,7 @@ export function ExpenseSection({ data }: { data: DashboardViewModel }) {
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-12">
         <div aria-label="หลักฐานค่าใช้จ่ายโดยประมาณ" className="min-w-0 xl:col-span-8" role="region">
-          <BarChartCard data={data.expense.spendingRanges} definition="การกระจายช่วงค่าใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง ไม่ใช่ยอดธุรกรรมจริง" emptyDescription="ยังไม่มีคำตอบช่วงค่าใช้จ่ายสำหรับตัวกรองที่เลือก" title="ช่วงค่าใช้จ่ายที่รายงาน" sampleCount={spendingRangeResponseCount} sampleLabel="คำตอบช่วงค่าใช้จ่าย" />
+          <BarChartCard data={data.expense.spendingRanges} definition="การกระจายช่วงค่าใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง ไม่ใช่ยอดธุรกรรมจริง" emptyDescription="ยังไม่มีคำตอบช่วงค่าใช้จ่ายสำหรับตัวกรองที่เลือก" title="ช่วงค่าใช้จ่ายที่รายงาน" sampleCount={spendingRangeResponseCount} sampleLabel="คำตอบช่วงค่าใช้จ่าย" denominatorCount={eligibleSurveyCount} interpretation={buildDistributionInterpretation(data.expense.spendingRanges, { answeredCount: spendingRangeResponseCount, denominatorCount: eligibleSurveyCount })} />
         </div>
 
         <aside aria-label="การตีความค่าใช้จ่าย" className="min-w-0 rounded-md border border-slate-200 bg-white p-4 xl:col-span-4" role="region">
@@ -65,6 +67,8 @@ export function ExpenseSection({ data }: { data: DashboardViewModel }) {
           </div>
         </aside>
       </div>
+
+      <BarChartCard data={data.expense.expenseCategories} definition="หมวดที่ผู้ตอบระบุว่าใช้จ่ายหลัก เป็นข้อมูลรายงานด้วยตนเอง ไม่ใช่ยอดขายของธุรกิจ" emptyDescription="ยังไม่มีคำตอบหมวดค่าใช้จ่ายสำหรับตัวกรองที่เลือก" title="หมวดค่าใช้จ่ายหลักที่รายงาน" sampleCount={data.expense.expenseCategoryResponseCount} sampleLabel="คำตอบหมวดค่าใช้จ่าย" denominatorCount={eligibleSurveyCount} interpretation={buildDistributionInterpretation(data.expense.expenseCategories, { answeredCount: data.expense.expenseCategoryResponseCount, denominatorCount: eligibleSurveyCount })} />
 
       <ExpenseDetailTable
         estimatedMax={data.expense.estimatedMax}

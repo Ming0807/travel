@@ -2461,3 +2461,35 @@ causal, statistically significant, or inherently positive/negative.
   answers; it is not proof of population representativeness or causation.
 - `unavailable` is used when the required numerator, denominator, or score is
   missing. Missing values are never replaced with zero.
+
+---
+
+## 48. Distribution Evidence and Segment Comparison
+
+Protected audience, journey, experience, and economic modules display the
+answer count beside the eligible denominator before interpreting a
+distribution. Missing values remain missing and are calculated as
+`eligible denominator - answered records`.
+
+| Evidence label | Deterministic rule | Permitted interpretation |
+|---|---|---|
+| Unavailable | Eligible denominator is zero | No distribution conclusion |
+| Insufficient | Fewer than 10 answered records | Do not summarize a leading category |
+| Limited | 10-29 answered records | Descriptive preview only |
+| Usable | At least 30 answers and coverage below 70% | Describe respondents with a coverage limitation |
+| Strong | At least 30 answers and coverage at least 70% | Describe the answered scope; do not claim population representativeness |
+
+Denominators are module-specific: distinct profiles with visits for audience
+profile fields, recorded visits for travel behavior, submitted optional survey
+records for expense and satisfaction fields, and the immediately preceding
+event stage for funnel conversion. Country-of-origin province coverage uses
+profiles identified as originating in Thailand rather than foreign profiles.
+
+The experience module may compare the mean overall score of the two age groups
+with the most valid answers. Both groups must have at least 30 valid scores;
+otherwise no group mean or directional comparison is displayed. This is a
+descriptive association and does not establish an age effect.
+
+Selecting a protected bar, donut segment, or funnel stage filters its on-page
+aggregate detail table. It does not load respondent names, identifiers,
+comments, contact data, or private media paths into chart props.

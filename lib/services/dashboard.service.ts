@@ -23,6 +23,7 @@ import {
 } from "@/lib/services/dashboard-math";
 import { buildDashboardAlerts } from "@/lib/services/dashboard-alert.service";
 import { compareDashboardKpis, getPreviousDashboardPeriod } from "@/lib/services/dashboard-comparison";
+import { buildTwoGroupMeanComparison } from "@/lib/dashboard/segment-comparison";
 import { parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 import type {
   DashboardFilters,
@@ -228,12 +229,15 @@ function buildTouristProfileSection(visits: Row[]) {
   const ageMap = new Map<string, number>();
   const languageMap = new Map<string, number>();
   const identityMap = new Map<string, number>();
+  let originProvinceEligibleCount = 0;
 
   Array.from(uniqueByTourist.values()).forEach((visit) => {
     const touristRow = tourist(visit);
     const country = touristRow ? relation(touristRow, "countries") : null;
+    const countryLabel = stringValue(country?.country_name_th) || stringValue(country?.country_name_en);
     const originProvince = touristRow ? relation(touristRow, "provinces") : null;
-    increment(countryMap, stringValue(country?.country_name_th) || stringValue(country?.country_name_en));
+    increment(countryMap, countryLabel);
+    if (countryLabel && /^(ไทย|ประเทศไทย|Thailand)$/i.test(countryLabel)) originProvinceEligibleCount += 1;
     increment(provinceMap, stringValue(originProvince?.province_name_th) || stringValue(originProvince?.province_name_en));
     increment(ageMap, stringValue(touristRow?.age_group));
     increment(languageMap, preferredLanguageLabel(touristRow?.preferred_language));
@@ -249,6 +253,8 @@ function buildTouristProfileSection(visits: Row[]) {
   });
 
   return {
+    recordCount: uniqueByTourist.size,
+    originProvinceEligibleCount,
     originCountries: buildDistribution(countryMap, uniqueByTourist.size),
     originProvinces: buildDistribution(provinceMap, uniqueByTourist.size),
     ageGroups: buildDistribution(ageMap, uniqueByTourist.size),
@@ -288,6 +294,7 @@ function buildTravelBehaviorSection(visits: Row[]) {
 
   return {
     section: {
+      recordCount: visits.length,
       companionTypes: buildDistribution(companionMap),
       transportModes: buildDistribution(transportMap),
       travelPurposes: buildDistribution(purposeMap),
@@ -301,7 +308,7 @@ function buildTravelBehaviorSection(visits: Row[]) {
   };
 }
 
-function buildExpenseSection(expenses: Row[]) {
+function buildExpenseSection(expenses: Row[], eligibleSurveyCount = expenses.length) {
   const spendingMap = new Map<string, number>();
   const categoryMap = new Map<string, number>();
   let estimatedMin = 0;
@@ -336,6 +343,7 @@ function buildExpenseSection(expenses: Row[]) {
 
   return {
     section: {
+      eligibleSurveyCount,
       spendingRanges: buildDistribution(spendingMap),
       expenseCategories: buildDistribution(categoryMap),
       estimatedMin: hasEstimate ? estimatedMin : null,
@@ -373,12 +381,21 @@ function buildSatisfactionSection(surveys: Row[], topAttractions: RankedAttracti
   const facilityScores = surveys.map((survey) => numberValue(survey.facility_score));
   const revisit = yesMetric(surveys, "revisit_intention");
   const recommend = yesMetric(surveys, "recommend_intention");
+  const ageGroupComparison = buildTwoGroupMeanComparison(surveys.map((survey) => {
+    const visit = relation(survey, "visits");
+    const touristRow = visit ? relation(visit, "tourists") : null;
+    return {
+      segment: stringValue(touristRow?.age_group),
+      value: numberValue(survey.overall_score),
+    };
+  }));
   const scoreMap = new Map<string, number>();
   overallScores.forEach((score) => {
     if (score !== null) increment(scoreMap, `${score} / 5`);
   });
 
   return {
+    surveyRecordCount: surveys.length,
     averageOverall: averageNullable(overallScores),
     responseCount: overallScores.filter((score): score is number => score !== null).length,
     distribution: buildDistribution(scoreMap, overallScores.filter((score) => score !== null).length),
@@ -398,7 +415,8 @@ function buildSatisfactionSection(surveys: Row[], topAttractions: RankedAttracti
     revisitIntentionRate: revisit.rate,
     revisitAnsweredCount: revisit.answeredCount,
     recommendIntentionRate: recommend.rate,
-    recommendAnsweredCount: recommend.answeredCount
+    recommendAnsweredCount: recommend.answeredCount,
+    ageGroupComparison
   };
 }
 
@@ -706,7 +724,7 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
   const topAttractions = buildTopAttractions(visits, payload.certificates, payload.surveys);
   const visitsByProvince = buildVisitsByProvince(visits);
   const travelBehaviorResult = buildTravelBehaviorSection(visits);
-  const expenseResult = buildExpenseSection(payload.expenses);
+  const expenseResult = buildExpenseSection(payload.expenses, payload.surveys.length);
   const expenseSection = expenseResult.section;
   const satisfactionSection = buildSatisfactionSection(payload.surveys, topAttractions);
 
