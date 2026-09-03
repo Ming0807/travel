@@ -6,6 +6,7 @@ import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/surveys",
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 function renderNavigation() {

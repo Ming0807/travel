@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { List, X, MapPin, CaretDown } from "@phosphor-icons/react";
 import { createPortal } from "react-dom";
 import { getVisibleNavGroups, navGroups, type NavGroup as NavGroupType, type NavItem } from "./admin-nav-items";
 import { useAdminAccess } from "./AdminAccessContext";
+import { buildDashboardNavigationHref } from "@/components/dashboard/dashboard-navigation";
 
 export function MobileAdminNav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,6 +15,7 @@ export function MobileAdminNav() {
   const closeRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const access = useAdminAccess();
   const visibleGroups = getVisibleNavGroups(navGroups, access.permissions, access.resolved);
 
@@ -98,7 +100,7 @@ export function MobileAdminNav() {
 
             <nav className="space-y-6 p-4 pb-20" aria-label="เมนูผู้ดูแลระบบบนมือถือ">
               {visibleGroups.map((group) => (
-                <MobileNavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} closeDrawer={closeDrawer} />
+                <MobileNavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} queryString={searchParams.toString()} closeDrawer={closeDrawer} />
               ))}
             </nav>
           </div>
@@ -125,7 +127,7 @@ export function MobileAdminNav() {
   );
 }
 
-function MobileNavGroup({ group, pathname, closeDrawer }: { group: NavGroupType; pathname: string; closeDrawer: () => void }) {
+function MobileNavGroup({ group, pathname, queryString, closeDrawer }: { group: NavGroupType; pathname: string; queryString: string; closeDrawer: () => void }) {
   const hasActiveItem = group.items.some((i: NavItem) => pathname === i.href || pathname.startsWith(i.href + "/"));
   const [isGroupOpen, setIsGroupOpen] = useState(hasActiveItem);
 
@@ -143,7 +145,7 @@ function MobileNavGroup({ group, pathname, closeDrawer }: { group: NavGroupType;
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={buildDashboardNavigationHref(item.href, queryString)}
               onClick={closeDrawer}
               className={`flex min-h-11 items-center justify-between rounded-[4px] px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#E77455] ${
                 isActive

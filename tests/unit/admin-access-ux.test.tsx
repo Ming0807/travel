@@ -17,6 +17,7 @@ vi.mock("@/app/actions/admin-auth-actions", () => ({
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin",
+  useSearchParams: () => new URLSearchParams(),
   useRouter: () => ({
     replace: mocks.replace,
     refresh: mocks.refresh,

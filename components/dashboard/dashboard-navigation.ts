@@ -30,3 +30,46 @@ export const dashboardNavigation: ReadonlyArray<DashboardNavigationItem> = [
   { page: "attractions", href: "/admin/dashboard/attractions", label: "วิเคราะห์รายสถานที่", shortLabel: "รายสถานที่", icon: Star },
   { page: "sustainability", href: "/admin/dashboard/sustainability", label: "ความยั่งยืนและข้อเสนอ", shortLabel: "ความยั่งยืน", icon: TreeEvergreen },
 ];
+
+const SHARED_SCOPE_KEYS = [
+  ["date_from", "dateFrom"],
+  ["date_to", "dateTo"],
+  ["province_id", "provinceId"],
+  ["district_id", "districtId"],
+  ["attraction_id", "attractionId"],
+  ["attraction_type_id", "attractionTypeId"],
+  ["origin_country_id", "originCountryId"],
+  ["origin_province_id", "originProvinceId"],
+  ["age_group", "ageGroup"],
+  ["transport_mode_id", "transportModeId"],
+  ["travel_purpose_id", "travelPurposeId"],
+  ["satisfaction_min", "satisfactionMin"],
+  ["satisfaction_max", "satisfactionMax"],
+] as const;
+
+function scopeValue(params: URLSearchParams, snakeKey: string, camelKey: string) {
+  return params.get(snakeKey) ?? params.get(camelKey);
+}
+
+export function buildDashboardNavigationHref(href: string, currentQuery: string) {
+  if (!href.startsWith("/admin/dashboard") || !currentQuery) return href;
+
+  const current = new URLSearchParams(currentQuery);
+  const next = new URLSearchParams();
+
+  if (href === "/admin/dashboard/attractions") {
+    for (const [snakeKey, camelKey] of SHARED_SCOPE_KEYS.slice(0, 5)) {
+      if (!["date_from", "date_to", "attraction_id"].includes(snakeKey)) continue;
+      const value = scopeValue(current, snakeKey, camelKey);
+      if (value) next.set(camelKey, value);
+    }
+  } else {
+    for (const [snakeKey, camelKey] of SHARED_SCOPE_KEYS) {
+      const value = scopeValue(current, snakeKey, camelKey);
+      if (value) next.set(snakeKey, value);
+    }
+  }
+
+  const query = next.toString();
+  return query ? `${href}?${query}` : href;
+}

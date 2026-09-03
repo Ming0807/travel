@@ -2,13 +2,15 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Buildings, CaretDown, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { getVisibleNavGroups, navGroups, type NavGroup as NavGroupType, type NavItem } from "./admin-nav-items";
 import { useAdminAccess } from "./AdminAccessContext";
+import { buildDashboardNavigationHref } from "@/components/dashboard/dashboard-navigation";
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const access = useAdminAccess();
   const visibleGroups = getVisibleNavGroups(navGroups, access.permissions, access.resolved);
 
@@ -26,7 +28,7 @@ export function AdminSidebar() {
         </Link>
         <nav aria-label="เมนูผู้ดูแลระบบ" className="flex-1 space-y-2 overflow-y-auto overscroll-contain px-3 py-4">
           {visibleGroups.map((group) => (
-            <NavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} />
+            <NavGroup key={`${group.group}-${pathname}`} group={group} pathname={pathname} queryString={searchParams.toString()} />
           ))}
         </nav>
         <div className="shrink-0 border-t border-[var(--admin-border)] px-4 py-4">
@@ -43,7 +45,7 @@ export function AdminSidebar() {
     </aside>
   );
 }
-function NavGroup({ group, pathname }: { group: NavGroupType; pathname: string }) {
+function NavGroup({ group, pathname, queryString }: { group: NavGroupType; pathname: string; queryString: string }) {
   const itemIsActive = (item: NavItem) => item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
   const hasActiveItem = group.items.some(itemIsActive);
 
@@ -67,7 +69,7 @@ function NavGroup({ group, pathname }: { group: NavGroupType; pathname: string }
                   ? "border-[#F0C8BB] bg-[#FFF0EA] text-[#B94727] shadow-[0_2px_6px_rgba(217,71,23,0.08)]"
                   : "border-transparent text-slate-600 hover:bg-white hover:text-[#202020]"
               }`}
-              href={item.href}
+              href={buildDashboardNavigationHref(item.href, queryString)}
               key={item.href}
             >
               <div className="flex items-center gap-3">

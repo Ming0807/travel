@@ -85,7 +85,8 @@ The first screen of every area uses the same reading order:
 - [ ] Keep date range and primary geography/attraction in a compact sticky filter bar.
 - [ ] Move audience, travel behavior, campaign, collection mode, and entry channel into an advanced filter drawer.
 - [ ] Replace raw numeric IDs with searchable controlled options.
-- [ ] Preserve all applied filters in validated URL parameters across navigation, export, drill-down, and browser history.
+- [x] Preserve and safely translate the validated shared scope across dashboard tabs, desktop sidebar, and mobile navigation.
+- [ ] Preserve all applied filters across export, drill-down, and browser history.
 - [ ] Add active-filter chips, clear-one, clear-all, and named presets for field evidence, pilot QA, and previous-period comparison.
 - [ ] Add comparison contracts for current vs previous period and attraction vs eligible peer median.
 

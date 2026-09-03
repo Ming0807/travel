@@ -5,9 +5,11 @@ import { DashboardPageFailure } from "@/components/dashboard/DashboardPageFailur
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { navGroups } from "@/components/admin/admin-nav-items";
+import { buildDashboardNavigationHref } from "@/components/dashboard/dashboard-navigation";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/dashboard/expenses",
+  useSearchParams: () => new URLSearchParams("date_from=2026-08-01&date_to=2026-08-31&attraction_id=4&ignored=private"),
 }));
 
 describe("dashboard page foundation", () => {
@@ -87,5 +89,21 @@ describe("dashboard page foundation", () => {
       "ความยั่งยืนและข้อเสนอ",
       "ศูนย์งานวิจัย",
     ]);
+    expect(screen.getByRole("link", { name: "ประสบการณ์" })).toHaveAttribute(
+      "href",
+      "/admin/dashboard/satisfaction?date_from=2026-08-01&date_to=2026-08-31&attraction_id=4",
+    );
+  });
+
+  it("translates the shared scope for attraction analytics and drops unsupported parameters", () => {
+    expect(buildDashboardNavigationHref(
+      "/admin/dashboard/attractions",
+      "date_from=2026-08-01&date_to=2026-08-31&attraction_id=4&origin_country_id=66&ignored=private",
+    )).toBe("/admin/dashboard/attractions?dateFrom=2026-08-01&dateTo=2026-08-31&attractionId=4");
+
+    expect(buildDashboardNavigationHref(
+      "/admin/dashboard/tourists",
+      "dateFrom=2026-07-01&dateTo=2026-07-31&attractionId=9&evidenceScope=pilot_only",
+    )).toBe("/admin/dashboard/tourists?date_from=2026-07-01&date_to=2026-07-31&attraction_id=9");
   });
 });
