@@ -82,8 +82,9 @@ The first screen of every area uses the same reading order:
 
 ### Task 24.3: Filter, Comparison, and URL Contract
 
-- [ ] Keep date range and primary geography/attraction in a compact sticky filter bar.
-- [ ] Move audience, travel behavior, campaign, collection mode, and entry channel into an advanced filter drawer.
+- [x] Keep date range and primary geography/attraction in a compact sticky filter bar on desktop and a collapsible bar on mobile.
+- [x] Move audience, travel behavior, district, attraction type, and satisfaction range into a responsive advanced filter panel.
+- [ ] Move campaign, collection mode, and entry channel into the corresponding specialized advanced filter panels.
 - [ ] Replace raw numeric IDs with searchable controlled options.
 - [x] Preserve and safely translate the validated shared scope across dashboard tabs, desktop sidebar, and mobile navigation.
 - [ ] Preserve all applied filters across export, drill-down, and browser history.

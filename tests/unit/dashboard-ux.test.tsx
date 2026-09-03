@@ -171,6 +171,43 @@ describe("Dashboard UX ภาษาไทย", () => {
     await waitFor(() => expect(screen.getByLabelText("ตั้งแต่วันที่")).toBeVisible());
   });
 
+  it("แยกตัวกรองหลักออกจากตัวกรองขั้นสูงและแสดงค่าที่ใช้อยู่ครบ", () => {
+    const { container } = render(
+      <DashboardFilters
+        filters={{
+          dateFrom: "2026-07-01",
+          dateTo: "2026-07-31",
+          districtId: 10,
+          satisfactionMin: 3,
+          satisfactionMax: 5,
+        }}
+        options={{
+          provinces: [{ value: "1", label: "ยะลา" }],
+          districts: [{ value: "10", label: "อำเภอเมืองยะลา" }],
+          attractions: [],
+          attractionTypes: [],
+          originCountries: [],
+          originProvinces: [],
+          ageGroups: [],
+          transportModes: [],
+          travelPurposes: [],
+        }}
+      />,
+    );
+
+    expect(container.querySelector("section")).toHaveClass("lg:sticky", "lg:top-20");
+    const advancedToggle = screen.getByRole("button", { name: /ตัวกรองขั้นสูง/ });
+    expect(advancedToggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(advancedToggle);
+    expect(advancedToggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("region", { name: "ตัวกรองขั้นสูง" })).toBeInTheDocument();
+    expect(screen.getByLabelText("อำเภอปลายทาง")).toHaveValue("10");
+    expect(screen.getByLabelText("คะแนนขั้นต่ำ")).toHaveValue("3");
+    expect(screen.getByLabelText("คะแนนสูงสุด")).toHaveValue("5");
+    expect(screen.getByText("อำเภอ: อำเภอเมืองยะลา")).toBeInTheDocument();
+    expect(screen.getByText("คะแนน: 3-5")).toBeInTheDocument();
+  });
+
   it("แสดงกราฟแท่งพร้อมตารางข้อมูลที่เข้าถึงได้", () => {
     const { container } = render(
       <BarChartCard
