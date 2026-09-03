@@ -46,6 +46,7 @@ const SHARED_SCOPE_KEYS = [
   ["satisfaction_min", "satisfactionMin"],
   ["satisfaction_max", "satisfactionMax"],
   ["compare", "comparisonMode"],
+  ["evidence_scope", "evidenceScope"],
 ] as const;
 
 function scopeValue(params: URLSearchParams, snakeKey: string, camelKey: string) {
@@ -59,8 +60,8 @@ export function buildDashboardNavigationHref(href: string, currentQuery: string)
   const next = new URLSearchParams();
 
   if (href === "/admin/dashboard/attractions") {
-    for (const [snakeKey, camelKey] of SHARED_SCOPE_KEYS.slice(0, 5)) {
-      if (!["date_from", "date_to", "attraction_id"].includes(snakeKey)) continue;
+    for (const [snakeKey, camelKey] of SHARED_SCOPE_KEYS) {
+      if (!["date_from", "date_to", "attraction_id", "evidence_scope"].includes(snakeKey)) continue;
       const value = scopeValue(current, snakeKey, camelKey);
       if (value) next.set(camelKey, value);
     }

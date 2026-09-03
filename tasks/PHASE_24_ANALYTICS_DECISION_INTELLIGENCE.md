@@ -1,6 +1,6 @@
 # Phase 24: Production Analytics Decision Intelligence
 
-Status: In progress; Tasks 24.3-24.6 have production slices implemented and verified
+Status: In progress; Tasks 24.3-24.7 have production slices implemented and verified
 
 Priority: P1 production decision support and research readiness
 
@@ -127,11 +127,11 @@ The first screen of every area uses the same reading order:
 
 ### Task 24.7: Data Quality and Confidence Center
 
-- [ ] Add one shared quality strip for freshness, field/pilot/simulated scope, sample size, coverage, missingness, suppression, and truncation.
-- [ ] Add a quality details drawer showing source tables/views, metric version, date field, refresh time, and exclusions.
-- [ ] Grade evidence as insufficient, limited, usable, or strong using documented deterministic thresholds.
-- [ ] Block export and narrative claims when reads are truncated or required quality gates fail.
-- [ ] Surface data collection gaps as operational tasks rather than silently hiding them.
+- [x] Add one shared quality strip for freshness, field/pilot/simulated scope, sample size, coverage, missingness, suppression, and truncation.
+- [x] Add a quality details drawer showing source tables/views, metric version, date field, refresh time, and exclusions.
+- [x] Grade evidence as insufficient, limited, usable, or strong using documented deterministic thresholds.
+- [x] Block export and narrative claims when reads are truncated or required quality gates fail.
+- [x] Surface data collection gaps as operational tasks rather than silently hiding them.
 
 **Acceptance:** every conclusion exposes enough context for an advisor or analyst to audit why it can or cannot be used.
 

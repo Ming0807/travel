@@ -37,3 +37,5 @@ The active design source is `docs/frontend/DASHBOARD_UI_SPEC.md`. The implementa
 - `DistributionEvidenceStrip` gives optional-field charts one shared answered/denominator, coverage, missingness, and evidence-strength contract without adding another decorative card.
 - `BarChartCard`, `DonutChartCard`, and the protected Funnel workspace support aggregate mark selection and filter only their on-page aggregate table. They never receive respondent identity or private comment fields.
 - `SatisfactionSegmentComparison` displays two age-group means only when both groups have at least 30 valid overall scores and always labels the result as descriptive, not causal.
+- `DashboardQualityCenter` is the shared confidence strip for all general analytics pages. It displays field/pilot/simulated scope, freshness, sample, coverage, missingness, suppression, truncation, audit metadata, and operational collection gaps.
+- Dashboard narratives and server-side exports use the same quality gates. Reaching the bounded row limit, stale summary data, `n < 10`, or relevant coverage below 20% blocks the claim/export rather than returning a partial result.

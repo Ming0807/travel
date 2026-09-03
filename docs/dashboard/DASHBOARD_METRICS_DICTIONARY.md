@@ -2493,3 +2493,41 @@ descriptive association and does not establish an age effect.
 Selecting a protected bar, donut segment, or funnel stage filters its on-page
 aggregate detail table. It does not load respondent names, identifiers,
 comments, contact data, or private media paths into chart props.
+
+---
+
+## 49. Data Quality and Confidence Contract
+
+All general dashboard routes use one typed quality model before rendering a conclusion or allowing an export. The model version is `dashboard-2026.09-v1` and exposes the selected evidence scope, sample size, field coverage, missingness, suppressed-cell count, bounded-read truncation, source tables, date field, refresh time, and exclusions.
+
+### 49.1 Evidence scope
+
+| Scope | Included records | Reporting rule |
+|---|---|---|
+| `field_claim` | Operational visits without a research session, plus included final-collection field observations | Default for field reporting; excludes explicit pilot and simulated sessions |
+| `all_records` | Every record matching the remaining filters | Internal inspection only; separate the scope before external reporting |
+| `pilot_only` | Included pilot study or `pilot_internal` sessions | Pilot QA only |
+| `simulated_only` | Included `simulated_usability` sessions | Usability testing only; never a tourism field claim |
+
+Withdrawn, excluded, and expired research sessions never qualify a Visit for a research evidence scope. Child Certificate, Stamp, Survey, and Expense records are restricted to the same included Visit set. Funnel events under a scoped research view require a linked included Visit; unlinked entry events are not silently assigned to a collection mode.
+
+### 49.2 Deterministic quality gates
+
+| Condition | Evidence/result |
+|---|---|
+| denominator = 0 | unavailable |
+| answered `n < 10` | insufficient; narrative and export blocked |
+| answered `10 <= n < 30` | limited; descriptive preview only |
+| answered `n >= 30` and coverage `< 70%` | usable |
+| answered `n >= 30` and coverage `>= 70%` | strong |
+| relevant coverage `< 20%` | narrative and export blocked |
+| bounded read reaches its row limit | truncated; narrative, comparison, and export blocked |
+| pre-aggregated refresh older than 72 hours | stale; narrative and export blocked |
+
+When a module has no meaningful response-coverage denominator, such as an event funnel, evidence cannot receive the `strong` grade from sample size alone. It may be `usable` when `n >= 30`, but its unit and linkage limitations remain visible.
+
+### 49.3 Operational follow-up
+
+Quality failures become explicit collection tasks: narrow the date/geography scope after truncation, collect more records below the sample target, inspect form abandonment when missingness reaches 30%, keep suppressed groups hidden until they pass privacy thresholds, and separate mixed field/pilot/simulated scopes before external reporting. These tasks do not create automatic causal recommendations.
+
+Dashboard export routes enforce the same gates on the server and audit quality-gate failures. UI-disabled export controls are explanatory only and are not the security boundary.

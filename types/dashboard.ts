@@ -2,6 +2,7 @@ export type DashboardFilters = {
   dateFrom: string;
   dateTo: string;
   comparisonMode?: "previous_period";
+  evidenceScope?: DashboardEvidenceScope;
   provinceId?: number;
   districtId?: number;
   attractionId?: number;
@@ -13,6 +14,43 @@ export type DashboardFilters = {
   travelPurposeId?: number;
   satisfactionMin?: number;
   satisfactionMax?: number;
+};
+
+export type DashboardEvidenceScope = "field_claim" | "all_records" | "pilot_only" | "simulated_only";
+export type DashboardQualityPage = "executive" | "tourists" | "visits" | "expenses" | "satisfaction" | "funnel" | "sustainability";
+
+export type DashboardQuality = {
+  status: "ready" | "caution" | "blocked";
+  evidenceGrade: "unavailable" | "insufficient" | "limited" | "usable" | "strong";
+  scope: { code: DashboardEvidenceScope; label: string };
+  sampleSize: number;
+  coverage: {
+    answeredCount: number;
+    denominatorCount: number;
+    rate: number | null;
+    missingCount: number;
+    missingRate: number | null;
+  } | null;
+  freshness: { state: "fresh" | "aging" | "stale"; label: string };
+  suppressedCellCount: number;
+  truncated: boolean;
+  claimsAllowed: boolean;
+  exportAllowed: boolean;
+  blockers: string[];
+  warnings: string[];
+  operationalTasks: Array<{
+    key: string;
+    severity: "critical" | "warning" | "info";
+    title: string;
+    detail: string;
+  }>;
+  metadata: {
+    sourceTables: string[];
+    metricVersion: string;
+    dateField: string;
+    refreshedAt: string;
+    exclusions: string[];
+  };
 };
 
 export type DashboardMetricComparison = {
@@ -126,6 +164,7 @@ export type DashboardViewModel = {
   generatedAt: string;
   dataSource: "live_database" | "pre_aggregated";
   summaryRefreshTimestamp: string | null;
+  quality?: DashboardQuality;
   viewer: {
     displayName: string | null;
     email: string;

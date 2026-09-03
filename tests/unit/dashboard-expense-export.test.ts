@@ -69,4 +69,30 @@ describe("dashboard expense export", () => {
     expect(estimateRow?.Responses).toBe(3);
     expect(estimateRow?.Responses).not.toBe(40);
   });
+
+  it("blocks an export when the server-side quality gate fails", async () => {
+    mocks.analytics.mockResolvedValue({
+      quality: {
+        exportAllowed: false,
+        blockers: ["ข้อมูลถูกตัดที่ขีดจำกัดการอ่าน"],
+      },
+      expense: {
+        spendingRanges: [],
+        expenseCategories: [],
+        estimatedMin: null,
+        estimatedMax: null,
+        hasOpenEndedRange: false,
+        responseCount: 10_000,
+        spendingRangeResponseCount: 10_000,
+        expenseCategoryResponseCount: 10_000,
+        methodologyNote: "",
+      },
+    });
+
+    const response = await GET(new Request("http://localhost/api/admin/dashboard/export?type=expenses"));
+
+    expect(response.status).toBe(422);
+    expect(await response.text()).toContain("ไม่สามารถส่งออก");
+    expect(mocks.exportRows).toEqual([]);
+  });
 });

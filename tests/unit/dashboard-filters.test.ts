@@ -35,6 +35,16 @@ describe("dashboard filter validation", () => {
     expect(invalid.success).toBe(false);
   });
 
+  it("defaults to field evidence and accepts explicit pilot or simulated scopes", () => {
+    const defaultScope = parseDashboardFilters({ date_from: "2026-05-01", date_to: "2026-05-31" });
+    const pilotScope = parseDashboardFilters({ date_from: "2026-05-01", date_to: "2026-05-31", evidence_scope: "pilot_only" });
+    const invalidScope = parseDashboardFilters({ date_from: "2026-05-01", date_to: "2026-05-31", evidence_scope: "private_raw" });
+
+    expect(defaultScope.success && defaultScope.data.evidenceScope).toBe("field_claim");
+    expect(pilotScope.success && pilotScope.data.evidenceScope).toBe("pilot_only");
+    expect(invalidScope.success).toBe(false);
+  });
+
   it("derives an equal inclusive previous period across month boundaries", () => {
     expect(getPreviousDashboardPeriod("2026-03-01", "2026-03-31")).toEqual({
       dateFrom: "2026-01-29",

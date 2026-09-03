@@ -24,6 +24,7 @@ import {
 import { buildDashboardAlerts } from "@/lib/services/dashboard-alert.service";
 import { compareDashboardKpis, getPreviousDashboardPeriod } from "@/lib/services/dashboard-comparison";
 import { buildTwoGroupMeanComparison } from "@/lib/dashboard/segment-comparison";
+import { buildDashboardQuality } from "@/lib/dashboard/dashboard-quality";
 import { parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 import type {
   DashboardFilters,
@@ -32,6 +33,7 @@ import type {
   DistributionItem,
   InsightCardData,
   RankedAttraction,
+  DashboardQualityPage,
   TrendPoint
 } from "@/types/dashboard";
 
@@ -727,6 +729,7 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
   const expenseResult = buildExpenseSection(payload.expenses, payload.surveys.length);
   const expenseSection = expenseResult.section;
   const satisfactionSection = buildSatisfactionSection(payload.surveys, topAttractions);
+  const touristProfileSection = buildTouristProfileSection(visits);
 
   // Funnel events before visit creation cannot be segmented by tourist profile or
   // survey fields. Returning unfiltered counts would violate global filter semantics.
@@ -818,12 +821,60 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
     );
   }
 
+  const generatedAt = new Date().toISOString();
+  const qualityPage: DashboardQualityPage = ["tourists", "visits", "expenses", "satisfaction", "funnel", "sustainability"].includes(activeTab)
+    ? activeTab as DashboardQualityPage
+    : "executive";
+  const travelMissingTotal = Object.values(travelBehaviorResult.missing).reduce((sum, count) => sum + count, 0);
+  const travelDenominator = visits.length * 4;
+  const qualityCoverage = (() => {
+    switch (qualityPage) {
+      case "tourists":
+        return { answeredCount: touristProfileSection.ageGroups.reduce((sum, item) => sum + item.value, 0), denominatorCount: touristProfileSection.recordCount ?? visits.length };
+      case "visits":
+        return { answeredCount: Math.max(0, travelDenominator - travelMissingTotal), denominatorCount: travelDenominator };
+      case "expenses":
+        return { answeredCount: expenseSection.spendingRangeResponseCount, denominatorCount: expenseSection.eligibleSurveyCount ?? payload.surveys.length };
+      case "satisfaction":
+        return { answeredCount: satisfactionSection.responseCount, denominatorCount: satisfactionSection.surveyRecordCount ?? payload.surveys.length };
+      case "sustainability":
+        return { answeredCount: satisfactionSection.responseCount, denominatorCount: visits.length };
+      case "funnel":
+        return { answeredCount: null, denominatorCount: null };
+      case "executive":
+      default:
+        return { answeredCount: payload.surveys.length, denominatorCount: payload.certificates.length };
+    }
+  })();
+  const qualitySampleSize = qualityPage === "expenses"
+    ? expenseSection.spendingRangeResponseCount
+    : qualityPage === "satisfaction"
+      ? satisfactionSection.responseCount
+      : qualityPage === "funnel"
+        ? funnelStages[0]?.count ?? 0
+        : visits.length;
+  const suppressedCellCount = satisfactionSection.ageGroupComparison?.groups.filter((group) => group.suppressed).length ?? 0;
+  const quality = buildDashboardQuality({
+    activeTab: qualityPage,
+    evidenceScope: filters.evidenceScope ?? "field_claim",
+    generatedAt,
+    dataSource: "live_database",
+    summaryRefreshTimestamp: null,
+    sampleSize: qualitySampleSize,
+    answeredCount: qualityCoverage.answeredCount,
+    denominatorCount: qualityCoverage.denominatorCount,
+    suppressedCellCount,
+    isTruncated: payload.isTruncated,
+    warnings: dataQualityWarnings,
+  });
+
   const viewModel: Omit<DashboardViewModel, 'dashboardAlerts'> = {
     filters,
     comparison,
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     dataSource: "live_database",
     summaryRefreshTimestamp: null,
+    quality,
     viewer,
     referenceOptions: payload.referenceOptions,
     kpis,
@@ -832,7 +883,7 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
       visitsByProvince,
       topAttractions
     },
-    touristProfile: buildTouristProfileSection(visits),
+    touristProfile: touristProfileSection,
     travelBehavior: travelBehaviorResult.section,
     expense: expenseSection,
     satisfaction: satisfactionSection,
@@ -840,7 +891,10 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
       stages: funnelStages,
       largestDropOffStage
     },
-    insights: buildInsights(visits, topAttractions, satisfactionSection.responseCount, surveyCompletionRate, visitsByProvince),
+    insights: (() => {
+      const insights = buildInsights(visits, topAttractions, satisfactionSection.responseCount, surveyCompletionRate, visitsByProvince);
+      return quality.claimsAllowed ? insights : insights.filter((insight) => insight.category === "data_quality");
+    })(),
     dataQualityWarnings
   };
 

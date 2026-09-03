@@ -1284,3 +1284,20 @@ The improvement timeline keeps the stored baseline, review decision, assigned ow
   responses. Differences are descriptive associations, not causal effects.
 - Expense range and category coverage appear before interpretation. All expense
   labels must say self-reported or estimated and must never say revenue.
+
+### 35.5 Shared Data Quality Center
+
+Every general dashboard page must show one compact quality center immediately after its filter controls. It must expose:
+
+- field, all-record, pilot, or simulated evidence scope;
+- relevant sample size and answered/eligible denominator when one exists;
+- coverage and missingness without converting blanks to zero;
+- suppressed-cell and bounded-read truncation status;
+- live/pre-aggregated freshness;
+- source tables, date field, metric version, refresh time, and exclusions on demand;
+- a deterministic evidence grade and whether narrative/export use is allowed;
+- concrete data-collection follow-up tasks for gaps.
+
+The default is `field_claim`. Explicit pilot and simulated research sessions must be excluded from field claims in the service/repository layer. A URL must preserve the selected evidence scope across general dashboard tabs and the attraction analytics workspace.
+
+Exports must repeat the quality check on the server. A hidden or disabled UI button is not sufficient. Truncated reads, stale summaries over 72 hours, sample sizes below 10, and relevant response coverage below 20% return an audited `422` response instead of a partial or misleading file.

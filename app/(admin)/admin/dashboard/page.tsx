@@ -37,7 +37,7 @@ export default async function AdminDashboardPage({ searchParams = {} }: Dashboar
   }
 
   return (
-    <DashboardShell actions={<ExportCsvButton />} data={data} page="overview">
+    <DashboardShell actions={<ExportCsvButton quality={data.quality} />} data={data} page="overview">
       <ErrorBoundary fallbackTitle="ไม่สามารถแสดงภาพรวมได้" fallbackDescription="ส่วนแสดงผลพบข้อผิดพลาด กรุณารีเฟรชหน้าแล้วลองอีกครั้ง">
         <ExecutiveOverview data={data} />
       </ErrorBoundary>

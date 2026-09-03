@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useRef } from "react";
 import { ExportPrivacyDialog } from "@/components/dashboard/ExportPrivacyDialog";
+import type { DashboardQuality } from "@/types/dashboard";
 
 const exports = [
   ["summary", "สรุปภาพรวม"],
@@ -12,7 +13,7 @@ const exports = [
   ["expenses", "ค่าใช้จ่าย"],
 ] as const;
 
-export function ExportCsvButton() {
+export function ExportCsvButton({ quality }: { quality?: DashboardQuality }) {
   const searchParams = useSearchParams();
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const summaryRef = useRef<HTMLElement>(null);
@@ -20,6 +21,13 @@ export function ExportCsvButton() {
   const closeMenu = useCallback(() => {
     if (detailsRef.current) detailsRef.current.open = false;
   }, []);
+  if (quality && !quality.exportAllowed) {
+    return (
+      <span className="inline-flex min-h-10 cursor-not-allowed items-center rounded-md border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-800" title={quality.blockers.join(" · ")}>
+        ระงับการส่งออก
+      </span>
+    );
+  }
   return (
     <details ref={detailsRef} className="relative max-w-full">
       <summary ref={summaryRef} className="inline-flex min-h-10 cursor-pointer list-none items-center rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-[#B94727] hover:text-[#B94727]">ส่งออกข้อมูล</summary>

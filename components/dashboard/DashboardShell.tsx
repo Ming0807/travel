@@ -4,6 +4,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardPageHeader, type DashboardPageKey } from "@/components/dashboard/DashboardPageHeader";
+import { DashboardQualityCenter } from "@/components/dashboard/DashboardQualityCenter";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import type { DashboardViewModel } from "@/types/dashboard";
 
@@ -46,6 +47,8 @@ export function DashboardShell({
           <DashboardTabs />
           <DashboardFilters filters={data.filters} options={data.referenceOptions} />
         </Suspense>
+
+        {data.quality ? <DashboardQualityCenter quality={data.quality} /> : null}
 
         {children}
 

@@ -19,6 +19,7 @@ import {
 } from "@/lib/utils/export-response";
 import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 import { logAuditAction } from "@/lib/services/audit-log.service";
+import { DASHBOARD_EXPORT_MIN_SAMPLE, dashboardExportBlockReason } from "@/lib/dashboard/dashboard-quality";
 
 type DashboardExportRecord = Record<string, unknown>;
 type DashboardExportType = "summary" | "expenses" | "tourists" | "visits" | "surveys";
@@ -89,6 +90,29 @@ async function respondWithAudit(
   return await createExportResponse(exportRows, dashboardFilename(type), format);
 }
 
+async function respondBlockedExport(
+  reason: string,
+  type: DashboardExportType,
+  format: ExportFormat,
+  guard: GuardResult,
+  filters: Record<string, string>,
+) {
+  await logAuditAction({
+    actor: guard.actor,
+    action: `export.dashboard.${type}.${format}`,
+    entityType: "dashboard_export",
+    result: "failed",
+    metadata: { exportType: type, format, filters, reason: "quality_gate", qualityReason: reason },
+  });
+  return new NextResponse(`ไม่สามารถส่งออกข้อมูลได้: ${reason}`, { status: 422 });
+}
+
+function rawExportBlockReason(isTruncated: boolean, sampleSize: number): string | null {
+  if (isTruncated) return "ข้อมูลถูกตัดที่ขีดจำกัดการอ่าน กรุณาลดช่วงวันที่หรือเพิ่มตัวกรอง";
+  if (sampleSize < DASHBOARD_EXPORT_MIN_SAMPLE) return `ฐานข้อมูลต่ำกว่า ${DASHBOARD_EXPORT_MIN_SAMPLE} รายการ`;
+  return null;
+}
+
 export async function GET(request: Request) {
   let guard: GuardResult | null = null;
   let exportType: DashboardExportType | null = null;
@@ -136,6 +160,8 @@ export async function GET(request: Request) {
 
     if (exportType === "expenses") {
       const data = await getDashboardAnalytics(params, "expenses");
+      const qualityReason = dashboardExportBlockReason(data.quality);
+      if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
       const rows: Array<Record<string, unknown>> = [
         ...data.expense.spendingRanges.map((range) => ({
           Section: "Spending Range",
@@ -180,6 +206,8 @@ export async function GET(request: Request) {
 
     if (exportType === "summary") {
       const data = await getDashboardAnalytics(params, "executive");
+      const qualityReason = dashboardExportBlockReason(data.quality);
+      if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
       const rows = data.executive.topAttractions.map((attr) => ({
         Rank: attr.rank,
         Attraction: attr.attractionName,
@@ -217,6 +245,9 @@ export async function GET(request: Request) {
         };
       });
 
+      const qualityReason = rawExportBlockReason(payload.isTruncated, rows.length);
+      if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
+
       return await respondWithAudit(rows, exportType, format, guard, filtersForAudit);
     }
 
@@ -246,6 +277,9 @@ export async function GET(request: Request) {
         };
       });
 
+      const qualityReason = rawExportBlockReason(payload.isTruncated, rows.length);
+      if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
+
       return await respondWithAudit(rows, exportType, format, guard, filtersForAudit);
     }
 
@@ -270,6 +304,9 @@ export async function GET(request: Request) {
         "Recommend Intention": safeString(s.recommend_intention),
       };
     });
+
+    const qualityReason = rawExportBlockReason(payload.isTruncated, rows.length);
+    if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
 
     return await respondWithAudit(rows, exportType, format, guard, filtersForAudit);
   } catch (error) {

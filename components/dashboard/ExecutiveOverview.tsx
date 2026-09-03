@@ -1,7 +1,6 @@
 import { ExecutiveAttractionMatrix } from "@/components/dashboard/ExecutiveAttractionMatrix";
 import { ExecutiveFunnelSummary } from "@/components/dashboard/ExecutiveFunnelSummary";
 import { ExecutiveDecisionSummary } from "@/components/dashboard/ExecutiveDecisionSummary";
-import { ExecutiveQualityStrip } from "@/components/dashboard/ExecutiveQualityStrip";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import type { DashboardViewModel } from "@/types/dashboard";
@@ -16,7 +15,6 @@ const PRIMARY_KPIS = [
 
 export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
   const primaryMetrics = PRIMARY_KPIS.map((key) => data.kpis.find((metric) => metric.key === key)).filter((metric): metric is DashboardViewModel["kpis"][number] => Boolean(metric));
-  const surveyCompletionRate = data.kpis.find((metric) => metric.key === "survey_completion_rate")?.rawValue ?? null;
 
   return (
     <section className="space-y-4" aria-labelledby="executive-overview-heading">
@@ -50,13 +48,6 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
           <ExecutiveAttractionMatrix attractions={data.executive.topAttractions} />
         </div>
       </div>
-
-      <ExecutiveQualityStrip
-        expense={data.expense}
-        generatedAt={data.summaryRefreshTimestamp ?? data.generatedAt}
-        satisfaction={data.satisfaction}
-        surveyCompletionRate={surveyCompletionRate}
-      />
 
       {data.dataQualityWarnings.length > 0 ? (
         <details className="rounded-md border border-amber-200 bg-[#FFFBEB] px-4 py-2.5">

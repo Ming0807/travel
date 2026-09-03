@@ -62,7 +62,7 @@ export function SatisfactionSection({ data }: { data: DashboardViewModel }) {
   return (
     <section aria-labelledby="satisfaction-heading" className="space-y-5">
       <AnalyticsSectionHeader
-        actions={<><SurveyRecordsLink data={data} /><ExportCsvButton /></>}
+        actions={<><SurveyRecordsLink data={data} /><ExportCsvButton quality={data.quality} /></>}
         description="สรุปเฉพาะแบบสำรวจที่สมัครใจ พร้อมฐานคำตอบของแต่ละตัวชี้วัด"
         headingId="satisfaction-heading"
         title="ความพึงพอใจของนักท่องเที่ยว"

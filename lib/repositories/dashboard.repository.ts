@@ -4,6 +4,7 @@ import { DASHBOARD_ROW_LIMIT } from "@/constants/dashboard-metrics";
 import { AGE_GROUP_OPTIONS } from "@/lib/validation/checkin";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { DashboardFilters, DashboardReferenceOptions } from "@/types/dashboard";
+import { filterVisitsByDashboardEvidenceScope } from "@/lib/dashboard/evidence-scope";
 import {
   type DashboardSummaryKpis
 } from "@/lib/repositories/dashboard-summary.repository";
@@ -240,7 +241,13 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
         ),
         travel_companions (name_th, name_en),
         transport_modes (name_th, name_en),
-        travel_purposes (name_th, name_en)
+        travel_purposes (name_th, name_en),
+        research_sessions (
+          collection_mode,
+          status,
+          inclusion_status,
+          research_studies (study_kind)
+        )
       `
     )
     .gte("visit_date", filters.dateFrom)
@@ -264,6 +271,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
         certificate_id,
         generated_at,
         visits!inner (
+          visit_id,
           visit_date,
           attraction_id,
           tourist_id,
@@ -285,6 +293,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
         status,
         attraction_id,
         visits!inner (
+          visit_id,
           visit_date,
           tourist_id,
           tourists!inner (origin_country_id, origin_province_id, age_group)
@@ -313,6 +322,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
         submitted_at,
         completed_at,
         visits!inner (
+          visit_id,
           visit_date,
           attraction_id,
           tourist_id,
@@ -339,6 +349,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
         spending_ranges (range_label_th, range_label_en, min_value, max_value),
         expense_categories (name_th, name_en),
         visits!inner (
+          visit_id,
           visit_date,
           attraction_id,
           tourist_id,
@@ -356,6 +367,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
     .select(
       `
         event_id,
+        visit_id,
         event_type,
         event_time,
         checkin_code_id,
@@ -416,7 +428,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
   // Every populated section in one response is built from the same live source.
   // Summary tables remain available for refresh/inspection, but they do not yet
   // cover every demographic and behavior filter required by this view model.
-  const needVisits = ["executive", "tourists", "visits", "attractions", "expenses", "satisfaction", "sustainability"].includes(activeTab);
+  const needVisits = ["executive", "tourists", "visits", "attractions", "expenses", "satisfaction", "sustainability", "funnel"].includes(activeTab);
   const needCertificates = ["executive", "attractions", "satisfaction", "sustainability"].includes(activeTab);
   const needStamps = ["executive", "sustainability"].includes(activeTab);
   const needSurveys = ["executive", "attractions", "satisfaction", "sustainability"].includes(activeTab);
@@ -447,12 +459,23 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
     }
   }
 
-  const visitRows = (visits.data ?? []) as DashboardVisitRow[];
-  const certificateRows = filterRowsByDestination((certificates.data ?? []) as DashboardCertificateRow[], filters);
-  const stampRows = filterRowsByDestination((stamps.data ?? []) as DashboardStampRow[], filters);
-  const surveyRows = filterRowsByDestination((surveys.data ?? []) as DashboardSurveyRow[], filters);
-  const expenseRows = filterRowsByDestination((expenses.data ?? []) as DashboardExpenseRow[], filters);
-  const funnelRows = filterFunnelRows((funnelEvents.data ?? []) as DashboardFunnelRow[], filters);
+  const rawVisitRows = (visits.data ?? []) as DashboardVisitRow[];
+  const evidenceScope = filters.evidenceScope ?? "field_claim";
+  const visitRows = filterVisitsByDashboardEvidenceScope(rawVisitRows, evidenceScope);
+  const includedVisitIds = new Set(visitRows.map((row) => String(row.visit_id ?? "")).filter(Boolean));
+  const isIncludedChild = (row: Record<string, unknown>) => {
+    if (evidenceScope === "all_records") return true;
+    const visit = relation(row, "visits");
+    return includedVisitIds.has(String(visit?.visit_id ?? ""));
+  };
+  const certificateRows = filterRowsByDestination((certificates.data ?? []) as DashboardCertificateRow[], filters).filter(isIncludedChild);
+  const stampRows = filterRowsByDestination((stamps.data ?? []) as DashboardStampRow[], filters).filter(isIncludedChild);
+  const surveyRows = filterRowsByDestination((surveys.data ?? []) as DashboardSurveyRow[], filters).filter(isIncludedChild);
+  const expenseRows = filterRowsByDestination((expenses.data ?? []) as DashboardExpenseRow[], filters).filter(isIncludedChild);
+  const funnelRows = filterFunnelRows((funnelEvents.data ?? []) as DashboardFunnelRow[], filters).filter((row) => {
+    if (evidenceScope === "all_records") return true;
+    return includedVisitIds.has(String(row.visit_id ?? ""));
+  });
 
   return {
     visits: visitRows,
@@ -463,7 +486,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
     funnelEvents: funnelRows,
     referenceOptions,
     isTruncated:
-      (needVisits && visitRows.length >= DASHBOARD_ROW_LIMIT) ||
+      (needVisits && rawVisitRows.length >= DASHBOARD_ROW_LIMIT) ||
       (needCertificates && certificateRows.length >= DASHBOARD_ROW_LIMIT) ||
       (needStamps && stampRows.length >= DASHBOARD_ROW_LIMIT) ||
       (needSurveys && surveyRows.length >= DASHBOARD_ROW_LIMIT) ||

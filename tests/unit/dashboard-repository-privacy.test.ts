@@ -46,6 +46,9 @@ describe("dashboard repository privacy", () => {
 
     const visitsSelection = queryState.selections.find((selection) => selection.table === "visits");
     expect(visitsSelection?.columns).toContain("tourist_identities (provider)");
+    expect(visitsSelection?.columns).toContain("research_sessions");
+    expect(visitsSelection?.columns).toContain("collection_mode");
     expect(visitsSelection?.columns).not.toContain("provider_user_id");
+    expect(visitsSelection?.columns).not.toContain("participant_code");
   });
 });

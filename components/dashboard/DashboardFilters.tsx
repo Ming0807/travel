@@ -7,6 +7,13 @@ import { CaretDown, FunnelSimple, X } from "@phosphor-icons/react/dist/ssr";
 import { getPreviousDashboardPeriod } from "@/lib/services/dashboard-comparison";
 import type { DashboardFilters, DashboardReferenceOption, DashboardReferenceOptions } from "@/types/dashboard";
 
+const EVIDENCE_SCOPE_OPTIONS: DashboardReferenceOption[] = [
+  { value: "field_claim", label: "หลักฐานภาคสนาม (ค่าเริ่มต้น)" },
+  { value: "all_records", label: "ทุกชุดข้อมูล" },
+  { value: "pilot_only", label: "Pilot เท่านั้น" },
+  { value: "simulated_only", label: "สถานการณ์จำลองเท่านั้น" },
+];
+
 type DashboardFiltersProps = {
   filters: DashboardFilters;
   options: DashboardReferenceOptions;
@@ -113,6 +120,7 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
     ["transport_mode_id", "พาหนะ", optionLabel(options.transportModes, filters.transportModeId)],
     ["travel_purpose_id", "วัตถุประสงค์", optionLabel(options.travelPurposes, filters.travelPurposeId)],
     ["satisfaction_score", "คะแนน", satisfactionLabel],
+    ["evidence_scope", "ขอบเขตหลักฐาน", filters.evidenceScope && filters.evidenceScope !== "field_claim" ? optionLabel(EVIDENCE_SCOPE_OPTIONS, filters.evidenceScope) : null],
   ].filter((item): item is [string, string, string] => Boolean(item[2]));
   const advancedFilterCount = activeFilters.filter(([key]) => !["province_id", "attraction_id"].includes(key)).length;
 
@@ -231,6 +239,7 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
                 <FilterSelect label="ช่วงอายุ" name="age_group" options={options.ageGroups} value={filters.ageGroup} />
                 <FilterSelect label="พาหนะ" name="transport_mode_id" options={options.transportModes} value={filters.transportModeId} />
                 <FilterSelect label="วัตถุประสงค์การเดินทาง" name="travel_purpose_id" options={options.travelPurposes} value={filters.travelPurposeId} />
+                      <FilterSelect label="ขอบเขตหลักฐาน" name="evidence_scope" options={EVIDENCE_SCOPE_OPTIONS} value={filters.evidenceScope ?? "field_claim"} />
                       <ScoreSelect label="คะแนนขั้นต่ำ" name="satisfaction_min" value={filters.satisfactionMin} />
                       <ScoreSelect label="คะแนนสูงสุด" name="satisfaction_max" value={filters.satisfactionMax} />
                     </div>
