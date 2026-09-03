@@ -97,9 +97,9 @@ The first screen of every area uses the same reading order:
 
 ### Task 24.4: Executive Decision Brief
 
-- [ ] Present five to seven outcome KPIs with prior-period delta, denominator, and evidence-strength label.
-- [ ] Add a concise deterministic brief answering `what changed`, `why it matters`, `evidence`, and `next action`.
-- [ ] Keep visit trend, attraction matrix, experience quality, and funnel health as the primary visual sequence.
+- [x] Present five outcome KPIs with prior-period delta, denominator, and evidence-strength label.
+- [x] Add a concise deterministic brief answering `what changed`, `why it matters`, `evidence`, and `next action` without causal claims.
+- [x] Keep visit trend, attraction matrix, experience quality, and funnel health as the primary visual sequence.
 - [ ] Add target or benchmark markers only when the target source and comparison population are documented.
 - [ ] Prevent one-point series, suppressed groups, or weak samples from producing trend language.
 

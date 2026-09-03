@@ -59,6 +59,12 @@ export type DashboardKpi = {
   valueType: KpiValueType;
   definition: string;
   note?: string;
+  evidence?: {
+    level: "system_record" | "limited" | "decision_ready" | "unavailable";
+    sampleSize: number;
+    denominator: number | null;
+    unit: string;
+  };
 };
 
 export type DistributionItem = {

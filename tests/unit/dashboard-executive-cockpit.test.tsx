@@ -122,6 +122,37 @@ describe("Executive analytics cockpit", () => {
     expect(screen.queryByText("Improvement priority")).not.toBeInTheDocument();
   });
 
+  it("สรุปการเปลี่ยนแปลงที่เด่นที่สุดพร้อมความหมายและขั้นถัดไปโดยไม่อ้างเหตุผล", () => {
+    render(
+      <ExecutiveDecisionSummary
+        comparison={{
+          mode: "previous_period",
+          dateFrom: "2026-07-01",
+          dateTo: "2026-07-31",
+          status: "ready",
+          unavailableReason: null,
+          metrics: {
+            total_visits: { currentValue: 120, previousValue: 100, absoluteChange: 20, percentChange: 20, direction: "up" },
+          },
+        }}
+        insights={[]}
+        kpis={[{
+          key: "total_visits",
+          label: "Total Visits",
+          value: "120",
+          rawValue: 120,
+          valueType: "count",
+          definition: "Recorded visits",
+        }]}
+      />,
+    );
+
+    expect(screen.getByText("สิ่งที่เปลี่ยนจากช่วงก่อน")).toBeInTheDocument();
+    expect(screen.getByText(/การเข้าชมที่บันทึกเพิ่มขึ้น 20%/)).toBeInTheDocument();
+    expect(screen.getByText(/ไม่ได้ยืนยันว่าเกิดจากมาตรการใด/)).toBeInTheDocument();
+    expect(screen.getByText(/เปิดดูพฤติกรรมการเดินทางและรายสถานที่/)).toBeInTheDocument();
+  });
+
   it("แสดงตารางจัดอันดับสถานที่พร้อมตัวชี้วัดที่ตรวจสอบย้อนกลับได้", () => {
     render(
       <ExecutiveAttractionRanking

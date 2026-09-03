@@ -2443,3 +2443,13 @@ mode is disabled by default and is not available on the public evidence report.
 The current dashboard remains available if the optional prior-period query
 fails. Directional wording is descriptive only and must not be interpreted as
 causal, statistically significant, or inherently positive/negative.
+
+### 47.1 Executive evidence labels
+
+- `system_record` identifies operational rows recorded by the platform. It is
+  not labelled as a respondent sample and does not imply verified unique people.
+- `limited` identifies survey evidence below `n=30`.
+- `decision_ready` identifies descriptive survey evidence with at least 30
+  answers; it is not proof of population representativeness or causation.
+- `unavailable` is used when the required numerator, denominator, or score is
+  missing. Missing values are never replaced with zero.

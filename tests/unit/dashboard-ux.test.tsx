@@ -290,6 +290,25 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(screen.getByText("ช่วงก่อน 0 · ไม่คำนวณร้อยละ")).toBeInTheDocument();
   });
 
+  it("แสดงชนิดหลักฐานและฐานของ KPI โดยไม่เรียกข้อมูลระบบว่ากลุ่มตัวอย่าง", () => {
+    render(
+      <KpiCard
+        metric={{
+          key: "total_visits",
+          label: "Total visits",
+          value: "42",
+          rawValue: 42,
+          valueType: "count",
+          definition: "Visit records",
+          evidence: { level: "system_record", sampleSize: 42, denominator: null, unit: "รายการ" },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("ข้อมูลระบบ · 42 รายการ")).toBeInTheDocument();
+    expect(screen.queryByText(/กลุ่มตัวอย่าง/)).not.toBeInTheDocument();
+  });
+
   it("แสดงกราฟโดนัทพร้อมคำไทยและตารางข้อมูลที่ตรวจสอบได้", () => {
     const { container } = render(
       <DonutChartCard

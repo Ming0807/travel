@@ -519,6 +519,7 @@ function buildKpis(params: {
   landingViewCount: number;
   certificateCount: number;
   stampCount: number;
+  surveyResponseCount: number;
   surveyCompletionRate: number | null;
   averageSatisfaction: number | null;
   estimatedMin: number | null;
@@ -533,7 +534,8 @@ function buildKpis(params: {
       value: formatCount(params.touristProfileCount),
       rawValue: params.touristProfileCount,
       valueType: "count",
-      definition: DASHBOARD_METRIC_DEFINITIONS.touristProfiles
+      definition: DASHBOARD_METRIC_DEFINITIONS.touristProfiles,
+      evidence: { level: "system_record", sampleSize: params.touristProfileCount, denominator: null, unit: "โปรไฟล์" }
     },
     {
       key: "total_visits",
@@ -541,7 +543,8 @@ function buildKpis(params: {
       value: formatCount(params.visitCount),
       rawValue: params.visitCount,
       valueType: "count",
-      definition: DASHBOARD_METRIC_DEFINITIONS.totalVisits
+      definition: DASHBOARD_METRIC_DEFINITIONS.totalVisits,
+      evidence: { level: "system_record", sampleSize: params.visitCount, denominator: null, unit: "รายการ" }
     },
     {
       key: "qr_scans",
@@ -565,7 +568,8 @@ function buildKpis(params: {
       value: formatCount(params.certificateCount),
       rawValue: params.certificateCount,
       valueType: "count",
-      definition: DASHBOARD_METRIC_DEFINITIONS.certificatesGenerated
+      definition: DASHBOARD_METRIC_DEFINITIONS.certificatesGenerated,
+      evidence: { level: "system_record", sampleSize: params.certificateCount, denominator: null, unit: "ใบ" }
     },
     {
       key: "stamps_earned",
@@ -581,7 +585,13 @@ function buildKpis(params: {
       value: formatPercentage(params.surveyCompletionRate),
       rawValue: params.surveyCompletionRate,
       valueType: "percentage",
-      definition: DASHBOARD_METRIC_DEFINITIONS.surveyCompletionRate
+      definition: DASHBOARD_METRIC_DEFINITIONS.surveyCompletionRate,
+      evidence: {
+        level: params.surveyCompletionRate === null ? "unavailable" : params.surveyResponseCount < DASHBOARD_MIN_SAMPLE_SIZE ? "limited" : "decision_ready",
+        sampleSize: params.surveyResponseCount,
+        denominator: params.certificateCount,
+        unit: "คำตอบ"
+      }
     },
     {
       key: "average_satisfaction",
@@ -589,7 +599,13 @@ function buildKpis(params: {
       value: formatRating(params.averageSatisfaction),
       rawValue: params.averageSatisfaction,
       valueType: "rating",
-      definition: DASHBOARD_METRIC_DEFINITIONS.averageSatisfaction
+      definition: DASHBOARD_METRIC_DEFINITIONS.averageSatisfaction,
+      evidence: {
+        level: params.averageSatisfaction === null ? "unavailable" : params.surveyResponseCount < DASHBOARD_MIN_SAMPLE_SIZE ? "limited" : "decision_ready",
+        sampleSize: params.surveyResponseCount,
+        denominator: null,
+        unit: "คำตอบ"
+      }
     },
     {
       key: "estimated_spending",
@@ -717,6 +733,7 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
     landingViewCount: eventCounts.get("landing_viewed") ?? 0,
     certificateCount: payload.certificates.length,
     stampCount: payload.stamps.length,
+    surveyResponseCount: payload.surveys.length,
     surveyCompletionRate,
     averageSatisfaction: satisfactionSection.averageOverall,
     estimatedMin: expenseSection.estimatedMin,
@@ -736,6 +753,7 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
       { key: "total_visits", rawValue: previousVisits.length },
       { key: "certificates_generated", rawValue: comparisonPayload.certificates.length },
       { key: "survey_completion_rate", rawValue: safeRate(comparisonPayload.surveys.length, comparisonPayload.certificates.length) },
+      { key: "average_satisfaction", rawValue: buildSatisfactionSection(comparisonPayload.surveys, []).averageOverall },
     ] : [];
     const status = comparisonPayload && !comparisonIsTruncated ? "ready" as const : "unavailable" as const;
 

@@ -29,3 +29,5 @@ The active design source is `docs/frontend/DASHBOARD_UI_SPEC.md`. The implementa
 - `DashboardFilters` keeps date, province, and attraction as the primary scope. District, attraction type, audience, travel behavior, and satisfaction filters live in the advanced panel; every applied dimension must also appear as a removable chip.
 - Executive previous-period comparison is opt-in. It uses the immediately preceding equal-length calendar range, does not run on the public evidence page, and keeps current-period results visible if the optional comparison query fails.
 - KPI count deltas use relative percentage change. Rate deltas use percentage points. Missing, zero-baseline, or truncated evidence cannot produce a directional percentage.
+- Executive KPI evidence distinguishes operational system records from survey evidence. Survey metrics show their answer count and denominator, and remain labelled as limited below the documented minimum sample.
+- `ExecutiveDecisionSummary` may describe the largest comparable KPI change, but its deterministic copy must state the metric boundary and avoid claiming why the change occurred.

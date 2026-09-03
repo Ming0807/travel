@@ -56,6 +56,25 @@ function comparisonText(comparison: DashboardMetricComparison, valueType: KpiVal
   return `${action} ${Math.abs(comparison.percentChange).toLocaleString("th-TH", { maximumFractionDigits: 1 })}% จากช่วงก่อน`;
 }
 
+function EvidenceLabel({ evidence }: { evidence: NonNullable<DashboardKpi["evidence"]> }) {
+  const label = {
+    system_record: "ข้อมูลระบบ",
+    limited: "หลักฐานยังน้อย",
+    decision_ready: "พร้อมใช้เชิงพรรณนา",
+    unavailable: "ยังไม่มีฐานข้อมูล",
+  }[evidence.level];
+  const base = `${evidence.sampleSize.toLocaleString("th-TH")} ${evidence.unit}`;
+  const denominator = evidence.denominator === null
+    ? ""
+    : ` / ฐาน ${evidence.denominator.toLocaleString("th-TH")}`;
+
+  return (
+    <p className={`mt-2 text-[10px] font-bold leading-4 ${evidence.level === "limited" ? "text-amber-700" : "text-slate-500"}`}>
+      {label}{evidence.level === "unavailable" ? "" : ` · ${base}${denominator}`}
+    </p>
+  );
+}
+
 export function KpiCard({
   metric,
   comparison,
@@ -128,6 +147,7 @@ export function KpiCard({
       </div>
       {metric.note && !noData ? <p className="mt-2 line-clamp-1 text-[11px] leading-4 text-slate-500">{metric.note}</p> : null}
       {!metric.note && context && !noData ? <p className="mt-2 line-clamp-1 text-[11px] leading-4 text-slate-500">{context}</p> : null}
+      {metric.evidence ? <EvidenceLabel evidence={metric.evidence} /> : null}
       {comparison && !noData ? (
         <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] font-semibold leading-4 text-slate-600">
           {comparisonText(comparison, metric.valueType)}

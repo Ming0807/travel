@@ -424,6 +424,12 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
 
     // Average satisfaction from 1 survey with score 4
     expect(result.kpis.find((k) => k.key === "average_satisfaction")?.value).toBe("4.0 / 5");
+    expect(result.kpis.find((k) => k.key === "average_satisfaction")?.evidence).toEqual({
+      level: "limited",
+      sampleSize: 1,
+      denominator: null,
+      unit: "คำตอบ",
+    });
 
     // Estimated spending from 1 expense with range 1,001-3,000
     expect(result.kpis.find((k) => k.key === "estimated_spending")?.value).toContain("Estimated");

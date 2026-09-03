@@ -11,6 +11,7 @@ const PRIMARY_KPIS = [
   "total_visits",
   "certificates_generated",
   "survey_completion_rate",
+  "average_satisfaction",
 ];
 
 export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
@@ -19,7 +20,7 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
 
   return (
     <section className="space-y-4" aria-labelledby="executive-overview-heading">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="ตัวชี้วัดหลัก">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="ตัวชี้วัดหลัก">
         {primaryMetrics.map((metric, index) => (
           <KpiCard
             key={metric.key}
@@ -37,7 +38,7 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
           <TrendChart points={data.executive.visitTrend} />
         </div>
         <div className="min-w-0">
-          <ExecutiveDecisionSummary insights={data.insights} />
+          <ExecutiveDecisionSummary comparison={data.comparison} insights={data.insights} kpis={data.kpis} />
         </div>
       </div>
 

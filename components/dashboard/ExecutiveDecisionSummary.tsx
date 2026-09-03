@@ -7,7 +7,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react/dist/ssr";
 import { localizeDashboardInsight } from "@/components/dashboard/dashboard-localization";
-import type { InsightCardData } from "@/types/dashboard";
+import type { DashboardComparison, DashboardKpi, InsightCardData } from "@/types/dashboard";
 
 const CATEGORY_META: Record<
   InsightCardData["category"],
@@ -26,8 +26,69 @@ const CONFIDENCE_LABELS: Record<InsightCardData["confidence"], string> = {
   low: "ความเชื่อมั่นต่ำ",
 };
 
-export function ExecutiveDecisionSummary({ insights }: { insights: InsightCardData[] }) {
+const CHANGE_COPY: Record<string, { label: string; meaning: string; action: string }> = {
+  tourist_profiles: {
+    label: "โปรไฟล์ที่เชื่อมกับการเข้าชม",
+    meaning: "สะท้อนจำนวนโปรไฟล์ในระบบ ไม่ใช่จำนวนคนที่ผ่านการยืนยันตัวตน และไม่ได้ยืนยันว่าเกิดจากมาตรการใด",
+    action: "เปิดดูกลุ่มนักท่องเที่ยวเพื่อตรวจว่าการเปลี่ยนแปลงเกิดในกลุ่มใด",
+  },
+  total_visits: {
+    label: "การเข้าชมที่บันทึก",
+    meaning: "สะท้อนรายการที่ผ่านขั้นข้อมูลขั้นต่ำ ไม่ใช่ยอดเปิดหน้าเว็บหรือสแกน QR และไม่ได้ยืนยันว่าเกิดจากมาตรการใด",
+    action: "เปิดดูพฤติกรรมการเดินทางและรายสถานที่เพื่อหาจุดที่การเปลี่ยนแปลงกระจุกตัว",
+  },
+  certificates_generated: {
+    label: "ใบประกาศที่สร้างสำเร็จ",
+    meaning: "สะท้อนการจบขั้นรับรางวัลในระบบ และไม่ได้ยืนยันว่าใบประกาศเป็นสาเหตุของพฤติกรรมถัดไป",
+    action: "เปิดดูเส้นทางผู้ใช้เพื่อตรวจ conversion ก่อนและหลังขั้นสร้างใบประกาศ",
+  },
+  survey_completion_rate: {
+    label: "อัตราตอบแบบสำรวจ",
+    meaning: "สะท้อนความครอบคลุมของคำตอบเมื่อเทียบกับใบประกาศ ไม่ได้ยืนยันว่าแรงจูงใจใดเป็นสาเหตุ",
+    action: "ตรวจจำนวนคำตอบและจุดหลุดในเส้นทางผู้ใช้ก่อนนำผลสำรวจไปตัดสินใจ",
+  },
+  average_satisfaction: {
+    label: "คะแนนความพึงพอใจเฉลี่ย",
+    meaning: "สะท้อนเฉพาะผู้ตอบแบบสำรวจในขอบเขตนี้ ไม่ใช่ความคิดเห็นของผู้เยี่ยมชมทั้งหมด และไม่ได้ยืนยันสาเหตุของการเปลี่ยนแปลง",
+    action: "เปิดดูคุณภาพประสบการณ์และรายสถานที่ พร้อมตรวจฐานคำตอบของแต่ละมิติ",
+  },
+};
+
+function formatChange(metric: DashboardKpi, change: NonNullable<DashboardComparison>["metrics"][string]) {
+  if (change.direction === "flat") return `${CHANGE_COPY[metric.key]?.label ?? metric.label}คงที่จากช่วงก่อน`;
+  const direction = change.direction === "up" ? "เพิ่มขึ้น" : "ลดลง";
+  if (metric.valueType === "percentage" && change.absoluteChange !== null) {
+    return `${CHANGE_COPY[metric.key]?.label ?? metric.label}${direction} ${Math.abs(change.absoluteChange * 100).toLocaleString("th-TH", { maximumFractionDigits: 1 })} จุดร้อยละ`;
+  }
+  if (metric.valueType === "rating" && change.absoluteChange !== null) {
+    return `${CHANGE_COPY[metric.key]?.label ?? metric.label}${direction} ${Math.abs(change.absoluteChange).toLocaleString("th-TH", { maximumFractionDigits: 1 })} คะแนน`;
+  }
+  return `${CHANGE_COPY[metric.key]?.label ?? metric.label}${direction} ${Math.abs(change.percentChange ?? 0).toLocaleString("th-TH", { maximumFractionDigits: 1 })}%`;
+}
+
+function buildChangeBrief(comparison: DashboardComparison | null | undefined, kpis: DashboardKpi[]) {
+  if (comparison?.status !== "ready") return null;
+  const candidates = kpis.flatMap((metric) => {
+    const change = comparison.metrics[metric.key];
+    if (!CHANGE_COPY[metric.key] || !change || !["up", "down", "flat"].includes(change.direction)) return [];
+    const magnitude = metric.valueType === "count"
+      ? Math.abs(change.percentChange ?? -1)
+      : Math.abs(change.absoluteChange ?? -1) * 100;
+    return [{ metric, change, magnitude }];
+  });
+  const selected = candidates.sort((left, right) => right.magnitude - left.magnitude)[0];
+  if (!selected) return null;
+  const copy = CHANGE_COPY[selected.metric.key];
+  return { ...copy, title: formatChange(selected.metric, selected.change) };
+}
+
+export function ExecutiveDecisionSummary({ comparison, insights, kpis = [] }: {
+  comparison?: DashboardComparison | null;
+  insights: InsightCardData[];
+  kpis?: DashboardKpi[];
+}) {
   const visible = insights.slice(0, 3).map(localizeDashboardInsight);
+  const changeBrief = buildChangeBrief(comparison, kpis);
 
   return (
     <section
@@ -47,12 +108,21 @@ export function ExecutiveDecisionSummary({ insights }: { insights: InsightCardDa
         </span>
       </div>
 
-      {visible.length === 0 ? (
+      {changeBrief ? (
+        <article className="border-b border-slate-200 bg-[#FFF7F3] px-4 py-3.5 sm:px-5">
+          <p className="text-[11px] font-black uppercase text-[#B94727]">สิ่งที่เปลี่ยนจากช่วงก่อน</p>
+          <h3 className="mt-1 text-sm font-black leading-5 text-slate-950">{changeBrief.title}</h3>
+          <p className="mt-1 text-xs leading-5 text-slate-600">{changeBrief.meaning}</p>
+          <p className="mt-2 flex items-start gap-1.5 text-xs font-semibold leading-5 text-[#0A6B62]"><ArrowRight aria-hidden="true" className="mt-0.5 shrink-0" size={14} weight="bold" />{changeBrief.action}</p>
+        </article>
+      ) : null}
+
+      {visible.length === 0 && !changeBrief ? (
         <div className="px-5 py-8 text-center">
           <p className="text-sm font-bold text-slate-800">ยังไม่มีประเด็นสรุป</p>
           <p className="mt-1 text-xs leading-5 text-slate-600">ระบบต้องมีข้อมูลเพียงพอก่อนจึงจะแสดงข้อสังเกตสำหรับวางแผน</p>
         </div>
-      ) : (
+      ) : visible.length > 0 ? (
         <ol className="space-y-2.5 p-3.5">
           {visible.map((insight, index) => {
             const meta = CATEGORY_META[insight.category];
@@ -79,7 +149,7 @@ export function ExecutiveDecisionSummary({ insights }: { insights: InsightCardDa
             );
           })}
         </ol>
-      )}
+      ) : null}
     </section>
   );
 }
