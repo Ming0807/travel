@@ -1,8 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { DashboardPageFailure } from "@/components/dashboard/DashboardPageFailure";
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
+import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { navGroups } from "@/components/admin/admin-nav-items";
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/admin/dashboard/expenses",
+}));
 
 describe("dashboard page foundation", () => {
   it("explains the page decision, visible scope, freshness and source", () => {
@@ -52,5 +58,34 @@ describe("dashboard page foundation", () => {
     render(<DashboardPageFailure error={{ code: "FORBIDDEN" }} />);
     expect(screen.getByRole("heading", { name: "ไม่มีสิทธิ์ดูข้อมูลส่วนนี้" })).toBeInTheDocument();
     expect(screen.queryByText("ยังไม่มีข้อมูล")).not.toBeInTheDocument();
+  });
+
+  it("uses one decision-oriented order and vocabulary across dashboard navigation", () => {
+    render(<DashboardTabs />);
+    const labels = screen.getAllByRole("link").map((link) => link.textContent?.trim());
+
+    expect(labels).toEqual([
+      "ภาพรวม",
+      "กลุ่มนักท่องเที่ยว",
+      "การเดินทาง",
+      "เส้นทางผู้ใช้",
+      "ประสบการณ์",
+      "ค่าใช้จ่าย",
+      "รายสถานที่",
+      "ความยั่งยืน",
+    ]);
+
+    const analyticsGroup = navGroups.find((group) => group.group === "วิเคราะห์และวิจัย");
+    expect(analyticsGroup?.items.map((item) => item.label)).toEqual([
+      "ภาพรวมการตัดสินใจ",
+      "กลุ่มนักท่องเที่ยว",
+      "พฤติกรรมการเดินทาง",
+      "เส้นทางผู้ใช้",
+      "คุณภาพประสบการณ์",
+      "สัญญาณค่าใช้จ่าย",
+      "วิเคราะห์รายสถานที่",
+      "ความยั่งยืนและข้อเสนอ",
+      "ศูนย์งานวิจัย",
+    ]);
   });
 });

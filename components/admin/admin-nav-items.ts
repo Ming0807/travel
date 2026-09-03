@@ -1,7 +1,6 @@
 import {
   SquaresFour,
   ChartLineUp,
-  FunnelSimple,
   Users,
   CalendarBlank,
   Star,
@@ -20,11 +19,9 @@ import {
   Scroll,
   EnvelopeSimple,
   Gear,
-  Smiley,
-  TreeEvergreen,
-  Wallet,
   Flask,
 } from "@phosphor-icons/react/dist/ssr";
+import { dashboardNavigation } from "@/components/dashboard/dashboard-navigation";
 
 type AdminNavIcon = typeof SquaresFour;
 
@@ -47,14 +44,12 @@ export const navGroups: NavGroup[] = [
     group: "ภาพรวม",
     items: [
       { href: "/admin", label: "ศูนย์ปฏิบัติการ", icon: SquaresFour, exact: true },
-      { href: "/admin/dashboard", label: "ภาพรวมการท่องเที่ยว", icon: ChartLineUp, exact: true },
-      { href: "/admin/dashboard/tourists", label: "โปรไฟล์นักท่องเที่ยว", icon: Users },
-      { href: "/admin/dashboard/visits", label: "พฤติกรรมการเดินทาง", icon: MapPinLine },
-      { href: "/admin/dashboard/attractions", label: "ประสิทธิภาพสถานที่", icon: MapPin },
-      { href: "/admin/dashboard/expenses", label: "เศรษฐกิจการท่องเที่ยว", icon: Wallet },
-      { href: "/admin/dashboard/satisfaction", label: "ความพึงพอใจ", icon: Smiley },
-      { href: "/admin/dashboard/funnel", label: "เส้นทางผู้ใช้งาน", icon: FunnelSimple },
-      { href: "/admin/dashboard/sustainability", label: "ความยั่งยืน", icon: TreeEvergreen },
+    ]
+  },
+  {
+    group: "วิเคราะห์และวิจัย",
+    items: [
+      ...dashboardNavigation.map(({ exact, href, icon, label }) => ({ href, label, icon, exact })),
       { href: "/admin/research", label: "ศูนย์งานวิจัย", icon: Flask, requiredAny: ["research.read"] },
     ]
   },

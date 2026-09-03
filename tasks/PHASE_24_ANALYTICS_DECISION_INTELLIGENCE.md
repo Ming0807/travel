@@ -72,7 +72,7 @@ The first screen of every area uses the same reading order:
 
 ### Task 24.2: Unified Navigation and Page States
 
-- [ ] Redesign dashboard navigation around the information architecture above while preserving existing route compatibility.
+- [x] Redesign dashboard navigation around the information architecture above while preserving existing route compatibility.
 - [x] Add one reusable page header with title, purpose, data-as-of time, freshness state, active scope, and page actions.
 - [x] Replace duplicated route-level dashboard service failure markup with shared typed page states.
 - [ ] Distinguish no records, filtered-to-zero, temporarily unavailable, permission denied, and incomplete-data states.

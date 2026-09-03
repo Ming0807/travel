@@ -23,3 +23,4 @@ The active design source is `docs/frontend/DASHBOARD_UI_SPEC.md`. The implementa
 - `DashboardPageHeader` owns the decision-oriented page title, date scope, data source, freshness timestamp, and page actions for the protected dashboard routes.
 - `DashboardPageFailure` maps validation, authentication, permission, and query failures to distinct recovery copy. A service failure must not be presented as an empty dataset.
 - `DashboardShell` composes the page foundation, navigation, shared filters, content, interpretation note, and alerts. New dimension pages must provide a typed `page` key instead of creating another local header.
+- `dashboard-navigation` is the single source for protected analytics route order, full sidebar labels, compact tab labels, and icons. Desktop and mobile navigation must not define separate analytics vocabulary.
