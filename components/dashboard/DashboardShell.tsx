@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { Database, Info } from "@phosphor-icons/react/dist/ssr";
+import { Info } from "@phosphor-icons/react/dist/ssr";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
+import { DashboardPageHeader, type DashboardPageKey } from "@/components/dashboard/DashboardPageHeader";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import type { DashboardViewModel } from "@/types/dashboard";
 
@@ -10,20 +11,34 @@ function filtersSig(filters: DashboardViewModel["filters"]): string {
   return `${filters.dateFrom}-${filters.dateTo}-${filters.provinceId ?? ""}-${filters.attractionId ?? ""}`;
 }
 
-export function DashboardShell({ data, children, header }: { data: DashboardViewModel; children: ReactNode; header?: ReactNode }) {
-  const sourceLabel = data.dataSource === "pre_aggregated" ? "ข้อมูลสรุปที่ประมวลผลแล้ว" : "ฐานข้อมูลปัจจุบัน";
-
+export function DashboardShell({
+  actions,
+  children,
+  data,
+  page,
+}: {
+  actions?: ReactNode;
+  children: ReactNode;
+  data: DashboardViewModel;
+  page: DashboardPageKey;
+}) {
   return (
     <AdminShell admin={{ displayName: data.viewer.displayName, email: data.viewer.email, permissions: data.viewer.permissions }}>
       <div className="min-w-0 space-y-4">
-        {header}
+        <DashboardPageHeader
+          actions={actions}
+          dataSource={data.dataSource}
+          filters={data.filters}
+          generatedAt={data.generatedAt}
+          page={page}
+          summaryRefreshTimestamp={data.summaryRefreshTimestamp}
+        />
         <DashboardTabs />
         <DashboardFilters filters={data.filters} options={data.referenceOptions} />
 
         {children}
 
         <footer className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-200 pt-3 text-[11px] font-semibold text-slate-500">
-          <span className="inline-flex items-center gap-1.5"><Database aria-hidden="true" size={14} />{sourceLabel}</span>
           <span>ขอบเขตนำร่อง: จังหวัดยะลา</span>
           <details className="relative ml-auto">
             <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1.5 rounded-[4px] px-2 text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D94717]">
