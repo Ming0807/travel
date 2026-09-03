@@ -26,20 +26,17 @@
 | `PHASE_16A_STORY_CMS_RECOMMENDATION_DASHBOARD_UX.md` | In progress (P2) | Full Story CMS, explainable recommendations, operational admin home, and analytical dashboard UX |
 | `PHASE_16B_YALA_ADMIN_ANALYTICS_PRODUCTION.md` | In progress (P2) | Yala-first launch scope, privacy-safe engagement, command center, and production analytics |
 | `PHASE_18_RESEARCH_EVALUATION_LAYER.md` | Core technical implementation complete | Versioned research consent, real-vs-simulated separation, system evaluation, operator decision tasks, and de-identified research analytics |
-| `PHASE_20_PUBLIC_HOMEPAGE_VISUAL_FIDELITY.md` | Ready for delegated implementation | Reference-led public homepage visual redesign with production logic preserved |
+| `PHASE_20_PUBLIC_HOMEPAGE_VISUAL_FIDELITY.md` | Implemented / route-by-route visual QA continues | Reference-led public homepage visual redesign with production logic preserved |
 | `PHASE_21_RESEARCH_PILOT_ACTIVATION.md` | Advisor direction approved / activation gated | Instrument freeze, ethics confirmation, pilot QA, and controlled field activation |
-| `PHASE_22_ATTRACTION_LEVEL_ANALYTICS.md` | Planned | Per-attraction operational, funnel, tourism, satisfaction, and improvement analytics |
+| `PHASE_22_ATTRACTION_LEVEL_ANALYTICS.md` | Implemented / production query-plan evidence pending | Per-attraction operational, funnel, tourism, satisfaction, and improvement analytics |
 | `PHASE_23_NFC_CHECKIN_CHANNEL.md` | Planned | NFC entry through the canonical QR/check-in flow with channel analytics and tag governance |
+| `PHASE_24_ANALYTICS_DECISION_INTELLIGENCE.md` | Planned / next engineering phase | Role-aware decision workspace, comparison, data quality, insight-to-action, research monitoring, and production analytics QA |
 
 ## Immediate Priority
 
-Proceed to Phase 13 preview/staging release verification. Run `PHASE_12A_ADMIN_E2E_QA.md` against the deployment before production sign-off.
+Start Phase 24 Tasks 24.1-24.3: reconcile the analytics backlog, lock the decision-question information architecture, and standardize filters, comparisons, URL scope, and page states before changing individual dashboard pages.
 
-Reason:
-
-- Core admin UX hardening is complete.
-- Authenticated local smoke now covers the real application without destructive mutations.
-- Preview/staging must still prove environment configuration, storage, migrations, and runtime behavior before production release.
+In parallel, continue the human-governed Phase 21 approval, ethics, instrument-freeze, and pilot-preparation evidence. Close the final Phase 22 production query-plan task as soon as the exact Supabase Session Pooler URL is available.
 
 ## P2 Product Expansion
 
@@ -62,8 +59,9 @@ The advisor has approved the research direction. Phase 18's generic technical fo
 
 ## Public Experience and Entry Channels
 
-Phase 20 is the next delegated visual batch. It changes public presentation only and must preserve production logic. Phase 22 adds decision-grade per-attraction analytics. Phase 23 adds NFC as a second physical entry channel into the same canonical check-in flow.
+Phase 20 public presentation is implemented and continues through route-by-route visual QA. Phase 22 provides the attraction-level analytics foundation. Phase 24 now hardens the complete analytics product before Phase 23 adds NFC as a second physical entry channel into the same canonical check-in flow.
 
 - `tasks/PHASE_20_PUBLIC_HOMEPAGE_VISUAL_FIDELITY.md`
 - `tasks/PHASE_22_ATTRACTION_LEVEL_ANALYTICS.md`
 - `tasks/PHASE_23_NFC_CHECKIN_CHANNEL.md`
+- `tasks/PHASE_24_ANALYTICS_DECISION_INTELLIGENCE.md`

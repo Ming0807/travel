@@ -1207,3 +1207,58 @@ Scheduled monthly dashboard report
 A dashboard is only valuable if its numbers are correct and its interpretation is honest.
 
 This dashboard must support real tourism planning, not just visual decoration.
+
+---
+
+## 35. Decision Question Matrix (Phase 24)
+
+Each analytics page must answer its primary question before showing secondary detail. Existing URLs remain stable while navigation labels and screen hierarchy follow this matrix.
+
+| Area | Primary decision question | First-view evidence | Required comparison | Primary next action |
+|---|---|---|---|---|
+| Executive overview | What needs attention now? | Five to seven outcome KPIs, freshness, quality, top priorities | Previous period; eligible attraction peer context | Open the highest-priority evidence or action |
+| Audience | Which aggregate visitor groups are participating? | Origin, age, and language with coverage | Prior period or one privacy-safe segment | Adjust content, language, or audience plan |
+| Journey and conversion | Where does the real participant flow lose people? | Ordered stage count, conversion, and drop-off with unit | Prior period, attraction, or verified entry channel | Investigate the highest supported drop-off |
+| Visitor experience | Which experience dimensions need improvement? | Overall and dimension scores with `n` and missingness | Prior period and eligible attraction peer | Create or link a reviewed improvement issue |
+| Economic signals | What self-reported spending patterns can inform planning? | Range/category distribution and response coverage | Prior period or privacy-safe visitor segment | Review product/package opportunity without revenue claims |
+| Attraction intelligence | What is happening at this attraction and what should follow? | Visit-safe KPIs, funnel, audience, experience, action status | Up to three eligible peers and previous period | Assign an owner, due date, baseline, and follow-up |
+| Sustainability and action center | Which evidence-backed issues or opportunities are most important? | Prioritized deterministic insights and confidence | Relevant baseline/peer where available | Accept, reject, or convert insight into tracked work |
+| Research quality | Is the pilot ready for final field collection? | Consent, completion, burden, version, suppression, and data quality | Collection mode and participant type, descriptively | Record go/no-go evidence and instrument freeze |
+| Public evidence | What can the public responsibly learn from the Yala pilot? | Small set of approved aggregates and limitations | Previous period only when enough points and sample exist | Explore public attractions or methodology |
+
+### 35.1 Shared Reading Order
+
+All protected analytics pages use this order:
+
+```text
+scope and freshness
+key outcome
+comparison
+evidence strength
+recommended next action
+drill-down and metric definition
+```
+
+### 35.2 Shared Comparison Rules
+
+- Previous-period comparison uses an immediately preceding range with equal calendar length.
+- Peer comparison includes only attractions that satisfy the documented scope, date alignment, privacy threshold, and metric availability rules.
+- A comparison displays its baseline, denominator, and eligibility note beside the result.
+- Descriptive differences must not be labelled statistically significant unless a separately approved statistical method is implemented and documented.
+- Suppressed, stale, or truncated results cannot generate directional narrative or action priority automatically.
+
+### 35.3 Shared Action Contract
+
+When a supported finding becomes an improvement issue, carry only aggregate and auditable context:
+
+```text
+metric key
+attraction ID when applicable
+date range
+filter signature
+baseline value and denominator
+evidence strength
+generated-at timestamp
+```
+
+Do not copy private comments, tourist identifiers, contact information, or media paths into the issue draft.
