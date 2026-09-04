@@ -52,6 +52,15 @@ Move the implemented Phase 18 research foundation into a controlled Yala pilot w
 - [ ] Review missingness, completion time, drop-off, reliability readiness, small-sample disclosure, and instrument changes.
 - [ ] Activate final collection only after all freeze evidence is recorded.
 
+### Task 21.9: Guided Research Operations UX (2026-09-04 Follow-up)
+
+- [ ] Implement the readiness-first, next-action workflow and reduce repeated
+  version/configuration entry without fabricating evidence or auto-freezing.
+- [ ] Recheck mobile consent/decline/resume/withdrawal and current-build staff roles.
+
+Detailed tasks 21.9a-e and release criteria are in
+`docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md`.
+
 ## Exit Gate
 
 Final collection begins only after the instrument/version freeze and required ethics/administrative approval are documented. Declining research must never block the normal tourist reward flow.

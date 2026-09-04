@@ -66,6 +66,17 @@ Allow authorized staff to analyze each attraction independently and translate vi
 - [x] Validate production data parity, entry-channel filters, low-sample suppression, aggregate CSV export, and authenticated desktop/mobile layouts.
 - [ ] Verify production query plans after replacing the IPv6-only direct database URL with the exact Session Pooler URL from Supabase Connect.
 
+### Task 22.11: Channel Intelligence and Operational UX (2026-09-04 Follow-up)
+
+- [ ] Add genuine searchable place/campaign labels and a clearer summary-to-action hierarchy.
+- [ ] Add QR/NFC session, trend and conversion panels after Phase 23 attribution is reliable.
+- [ ] Verify current-build drill-down/export/role/mobile parity and production performance.
+
+Detailed tasks 22.11a-f and metric/visual contracts are in
+`docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md`. Existing channel filters
+do not constitute completed channel-acquisition graphs. Historical channel
+values remain `unknown` unless supported by recorded evidence.
+
 ## Analytics Rules
 
 - Every metric states unit, denominator, date field, source table, calculation, and missing-data rule.

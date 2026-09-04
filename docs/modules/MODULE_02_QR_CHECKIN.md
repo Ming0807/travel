@@ -4,6 +4,16 @@
 
 **QR Check-in Module**
 
+### Phase 23 Extension Status (2026-09-04)
+
+NFC will reuse the canonical route with a registered public token:
+`/c/<code>?nfc=<uuid>`. ADR-010 defines revocation, immutable assignment and
+anti-reclassification rules. The current slice adds only a read-only registry
+resolver and migration; existing public routes do not yet consume NFC context.
+Do not install tags or claim NFC channel conversion until session attribution,
+canonical integration and device QA are complete. See Phase 23 tasks and
+`docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md`.
+
 ---
 
 ## 2. Module Purpose

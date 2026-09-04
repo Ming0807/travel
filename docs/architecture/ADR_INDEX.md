@@ -21,6 +21,7 @@ ADRs document significant architectural decisions, the context that led to them,
 | [ADR-007](adr/ADR_007_DASHBOARD_SUMMARY_TABLES.md) | Dashboard Summary Tables | Accepted | 2025-02 |
 | [ADR-008](adr/ADR_008_PRIVACY_BY_DESIGN.md) | Privacy by Design | Accepted | 2025-01 |
 | [ADR-009](adr/ADR_009_STORAGE_PROVIDER_STRATEGY.md) | Storage Provider Strategy | Accepted | 2026-05 |
+| [ADR-010](adr/ADR_010_NFC_CANONICAL_ENTRY.md) | NFC Canonical Entry and Revocable Registry | Accepted; rollout gated | 2026-09-04 |
 
 ---
 

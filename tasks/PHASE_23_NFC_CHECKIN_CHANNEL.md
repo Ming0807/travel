@@ -1,6 +1,6 @@
 # Phase 23: NFC Check-in Entry Channel
 
-Status: Planned
+Status: In progress; registry and read-only resolution foundation implemented locally. Public flow, channel graphs, staff provisioning, and device rollout remain gated.
 
 Priority: P1 field accessibility and channel resilience
 
@@ -16,15 +16,21 @@ NFC tags open the same canonical `/c/[code]` route used by QR. The resolved chec
 
 ### Task 23.1: NFC ADR and Threat Model
 
-- [ ] Define canonical URL payload, supported tags/devices, ownership, overlay/rewrite threats, verification, and incident response.
+- [x] Define canonical URL payload, device acceptance boundaries, ownership, overlay/rewrite threats, verification, and incident response in ADR-010.
 
 ### Task 23.2: Additive Data Contract
 
-- [ ] Define NFC tag registry, assignment, lifecycle, replacement, revocation, audit, and entry-channel fields.
+- [x] Define immutable tag assignments, verification, lifecycle, replacement, revocation, and atomic audit.
+- [x] Add an additive registry migration and a read-only typed repository with isolated PostgreSQL tests.
+- [ ] Apply and verify migration in staging before any public NFC activation.
+- [ ] Implement the entry-session/visit correlation contract and migration for channel analytics; preserve existing `visits.entry_channel` values.
 
 ### Task 23.3: Canonical Resolution
 
-- [ ] Route NFC through the existing `/c/[code]` resolver and record channel attribution without duplicating visits or rewards.
+- [x] Implement read-only NFC resolution using current QR availability checks; reject revoked, inactive, invalid, and reassigned tags without QR fallback.
+- [ ] Integrate `/c/[code]?nfc=<token>` behind a default-off rollout flag; do not emit `qr_scanned` for NFC.
+- [ ] Bind channel context to the entry session/code and revalidate on landing and submission.
+- [ ] Correlate entry, visit, and rewards with duplicate/retry protection and multi-tab tests.
 
 ### Task 23.4: Admin Provisioning UX
 
@@ -40,7 +46,12 @@ NFC tags open the same canonical `/c/[code]` route used by QR. The resolved chec
 
 ### Task 23.7: Channel Analytics
 
-- [ ] Compare QR, NFC, direct, and unknown entry conversion using correct session/visit denominators.
+- [ ] 23.7a: Add versioned server-recorded entry sessions, channel attribution, visit linkage, and retry deduplication before adding claims to graphs.
+- [ ] 23.7b: Calculate channel distribution and daily trends from distinct entry sessions; keep direct and unknown visible and admin imports separate.
+- [ ] 23.7c: Calculate session-to-visit/certificate/survey conversion on the same entry cohort and common as-of cutoff; display numerator, denominator, pending follow-ups, and missing linkage.
+- [ ] 23.7d: Add a compact channel comparison to executive overview and an expanded channel panel to attraction analytics, with shared Recharts tokens and accessible data tables.
+- [ ] 23.7e: Carry applied place/date/campaign/evidence filters through charts, drill-down, and CSV/XLSX; disable unavailable comparisons rather than inventing zeros.
+- [ ] 23.7f: Test unknown historical data, forged hints, repeated taps, low samples, suppression, and unequal cohort coverage; do not infer old channels retrospectively.
 
 ### Task 23.8: Security and Permission Tests
 
@@ -66,3 +77,19 @@ NFC tags open the same canonical `/c/[code]` route used by QR. The resolved chec
 - QR and NFC enter the same production flow and award the same idempotent rewards.
 - Analytics can compare entry channels with correct denominators.
 - Compromised tags can be revoked and replaced safely.
+
+## Current Delivery and Next Order
+
+Foundation: `20260904000000_add_nfc_tag_registry.sql`, `lib/nfc/contract.ts`,
+`lib/repositories/nfc-tag.repository.ts`, and `lib/services/nfc-checkin.service.ts`.
+No production route imports these new services yet. Do not encode or install
+tags until canonical-route integration and real-device QA pass. No SQL has been
+run against production by this batch.
+
+Next order: session/visit contract -> canonical integration and retry safety ->
+staff provisioning/public verification UX -> channel graphs -> device QA ->
+small controlled rollout. Phase 21 operational evidence continues in parallel;
+Phase 22/24 release gaps remain visible in the cross-phase readiness plan.
+
+See `docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md` for the chart design,
+metric definitions, UX priorities, and phase completion boundaries.

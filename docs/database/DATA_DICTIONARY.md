@@ -1814,3 +1814,52 @@ SELECT to_regprocedure(
   'public.sync_attraction_related_content_v2(bigint,text,bigint[],text,smallint)'
 ) AS related_content_rpc;
 ```
+
+## Phase 23 NFC Registry (Local Foundation, 2026-09-04)
+
+Migration: `20260904000000_add_nfc_tag_registry.sql`. Not applied to production
+by the implementation agent; no existing tourism rows or channel values change.
+
+### nfc_tags
+
+| Field/group | Meaning |
+|---|---|
+| nfc_tag_id | Internal UUID primary key; operational reference, not tourist identity |
+| public_token | Unique generated UUID for the public NDEF URL; public identifier, not authentication |
+| checkin_code_id | Existing canonical check-in assignment; FK with delete restriction |
+| code_snapshot, attraction_id_snapshot, photo_spot_id_snapshot, campaign_id_snapshot | Immutable provisioning context captured by trigger from the code; mismatch on later resolution is denied |
+| label | Required human asset label, 1-80 trimmed characters |
+| status | draft, active, inactive, revoked; revoked is terminal |
+| replaces_tag_id | Unique optional predecessor, which must already be revoked; new token/row required |
+| verification_reference, verified_by, verified_at | All-null or complete read-back evidence; recorded before activation and immutable once set |
+| revoked_at | Database timestamp required only for revoked status |
+| created_by, updated_by | Required staff actors, referencing admin_users |
+| last_change_reason | Required operational reason, max 500 characters; no tourist data |
+| created_at, updated_at, version | Database-maintained timestamps and monotonic per-tag revision |
+
+The campaign snapshot deliberately is not a live FK: it retains an immutable
+historical number and is compared against the live check-in code. No ownership
+or permission decision relies on it. Identity/code/location snapshots cannot be
+edited; create a replacement assignment instead. Check-in deletion and snapshot
+location deletion are restricted while referenced by registry history.
+
+### nfc_tag_events
+
+Append-only transactional audit: event UUID, tag FK, event type, previous/current
+status, version, actor, reason, timestamp. Unique `(nfc_tag_id, version)` prevents
+duplicate revisions. Lifecycle writes and audit insertion succeed or fail
+together. Event types: registered, verified, activated, deactivated, revoked,
+updated. These are operational events, not tourist funnel events.
+
+Both tables use RLS without anonymous/authenticated policies. Only service_role
+may read registry data or insert/update tags; event writes are restricted to the
+database trigger. Application delete is denied. The upcoming admin service must
+still authorize the logged-in actor before using service_role.
+
+Indexes: unique public token for point lookup; `(checkin_code_id, status)` for
+code management; `(status, created_at DESC)` for lifecycle lists; unique tag/event
+version for timeline order. No speculative analytics summary table is added.
+
+The read-only resolver is not a transaction authorizing a later visit write.
+Canonical integration must revalidate context at submission and define atomic
+session/visit correlation before NFC traffic is enabled.
