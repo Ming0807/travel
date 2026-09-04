@@ -5,7 +5,7 @@
 export function generateCsv(data: Array<Record<string, unknown>>): string {
   if (!data || data.length === 0) return "";
 
-  const headers = Object.keys(data[0]);
+  const headers = collectExportHeaders(data);
   
   const escapeCsv = (val: unknown) => {
     if (val === null || val === undefined) return '""';
@@ -24,6 +24,19 @@ export function generateCsv(data: Array<Record<string, unknown>>): string {
   // \uFEFF is the UTF-8 Byte Order Mark (BOM)
   const bom = "\uFEFF";
   return bom + [headerRow, ...bodyRows].join("\n");
+}
+
+export function collectExportHeaders(data: Array<Record<string, unknown>>): string[] {
+  const seen = new Set<string>();
+  const headers: string[] = [];
+  data.forEach((row) => {
+    Object.keys(row).forEach((key) => {
+      if (seen.has(key)) return;
+      seen.add(key);
+      headers.push(key);
+    });
+  });
+  return headers;
 }
 
 export function neutralizeFormulaValue(value: string): string {

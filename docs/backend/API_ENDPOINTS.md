@@ -138,3 +138,16 @@ LINE token
 | `GET` | `/api/admin/export/research` | Study-scoped CSV/XLSX datasets and codebook | `research.export` | Requires a frozen/approved study and explicit scope; participant codes replace internal IDs; every released subgroup must have at least 10 eligible sessions; raw free text is omitted and represented only by a presence/review flag; spreadsheet cells are protected; every success, denial, and failure is audited |
 
 Research participant mutations use server actions backed by service-role-only PostgreSQL functions. The browser never receives access-token hashes, withdrawal-token hashes, internal response IDs, tourist IDs, or visit IDs from these operations.
+
+## Phase 24 Dashboard Exports
+
+| Method | Path | Contract |
+|---|---|---|
+| `GET` | `/api/admin/dashboard/export` | Requires `dashboard.read` plus the existing export-type permission. Supports explicit `format=csv` or `format=xlsx`; other explicit formats return 400. Validated scope and quality gates are enforced server-side. |
+| `GET` | `/api/admin/dashboard/attractions/export` | Requires `dashboard.read` and `export.summary`. Uses the attraction/date/evidence/campaign/check-in/channel filter contract. Truncated reads return 409; fewer than the configured minimum visit sample return 422. |
+
+Reports embed title, selected scope, generation time, denominator, exclusions,
+suppression note, and metric version. Suppressed satisfaction denominators are
+withheld. Authenticated success and failure outcomes are audited without unknown
+query parameters or raw invalid filter values. A file must finish generating
+before a successful export audit event is recorded.

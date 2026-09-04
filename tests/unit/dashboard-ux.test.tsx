@@ -4,6 +4,7 @@ import { BarChartCard } from "@/components/dashboard/BarChartCard";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { DashboardSavedViews } from "@/components/dashboard/DashboardSavedViews";
 import { DonutChartCard } from "@/components/dashboard/DonutChartCard";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { KpiCard } from "@/components/dashboard/KpiCard";
@@ -12,11 +13,29 @@ import { localizeDashboardKpi } from "@/components/dashboard/dashboard-localizat
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 
 const mockPathname = vi.hoisted(() => ({ current: "/admin/dashboard/expenses" }));
+const mockSearchParams = vi.hoisted(() => ({ current: new URLSearchParams() }));
+const mockRouterPush = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname.current,
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => mockSearchParams.current,
+  useRouter: () => ({ push: mockRouterPush }),
 }));
+
+beforeEach(() => {
+  const values = new Map<string, string>();
+  Object.defineProperty(window, "localStorage", {
+    configurable: true,
+    value: {
+      clear: () => values.clear(),
+      getItem: (key: string) => values.get(key) ?? null,
+      key: (index: number) => Array.from(values.keys())[index] ?? null,
+      get length() { return values.size; },
+      removeItem: (key: string) => values.delete(key),
+      setItem: (key: string, value: string) => values.set(key, value),
+    },
+  });
+});
 
 describe("dashboard responsive actions", () => {
   it("keeps the export menu within the mobile viewport", () => {
@@ -90,6 +109,18 @@ describe("dashboard export privacy interactions", () => {
     anchorClick.mockRestore();
   });
 
+  it("lets the analyst choose XLSX and includes the format in the download URL", async () => {
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    openTouristExport();
+    fireEvent.click(screen.getByRole("radio", { name: "Excel (.xlsx)" }));
+    fireEvent.click(screen.getByRole("button", { name: /ดาวน์โหลด/ }));
+
+    const anchor = anchorClick.mock.instances[0] as HTMLAnchorElement;
+    expect(anchor.href).toContain("type=summary");
+    expect(anchor.href).toContain("format=xlsx");
+    anchorClick.mockRestore();
+  });
+
   it("keeps Tab focus inside the dialog", () => {
     openTouristExport();
     const dialog = screen.getByRole("dialog");
@@ -108,8 +139,71 @@ describe("dashboard export privacy interactions", () => {
 });
 
 afterEach(() => {
+  window.localStorage.clear();
   vi.unstubAllGlobals();
   mockPathname.current = "/admin/dashboard/expenses";
+  mockSearchParams.current = new URLSearchParams();
+  mockRouterPush.mockReset();
+});
+
+describe("dashboard saved aggregate views", () => {
+  it("saves the resolved date scope even when the URL uses defaults", () => {
+    render(<DashboardSavedViews filters={{ dateFrom: "2026-08-06", dateTo: "2026-09-04", evidenceScope: "field_claim" }} />);
+    fireEvent.click(screen.getByRole("button", { name: "บันทึกมุมมองนี้" }));
+    fireEvent.change(screen.getByLabelText("ชื่อมุมมอง"), { target: { value: "ช่วงที่ตรวจแล้ว" } });
+    fireEvent.click(screen.getByRole("button", { name: "ยืนยันการบันทึก" }));
+    expect(window.localStorage.getItem("dashboard.saved-views.v1")).toContain("date_from=2026-08-06&date_to=2026-09-04");
+  });
+
+  it("keeps presets usable when browser storage is unavailable", async () => {
+    const storage = window.localStorage;
+    Object.defineProperty(window, "localStorage", { configurable: true, get: () => { throw new Error("blocked"); } });
+    try {
+    render(<DashboardSavedViews />);
+    fireEvent.click(screen.getByRole("button", { name: "บันทึกมุมมองนี้" }));
+    fireEvent.change(screen.getByLabelText("ชื่อมุมมอง"), { target: { value: "Pilot" } });
+    fireEvent.click(screen.getByRole("button", { name: "ยืนยันการบันทึก" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("เบราว์เซอร์ไม่อนุญาต");
+    expect(screen.getByRole("link", { name: "ตรวจ Pilot" })).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "localStorage", { configurable: true, value: storage });
+    }
+  });
+  it("stores only safe aggregate filters and restores the selected view", async () => {
+    mockPathname.current = "/admin/dashboard/satisfaction";
+    mockSearchParams.current = new URLSearchParams(
+      "date_from=2026-08-01&date_to=2026-08-31&evidence_scope=pilot_only&email=person@example.com",
+    );
+    render(<DashboardSavedViews />);
+
+    fireEvent.click(screen.getByRole("button", { name: "บันทึกมุมมองนี้" }));
+    fireEvent.change(screen.getByLabelText("ชื่อมุมมอง"), { target: { value: "Pilot สิงหาคม" } });
+    fireEvent.click(screen.getByRole("button", { name: "ยืนยันการบันทึก" }));
+
+    const persisted = window.localStorage.getItem("dashboard.saved-views.v1") ?? "";
+    expect(persisted).toContain("Pilot สิงหาคม");
+    expect(persisted).toContain("evidence_scope=pilot_only");
+    expect(persisted).not.toContain("person@example.com");
+
+    fireEvent.click(await screen.findByRole("button", { name: "ใช้มุมมอง Pilot สิงหาคม" }));
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/admin/dashboard/satisfaction?date_from=2026-08-01&date_to=2026-08-31&evidence_scope=pilot_only",
+    );
+  });
+
+  it("offers safe field and pilot presets without discarding the date range", () => {
+    mockSearchParams.current = new URLSearchParams("date_from=2026-08-01&date_to=2026-08-31");
+    render(<DashboardSavedViews />);
+
+    expect(screen.getByRole("link", { name: "หลักฐานภาคสนาม" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("evidence_scope=field_claim"),
+    );
+    expect(screen.getByRole("link", { name: "ตรวจ Pilot" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("evidence_scope=pilot_only"),
+    );
+  });
 });
 
 describe("Dashboard UX ภาษาไทย", () => {

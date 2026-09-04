@@ -13,6 +13,12 @@ export function parseExportFormat(raw: string | null): ExportFormat {
   return "csv";
 }
 
+export function parseRequestedExportFormat(raw: string | null): ExportFormat | null {
+  if (raw === null || raw === "" || raw === "csv") return "csv";
+  if (raw === "xlsx") return "xlsx";
+  return null;
+}
+
 /**
  * Returns the appropriate file extension for the given export format.
  */

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   parseExportFormat,
+  parseRequestedExportFormat,
   exportExtension,
   exportFilename,
   // createExportResponse is tested separately because it requires NextResponse
@@ -36,6 +37,15 @@ describe("parseExportFormat", () => {
     expect(parseExportFormat("pdf")).toBe("csv");
     expect(parseExportFormat("json")).toBe("csv");
     expect(parseExportFormat("XLSX")).toBe("csv"); // case-sensitive
+  });
+});
+
+describe("parseRequestedExportFormat", () => {
+  it("defaults a missing format to CSV and rejects unsupported explicit formats", () => {
+    expect(parseRequestedExportFormat(null)).toBe("csv");
+    expect(parseRequestedExportFormat("csv")).toBe("csv");
+    expect(parseRequestedExportFormat("xlsx")).toBe("xlsx");
+    expect(parseRequestedExportFormat("pdf")).toBeNull();
   });
 });
 

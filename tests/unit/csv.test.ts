@@ -168,6 +168,16 @@ describe("generateCsv", () => {
     expect(csv).toBe('"name","age"\n"Alice","30"\n"Bob",""');
   });
 
+  it("preserves columns that first appear in later rows", () => {
+    const result = generateCsv([
+      { Section: "Metadata", Value: "scope" },
+      { Section: "Data", Value: 42, Denominator: 50, Note: "answered visits" },
+    ]).slice(1);
+
+    expect(result.split("\n")[0]).toBe('"Section","Value","Denominator","Note"');
+    expect(result).toContain('"Data","42","50","answered visits"');
+  });
+
   it("handles large datasets efficiently", () => {
     const data = Array.from({ length: 1000 }, (_, i) => ({
       id: i,

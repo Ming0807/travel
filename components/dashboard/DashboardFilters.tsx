@@ -70,6 +70,8 @@ function FilterSelect({
 }
 
 function ScoreSelect({ label, name, value }: { label: string; name: string; value?: number }) {
+  const scoreOptions = Array.from(new Set([1, 2, 3, 4, 5, ...(value === undefined ? [] : [value])])).sort((a, b) => a - b);
+
   return (
     <label className="block min-w-0">
       <span className="text-xs font-semibold text-slate-600">{label}</span>
@@ -79,7 +81,7 @@ function ScoreSelect({ label, name, value }: { label: string; name: string; valu
         name={name}
       >
         <option value="">ไม่กำหนด</option>
-        {[1, 2, 3, 4, 5].map((score) => <option key={score} value={score}>{score} / 5</option>)}
+        {scoreOptions.map((score) => <option key={score} value={score}>{score} / 5</option>)}
       </select>
     </label>
   );
@@ -178,8 +180,8 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
         </button>
 
         <div className={`${isOpen ? "block" : "hidden"} w-full min-w-0 lg:block lg:flex-1`} id="dashboard-filter-form">
-          <form action={pathname} className="space-y-3 lg:flex lg:items-end lg:gap-2 lg:space-y-0">
-            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-0 lg:flex-1 lg:grid-cols-4">
+          <form action={pathname} className="flex flex-wrap items-end gap-3 2xl:flex-nowrap 2xl:gap-2">
+            <div className="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:min-w-0 2xl:flex-1">
               <label className="block min-w-0">
                 <span className="text-xs font-semibold text-slate-600">ตั้งแต่วันที่</span>
                 <input className="mt-1 min-h-10 w-full rounded-[5px] border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15" defaultValue={filters.dateFrom} name="date_from" type="date" />
@@ -218,34 +220,38 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
                 ตัวกรองขั้นสูง{advancedFilterCount > 0 ? ` (${advancedFilterCount})` : ""}
                 <CaretDown aria-hidden="true" className={`transition-transform ${isAdvancedOpen ? "rotate-180" : ""}`} size={14} weight="bold" />
               </button>
-              {isAdvancedOpen ? (
-                <>
+              <>
+                {isAdvancedOpen ? (
                   <button aria-label="ปิดตัวกรองขั้นสูง" className="fixed inset-0 z-40 bg-slate-950/35 lg:hidden" onClick={() => setIsAdvancedOpen(false)} type="button" />
-                  <div
-                    aria-label="ตัวกรองขั้นสูง"
-                    className="fixed inset-x-3 bottom-3 z-50 max-h-[min(80dvh,42rem)] overflow-y-auto rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.18)] sm:grid-cols-2 lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-0 lg:top-full lg:z-30 lg:mt-2 lg:grid lg:w-[min(54rem,calc(100vw-18rem))] lg:gap-3 lg:shadow-[0_4px_8px_rgba(23,23,23,0.10)]"
-                    id="dashboard-advanced-filters"
-                    role="region"
-                  >
-                    <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-3 sm:col-span-2 lg:mb-0">
-                      <div><p className="text-sm font-black text-slate-900">ตัวกรองขั้นสูง</p><p className="mt-1 text-xs leading-5 text-slate-500">ใช้เพื่อเปรียบเทียบกลุ่มข้อมูลเฉพาะ ค่าที่ไม่ตอบจะไม่ถูกแทนด้วยศูนย์</p></div>
-                      <button aria-label="ปิดแผงตัวกรองขั้นสูง" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-slate-500 hover:bg-slate-100" onClick={() => setIsAdvancedOpen(false)} type="button"><X aria-hidden="true" size={18} weight="bold" /></button>
-                    </div>
-                    <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2 lg:grid-cols-4">
-                      <FilterSelect label="อำเภอปลายทาง" name="district_id" options={options.districts} value={filters.districtId} />
-                <FilterSelect label="ประเภทสถานที่" name="attraction_type_id" options={options.attractionTypes} value={filters.attractionTypeId} />
-                <FilterSelect label="ประเทศต้นทาง" name="origin_country_id" options={options.originCountries} value={filters.originCountryId} />
-                <FilterSelect label="จังหวัดต้นทาง" name="origin_province_id" options={options.originProvinces} value={filters.originProvinceId} />
-                <FilterSelect label="ช่วงอายุ" name="age_group" options={options.ageGroups} value={filters.ageGroup} />
-                <FilterSelect label="พาหนะ" name="transport_mode_id" options={options.transportModes} value={filters.transportModeId} />
-                <FilterSelect label="วัตถุประสงค์การเดินทาง" name="travel_purpose_id" options={options.travelPurposes} value={filters.travelPurposeId} />
-                      <FilterSelect label="ขอบเขตหลักฐาน" name="evidence_scope" options={EVIDENCE_SCOPE_OPTIONS} value={filters.evidenceScope ?? "field_claim"} />
-                      <ScoreSelect label="คะแนนขั้นต่ำ" name="satisfaction_min" value={filters.satisfactionMin} />
-                      <ScoreSelect label="คะแนนสูงสุด" name="satisfaction_max" value={filters.satisfactionMax} />
-                    </div>
+                ) : null}
+                <div
+                  aria-hidden={!isAdvancedOpen}
+                  aria-label="ตัวกรองขั้นสูง"
+                  className={`${isAdvancedOpen ? "block lg:grid" : "hidden"} fixed inset-x-3 bottom-3 z-50 max-h-[min(80dvh,42rem)] overflow-y-auto rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.18)] lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-0 lg:top-full lg:z-30 lg:mt-2 lg:w-[min(54rem,calc(100vw-18rem))] lg:gap-3 lg:shadow-[0_4px_8px_rgba(23,23,23,0.10)]`}
+                  id="dashboard-advanced-filters"
+                  role="region"
+                >
+                  <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-3 sm:col-span-2 lg:mb-0">
+                    <div><p className="text-sm font-black text-slate-900">ตัวกรองขั้นสูง</p><p className="mt-1 text-xs leading-5 text-slate-500">ใช้เพื่อเปรียบเทียบกลุ่มข้อมูลเฉพาะ ค่าที่ไม่ตอบจะไม่ถูกแทนด้วยศูนย์</p></div>
+                    <button aria-label="ปิดแผงตัวกรองขั้นสูง" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-slate-500 hover:bg-slate-100" onClick={() => setIsAdvancedOpen(false)} type="button"><X aria-hidden="true" size={18} weight="bold" /></button>
                   </div>
-                </>
-              ) : null}
+                  <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2 lg:grid-cols-4">
+                    <FilterSelect label="อำเภอปลายทาง" name="district_id" options={options.districts} value={filters.districtId} />
+                    <FilterSelect label="ประเภทสถานที่" name="attraction_type_id" options={options.attractionTypes} value={filters.attractionTypeId} />
+                    <FilterSelect label="ประเทศต้นทาง" name="origin_country_id" options={options.originCountries} value={filters.originCountryId} />
+                    <FilterSelect label="จังหวัดต้นทาง" name="origin_province_id" options={options.originProvinces} value={filters.originProvinceId} />
+                    <FilterSelect label="ช่วงอายุ" name="age_group" options={options.ageGroups} value={filters.ageGroup} />
+                    <FilterSelect label="พาหนะ" name="transport_mode_id" options={options.transportModes} value={filters.transportModeId} />
+                    <FilterSelect label="วัตถุประสงค์การเดินทาง" name="travel_purpose_id" options={options.travelPurposes} value={filters.travelPurposeId} />
+                    <FilterSelect label="ขอบเขตหลักฐาน" name="evidence_scope" options={EVIDENCE_SCOPE_OPTIONS} value={filters.evidenceScope ?? "field_claim"} />
+                    <ScoreSelect label="คะแนนขั้นต่ำ" name="satisfaction_min" value={filters.satisfactionMin} />
+                    <ScoreSelect label="คะแนนสูงสุด" name="satisfaction_max" value={filters.satisfactionMax} />
+                  </div>
+                  <div className="sticky bottom-0 mt-4 border-t border-slate-200 bg-white/95 pt-3 backdrop-blur lg:hidden">
+                    <button className="min-h-11 w-full rounded-[5px] bg-[#171717] px-4 text-sm font-bold text-white transition-colors hover:bg-[#B94727] focus:outline-none focus:ring-2 focus:ring-[#B94727] focus:ring-offset-2" type="submit">ใช้ตัวกรองขั้นสูง</button>
+                  </div>
+                </div>
+              </>
             </div>
           </form>
         </div>

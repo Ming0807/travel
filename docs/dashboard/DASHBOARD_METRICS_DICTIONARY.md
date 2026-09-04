@@ -2532,6 +2532,27 @@ Quality failures become explicit collection tasks: narrow the date/geography sco
 
 Dashboard export routes enforce the same gates on the server and audit quality-gate failures. UI-disabled export controls are explanatory only and are not the security boundary.
 
+### 49.4 Export reproducibility metadata
+
+Every dashboard CSV/XLSX export embeds the following context on each analytical
+row: report title, canonical selected filter scope, evidence scope, generated-at
+time, report denominator, exclusions, suppression note, and metric version.
+The current general dashboard metric version is `dashboard-2026.09-v1`.
+
+Canonical export and saved-view filters are limited to date range, comparison
+mode, evidence scope, destination province/district/attraction/type, origin
+country/province, age group, transport mode, travel purpose, and satisfaction
+range. Unknown parameters and personal identifiers are discarded before audit
+or browser-local persistence.
+
+For attraction-level exports, the selected attraction, date range, evidence
+scope, campaign, check-in code, and entry channel come from the validated
+attraction analytics contract. When the selected attraction has fewer than 10
+Visits, the whole export is blocked (HTTP 422), preventing disclosure through
+another section. Dimension-level cells retain their answered-count suppression
+rules, including withheld satisfaction denominators. `SUPPRESSED` means
+withheld for privacy, not zero and not missing.
+
 ---
 
 ## 50. Research Pilot Monitoring Contract

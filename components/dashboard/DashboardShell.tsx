@@ -5,6 +5,7 @@ import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardPageHeader, type DashboardPageKey } from "@/components/dashboard/DashboardPageHeader";
 import { DashboardQualityCenter } from "@/components/dashboard/DashboardQualityCenter";
+import { DashboardSavedViews } from "@/components/dashboard/DashboardSavedViews";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import type { DashboardViewModel } from "@/types/dashboard";
 
@@ -45,7 +46,8 @@ export function DashboardShell({
         />
         <Suspense fallback={<DashboardControlsFallback />}>
           <DashboardTabs />
-          <DashboardFilters filters={data.filters} options={data.referenceOptions} />
+          <DashboardFilters key={JSON.stringify(data.filters)} filters={data.filters} options={data.referenceOptions} />
+          <DashboardSavedViews filters={data.filters} />
         </Suspense>
 
         {data.quality ? <DashboardQualityCenter quality={data.quality} /> : null}

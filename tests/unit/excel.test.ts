@@ -82,6 +82,26 @@ describe("generateXlsx", () => {
     expect(buf.length).toBeGreaterThan(200);
   });
 
+  it("preserves columns that first appear in later rows", async () => {
+    const buf = await generateXlsx([
+      { Section: "Metadata", Value: "scope" },
+      { Section: "Data", Value: 42, Denominator: 50, Note: "answered visits" },
+    ]);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buf as unknown as Parameters<typeof workbook.xlsx.load>[0]);
+    const worksheet = workbook.getWorksheet("Export");
+
+    expect(worksheet?.getRow(1).values).toEqual([
+      undefined,
+      "Section",
+      "Value",
+      "Denominator",
+      "Note",
+    ]);
+    expect(worksheet?.getCell("C3").value).toBe("50");
+    expect(worksheet?.getCell("D3").value).toBe("answered visits");
+  });
+
   it("handles very long string values (>60 chars)", async () => {
     const longString = "A".repeat(200);
     const buf = await generateXlsx([{ id: 1, description: longString }]);

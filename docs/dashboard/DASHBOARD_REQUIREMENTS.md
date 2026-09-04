@@ -1325,3 +1325,36 @@ Mixed instrument versions, a missing freeze snapshot, a truncated read, failed
 burden gates, or missing required activation evidence prevent the workspace from
 showing a field-ready state. “Ready for review” remains a human review state and
 does not automatically create a `ready_for_field` Pilot decision.
+
+### 35.7 Reproducible Reports and Saved Views
+
+Protected dashboard pages provide two fixed evidence presets (`field_claim` and
+`pilot_only`) and up to 12 browser-local named views. A saved view contains only
+the protected dashboard pathname, a canonical allowlist of aggregate filters,
+its display name, and creation time. It never stores metric output, respondent
+identifiers, contact data, tokens, comments, or media paths. Saved views are
+device/browser conveniences and are not shared research records.
+Resolved date boundaries are saved even when the current URL uses default dates.
+Blocked browser storage must leave evidence presets and the dashboard usable,
+and must not claim a view was saved successfully.
+
+CSV and XLSX remain analytical formats. Every exported row carries the report
+title, canonical selected scope, evidence-scope label, generated-at time,
+report denominator, exclusions, suppression note, and metric version so the
+file remains interpretable away from the application. Export generators use
+the union of columns across all rows; metadata cannot cause later analytical
+columns to disappear.
+
+All authenticated export outcomes are audited, including success, invalid
+filters, unsupported formats, permission denial, quality-gate failure, missing
+attractions, and server failure. Audit metadata uses validated or allowlisted
+filters only. Unknown query parameters and raw invalid values are never copied
+to the audit log. Attraction reports below the configured minimum visit sample
+are blocked as a whole so other sections cannot disclose the withheld base.
+Suppressed satisfaction dimensions also withhold their answered denominator.
+Successful audit entries are recorded only after file generation succeeds.
+
+PDF is a presentation format only. It must not be enabled until the executive
+brief and attraction-improvement print layouts pass authenticated browser
+rendering checks against the same visible metrics. Screenshots are not research
+datasets or analytical exports.

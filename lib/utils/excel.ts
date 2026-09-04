@@ -1,6 +1,6 @@
 import "server-only";
 import ExcelJS from "exceljs";
-import { neutralizeFormulaValue } from "./csv";
+import { collectExportHeaders, neutralizeFormulaValue } from "./csv";
 
 /**
  * Converts an array of flat row objects into an XLSX workbook Buffer.
@@ -33,7 +33,7 @@ export async function generateXlsx(
 
   const worksheet = workbook.addWorksheet("Export");
 
-  const headers = Object.keys(data[0]);
+  const headers = collectExportHeaders(data);
 
   // Define columns with initial width guess
   worksheet.columns = headers.map((header) => ({

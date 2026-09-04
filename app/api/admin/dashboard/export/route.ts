@@ -14,12 +14,20 @@ import { parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 import type { DashboardFilters } from "@/types/dashboard";
 import {
   createExportResponse,
-  parseExportFormat,
+  parseRequestedExportFormat,
   type ExportFormat,
 } from "@/lib/utils/export-response";
 import { firstJoin, type SupabaseJoin } from "@/lib/utils/supabase-joins";
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import { DASHBOARD_EXPORT_MIN_SAMPLE, dashboardExportBlockReason } from "@/lib/dashboard/dashboard-quality";
+import {
+  attachDashboardExportMetadata,
+  buildDashboardExportMetadata,
+} from "@/lib/dashboard/dashboard-export-metadata";
+import {
+  dashboardFiltersToSafeQuery,
+  sanitizeDashboardQuery,
+} from "@/lib/dashboard/dashboard-saved-views";
 
 type DashboardExportRecord = Record<string, unknown>;
 type DashboardExportType = "summary" | "expenses" | "tourists" | "visits" | "surveys";
@@ -65,6 +73,20 @@ function dashboardFilename(type: DashboardExportType): string {
   return `dashboard_export_${type}_${datePrefix}`;
 }
 
+const EXPORT_TITLES: Record<DashboardExportType, string> = {
+  summary: "รายงานสรุปภาพรวมการท่องเที่ยว",
+  expenses: "สัญญาณค่าใช้จ่ายที่รายงานด้วยตนเอง",
+  tourists: "โปรไฟล์นักท่องเที่ยวแบบไม่ระบุตัวบุคคล",
+  visits: "รายการเข้าชมแบบไม่ระบุตัวบุคคล",
+  surveys: "ผลแบบสำรวจแบบไม่ระบุตัวบุคคล",
+};
+
+const RAW_EXPORT_EXCLUSIONS: Record<Exclude<DashboardExportType, "summary" | "expenses">, string[]> = {
+  tourists: ["ชื่อ อีเมล เบอร์โทร รหัสตัวตน และโทเคน", "โปรไฟล์ที่ไม่มี Visit ในช่วงที่เลือก"],
+  visits: ["ชื่อ อีเมล เบอร์โทร รหัสตัวตน และโทเคน", "QR scan ที่ยังไม่สร้าง Visit"],
+  surveys: ["ข้อมูลระบุตัวบุคคลและโทเคน", "ความคิดเห็นอิสระที่อาจมีข้อมูลส่วนบุคคล", "คำตอบว่างจากตัวหารรายมิติ"],
+};
+
 async function respondWithAudit(
   rows: Array<Record<string, unknown>>,
   type: DashboardExportType,
@@ -73,6 +95,7 @@ async function respondWithAudit(
   filters: Record<string, string>,
 ) {
   const exportRows = rows.length === 0 ? [{ Message: "No data available" }] : rows;
+  const response = await createExportResponse(exportRows, dashboardFilename(type), format);
 
   await logAuditAction({
     actor: guard.actor,
@@ -87,7 +110,7 @@ async function respondWithAudit(
     },
   });
 
-  return await createExportResponse(exportRows, dashboardFilename(type), format);
+  return response;
 }
 
 async function respondBlockedExport(
@@ -118,6 +141,7 @@ export async function GET(request: Request) {
   let exportType: DashboardExportType | null = null;
   let format: ExportFormat = "csv";
   let filtersForAudit: Record<string, string> = {};
+  let parsedFilters: DashboardFilters | null = null;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -125,19 +149,39 @@ export async function GET(request: Request) {
     searchParams.forEach((value, key) => {
       params[key] = value;
     });
-    filtersForAudit = { ...params };
+    filtersForAudit = sanitizeDashboardQuery(searchParams);
 
-    format = parseExportFormat(searchParams.get("format"));
+    const requestedFormat = parseRequestedExportFormat(searchParams.get("format"));
+    format = requestedFormat ?? "csv";
     exportType = parseExportType(params.type);
+
+    try {
+      guard = await requirePermission("dashboard.read");
+    } catch (error) {
+      const err = mapAdminError(error as AdminAuthError);
+      return new NextResponse(err.message, { status: err.code === "UNAUTHORIZED" ? 401 : 403 });
+    }
+
+    if (!requestedFormat) {
+      await logAuditAction({ actor: guard.actor, action: "export.dashboard.invalid", entityType: "dashboard_export", result: "failed", metadata: { reason: "invalid_format" } });
+      return new NextResponse("Unsupported export format", { status: 400 });
+    }
     if (!exportType) {
+      await logAuditAction({ actor: guard.actor, action: "export.dashboard.invalid", entityType: "dashboard_export", result: "failed", metadata: { reason: "invalid_export_type" } });
       return new NextResponse("Unknown export type", { status: 400 });
     }
 
     try {
-      await requirePermission("dashboard.read");
       guard = await requirePermission(permissionForExportType(exportType));
     } catch (error) {
       const err = mapAdminError(error as AdminAuthError);
+      await logAuditAction({
+        actor: guard.actor,
+        action: `export.dashboard.${exportType}.${format}`,
+        entityType: "dashboard_export",
+        result: "failed",
+        metadata: { exportType, reason: "permission_denied" },
+      });
       return new NextResponse(err.message, { status: err.code === "UNAUTHORIZED" ? 401 : 403 });
     }
 
@@ -151,15 +195,20 @@ export async function GET(request: Request) {
         metadata: {
           exportType,
           format,
-          filters: filtersForAudit,
           reason: "invalid_filters",
         },
       });
       return new NextResponse("Invalid filters", { status: 400 });
     }
+    parsedFilters = parsed.data as DashboardFilters;
+    filtersForAudit = dashboardFiltersToSafeQuery(parsedFilters);
+    if (!filtersForAudit.date_from || !filtersForAudit.date_to || (parsedFilters.ageGroup && !filtersForAudit.age_group)) {
+      await logAuditAction({ actor: guard.actor, action: `export.dashboard.${exportType}.${format}`, entityType: "dashboard_export", result: "failed", metadata: { exportType, format, reason: "invalid_filters" } });
+      return new NextResponse("Invalid filters", { status: 400 });
+    }
 
     if (exportType === "expenses") {
-      const data = await getDashboardAnalytics(params, "expenses");
+      const data = await getDashboardAnalytics(filtersForAudit, "expenses");
       const qualityReason = dashboardExportBlockReason(data.quality);
       if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
       const rows: Array<Record<string, unknown>> = [
@@ -201,11 +250,17 @@ export async function GET(request: Request) {
         },
       ];
 
-      return await respondWithAudit(rows, exportType, format, guard, filtersForAudit);
+      const exportRows = attachDashboardExportMetadata(rows, buildDashboardExportMetadata({
+        title: EXPORT_TITLES.expenses,
+        generatedAt: data.generatedAt,
+        filters: parsedFilters,
+        quality: data.quality,
+      }));
+      return await respondWithAudit(exportRows, exportType, format, guard, filtersForAudit);
     }
 
     if (exportType === "summary") {
-      const data = await getDashboardAnalytics(params, "executive");
+      const data = await getDashboardAnalytics(filtersForAudit, "executive");
       const qualityReason = dashboardExportBlockReason(data.quality);
       if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
       const rows = data.executive.topAttractions.map((attr) => ({
@@ -216,14 +271,19 @@ export async function GET(request: Request) {
         Certificates: attr.certificateCount,
         Surveys: attr.surveyResponseCount,
         "Average Satisfaction": attr.averageSatisfaction ?? "",
-        "Generated At": data.generatedAt,
         Note: "Dashboard summary export uses aggregated planning metrics only",
       }));
 
-      return await respondWithAudit(rows, exportType, format, guard, filtersForAudit);
+      const exportRows = attachDashboardExportMetadata(rows, buildDashboardExportMetadata({
+        title: EXPORT_TITLES.summary,
+        generatedAt: data.generatedAt,
+        filters: parsedFilters,
+        quality: data.quality,
+      }));
+      return await respondWithAudit(exportRows, exportType, format, guard, filtersForAudit);
     }
 
-    const payload = await getDashboardRepositoryPayload(parsed.data as DashboardFilters, exportType);
+    const payload = await getDashboardRepositoryPayload(parsedFilters, exportType);
 
     if (exportType === "tourists") {
       const uniqueTourists = new Map<string, DashboardExportRecord>();
@@ -248,7 +308,14 @@ export async function GET(request: Request) {
       const qualityReason = rawExportBlockReason(payload.isTruncated, rows.length);
       if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
 
-      return await respondWithAudit(rows, exportType, format, guard, filtersForAudit);
+      const exportRows = attachDashboardExportMetadata(rows, buildDashboardExportMetadata({
+        title: EXPORT_TITLES.tourists,
+        generatedAt: new Date().toISOString(),
+        filters: parsedFilters,
+        denominator: rows.length,
+        exclusions: RAW_EXPORT_EXCLUSIONS.tourists,
+      }));
+      return await respondWithAudit(exportRows, exportType, format, guard, filtersForAudit);
     }
 
     if (exportType === "visits") {
@@ -280,7 +347,14 @@ export async function GET(request: Request) {
       const qualityReason = rawExportBlockReason(payload.isTruncated, rows.length);
       if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
 
-      return await respondWithAudit(rows, exportType, format, guard, filtersForAudit);
+      const exportRows = attachDashboardExportMetadata(rows, buildDashboardExportMetadata({
+        title: EXPORT_TITLES.visits,
+        generatedAt: new Date().toISOString(),
+        filters: parsedFilters,
+        denominator: rows.length,
+        exclusions: RAW_EXPORT_EXCLUSIONS.visits,
+      }));
+      return await respondWithAudit(exportRows, exportType, format, guard, filtersForAudit);
     }
 
     const rows = payload.surveys.map((s) => {
@@ -308,7 +382,14 @@ export async function GET(request: Request) {
     const qualityReason = rawExportBlockReason(payload.isTruncated, rows.length);
     if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
 
-    return await respondWithAudit(rows, exportType, format, guard, filtersForAudit);
+    const exportRows = attachDashboardExportMetadata(rows, buildDashboardExportMetadata({
+      title: EXPORT_TITLES.surveys,
+      generatedAt: new Date().toISOString(),
+      filters: parsedFilters,
+      denominator: rows.length,
+      exclusions: RAW_EXPORT_EXCLUSIONS.surveys,
+    }));
+    return await respondWithAudit(exportRows, exportType, format, guard, filtersForAudit);
   } catch (error) {
     if (guard && exportType) {
       await logAuditAction({
