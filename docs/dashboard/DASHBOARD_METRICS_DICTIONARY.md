@@ -2531,3 +2531,46 @@ When a module has no meaningful response-coverage denominator, such as an event 
 Quality failures become explicit collection tasks: narrow the date/geography scope after truncation, collect more records below the sample target, inspect form abandonment when missingness reaches 30%, keep suppressed groups hidden until they pass privacy thresholds, and separate mixed field/pilot/simulated scopes before external reporting. These tasks do not create automatic causal recommendations.
 
 Dashboard export routes enforce the same gates on the server and audit quality-gate failures. UI-disabled export controls are explanatory only and are not the security boundary.
+
+---
+
+## 50. Research Pilot Monitoring Contract
+
+The protected research workspace presents Pilot evidence in the order required
+for a go/no-go review: recruitment availability, consented sessions, eligible
+sessions, evaluation starts, evaluation submissions, construct evidence, and
+operator decision-task outcomes. Units must remain explicit: research sessions
+are not invitations, and operator task attempts are not unique participants.
+
+### 50.1 Evaluation burden and abandonment
+
+| Metric | Calculation | Pilot gate |
+|---|---|---|
+| Evaluation started | Distinct eligible research sessions with a `research_responses` row | Denominator for evaluation completion |
+| Evaluation submitted | Distinct eligible sessions with a submitted response | Numerator for evaluation completion |
+| Evaluation completion | Submitted sessions / started sessions | At least 80% when `n >= 10` |
+| Median evaluation time | Median non-null `research_responses.duration_seconds` among submitted responses | At most 240 seconds when `n >= 10` |
+| Section reached | A session answered an item in the section, reached a later section, or submitted the response | Used only for ordered Pilot UX monitoring |
+| Section drop-off | `(previous section count - current section count) / previous section count` | `null` with zero denominator; hidden when the preceding cell is below 10 |
+| Required-item missingness | Missing submitted responses / submitted responses for each required item | Worst item at most 5% when `n >= 10` |
+
+Section order comes from the immutable instrument item display order. Sections
+from an instrument with no response in the selected scope are excluded. This is
+an operational abandonment signal, not a clinical or causal measure.
+
+### 50.2 Instrument and comparison controls
+
+- Observed response versions are listed beside the expected published/frozen
+  versions and the immutable freeze snapshot ID.
+- Mixed or unexpected instrument versions block a field-ready review; the UI
+  must not aggregate them as one instrument without an explicit version scope.
+- Collection-mode and participant-type comparisons are descriptive only.
+- A comparison group below `n=10` hides its sample, completion rate, and median
+  duration instead of displaying a small cell.
+- Recruitment conversion remains unavailable until the system has an approved,
+  de-identified invitation denominator linked to the study. Consented sessions
+  must never be presented as all invited participants.
+
+The readiness checklist links each result to the corresponding scope,
+instrument banner, burden panel, operator outcomes, freeze state, or recorded
+activation evidence. It never turns free-text rationale into automatic proof.

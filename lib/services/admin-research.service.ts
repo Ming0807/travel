@@ -285,11 +285,303 @@ const FUNNEL_STEPS = [
   { key: "evaluation_submitted", label: "ส่งแบบประเมินระบบ" },
 ] as const;
 
+const EVALUATION_THRESHOLDS = {
+  completionRatePercent: 80,
+  medianSeconds: 240,
+  maximumRequiredItemMissingnessPercent: 5,
+} as const;
+
+const EVALUATION_SECTION_LABELS: Record<string, string> = {
+  system_quality: "คุณภาพระบบ",
+  information_quality: "คุณภาพข้อมูล",
+  perceived_ease_of_use: "ความง่ายในการใช้งาน",
+  perceived_usefulness: "ประโยชน์ที่รับรู้",
+  engagement: "ประสบการณ์และแรงจูงใจ",
+  privacy_trust: "ความเป็นส่วนตัวและความเชื่อมั่น",
+  user_satisfaction: "ความพึงพอใจต่อระบบ",
+  behavioral_intention: "ความตั้งใจใช้งานต่อ",
+  incentive_engagement: "แรงจูงใจจากรางวัล",
+  incentive: "ใบประกาศ ตราประทับ และอันดับ",
+  comment: "ความคิดเห็นเพิ่มเติม",
+};
+
+type PilotGateStatus = "pass" | "fail" | "insufficient_sample" | "no_data";
+
+function percentage(numerator: number, denominator: number) {
+  return denominator > 0 ? round((numerator / denominator) * 100, 1) : null;
+}
+
+function dropoff(previous: number, current: number) {
+  return previous > 0 ? round((Math.max(0, previous - current) / previous) * 100, 1) : null;
+}
+
+function thresholdGate(value: number | null, sampleSize: number, comparator: (candidate: number) => boolean): PilotGateStatus {
+  if (value === null) return "no_data";
+  if (sampleSize < RESEARCH_SMALL_CELL_THRESHOLD) return "insufficient_sample";
+  return comparator(value) ? "pass" : "fail";
+}
+
+function buildEvaluationFlow(rows: ResearchAnalyticsRows, eligibleIds: Set<string>) {
+  const responses = rows.responses.filter((response) => eligibleIds.has(response.researchSessionId));
+  const submitted = responses.filter((response) => response.status === "submitted");
+  const startedSessionIds = new Set(responses.map((response) => response.researchSessionId));
+  const submittedSessionIds = new Set(submitted.map((response) => response.researchSessionId));
+  const responseById = new Map(responses.map((response) => [response.researchResponseId, response]));
+  const observedInstrumentIds = new Set(responses.map((response) => response.instrumentId));
+  const instrumentsById = new Map(rows.instruments.map((instrument) => [instrument.researchInstrumentId, instrument]));
+  const observedContracts = new Set([...observedInstrumentIds].flatMap((id) => {
+    const instrument = instrumentsById.get(id);
+    return instrument ? [`${instrument.instrumentKey}:${instrument.audience}`] : [];
+  }));
+  const stageAnalysisAvailable = observedContracts.size <= 1;
+  const answeredItemIdsByResponse = new Map<string, Set<string>>();
+
+  rows.answers.forEach((answer) => {
+    if (!responseById.has(answer.responseId)) return;
+    const answered = answeredItemIdsByResponse.get(answer.responseId) ?? new Set<string>();
+    answered.add(answer.itemId);
+    answeredItemIdsByResponse.set(answer.responseId, answered);
+  });
+
+  const sectionOrder = new Map<string, number>();
+  rows.items.forEach((item) => {
+    if (!observedInstrumentIds.has(item.instrumentId)) return;
+    sectionOrder.set(item.constructKey, Math.min(sectionOrder.get(item.constructKey) ?? Number.POSITIVE_INFINITY, item.displayOrder));
+  });
+  const sections = [...sectionOrder.entries()].sort((left, right) => left[1] - right[1] || left[0].localeCompare(right[0]));
+  const reachedBySection = new Map(sections.map(([key]) => [key, new Set<string>()]));
+
+  responses.forEach((response) => {
+    const instrumentSections = sections.filter(([key]) => rows.items.some((item) => item.instrumentId === response.instrumentId && item.constructKey === key));
+    const answeredIds = answeredItemIdsByResponse.get(response.researchResponseId) ?? new Set<string>();
+    const answeredSectionIndexes = instrumentSections.flatMap(([key], index) =>
+      rows.items.some((item) => item.instrumentId === response.instrumentId && item.constructKey === key && answeredIds.has(item.researchItemId)) ? [index] : [],
+    );
+    const furthestIndex = response.status === "submitted"
+      ? instrumentSections.length - 1
+      : answeredSectionIndexes.length > 0
+        ? Math.max(...answeredSectionIndexes)
+        : -1;
+    instrumentSections.forEach(([key], index) => {
+      if (index <= furthestIndex) reachedBySection.get(key)?.add(response.researchSessionId);
+    });
+  });
+
+  const stageCounts = stageAnalysisAvailable
+    ? [
+      { key: "evaluation_started", label: "เริ่มแบบประเมิน", count: startedSessionIds.size },
+      ...sections.map(([key]) => ({ key, label: EVALUATION_SECTION_LABELS[key] ?? key, count: reachedBySection.get(key)?.size ?? 0 })),
+      { key: "evaluation_submitted", label: "ส่งแบบประเมินสำเร็จ", count: submittedSessionIds.size },
+    ]
+    : [
+      { key: "evaluation_started", label: "เริ่มแบบประเมิน", count: startedSessionIds.size },
+      { key: "evaluation_submitted", label: "ส่งแบบประเมินสำเร็จ", count: submittedSessionIds.size },
+    ];
+  const stages = stageCounts.map((stage, index) => ({
+    ...stage,
+    rateFromStarted: percentage(stage.count, startedSessionIds.size),
+    dropoffFromPrevious: index === 0 ? null : dropoff(stageCounts[index - 1].count, stage.count),
+    suppressed: index > 0 && stageCounts[index - 1].count < RESEARCH_SMALL_CELL_THRESHOLD,
+  }));
+
+  const durations = submitted.map((response) => response.durationSeconds).filter((value): value is number => value !== null);
+  const medianSeconds = median(durations);
+  const completionRate = percentage(submittedSessionIds.size, startedSessionIds.size);
+  const requiredMissingness = rows.items
+    .filter((item) => item.isRequired)
+    .flatMap((item) => {
+      const instrumentResponses = submitted.filter((response) => response.instrumentId === item.instrumentId);
+      if (instrumentResponses.length === 0) return [];
+      const answered = instrumentResponses.filter((response) => answeredItemIdsByResponse.get(response.researchResponseId)?.has(item.researchItemId)).length;
+      return [{ itemCode: item.itemCode, rate: round(((instrumentResponses.length - answered) / instrumentResponses.length) * 100, 1) }];
+    });
+  const worstRequiredItem = requiredMissingness.sort((left, right) => right.rate - left.rate || left.itemCode.localeCompare(right.itemCode))[0] ?? null;
+
+  return {
+    started: startedSessionIds.size,
+    submitted: submittedSessionIds.size,
+    completionRate,
+    medianSeconds,
+    durationSampleSize: durations.length,
+    worstRequiredItemMissingness: worstRequiredItem?.rate ?? null,
+    worstRequiredItemCode: worstRequiredItem?.itemCode ?? null,
+    thresholds: EVALUATION_THRESHOLDS,
+    gates: {
+      completion: thresholdGate(completionRate, startedSessionIds.size, (value) => value >= EVALUATION_THRESHOLDS.completionRatePercent),
+      duration: thresholdGate(medianSeconds, durations.length, (value) => value <= EVALUATION_THRESHOLDS.medianSeconds),
+      requiredItemMissingness: thresholdGate(worstRequiredItem?.rate ?? null, submittedSessionIds.size, (value) => value <= EVALUATION_THRESHOLDS.maximumRequiredItemMissingnessPercent),
+    },
+    stageAnalysisAvailable,
+    stageAnalysisLimitation: stageAnalysisAvailable
+      ? null
+      : "ขอบเขตนี้มีแบบประเมินมากกว่าหนึ่งประเภท โปรดกรองประเภทผู้เข้าร่วมก่อนตีความ drop-off รายส่วน",
+    stages,
+  };
+}
+
+function buildDescriptiveGroups(
+  rows: ResearchAnalyticsRows,
+  eligible: ResearchAnalyticsRows["sessions"],
+  submittedSessionIds: Set<string>,
+  dimension: "collectionMode" | "participantType",
+) {
+  const keys = [...new Set(eligible.map((session) => session[dimension]))].sort();
+  return keys.map((key) => {
+    const groupSessions = eligible.filter((session) => session[dimension] === key);
+    const groupIds = new Set(groupSessions.map((session) => session.researchSessionId));
+    const submittedCount = [...groupIds].filter((id) => submittedSessionIds.has(id)).length;
+    const durations = rows.responses
+      .filter((response) => groupIds.has(response.researchSessionId) && response.status === "submitted" && response.durationSeconds !== null)
+      .map((response) => response.durationSeconds as number);
+    const suppressed = groupSessions.length < RESEARCH_SMALL_CELL_THRESHOLD;
+    return {
+      key,
+      suppressed,
+      sampleSize: suppressed ? null : groupSessions.length,
+      completionRate: suppressed ? null : percentage(submittedCount, groupSessions.length),
+      medianSeconds: suppressed || durations.length < RESEARCH_SMALL_CELL_THRESHOLD ? null : median(durations),
+      durationSampleSize: suppressed ? null : durations.length,
+    };
+  });
+}
+
+function instrumentLabel(instrument: ResearchAnalyticsRows["instruments"][number]) {
+  return `${instrument.instrumentKey} v${instrument.versionNumber} (${instrument.audience})`;
+}
+
+function buildInstrumentControl(rows: ResearchAnalyticsRows) {
+  const instrumentById = new Map(rows.instruments.map((instrument) => [instrument.researchInstrumentId, instrument]));
+  const scopedAudiences = new Set(rows.sessions.map((session) => session.participantType));
+  const expected = rows.instruments.filter((instrument) => instrument.status === "published" && Boolean(instrument.frozenAt) && (scopedAudiences.size === 0 || scopedAudiences.has(instrument.audience)));
+  const observedIds = new Set(rows.responses.map((response) => response.instrumentId));
+  const observed = [...observedIds].map((id) => instrumentById.get(id)).filter((instrument): instrument is NonNullable<typeof instrument> => Boolean(instrument));
+  const expectedIds = new Set(expected.map((instrument) => instrument.researchInstrumentId));
+  const versionsByContract = new Map<string, Set<number>>();
+  observed.forEach((instrument) => {
+    const key = `${instrument.instrumentKey}:${instrument.audience}`;
+    const versions = versionsByContract.get(key) ?? new Set<number>();
+    versions.add(instrument.versionNumber);
+    versionsByContract.set(key, versions);
+  });
+  const mixedVersions = [...versionsByContract.values()].some((versions) => versions.size > 1);
+  const hasUnexpectedVersion = observed.some((instrument) => !expectedIds.has(instrument.researchInstrumentId));
+  const freezeStatus = rows.governance?.freezeSnapshotId ? "frozen" as const : "not_frozen" as const;
+  const status = observed.length === 0
+    ? "no_responses" as const
+    : freezeStatus === "not_frozen"
+      ? "not_frozen" as const
+      : mixedVersions
+        ? "mixed" as const
+        : hasUnexpectedVersion
+          ? "mismatch" as const
+          : "aligned" as const;
+  return {
+    freezeStatus,
+    freezeSnapshotId: rows.governance?.freezeSnapshotId ?? null,
+    expectedVersions: expected.map(instrumentLabel).sort(),
+    observedVersions: observed.map(instrumentLabel).sort(),
+    mixedVersions,
+    hasUnexpectedVersion,
+    status,
+  };
+}
+
+function buildPilotReadiness(
+  rows: ResearchAnalyticsRows,
+  eligibleCount: number,
+  evaluationFlow: ReturnType<typeof buildEvaluationFlow>,
+  instrumentControl: ReturnType<typeof buildInstrumentControl>,
+  operatorAssessedCount: number,
+) {
+  const evidenceByType = new Map(rows.governance?.activationEvidence.map((evidence) => [evidence.evidenceType, evidence]) ?? []);
+  const evidenceItem = (key: "expert_review" | "cognitive_pretest" | "mobile_flow_qa", label: string) => {
+    const evidence = evidenceByType.get(key);
+    const ready = Boolean(evidence && ["passed", "not_required"].includes(evidence.status));
+    return {
+      key,
+      label,
+      ready,
+      evidenceLabel: evidence ? `${evidence.reference} · ${evidence.status}` : "ยังไม่มีหลักฐานที่บันทึก",
+      evidenceHref: `#research-evidence-${key}`,
+    };
+  };
+  const configuredOperatorTasks = rows.operatorTasks.length > 0;
+  const items = [
+    {
+      key: "bounded_read",
+      label: "ชุดข้อมูลไม่ถูกตัดทอน",
+      ready: !rows.truncated,
+      evidenceLabel: rows.truncated ? "เกินขีดจำกัด 5,000 sessions" : "อ่านข้อมูลในขอบเขตครบ",
+      evidenceHref: "#research-scope",
+    },
+    {
+      key: "sample_size",
+      label: "ขนาดกลุ่มผ่านเกณฑ์เปิดเผย",
+      ready: eligibleCount >= RESEARCH_SMALL_CELL_THRESHOLD,
+      evidenceLabel: eligibleCount >= RESEARCH_SMALL_CELL_THRESHOLD ? `n=${eligibleCount} sessions` : `n<${RESEARCH_SMALL_CELL_THRESHOLD} ยังสรุปไม่ได้`,
+      evidenceHref: "#research-participant-sequence",
+    },
+    {
+      key: "instrument_alignment",
+      label: "ใช้เครื่องมือรุ่นเดียวและตรงกับ Freeze",
+      ready: instrumentControl.status === "aligned",
+      evidenceLabel: instrumentControl.status === "aligned" ? instrumentControl.observedVersions.join(", ") : `สถานะ ${instrumentControl.status}`,
+      evidenceHref: "#research-instrument-control",
+    },
+    {
+      key: "evaluation_completion",
+      label: "ผู้เริ่มตอบส่งสำเร็จอย่างน้อย 80%",
+      ready: evaluationFlow.gates.completion === "pass",
+      evidenceLabel: evaluationFlow.completionRate === null ? "ยังไม่มีตัวหาร" : `${evaluationFlow.completionRate}% จาก ${evaluationFlow.started} sessions`,
+      evidenceHref: "#research-evaluation-flow",
+    },
+    {
+      key: "evaluation_burden",
+      label: "เวลามัธยฐานไม่เกิน 4 นาที",
+      ready: evaluationFlow.gates.duration === "pass",
+      evidenceLabel: evaluationFlow.medianSeconds === null ? "ยังไม่มีข้อมูลเวลา" : `${evaluationFlow.medianSeconds} วินาที · n=${evaluationFlow.durationSampleSize}`,
+      evidenceHref: "#research-evaluation-flow",
+    },
+    {
+      key: "required_item_missingness",
+      label: "ข้อบังคับขาดหายไม่เกิน 5%",
+      ready: evaluationFlow.gates.requiredItemMissingness === "pass",
+      evidenceLabel: evaluationFlow.worstRequiredItemMissingness === null ? "ยังไม่มี response ที่ตรวจได้" : `${evaluationFlow.worstRequiredItemCode}: ${evaluationFlow.worstRequiredItemMissingness}%`,
+      evidenceHref: "#research-evaluation-flow",
+    },
+    ...(configuredOperatorTasks ? [{
+      key: "operator_outcomes",
+      label: "ผลโจทย์ตัดสินใจผ่านเกณฑ์เปิดเผย",
+      ready: operatorAssessedCount >= RESEARCH_SMALL_CELL_THRESHOLD,
+      evidenceLabel: operatorAssessedCount >= RESEARCH_SMALL_CELL_THRESHOLD ? `ตรวจแล้ว ${operatorAssessedCount} attempts` : `ตรวจแล้วน้อยกว่า ${RESEARCH_SMALL_CELL_THRESHOLD} attempts`,
+      evidenceHref: "#research-operator-outcomes",
+    }] : []),
+    evidenceItem("expert_review", "ผู้เชี่ยวชาญตรวจเครื่องมือ"),
+    evidenceItem("cognitive_pretest", "ผ่าน Cognitive pretest"),
+    evidenceItem("mobile_flow_qa", "ผ่าน Mobile E2E"),
+    {
+      key: "review_state",
+      label: "พักหรือปิด Pilot ก่อนตัดสิน",
+      ready: ["paused", "closed"].includes(rows.governance?.studyStatus ?? ""),
+      evidenceLabel: rows.governance?.studyStatus ? `สถานะโครงการ: ${rows.governance.studyStatus}` : "ไม่มีข้อมูลสถานะโครงการ",
+      evidenceHref: "#research-activation-control",
+    },
+  ];
+  const readyCount = items.filter((item) => item.ready).length;
+  return {
+    decision: readyCount === items.length ? "ready_for_review" as const : "not_ready" as const,
+    readyCount,
+    totalCount: items.length,
+    items,
+  };
+}
+
 export function summarizeResearchAnalytics(rows: ResearchAnalyticsRows, filters: AdminResearchAnalyticsFilters) {
   const eligible = rows.sessions.filter((session) => session.inclusionStatus !== "excluded" && !["withdrawn", "excluded", "expired"].includes(session.status));
   const eligibleIds = new Set(eligible.map((session) => session.researchSessionId));
   const submitted = rows.responses.filter((response) => response.status === "submitted" && eligibleIds.has(response.researchSessionId));
   const submittedSessionIds = new Set(submitted.map((response) => response.researchSessionId));
+  const evaluationFlow = buildEvaluationFlow(rows, eligibleIds);
   const eventSessions = new Map<string, Set<string>>();
   for (const event of rows.funnelEvents) {
     if (!eligibleIds.has(event.researchSessionId)) continue;
@@ -332,15 +624,24 @@ export function summarizeResearchAnalytics(rows: ResearchAnalyticsRows, filters:
     .filter((instrument) => submittedInstrumentIds.has(instrument.researchInstrumentId))
     .map((instrument) => `${instrument.instrumentKey} v${instrument.versionNumber} (${instrument.audience})`)
     .sort();
+  const instrumentControl = buildInstrumentControl(rows);
   const evaluationDurations = submitted
     .map((response) => response.durationSeconds)
     .filter((value): value is number => value !== null);
+  const pilotReadiness = buildPilotReadiness(rows, eligible.length, evaluationFlow, instrumentControl, operatorAssessed.length);
+  const recruitment: { available: boolean; count: number | null; limitation: string } = {
+    available: false,
+    count: null,
+    limitation: "ระบบยังไม่มีตัวหารจำนวนผู้ได้รับเชิญก่อน consent ที่เชื่อมแบบไม่ระบุตัวตน จึงไม่คำนวณ recruitment conversion",
+  };
   return {
     scope: {
       dateFrom: filters.dateFrom,
       dateTo: filters.dateTo,
       collectionModes: filters.collectionModes,
       participantType: filters.participantType ?? "all",
+      studyKind: rows.governance?.studyKind ?? null,
+      studyStatus: rows.governance?.studyStatus ?? null,
       smallCellThreshold: RESEARCH_SMALL_CELL_THRESHOLD,
       unit: "research_session",
       instrumentVersions,
@@ -358,7 +659,23 @@ export function summarizeResearchAnalytics(rows: ResearchAnalyticsRows, filters:
       requiredResponseCount: submitted.length,
     },
     funnel,
+    researchSequence: {
+      recruitment,
+      consented: rows.sessions.length,
+      eligible: eligible.length,
+      evaluationStarted: evaluationFlow.started,
+      evaluationSubmitted: evaluationFlow.submitted,
+      operatorAttemptsCompleted: operatorCompleted.length,
+    },
+    evaluationFlow,
     constructs: buildConstructMetrics(rows, eligibleIds),
+    comparisons: {
+      collectionModes: buildDescriptiveGroups(rows, eligible, submittedSessionIds, "collectionMode"),
+      participantTypes: buildDescriptiveGroups(rows, eligible, submittedSessionIds, "participantType"),
+      interpretation: "เปรียบเทียบเชิงพรรณนาภายในกลุ่มตัวอย่างเท่านั้น กลุ่ม n<10 ถูกปกปิดและไม่ใช้สรุปเหตุและผล",
+    },
+    instrumentControl,
+    pilotReadiness,
     incentives: {
       certificateRecipients: certificateSessions.size,
       tourismSurveyCompleters: intersectionCount(certificateSessions, surveySessions),

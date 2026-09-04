@@ -263,6 +263,12 @@ export type ResearchAnalyticsRows = {
   operatorAttempts: ResearchAnalyticsOperatorAttemptRow[];
   tourismRows: ResearchAnalyticsTourismRow[];
   truncated: boolean;
+  governance?: {
+    studyKind: ResearchStudyKind;
+    studyStatus: ResearchStudyStatus;
+    freezeSnapshotId: string | null;
+    activationEvidence: Array<Pick<AdminResearchActivationEvidence, "evidenceId" | "evidenceType" | "status" | "reference">>;
+  };
 };
 
 export type ResearchAnalyticsQuery = {
@@ -1016,5 +1022,16 @@ export async function getResearchAnalyticsRows(query: ResearchAnalyticsQuery): P
       };
     }),
     truncated,
+    governance: {
+      studyKind: study.study.studyKind,
+      studyStatus: study.study.status,
+      freezeSnapshotId: study.freezeSnapshot?.snapshotId ?? null,
+      activationEvidence: study.activationEvidence.map((evidence) => ({
+        evidenceId: evidence.evidenceId,
+        evidenceType: evidence.evidenceType,
+        status: evidence.status,
+        reference: evidence.reference,
+      })),
+    },
   };
 }

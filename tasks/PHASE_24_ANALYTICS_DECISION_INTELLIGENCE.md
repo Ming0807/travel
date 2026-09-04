@@ -1,6 +1,6 @@
 # Phase 24: Production Analytics Decision Intelligence
 
-Status: In progress; Tasks 24.3-24.7 have production slices implemented and verified
+Status: In progress; Tasks 24.3-24.8 have production slices implemented and verified
 
 Priority: P1 production decision support and research readiness
 
@@ -137,11 +137,11 @@ The first screen of every area uses the same reading order:
 
 ### Task 24.8: Research Pilot Monitoring
 
-- [ ] Separate participant recruitment, consent, completion, instrument burden, construct scores, and operator decision-task outcomes into a clear research sequence.
-- [ ] Add abandonment by evaluation step and median completion time against the approved pilot threshold.
-- [ ] Compare collection modes and participant types only as descriptive associations with suppression applied.
-- [ ] Add an instrument-version and freeze-status banner so mixed versions cannot be interpreted as one instrument accidentally.
-- [ ] Produce a pilot readiness checklist that links evidence records rather than relying on free-text claims.
+- [x] Separate participant recruitment, consent, completion, instrument burden, construct scores, and operator decision-task outcomes into a clear research sequence.
+- [x] Add abandonment by evaluation step and median completion time against the approved pilot threshold.
+- [x] Compare collection modes and participant types only as descriptive associations with suppression applied.
+- [x] Add an instrument-version and freeze-status banner so mixed versions cannot be interpreted as one instrument accidentally.
+- [x] Produce a pilot readiness checklist that links evidence records rather than relying on free-text claims.
 
 **Acceptance:** the research team can make an evidence-based go/no-go decision before final field collection.
 

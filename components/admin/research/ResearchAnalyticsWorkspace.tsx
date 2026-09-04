@@ -1,9 +1,10 @@
 "use client";
 
-import { Certificate, ChartBar, Clock, FunnelSimple, IdentificationCard, ShieldCheck, UsersThree, Warning } from "@phosphor-icons/react/dist/ssr";
+import { Certificate, FunnelSimple, IdentificationCard, Warning } from "@phosphor-icons/react/dist/ssr";
 import { Bar, BarChart, CartesianGrid, Cell, Funnel, FunnelChart, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import type { ResearchAnalyticsViewModel } from "@/lib/services/admin-research.service";
+import { ResearchPilotMonitoring } from "@/components/admin/research/ResearchPilotMonitoring";
 
 const CONSTRUCT_LABELS: Record<string, string> = {
   system_quality: "คุณภาพระบบ",
@@ -84,7 +85,7 @@ function ConstructScoreChart({ constructs }: { constructs: ResearchAnalyticsView
 export function ResearchAnalyticsWorkspace({ analytics }: { analytics: ResearchAnalyticsViewModel }) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 border-l-2 border-[#B94727] bg-[#FFF7F3] px-4 py-3 text-sm text-slate-700 lg:flex-row lg:items-center lg:justify-between">
+      <div id="research-scope" className="scroll-mt-24 flex flex-col gap-3 border-l-2 border-[#B94727] bg-[#FFF7F3] px-4 py-3 text-sm text-slate-700 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p><strong>ขอบเขต:</strong> {analytics.scope.dateFrom} ถึง {analytics.scope.dateTo} · หน่วยวิเคราะห์ Research session · เกณฑ์ปกปิด n &lt; {analytics.scope.smallCellThreshold}</p>
           <p className="mt-1 text-xs text-slate-600"><strong>รุ่นแบบประเมินในผลลัพธ์:</strong> {analytics.scope.instrumentVersions.length > 0 ? analytics.scope.instrumentVersions.join(", ") : "ยังไม่มี response ที่ส่งสำเร็จ"}</p>
@@ -94,12 +95,14 @@ export function ResearchAnalyticsWorkspace({ analytics }: { analytics: ResearchA
 
       {analytics.truncated ? <p role="alert" className="flex items-center gap-2 border border-amber-300 bg-amber-50 p-4 text-sm font-bold text-amber-900"><Warning aria-hidden="true" /> ผลลัพธ์เกินขีดจำกัด 5,000 sessions กรุณาลดช่วงวันที่ก่อนตีความหรือส่งออก</p> : null}
 
-      <section className="grid gap-px border border-[var(--admin-border)] bg-[var(--admin-border)] sm:grid-cols-2 xl:grid-cols-4" aria-label="ตัวชี้วัดงานวิจัย">
-        <div className="bg-white p-5"><UsersThree aria-hidden="true" size={21} className="text-[#B94727]" /><p className="mt-3 text-xs font-bold text-slate-500">ยินยอม / เข้าเกณฑ์</p><p className="mt-1 text-2xl font-black">{analytics.kpis.consented.toLocaleString("th-TH")} / {analytics.kpis.eligible.toLocaleString("th-TH")}</p></div>
-        <div className="bg-white p-5"><ShieldCheck aria-hidden="true" size={21} className="text-[#B94727]" /><p className="mt-3 text-xs font-bold text-slate-500">ส่งแบบประเมินสำเร็จ</p><p className="mt-1 text-2xl font-black">{analytics.kpis.completionRate.toLocaleString("th-TH")} %</p><p className="mt-1 text-xs text-slate-500">{analytics.kpis.completed.toLocaleString("th-TH")} จาก {analytics.kpis.eligible.toLocaleString("th-TH")} sessions ที่เข้าเกณฑ์</p></div>
-        <div className="bg-white p-5"><Clock aria-hidden="true" size={21} className="text-[#B94727]" /><p className="mt-3 text-xs font-bold text-slate-500">เวลามัธยฐานแบบประเมิน</p><p className="mt-1 text-2xl font-black">{durationLabel(analytics.kpis.medianEvaluationSeconds)}</p><p className="mt-1 text-xs text-slate-500">จาก {analytics.kpis.evaluationDurationCount.toLocaleString("th-TH")} responses ที่มีเวลา</p></div>
-        <div className="bg-white p-5"><ChartBar aria-hidden="true" size={21} className="text-[#B94727]" /><p className="mt-3 text-xs font-bold text-slate-500">ความครบถ้วนข้อบังคับ</p><p className="mt-1 text-2xl font-black">{analytics.kpis.requiredAnswerCompleteness === null ? "ไม่มีข้อมูล" : `${analytics.kpis.requiredAnswerCompleteness.toLocaleString("th-TH")} %`}</p><p className="mt-1 text-xs text-slate-500">จาก {analytics.kpis.requiredResponseCount.toLocaleString("th-TH")} responses ที่ส่งแล้ว</p></div>
-      </section>
+      {analytics.scope.studyKind === "pilot" ? <ResearchPilotMonitoring analytics={analytics} /> : (
+        <section className="grid gap-px border border-[var(--admin-border)] bg-[var(--admin-border)] sm:grid-cols-2 xl:grid-cols-4" aria-label="ตัวชี้วัดงานวิจัย">
+          <div className="bg-white p-5"><p className="text-xs font-bold text-slate-500">ยินยอม / เข้าเกณฑ์</p><p className="mt-2 text-2xl font-black">{analytics.kpis.consented.toLocaleString("th-TH")} / {analytics.kpis.eligible.toLocaleString("th-TH")}</p></div>
+          <div className="bg-white p-5"><p className="text-xs font-bold text-slate-500">ส่งแบบประเมินสำเร็จ</p><p className="mt-2 text-2xl font-black">{analytics.kpis.completionRate.toLocaleString("th-TH")} %</p><p className="mt-1 text-xs text-slate-500">{analytics.kpis.completed.toLocaleString("th-TH")} จาก {analytics.kpis.eligible.toLocaleString("th-TH")} sessions ที่เข้าเกณฑ์</p></div>
+          <div className="bg-white p-5"><p className="text-xs font-bold text-slate-500">เวลามัธยฐานแบบประเมิน</p><p className="mt-2 text-2xl font-black">{durationLabel(analytics.kpis.medianEvaluationSeconds)}</p><p className="mt-1 text-xs text-slate-500">จาก {analytics.kpis.evaluationDurationCount.toLocaleString("th-TH")} responses ที่มีเวลา</p></div>
+          <div className="bg-white p-5"><p className="text-xs font-bold text-slate-500">ความครบถ้วนข้อบังคับ</p><p className="mt-2 text-2xl font-black">{analytics.kpis.requiredAnswerCompleteness === null ? "ไม่มีข้อมูล" : `${analytics.kpis.requiredAnswerCompleteness.toLocaleString("th-TH")} %`}</p><p className="mt-1 text-xs text-slate-500">จาก {analytics.kpis.requiredResponseCount.toLocaleString("th-TH")} responses ที่ส่งแล้ว</p></div>
+        </section>
+      )}
 
       <section className="border border-[var(--admin-border)] bg-white p-5" aria-labelledby="incentive-heading">
         <div className="flex items-start gap-3">
@@ -161,7 +164,7 @@ export function ResearchAnalyticsWorkspace({ analytics }: { analytics: ResearchA
         )}
       </section>
 
-      <section className="border border-[var(--admin-border)] bg-white p-5">
+      <section id="research-operator-outcomes" className="scroll-mt-24 border border-[var(--admin-border)] bg-white p-5">
         <h2 className="text-lg font-black">การประเมินงานตัดสินใจของผู้ประกอบการ/ผู้ดูแลสถานที่</h2>
         <div className="mt-4 grid gap-px border border-slate-200 bg-slate-200 sm:grid-cols-2 xl:grid-cols-5">
           <div className="bg-slate-50 p-4"><p className="text-xs text-slate-500">งานที่ทำเสร็จ</p><p className="mt-1 text-xl font-black">{analytics.operator.completedAttempts.toLocaleString("th-TH")}</p></div>

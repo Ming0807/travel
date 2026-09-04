@@ -34,7 +34,7 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
   const canReviewPilot = detail.study.studyKind === "pilot" && ["paused", "closed"].includes(detail.study.status);
 
   return (
-    <section className="border border-[var(--admin-border)] bg-white" aria-labelledby="activation-control-heading">
+    <section id="research-activation-control" className="scroll-mt-24 border border-[var(--admin-border)] bg-white" aria-labelledby="activation-control-heading">
       <div className="grid gap-4 border-b border-[var(--admin-border)] bg-[#202020] p-5 text-white lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div>
           <p className="text-xs font-bold uppercase text-orange-300">Research governance</p>
@@ -52,7 +52,7 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
           const evidence = latestByType.get(key);
           const passed = evidence?.status === "passed" || evidence?.status === "not_required";
           return (
-            <article key={key} className="bg-white p-5">
+            <article id={`research-evidence-${key}`} key={key} className="scroll-mt-24 bg-white p-5">
               <div className="flex items-start justify-between gap-3">
                 <div><p className="text-xs font-bold text-slate-500">หลักฐานล่าสุด</p><h3 className="mt-1 font-black">{EVIDENCE_LABELS[key]}</h3></div>
                 <span className={`flex size-9 shrink-0 items-center justify-center ${passed ? "bg-emerald-700 text-white" : "bg-amber-50 text-amber-700"}`}>{passed ? <CheckCircle aria-hidden="true" weight="fill" /> : <Warning aria-hidden="true" weight="fill" />}</span>

@@ -1301,3 +1301,27 @@ Every general dashboard page must show one compact quality center immediately af
 The default is `field_claim`. Explicit pilot and simulated research sessions must be excluded from field claims in the service/repository layer. A URL must preserve the selected evidence scope across general dashboard tabs and the attraction analytics workspace.
 
 Exports must repeat the quality check on the server. A hidden or disabled UI button is not sufficient. Truncated reads, stale summaries over 72 hours, sample sizes below 10, and relevant response coverage below 20% return an audited `422` response instead of a partial or misleading file.
+
+### 35.6 Research Pilot Decision Sequence
+
+The research workspace must make the Pilot decision auditable without requiring
+the reviewer to infer readiness from unrelated cards:
+
+1. Show the immutable freeze state and expected versus observed instrument
+   versions before scores or comparisons.
+2. Show recruitment as unavailable when no invitation denominator exists, then
+   separate consented, eligible, evaluation-started, submitted, and operator
+   task-attempt units.
+3. Show evaluation section abandonment, completion against the approved 80%
+   trigger, median duration against 240 seconds, and worst required-item
+   missingness against 5%.
+4. Suppress collection-mode and participant-type groups below 10 and label all
+   visible differences as descriptive associations.
+5. Produce a go/no-go checklist whose items deep-link to recorded evidence or a
+   computed panel. Free-text review notes may explain a human decision but may
+   not satisfy a readiness gate by themselves.
+
+Mixed instrument versions, a missing freeze snapshot, a truncated read, failed
+burden gates, or missing required activation evidence prevent the workspace from
+showing a field-ready state. “Ready for review” remains a human review state and
+does not automatically create a `ready_for_field` Pilot decision.
