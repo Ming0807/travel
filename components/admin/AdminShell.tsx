@@ -17,11 +17,11 @@ type AdminShellProps = {
 };
 
 function AdminSidebarFallback() {
-  return <aside aria-hidden="true" className="sticky top-0 hidden h-screen w-[236px] shrink-0 border-r border-[var(--admin-border)] bg-[#FBFBFA] lg:block" />;
+  return <aside aria-hidden="true" data-admin-chrome className="sticky top-0 hidden h-screen w-[236px] shrink-0 border-r border-[var(--admin-border)] bg-[#FBFBFA] lg:block" />;
 }
 
 function AdminTopbarFallback() {
-  return <div aria-hidden="true" className="h-16 shrink-0 border-b border-[var(--admin-border)] bg-white" />;
+  return <div aria-hidden="true" data-admin-chrome className="h-16 shrink-0 border-b border-[var(--admin-border)] bg-white" />;
 }
 
 export function AdminShell({ children, admin }: AdminShellProps) {

@@ -2,6 +2,7 @@ import { Suspense, type ReactNode } from "react";
 import { Info } from "@phosphor-icons/react/dist/ssr";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
+import { DashboardContentState } from "@/components/dashboard/DashboardContentState";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardPageHeader, type DashboardPageKey } from "@/components/dashboard/DashboardPageHeader";
 import { DashboardQualityCenter } from "@/components/dashboard/DashboardQualityCenter";
@@ -27,15 +28,17 @@ export function DashboardShell({
   children,
   data,
   page,
+  printReport,
 }: {
   actions?: ReactNode;
   children: ReactNode;
   data: DashboardViewModel;
   page: DashboardPageKey;
+  printReport?: "executive";
 }) {
   return (
     <AdminShell admin={{ displayName: data.viewer.displayName, email: data.viewer.email, permissions: data.viewer.permissions }}>
-      <div className="min-w-0 space-y-4">
+      <div className="min-w-0 space-y-4" data-print-report={printReport}>
         <DashboardPageHeader
           actions={actions}
           dataSource={data.dataSource}
@@ -44,13 +47,16 @@ export function DashboardShell({
           page={page}
           summaryRefreshTimestamp={data.summaryRefreshTimestamp}
         />
-        <Suspense fallback={<DashboardControlsFallback />}>
-          <DashboardTabs />
-          <DashboardFilters key={JSON.stringify(data.filters)} filters={data.filters} options={data.referenceOptions} />
-          <DashboardSavedViews filters={data.filters} />
-        </Suspense>
+        <div data-print-hide>
+          <Suspense fallback={<DashboardControlsFallback />}>
+            <DashboardTabs />
+            <DashboardFilters key={JSON.stringify(data.filters)} filters={data.filters} options={data.referenceOptions} />
+            <DashboardSavedViews filters={data.filters} />
+          </Suspense>
+        </div>
 
         {data.quality ? <DashboardQualityCenter quality={data.quality} /> : null}
+        <DashboardContentState data={data} page={page} />
 
         {children}
 
@@ -66,7 +72,7 @@ export function DashboardShell({
           </details>
         </footer>
         {data.dashboardAlerts.length > 0 ? (
-          <DashboardAlertBar alerts={data.dashboardAlerts} filtersSig={filtersSig(data.filters)} />
+          <div data-print-hide><DashboardAlertBar alerts={data.dashboardAlerts} filtersSig={filtersSig(data.filters)} /></div>
         ) : null}
       </div>
     </AdminShell>

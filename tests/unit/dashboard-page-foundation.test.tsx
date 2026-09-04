@@ -1,11 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DashboardPageFailure } from "@/components/dashboard/DashboardPageFailure";
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
+import { DashboardContentState, deriveDashboardContentState } from "@/components/dashboard/DashboardContentState";
+import { DashboardPrintButton } from "@/components/dashboard/DashboardPrintButton";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { navGroups } from "@/components/admin/admin-nav-items";
 import { buildDashboardNavigationHref } from "@/components/dashboard/dashboard-navigation";
+import { executiveFixture } from "../visual/dashboard/executive-fixture";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/dashboard/expenses",
@@ -60,6 +63,53 @@ describe("dashboard page foundation", () => {
     render(<DashboardPageFailure error={{ code: "FORBIDDEN" }} />);
     expect(screen.getByRole("heading", { name: "ไม่มีสิทธิ์ดูข้อมูลส่วนนี้" })).toBeInTheDocument();
     expect(screen.queryByText("ยังไม่มีข้อมูล")).not.toBeInTheDocument();
+  });
+
+  it("distinguishes an empty dataset from filters that reduce a dataset to zero", () => {
+    const filtered = executiveFixture("empty");
+    expect(deriveDashboardContentState(filtered, "overview")?.code).toBe("filtered_zero");
+
+    const unfiltered = {
+      ...filtered,
+      filters: {
+        dateFrom: filtered.filters.dateFrom,
+        dateTo: filtered.filters.dateTo,
+        evidenceScope: "field_claim" as const,
+      },
+    };
+    expect(deriveDashboardContentState(unfiltered, "overview")?.code).toBe("no_records");
+  });
+
+  it("marks missing optional answers as incomplete instead of no records", () => {
+    const data = executiveFixture(null);
+    const state = deriveDashboardContentState(data, "expenses");
+
+    expect(state?.code).toBe("incomplete_data");
+    render(<DashboardContentState data={data} page="expenses" />);
+
+    expect(screen.getByRole("status", { name: "ข้อมูลประกอบยังไม่ครบ" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ตรวจข้อมูลแบบสำรวจ" })).toHaveAttribute("href", "/admin/surveys");
+  });
+
+  it("renders a recovery link that clears refinements but preserves the date range", () => {
+    const data = executiveFixture("empty");
+    render(<DashboardContentState data={data} page="overview" />);
+
+    expect(screen.getByRole("status", { name: "ตัวกรองนี้ไม่พบข้อมูล" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ล้างตัวกรองเพิ่มเติม" })).toHaveAttribute(
+      "href",
+      "/admin/dashboard?date_from=2026-08-01&date_to=2026-08-31",
+    );
+  });
+
+  it("opens the browser print dialog for a presentation PDF without creating another dataset", () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => undefined);
+    render(<DashboardPrintButton reportLabel="ภาพรวมผู้บริหาร" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "พิมพ์หรือบันทึก PDF ภาพรวมผู้บริหาร" }));
+
+    expect(print).toHaveBeenCalledOnce();
+    print.mockRestore();
   });
 
   it("uses one decision-oriented order and vocabulary across dashboard navigation", () => {

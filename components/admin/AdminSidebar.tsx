@@ -15,7 +15,7 @@ export function AdminSidebar() {
   const visibleGroups = getVisibleNavGroups(navGroups, access.permissions, access.resolved);
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[236px] shrink-0 border-r border-[var(--admin-border)] bg-[#FBFBFA] lg:flex lg:flex-col">
+    <aside data-admin-chrome className="sticky top-0 hidden h-screen w-[236px] shrink-0 border-r border-[var(--admin-border)] bg-[#FBFBFA] lg:flex lg:flex-col">
       <div className="flex h-full flex-col overflow-hidden">
         <Link className="flex min-h-16 shrink-0 items-center gap-3 border-b border-[var(--admin-border)] px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#E77455]" href="/admin">
           <div className="flex h-9 w-9 items-center justify-center rounded-[4px] border border-[#D94717] bg-white text-[#D94717]">

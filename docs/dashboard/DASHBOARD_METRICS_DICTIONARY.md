@@ -2595,3 +2595,51 @@ an operational abandonment signal, not a clinical or causal measure.
 The readiness checklist links each result to the corresponding scope,
 instrument banner, burden panel, operator outcomes, freeze state, or recorded
 activation evidence. It never turns free-text rationale into automatic proof.
+
+## 51. Executive Comparative Display Rules
+
+The comparative scatter uses the existing top-attraction aggregate DTO, bounded
+to eight records. A point requires a finite score in [1,5] and at least
+`DASHBOARD_MIN_SAMPLE_SIZE` (30) responses. Other places remain visible with their
+recorded visit counts in an awaiting-evidence list; no score is manufactured.
+This is an interpretation threshold, not a change to the source score or the
+privacy threshold of another dashboard.
+
+Reference lines require at least two eligible places. The X reference is the
+median of displayed visit counts (mean of the two middle values for an even
+count); the Y reference is the unweighted mean of displayed attraction scores.
+These are within-display descriptive references, not provincial benchmarks,
+targets, or quality cutoffs. The UI states the comparison population explicitly.
+
+The executive funnel remains event counts. Ratios with a missing stage, invalid
+count, zero denominator, or numerator exceeding denominator are unavailable,
+not 0% or capped 100%. A one-date visit series does not support trend inference.
+Executive change prose is withheld when the quality gate disallows claims.
+
+## 52. Page-State Classification
+
+Dashboard page states are presentation metadata and do not alter metric values.
+The base-record check uses recorded Visits, except Funnel, which can also be
+ready when entry events exist before a Visit. Date range alone is the base scope;
+destination, audience, behavior, score, non-field evidence scope, and related
+selectors are refinements.
+
+When the base count is zero, a refined scope is `filtered_zero`; otherwise it is
+`no_records`. When base records exist but the page has no required aggregate
+evidence, it is `incomplete_data`: no profile aggregate for Audience, no travel
+answers for Behavior, no voluntary spending response for Expenses, no voluntary
+experience response for Satisfaction/Sustainability, or no linked stages for
+Funnel. Missing evidence remains unavailable and is never converted to zero.
+
+`temporarily_unavailable` is reserved for a failed service read.
+`permission_denied` is reserved for an authenticated role without
+`dashboard.read`. Both are route failures, not data states.
+
+## 53. Presentation PDF Boundary
+
+Browser print/PDF uses the already rendered aggregate view and therefore keeps
+the same metric version, date scope, evidence scope, suppression, and quality
+labels. It is not a source dataset and must not be parsed as a replacement for
+CSV/XLSX. Interactive forms, drill-down links, admin chrome, and draft controls
+are excluded from print. Weak or blocked evidence remains labelled and cannot
+recover directional comparison prose merely because it is printed.

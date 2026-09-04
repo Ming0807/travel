@@ -1219,3 +1219,65 @@ advanced researcher filters
 A professional dashboard does not only show numbers.
 
 It explains what the numbers mean, where they come from, and how they can support tourism planning decisions.
+
+## 37. Phase 24 Executive and Attraction Layout
+
+The executive overview uses five primary KPIs, then a wide visit trend with a
+concise decision brief. The next row pairs eligible attraction performance with
+experience quality. Funnel events and existing spending/stamp/top-attraction
+metrics complete the overview. Detailed audience, travel, expenses and action
+pages remain one scoped link away; no additional query or synthetic metric is
+introduced for this layout.
+
+Use Recharts for the time series, scatter plot, stage bars and experience ring.
+Mobile uses full-label stage rows and a ranked attraction list. KPI cards form
+two compact columns on small screens. Evidence disclosures retain their full
+text; chart tables must be inside an `sr-only` wrapper, not sized directly as
+one-pixel tables, which can still create intrinsic-width overflow.
+
+Single-attraction reading order is summary, trend, evidence and interpretation,
+improvement actions, then the detailed audience/experience/expense distributions.
+Secondary measures and action totals are flat definition lists, not cards nested
+inside cards. Existing permission and privacy gates remain in place.
+
+The attraction detail route supports dates, attraction and evidence scope. A
+link from the executive page must disclose that audience filters are not carried
+into that narrower contract. Other dashboard links retain supported filters.
+
+## 38. Dashboard Content States
+
+The shared dashboard shell classifies page content separately from request
+failures. A successful query can be `no_records`, `filtered_zero`,
+`incomplete_data`, or ready. Query failures and permission denial remain in the
+route-level failure component and must never be presented as an empty dataset.
+
+- `no_records`: the selected date range has no Visit or applicable funnel event.
+- `filtered_zero`: additional scope filters reduced the result to zero. The
+  recovery action clears refinements while preserving the selected dates.
+- `incomplete_data`: base records exist, but the page-specific voluntary answers
+  or linked events are absent. The copy names the missing evidence and links to
+  the relevant operational list.
+- ready: no page-state banner is rendered; quality and coverage remain visible.
+
+The banner supplements the charts and tables rather than replacing them, so an
+analyst can still inspect denominators, missingness, and metric definitions.
+
+The single-attraction filter keeps attraction, dates, evidence scope, and the
+primary submit action visible. Entry channel, campaign, and check-in point live
+in one optional disclosure. Campaign is a controlled selector derived from
+campaign IDs actually attached to the selected attraction's check-in codes; a
+raw numeric ID input is not exposed. Mobile has a submit action inside the
+expanded disclosure so users do not need to scroll back to the top.
+
+## 39. Print and Presentation PDF
+
+The executive overview and attraction improvement review expose a browser print
+command. This command presents the aggregate screen evidence; it does not query,
+calculate, or persist another dataset. CSV/XLSX remain the analytical formats.
+
+Print hides admin navigation, filter/edit forms, alerts, drill-down commands,
+and interactive-only controls. The executive layout forces five compact KPIs
+and paired evidence modules onto an A4 landscape composition. The attraction
+improvement review uses A4 portrait and keeps the selected scope, deterministic
+rule version, evidence summary, owners, deadlines, history, and verified outcome.
+Form controls are never printed as if they were completed evidence.

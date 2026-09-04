@@ -15,7 +15,7 @@ export function AdminPageHeader({ eyebrow, title, description, actions }: AdminP
         <h1 className="mt-1 text-2xl font-black text-[#202020]">{title}</h1>
         {description ? <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap items-center gap-2" data-print-hide>{actions}</div> : null}
     </header>
   );
 }

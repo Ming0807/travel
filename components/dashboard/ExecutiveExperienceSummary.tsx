@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
 import { ArrowClockwise, ChatCircleText, Star } from "@phosphor-icons/react/dist/ssr";
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
@@ -25,7 +28,7 @@ function rateLabel(value: number | null): string {
 }
 
 function validScore(value: number | null): number | null {
-  if (value === null || value < 1 || value > 5) return null;
+  if (value === null || !Number.isFinite(value) || value < 1 || value > 5) return null;
   return value;
 }
 
@@ -67,11 +70,12 @@ export function ExecutiveExperienceSummary({ satisfaction }: { satisfaction: Sat
         </span>
       </div>
 
-      <div className="grid gap-4 px-4 py-4 sm:grid-cols-[7.25rem_minmax(0,1fr)] sm:px-5">
-        <div className="self-center">
+      <div className="px-4 py-4 sm:px-5">
+        <div className="flex items-center justify-center gap-5 border-b border-slate-100 pb-4">
           <ScoreRing value={average} />
+          <div className="text-sm text-slate-600"><p className="font-semibold text-slate-900">คะแนนเฉลี่ยรวม</p><p className="mt-1 text-xs">จากผู้ตอบ {satisfaction.responseCount.toLocaleString("th-TH")} รายการ</p><p className="mt-1 text-xs">ระดับคะแนน 1 ถึง 5</p></div>
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 pt-4">
           <h3 className="text-xs font-bold text-slate-700">คะแนนรายมิติ</h3>
           <div role="group" aria-label="แผนภูมิคะแนนประสบการณ์รายมิติ" className="mt-2.5 space-y-2.5">
             {dimensions.map((dimension) => (
@@ -97,6 +101,7 @@ export function ExecutiveExperienceSummary({ satisfaction }: { satisfaction: Sat
                   />
                 ))}
               </div>
+              <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600" aria-label="คำอธิบายการกระจายคะแนน">{distribution.map((item) => <li key={item.label} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm" style={{ backgroundColor: SCORE_COLORS[scoreFromLabel(item.label)] }} /><span>{item.label}: {item.value.toLocaleString("th-TH")}</span></li>)}</ul>
             </div>
           ) : (
             <p className="mt-3 border-t border-slate-100 pt-2.5 text-sm font-semibold text-slate-600">ยังไม่มีข้อมูล</p>
@@ -153,32 +158,12 @@ export function ExecutiveExperienceSummary({ satisfaction }: { satisfaction: Sat
 }
 
 function ScoreRing({ value }: { value: number | null }) {
-  const radius = 43;
-  const circumference = 2 * Math.PI * radius;
-  const progress = value === null ? 0 : value / 5;
-  const dashOffset = circumference * (1 - progress);
-
   return (
-    <div className="relative mx-auto h-28 w-28 shrink-0">
-      <svg
-        className="h-full w-full -rotate-90"
-        viewBox="0 0 104 104"
-        role="img"
-        aria-label={value === null ? "ยังไม่มีคะแนนเฉลี่ย" : `คะแนนเฉลี่ย ${value.toFixed(1)} จาก 5`}
-      >
-        <circle cx="52" cy="52" r={radius} fill="none" stroke="#E5E7EB" strokeWidth="8" />
-        <circle
-          cx="52"
-          cy="52"
-          r={radius}
-          fill="none"
-          stroke="#B94727"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
-          strokeWidth="7"
-        />
-      </svg>
+    <div className="relative h-28 w-28 shrink-0" data-chart-engine="recharts" role="img" aria-label={value === null ? "ยังไม่มีคะแนนเฉลี่ย" : `คะแนนเฉลี่ย ${value.toFixed(1)} จาก 5`}>
+      {value === null ? <div className="absolute inset-2 rounded-full border-[8px] border-slate-100" /> : <RadialBarChart width={112} height={112} innerRadius={43} outerRadius={53} startAngle={90} endAngle={-270} barSize={9} data={[{ value, fill: "#0A6B62" }]} accessibilityLayer={false}>
+        <PolarAngleAxis type="number" domain={[0, 5]} tick={false} />
+        <RadialBar dataKey="value" background={{ fill: "#E9EFED" }} cornerRadius={6} isAnimationActive={false} />
+      </RadialBarChart>}
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         <Star aria-hidden="true" className="text-[#D6A13D]" size={16} weight="fill" />
         <strong className={`mt-1 tabular-nums ${value === null ? "max-w-20 text-xs leading-4 text-slate-600" : "text-xl text-slate-950"}`}>

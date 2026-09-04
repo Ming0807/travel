@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AttractionImprovementWorkspace } from "@/components/admin/attractions/AttractionImprovementWorkspace";
+import { DashboardPrintButton } from "@/components/dashboard/DashboardPrintButton";
 import { hasPermission, requirePermission } from "@/lib/auth/guards";
 import { parseAttractionIssueDraft } from "@/lib/dashboard/attraction-improvement-draft";
 import { getAdminAttractionById } from "@/lib/repositories/admin-attraction.repository";
@@ -84,19 +85,22 @@ export default async function AttractionImprovementsPage({
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-6" data-print-report="attraction-improvement">
         <AdminPageHeader
           eyebrow="การจัดการคุณภาพสถานที่"
           title={`แผนปรับปรุง: ${attraction.name_th}`}
           description="เปลี่ยน feedback ที่มีจำนวนตัวอย่างเพียงพอให้เป็นประเด็น ผู้รับผิดชอบ แผนงาน และผลติดตามที่ตรวจสอบย้อนหลังได้"
           actions={(
-            <Link href={`/admin/attractions/${attractionId}/edit`} className="inline-flex min-h-11 items-center border border-[var(--admin-border)] bg-white px-4 text-sm font-bold text-[var(--admin-ink)] hover:bg-[var(--admin-surface-muted)]">
-              กลับหน้าแก้ไขสถานที่
-            </Link>
+            <>
+              <Link href={`/admin/attractions/${attractionId}/edit`} className="inline-flex min-h-11 items-center border border-[var(--admin-border)] bg-white px-4 text-sm font-bold text-[var(--admin-ink)] hover:bg-[var(--admin-surface-muted)]">
+                กลับหน้าแก้ไขสถานที่
+              </Link>
+              <DashboardPrintButton reportLabel={`ทบทวนแผนปรับปรุง ${attraction.name_th}`} />
+            </>
           )}
         />
 
-        <form method="get" className="grid gap-3 border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 sm:grid-cols-2 xl:grid-cols-6">
+        <form method="get" data-print-hide className="grid gap-3 border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 sm:grid-cols-2 xl:grid-cols-6">
           <label className="text-xs font-bold text-[var(--admin-muted)]">มิติข้อมูล<select name="dimension" defaultValue={dimension} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] bg-white px-3 text-sm font-normal text-[var(--admin-ink)]">{FEEDBACK_DIMENSIONS.map((value) => <option key={value} value={value}>{({ overall: "ภาพรวม", facility: "สิ่งอำนวยความสะดวก", cleanliness: "ความสะอาด", safety: "ความปลอดภัย", accessibility: "การเข้าถึง", information: "ข้อมูลและป้าย", value: "ความคุ้มค่า" } as const)[value]}</option>)}</select></label>
           <label className="text-xs font-bold text-[var(--admin-muted)]">เริ่มช่วงปัจจุบัน<input type="date" name="dateStart" defaultValue={scope.dateStart} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] px-3 text-sm font-normal" /></label>
           <label className="text-xs font-bold text-[var(--admin-muted)]">สิ้นสุดช่วงปัจจุบัน<input type="date" name="dateEnd" defaultValue={scope.dateEnd} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] px-3 text-sm font-normal" /></label>

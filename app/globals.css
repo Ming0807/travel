@@ -344,3 +344,104 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Dashboard PDF is a presentation of the visible aggregate scope, not a data export. */
+@page executive-report {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
+@page attraction-improvement-report {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body,
+  .admin-app {
+    background: #fff !important;
+    color: #111827 !important;
+  }
+
+  [data-admin-chrome],
+  [data-print-hide],
+  .admin-app > a {
+    display: none !important;
+  }
+
+  #admin-main-content {
+    padding: 0 !important;
+  }
+
+  [data-print-report] {
+    max-width: none !important;
+    page-break-inside: auto;
+  }
+
+  [data-print-report="executive"] {
+    page: executive-report;
+    width: 277mm !important;
+    margin: 0 auto !important;
+  }
+
+  [data-print-report="attraction-improvement"] {
+    page: attraction-improvement-report;
+    width: 186mm !important;
+    margin: 0 auto !important;
+  }
+
+  [data-print-report] article,
+  [data-print-report] dl,
+  [data-print-report] table,
+  [data-print-report] [data-dashboard-kpi] {
+    break-inside: avoid;
+  }
+
+  [data-print-report="executive"] [data-print-kpis] {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 3mm !important;
+    break-inside: avoid;
+  }
+
+  [data-print-report="executive"] [data-print-kpis] > * {
+    grid-column: auto !important;
+    min-height: 0 !important;
+  }
+
+  [data-print-report="executive"] [data-print-grid] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 4mm !important;
+    break-inside: avoid;
+  }
+
+  [data-print-report="executive"] .recharts-responsive-container {
+    height: 58mm !important;
+    min-height: 58mm !important;
+  }
+
+  [data-print-report] form {
+    display: none !important;
+  }
+
+  [data-print-report] details > * {
+    display: block !important;
+  }
+
+  [data-print-report] details > summary {
+    display: none !important;
+  }
+
+  [data-print-report] a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  [data-print-report] .shadow,
+  [data-print-report] [class*="shadow-"] {
+    box-shadow: none !important;
+  }
+}

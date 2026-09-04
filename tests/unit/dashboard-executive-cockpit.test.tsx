@@ -46,6 +46,40 @@ const satisfaction: DashboardViewModel["satisfaction"] = {
 };
 
 describe("Executive analytics cockpit", () => {
+  it("เก็บสถานที่ที่ยังไม่มีคะแนนไว้ในบริบท ไม่ทำให้หายจากภาพรวม", () => {
+    render(<ExecutiveAttractionMatrix attractions={[{
+      rank: 1, attractionName: "สถานที่ยังรอคำตอบ", provinceName: "ยะลา", visitCount: 18,
+      certificateCount: 12, averageSatisfaction: null, surveyResponseCount: 0,
+    }]} />);
+    expect(screen.getByText("สถานที่ยังรอคำตอบ")).toBeInTheDocument();
+    expect(screen.getByText(/ยังไม่มีคะแนนที่ใช้เปรียบเทียบได้/)).toBeInTheDocument();
+  });
+
+  it("ไม่วาดเส้นอ้างอิงเปรียบเทียบจากสถานที่เดียว", () => {
+    render(<ExecutiveAttractionMatrix attractions={[{
+      rank: 1, attractionName: "สถานที่เดียว", provinceName: "ยะลา", visitCount: 60,
+      certificateCount: 40, averageSatisfaction: 4.2, surveyResponseCount: 30,
+    }]} />);
+    expect(screen.getByText(/ยังไม่แสดงเส้นเปรียบเทียบ/)).toBeInTheDocument();
+  });
+  it("uses the midpoint median for an even number of eligible attractions", () => {
+    render(<ExecutiveAttractionMatrix attractions={[10, 30].map((visitCount, index) => ({
+      rank: index + 1, attractionName: `สถานที่ ${index}`, provinceName: "ยะลา", visitCount,
+      certificateCount: 5, averageSatisfaction: 4, surveyResponseCount: 30,
+    }))} />);
+    expect(screen.getByText(/มัธยฐานการเยี่ยมชม 20 ครั้ง/)).toBeInTheDocument();
+  });
+
+  it("does not turn an absent event stage into a zero conversion", () => {
+    render(<ExecutiveFunnelSummary stages={[stage("qr_scanned", 100)]} />);
+    expect(within(screen.getByLabelText("อัตราสรุปเส้นทาง")).getAllByText("ยังคำนวณไม่ได้")).toHaveLength(2);
+    expect(screen.queryByText("0%")).not.toBeInTheDocument();
+  });
+  it("does not narrate a missing period change as zero percent", () => {
+    render(<ExecutiveDecisionSummary insights={[]} kpis={[{ key: "total_visits", label: "Total Visits", value: "10", rawValue: 10, valueType: "count", definition: "Visits" }]} comparison={{ mode: "previous_period", dateFrom: "2026-07-01", dateTo: "2026-07-31", status: "ready", unavailableReason: null, metrics: { total_visits: { currentValue: 10, previousValue: 0, absoluteChange: 10, percentChange: null, direction: "up" } } }} />);
+    expect(screen.queryByText(/เพิ่มขึ้น 0%/)).not.toBeInTheDocument();
+    expect(screen.getByText("ยังไม่มีประเด็นสรุป")).toBeInTheDocument();
+  });
   it("สรุปคุณภาพและความครอบคลุมข้อมูลเป็นแถบกะทัดรัด", () => {
     render(
       <ExecutiveQualityStrip

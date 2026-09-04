@@ -83,6 +83,7 @@ export function KpiCard({
   sampleCount,
   sampleLabel = "คำตอบ",
   variant = "card",
+  compact = false,
 }: {
   metric: DashboardKpi;
   comparison?: DashboardMetricComparison;
@@ -91,6 +92,7 @@ export function KpiCard({
   sampleCount?: number;
   sampleLabel?: string;
   variant?: "card" | "band";
+  compact?: boolean;
 }) {
   const localized = localizeDashboardKpi(metric);
   const context = metricContext(metric.key);
@@ -138,10 +140,10 @@ export function KpiCard({
           {noData ? (
             <p className="mt-3 flex items-center gap-1.5 text-sm font-bold text-slate-600"><WarningCircle aria-hidden="true" size={16} />ยังไม่มีข้อมูล</p>
           ) : (
-            <p className="mt-2 break-words text-[2rem] font-black leading-none tabular-nums text-slate-950">{localized.value}</p>
+            <p className={`mt-2 break-words font-black leading-none tabular-nums text-slate-950 ${compact ? "text-[1.65rem] sm:text-[2rem]" : "text-[2rem]"}`}>{localized.value}</p>
           )}
         </div>
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${variant === "band" ? bandTheme.icon : "border-[#F0C8BB] bg-[#FFF7F3] text-[#B94727]"}`}>
+        <span className={`${compact ? "hidden 2xl:flex" : "flex"} h-10 w-10 shrink-0 items-center justify-center rounded-full border ${variant === "band" ? bandTheme.icon : "border-[#F0C8BB] bg-[#FFF7F3] text-[#B94727]"}`}>
           {metricIcon(metric.key)}
         </span>
       </div>

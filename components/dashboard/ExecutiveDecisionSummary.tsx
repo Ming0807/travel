@@ -71,6 +71,8 @@ function buildChangeBrief(comparison: DashboardComparison | null | undefined, kp
   const candidates = kpis.flatMap((metric) => {
     const change = comparison.metrics[metric.key];
     if (!CHANGE_COPY[metric.key] || !change || !["up", "down", "flat"].includes(change.direction)) return [];
+    const changeValue = metric.valueType === "count" ? change.percentChange : change.absoluteChange;
+    if (change.currentValue === null || change.previousValue === null || changeValue === null || !Number.isFinite(changeValue)) return [];
     const magnitude = metric.valueType === "count"
       ? Math.abs(change.percentChange ?? -1)
       : Math.abs(change.absoluteChange ?? -1) * 100;
@@ -97,8 +99,7 @@ export function ExecutiveDecisionSummary({ comparison, insights, kpis = [] }: {
     >
       <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
         <div>
-          <p className="text-xs font-bold text-[#0A6B62]">DECISION SUPPORT</p>
-          <h2 id="executive-decision-heading" className="mt-1 text-lg font-black text-slate-950">
+          <h2 id="executive-decision-heading" className="text-lg font-black text-slate-950">
             ประเด็นเพื่อการตัดสินใจ
           </h2>
           <p className="mt-1 text-xs leading-5 text-slate-600">สรุปจากหลักฐานในช่วงและตัวกรองเดียวกับทั้งหน้า</p>
@@ -112,7 +113,7 @@ export function ExecutiveDecisionSummary({ comparison, insights, kpis = [] }: {
         <article className="border-b border-slate-200 bg-[#FFF7F3] px-4 py-3.5 sm:px-5">
           <p className="text-[11px] font-black uppercase text-[#B94727]">สิ่งที่เปลี่ยนจากช่วงก่อน</p>
           <h3 className="mt-1 text-sm font-black leading-5 text-slate-950">{changeBrief.title}</h3>
-          <p className="mt-1 text-xs leading-5 text-slate-600">{changeBrief.meaning}</p>
+          <details className="mt-1 text-xs leading-5 text-slate-600"><summary className="min-h-8 cursor-pointer py-1 font-semibold">ขอบเขตการตีความ</summary><p>{changeBrief.meaning}</p></details>
           <p className="mt-2 flex items-start gap-1.5 text-xs font-semibold leading-5 text-[#0A6B62]"><ArrowRight aria-hidden="true" className="mt-0.5 shrink-0" size={14} weight="bold" />{changeBrief.action}</p>
         </article>
       ) : null}
@@ -123,23 +124,22 @@ export function ExecutiveDecisionSummary({ comparison, insights, kpis = [] }: {
           <p className="mt-1 text-xs leading-5 text-slate-600">ระบบต้องมีข้อมูลเพียงพอก่อนจึงจะแสดงข้อสังเกตสำหรับวางแผน</p>
         </div>
       ) : visible.length > 0 ? (
-        <ol className="space-y-2.5 p-3.5">
+        <ol className="divide-y divide-slate-100 px-4 sm:px-5">
           {visible.map((insight, index) => {
             const meta = CATEGORY_META[insight.category];
             const Icon = meta.icon;
             return (
-              <li key={`${insight.category}-${insight.title}`} className="grid min-w-0 grid-cols-[2.6rem_minmax(0,1fr)] overflow-hidden rounded-[5px] border border-slate-200 bg-slate-50/60">
-                <div className={`flex min-h-full flex-col items-center justify-center gap-1 ${meta.iconClass}`}>
-                  <span className="text-base font-black tabular-nums">{index + 1}</span>
-                  <Icon aria-hidden="true" size={15} weight="fill" />
+              <li key={`${insight.category}-${insight.title}-${index}`} className="flex min-w-0 items-start gap-3 py-4">
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${meta.iconClass}`}>
+                  <Icon aria-hidden="true" size={18} weight="fill" />
                 </div>
-                <div className="min-w-0 px-3 py-2.5">
+                <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="text-[11px] font-bold text-[#8F351F]">{meta.label}</span>
                       <span className="text-[11px] font-semibold text-slate-500">{CONFIDENCE_LABELS[insight.confidence]}</span>
                     </div>
                     <h3 className="mt-1 text-sm font-black leading-5 text-slate-900">{insight.title}</h3>
-                    <p className="mt-1 text-xs leading-5 text-slate-600">{insight.evidence}</p>
+                    <details className="mt-1 text-xs leading-5 text-slate-600"><summary className="min-h-8 cursor-pointer py-1 font-semibold">หลักฐานประกอบ</summary><p>{insight.evidence}</p></details>
                     <p className="mt-2 flex items-start gap-1.5 text-xs font-semibold leading-5 text-[#0A6B62]">
                       <ArrowRight aria-hidden="true" className="mt-0.5 shrink-0" size={14} weight="bold" />
                       <span>{insight.suggestedAction}</span>

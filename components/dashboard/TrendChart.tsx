@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { ChartLineUp } from "@phosphor-icons/react/dist/ssr";
 import { NoDataState } from "@/components/dashboard/NoDataState";
+import { DASHBOARD_CHART_TOOLTIP } from "@/components/dashboard/dashboard-chart-theme";
 import { buildAttractionImprovementHref, type AttractionImprovementContext } from "@/lib/dashboard/attraction-improvement-links";
 import type { TrendPoint } from "@/types/dashboard";
 
@@ -40,6 +41,7 @@ function formatDateActionLabel(raw: string): string {
 }
 
 export function TrendChart({ points, improvementContext }: { points: TrendPoint[]; improvementContext?: AttractionImprovementContext }) {
+  const gradientId = useId();
   const total = useMemo(() => points.reduce((sum, point) => sum + point.value, 0), [points]);
   const peak = useMemo(() => points.reduce<TrendPoint | null>((best, point) => (
     best === null || point.value > best.value ? point : best
@@ -70,7 +72,7 @@ export function TrendChart({ points, improvementContext }: { points: TrendPoint[
           </div>
           <p className="mt-1.5 max-w-2xl text-xs leading-5 text-slate-600">นับรายการเยี่ยมชมที่ระบบบันทึกสำเร็จหลังส่งข้อมูลขั้นต่ำ ไม่ใช่ยอดเปิดหน้าเว็บสาธารณะ และไม่ใช่จำนวนสแกน QR</p>
         </div>
-        <div className="flex divide-x divide-slate-200 rounded-[5px] border border-slate-200 bg-slate-50">
+        <div className="flex flex-wrap gap-y-2 divide-x divide-slate-200">
           <div className="flex min-h-12 items-center gap-2 px-3 text-[#0A6B62]">
             <ChartLineUp aria-hidden="true" size={18} weight="bold" />
             <span>
@@ -96,7 +98,7 @@ export function TrendChart({ points, improvementContext }: { points: TrendPoint[
         <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 800, height: 288 }}>
           <AreaChart data={chartData} margin={{ top: 12, right: 10, bottom: 0, left: -10 }}>
             <defs>
-              <linearGradient id="visitTrendFill" x1="0" x2="0" y1="0" y2="1">
+              <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stopColor="#D94717" stopOpacity={0.2} />
                 <stop offset="100%" stopColor="#D94717" stopOpacity={0.02} />
               </linearGradient>
@@ -106,24 +108,26 @@ export function TrendChart({ points, improvementContext }: { points: TrendPoint[
             <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} width={42} />
             <Tooltip
               cursor={{ stroke: "#94A3B8", strokeDasharray: "4 4" }}
-              contentStyle={{ background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: 5, boxShadow: "0 4px 8px rgba(15,23,42,0.10)", fontSize: 12 }}
+              contentStyle={DASHBOARD_CHART_TOOLTIP}
               formatter={(value) => [`${Number(value).toLocaleString("th-TH")} ครั้ง`, "รายการเข้าชม"]}
               labelFormatter={(_, payload) => payload[0]?.payload?.fullDate ?? ""}
             />
             <Area
               dataKey="value"
-              fill="url(#visitTrendFill)"
+              fill={`url(#${gradientId})`}
               isAnimationActive={false}
               name="รายการเข้าชม"
               stroke="#D94717"
               strokeWidth={3}
               type="monotone"
               activeDot={{ r: 6, fill: "#0A6B62", stroke: "#FFFFFF", strokeWidth: 3 }}
-              dot={{ r: 4, fill: "#D94717", stroke: "#FFFFFF", strokeWidth: 2 }}
+              dot={points.length <= 7 ? { r: 4, fill: "#D94717", stroke: "#FFFFFF", strokeWidth: 2 } : false}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {points.length === 1 ? <p className="mt-2 text-xs leading-5 text-slate-600">มีข้อมูลเพียงวันเดียว ยังสรุปแนวโน้มการเปลี่ยนแปลงไม่ได้</p> : null}
 
       <details className="mt-3 border-t border-slate-100 pt-3">
         <summary className="min-h-11 cursor-pointer py-2 text-xs font-semibold text-[#B94727]">ดูตารางแนวโน้ม</summary>

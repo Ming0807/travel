@@ -5,6 +5,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { DashboardPageFailure } from "@/components/dashboard/DashboardPageFailure";
+import { DashboardPrintButton } from "@/components/dashboard/DashboardPrintButton";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { getDashboardAnalytics } from "@/lib/services/dashboard.service";
 
@@ -37,7 +38,7 @@ export default async function AdminDashboardPage({ searchParams = {} }: Dashboar
   }
 
   return (
-    <DashboardShell actions={<ExportCsvButton quality={data.quality} />} data={data} page="overview">
+    <DashboardShell actions={<><ExportCsvButton quality={data.quality} /><DashboardPrintButton reportLabel="ภาพรวมผู้บริหาร" /></>} data={data} page="overview" printReport="executive">
       <ErrorBoundary fallbackTitle="ไม่สามารถแสดงภาพรวมได้" fallbackDescription="ส่วนแสดงผลพบข้อผิดพลาด กรุณารีเฟรชหน้าแล้วลองอีกครั้ง">
         <ExecutiveOverview data={data} />
       </ErrorBoundary>

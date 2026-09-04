@@ -101,7 +101,7 @@ export function DashboardPageHeader({
           <h1 className="mt-1 text-2xl font-black text-slate-950 sm:text-[1.65rem]" id={copy.headingId}>{copy.title}</h1>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">{copy.description}</p>
         </div>
-        {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+        {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2" data-print-hide>{actions}</div> : null}
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold text-slate-600" aria-label="ขอบเขตและความสดของข้อมูล">

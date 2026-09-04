@@ -147,6 +147,18 @@ afterEach(() => {
 });
 
 describe("dashboard saved aggregate views", () => {
+  it("collapses the saved-view actions on mobile without discarding draft text", () => {
+    render(<DashboardSavedViews filters={{ dateFrom: "2026-08-06", dateTo: "2026-09-04" }} />);
+    const toggle = screen.getByRole("button", { name: "เปิดหรือปิดเครื่องมือมุมมอง" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole("button", { name: "บันทึกมุมมองนี้" }));
+    fireEvent.change(screen.getByLabelText("ชื่อมุมมอง"), { target: { value: "ฉบับร่าง" } });
+    fireEvent.click(toggle);
+    fireEvent.click(toggle);
+    expect(screen.getByLabelText("ชื่อมุมมอง")).toHaveValue("ฉบับร่าง");
+  });
+
   it("saves the resolved date scope even when the URL uses defaults", () => {
     render(<DashboardSavedViews filters={{ dateFrom: "2026-08-06", dateTo: "2026-09-04", evidenceScope: "field_claim" }} />);
     fireEvent.click(screen.getByRole("button", { name: "บันทึกมุมมองนี้" }));

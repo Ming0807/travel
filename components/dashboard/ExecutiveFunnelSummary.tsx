@@ -1,5 +1,10 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CheckCircle, QrCode, TrendDown } from "@phosphor-icons/react/dist/ssr";
+import { useWideDashboardChart } from "@/components/dashboard/useWideDashboardChart";
+import { DASHBOARD_CHART_TOOLTIP, formatChartAxisLabel } from "@/components/dashboard/dashboard-chart-theme";
 import type { FunnelStage } from "@/types/dashboard";
 
 const STAGE_LABELS: Record<string, string> = {
@@ -25,12 +30,12 @@ const EXECUTIVE_STAGE_KEYS = [
 
 const FUNNEL_TONES = ["#D94717", "#E76A3B", "#D69E2E", "#4B8A5F", "#0A6B62", "#07534D"];
 
-function countFor(stages: FunnelStage[], key: string): number {
-  return stages.find((stage) => stage.key === key)?.count ?? 0;
+function countFor(stages: FunnelStage[], key: string): number | null {
+  return stages.find((stage) => stage.key === key)?.count ?? null;
 }
 
-function safeRate(numerator: number, denominator: number): number | null {
-  if (denominator <= 0 || numerator < 0 || numerator > denominator) return null;
+function safeRate(numerator: number | null, denominator: number | null): number | null {
+  if (numerator === null || denominator === null || !Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0 || numerator < 0 || numerator > denominator) return null;
   return numerator / denominator;
 }
 
@@ -43,6 +48,7 @@ function stageLabel(stage: FunnelStage): string {
 }
 
 export function ExecutiveFunnelSummary({ stages }: { stages: FunnelStage[] }) {
+  const showWideChart = useWideDashboardChart();
   const qrScans = countFor(stages, "qr_scanned");
   const certificates = countFor(stages, "certificate_generated");
   const surveys = countFor(stages, "survey_completed");
@@ -50,12 +56,14 @@ export function ExecutiveFunnelSummary({ stages }: { stages: FunnelStage[] }) {
   const surveyRate = safeRate(surveys, certificates);
   const keyStages = EXECUTIVE_STAGE_KEYS.map((key) => stages.find((stage) => stage.key === key)).filter((stage): stage is FunnelStage => Boolean(stage));
   const displayStages = keyStages.length >= 3 ? keyStages : stages.slice(0, 6);
+  const maximum = Math.max(...displayStages.map((stage) => stage.count), 0);
+  const chartData = displayStages.map((stage, index) => ({ ...stage, name: stageLabel(stage), fill: FUNNEL_TONES[index % FUNNEL_TONES.length] }));
   return (
     <section
       aria-labelledby="executive-funnel-heading"
       className="h-full min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white"
     >
-      <div className="flex flex-col gap-4 border-b border-slate-200 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="space-y-4 border-b border-slate-200 px-4 py-4 sm:px-5">
         <div>
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#FFF0EA] text-[#B94727]"><TrendDown aria-hidden="true" size={18} weight="bold" /></span>
@@ -63,7 +71,7 @@ export function ExecutiveFunnelSummary({ stages }: { stages: FunnelStage[] }) {
           </div>
           <p className="mt-1.5 text-xs leading-5 text-slate-600">แต่ละขั้นคือจำนวนเหตุการณ์ใน Funnel ไม่ใช่จำนวนบุคคลหรือรายการเยี่ยมชม</p>
         </div>
-        <div role="group" aria-label="อัตราสรุปเส้นทาง" className="grid shrink-0 grid-cols-2 divide-x divide-slate-200 rounded-md border border-slate-200 bg-slate-50">
+        <div role="group" aria-label="อัตราสรุปเส้นทาง" className="grid grid-cols-2 divide-x divide-slate-200">
           <ConversionSummary
             icon={<QrCode aria-hidden="true" size={16} weight="bold" />}
             label="QR ถึงใบประกาศ"
@@ -83,33 +91,45 @@ export function ExecutiveFunnelSummary({ stages }: { stages: FunnelStage[] }) {
             ยังไม่มีเหตุการณ์เพียงพอสำหรับแสดงเส้นทาง
           </p>
         ) : (
-          <ol className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6 xl:gap-0" aria-label="ลำดับขั้นของเส้นทางผู้ใช้">
+          <>
+          {showWideChart ? <div className="hidden h-72 min-w-0 sm:block" data-chart-engine="recharts" role="img" aria-label="จำนวนเหตุการณ์ตามขั้นตอนหลัก">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: 288 }}>
+              <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 50, bottom: 0, left: 0 }}>
+                <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" width={128} tickFormatter={formatChartAxisLabel} axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11 }} />
+                <Tooltip contentStyle={DASHBOARD_CHART_TOOLTIP} cursor={{ fill: "#F8FAFC" }} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} เหตุการณ์`, "จำนวน"]} />
+                <Bar dataKey="count" barSize={18} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+                  {chartData.map((stage) => <Cell key={stage.key} fill={stage.fill} />)}
+                  <LabelList dataKey="count" position="right" fill="#0F172A" fontSize={12} fontWeight={700} formatter={(value) => Number(value).toLocaleString("th-TH")} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div> : null}
+          <ol className={showWideChart ? "sr-only" : "divide-y divide-slate-100"} aria-label="ลำดับขั้นของเส้นทางผู้ใช้">
             {displayStages.map((stage, index) => {
               const previous = displayStages[index - 1];
               const conversion = previous ? safeRate(stage.count, previous.count) : null;
               return (
                 <li
                   key={stage.key}
-                  className="relative min-w-0 overflow-hidden px-3 py-3 xl:-ml-px xl:px-4"
-                  style={{
-                    background: `color-mix(in srgb, ${FUNNEL_TONES[index] ?? FUNNEL_TONES[FUNNEL_TONES.length - 1]} 10%, white)`,
-                    clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%)",
-                  }}
+                  className="min-w-0 py-3"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-black tabular-nums text-slate-700">{index + 1}</span>
+                    <span className="flex min-w-0 items-start gap-2 text-sm font-semibold text-slate-800"><span aria-hidden="true" className="text-slate-500">{index + 1}.</span><span>{stageLabel(stage)}</span></span>
                     <strong className="text-lg font-black tabular-nums text-slate-950">{stage.count.toLocaleString("th-TH")}</strong>
                   </div>
-                  <span className="mt-2 block break-words text-[11px] font-bold leading-4 text-slate-800">{stageLabel(stage)}</span>
-                  <span className="mt-0.5 block text-[10px] font-semibold tabular-nums text-slate-500">{index === 0 ? "จุดเริ่มต้น" : `${percentLabel(conversion)} จากขั้นก่อน`}</span>
+                  <div className="my-2 h-2 overflow-hidden rounded-sm bg-slate-100" aria-hidden="true"><div className="h-full rounded-sm" style={{ width: `${maximum > 0 ? stage.count / maximum * 100 : 0}%`, backgroundColor: FUNNEL_TONES[index % FUNNEL_TONES.length] }} /></div>
+                  <span className="block text-xs tabular-nums text-slate-600">{index === 0 ? "จุดเริ่มต้น" : `${percentLabel(conversion)} จากขั้นที่แสดงก่อนหน้า`}</span>
                 </li>
               );
             })}
           </ol>
+          </>
         )}
       </div>
 
-      <p className="border-t border-slate-100 bg-slate-50 px-4 py-2.5 text-xs leading-5 text-slate-600 sm:px-5">เปอร์เซ็นต์ของแต่ละขั้นคำนวณเทียบกับขั้นก่อนหน้า</p>
+      <p className="border-t border-slate-100 px-4 py-2.5 text-xs leading-5 text-slate-600 sm:px-5">จำนวนเหตุการณ์อาจมาจากคนละเซสชัน อัตราส่วนนี้ไม่ใช่อัตราสำเร็จรายบุคคล</p>
 
       <div className="sr-only">
         <table aria-label="ข้อมูลประสิทธิภาพเส้นทางผู้ใช้">

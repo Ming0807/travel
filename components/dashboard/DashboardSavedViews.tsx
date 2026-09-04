@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BookmarkSimple, FloppyDisk, Trash, X } from "@phosphor-icons/react/dist/ssr";
+import { BookmarkSimple, CaretDown, FloppyDisk, Trash, X } from "@phosphor-icons/react/dist/ssr";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -29,6 +29,7 @@ export function DashboardSavedViews({ filters }: { filters?: DashboardFilters })
   const searchParams = useSearchParams();
   const [views, setViews] = useState<DashboardSavedView[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const storageInitializedRef = useRef(false);
@@ -96,19 +97,22 @@ export function DashboardSavedViews({ filters }: { filters?: DashboardFilters })
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] bg-[#FFF0EA] text-[#B94727]"><BookmarkSimple aria-hidden="true" size={17} weight="fill" /></span>
           <div className="min-w-0">
             <h2 id="dashboard-saved-views-title" className="text-sm font-black text-slate-900">มุมมองวิเคราะห์</h2>
-            <p className="text-[11px] leading-4 text-slate-500">บันทึกเฉพาะตัวกรอง aggregate ในเครื่องนี้ ไม่บันทึกข้อมูลบุคคล</p>
+            <p className={`${isExpanded ? "block" : "hidden"} text-[11px] leading-4 text-slate-500 sm:block`}>บันทึกเฉพาะตัวกรอง aggregate ในเครื่องนี้ ไม่บันทึกข้อมูลบุคคล</p>
           </div>
         </div>
+        <button type="button" aria-label="เปิดหรือปิดเครื่องมือมุมมอง" aria-expanded={isExpanded} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D94717] sm:hidden" onClick={() => setIsExpanded((expanded) => !expanded)}><CaretDown aria-hidden="true" size={18} className={isExpanded ? "rotate-180" : ""} /></button>
+        <div className={`${isExpanded ? "flex" : "hidden"} w-full flex-wrap items-center gap-2 sm:flex sm:w-auto`}>
         <Link aria-label="หลักฐานภาคสนาม" className="inline-flex min-h-9 items-center rounded-[4px] border border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-800 hover:border-emerald-400" href={fieldHref}>หลักฐานภาคสนาม</Link>
         <Link aria-label="ตรวจ Pilot" className="inline-flex min-h-9 items-center rounded-[4px] border border-amber-200 bg-amber-50 px-3 text-xs font-bold text-amber-800 hover:border-amber-400" href={pilotHref}>ตรวจ Pilot</Link>
         <button aria-expanded={isEditing} className="inline-flex min-h-9 items-center gap-1.5 rounded-[4px] bg-[#171717] px-3 text-xs font-bold text-white hover:bg-[#B94727]" onClick={() => { setIsEditing((current) => !current); setError(null); }} type="button">
           {isEditing ? <X aria-hidden="true" size={14} /> : <FloppyDisk aria-hidden="true" size={14} />}
           {isEditing ? "ปิด" : "บันทึกมุมมองนี้"}
         </button>
+        </div>
       </div>
 
       {isEditing ? (
-        <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-end">
+        <div className={`${isExpanded ? "flex" : "hidden"} mt-3 flex-col gap-2 border-t border-slate-100 pt-3 sm:flex sm:flex-row sm:items-end`}>
           <label className="min-w-0 flex-1">
             <span className="text-xs font-bold text-slate-700">ชื่อมุมมอง</span>
             <input aria-describedby={error ? "saved-view-error" : undefined} className="mt-1 min-h-10 w-full rounded-[4px] border border-slate-300 px-3 text-sm outline-none focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15" maxLength={60} onChange={(event) => setName(event.target.value)} placeholder="เช่น Pilot สิงหาคม - ความพึงพอใจ" value={name} />
@@ -119,7 +123,7 @@ export function DashboardSavedViews({ filters }: { filters?: DashboardFilters })
       {error ? <p className="mt-2 text-xs font-semibold text-rose-700" id="saved-view-error" role="alert">{error}</p> : null}
 
       {views.length > 0 ? (
-        <div aria-label="มุมมองที่บันทึกไว้" className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+        <div aria-label="มุมมองที่บันทึกไว้" className={`${isExpanded ? "flex" : "hidden"} mt-3 flex-wrap gap-2 border-t border-slate-100 pt-3 sm:flex`}>
           {views.map((view) => (
             <span className="inline-flex max-w-full items-stretch rounded-[4px] border border-slate-200 bg-slate-50" key={view.id}>
               <button aria-label={`ใช้มุมมอง ${view.name}`} className="min-h-9 max-w-[15rem] truncate px-3 text-left text-xs font-bold text-slate-700 hover:bg-white hover:text-[#B94727]" onClick={() => applyView(view)} type="button">{view.name}</button>

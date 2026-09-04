@@ -75,7 +75,7 @@ The first screen of every area uses the same reading order:
 - [x] Redesign dashboard navigation around the information architecture above while preserving existing route compatibility.
 - [x] Add one reusable page header with title, purpose, data-as-of time, freshness state, active scope, and page actions.
 - [x] Replace duplicated route-level dashboard service failure markup with shared typed page states.
-- [ ] Distinguish no records, filtered-to-zero, temporarily unavailable, permission denied, and incomplete-data states.
+- [x] Distinguish no records, filtered-to-zero, temporarily unavailable, permission denied, and incomplete-data states.
 - [ ] Remove legacy analytics components only after repository usage tests prove they have no consumers.
 
 **Acceptance:** users can tell where they are, what data they are viewing, how current it is, and how to recover from every empty or error state.
@@ -84,7 +84,7 @@ The first screen of every area uses the same reading order:
 
 - [x] Keep date range and primary geography/attraction in a compact sticky filter bar on desktop and a collapsible bar on mobile.
 - [x] Move audience, travel behavior, district, attraction type, and satisfaction range into a responsive advanced filter panel.
-- [ ] Move campaign, collection mode, and entry channel into the corresponding specialized advanced filter panels.
+- [x] Move campaign, collection mode, and entry channel into the corresponding specialized advanced filter panels.
 - [ ] Replace raw numeric IDs with searchable controlled options.
 - [x] Preserve and safely translate the validated shared scope across dashboard tabs, desktop sidebar, and mobile navigation.
 - [ ] Preserve all applied filters across export, drill-down, and browser history.
@@ -101,7 +101,7 @@ The first screen of every area uses the same reading order:
 - [x] Add a concise deterministic brief answering `what changed`, `why it matters`, `evidence`, and `next action` without causal claims.
 - [x] Keep visit trend, attraction matrix, experience quality, and funnel health as the primary visual sequence.
 - [ ] Add target or benchmark markers only when the target source and comparison population are documented.
-- [ ] Prevent one-point series, suppressed groups, or weak samples from producing trend language.
+- [x] Prevent one-point series, suppressed groups, or weak samples from producing trend language.
 
 **Acceptance:** an executive can identify the top three priorities and their limitations in under one minute without opening another page.
 
@@ -149,7 +149,7 @@ The first screen of every area uses the same reading order:
 
 - [x] Add saved aggregate views for authorized roles without saving raw personal identifiers in filter metadata.
 - [x] Export visible aggregates with title, scope, generated-at time, denominator, exclusions, suppression note, and metric-version metadata.
-- [ ] Add print/PDF layouts for executive brief and attraction improvement review only after browser rendering matches the screen metrics.
+- [x] Add print/PDF layouts for executive brief and attraction improvement review only after browser rendering matches the screen metrics.
 - [x] Audit every authenticated export attempt and enforce existing permission boundaries.
 - [x] Keep CSV/XLSX as analytical formats and PDF as a presentation format; do not make screenshots the source dataset.
 
@@ -162,6 +162,18 @@ mobile presentation, donut legends no longer widen small screens, and collapsed
 advanced filters retain their values. A loopback-only component harness checks
 normal, empty and low-sample fixtures at 360/390/768/1024/1440 px. This is component
 visual evidence, not authenticated dashboard or role/permission sign-off.
+
+Executive and single-attraction continuation (2026-09-04):
+
+- [x] Restore the executive experience summary and existing supporting KPIs (spending estimate, stamps, top attraction) without creating new source metrics.
+- [x] Replace cramped executive funnel chevrons with Recharts stage bars and full-label mobile rows.
+- [x] Use a Recharts score ring, distinct trend gradient IDs, and explicit single-date limitations.
+- [x] Keep low-response attractions visible as awaiting evidence; require 30 responses for comparative scatter points and two eligible places for reference lines.
+- [x] Move single-attraction secondary KPIs into flat evidence rows and bring trend, interpretation and improvement actions ahead of detailed distributions.
+- [x] Add executive drill-down links with shared scope translation; explicitly disclose the narrower attraction-route filter contract.
+- [x] Collapse detailed single-attraction distributions below 640 px and defer hidden chart rendering; keep them open on wide layouts.
+- [x] Add shared page-state recovery banners without turning missing evidence into zero or conflating query/permission failures with empty data.
+- [ ] Complete authenticated browser QA and the remaining cross-page accessibility/release gates below.
 
 - [ ] Define dashboard tokens for surfaces, borders, typography, series colors, semantic states, chart grids, tooltips, and focus states.
 - [ ] Use orange/white/black as the product identity and restrained teal, green, amber, rose, and blue only for analytical meaning.
