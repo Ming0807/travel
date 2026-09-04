@@ -37,7 +37,7 @@ export function DonutChartCard({ title, definition, data, emptyDescription, samp
 
   if (segments.length === 0) {
     return (
-      <section className="rounded-md border border-slate-200 bg-white p-4 sm:p-5">
+      <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3"><h2 className="text-base font-black text-slate-950">{title}</h2><MetricTooltip definition={definition} /></div>
         {sampleCount !== undefined && sampleCount < DASHBOARD_MIN_SAMPLE_SIZE ? <div className="mt-4"><SmallSampleWarning count={sampleCount} label={sampleLabel} /></div> : null}
         <div className="mt-4"><NoDataState description={emptyDescription} /></div>
@@ -46,7 +46,7 @@ export function DonutChartCard({ title, definition, data, emptyDescription, samp
   }
 
   return (
-    <section className="rounded-md border border-slate-200 bg-white p-4 sm:p-5">
+    <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3"><h2 className="text-base font-black text-slate-950">{title}</h2><MetricTooltip definition={definition} /></div>
       {sampleCount !== undefined && denominatorCount !== undefined && interpretation ? (
         <DistributionEvidenceStrip answeredCount={sampleCount} denominatorCount={denominatorCount} interpretation={interpretation} />
@@ -66,8 +66,8 @@ export function DonutChartCard({ title, definition, data, emptyDescription, samp
           </ResponsiveContainer>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"><strong className="text-2xl font-black tabular-nums text-slate-950">{total.toLocaleString("th-TH")}</strong><span className="text-xs font-semibold text-slate-500">รวมทั้งหมด</span></div>
         </div>
-        <ul className="divide-y divide-slate-100">
-          {segments.map((segment) => <li key={segment.label} className="flex min-h-11 items-center gap-3 py-2"><span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: segment.color }} /><span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{segment.displayLabel}</span><span className="shrink-0 text-right"><strong className="block text-sm font-black tabular-nums text-slate-950">{segment.value.toLocaleString("th-TH")}</strong><span className="block text-xs tabular-nums text-slate-500">{(segment.share * 100).toFixed(1)}%</span></span></li>)}
+        <ul className="min-w-0 divide-y divide-slate-100">
+          {segments.map((segment) => <li key={segment.label} className="flex min-h-11 items-center gap-3 py-2"><span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: segment.color }} /><span className="min-w-0 flex-1 break-words text-sm font-bold leading-6 text-slate-700">{segment.displayLabel}</span><span className="shrink-0 text-right"><strong className="block text-sm font-black tabular-nums text-slate-950">{segment.value.toLocaleString("th-TH")}</strong><span className="block text-xs tabular-nums text-slate-500">{(segment.share * 100).toFixed(1)}%</span></span></li>)}
         </ul>
       </div>
       <details className="mt-3 border-t border-slate-100 pt-3" open={selectedLabel === null ? undefined : true}>

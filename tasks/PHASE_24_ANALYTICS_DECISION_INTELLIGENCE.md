@@ -1,6 +1,6 @@
 # Phase 24: Production Analytics Decision Intelligence
 
-Status: In progress; Tasks 24.3-24.8 have production slices implemented and verified
+Status: In progress; core slices through Task 24.9 implemented, Task 24.10 responsive chart hardening underway; unchecked acceptance items remain open
 
 Priority: P1 production decision support and research readiness
 
@@ -89,7 +89,7 @@ The first screen of every area uses the same reading order:
 - [x] Preserve and safely translate the validated shared scope across dashboard tabs, desktop sidebar, and mobile navigation.
 - [ ] Preserve all applied filters across export, drill-down, and browser history.
 - [x] Add active-filter chips with clear-one and clear-all behavior.
-- [ ] Add named presets for field evidence and pilot QA.
+- [x] Add named presets for field evidence and pilot QA.
 - [x] Add an opt-in current-vs-previous-period contract with equal inclusive date ranges and safe zero/null handling.
 - [ ] Add attraction comparison against the eligible peer median.
 
@@ -147,15 +147,21 @@ The first screen of every area uses the same reading order:
 
 ### Task 24.9: Reports, Exports, and Saved Views
 
-- [ ] Add saved aggregate views for authorized roles without saving raw personal identifiers in filter metadata.
-- [ ] Export visible aggregates with title, scope, generated-at time, denominator, exclusions, suppression note, and metric-version metadata.
+- [x] Add saved aggregate views for authorized roles without saving raw personal identifiers in filter metadata.
+- [x] Export visible aggregates with title, scope, generated-at time, denominator, exclusions, suppression note, and metric-version metadata.
 - [ ] Add print/PDF layouts for executive brief and attraction improvement review only after browser rendering matches the screen metrics.
-- [ ] Audit every export attempt and enforce existing permission boundaries.
-- [ ] Keep CSV/XLSX as analytical formats and PDF as a presentation format; do not make screenshots the source dataset.
+- [x] Audit every authenticated export attempt and enforce existing permission boundaries.
+- [x] Keep CSV/XLSX as analytical formats and PDF as a presentation format; do not make screenshots the source dataset.
 
 **Acceptance:** another analyst can reproduce and correctly interpret a report from its embedded scope and definitions.
 
 ### Task 24.10: Responsive and Accessible Visual System
+
+2026-09-04 checkpoint: shared category/attraction bars now have a full-label
+mobile presentation, donut legends no longer widen small screens, and collapsed
+advanced filters retain their values. A loopback-only component harness checks
+normal, empty and low-sample fixtures at 360/390/768/1024/1440 px. This is component
+visual evidence, not authenticated dashboard or role/permission sign-off.
 
 - [ ] Define dashboard tokens for surfaces, borders, typography, series colors, semantic states, chart grids, tooltips, and focus states.
 - [ ] Use orange/white/black as the product identity and restrained teal, green, amber, rose, and blue only for analytical meaning.

@@ -4,20 +4,23 @@ import { useId } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import type { AttractionAnalyticsViewModel } from "@/lib/services/attraction-analytics.service";
+import { CompactBarList } from "@/components/dashboard/CompactBarList";
+import { useWideDashboardChart } from "@/components/dashboard/useWideDashboardChart";
+import { DASHBOARD_CHART_COLORS as BAR_COLORS, DASHBOARD_CHART_TOOLTIP, formatChartAxisLabel } from "@/components/dashboard/dashboard-chart-theme";
 
 type DistributionRow = AttractionAnalyticsViewModel["audience"]["ageGroups"][number];
 
-const BAR_COLORS = ["#D94717", "#0A6B62", "#D6A13D", "#3E7A4F", "#64748B", "#E78A6D", "#4F8E88", "#A97B22"];
 
 export function AttractionDistributionChart({ title, description, rows }: { title: string; description: string; rows: DistributionRow[] }) {
   const headingId = useId();
+  const showWideChart = useWideDashboardChart();
   const denominator = rows[0]?.denominator ?? 0;
   const visibleRows = rows.filter((row) => !row.suppressed && row.count !== null);
   const suppressedRows = rows.filter((row) => row.suppressed);
   const chartData = visibleRows.map((row) => ({
     ...row,
     value: row.count ?? 0,
-    displayValue: `${row.count?.toLocaleString("th-TH")} (${row.percent ?? 0}%)`,
+    displayValue: row.percent === null ? `${row.count?.toLocaleString("th-TH")}` : `${row.count?.toLocaleString("th-TH")} (${row.percent}%)`,
   }));
   const chartHeight = Math.max(216, chartData.length * 48 + 44);
 
@@ -36,20 +39,23 @@ export function AttractionDistributionChart({ title, description, rows }: { titl
       ) : chartData.length === 0 ? (
         <p className="mt-4 border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">ข้อมูลทุกหมวดมีขนาดต่ำกว่าเกณฑ์ จึงไม่สร้างกราฟเพื่อป้องกันการอนุมานกลับถึงกลุ่มย่อย</p>
       ) : (
-        <div className="mt-4 min-w-0" data-chart-engine="recharts" role="img" aria-label={`กราฟแจกแจง ${title}`} style={{ height: chartHeight }}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 620, height: chartHeight }}>
+        <>
+        <div className="mt-4 sm:hidden"><CompactBarList items={chartData.map((row, index) => ({ key: `${row.label}-${index}`, label: row.label, value: row.value, displayValue: row.displayValue, color: BAR_COLORS[index % BAR_COLORS.length] }))} /></div>
+        <div className="mt-4 hidden min-w-0 sm:block" data-chart-engine="recharts" role="img" aria-label={`กราฟแจกแจง ${title}`} style={{ height: chartHeight }}>
+          {showWideChart ? <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 620, height: chartHeight }}>
             <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 74, bottom: 4, left: 0 }}>
               <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} />
-              <YAxis type="category" dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11, fontWeight: 700 }} width={118} />
-              <Tooltip cursor={{ fill: "#F8FAFC" }} contentStyle={{ background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: 5, boxShadow: "0 4px 8px rgba(15,23,42,0.10)", fontSize: 12 }} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} คำตอบ`, "จำนวน"]} />
+              <YAxis type="category" dataKey="label" tickFormatter={formatChartAxisLabel} axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11, fontWeight: 700 }} width={118} />
+              <Tooltip cursor={{ fill: "#F8FAFC" }} contentStyle={DASHBOARD_CHART_TOOLTIP} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} คำตอบ`, "จำนวน"]} />
               <Bar dataKey="value" barSize={18} radius={[0, 4, 4, 0]} isAnimationActive={false}>
                 {chartData.map((row, index) => <Cell key={`distribution-${row.label}-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />)}
                 <LabelList dataKey="displayValue" position="right" fill="#0F172A" fontSize={11} fontWeight={800} />
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </ResponsiveContainer> : null}
         </div>
+        </>
       )}
 
       {suppressedRows.length > 0 ? <p className="mt-3 border-l-2 border-amber-400 pl-3 text-xs leading-5 text-slate-600">มี {suppressedRows.length.toLocaleString("th-TH")} กลุ่มที่ไม่แสดงบนกราฟ เนื่องจากมีขนาดต่ำกว่าเกณฑ์ความเป็นส่วนตัว</p> : null}

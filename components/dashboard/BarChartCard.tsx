@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { DistributionEvidenceStrip } from "@/components/dashboard/DistributionEvidenceStrip";
+import { CompactBarList } from "@/components/dashboard/CompactBarList";
+import { useWideDashboardChart } from "@/components/dashboard/useWideDashboardChart";
+import { DASHBOARD_CHART_COLORS as BAR_COLORS, DASHBOARD_CHART_TOOLTIP, formatChartAxisLabel } from "@/components/dashboard/dashboard-chart-theme";
 import { localizeDashboardLabel } from "@/components/dashboard/dashboard-localization";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { NoDataState } from "@/components/dashboard/NoDataState";
@@ -10,7 +13,6 @@ import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import type { DistributionItem } from "@/types/dashboard";
 
-const BAR_COLORS = ["#D94717", "#0A6B62", "#D6A13D", "#3E7A4F", "#64748B", "#E78A6D", "#4F8E88", "#A97B22"];
 
 type BarChartCardProps = {
   title: string;
@@ -34,6 +36,7 @@ export function BarChartCard({
   interpretation,
 }: BarChartCardProps) {
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
+  const showWideChart = useWideDashboardChart();
   const visible = data.slice(0, 8);
   const chartData = visible.map((item) => ({
     ...item,
@@ -60,13 +63,14 @@ export function BarChartCard({
           {sampleCount !== undefined && denominatorCount !== undefined && interpretation ? (
             <DistributionEvidenceStrip answeredCount={sampleCount} denominatorCount={denominatorCount} interpretation={interpretation} />
           ) : sampleCount !== undefined && sampleCount < DASHBOARD_MIN_SAMPLE_SIZE ? <div className="mt-3"><SmallSampleWarning count={sampleCount} label={sampleLabel} /></div> : null}
-          <div className="mt-4 min-w-0" data-chart-engine="recharts" role="img" aria-label={`กราฟแท่ง ${title}`} style={{ height: chartHeight }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: chartHeight }}>
+          <div className="mt-4 sm:hidden"><CompactBarList items={chartData.map((item, index) => ({ key: item.label, label: item.displayLabel, value: item.value, displayValue: item.displayValue, color: BAR_COLORS[index % BAR_COLORS.length] }))} onSelect={setSelectedLabel} /></div>
+          <div className="mt-4 hidden min-w-0 sm:block" data-chart-engine="recharts" role="img" aria-label={`กราฟแท่ง ${title}`} style={{ height: chartHeight }}>
+            {showWideChart ? <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: chartHeight }}>
               <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 58, bottom: 4, left: 0 }}>
                 <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} />
-                <YAxis type="category" dataKey="displayLabel" axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11, fontWeight: 700 }} width={112} />
-                <Tooltip cursor={{ fill: "#F8FAFC" }} contentStyle={{ background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: 5, boxShadow: "0 4px 8px rgba(15,23,42,0.10)", fontSize: 12 }} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} รายการ`, "จำนวน"]} />
+                <YAxis type="category" dataKey="displayLabel" tickFormatter={formatChartAxisLabel} axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11, fontWeight: 700 }} width={112} />
+                <Tooltip cursor={{ fill: "#F8FAFC" }} contentStyle={DASHBOARD_CHART_TOOLTIP} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} รายการ`, "จำนวน"]} />
                 <Bar
                   dataKey="value"
                   barSize={18}
@@ -79,7 +83,7 @@ export function BarChartCard({
                   <LabelList dataKey="displayValue" position="right" fill="#0F172A" fontSize={11} fontWeight={800} />
                 </Bar>
               </BarChart>
-            </ResponsiveContainer>
+            </ResponsiveContainer> : null}
           </div>
           <details className="mt-3 border-t border-slate-100 pt-3" open={selectedLabel === null ? undefined : true}>
             <summary className="min-h-11 cursor-pointer py-2 text-xs font-semibold text-[#B94727]">ดูเป็นตารางข้อมูล</summary>

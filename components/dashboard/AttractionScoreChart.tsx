@@ -7,10 +7,12 @@ import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Too
 
 import { buildAttractionImprovementHref, type AttractionImprovementContext } from "@/lib/dashboard/attraction-improvement-links";
 import type { AttractionAnalyticsViewModel } from "@/lib/services/attraction-analytics.service";
+import { CompactBarList } from "@/components/dashboard/CompactBarList";
+import { useWideDashboardChart } from "@/components/dashboard/useWideDashboardChart";
+import { DASHBOARD_CHART_COLORS as SCORE_COLORS, DASHBOARD_CHART_TOOLTIP, formatChartAxisLabel } from "@/components/dashboard/dashboard-chart-theme";
 
 type ScoreMetric = AttractionAnalyticsViewModel["satisfaction"][number];
 
-const SCORE_COLORS = ["#D94717", "#0A6B62", "#D6A13D", "#3E7A4F", "#64748B", "#E78A6D", "#4F8E88"];
 const LOW_SCORE_THRESHOLD = 3;
 const DIMENSION_BY_SCORE_KEY: Record<string, string> = {
   overall_score: "overall",
@@ -24,8 +26,9 @@ const DIMENSION_BY_SCORE_KEY: Record<string, string> = {
 
 export function AttractionScoreChart({ metrics, improvementContext }: { metrics: ScoreMetric[]; improvementContext?: AttractionImprovementContext }) {
   const headingId = useId();
+  const showWideChart = useWideDashboardChart();
   const chartData = metrics.filter((metric) => !metric.suppressed && metric.value !== null).map((metric) => ({ ...metric, score: metric.value ?? 0, displayValue: `${metric.value?.toFixed(2)} / 5` }));
-  const chartHeight = Math.max(260, chartData.length * 48 + 44);
+  const chartHeight = Math.max(136, chartData.length * 48 + 44);
 
   return (
     <section className="min-w-0 rounded-md border border-slate-200 bg-white p-4 sm:p-5" aria-labelledby={headingId}>
@@ -38,20 +41,23 @@ export function AttractionScoreChart({ metrics, improvementContext }: { metrics:
       {chartData.length === 0 ? (
         <p className="mt-4 border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">ยังไม่มีมิติที่มีฐานเพียงพอสำหรับแสดงค่าเฉลี่ย</p>
       ) : (
-        <div className="mt-4 min-w-0" data-chart-engine="recharts" role="img" aria-label="กราฟคะแนนคุณภาพประสบการณ์" style={{ height: chartHeight }}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 620, height: chartHeight }}>
+        <>
+        <div className="mt-4 sm:hidden"><CompactBarList maximum={5} items={chartData.map((metric, index) => ({ key: metric.key, label: metric.label, value: metric.score, displayValue: metric.displayValue, color: SCORE_COLORS[index % SCORE_COLORS.length] }))} /></div>
+        <div className="mt-4 hidden min-w-0 sm:block" data-chart-engine="recharts" role="img" aria-label="กราฟคะแนนคุณภาพประสบการณ์" style={{ height: chartHeight }}>
+          {showWideChart ? <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 620, height: chartHeight }}>
             <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 66, bottom: 4, left: 0 }}>
               <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} />
-              <YAxis type="category" dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11, fontWeight: 700 }} width={118} />
-              <Tooltip cursor={{ fill: "#F8FAFC" }} contentStyle={{ background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: 5, boxShadow: "0 4px 8px rgba(15,23,42,0.10)", fontSize: 12 }} formatter={(value) => [`${Number(value).toFixed(2)} / 5`, "คะแนนเฉลี่ย"]} />
+              <YAxis type="category" dataKey="label" tickFormatter={formatChartAxisLabel} axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11, fontWeight: 700 }} width={118} />
+              <Tooltip cursor={{ fill: "#F8FAFC" }} contentStyle={DASHBOARD_CHART_TOOLTIP} formatter={(value) => [`${Number(value).toFixed(2)} / 5`, "คะแนนเฉลี่ย"]} />
               <Bar dataKey="score" barSize={18} radius={[0, 4, 4, 0]} isAnimationActive={false}>
                 {chartData.map((metric, index) => <Cell key={`score-${metric.key}-${index}`} fill={SCORE_COLORS[index % SCORE_COLORS.length]} />)}
                 <LabelList dataKey="displayValue" position="right" fill="#0F172A" fontSize={11} fontWeight={800} />
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </ResponsiveContainer> : null}
         </div>
+        </>
       )}
 
       <details className="mt-3 border-t border-slate-100 pt-2">
