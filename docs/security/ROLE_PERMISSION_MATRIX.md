@@ -214,6 +214,16 @@ Do not:
 - Allow hard delete of historical tourism records by default.
 - Treat dashboard/export/LINE features as implemented before verification.
 
+## Dashboard API Guard Mode
+
+`requireAdmin` and `requirePermission` accept an optional
+`{ unauthenticated: "throw" }` mode for API callers. It changes only missing-login
+handling from a Next redirect to `AdminAuthError("UNAUTHORIZED")`. It does not
+skip Supabase identity validation, active-admin checks, role resolution or the
+requested permission. Default page callers still redirect to `/admin/login`.
+Both Phase 24 dashboard export routes opt into this mode and map missing login
+to 401 and insufficient/inactive access to 403.
+
 ## Related Documents
 
 - `docs/backend/AUTHORIZATION_RULES.md`

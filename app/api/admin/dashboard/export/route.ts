@@ -28,6 +28,7 @@ import {
   dashboardFiltersToSafeQuery,
   sanitizeDashboardQuery,
 } from "@/lib/dashboard/dashboard-saved-views";
+import { buildDashboardSummaryExportRows } from "@/lib/dashboard/dashboard-summary-export";
 
 type DashboardExportRecord = Record<string, unknown>;
 type DashboardExportType = "summary" | "expenses" | "tourists" | "visits" | "surveys";
@@ -147,7 +148,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const params: Record<string, string> = {};
     searchParams.forEach((value, key) => {
-      params[key] = value;
+      if (!(key in params)) params[key] = value;
     });
     filtersForAudit = sanitizeDashboardQuery(searchParams);
 
@@ -156,7 +157,7 @@ export async function GET(request: Request) {
     exportType = parseExportType(params.type);
 
     try {
-      guard = await requirePermission("dashboard.read");
+      guard = await requirePermission("dashboard.read", { unauthenticated: "throw" });
     } catch (error) {
       const err = mapAdminError(error as AdminAuthError);
       return new NextResponse(err.message, { status: err.code === "UNAUTHORIZED" ? 401 : 403 });
@@ -172,7 +173,7 @@ export async function GET(request: Request) {
     }
 
     try {
-      guard = await requirePermission(permissionForExportType(exportType));
+      guard = await requirePermission(permissionForExportType(exportType), { unauthenticated: "throw" });
     } catch (error) {
       const err = mapAdminError(error as AdminAuthError);
       await logAuditAction({
@@ -263,16 +264,7 @@ export async function GET(request: Request) {
       const data = await getDashboardAnalytics(filtersForAudit, "executive");
       const qualityReason = dashboardExportBlockReason(data.quality);
       if (qualityReason) return await respondBlockedExport(qualityReason, exportType, format, guard, filtersForAudit);
-      const rows = data.executive.topAttractions.map((attr) => ({
-        Rank: attr.rank,
-        Attraction: attr.attractionName,
-        Province: attr.provinceName,
-        Visits: attr.visitCount,
-        Certificates: attr.certificateCount,
-        Surveys: attr.surveyResponseCount,
-        "Average Satisfaction": attr.averageSatisfaction ?? "",
-        Note: "Dashboard summary export uses aggregated planning metrics only",
-      }));
+      const rows = buildDashboardSummaryExportRows(data);
 
       const exportRows = attachDashboardExportMetadata(rows, buildDashboardExportMetadata({
         title: EXPORT_TITLES.summary,

@@ -13,7 +13,7 @@ export function ExecutiveDashboardHeader({ data }: { data: DashboardViewModel })
       </div>
       <div className="flex min-w-0 flex-wrap items-center gap-3">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500"><Clock aria-hidden="true" size={15} />อัปเดต {new Date(updatedAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}</span>
-        <ExportCsvButton />
+        <ExportCsvButton filters={data.filters} quality={data.quality} />
       </div>
     </header>
   );

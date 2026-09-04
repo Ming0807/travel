@@ -39,7 +39,7 @@ beforeEach(() => {
 
 describe("dashboard responsive actions", () => {
   it("keeps the export menu within the mobile viewport", () => {
-    const { container } = render(<ExportCsvButton />);
+    const { container } = render(<ExportCsvButton filters={{ dateFrom: "2026-08-01", dateTo: "2026-08-31" }} />);
     const menu = container.querySelector("details > div");
 
     expect(menu).toHaveClass("w-[min(15rem,calc(100vw-2rem))]");
@@ -57,7 +57,7 @@ describe("dashboard export privacy interactions", () => {
   });
 
   function openTouristExport() {
-    const { container } = render(<ExportCsvButton />);
+    const { container } = render(<ExportCsvButton filters={{ dateFrom: "2026-08-01", dateTo: "2026-08-31" }} />);
     const details = container.querySelector("details") as HTMLDetailsElement;
     const summary = container.querySelector("summary") as HTMLElement;
     fireEvent.click(summary);

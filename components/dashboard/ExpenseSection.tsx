@@ -24,7 +24,7 @@ export function ExpenseSection({ data }: { data: DashboardViewModel }) {
   return (
     <section aria-labelledby="expense-heading" className="space-y-5">
       <AnalyticsSectionHeader
-        actions={<><SurveyRecordsLink data={data} /><ExportCsvButton quality={data.quality} /></>}
+        actions={<><SurveyRecordsLink data={data} /><ExportCsvButton filters={data.filters} quality={data.quality} /></>}
         description="สำรวจรูปแบบการใช้จ่ายที่ผู้ตอบเลือกด้วยตนเอง เพื่อประกอบการวางแผนเศรษฐกิจท้องถิ่น"
         headingId="expense-heading"
         title="ค่าใช้จ่ายโดยประมาณ"

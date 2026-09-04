@@ -1,9 +1,9 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useCallback, useRef } from "react";
 import { ExportPrivacyDialog } from "@/components/dashboard/ExportPrivacyDialog";
-import type { DashboardQuality } from "@/types/dashboard";
+import { dashboardFiltersToSafeQuery, dashboardQueryString } from "@/lib/dashboard/dashboard-saved-views";
+import type { DashboardFilters, DashboardQuality } from "@/types/dashboard";
 
 const exports = [
   ["summary", "สรุปภาพรวม"],
@@ -13,11 +13,10 @@ const exports = [
   ["expenses", "ค่าใช้จ่าย"],
 ] as const;
 
-export function ExportCsvButton({ quality }: { quality?: DashboardQuality }) {
-  const searchParams = useSearchParams();
+export function ExportCsvButton({ filters, quality }: { filters: DashboardFilters; quality?: DashboardQuality }) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const summaryRef = useRef<HTMLElement>(null);
-  const queryString = searchParams.toString() ? `${searchParams.toString()}&` : "";
+  const queryString = dashboardQueryString(dashboardFiltersToSafeQuery(filters));
   const closeMenu = useCallback(() => {
     if (detailsRef.current) detailsRef.current.open = false;
   }, []);

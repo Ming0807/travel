@@ -68,7 +68,7 @@ export function TouristProfileSection({ data }: { data: DashboardViewModel }) {
   return (
     <section className="space-y-5" aria-labelledby="tourist-profile-heading">
       <AnalyticsSectionHeader
-        actions={<ExportCsvButton quality={data.quality} />}
+        actions={<ExportCsvButton filters={data.filters} quality={data.quality} />}
         description="สำรวจพื้นที่ต้นทาง ช่วงอายุ และภาษาจากโปรไฟล์ที่มีรายการเข้าชม โดยแสดงเฉพาะข้อมูลสรุปที่ไม่ระบุตัวบุคคล"
         headingId="tourist-profile-heading"
         title="ลักษณะนักท่องเที่ยว"

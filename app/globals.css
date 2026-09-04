@@ -62,17 +62,6 @@
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .admin-app *,
-  .admin-app *::before,
-  .admin-app *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
-}
-
 * {
   box-sizing: border-box;
 }
@@ -360,6 +349,11 @@ textarea {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
+  }
+  .admin-app *,
+  .admin-app *::before,
+  .admin-app *::after {
+    animation-iteration-count: 1 !important;
   }
 }
 

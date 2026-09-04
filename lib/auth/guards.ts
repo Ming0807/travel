@@ -681,7 +681,9 @@ async function findAdminUser(authUserId: string, email: string | null | undefine
   return byEmail.data;
 }
 
-export async function requireAdmin(): Promise<GuardResult> {
+type AdminGuardOptions = { unauthenticated?: "redirect" | "throw" };
+
+export async function requireAdmin(options: AdminGuardOptions = {}): Promise<GuardResult> {
   const authClient = await createSupabaseServerClient();
   const {
     data: { user },
@@ -689,6 +691,9 @@ export async function requireAdmin(): Promise<GuardResult> {
   } = await authClient.auth.getUser();
 
   if (error || !user) {
+    if (options.unauthenticated === "throw") {
+      throw new AdminAuthError("UNAUTHORIZED", "Please sign in to continue.");
+    }
     redirect("/admin/login");
   }
 
@@ -719,8 +724,8 @@ export function hasPermission(actor: Pick<AdminActor, "permissions">, permission
   return actor.permissions.includes("system.all") || actor.permissions.includes(permission);
 }
 
-export async function requirePermission(permission: PermissionKey): Promise<GuardResult> {
-  const result = await requireAdmin();
+export async function requirePermission(permission: PermissionKey, options: AdminGuardOptions = {}): Promise<GuardResult> {
+  const result = await requireAdmin(options);
 
   if (!hasPermission(result.actor, permission)) {
     throw new AdminAuthError("FORBIDDEN", "You do not have permission to perform this action.");

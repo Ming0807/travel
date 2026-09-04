@@ -82,6 +82,13 @@ The first screen of every area uses the same reading order:
 
 ### Task 24.3: Filter, Comparison, and URL Contract
 
+2026-09-04 parity checkpoint: export actions now serialize the server-resolved
+screen scope, including default dates, rather than the current browser query.
+The page/export repeated-key rule is first-value-wins, and impossible calendar
+dates are rejected. Summary export now includes KPI and daily Visit-trend rows
+alongside the existing ranking. Full authenticated drill-down/history parity
+remains open; this checkpoint does not mark the entire contract complete.
+
 - [x] Keep date range and primary geography/attraction in a compact sticky filter bar on desktop and a collapsible bar on mobile.
 - [x] Move audience, travel behavior, district, attraction type, and satisfaction range into a responsive advanced filter panel.
 - [x] Move campaign, collection mode, and entry channel into the corresponding specialized advanced filter panels.

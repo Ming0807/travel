@@ -39,10 +39,7 @@ const optionalScore = z.preprocess(
   z.coerce.number().min(1).max(5).optional()
 );
 
-const dashboardDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must use YYYY-MM-DD format.")
-  .refine((value) => parseDateInput(value) !== null, "Date is invalid.");
+const dashboardDateSchema = z.iso.date();
 
 export const dashboardFiltersSchema = z
   .object({

@@ -151,3 +151,13 @@ suppression note, and metric version. Suppressed satisfaction denominators are
 withheld. Authenticated success and failure outcomes are audited without unknown
 query parameters or raw invalid filter values. A file must finish generating
 before a successful export audit event is recorded.
+
+Dashboard export guards explicitly use `unauthenticated: "throw"`: a missing
+or expired login produces 401 without an HTML redirect. An authenticated admin
+without the required permission (or an inactive account) receives 403. Regular
+admin pages keep their existing redirect-to-login behavior.
+
+The generic export uses the first repeated query value, matching dashboard page
+parsing. Summary files contain KPI, Visit Trend and Attraction Ranking sections
+with uniform columns, retaining existing ranking columns. Export buttons submit
+server-resolved screen filters rather than unrelated browser query parameters.

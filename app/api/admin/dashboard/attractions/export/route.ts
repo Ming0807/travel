@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const format: ExportFormat | null = parseRequestedExportFormat(url.searchParams.get("format"));
   try {
-    guard = await requirePermission("dashboard.read");
+    guard = await requirePermission("dashboard.read", { unauthenticated: "throw" });
   } catch (error) {
     const status = error instanceof AdminAuthError && error.code === "UNAUTHORIZED" ? 401 : 403;
     return new NextResponse(status === 401 ? "Authentication required" : "Export permission required", { status });
@@ -28,8 +28,8 @@ export async function GET(request: Request) {
     return new NextResponse("Unsupported export format", { status: 400 });
   }
   try {
-    guard = await requirePermission("export.summary");
-  } catch {
+    guard = await requirePermission("export.summary", { unauthenticated: "throw" });
+  } catch (error) {
     await logAuditAction({
       actor: guard.actor,
       action: `export.dashboard.attraction_analytics.${format}`,
@@ -37,7 +37,8 @@ export async function GET(request: Request) {
       result: "failed",
       metadata: { reason: "permission_denied" },
     });
-    return new NextResponse("Export permission required", { status: 403 });
+    const status = error instanceof AdminAuthError && error.code === "UNAUTHORIZED" ? 401 : 403;
+    return new NextResponse(status === 401 ? "Authentication required" : "Export permission required", { status });
   }
   const parsed = attractionAnalyticsFiltersSchema.safeParse({
     attractionId: url.searchParams.get("attractionId"),

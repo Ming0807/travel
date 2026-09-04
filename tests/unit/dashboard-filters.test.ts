@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import { getPreviousDashboardPeriod, parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 
 describe("dashboard filter validation", () => {
+  it.each(["2026-02-30", "2025-02-29", "2026-04-31"])("rejects nonexistent calendar date %s", (date) => {
+    expect(parseDashboardFilters({ date_from: date, date_to: date }).success).toBe(false);
+  });
+
+  it("accepts an actual leap day", () => {
+    expect(parseDashboardFilters({ date_from: "2024-02-29", date_to: "2024-03-01" }).success).toBe(true);
+  });
+
   it("accepts a valid date range and numeric filters", () => {
     const result = parseDashboardFilters({
       date_from: "2026-05-01",

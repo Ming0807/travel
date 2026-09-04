@@ -2643,3 +2643,26 @@ labels. It is not a source dataset and must not be parsed as a replacement for
 CSV/XLSX. Interactive forms, drill-down links, admin chrome, and draft controls
 are excluded from print. Weak or blocked evidence remains labelled and cannot
 recover directional comparison prose merely because it is printed.
+
+## 54. Dashboard Export Scope Parity
+
+The export control receives the server-resolved `DashboardFilters` used by its
+visible analytical view. It serializes only the approved canonical filter keys,
+including the explicit dates, instead of forwarding the browser query. This
+prevents rolling defaults from changing across midnight and excludes unrelated
+query values from download URLs. Repeated query keys use the first occurrence,
+matching the page parser. Nonexistent calendar dates are rejected by Zod.
+
+The summary CSV/XLSX contains three named sections: KPI, Visit Trend, and
+Attraction Ranking. KPI rows retain raw value, displayed value, value type,
+sample size, metric denominator, unit, definition and note. Trend rows use visit
+date and recorded Visit counts, not web views. Existing ranking columns remain
+available. Missing numeric values are blank; a measured zero remains zero. All
+sections share the same columns and per-row report metadata.
+
+The export re-reads current data under the resolved scope and existing quality
+and permission gates. Its generated-at timestamp identifies that read; it is
+not an immutable snapshot of a previously opened browser page. Previous-period
+comparisons are not included in this summary file and the download dialog says
+so. `Report Denominator` is report context; each KPI's `Denominator` is its own
+calculation base and must not be replaced with the report-wide count.
