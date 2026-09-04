@@ -9,8 +9,7 @@ import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { localizeDashboardLabel } from "@/components/dashboard/dashboard-localization";
-
-const DONUT_COLORS = ["#D94717", "#0A6B62", "#D6A13D", "#3E7A4F", "#64748B", "#E78A6D", "#4F8E88", "#A97B22", "#94A3B8", "#B7D9D5"];
+import { DASHBOARD_CHART_COLORS as DONUT_COLORS, DASHBOARD_CHART_TOKENS, DASHBOARD_CHART_TOOLTIP } from "@/components/dashboard/dashboard-chart-theme";
 
 type DonutChartCardProps = {
   title: string;
@@ -55,10 +54,10 @@ export function DonutChartCard({ title, definition, data, emptyDescription, samp
         <div className="relative mx-auto h-52 w-full max-w-60" data-chart-engine="recharts" role="img" aria-label={`แผนภูมิโดนัท ${title}`}>
           <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 240, height: 208 }}>
             <PieChart>
-              <Pie data={segments} dataKey="value" nameKey="displayLabel" cx="50%" cy="50%" innerRadius="62%" outerRadius="88%" paddingAngle={2} cornerRadius={4} stroke="#FFFFFF" strokeWidth={2} isAnimationActive={false} cursor="pointer" onClick={(_entry, index) => setSelectedLabel(segments[index]?.label ?? null)}>
+              <Pie data={segments} dataKey="value" nameKey="displayLabel" cx="50%" cy="50%" innerRadius="62%" outerRadius="88%" paddingAngle={2} cornerRadius={4} stroke={DASHBOARD_CHART_TOKENS.surface} strokeWidth={2} isAnimationActive={false} cursor="pointer" onClick={(_entry, index) => setSelectedLabel(segments[index]?.label ?? null)}>
                 {segments.map((segment) => <Cell key={`slice-${segment.label}`} fill={segment.color} />)}
               </Pie>
-              <Tooltip contentStyle={{ background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: 5, boxShadow: "0 4px 8px rgba(15,23,42,0.10)", fontSize: 12 }} formatter={(value, _name, item) => {
+              <Tooltip contentStyle={DASHBOARD_CHART_TOOLTIP} formatter={(value, _name, item) => {
                 const payload = item.payload as (typeof segments)[number];
                 return [`${Number(value).toLocaleString("th-TH")} รายการ (${(payload.share * 100).toFixed(1)}%)`, payload.displayLabel];
               }} />

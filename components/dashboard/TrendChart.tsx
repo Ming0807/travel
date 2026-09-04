@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { ChartLineUp } from "@phosphor-icons/react/dist/ssr";
 import { NoDataState } from "@/components/dashboard/NoDataState";
-import { DASHBOARD_CHART_TOOLTIP } from "@/components/dashboard/dashboard-chart-theme";
+import { DASHBOARD_CHART_AXIS_TICK, DASHBOARD_CHART_TOKENS, DASHBOARD_CHART_TOOLTIP } from "@/components/dashboard/dashboard-chart-theme";
 import { buildAttractionImprovementHref, type AttractionImprovementContext } from "@/lib/dashboard/attraction-improvement-links";
 import type { TrendPoint } from "@/types/dashboard";
 
@@ -99,15 +99,15 @@ export function TrendChart({ points, improvementContext }: { points: TrendPoint[
           <AreaChart data={chartData} margin={{ top: 12, right: 10, bottom: 0, left: -10 }}>
             <defs>
               <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#D94717" stopOpacity={0.2} />
-                <stop offset="100%" stopColor="#D94717" stopOpacity={0.02} />
+                <stop offset="0%" stopColor={DASHBOARD_CHART_TOKENS.accent} stopOpacity={0.2} />
+                <stop offset="100%" stopColor={DASHBOARD_CHART_TOKENS.accent} stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="dateLabel" axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} minTickGap={24} />
-            <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} width={42} />
+            <CartesianGrid stroke={DASHBOARD_CHART_TOKENS.grid} strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="dateLabel" axisLine={false} tickLine={false} tick={DASHBOARD_CHART_AXIS_TICK} minTickGap={24} />
+            <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={DASHBOARD_CHART_AXIS_TICK} width={42} />
             <Tooltip
-              cursor={{ stroke: "#94A3B8", strokeDasharray: "4 4" }}
+              cursor={{ stroke: DASHBOARD_CHART_TOKENS.reference, strokeDasharray: "4 4" }}
               contentStyle={DASHBOARD_CHART_TOOLTIP}
               formatter={(value) => [`${Number(value).toLocaleString("th-TH")} ครั้ง`, "รายการเข้าชม"]}
               labelFormatter={(_, payload) => payload[0]?.payload?.fullDate ?? ""}
@@ -117,11 +117,11 @@ export function TrendChart({ points, improvementContext }: { points: TrendPoint[
               fill={`url(#${gradientId})`}
               isAnimationActive={false}
               name="รายการเข้าชม"
-              stroke="#D94717"
+              stroke={DASHBOARD_CHART_TOKENS.accent}
               strokeWidth={3}
               type="monotone"
-              activeDot={{ r: 6, fill: "#0A6B62", stroke: "#FFFFFF", strokeWidth: 3 }}
-              dot={points.length <= 7 ? { r: 4, fill: "#D94717", stroke: "#FFFFFF", strokeWidth: 2 } : false}
+              activeDot={{ r: 6, fill: DASHBOARD_CHART_TOKENS.teal, stroke: DASHBOARD_CHART_TOKENS.surface, strokeWidth: 3 }}
+              dot={points.length <= 7 ? { r: 4, fill: DASHBOARD_CHART_TOKENS.accent, stroke: DASHBOARD_CHART_TOKENS.surface, strokeWidth: 2 } : false}
             />
           </AreaChart>
         </ResponsiveContainer>

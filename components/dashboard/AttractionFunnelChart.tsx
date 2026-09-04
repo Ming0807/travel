@@ -7,10 +7,10 @@ import { Cell, Funnel, FunnelChart as RechartsFunnelChart, ResponsiveContainer, 
 
 import { buildAttractionImprovementHref, type AttractionImprovementContext } from "@/lib/dashboard/attraction-improvement-links";
 import type { AttractionAnalyticsViewModel } from "@/lib/services/attraction-analytics.service";
+import { DASHBOARD_CHART_TOKENS, DASHBOARD_CHART_TOOLTIP, DASHBOARD_FUNNEL_COLORS as FUNNEL_COLORS } from "@/components/dashboard/dashboard-chart-theme";
 
 type FunnelStages = AttractionAnalyticsViewModel["funnel"];
 
-const FUNNEL_COLORS = ["#D94717", "#E05B2B", "#E87945", "#D6A13D", "#3E7A4F", "#0A6B62", "#4F8E88"];
 const DESKTOP_QUERY = "(min-width: 1280px)";
 
 function subscribeToDesktop(callback: () => void) {
@@ -52,9 +52,9 @@ export function AttractionFunnelChart({ stages, improvementContext }: { stages: 
           {showDesktopChart ? <div className="h-[23rem] min-w-0" data-chart-engine="recharts" role="img" aria-label="กราฟ Funnel รายสถานที่">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 300, height: 368 }}>
               <RechartsFunnelChart>
-                <Tooltip contentStyle={{ background: "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: 5, boxShadow: "0 4px 8px rgba(15,23,42,0.10)", fontSize: 12 }} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} Visits`, "จำนวน"]} />
+                <Tooltip contentStyle={DASHBOARD_CHART_TOOLTIP} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} Visits`, "จำนวน"]} />
                 <Funnel dataKey="value" data={chartData} isAnimationActive={false}>
-                  {chartData.map((stage) => <Cell key={`attraction-funnel-${stage.key}`} fill={stage.fill} stroke="#FFFFFF" strokeWidth={2} />)}
+                  {chartData.map((stage) => <Cell key={`attraction-funnel-${stage.key}`} fill={stage.fill} stroke={DASHBOARD_CHART_TOKENS.surface} strokeWidth={2} />)}
                 </Funnel>
               </RechartsFunnelChart>
             </ResponsiveContainer>
@@ -66,11 +66,11 @@ export function AttractionFunnelChart({ stages, improvementContext }: { stages: 
               return (
                 <li key={stage.key} className="grid gap-2 py-3 sm:grid-cols-[minmax(170px,.8fr)_minmax(0,1.2fr)] sm:items-center">
                   <div className="flex items-start gap-2.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-black text-white" style={{ backgroundColor: stage.available ? FUNNEL_COLORS[index % FUNNEL_COLORS.length] : "#94A3B8" }}>{index + 1}</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-2 bg-white text-xs font-black text-slate-950" style={{ borderColor: stage.available ? FUNNEL_COLORS[index % FUNNEL_COLORS.length] : DASHBOARD_CHART_TOKENS.reference }}>{index + 1}</span>
                     <div className="min-w-0"><p className="text-sm font-bold text-slate-800">{stage.label}</p><p className="text-xs tabular-nums text-slate-600">{stage.available ? `${stage.count.toLocaleString("th-TH")} Visits` : "ข้อมูลเชื่อมโยงไม่ครบ"}</p></div>
                   </div>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-3"><div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-sm bg-slate-100" aria-label={`${stage.label} ${stage.available ? stage.count.toLocaleString("th-TH") : "ไม่พร้อมแสดง"}`} role="img"><div className="h-full rounded-sm" style={{ width: `${width}%`, backgroundColor: stage.available ? FUNNEL_COLORS[index % FUNNEL_COLORS.length] : "#94A3B8" }} /></div><span className="w-12 shrink-0 text-right text-xs font-bold tabular-nums text-slate-700">{stage.available ? `${Math.round(width)}%` : "N/A"}</span></div>
+                    <div className="flex items-center gap-3"><div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-sm bg-slate-100" aria-label={`${stage.label} ${stage.available ? stage.count.toLocaleString("th-TH") : "ไม่พร้อมแสดง"}`} role="img"><div className="h-full rounded-sm" style={{ width: `${width}%`, backgroundColor: stage.available ? FUNNEL_COLORS[index % FUNNEL_COLORS.length] : DASHBOARD_CHART_TOKENS.reference }} /></div><span className="w-12 shrink-0 text-right text-xs font-bold tabular-nums text-slate-700">{stage.available ? `${Math.round(width)}%` : "N/A"}</span></div>
                     <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
                       <p className="text-xs leading-5 text-slate-600">{index === 0 || stage.conversionFromPrevious === null ? stage.note ?? "จุดเริ่มต้นของฐานที่คำนวณได้" : `ผ่าน ${percentage(stage.conversionFromPrevious)} · หลุด ${percentage(stage.dropOffFromPrevious)}`}</p>
                       {improvementContext && stage.dropOffFromPrevious !== null && stage.dropOffFromPrevious > 0 ? <Link aria-label={`เปิดร่างประเด็นจากขั้น ${stage.label}`} href={buildAttractionImprovementHref(improvementContext, { source: "funnel_dropoff", dimension: "overall", metric: stage.key, value: stage.dropOffFromPrevious })} className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-[#B94727] underline underline-offset-4"><ArrowSquareOut aria-hidden="true" /> เปิดร่าง</Link> : null}

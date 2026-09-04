@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CheckCircle, QrCode, TrendDown } from "@phosphor-icons/react/dist/ssr";
 import { useWideDashboardChart } from "@/components/dashboard/useWideDashboardChart";
-import { DASHBOARD_CHART_TOOLTIP, formatChartAxisLabel } from "@/components/dashboard/dashboard-chart-theme";
+import { DASHBOARD_CHART_AXIS_TICK, DASHBOARD_CHART_CATEGORY_TICK, DASHBOARD_CHART_TOKENS, DASHBOARD_CHART_TOOLTIP, DASHBOARD_FUNNEL_COLORS as FUNNEL_TONES, formatChartAxisLabel } from "@/components/dashboard/dashboard-chart-theme";
 import type { FunnelStage } from "@/types/dashboard";
 
 const STAGE_LABELS: Record<string, string> = {
@@ -28,7 +28,6 @@ const EXECUTIVE_STAGE_KEYS = [
   "survey_completed",
 ];
 
-const FUNNEL_TONES = ["#D94717", "#E76A3B", "#D69E2E", "#4B8A5F", "#0A6B62", "#07534D"];
 
 function countFor(stages: FunnelStage[], key: string): number | null {
   return stages.find((stage) => stage.key === key)?.count ?? null;
@@ -95,13 +94,13 @@ export function ExecutiveFunnelSummary({ stages }: { stages: FunnelStage[] }) {
           {showWideChart ? <div className="hidden h-72 min-w-0 sm:block" data-chart-engine="recharts" role="img" aria-label="จำนวนเหตุการณ์ตามขั้นตอนหลัก">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: 288 }}>
               <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 50, bottom: 0, left: 0 }}>
-                <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" width={128} tickFormatter={formatChartAxisLabel} axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11 }} />
-                <Tooltip contentStyle={DASHBOARD_CHART_TOOLTIP} cursor={{ fill: "#F8FAFC" }} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} เหตุการณ์`, "จำนวน"]} />
+                <CartesianGrid stroke={DASHBOARD_CHART_TOKENS.grid} strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={DASHBOARD_CHART_AXIS_TICK} />
+                <YAxis type="category" dataKey="name" width={128} tickFormatter={formatChartAxisLabel} axisLine={false} tickLine={false} tick={DASHBOARD_CHART_CATEGORY_TICK} />
+                <Tooltip contentStyle={DASHBOARD_CHART_TOOLTIP} cursor={{ fill: DASHBOARD_CHART_TOKENS.cursor }} formatter={(value) => [`${Number(value).toLocaleString("th-TH")} เหตุการณ์`, "จำนวน"]} />
                 <Bar dataKey="count" barSize={18} radius={[0, 4, 4, 0]} isAnimationActive={false}>
                   {chartData.map((stage) => <Cell key={stage.key} fill={stage.fill} />)}
-                  <LabelList dataKey="count" position="right" fill="#0F172A" fontSize={12} fontWeight={700} formatter={(value) => Number(value).toLocaleString("th-TH")} />
+                  <LabelList dataKey="count" position="right" fill={DASHBOARD_CHART_TOKENS.value} fontSize={12} fontWeight={700} formatter={(value) => Number(value).toLocaleString("th-TH")} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

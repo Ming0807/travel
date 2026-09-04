@@ -1281,3 +1281,30 @@ and paired evidence modules onto an A4 landscape composition. The attraction
 improvement review uses A4 portrait and keeps the selected scope, deterministic
 rule version, evidence summary, owners, deadlines, history, and verified outcome.
 Form controls are never printed as if they were completed evidence.
+
+## 40. Shared Chart Presentation Tokens
+
+`dashboard-chart-theme.ts` owns protected chart series, grid, axis, category
+labels, exact-value labels, references, cursor fill, and tooltip surface tokens.
+The admin shell owns surface, border, ink, semantic state, radius and focus CSS
+variables. Chart components import typed tokens directly to support both SVG
+and isolated browser fixtures without a second CSS palette to synchronize.
+
+Category colors distinguish categories only. Funnel palettes indicate sequence,
+not quality or success. Evidence grades retain their explicit text and icons.
+Orange is the primary identity, with teal, green and amber supporting charts;
+rose and blue remain available for explicit risk/comparison semantics. Values
+and tables must remain understandable without color.
+
+All admin interactive elements have a two-pixel visible focus outline. Reduced
+motion disables decorative transitions and scrolling within the admin shell.
+Funnel badges use dark numbers on white with colored borders, avoiding white
+text on amber. The protected charts retain their existing stable dimensions,
+responsive label presentations and data contracts.
+
+2026-09-04 validation: focused chart/overview/workspace tests (56 tests in six
+files), TypeScript, scoped ESLint, production build (63 static pages), and
+desktop/mobile executive screenshots. At 360 and 1440 px, scroll width matched
+the viewport; browser console recorded zero errors or warnings. This token pass
+does not constitute a complete authenticated accessibility audit or change the
+public evidence chart design.

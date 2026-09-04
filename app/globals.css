@@ -50,9 +50,27 @@
   --admin-success: #15803D;
   --admin-warning: #B45309;
   --admin-danger: #BE123C;
+  --admin-info: #2563EB;
+  --admin-focus: #D94717;
   --admin-radius-control: 4px;
   --admin-radius-panel: 6px;
   --admin-control-height: 44px;
+}
+
+.admin-app :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--admin-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-app *,
+  .admin-app *::before,
+  .admin-app *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 * {

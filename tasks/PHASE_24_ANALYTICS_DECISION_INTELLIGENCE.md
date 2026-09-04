@@ -175,7 +175,7 @@ Executive and single-attraction continuation (2026-09-04):
 - [x] Add shared page-state recovery banners without turning missing evidence into zero or conflating query/permission failures with empty data.
 - [ ] Complete authenticated browser QA and the remaining cross-page accessibility/release gates below.
 
-- [ ] Define dashboard tokens for surfaces, borders, typography, series colors, semantic states, chart grids, tooltips, and focus states.
+- [x] Define dashboard tokens for surfaces, borders, typography, series colors, semantic states, chart grids, tooltips, and focus states.
 - [ ] Use orange/white/black as the product identity and restrained teal, green, amber, rose, and blue only for analytical meaning.
 - [ ] Use low-radius panels, stable chart heights, no nested decorative cards, and no excessive gradients.
 - [ ] On mobile, order content as summary, primary chart, interpretation, action; move advanced filters to a sheet/drawer.

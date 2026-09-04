@@ -21,6 +21,13 @@ Dashboards must consume server-side aggregated, privacy-safe data. They must not
 - `dashboard-chart-theme.ts` owns the category palette, tooltip surface and
   grapheme-safe abbreviated axis labels. Full labels remain in tooltips/tables.
 - Donut legend labels wrap within a `min-w-0` container rather than widening the page.
+- Protected bar, donut, scatter, trend and funnel components share chart tokens,
+  axis typography and tooltip styling from `dashboard-chart-theme.ts`. Category
+  colors distinguish series, not evidence grades; ordered funnel colors do not
+  imply that later stages are successful without the actual counts.
+- Admin controls share a visible focus outline and respect reduced motion.
+  Funnel step numbers use dark text on white with a colored border so amber
+  stages remain readable. Values, labels and tables carry meaning without color.
 
 The active design source is `docs/frontend/DASHBOARD_UI_SPEC.md`. The implementation rationale and page-by-page plan are in `docs/superpowers/specs/2026-08-05-admin-analytics-visual-system-design.md` and `docs/superpowers/plans/2026-08-05-admin-analytics-visual-redesign.md`.
 

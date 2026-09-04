@@ -9,7 +9,7 @@ import { buildAttractionImprovementHref, type AttractionImprovementContext } fro
 import type { AttractionAnalyticsViewModel } from "@/lib/services/attraction-analytics.service";
 import { CompactBarList } from "@/components/dashboard/CompactBarList";
 import { useWideDashboardChart } from "@/components/dashboard/useWideDashboardChart";
-import { DASHBOARD_CHART_COLORS as SCORE_COLORS, DASHBOARD_CHART_TOOLTIP, formatChartAxisLabel } from "@/components/dashboard/dashboard-chart-theme";
+import { DASHBOARD_CHART_AXIS_TICK, DASHBOARD_CHART_CATEGORY_TICK, DASHBOARD_CHART_COLORS as SCORE_COLORS, DASHBOARD_CHART_TOKENS, DASHBOARD_CHART_TOOLTIP, formatChartAxisLabel } from "@/components/dashboard/dashboard-chart-theme";
 
 type ScoreMetric = AttractionAnalyticsViewModel["satisfaction"][number];
 
@@ -46,13 +46,13 @@ export function AttractionScoreChart({ metrics, improvementContext }: { metrics:
         <div className="mt-4 hidden min-w-0 sm:block" data-chart-engine="recharts" role="img" aria-label="กราฟคะแนนคุณภาพประสบการณ์" style={{ height: chartHeight }}>
           {showWideChart ? <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 620, height: chartHeight }}>
             <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 66, bottom: 4, left: 0 }}>
-              <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} />
-              <YAxis type="category" dataKey="label" tickFormatter={formatChartAxisLabel} axisLine={false} tickLine={false} tick={{ fill: "#334155", fontSize: 11, fontWeight: 700 }} width={118} />
-              <Tooltip cursor={{ fill: "#F8FAFC" }} contentStyle={DASHBOARD_CHART_TOOLTIP} formatter={(value) => [`${Number(value).toFixed(2)} / 5`, "คะแนนเฉลี่ย"]} />
+              <CartesianGrid stroke={DASHBOARD_CHART_TOKENS.grid} strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} axisLine={false} tickLine={false} tick={DASHBOARD_CHART_AXIS_TICK} />
+              <YAxis type="category" dataKey="label" tickFormatter={formatChartAxisLabel} axisLine={false} tickLine={false} tick={DASHBOARD_CHART_CATEGORY_TICK} width={118} />
+              <Tooltip cursor={{ fill: DASHBOARD_CHART_TOKENS.cursor }} contentStyle={DASHBOARD_CHART_TOOLTIP} formatter={(value) => [`${Number(value).toFixed(2)} / 5`, "คะแนนเฉลี่ย"]} />
               <Bar dataKey="score" barSize={18} radius={[0, 4, 4, 0]} isAnimationActive={false}>
                 {chartData.map((metric, index) => <Cell key={`score-${metric.key}-${index}`} fill={SCORE_COLORS[index % SCORE_COLORS.length]} />)}
-                <LabelList dataKey="displayValue" position="right" fill="#0F172A" fontSize={11} fontWeight={800} />
+                <LabelList dataKey="displayValue" position="right" fill={DASHBOARD_CHART_TOKENS.value} fontSize={11} fontWeight={800} />
               </Bar>
             </BarChart>
           </ResponsiveContainer> : null}

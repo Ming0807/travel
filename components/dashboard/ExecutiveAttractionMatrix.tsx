@@ -4,7 +4,7 @@ import { ChartScatter, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from "recharts";
 import { NoDataState } from "@/components/dashboard/NoDataState";
 import { useWideDashboardChart } from "@/components/dashboard/useWideDashboardChart";
-import { DASHBOARD_CHART_COLORS as POINT_COLORS, DASHBOARD_CHART_TOOLTIP } from "@/components/dashboard/dashboard-chart-theme";
+import { DASHBOARD_CHART_AXIS_TICK, DASHBOARD_CHART_COLORS as POINT_COLORS, DASHBOARD_CHART_TOKENS, DASHBOARD_CHART_TOOLTIP } from "@/components/dashboard/dashboard-chart-theme";
 import { DASHBOARD_MIN_SAMPLE_SIZE } from "@/constants/dashboard-metrics";
 import type { DashboardViewModel } from "@/types/dashboard";
 
@@ -50,19 +50,19 @@ export function ExecutiveAttractionMatrix({ attractions }: { attractions: Dashbo
             <div className="h-[19rem] min-w-0" data-chart-engine="recharts" role="img" aria-label="แผนภาพกระจายผลงานรายสถานที่">
               {showWideChart ? <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 620, height: 304 }}>
                 <ScatterChart margin={{ top: 14, right: 20, bottom: 18, left: 0 }}>
-                  <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" />
-                  <XAxis type="number" dataKey="visits" name="รายการเยี่ยมชม" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} label={{ value: "รายการเยี่ยมชม", position: "insideBottom", offset: -10, fill: "#64748B", fontSize: 11, fontWeight: 700 }} />
-                  <YAxis type="number" dataKey="satisfaction" name="ความพึงพอใจ" domain={[1, 5]} tickCount={5} axisLine={false} tickLine={false} tick={{ fill: "#64748B", fontSize: 11, fontWeight: 600 }} width={34} />
+                  <CartesianGrid stroke={DASHBOARD_CHART_TOKENS.grid} strokeDasharray="3 3" />
+                  <XAxis type="number" dataKey="visits" name="รายการเยี่ยมชม" allowDecimals={false} axisLine={false} tickLine={false} tick={DASHBOARD_CHART_AXIS_TICK} label={{ value: "รายการเยี่ยมชม", position: "insideBottom", offset: -10, fill: DASHBOARD_CHART_TOKENS.axis, fontSize: 11, fontWeight: 700 }} />
+                  <YAxis type="number" dataKey="satisfaction" name="ความพึงพอใจ" domain={[1, 5]} tickCount={5} axisLine={false} tickLine={false} tick={DASHBOARD_CHART_AXIS_TICK} width={34} />
                   <ZAxis type="number" dataKey="respondents" range={[90, 330]} name="จำนวนคำตอบ" />
-                  {canCompare ? <ReferenceLine x={medianVisits} stroke="#94A3B8" strokeDasharray="5 5" /> : null}
-                  {canCompare ? <ReferenceLine y={averageSatisfaction} stroke="#D6A13D" strokeDasharray="5 5" /> : null}
+                  {canCompare ? <ReferenceLine x={medianVisits} stroke={DASHBOARD_CHART_TOKENS.reference} strokeDasharray="5 5" /> : null}
+                  {canCompare ? <ReferenceLine y={averageSatisfaction} stroke={DASHBOARD_CHART_TOKENS.amber} strokeDasharray="5 5" /> : null}
                   <Tooltip cursor={{ strokeDasharray: "4 4" }} content={({ active, payload }) => {
                     const point = chartData.find((item) => item === payload?.[0]?.payload);
                     if (!active || !point) return null;
                     return <div className="max-w-64 p-3 text-slate-900" style={DASHBOARD_CHART_TOOLTIP}><p className="break-words font-bold">{point.attractionName}</p><dl className="mt-2 space-y-1"><div className="flex justify-between gap-4"><dt>รายการเยี่ยมชม</dt><dd>{point.visits.toLocaleString("th-TH")} ครั้ง</dd></div><div className="flex justify-between gap-4"><dt>ความพึงพอใจ</dt><dd>{point.satisfaction.toFixed(1)} / 5</dd></div><div className="flex justify-between gap-4"><dt>จำนวนคำตอบ</dt><dd>{point.respondents.toLocaleString("th-TH")}</dd></div></dl></div>;
                   }} />
                   <Scatter name="สถานที่" data={chartData} isAnimationActive={false}>
-                    {chartData.map((item) => <Cell key={`point-${item.rank}-${item.attractionName}`} fill={item.color} stroke="#FFFFFF" strokeWidth={2} />)}
+                    {chartData.map((item) => <Cell key={`point-${item.rank}-${item.attractionName}`} fill={item.color} stroke={DASHBOARD_CHART_TOKENS.surface} strokeWidth={2} />)}
                   </Scatter>
                 </ScatterChart>
               </ResponsiveContainer> : null}
