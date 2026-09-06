@@ -208,7 +208,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
 
   const visitSelection: string = `
         visit_id,
-        ${getCheckinEntryConfig().sessionsEnabled ? "checkin_entry_sessions(evidence_scope)," : ""}
+        ${getCheckinEntryConfig().sessionsEnabled ? "checkin_entry_sessions(evidence_scope,entry_channel)," : ""}
         tourist_id,
         visit_date,
         attraction_id,

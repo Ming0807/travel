@@ -158,6 +158,12 @@ export type InsightCardData = {
   confidence: "low" | "medium" | "high";
 };
 
+export type DashboardVisitChannels = {
+  status: "ready" | "disabled" | "incomplete" | "suppressed" | "empty";
+  denominator: number | null;
+  distribution: DistributionItem[];
+};
+
 export type DashboardViewModel = {
   filters: DashboardFilters;
   comparison?: DashboardComparison | null;
@@ -173,6 +179,7 @@ export type DashboardViewModel = {
   referenceOptions: DashboardReferenceOptions;
   kpis: DashboardKpi[];
   executive: {
+    visitChannels?: DashboardVisitChannels;
     visitTrend: TrendPoint[];
     visitsByProvince: DistributionItem[];
     topAttractions: RankedAttraction[];

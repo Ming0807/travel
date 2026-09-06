@@ -2703,3 +2703,24 @@ precedence over optional research participation. An unknown or simulated entry
 cannot become field data because the user declined evaluation. Legacy Visits
 without entry snapshots retain the previous rules; they are not reclassified.
 Public/summary SQL paths remain a separate rollout audit gate.
+
+## 56. Executive Visit Channel Distribution
+
+- Label: channels of recorded check-ins, not website traffic or raw scan counts.
+- Source: filtered `visits`, with `checkin_entry_sessions.entry_channel` relation.
+  The relation is requested only when entry tracking is enabled. No additional
+  query or browser identity is introduced.
+- Unit/denominator: unique Visit IDs in the same Visit-date and demographic,
+  attraction and evidence scope as executive KPIs. This differs from the
+  entry-start-date conversion cohort on the attraction channel panel.
+- Categories: QR, NFC, unknown. Missing, unsupported or ambiguous entry relations
+  stay unknown; never infer QR from historical Visit records or XP.
+- Privacy: any nonzero category below 10 suppresses all categories and the local
+  denominator. This prevents deriving a small cell from the executive Visit total.
+- States: disabled, incomplete, empty, suppressed and ready are distinct. Blocked
+  states contain no chart counts, percentages or raw Visit IDs.
+- Export: summary CSV/XLSX uses the same view model and denominator; blocked states
+  add only a status row, not zero-filled categories. Existing export guards apply.
+- Interpretation: indicates channel attribution of saved Visits. Copied NFC URLs
+  retain NFC attribution and do not prove a physical tap. Not a research answer
+  coverage or evidence-strength measure; no such badge is shown.

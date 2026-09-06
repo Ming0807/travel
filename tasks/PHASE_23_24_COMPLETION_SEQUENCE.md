@@ -127,3 +127,13 @@ treating every non-create command as an edit. Action/service/repository tests
 passed (25 tests), covering read/manage denial before queries, history cursor
 validation and private error containment. Authenticated E2E and hardware gates
 remain open; this is not permission sign-off for the live deployment.
+
+S6 continuation: executive Visit-channel distribution now uses already-filtered
+Visits and linked immutable entry attribution, with unknown/legacy kept explicit.
+This is a Visit-date cohort, not the attraction entry-start conversion cohort.
+Summary CSV/XLSX uses the identical aggregate; complementary small cells suppress
+all categories. The shared chart renders mobile bars and an accessible table.
+Verified at 360/390/768/1440px without page overflow or page errors using synthetic
+fixtures; empty, disabled, incomplete and small-sample states were checked separately.
+No rollout flags or SQL changed. Full executive entry-start conversion aggregation,
+authenticated QA and public summary SQL review remain separate pending work.

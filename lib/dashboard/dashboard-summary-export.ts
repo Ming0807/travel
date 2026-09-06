@@ -10,6 +10,14 @@ export function buildDashboardSummaryExportRows(data: Pick<DashboardViewModel, "
   };
 
   return [
+    ...(data.executive.visitChannels ? [{
+      ...columns, Section: "Visit Channels", Metric: "status", Value: data.executive.visitChannels.status,
+      Definition: "Unique filtered Visit cohort, not page views or scan counts",
+    }, ...data.executive.visitChannels.distribution.map((item) => ({
+      ...columns, Section: "Visit Channels", Metric: "visits_by_entry_channel", Label: item.label,
+      Value: item.value, Denominator: data.executive.visitChannels?.denominator ?? "",
+      Unit: "visit records", Definition: "Linked immutable entry channel; legacy/missing attribution stays unknown",
+    }))] : []),
     ...data.kpis.map((kpi) => ({
       ...columns,
       Section: "KPI",

@@ -1,4 +1,5 @@
 import type { DashboardViewModel, DashboardKpi } from "@/types/dashboard";
+import { buildDashboardVisitChannels } from "@/lib/dashboard/visit-channels";
 
 // Synthetic component evidence only; never import this dataset into app routes.
 export function executiveFixture(state: string | null): DashboardViewModel {
@@ -28,6 +29,9 @@ export function executiveFixture(state: string | null): DashboardViewModel {
       { ...metric("top_attraction", "Top Attraction", null, "text"), value: empty ? "No data" : "วัดคูหาภิมุข (วัดหน้าถ้ำ)" },
     ],
     executive: {
+      visitChannels: buildDashboardVisitChannels(empty ? [] : Array.from({ length: low ? 2 : 180 }, (_, index) => ({
+        visit_id: `fixture-${index}`, checkin_entry_sessions: [{ entry_channel: index < 100 ? "qr" : index < 150 ? "nfc" : "unknown" }],
+      })), state !== "channels-disabled", state === "channels-incomplete"),
       visitTrend: empty ? [] : low ? [{ label: "2026-08-01", value: 2 }] : Array.from({ length: 16 }, (_, index) => ({ label: `2026-08-${String(index + 1).padStart(2, "0")}`, value: [18, 24, 23, 36, 40, 68, 76, 45, 28, 32, 42, 35, 40, 47, 22, 64][index] })),
       visitsByProvince: [],
       topAttractions: empty ? [] : [

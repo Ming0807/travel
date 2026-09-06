@@ -1,4 +1,6 @@
 import "server-only";
+import { getCheckinEntryConfig } from "@/lib/config/checkin-entry";
+import { buildDashboardVisitChannels } from "@/lib/dashboard/visit-channels";
 
 import {
   DASHBOARD_METRIC_DEFINITIONS,
@@ -879,6 +881,7 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
     referenceOptions: payload.referenceOptions,
     kpis,
     executive: {
+      visitChannels: buildDashboardVisitChannels(visits, getCheckinEntryConfig().sessionsEnabled, payload.isTruncated),
       visitTrend,
       visitsByProvince,
       topAttractions

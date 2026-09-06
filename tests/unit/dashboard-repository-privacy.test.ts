@@ -56,11 +56,11 @@ describe("dashboard repository privacy", () => {
     expect(visitsSelection?.columns).not.toContain("checkin_entry_sessions");
   });
 
-  it("selects only collection scope from entries when tracking is enabled", async () => {
+  it("selects only collection scope and channel from entries when tracking is enabled", async () => {
     entryConfig.sessionsEnabled = true;
     await getDashboardRepositoryPayload({ dateFrom: "2026-08-01", dateTo: "2026-08-05" }, "executive");
     const selection = queryState.selections.find((row) => row.table === "visits")?.columns;
-    expect(selection).toContain("checkin_entry_sessions(evidence_scope)");
+    expect(selection).toContain("checkin_entry_sessions(evidence_scope,entry_channel)");
     expect(selection).not.toContain("browser_hash");
   });
 });
