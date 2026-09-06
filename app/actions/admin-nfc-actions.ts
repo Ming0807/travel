@@ -13,8 +13,9 @@ const errors: Record<string, string> = {
   NFC_VERIFICATION_REQUIRED: "กรุณาตรวจสอบ URL จากแท็กก่อนเปิดใช้งาน",
   NFC_REVOKED_IMMUTABLE: "แท็กนี้ยกเลิกถาวรแล้ว ต้องสร้างแท็กทดแทน",
 };
-export async function saveAdminNfcAction(operation: "create" | "change", input: unknown) {
+export async function saveAdminNfcAction(operation: unknown, input: unknown) {
   try {
+    if (operation !== "create" && operation !== "change") throw new Error("NFC_OPERATION_INVALID");
     const tag = operation === "create" ? await createNfcTag(input) : await changeNfcTag(input);
     revalidatePath(`/admin/checkin-codes/${tag.checkin_code_id}/nfc`);
     return { success: true as const };

@@ -4,6 +4,9 @@ Route: `/admin/checkin-codes/[id]/nfc`.
 Read permission: `checkin_code.read`. Mutation permission: `checkin_code.manage`.
 Actions: `saveAdminNfcAction` and `getAdminNfcHistoryAction`; all enforce permissions
 on the server through the management service. Client controls are not authority.
+The action accepts only `create` or `change` at runtime. Unknown commands fail
+before service dispatch, including malformed calls that bypass TypeScript.
+Failed operations do not invalidate pages or expose database error details.
 
 Tags inherit assignment from the chosen check-in code in SQL. New tags are draft.
 Staff encode the generated HTTPS URL using a suitable external NFC writer,
@@ -25,3 +28,8 @@ Both public rollout flags stay off until installation/device and research gates 
 
 Remaining: installation photos/records, current-role E2E, full multi-tab research
 acceptance and physical tag QA. This local UI is not a production activation.
+
+September 6 action-boundary regression suite: 25 tests across actions, service and
+repository passed on Node 22. Covers unknown commands, missing read/manage
+permissions, invalid history cursors, forged actor fields, version conflicts and
+safe error responses. These mocked tests do not replace authenticated browser QA.

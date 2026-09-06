@@ -121,3 +121,9 @@ all SQL applied in Supabase; REST schema discovery confirms the new tables,
 snapshot columns and consent RPC. Direct PostgreSQL verification is blocked by
 DNS, so production grants and full-schema behavior remain unverified. Both flags
 remain disabled. User-authorized default-off code push may proceed.
+
+S4 continuation: server actions now reject unknown operation values instead of
+treating every non-create command as an edit. Action/service/repository tests
+passed (25 tests), covering read/manage denial before queries, history cursor
+validation and private error containment. Authenticated E2E and hardware gates
+remain open; this is not permission sign-off for the live deployment.
