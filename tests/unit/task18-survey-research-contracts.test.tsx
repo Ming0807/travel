@@ -152,7 +152,8 @@ describe("Task 18 survey and research boundaries", () => {
       instrumentKey: "tourist_evaluation",
       submit: true,
     }));
-    expect(payload).not.toHaveProperty("visitId");
+    // Visit selects server-verified credentials, not tourism survey answers.
+    expect(payload.visitId).toBe(visitId);
     expect(payload).not.toHaveProperty("facilityScore");
     expect(payload).not.toHaveProperty("overallSatisfaction");
     expect(payload.answers).toEqual([{ itemCode: "SQ_01", integerValue: 4 }]);

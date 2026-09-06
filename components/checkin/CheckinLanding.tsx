@@ -12,7 +12,13 @@ import {
 import { CheckinProgress } from "@/components/checkin/CheckinProgress";
 import type { CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
 
-export function CheckinLanding({ details }: { details: CheckinCodeDetails }) {
+export function CheckinLanding({
+  details,
+  entrySessionId = null,
+}: {
+  details: CheckinCodeDetails;
+  entrySessionId?: string | null;
+}) {
   const attraction = details.attraction;
   const heroImage = details.photo_spot?.sample_image_url || attraction?.cover_image_url;
   const placeName = details.photo_spot?.spot_name_th || attraction?.name_th || "สถานที่ท่องเที่ยว";
@@ -91,7 +97,7 @@ export function CheckinLanding({ details }: { details: CheckinCodeDetails }) {
         </div>
 
         <Link
-          href={`/checkin/${details.code}/start`}
+          href={`/checkin/${details.code}/start${entrySessionId ? `?flow=${encodeURIComponent(entrySessionId)}` : ""}`}
           className="mt-6 flex min-h-14 w-full items-center justify-center rounded-md bg-ink px-6 py-4 text-lg font-bold text-white transition-colors hover:bg-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
         >
           สร้างใบประกาศของฉัน

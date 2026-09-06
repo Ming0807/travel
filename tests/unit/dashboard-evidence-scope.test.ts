@@ -12,6 +12,12 @@ const visit = (collectionMode?: string, studyKind?: string) => ({
 });
 
 describe("dashboard evidence scope", () => {
+  it("uses immutable entry scope before optional research participation", () => {
+    for (const evidence_scope of ["unknown", "pilot_internal", "simulated_usability"]) {
+      expect(visitMatchesDashboardEvidenceScope({ checkin_entry_sessions: [{ evidence_scope }] }, "field_claim")).toBe(false);
+    }
+    expect(visitMatchesDashboardEvidenceScope({ checkin_entry_sessions: [{ evidence_scope: "field_observation" }] }, "field_claim")).toBe(true);
+  });
   it("keeps unlinked operational visits in field claims and excludes pilot/simulated visits", () => {
     expect(visitMatchesDashboardEvidenceScope(visit(), "field_claim")).toBe(true);
     expect(visitMatchesDashboardEvidenceScope(visit("field_observation", "final_collection"), "field_claim")).toBe(true);

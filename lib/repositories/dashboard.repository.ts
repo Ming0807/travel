@@ -1,4 +1,6 @@
 import "server-only";
+import { getCheckinEntryConfig } from "@/lib/config/checkin-entry";
+import { asRecord } from "@/lib/utils/record";
 
 import { DASHBOARD_ROW_LIMIT } from "@/constants/dashboard-metrics";
 import { AGE_GROUP_OPTIONS } from "@/lib/validation/checkin";
@@ -204,11 +206,9 @@ export async function getDashboardReferenceOptions(): Promise<DashboardReference
 export async function getDashboardRepositoryPayload(filters: DashboardFilters, activeTab: string = "executive"): Promise<DashboardRepositoryPayload> {
   const supabase = createSupabaseServiceRoleClient();
 
-  let visitsQuery = supabase
-    .from("visits")
-    .select(
-      `
+  const visitSelection: string = `
         visit_id,
+        ${getCheckinEntryConfig().sessionsEnabled ? "checkin_entry_sessions(evidence_scope)," : ""}
         tourist_id,
         visit_date,
         attraction_id,
@@ -248,8 +248,8 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
           inclusion_status,
           research_studies (study_kind)
         )
-      `
-    )
+      `;
+  let visitsQuery = supabase.from("visits").select(visitSelection)
     .gte("visit_date", filters.dateFrom)
     .lte("visit_date", filters.dateTo)
     .limit(DASHBOARD_ROW_LIMIT);
@@ -459,7 +459,7 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
     }
   }
 
-  const rawVisitRows = (visits.data ?? []) as DashboardVisitRow[];
+  const rawVisitRows = (visits.data ?? []).map(asRecord);
   const evidenceScope = filters.evidenceScope ?? "field_claim";
   const visitRows = filterVisitsByDashboardEvidenceScope(rawVisitRows, evidenceScope);
   const includedVisitIds = new Set(visitRows.map((row) => String(row.visit_id ?? "")).filter(Boolean));

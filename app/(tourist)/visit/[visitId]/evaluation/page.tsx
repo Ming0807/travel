@@ -13,7 +13,7 @@ export default async function ResearchEvaluationPage({
   const { visitId } = await params;
   let evaluation;
   try {
-    evaluation = await getCurrentResearchEvaluation();
+    evaluation = await getCurrentResearchEvaluation(visitId);
   } catch {
     notFound();
   }
@@ -47,6 +47,8 @@ export default async function ResearchEvaluationPage({
 
         <section className="mt-6 bg-white p-5 sm:p-7">
           <ResearchEvaluationForm
+            visitId={visitId}
+            withdrawHref={`/research/withdraw/current?visitId=${encodeURIComponent(visitId)}`}
             instrumentKey={evaluation.instrumentKey}
             items={evaluation.items}
             savedAnswers={evaluation.savedAnswers}

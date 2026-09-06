@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { buildChannelExportRows } from "@/lib/dashboard/channel-export";
 
 import { AdminAuthError, requirePermission, type GuardResult } from "@/lib/auth/guards";
 import { getAttractionAnalytics } from "@/lib/services/attraction-analytics.service";
@@ -94,7 +95,7 @@ export async function GET(request: Request) {
       { Section: "Metadata", Metric: "selected_scope", Value: selectedScope, Denominator: "", Note: data.quality.scopeNote },
       { Section: "Metadata", Metric: "generated_at", Value: data.generatedAt, Denominator: "", Note: "ISO 8601" },
       { Section: "Metadata", Metric: "report_denominator", Value: kpiDenominator, Denominator: "", Note: "Visit records in selected scope" },
-      { Section: "Metadata", Metric: "exclusions", Value: "ข้อมูลระบุตัวบุคคล; คำตอบว่างจากตัวหารรายมิติ; QR scan ที่ยังไม่สร้าง Visit", Denominator: "", Note: "Missing values are not zero" },
+      { Section: "Metadata", Metric: "exclusions", Value: "ข้อมูลระบุตัวบุคคล; คำตอบว่างจากตัวหารรายมิติ", Denominator: "", Note: "Missing values are not zero; entry cohorts are separate from Visit KPIs" },
       { Section: "Metadata", Metric: "suppression_note", Value: `${suppressedCellCount} suppressed cells`, Denominator: "", Note: `Small-cell threshold n=${data.quality.smallCellThreshold}` },
       { Section: "Metadata", Metric: "metric_version", Value: DASHBOARD_METRIC_VERSION, Denominator: "", Note: data.metricContract.map((metric) => `${metric.key}:${metric.source}`).join("; ") },
       { Section: "KPI", Metric: "unique_tourists", Value: kpiValue(data.kpis.uniqueTourists), Denominator: "", Note: "System profiles, not verified real-world persons" },
@@ -107,6 +108,7 @@ export async function GET(request: Request) {
       ...data.expenses.ranges.map((row) => ({ Section: "Self-reported expense range", Metric: row.label, Value: row.suppressed ? "SUPPRESSED" : row.count ?? "", Denominator: row.denominator, Note: data.expenses.note })),
       ...data.expenses.categories.map((row) => ({ Section: "Self-reported expense category", Metric: row.label, Value: row.suppressed ? "SUPPRESSED" : row.count ?? "", Denominator: row.denominator, Note: "Not business revenue" })),
     ];
+    if (data.channels) rows.push(...buildChannelExportRows(data.channels));
     const response = await createExportResponse(rows, `attraction_analytics_${parsed.data.attractionId}_${parsed.data.dateFrom}_${parsed.data.dateTo}`, format);
     await logAuditAction({
       actor: guard.actor,

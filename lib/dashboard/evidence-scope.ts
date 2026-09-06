@@ -27,6 +27,9 @@ function studyKind(session: Row): string {
 export function visitMatchesDashboardEvidenceScope(row: Row, scope: DashboardEvidenceScope): boolean {
   if (scope === "all_records") return true;
 
+  const entries = relations(row, "checkin_entry_sessions");
+  if (entries.length > 0) return entries.every((entry) => entryMatchesDashboardEvidenceScope(entry, scope));
+
   const sessions = includedResearchSessions(row);
   if (scope === "pilot_only") {
     return sessions.some((session) => studyKind(session) === "pilot" || session.collection_mode === "pilot_internal");
@@ -39,6 +42,13 @@ export function visitMatchesDashboardEvidenceScope(row: Row, scope: DashboardEvi
   // records. Explicit pilot and simulated sessions are excluded from field claims.
   if (sessions.length === 0) return true;
   return sessions.some((session) => studyKind(session) === "final_collection" && session.collection_mode === "field_observation");
+}
+
+export function entryMatchesDashboardEvidenceScope(row: Row, scope: DashboardEvidenceScope): boolean {
+  if (scope === "all_records") return true;
+  if (scope === "pilot_only") return row.evidence_scope === "pilot_internal";
+  if (scope === "simulated_only") return row.evidence_scope === "simulated_usability";
+  return row.evidence_scope === "field_observation" || row.evidence_scope === "operational_unclassified";
 }
 
 export function filterVisitsByDashboardEvidenceScope<T extends Row>(rows: T[], scope: DashboardEvidenceScope): T[] {

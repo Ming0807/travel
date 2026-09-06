@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getCheckinEntryConfig } from "@/lib/config/checkin-entry";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { listLiveDestinationProvinceIds } from "@/lib/repositories/destination-scope.repository";
 import { asRecord, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
@@ -21,12 +22,16 @@ export type AttractionAnalyticsRows = {
   checkinCodes: AttractionCheckinOption[];
   visits: Record<string, unknown>[];
   funnelEvents: Record<string, unknown>[];
+  entrySessions: Record<string, unknown>[];
+  channelTrackingEnabled: boolean;
+  channelAsOf: string;
   peerVisits: Record<string, unknown>[];
   truncated: boolean;
 };
 
 export const ATTRACTION_ANALYTICS_VISIT_LIMIT = 5000;
 export const ATTRACTION_ANALYTICS_FUNNEL_LIMIT = 10000;
+export const ATTRACTION_ANALYTICS_ENTRY_LIMIT = 10000;
 
 export async function listAttractionAnalyticsOptions(): Promise<AttractionAnalyticsOption[]> {
   const liveProvinceIds = await listLiveDestinationProvinceIds();
@@ -41,6 +46,7 @@ export async function listAttractionAnalyticsOptions(): Promise<AttractionAnalyt
 }
 
 export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFilters): Promise<AttractionAnalyticsRows | null> {
+  const channelTrackingEnabled = getCheckinEntryConfig().sessionsEnabled;
   const liveProvinceIds = await listLiveDestinationProvinceIds();
   if (liveProvinceIds.length === 0) return null;
   const supabase = createSupabaseServiceRoleClient();
@@ -72,18 +78,20 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
       : allowedCodeIds.filter((checkinCodeId) => checkinCodeId === filters.checkinCodeId);
   }
 
-  let visitQuery = supabase
-    .from("visits")
-    .select(`
+  const visitSelection: string = `
       visit_id, tourist_id, attraction_id, checkin_code_id, visit_date, completion_status,
       group_size, overnight_status, nights, entry_channel,
+      ${channelTrackingEnabled ? "checkin_entry_sessions(entry_session_id, entry_channel, evidence_scope, created_at)," : ""}
       tourists(age_group, preferred_language, countries(country_name_th), provinces(province_name_th)),
       travel_companions(name_th), transport_modes(name_th), travel_purposes(name_th),
       visit_photos(photo_id), certificates(certificate_id), tourist_stamps(stamp_id, status),
       visit_expenses(visit_id, expense_categories(name_th), spending_ranges(range_label_th)),
       satisfaction_surveys(overall_score, facility_score, cleanliness_score, safety_score, accessibility_score, information_score, value_score, revisit_intention, recommend_intention, comments),
       research_sessions(collection_mode, status, inclusion_status, research_studies(study_kind), research_responses(status))
-    `)
+    `;
+  let visitQuery = supabase
+    .from("visits")
+    .select(visitSelection)
     .eq("attraction_id", filters.attractionId)
     .gte("visit_date", filters.dateFrom)
     .lte("visit_date", filters.dateTo)
@@ -97,17 +105,19 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
       visitQuery = visitQuery.in("checkin_code_id", allowedCodeIds);
     }
   }
-  const [{ data: visitData, error: visitError }, peerResult] = await Promise.all([
-    visitQuery,
-    allowedCodeIds === null && !filters.entryChannel && selectedAttractionTypeId
-      ? supabase.from("visits").select(`
+  const peerSelection: string = `
           visit_id, tourist_id, attraction_id,
+          ${channelTrackingEnabled ? "checkin_entry_sessions(evidence_scope)," : ""}
           attractions!inner(attraction_id, name_th, province_id, attraction_type_id, is_active),
           visit_photos(photo_id), certificates(certificate_id), tourist_stamps(stamp_id, status),
           visit_expenses(expense_categories(name_th), spending_ranges(range_label_th)),
           satisfaction_surveys(overall_score, safety_score, cleanliness_score, accessibility_score, information_score, value_score, revisit_intention, recommend_intention),
           research_sessions(collection_mode, status, inclusion_status, research_studies(study_kind), research_responses(status))
-        `).eq("attractions.province_id", selectedProvinceId).eq("attractions.attraction_type_id", selectedAttractionTypeId).eq("attractions.is_active", true).gte("visit_date", filters.dateFrom).lte("visit_date", filters.dateTo).limit(ATTRACTION_ANALYTICS_VISIT_LIMIT + 1)
+        `;
+  const [{ data: visitData, error: visitError }, peerResult] = await Promise.all([
+    visitQuery,
+    allowedCodeIds === null && !filters.entryChannel && selectedAttractionTypeId
+      ? supabase.from("visits").select(peerSelection).eq("attractions.province_id", selectedProvinceId).eq("attractions.attraction_type_id", selectedAttractionTypeId).eq("attractions.is_active", true).gte("visit_date", filters.dateFrom).lte("visit_date", filters.dateTo).limit(ATTRACTION_ANALYTICS_VISIT_LIMIT + 1)
       : Promise.resolve({ data: [], error: null }),
   ]);
   if (visitError) throw new Error("ATTRACTION_ANALYTICS_VISITS_FAILED");
@@ -130,6 +140,34 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
     funnelEvents = (data ?? []).slice(0, ATTRACTION_ANALYTICS_FUNNEL_LIMIT).map(asRecord);
   }
 
+  const channelAsOf = new Date().toISOString();
+  let entrySessions: Record<string, unknown>[] = [];
+  let entrySessionsTruncated = false;
+  if (channelTrackingEnabled) {
+    let entryQuery = supabase
+      .from("checkin_entry_sessions")
+      .select(`
+        entry_session_id, entry_channel, evidence_scope, visit_id, created_at, expires_at,
+        visits(visit_id, created_at, certificates(certificate_id, generated_at), satisfaction_surveys(survey_id, submitted_at))
+      `)
+      .eq("attraction_id_snapshot", filters.attractionId)
+      .gte("created_at", `${filters.dateFrom}T00:00:00+07:00`)
+      .lte("created_at", `${filters.dateTo}T23:59:59.999+07:00`)
+      .order("created_at", { ascending: true })
+      .limit(ATTRACTION_ANALYTICS_ENTRY_LIMIT + 1);
+    if (filters.campaignId) entryQuery = entryQuery.eq("campaign_id_snapshot", filters.campaignId);
+    if (filters.checkinCodeId) entryQuery = entryQuery.eq("checkin_code_id", filters.checkinCodeId);
+    if (filters.entryChannel === "qr" || filters.entryChannel === "nfc") {
+      entryQuery = entryQuery.eq("entry_channel", filters.entryChannel);
+    } else if (filters.entryChannel) {
+      entryQuery = entryQuery.eq("entry_channel", "__no_matching_entry_channel__");
+    }
+    const { data, error } = await entryQuery;
+    if (error) throw new Error("ATTRACTION_ANALYTICS_ENTRY_SESSIONS_FAILED");
+    entrySessionsTruncated = (data?.length ?? 0) > ATTRACTION_ANALYTICS_ENTRY_LIMIT;
+    entrySessions = (data ?? []).slice(0, ATTRACTION_ANALYTICS_ENTRY_LIMIT).map(asRecord);
+  }
+
   const attraction = attractionReference;
   const district = Array.isArray(attraction.districts) ? asRecord(attraction.districts[0]) : asRecord(attraction.districts);
   const attractionType = Array.isArray(attraction.attraction_types) ? asRecord(attraction.attraction_types[0]) : asRecord(attraction.attraction_types);
@@ -149,7 +187,10 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
     checkinCodes,
     visits: (visitData ?? []).slice(0, ATTRACTION_ANALYTICS_VISIT_LIMIT).map(asRecord),
     funnelEvents,
+    entrySessions,
+    channelTrackingEnabled,
+    channelAsOf,
     peerVisits: (peerResult.data ?? []).slice(0, ATTRACTION_ANALYTICS_VISIT_LIMIT).map(asRecord),
-    truncated: (visitData?.length ?? 0) > ATTRACTION_ANALYTICS_VISIT_LIMIT || (peerResult.data?.length ?? 0) > ATTRACTION_ANALYTICS_VISIT_LIMIT || funnelTruncated,
+    truncated: (visitData?.length ?? 0) > ATTRACTION_ANALYTICS_VISIT_LIMIT || (peerResult.data?.length ?? 0) > ATTRACTION_ANALYTICS_VISIT_LIMIT || funnelTruncated || entrySessionsTruncated,
   };
 }

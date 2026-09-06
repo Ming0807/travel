@@ -8,6 +8,7 @@ export async function initiateVisit(params: {
   photoSpotId?: number | null;
   checkinCodeId?: number | null;
   entryChannel?: "qr" | "nfc" | "direct" | "unknown";
+  sessionId?: string;
 }): Promise<string> {
   const visitId = await createVisitRepo({
     touristId: params.touristId,
@@ -19,13 +20,18 @@ export async function initiateVisit(params: {
   });
 
   // Track the funnel event for completing the minimal form
-  await recordFunnelEvent({
+  try {
+    await recordFunnelEvent({
     eventName: "minimal_form_completed",
     checkinCodeId: params.checkinCodeId || undefined,
     attractionId: params.attractionId,
     touristId: params.touristId,
     visitId: visitId,
-  });
+    ...(params.sessionId ? { sessionId: params.sessionId } : {}),
+    });
+  } catch {
+    // A saved visit must still be returned when optional analytics is unavailable.
+  }
 
   return visitId;
 }

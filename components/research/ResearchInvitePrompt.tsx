@@ -11,11 +11,13 @@ type Invitation = {
 export function ResearchInvitePrompt({
   invitation,
   checkinCode,
+  entrySessionId = null,
 }: {
   invitation: Invitation;
   checkinCode: string;
+  entrySessionId?: string | null;
 }) {
-  const returnTo = `/checkin/${checkinCode}/start`;
+  const returnTo = `/checkin/${checkinCode}/start${entrySessionId ? `?flow=${encodeURIComponent(entrySessionId)}` : ""}`;
   const href = `/research/${invitation.studyCode}/invite?checkinCode=${encodeURIComponent(checkinCode)}&returnTo=${encodeURIComponent(returnTo)}`;
 
   return (

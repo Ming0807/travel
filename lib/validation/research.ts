@@ -34,6 +34,7 @@ export const researchInvitationSchema = z.object({
 
 export const researchAcceptanceSchema = researchInvitationSchema.extend({
   hasConsented: z.literal(true),
+  entrySessionId: z.uuidv4().optional(),
 });
 
 export const researchOperatorAcceptanceSchema = z.object({
@@ -65,6 +66,7 @@ export const researchVisitLinkSchema = z.object({
 });
 
 export const researchWithdrawalSchema = z.object({
+  visitId: uuidSchema.optional(),
   reason: z.string().trim().max(500).optional(),
   source: z.string().trim().min(1).max(100).optional(),
 });
@@ -81,6 +83,7 @@ export const researchAnswerSchema = z.union([
 
 export const researchResponseInputSchema = z
   .object({
+    visitId: uuidSchema.optional(),
     instrumentKey: z
       .string()
       .trim()

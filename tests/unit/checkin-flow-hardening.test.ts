@@ -8,7 +8,6 @@ import { createConsentRecord } from "@/lib/repositories/consent.repository";
 import { getCheckinOriginSelection } from "@/lib/repositories/geography.repository";
 import { getTouristStampByAttraction, awardTouristStamp } from "@/lib/repositories/stamp.repository";
 import { getVisitById } from "@/lib/repositories/visit.repository";
-import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
 import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
 import { assignStampForVisit } from "@/lib/services/stamp.service";
 import { initiateVisit } from "@/lib/services/visit.service";
@@ -532,7 +531,10 @@ describe("QR Check-in Flow Hardening", () => {
         consentVersion: "1.0",
         purposeKey: "checkin_profile_creation",
       }));
-      expect(vi.mocked(recordFunnelEvent).mock.calls.map(([event]) => event.eventName)).toContain("minimal_form_completed");
+      expect(initiateVisit).toHaveBeenCalledWith(expect.objectContaining({
+        entryChannel: "unknown",
+        sessionId: "mock-checkin-session",
+      }));
       expect(tableCalls().slice(0, 4)).toEqual(["tourist_identities", "tourists", "tourist_identities", "consent_records"]);
       expect(revalidatePath).toHaveBeenCalledWith("/checkin/test");
       expect(redirect).toHaveBeenCalledWith("/visit/mock-visit-id/photo");

@@ -28,10 +28,17 @@ export async function acceptResearchInvitationAction(formData: FormData) {
   }
 
   try {
+    const returnUrl = new URL(returnTo, "https://research.invalid");
+    const flowValues = returnUrl.searchParams.getAll("flow");
+    if (flowValues.length > 1) throw new Error("RESEARCH_ENTRY_INVALID");
+    if (flowValues.length && returnUrl.pathname !== `/checkin/${encodeURIComponent(checkinCode)}/start`) {
+      throw new Error("RESEARCH_ENTRY_INVALID");
+    }
     await acceptResearchInvitation({
       studyCode,
       checkinCode,
       hasConsented: true,
+      ...(flowValues.length ? { entrySessionId: flowValues[0] } : {}),
       language: formData.get("language") === "en" || formData.get("language") === "ms" ? String(formData.get("language")) as "en" | "ms" : "th",
     });
   } catch {
@@ -104,13 +111,16 @@ export async function saveResearchOperatorAttemptAction(input: unknown) {
 
 export async function withdrawResearchSessionAction(formData: FormData) {
   const reason = String(formData.get("reason") ?? "").trim();
+  const visitId = formData.get("visitId");
+  const visitQuery = typeof visitId === "string" ? `visitId=${encodeURIComponent(visitId)}&` : "";
   try {
     await withdrawResearchSession({
+      ...(typeof visitId === "string" ? { visitId } : {}),
       reason: reason || undefined,
       source: "tourist_withdrawal_page",
     });
   } catch {
-    redirect("/research/withdraw/current?error=withdrawal_failed");
+    redirect(`/research/withdraw/current?${visitQuery}error=withdrawal_failed`);
   }
   redirect("/research/withdraw/current?success=1");
 }

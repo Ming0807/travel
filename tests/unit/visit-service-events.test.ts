@@ -35,4 +35,10 @@ describe("visit event semantics", () => {
       visitId: "visit-1",
     }));
   });
+
+  it("returns the saved visit when optional event tracking fails", async () => {
+    mocks.recordFunnelEvent.mockRejectedValue(new Error("unavailable"));
+    await expect(initiateVisit({ touristId: "tourist-1", attractionId: 12 })).resolves.toBe("visit-1");
+    expect(mocks.createVisit).toHaveBeenCalledTimes(1);
+  });
 });

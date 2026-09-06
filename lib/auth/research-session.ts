@@ -111,25 +111,54 @@ export function parseResearchSessionCookie(value: string | undefined): ResearchS
   }
 }
 
-export async function getResearchSessionCredentials(): Promise<ResearchSessionCredentials | null> {
-  const cookieStore = await cookies();
-  return parseResearchSessionCookie(cookieStore.get(RESEARCH_SESSION_COOKIE)?.value);
+function researchCookieName(entrySessionId?: string) {
+  if (!entrySessionId) return RESEARCH_SESSION_COOKIE;
+  if (!UUID_PATTERN.test(entrySessionId)) throw new Error("RESEARCH_ENTRY_INVALID");
+  return `${RESEARCH_SESSION_COOKIE}_${entrySessionId}`;
 }
 
-export async function setResearchSessionCredentials(credentials: ResearchSessionCredentials) {
+export async function getResearchSessionCredentials(entrySessionId?: string): Promise<ResearchSessionCredentials | null> {
   const cookieStore = await cookies();
-  cookieStore.set(RESEARCH_SESSION_COOKIE, encodeCookieValue(credentials), {
+  const credentials = parseResearchSessionCookie(cookieStore.get(researchCookieName(entrySessionId))?.value);
+  if (entrySessionId && credentials?.operationalSessionToken !== entrySessionId) return null;
+  return credentials;
+}
+
+export async function setResearchSessionCredentials(credentials: ResearchSessionCredentials, entrySessionId?: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(researchCookieName(entrySessionId), encodeCookieValue(credentials), {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
     path: "/",
-    maxAge: RESEARCH_SESSION_MAX_AGE,
+    maxAge: entrySessionId ? 60 * 60 * 2 : RESEARCH_SESSION_MAX_AGE,
   });
 }
 
 export async function clearResearchSessionCredentials() {
   const cookieStore = await cookies();
   cookieStore.delete(RESEARCH_SESSION_COOKIE);
+}
+
+function visitCookieName(visitId: string) {
+  if (!UUID_PATTERN.test(visitId)) throw new Error("RESEARCH_VISIT_INVALID");
+  return `${RESEARCH_SESSION_COOKIE}_visit_${visitId}`;
+}
+
+export async function getResearchVisitCredentials(visitId: string) {
+  const store = await cookies();
+  return parseResearchSessionCookie(store.get(visitCookieName(visitId))?.value);
+}
+
+export async function clearResearchVisitCredentials(visitId: string) {
+  (await cookies()).delete(visitCookieName(visitId));
+}
+
+export async function setResearchVisitCredentials(visitId: string, credentials: ResearchSessionCredentials) {
+  const store = await cookies();
+  store.set(visitCookieName(visitId), encodeCookieValue(credentials), {
+    httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: RESEARCH_SESSION_MAX_AGE,
+  });
 }
 
 export async function getResearchOperationalSessionToken() {

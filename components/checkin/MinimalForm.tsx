@@ -41,6 +41,7 @@ type MinimalFormProps = {
   provinces: ProvinceOption[];
   initialProfile?: CheckinProfileDefaults | null;
   detectedLanguage?: PreferredLanguage;
+  entrySessionId?: string | null;
 };
 
 const initialFormState: MinimalFormState = {};
@@ -51,6 +52,7 @@ export function MinimalForm({
   provinces,
   initialProfile,
   detectedLanguage = null,
+  entrySessionId = null,
 }: MinimalFormProps) {
   const [state, formAction, isPending] = useActionState(
     initiateCheckin.bind(null, checkinCode),
@@ -112,6 +114,7 @@ export function MinimalForm({
 
   return (
     <form action={formAction} className="w-full space-y-5">
+      {entrySessionId ? <input type="hidden" name="entrySessionId" value={entrySessionId} /> : null}
       {state.message || state.errors?._form?.[0] ? (
         <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-700">
           {state.errors?._form?.[0] ?? state.message}

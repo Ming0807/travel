@@ -161,3 +161,10 @@ The generic export uses the first repeated query value, matching dashboard page
 parsing. Summary files contain KPI, Visit Trend and Attraction Ranking sections
 with uniform columns, retaining existing ranking columns. Export buttons submit
 server-resolved screen filters rather than unrelated browser query parameters.
+
+## NFC Management Server Actions
+
+`saveAdminNfcAction` creates a draft or applies a version-checked verification/status
+change. `getAdminNfcHistoryAction` returns twenty history events with a version
+cursor. These are authenticated Next.js Server Actions, not anonymous REST routes.
+See [NFC Admin Operations](NFC_ADMIN_OPERATIONS.md) for permissions and lifecycle.

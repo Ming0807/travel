@@ -1863,3 +1863,11 @@ version for timeline order. No speculative analytics summary table is added.
 The read-only resolver is not a transaction authorizing a later visit write.
 Canonical integration must revalidate context at submission and define atomic
 session/visit correlation before NFC traffic is enabled.
+
+### Check-in Entry Sessions (Phase 23, Default-Off)
+
+Migration `20260904001000_add_checkin_entry_sessions.sql` adds browser-bound
+entry sessions and atomic begin/read/create-Visit RPCs. See
+[Check-in Entry Session Contract](CHECKIN_ENTRY_SESSION_CONTRACT.md) for fields,
+privacy, replay-safe XP and activation gates. The migration is not activated
+in production by this implementation; existing Visits are not backfilled.

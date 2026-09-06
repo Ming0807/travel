@@ -43,7 +43,7 @@ describe("research repository", () => {
     vi.clearAllMocks();
   });
 
-  it("passes only hashed credentials and bounded identifiers to the accept RPC", async () => {
+  it.each([undefined, "22222222-2222-4222-8222-222222222222"])("passes only hashed credentials and bounded identifiers to the accept RPC (%s)", async (entrySessionId) => {
     rpc.mockResolvedValue({
       data: {
         success: true,
@@ -55,6 +55,7 @@ describe("research repository", () => {
     });
 
     await acceptResearchInvitation({
+      entrySessionId,
       studyCode: "field-tour-2026",
       checkinCode: "YALA_01",
       operationalSessionHash: "a".repeat(64),
@@ -63,7 +64,8 @@ describe("research repository", () => {
       language: "th",
     });
 
-    expect(rpc).toHaveBeenCalledWith("accept_research_invitation", {
+    expect(rpc).toHaveBeenCalledWith(entrySessionId ? "accept_entry_research_invitation" : "accept_research_invitation", {
+      ...(entrySessionId ? { p_entry_session_id: entrySessionId } : {}),
       p_study_code: "field-tour-2026",
       p_checkin_code: "YALA_01",
       p_operational_session_hash: "a".repeat(64),

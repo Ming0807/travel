@@ -5,6 +5,8 @@ vi.mock("server-only", () => ({}));
 const queryState = vi.hoisted(() => ({
   selections: [] as Array<{ table: string; columns: string }>,
 }));
+const entryConfig = vi.hoisted(() => ({ sessionsEnabled: false }));
+vi.mock("@/lib/config/checkin-entry", () => ({ getCheckinEntryConfig: () => entryConfig }));
 
 function createQuery(table: string) {
   const query = {
@@ -36,6 +38,7 @@ import { getDashboardRepositoryPayload } from "@/lib/repositories/dashboard.repo
 describe("dashboard repository privacy", () => {
   beforeEach(() => {
     queryState.selections = [];
+    entryConfig.sessionsEnabled = false;
   });
 
   it("selects identity providers for filtered tourist profiles without identifiers", async () => {
@@ -50,5 +53,14 @@ describe("dashboard repository privacy", () => {
     expect(visitsSelection?.columns).toContain("collection_mode");
     expect(visitsSelection?.columns).not.toContain("provider_user_id");
     expect(visitsSelection?.columns).not.toContain("participant_code");
+    expect(visitsSelection?.columns).not.toContain("checkin_entry_sessions");
+  });
+
+  it("selects only collection scope from entries when tracking is enabled", async () => {
+    entryConfig.sessionsEnabled = true;
+    await getDashboardRepositoryPayload({ dateFrom: "2026-08-01", dateTo: "2026-08-05" }, "executive");
+    const selection = queryState.selections.find((row) => row.table === "visits")?.columns;
+    expect(selection).toContain("checkin_entry_sessions(evidence_scope)");
+    expect(selection).not.toContain("browser_hash");
   });
 });

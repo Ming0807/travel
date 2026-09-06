@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { resolveAndValidateCheckinCode, trackCheckinFunnelEvent } from "@/lib/services/checkin.service";
+import { CHECKIN_BROWSER_COOKIE } from "@/lib/auth/checkin-entry";
+import { resolveCheckinFlow } from "@/lib/services/checkin-entry.service";
+import { trackCheckinFunnelEvent } from "@/lib/services/checkin.service";
 import { CheckinUnavailable } from "@/components/checkin/CheckinUnavailable";
 import { MinimalForm } from "@/components/checkin/MinimalForm";
 import { ArrowLeft, Compass, MapPin, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
@@ -7,30 +9,41 @@ import { getGuestIdentity } from "@/lib/auth/guest";
 import { listCheckinCountries, listCheckinProvinces } from "@/lib/repositories/geography.repository";
 import { getGuestCheckinProfile } from "@/lib/repositories/tourist.repository";
 import { detectPreferredLanguage } from "@/lib/validation/language";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getOptionalResearchInvitationForCheckin } from "@/lib/services/research.service";
 import { ResearchInvitePrompt } from "@/components/research/ResearchInvitePrompt";
 import { CheckinProgress } from "@/components/checkin/CheckinProgress";
 
 export default async function StartCheckinPage({
   params,
+  searchParams = Promise.resolve({}),
 }: {
   params: Promise<{ code: string }>;
+  searchParams?: Promise<{ flow?: string; entryError?: string }>;
 }) {
   const { code } = await params;
-  const context = await resolveAndValidateCheckinCode(code);
+  const query = await searchParams;
+  if (query.entryError) return <CheckinUnavailable status="unavailable" />;
+  const flowId = typeof query.flow === "string" ? query.flow : null;
+  const browserId = flowId ? (await cookies()).get(CHECKIN_BROWSER_COOKIE)?.value ?? null : null;
+  const context = await resolveCheckinFlow({ code, flowId, browserId });
 
-  if (context.status !== "valid" || !context.details) {
-    return <CheckinUnavailable status={context.status === "valid" ? "unavailable" : context.status} />;
+  if (context.mode === "blocked") {
+    return <CheckinUnavailable status="unavailable" />;
   }
 
   try {
-    await trackCheckinFunnelEvent("certificate_started", context.details);
+    if (context.mode === "session") {
+      await trackCheckinFunnelEvent("certificate_started", context.details, { sessionId: context.session.sessionId });
+    } else {
+      await trackCheckinFunnelEvent("certificate_started", context.details);
+    }
   } catch {
     // Analytics must never block the tourist reward flow.
   }
 
   const { attraction, photo_spot } = context.details;
+  const entrySessionId = context.mode === "session" ? context.session.sessionId : null;
   const guestToken = await getGuestIdentity();
   const requestHeaders = await headers();
   const detectedLanguage = detectPreferredLanguage(requestHeaders.get("accept-language"));
@@ -44,7 +57,7 @@ export default async function StartCheckinPage({
       listCheckinCountries(),
       listCheckinProvinces(),
       guestToken ? getGuestCheckinProfile(guestToken) : Promise.resolve(null),
-      getOptionalResearchInvitationForCheckin(code).catch(() => null),
+      getOptionalResearchInvitationForCheckin(code, entrySessionId ?? undefined).catch(() => null),
     ]);
   } catch {
     return <CheckinUnavailable status="unavailable" />;
@@ -55,7 +68,7 @@ export default async function StartCheckinPage({
       <div className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
           <Link
-          href={`/checkin/${code}`}
+          href={`/checkin/${code}${entrySessionId ? `?flow=${encodeURIComponent(entrySessionId)}` : ""}`}
             className="inline-flex min-h-11 items-center gap-2 rounded-lg pr-3 text-sm font-bold text-slate-600 hover:text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
         >
             <ArrowLeft aria-hidden="true" size={18} weight="bold" />
@@ -89,6 +102,7 @@ export default async function StartCheckinPage({
           <ResearchInvitePrompt
             invitation={researchInvitation}
             checkinCode={code}
+            entrySessionId={entrySessionId}
           />
         ) : null}
 
@@ -99,6 +113,7 @@ export default async function StartCheckinPage({
             provinces={provinces}
             initialProfile={initialProfile}
             detectedLanguage={detectedLanguage}
+            entrySessionId={entrySessionId}
           />
         </div>
 

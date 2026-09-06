@@ -1,4 +1,5 @@
 import "server-only";
+import { entryMatchesDashboardEvidenceScope, visitMatchesDashboardEvidenceScope } from "@/lib/dashboard/evidence-scope";
 
 import { requirePermission } from "@/lib/auth/guards";
 import * as feedbackRepository from "@/lib/repositories/attraction-feedback.repository";
@@ -64,17 +65,105 @@ function researchSessions(row: Row) {
   );
 }
 
-function studyKind(session: Row) {
-  return nullableString(relation(session, "research_studies")?.study_kind);
+export const visitMatchesEvidenceScope = visitMatchesDashboardEvidenceScope;
+const entryMatchesEvidenceScope = entryMatchesDashboardEvidenceScope;
+
+function percent(numerator: number, denominator: number) {
+  return denominator > 0 ? round((numerator / denominator) * 100) : null;
 }
 
-export function visitMatchesEvidenceScope(row: Row, scope: AttractionAnalyticsFilters["evidenceScope"]) {
-  if (scope === "all_records") return true;
-  const sessions = researchSessions(row);
-  if (scope === "pilot_only") return sessions.some((session) => studyKind(session) === "pilot" || session.collection_mode === "pilot_internal");
-  if (scope === "simulated_only") return sessions.some((session) => session.collection_mode === "simulated_usability");
-  if (sessions.length === 0) return true;
-  return sessions.some((session) => studyKind(session) === "final_collection" && session.collection_mode === "field_observation");
+export function buildAttractionChannelAnalytics(
+  entryRows: Row[],
+  visits: Row[],
+  scope: AttractionAnalyticsFilters["evidenceScope"],
+  trackingEnabled: boolean,
+  generatedAt = new Date().toISOString(),
+) {
+  const uniqueEntries = [...new Map(entryRows.filter((row) => nullableString(row.entry_session_id)
+    && ["qr", "nfc"].includes(stringValue(row.entry_channel))).map((row) => [stringValue(row.entry_session_id), row])).values()];
+  const asOfTime = Date.parse(generatedAt);
+  const recordedBeforeAsOf = (value: unknown) => typeof value === "string"
+    && Number.isFinite(Date.parse(value)) && Date.parse(value) <= asOfTime;
+  const eligible = uniqueEntries.filter((row) => entryMatchesEvidenceScope(row, scope)
+    && recordedBeforeAsOf(row.created_at));
+  const hasSmallChannel = ["qr", "nfc"].some((channel) => {
+    const count = eligible.filter((row) => row.entry_channel === channel).length;
+    return count > 0 && count < ATTRACTION_SMALL_CELL_THRESHOLD;
+  });
+  const unclassifiedEntries = entryRows.filter((row) => row.evidence_scope === "unknown").length;
+  const channels = (["qr", "nfc"] as const).map((channel) => {
+    const rows = eligible.filter((row) => row.entry_channel === channel);
+    const entries = rows.length;
+    const lowSample = hasSmallChannel;
+    const linked = rows.filter((row) => {
+      const visitId = nullableString(row.visit_id);
+      return visitId !== null && recordedBeforeAsOf(relation(row, "visits")?.created_at);
+    });
+    const certificates = linked.filter((row) => relations(relation(row, "visits") ?? {}, "certificates")
+      .some((certificate) => recordedBeforeAsOf(certificate.generated_at))).length;
+    const surveys = linked.filter((row) => relations(relation(row, "visits") ?? {}, "satisfaction_surveys")
+      .some((survey) => recordedBeforeAsOf(survey.submitted_at))).length;
+    const privateOutcome = (count: number) => lowSample || (count > 0 && count < ATTRACTION_SMALL_CELL_THRESHOLD)
+      || (entries - count > 0 && entries - count < ATTRACTION_SMALL_CELL_THRESHOLD);
+    return {
+      channel,
+      entries: lowSample ? null : entries,
+      share: lowSample ? null : percent(entries, eligible.length),
+      linkedVisits: privateOutcome(linked.length) ? null : linked.length,
+      visitConversion: privateOutcome(linked.length) ? null : percent(linked.length, entries),
+      certificates: privateOutcome(certificates) ? null : certificates,
+      certificateConversion: privateOutcome(certificates) ? null : percent(certificates, entries),
+      surveys: privateOutcome(surveys) ? null : surveys,
+      surveyConversion: privateOutcome(surveys) ? null : percent(surveys, entries),
+      suppressed: lowSample,
+    };
+  });
+  const dailyMap = new Map<string, { date: string; qr: number; nfc: number }>();
+  eligible.forEach((row) => {
+    const channel = row.entry_channel;
+    if (channel !== "qr" && channel !== "nfc") return;
+    const createdAt = nullableString(row.created_at);
+    if (!createdAt) return;
+    const date = new Date(createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+    const current = dailyMap.get(date) ?? { date, qr: 0, nfc: 0 };
+    current[channel] += 1;
+    dailyMap.set(date, current);
+  });
+  const dailySuppressed = hasSmallChannel || [...dailyMap.values()].some((day) =>
+    [day.qr, day.nfc].some((count) => count > 0 && count < ATTRACTION_SMALL_CELL_THRESHOLD));
+  const linkedEligibleVisitIds = new Set(visits.filter((visit) => relations(visit, "checkin_entry_sessions")
+    .some((entry) => entryMatchesEvidenceScope(entry, scope) && recordedBeforeAsOf(entry.created_at)))
+    .map((visit) => stringValue(visit.visit_id)));
+  const coverageSmallCell = [linkedEligibleVisitIds.size, visits.length - linkedEligibleVisitIds.size]
+    .some((count) => count > 0 && count < ATTRACTION_SMALL_CELL_THRESHOLD);
+  const coverageSuppressed = coverageSmallCell || !trackingEnabled;
+  const status = !trackingEnabled
+    ? "tracking_not_activated" as const
+    : entryRows.length === 0
+      ? "no_entries" as const
+      : eligible.length === 0 && unclassifiedEntries > 0
+        ? "unclassified_only" as const
+        : eligible.length === 0
+          ? "no_entries_in_scope" as const
+          : "ready" as const;
+
+  return {
+    status,
+    asOf: generatedAt,
+    entries: hasSmallChannel ? null : eligible.length,
+    unclassifiedEntries,
+    channels,
+    daily: [...dailyMap.values()].sort((left, right) => left.date.localeCompare(right.date)).map((row) => ({
+      date: row.date,
+      qr: dailySuppressed ? null : row.qr,
+      nfc: dailySuppressed ? null : row.nfc,
+    })),
+    attributionCoverage: coverageSuppressed ? null : percent(linkedEligibleVisitIds.size, visits.length),
+    attributionLinkedVisits: coverageSuppressed ? null : linkedEligibleVisitIds.size,
+    attributionVisitBase: visits.length,
+    coverageSuppressed,
+    note: "นับรอบเริ่มเข้าใช้งานตามวันเริ่ม และติดตามผลถึงเวลาที่ระบุ ไม่ใช่จำนวนคนหรือหลักฐานการแตะทางกายภาพ; ความครอบคลุมนับจาก Visit ในช่วงวันที่เลือก รวมรอบเข้าที่เริ่มก่อนช่วงนั้น",
+  };
 }
 
 function hasChild(row: Row, key: string) {
@@ -289,6 +378,14 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
   ]);
   const actions = issues.length > 0 ? await feedbackRepository.listActionsForIssues(issues.map((issue) => issue.feedbackIssueId)) : issueActions;
   const funnel = buildAttractionFunnel(visits, rows.funnelEvents);
+  const generatedAt = new Date().toISOString();
+  const channels = buildAttractionChannelAnalytics(
+    rows.entrySessions,
+    visits,
+    parsed.data.evidenceScope,
+    rows.channelTrackingEnabled,
+    rows.channelAsOf ?? generatedAt,
+  );
   const comparisonBlockedReason = parsed.data.campaignId || parsed.data.checkinCodeId || parsed.data.entryChannel
     ? "ตัวกรอง Campaign จุดเช็กอิน หรือช่องทางเข้าไม่สามารถใช้กับ peer ทุกแห่งอย่างเท่าเทียม"
     : rows.truncated
@@ -334,7 +431,7 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
   return {
     attraction: rows.attraction,
     filters: parsed.data,
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     referenceOptions: { attractions: rows.attractions, checkinCodes: rows.checkinCodes },
     kpis: {
       uniqueTourists: uniqueTourists.size,
@@ -348,6 +445,7 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
     },
     trend: [...trendMap.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([label, value]) => ({ label, value })),
     funnel,
+    channels,
     audience: {
       originProvinces: buildAttractionDistribution(tourists, (visit) => nullableString(relation(relation(visit, "tourists") ?? {}, "provinces")?.province_name_th)),
       originCountries: buildAttractionDistribution(tourists, (visit) => nullableString(relation(relation(visit, "tourists") ?? {}, "countries")?.country_name_th)),
@@ -396,6 +494,7 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
       { key: "survey_rate", label: "อัตราตอบแบบสำรวจ", unit: "%", denominator: "Visits ใน scope", dateField: "visits.visit_date", source: "satisfaction_surveys / visits", missingRule: "เป็น null เมื่อไม่มี Visit", decisionUse: "ประเมิน coverage ของเสียงตอบรับ" },
       { key: "satisfaction", label: "คะแนนความพึงพอใจ", unit: "1-5", denominator: "คำตอบที่ไม่เป็น null ของแต่ละมิติ", dateField: "visits.visit_date", source: "satisfaction_surveys", missingRule: `ปกปิดค่าเมื่อ n < ${ATTRACTION_SMALL_CELL_THRESHOLD}`, decisionUse: "ระบุมิติที่ควรตรวจสอบและปรับปรุง" },
       { key: "expense", label: "ช่วงค่าใช้จ่ายที่รายงานเอง", unit: "category/range", denominator: "คำตอบค่าใช้จ่าย", dateField: "visits.visit_date", source: "visit_expenses", missingRule: "ไม่นำช่องว่างมาคำนวณ", decisionUse: "ดูรูปแบบการใช้จ่ายโดยไม่อ้างเป็นรายได้" },
+      { key: "entry_sessions", label: "ช่องทางเริ่มเข้าใช้งาน", unit: "entry session", denominator: "Entry sessions ใน cohort และ scope เดียวกัน", dateField: "checkin_entry_sessions.created_at", source: "checkin_entry_sessions", missingRule: "unknown scope ไม่รวมใน field claim และฐานต่ำกว่าเกณฑ์ไม่แสดง conversion", decisionUse: "เปรียบเทียบการเริ่ม flow และผลลัพธ์ QR/NFC โดยไม่อ้างเหตุและผล" },
     ],
     viewer: { displayName: guard.actor.displayName, permissions: guard.actor.permissions },
     interpretation: "ข้อมูลเป็นสถิติเชิงพรรณนาจากระบบและความสัมพันธ์ที่สังเกตได้ ไม่ยืนยันเหตุและผล และไม่ควรอ้างเป็นตัวแทนนักท่องเที่ยวทั้งจังหวัดโดยไม่มีการออกแบบกลุ่มตัวอย่างรองรับ",

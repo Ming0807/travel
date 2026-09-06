@@ -1,10 +1,16 @@
 import "server-only";
+import { cookies } from "next/headers";
+import { CHECKIN_BROWSER_COOKIE } from "@/lib/auth/checkin-entry";
+import { resolveCheckinFlow } from "@/lib/services/checkin-entry.service";
 
 import {
   clearResearchSessionCredentials,
+  clearResearchVisitCredentials,
   createResearchCredentials,
   getResearchOperationalSessionToken,
   getResearchSessionCredentials,
+  getResearchVisitCredentials,
+  setResearchVisitCredentials,
   hashResearchToken,
   setResearchSessionCredentials,
 } from "@/lib/auth/research-session";
@@ -161,15 +167,15 @@ function publicInvitation(invitation: Awaited<ReturnType<typeof getActiveResearc
   };
 }
 
-export async function hasCurrentResearchParticipation() {
-  const credentials = await getResearchSessionCredentials();
+export async function hasCurrentResearchParticipation(visitId?: string) {
+  const credentials = visitId ? await getResearchVisitCredentials(visitId) ?? await getResearchSessionCredentials() : await getResearchSessionCredentials();
   if (!credentials) return false;
   try {
     const session = await getResearchSessionForAccess(
       credentials.publicSessionCode,
       hashResearchToken(credentials.accessToken),
     );
-    return Boolean(session && !session.withdrawnAt && !["withdrawn", "excluded", "expired"].includes(session.status));
+    return Boolean(session && (!visitId || session.visitId === visitId) && !session.withdrawnAt && !["withdrawn", "excluded", "expired"].includes(session.status));
   } catch {
     return false;
   }
@@ -177,9 +183,12 @@ export async function hasCurrentResearchParticipation() {
 
 async function requireCurrentResearchSession(options?: {
   allowCompleted?: boolean;
+  visitId?: string;
   participantTypes?: Array<"tourist" | "operator" | "attraction_manager">;
 }) {
-  const credentials = await getResearchSessionCredentials();
+  const credentials = options?.visitId
+    ? await getResearchVisitCredentials(options.visitId) ?? await getResearchSessionCredentials()
+    : await getResearchSessionCredentials();
   if (!credentials) throw serviceError("SESSION_NOT_FOUND");
 
   let session: Awaited<ReturnType<typeof getResearchSessionForAccess>>;
@@ -207,6 +216,7 @@ async function requireCurrentResearchSession(options?: {
   }
 
   if (session.participantType === "tourist") {
+    if (options?.visitId && session.visitId !== options.visitId) throw serviceError("VISIT_MISMATCH");
     if (!session.visitId) throw serviceError("SESSION_NOT_ELIGIBLE");
     try {
       await requireTouristVisitAccess(session.visitId);
@@ -215,11 +225,13 @@ async function requireCurrentResearchSession(options?: {
     }
   }
 
+  if (options?.visitId && session.participantType !== "tourist") throw serviceError("VISIT_MISMATCH");
+
   return { credentials, session };
 }
 
-export async function getCurrentResearchEvaluation() {
-  const current = await requireCurrentResearchSession({ allowCompleted: true });
+export async function getCurrentResearchEvaluation(visitId?: string) {
+  const current = await requireCurrentResearchSession({ allowCompleted: true, visitId });
   let instrument: Awaited<ReturnType<typeof getPublishedResearchInstrument>>;
   try {
     instrument = await getPublishedResearchInstrument(
@@ -288,7 +300,7 @@ function toRepositoryAnswer(answer: ResearchResponseInput["answers"][number]) {
 
 export async function saveCurrentResearchResponse(input: ResearchResponseInput) {
   const parsed = parseOrThrow(researchResponseInputSchema, input);
-  const current = await requireCurrentResearchSession();
+  const current = await requireCurrentResearchSession(parsed.visitId ? { visitId: parsed.visitId } : undefined);
 
   let result: Awaited<ReturnType<typeof saveResearchResponseRpc>>;
   try {
@@ -397,8 +409,8 @@ export async function getOptionalResearchInvitation(input: ResearchInvitationInp
   }
 }
 
-export async function getOptionalResearchInvitationForCheckin(checkinCode: string) {
-  if (await getResearchSessionCredentials()) return null;
+export async function getOptionalResearchInvitationForCheckin(checkinCode: string, entrySessionId?: string) {
+  if (await getResearchSessionCredentials(entrySessionId)) return null;
   const parsed = parseOrThrow(researchInvitationSchema.pick({ checkinCode: true }), { checkinCode });
   try {
     return publicInvitation(await getActiveResearchInvitationForCheckin(parsed.checkinCode));
@@ -407,9 +419,9 @@ export async function getOptionalResearchInvitationForCheckin(checkinCode: strin
   }
 }
 
-export async function linkCurrentResearchSessionVisitIfPresent(input: ResearchVisitLinkInput) {
-  if (!(await getResearchSessionCredentials())) return { linked: false as const };
-  await linkResearchSessionVisit(input);
+export async function linkCurrentResearchSessionVisitIfPresent(input: ResearchVisitLinkInput, entrySessionId?: string) {
+  if (!(await getResearchSessionCredentials(entrySessionId))) return { linked: false as const };
+  await linkResearchSessionVisit(input, entrySessionId);
   return { linked: true as const };
 }
 
@@ -422,12 +434,26 @@ export async function declineResearchInvitation() {
 export async function acceptResearchInvitation(input: ResearchAcceptanceInput) {
   if (!input || input.hasConsented !== true) throw serviceError("CONSENT_REQUIRED");
   const parsed = parseOrThrow(researchAcceptanceSchema, input);
-  const operationalSessionToken = await getResearchOperationalSessionToken();
+  if (parsed.entrySessionId) {
+    const browserId = (await cookies()).get(CHECKIN_BROWSER_COOKIE)?.value ?? null;
+    const entry = await resolveCheckinFlow({ code: parsed.checkinCode, flowId: parsed.entrySessionId, browserId });
+    if (entry.mode !== "session" || entry.session.evidenceScope === "unknown") throw serviceError("INVITATION_UNAVAILABLE");
+    const invitation = await getActiveResearchInvitation(parsed.studyCode, parsed.checkinCode);
+    const frozenAt = entry.session.researchFrozenAt;
+    if (!invitation || !entry.session.researchStudyId || !frozenAt ||
+      invitation.studyId !== entry.session.researchStudyId ||
+      Date.parse(invitation.frozenAt) !== Date.parse(frozenAt) ||
+      invitation.collectionMode !== entry.session.evidenceScope) {
+      throw serviceError("INVITATION_UNAVAILABLE");
+    }
+  }
+  const operationalSessionToken = parsed.entrySessionId ?? await getResearchOperationalSessionToken();
   const credentials = createResearchCredentials("00000000-0000-4000-8000-000000000000", operationalSessionToken);
 
   let result: Awaited<ReturnType<typeof acceptResearchInvitationRpc>>;
   try {
     result = await acceptResearchInvitationRpc({
+      ...(parsed.entrySessionId ? { entrySessionId: parsed.entrySessionId } : {}),
       studyCode: parsed.studyCode,
       checkinCode: parsed.checkinCode,
       operationalSessionHash: hashResearchToken(operationalSessionToken),
@@ -440,7 +466,9 @@ export async function acceptResearchInvitation(input: ResearchAcceptanceInput) {
   }
   if (!result.success) mapRpcFailure(result.errorCode);
 
-  await setResearchSessionCredentials({ ...credentials, publicSessionCode: result.publicSessionCode });
+  const acceptedCredentials = { ...credentials, publicSessionCode: result.publicSessionCode };
+  await setResearchSessionCredentials(acceptedCredentials);
+  if (parsed.entrySessionId) await setResearchSessionCredentials(acceptedCredentials, parsed.entrySessionId);
   return {
     accepted: true as const,
     alreadyExists: result.alreadyExists,
@@ -457,9 +485,9 @@ function mapTouristAccessError(error: unknown): never {
   throw error;
 }
 
-export async function linkResearchSessionVisit(input: ResearchVisitLinkInput) {
+export async function linkResearchSessionVisit(input: ResearchVisitLinkInput, entrySessionId?: string) {
   const parsed = parseOrThrow(researchVisitLinkSchema, input);
-  const credentials = await getResearchSessionCredentials();
+  const credentials = await getResearchSessionCredentials(entrySessionId);
   if (!credentials) throw serviceError("SESSION_NOT_FOUND");
 
   const session = await getResearchSessionForAccess(
@@ -490,12 +518,15 @@ export async function linkResearchSessionVisit(input: ResearchVisitLinkInput) {
     return mapRepositoryError(error);
   }
   if (!result.success) mapRpcFailure(result.errorCode);
+  await setResearchVisitCredentials(parsed.visitId, credentials);
   return { linked: true as const };
 }
 
 export async function withdrawResearchSession(input: ResearchWithdrawalInput = {}) {
   const parsed = parseOrThrow(researchWithdrawalSchema, input);
-  const credentials = await getResearchSessionCredentials();
+  const credentials = parsed.visitId
+    ? (await requireCurrentResearchSession({ allowCompleted: true, visitId: parsed.visitId, participantTypes: ["tourist"] })).credentials
+    : await getResearchSessionCredentials();
   if (!credentials) throw serviceError("SESSION_NOT_FOUND");
 
   let result: Awaited<ReturnType<typeof withdrawResearchSessionRpc>>;
@@ -511,6 +542,12 @@ export async function withdrawResearchSession(input: ResearchWithdrawalInput = {
   }
   if (!result.success) mapRpcFailure(result.errorCode);
 
-  await clearResearchSessionCredentials();
+  if (parsed.visitId) {
+    await clearResearchVisitCredentials(parsed.visitId);
+    const global = await getResearchSessionCredentials();
+    if (global?.publicSessionCode === credentials.publicSessionCode) await clearResearchSessionCredentials();
+  } else {
+    await clearResearchSessionCredentials();
+  }
   return { withdrawn: true as const, alreadyWithdrawn: result.alreadyWithdrawn };
 }

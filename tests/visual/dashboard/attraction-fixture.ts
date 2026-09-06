@@ -28,7 +28,13 @@ const filters: AttractionAnalyticsViewModel["filters"] = {
   evidenceScope: "field_claim",
 };
 
-const shared: Pick<AttractionAnalyticsViewModel, "attraction" | "filters" | "generatedAt" | "referenceOptions" | "metricContract" | "viewer" | "interpretation"> = {
+const shared: Pick<AttractionAnalyticsViewModel, "channels" | "attraction" | "filters" | "generatedAt" | "referenceOptions" | "metricContract" | "viewer" | "interpretation"> = {
+  channels: {
+    status: "tracking_not_activated", asOf: "2026-09-04T00:00:00.000Z",
+    entries: 0, unclassifiedEntries: 0, channels: [], daily: [],
+    attributionCoverage: null, attributionLinkedVisits: null, attributionVisitBase: 0,
+    coverageSuppressed: false, note: "Channel tracking is disabled in this visual fixture.",
+  },
   attraction,
   filters,
   generatedAt: "2026-09-04T00:00:00.000Z",
@@ -265,7 +271,20 @@ const lowScenario: Omit<AttractionAnalyticsViewModel, keyof typeof shared> = {
 };
 
 function buildFixture(scenario: Omit<AttractionAnalyticsViewModel, keyof typeof shared>): AttractionAnalyticsViewModel {
-  return { ...shared, ...scenario };
+  const result = { ...shared, ...scenario };
+  if (scenario === normalScenario) {
+    result.channels = {
+      ...shared.channels, status: "ready", entries: 240,
+      note: "ข้อมูลสังเคราะห์สำหรับตรวจหน้าจอ · จำนวนรอบเข้าใช้งาน ไม่ใช่จำนวนบุคคล",
+      channels: (["qr", "nfc"] as const).map((channel) => ({
+        channel, entries: 120, share: 50, linkedVisits: 100, visitConversion: 83.3,
+        certificates: channel === "qr" ? 80 : 90, certificateConversion: channel === "qr" ? 66.7 : 75,
+        surveys: 60, surveyConversion: 50, suppressed: false,
+      })),
+      daily: Array.from({ length: 6 }, (_, index) => ({ date: `2026-08-0${index + 1}`, qr: [15, 20, 25, 20, 15, 25][index], nfc: [20, 15, 20, 30, 20, 15][index] })),
+    };
+  }
+  return result;
 }
 
 export function attractionFixture(state: string | null): AttractionAnalyticsViewModel {

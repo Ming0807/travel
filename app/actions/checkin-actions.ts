@@ -2,8 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { CHECKIN_BROWSER_COOKIE } from "@/lib/auth/checkin-entry";
+import { getCheckinSessionId } from "@/lib/auth/checkin-session";
 import { getOrCreateGuestIdentity } from "@/lib/auth/guest";
-import { resolveAndValidateCheckinCode, trackCheckinFunnelEvent } from "@/lib/services/checkin.service";
+import { completeCheckinEntryVisit, resolveCheckinFlow } from "@/lib/services/checkin-entry.service";
+import { trackCheckinFunnelEvent } from "@/lib/services/checkin.service";
 import { initiateVisit } from "@/lib/services/visit.service";
 import { awardXP } from "@/lib/services/xp.service";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
@@ -54,10 +58,17 @@ export async function initiateCheckin(
   let visitId: string;
 
   try {
-    // 1. Validate checkin code
-    const context = await resolveAndValidateCheckinCode(checkinCode);
-    if (context.status !== "valid" || !context.details?.attraction) {
-      return { errors: { _form: ["QR Code นี้ไม่สามารถใช้งานได้"] } };
+    // 1. Revalidate the live code and, when present, its browser-bound entry session.
+    const rawEntrySessionId = formData.get("entrySessionId");
+    const entrySessionId = typeof rawEntrySessionId === "string" && rawEntrySessionId.trim()
+      ? rawEntrySessionId.trim()
+      : null;
+    const browserId = entrySessionId
+      ? (await cookies()).get(CHECKIN_BROWSER_COOKIE)?.value ?? null
+      : null;
+    const context = await resolveCheckinFlow({ code: checkinCode, flowId: entrySessionId, browserId });
+    if (context.mode === "blocked" || !context.details.attraction) {
+      return { errors: { _form: ["จุดเช็กอินนี้ไม่สามารถใช้งานได้ กรุณาสแกนหรือแตะใหม่อีกครั้ง"] } };
     }
 
     // 2. Get guest identity
@@ -241,31 +252,57 @@ export async function initiateCheckin(
     }
 
     // 5. Create visit record
-    visitId = await initiateVisit({
-      touristId,
-      attractionId: context.details.attraction.attraction_id,
-      photoSpotId: context.details.photo_spot?.photo_spot_id || null,
-      checkinCodeId: context.details.checkin_code_id,
-    });
+    try {
+      visitId = context.mode === "session"
+        ? await completeCheckinEntryVisit({
+          touristId,
+          code: checkinCode,
+          flowId: context.session.sessionId,
+          browserId,
+        })
+        : await initiateVisit({
+          touristId,
+          attractionId: context.details.attraction.attraction_id,
+          photoSpotId: context.details.photo_spot?.photo_spot_id || null,
+          checkinCodeId: context.details.checkin_code_id,
+          entryChannel: "unknown",
+          sessionId: (await getCheckinSessionId()) ?? undefined,
+        });
+    } catch {
+      if (isNewTourist) await cleanupNewTourist(supabase, touristId);
+      return { errors: { _form: ["ไม่สามารถบันทึกการเช็กอินได้ กรุณาสแกนหรือแตะใหม่อีกครั้ง"] } };
+    }
 
     try {
-      await linkCurrentResearchSessionVisitIfPresent({ visitId });
+      if (context.mode === "session") {
+        await linkCurrentResearchSessionVisitIfPresent({ visitId }, context.session.sessionId);
+      } else {
+        await linkCurrentResearchSessionVisitIfPresent({ visitId });
+      }
     } catch {
       // Research is voluntary and must never block the certificate flow.
     }
 
-    try {
-      await trackCheckinFunnelEvent("minimal_form_completed", context.details, {
-        touristId,
-        visitId,
-      });
-    } catch {
-      // Analytics must never block the tourist reward flow.
+    if (context.mode === "session") {
+      try {
+        await trackCheckinFunnelEvent("minimal_form_completed", context.details, {
+          touristId,
+          visitId,
+          sessionId: context.session.sessionId,
+        });
+      } catch {
+        // Analytics must never block the tourist reward flow.
+      }
     }
 
     // 6. Award XP for checkin
     try {
-      await awardXP(touristId, "qr_checkin", { attraction_id: context.details.attraction.attraction_id }, visitId);
+      if (context.mode === "legacy") {
+        await awardXP(touristId, "qr_checkin", {
+          attraction_id: context.details.attraction.attraction_id,
+          entry_channel: "unknown",
+        }, visitId);
+      }
     } catch {
       // XP award is non-critical
     }

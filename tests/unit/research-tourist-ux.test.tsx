@@ -83,6 +83,7 @@ describe("research tourist UX", () => {
     await waitFor(() => expect(saveAction).toHaveBeenCalledWith({
       instrumentKey: "tourist_evaluation",
       answers: [{ itemCode: "SQ_01", integerValue: 4 }],
+      visitId: "22222222-2222-4222-8222-222222222222",
       submit: false,
     }));
     expect(await screen.findByText("ความคิดเห็นเพิ่มเติม")).toBeInTheDocument();
@@ -118,8 +119,10 @@ describe("research tourist UX", () => {
     await waitFor(() => expect(saveAction).toHaveBeenCalledWith({
       instrumentKey: "tourist_evaluation",
       answers: [],
+      visitId: "22222222-2222-4222-8222-222222222222",
       submit: false,
     }));
     expect(push).toHaveBeenCalledWith("/visit/22222222-2222-4222-8222-222222222222/certificate/success");
+    expect(screen.getByRole("link", { name: "ถอนตัวจากการวิจัย" })).toHaveAttribute("href", "/research/withdraw/current?visitId=22222222-2222-4222-8222-222222222222");
   });
 });

@@ -2666,3 +2666,40 @@ not an immutable snapshot of a previously opened browser page. Previous-period
 comparisons are not included in this summary file and the download dialog says
 so. `Report Denominator` is report context; each KPI's `Denominator` is its own
 calculation base and must not be replaced with the report-wide count.
+
+## 55. Attraction QR/NFC Entry Cohorts (Default-Off)
+
+Source: `checkin_entry_sessions`, immutable attraction/campaign/code snapshots,
+and the unique linked Visit with certificate/survey timestamps. An entry is a
+reused two-hour browser/source session, not a person, website view, QR camera
+scan, or verified physical NFC tap. A copied NFC URL retains its channel.
+
+- Entry trend: distinct entry-session IDs by Bangkok start date and QR/NFC.
+- Conversion: linked Visits, certificates, or submitted tourism surveys divided
+  by same-channel entries in the selected start-date cohort. Later-date outcomes
+  are included only through the displayed `asOf` timestamp.
+- Attribution coverage: linked Visits / Visits in the selected Visit-date scope,
+  including sessions started before the date range. This is NOT conversion.
+- Filters: attraction, dates, immutable campaign/code, channel, evidence scope.
+  Unknown evidence is only included in `all_records`; do not infer field
+  eligibility from a later completed research response.
+- Privacy: nonzero cells below 10 suppress complementary channel totals/shares.
+  Outcome success and failure cells are checked separately. Daily series are
+  withheld if a small cell exists. Coverage uses the same complementary rule.
+- Incomplete bounded reads show a warning, not charts. Disabled, empty and
+  unclassified states are distinct. Unavailable values are never replaced by zero.
+
+The UI provides trend/conversion views and a numerator/denominator table.
+Channel metrics are included in attraction CSV/XLSX export through the same
+scoped aggregation. Non-ready states export status metadata only; suppressed
+values remain `SUPPRESSED_OR_UNAVAILABLE`, never zero. Conversion denominators
+are same-channel entries, while coverage uses the Visit cohort. Existing access,
+incomplete-data and small-sample export guards remain in force. Both rollout
+flags remain off; deployment-scope acceptance and device QA gate activation.
+
+2026-09-05: executive live queries, attraction queries and peer queries now share
+the same evidence predicate. If a Visit has an entry snapshot, its scope takes
+precedence over optional research participation. An unknown or simulated entry
+cannot become field data because the user declined evaluation. Legacy Visits
+without entry snapshots retain the previous rules; they are not reclassified.
+Public/summary SQL paths remain a separate rollout audit gate.

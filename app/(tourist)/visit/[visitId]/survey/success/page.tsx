@@ -21,7 +21,7 @@ export default async function SurveySuccessPage({
 
   let researchEvaluationAvailable = false;
   try {
-    const evaluation = await getCurrentResearchEvaluation();
+    const evaluation = await getCurrentResearchEvaluation(visitId);
     researchEvaluationAvailable = evaluation.visitId === visitId && evaluation.status !== "submitted";
   } catch {
     // Most tourists are not enrolled in research. The normal success flow stays unchanged.

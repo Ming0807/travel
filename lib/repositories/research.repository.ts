@@ -67,6 +67,8 @@ export class ResearchRepositoryError extends Error {
 }
 
 export type ResearchInvitationRecord = {
+  studyId: string;
+  frozenAt: string;
   studyCode: string;
   titleTh: string;
   titleEn: string | null;
@@ -292,6 +294,7 @@ async function callRpc(name: string, args: Record<string, unknown>) {
 }
 
 export async function acceptResearchInvitation(params: {
+  entrySessionId?: string;
   studyCode: string;
   checkinCode: string;
   operationalSessionHash: string;
@@ -299,7 +302,8 @@ export async function acceptResearchInvitation(params: {
   withdrawalTokenHash: string;
   language: string | null;
 }): Promise<ResearchAcceptRpcResult> {
-  const object = await callRpc("accept_research_invitation", {
+  const object = await callRpc(params.entrySessionId ? "accept_entry_research_invitation" : "accept_research_invitation", {
+    ...(params.entrySessionId ? { p_entry_session_id: params.entrySessionId } : {}),
     p_study_code: params.studyCode,
     p_checkin_code: params.checkinCode,
     p_operational_session_hash: params.operationalSessionHash,
@@ -613,6 +617,8 @@ export async function getActiveResearchInvitation(studyCode: string, checkinCode
   if (!instrument) return null;
 
   return {
+    studyId: study.research_study_id,
+    frozenAt: study.frozen_at,
     studyCode: study.study_code,
     titleTh: study.title_th,
     titleEn: study.title_en ?? null,
@@ -668,6 +674,8 @@ export async function getActiveResearchInvitationForCheckin(
   if (!instrument) return null;
 
   return {
+    studyId: study.research_study_id,
+    frozenAt: study.frozen_at,
     studyCode: study.study_code,
     titleTh: study.title_th,
     titleEn: study.title_en ?? null,

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { z } from "zod";
 import { ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 
 import { withdrawResearchSessionAction } from "@/app/actions/research-actions";
@@ -12,7 +13,10 @@ export default async function ResearchWithdrawalPage({
   const query = await searchParams;
   const success = (Array.isArray(query.success) ? query.success[0] : query.success) === "1";
   const failed = (Array.isArray(query.error) ? query.error[0] : query.error) === "withdrawal_failed";
-  const active = success ? false : await hasCurrentResearchParticipation();
+  const rawVisit = Array.isArray(query.visitId) ? query.visitId[0] : query.visitId;
+  const parsedVisit = z.uuid().safeParse(rawVisit);
+  const visitId = parsedVisit.success ? parsedVisit.data : undefined;
+  const active = success || (rawVisit !== undefined && !parsedVisit.success) ? false : await hasCurrentResearchParticipation(visitId);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-12 text-ink">
@@ -32,6 +36,7 @@ export default async function ResearchWithdrawalPage({
             </div>
             {failed ? <p role="alert" className="mt-4 border border-rose-300 bg-rose-50 p-3 text-sm font-semibold text-rose-800">ยังถอนตัวไม่ได้ กรุณาลองใหม่</p> : null}
             <form action={withdrawResearchSessionAction} className="mt-5 space-y-4">
+              {visitId ? <input type="hidden" name="visitId" value={visitId} /> : null}
               <label className="block text-sm font-bold">
                 เหตุผล (ไม่บังคับ)
                 <textarea name="reason" maxLength={500} rows={4} className="mt-2 w-full border border-slate-300 px-4 py-3 font-normal outline-none focus:border-teal" />

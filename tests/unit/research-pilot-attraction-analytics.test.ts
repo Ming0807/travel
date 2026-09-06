@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildAttractionDistribution,
+  buildAttractionChannelAnalytics,
   buildAttractionFunnel,
   buildAttractionPeerComparison,
   isOpenFeedbackIssue,
@@ -111,6 +112,88 @@ describe("Phase 21 research activation", () => {
 });
 
 describe("Phase 22 attraction evidence scope", () => {
+  it("excludes pre-Visit pilot and unknown entry cohorts from field claims without requiring research consent", () => {
+    const visit = (evidence_scope: string) => ({ checkin_entry_sessions: [{ evidence_scope }] });
+    expect(visitMatchesEvidenceScope(visit("pilot_internal"), "field_claim")).toBe(false);
+    expect(visitMatchesEvidenceScope(visit("simulated_usability"), "field_claim")).toBe(false);
+    expect(visitMatchesEvidenceScope(visit("unknown"), "field_claim")).toBe(false);
+    expect(visitMatchesEvidenceScope(visit("field_observation"), "field_claim")).toBe(true);
+    expect(visitMatchesEvidenceScope(visit("pilot_internal"), "pilot_only")).toBe(true);
+    expect(visitMatchesEvidenceScope(visit("simulated_usability"), "simulated_only")).toBe(true);
+    expect(visitMatchesEvidenceScope(visit("unknown"), "all_records")).toBe(true);
+  });
+
+  it("measures visit coverage independently from the entry-date cohort", () => {
+    const visits = Array.from({ length: 30 }, (_, index) => ({
+      visit_id: `visit-${index}`,
+      checkin_entry_sessions: index < 20 ? [{
+        entry_session_id: `entry-${index}`, entry_channel: "qr",
+        evidence_scope: "unknown", created_at: "2026-08-31T16:59:00Z",
+      }] : [],
+    }));
+    const result = buildAttractionChannelAnalytics([], visits, "all_records", true, "2026-09-03T00:00:00Z");
+    expect(result.entries).toBe(0);
+    expect(result.attributionLinkedVisits).toBe(20);
+    expect(result.attributionVisitBase).toBe(30);
+    expect(result.attributionCoverage).toBeCloseTo(66.67, 1);
+    const smallRemainder = buildAttractionChannelAnalytics([], visits.slice(0, 25), "all_records", true, "2026-09-03T00:00:00Z");
+    expect(smallRemainder.attributionCoverage).toBeNull();
+    expect(smallRemainder.attributionLinkedVisits).toBeNull();
+  });
+
+  it("keeps cross-day outcomes in their entry cohort and excludes future outcomes", () => {
+    const rows = Array.from({ length: 30 }, (_, index) => ({
+      entry_session_id: `entry-${index}`, entry_channel: "qr", evidence_scope: "unknown",
+      created_at: "2026-09-01T16:59:00Z", visit_id: `visit-${index}`,
+      visits: { created_at: "2026-09-01T17:01:00Z",
+        certificates: [{ generated_at: index < 15 ? "2026-09-02T01:00:00Z" : "2026-09-04T01:00:00Z" }],
+        satisfaction_surveys: [],
+      },
+    }));
+    const result = buildAttractionChannelAnalytics([...rows, rows[0]], [], "all_records", true, "2026-09-03T00:00:00Z");
+    expect(result.channels[0]).toMatchObject({ entries: 30, linkedVisits: 30, certificates: 15, certificateConversion: 50 });
+    expect(result.daily[0]).toMatchObject({ date: "2026-09-01", qr: 30 });
+  });
+
+  it("builds like-for-like QR/NFC entry cohorts without inventing physical tap counts", () => {
+    const visits = Array.from({ length: 20 }, (_, index) => ({ visit_id: `v${index + 1}` }));
+    const entries = [
+      ...Array.from({ length: 12 }, (_, index) => ({
+        entry_session_id: `q${index}`,
+        entry_channel: "qr",
+        evidence_scope: "operational_unclassified",
+        created_at: `2026-09-${index < 6 ? "01" : "02"}T01:00:00Z`,
+        visit_id: `v${index + 1}`,
+        visits: { certificates: index < 9 ? [{}] : [], satisfaction_surveys: index < 6 ? [{}] : [] },
+      })),
+      ...Array.from({ length: 8 }, (_, index) => ({
+        entry_session_id: `n${index}`,
+        entry_channel: "nfc",
+        evidence_scope: "operational_unclassified",
+        created_at: "2026-09-01T02:00:00Z",
+        visit_id: `v${index + 13}`,
+        visits: { certificates: [{}], satisfaction_surveys: [] },
+      })),
+    ];
+
+    const result = buildAttractionChannelAnalytics(entries, visits, "field_claim", true, "2026-09-03T00:00:00Z");
+
+    expect(result.status).toBe("ready");
+    expect(result.entries).toBeNull();
+    expect(result.channels[0]).toMatchObject({ channel: "qr", entries: null, linkedVisits: null, visitConversion: null, suppressed: true });
+    expect(result.channels[1]).toMatchObject({ channel: "nfc", entries: null, linkedVisits: null, visitConversion: null, suppressed: true });
+    expect(result.daily.every((day) => day.nfc === null)).toBe(true);
+    expect(result.note).toMatch(/ไม่ใช่จำนวนคน|ไม่ใช่.*ทางกายภาพ/);
+  });
+
+  it("separates disabled, unclassified and empty channel states", () => {
+    const unknown = [{ entry_session_id: "x", entry_channel: "qr", evidence_scope: "unknown", created_at: "2026-09-01T00:00:00Z", visit_id: null }];
+    expect(buildAttractionChannelAnalytics([], [], "field_claim", false).status).toBe("tracking_not_activated");
+    expect(buildAttractionChannelAnalytics(unknown, [], "field_claim", true).status).toBe("unclassified_only");
+    expect(buildAttractionChannelAnalytics([], [], "field_claim", true).status).toBe("no_entries");
+    expect(buildAttractionChannelAnalytics(unknown, [], "all_records", true).status).toBe("ready");
+  });
+
   it("does not count dismissed or closed feedback issues as open work", () => {
     expect(isOpenFeedbackIssue("open")).toBe(true);
     expect(isOpenFeedbackIssue("dismissed")).toBe(false);

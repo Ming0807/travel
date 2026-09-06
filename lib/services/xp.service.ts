@@ -64,6 +64,7 @@ function toRequirementExtra(value: string | Record<string, unknown> | null): str
 
 export const XP_AWARD_AMOUNTS: Record<string, number> = {
   qr_checkin: 50,
+  nfc_checkin: 50,
   photo_upload: 30,
   certificate_generated: 100,
   survey_completed: 75,
@@ -76,6 +77,7 @@ export const XP_AWARD_AMOUNTS: Record<string, number> = {
 
 export const XP_SOURCES = [
   "qr_checkin",
+  "nfc_checkin",
   "photo_upload",
   "certificate_generated",
   "survey_completed",

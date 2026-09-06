@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 import { AttractionDistributionChart } from "@/components/dashboard/AttractionDistributionChart";
+import { AttractionChannelPanel } from "@/components/dashboard/AttractionChannelPanel";
 import { AttractionFunnelChart } from "@/components/dashboard/AttractionFunnelChart";
 import { AttractionPeerComparison } from "@/components/dashboard/AttractionPeerComparison";
 import { AttractionScoreChart } from "@/components/dashboard/AttractionScoreChart";
@@ -109,6 +110,8 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
       <div data-workspace-section="primary-trend">
         <TrendChart points={data.trend} improvementContext={improvementContext} />
       </div>
+
+      {data.channels ? <AttractionChannelPanel data={data.channels} incomplete={data.quality.truncated} /> : null}
 
       <section aria-labelledby="evidence-heading">
         <div className="mb-4">

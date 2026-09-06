@@ -84,6 +84,7 @@ function CheckinCodeActions({
 }) {
   return (
     <div className="flex items-center justify-end gap-2">
+      <Link href={`/admin/checkin-codes/${id}/nfc`} className="inline-flex min-h-11 items-center rounded border border-slate-200 bg-white px-3 text-xs font-bold text-teal-800">NFC</Link>
       <CopyCheckinUrlAction code={code} />
       {canEdit ? (
         <Link

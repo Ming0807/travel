@@ -185,7 +185,7 @@ export function ResearchEvaluationForm({
   savedAnswers,
   completionHref,
   pauseHref,
-  withdrawHref = "/research/withdraw/current",
+  withdrawHref,
 }: {
   visitId?: string;
   instrumentKey: string;
@@ -198,6 +198,7 @@ export function ResearchEvaluationForm({
   const router = useRouter();
   const resolvedCompletionHref = completionHref ?? (visitId ? `/visit/${visitId}/evaluation?completed=1` : "/");
   const resolvedPauseHref = pauseHref ?? (visitId ? `/visit/${visitId}/certificate/success` : "/");
+  const resolvedWithdrawHref = withdrawHref ?? (visitId ? `/research/withdraw/current?visitId=${encodeURIComponent(visitId)}` : "/research/withdraw/current");
   const [isPending, startTransition] = useTransition();
   const [step, setStep] = useState(0);
   const [values, setValues] = useState(() => initialValues(savedAnswers));
@@ -228,6 +229,7 @@ export function ResearchEvaluationForm({
     setError(null);
     startTransition(async () => {
       const result = await saveResearchEvaluationAction({
+        ...(visitId ? { visitId } : {}),
         instrumentKey,
         answers: answerPayload(values),
         submit,
@@ -323,7 +325,7 @@ export function ResearchEvaluationForm({
 
       <div className="mt-5 flex flex-wrap justify-between gap-3 text-sm font-bold">
         <button type="button" disabled={isPending} onClick={pause} className="min-h-11 text-teal underline underline-offset-4 disabled:cursor-wait disabled:opacity-60">{isPending ? "กำลังบันทึก..." : "พักไว้ ตอบภายหลัง"}</button>
-        <Link href={withdrawHref} className="min-h-11 text-slate-600 underline underline-offset-4">ถอนตัวจากการวิจัย</Link>
+        <Link href={resolvedWithdrawHref} className="min-h-11 text-slate-600 underline underline-offset-4">ถอนตัวจากการวิจัย</Link>
       </div>
     </div>
   );

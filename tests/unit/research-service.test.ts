@@ -19,9 +19,12 @@ const adminRepository = vi.hoisted(() => ({
 }));
 const auth = vi.hoisted(() => ({
   clearResearchSessionCredentials: vi.fn(),
+  clearResearchVisitCredentials: vi.fn(),
   createResearchCredentials: vi.fn(),
   getResearchOperationalSessionToken: vi.fn(),
   getResearchSessionCredentials: vi.fn(),
+  getResearchVisitCredentials: vi.fn(),
+  setResearchVisitCredentials: vi.fn(),
   hashResearchToken: vi.fn((value: string) => `hash:${value}`),
   setResearchSessionCredentials: vi.fn(),
 }));
@@ -29,6 +32,9 @@ const guards = vi.hoisted(() => ({
   requirePermission: vi.fn(),
   requireTouristVisitAccess: vi.fn(),
 }));
+const entry = vi.hoisted(() => ({ resolveCheckinFlow: vi.fn() }));
+vi.mock("@/lib/services/checkin-entry.service", () => entry);
+vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => ({ value: "browser-token" }) }) }));
 
 vi.mock("@/lib/repositories/research.repository", () => repository);
 vi.mock("@/lib/auth/research-session", () => auth);
@@ -43,6 +49,7 @@ import {
   getCurrentResearchOperatorWorkspace,
   getOptionalResearchInvitation,
   linkResearchSessionVisit,
+  linkCurrentResearchSessionVisitIfPresent,
   saveCurrentResearchResponse,
   saveCurrentResearchOperatorAttempt,
   withdrawResearchSession,
@@ -51,6 +58,76 @@ import {
 const publicSessionCode = "11111111-1111-4111-8111-111111111111";
 
 describe("research service", () => {
+  it("rejects a different Visit before saving or withdrawing a global session", async () => {
+    auth.getResearchVisitCredentials.mockResolvedValue(null);
+    auth.getResearchSessionCredentials.mockResolvedValue({ publicSessionCode, accessToken: "token" });
+    repository.getResearchSessionForAccess.mockResolvedValue({
+      participantType: "tourist", status: "in_progress", visitId: "22222222-2222-4222-8222-222222222222", withdrawnAt: null,
+    });
+    await expect(saveCurrentResearchResponse({ visitId: publicSessionCode, instrumentKey: "tourist_evaluation", answers: [], submit: false })).rejects.toThrow();
+    await expect(withdrawResearchSession({ visitId: publicSessionCode })).rejects.toThrow();
+    expect(repository.saveResearchResponse).not.toHaveBeenCalled();
+    expect(repository.withdrawResearchSession).not.toHaveBeenCalled();
+  });
+
+  it("saves with Visit-scoped credentials rather than the latest global session", async () => {
+    auth.getResearchVisitCredentials.mockResolvedValue({ publicSessionCode, accessToken: "scoped-token" });
+    repository.getResearchSessionForAccess.mockResolvedValue({ participantType: "tourist", status: "in_progress", visitId: publicSessionCode, withdrawnAt: null });
+    guards.requireTouristVisitAccess.mockResolvedValue({ touristId: "owner" });
+    repository.saveResearchResponse.mockResolvedValue({ success: true, status: "draft", answerCount: 0 });
+    await saveCurrentResearchResponse({ visitId: publicSessionCode, instrumentKey: "tourist_evaluation", answers: [], submit: false });
+    expect(repository.saveResearchResponse).toHaveBeenCalledWith(expect.objectContaining({ accessTokenHash: "hash:scoped-token" }));
+    expect(guards.requireTouristVisitAccess).toHaveBeenCalledWith(publicSessionCode);
+    expect(auth.getResearchSessionCredentials).not.toHaveBeenCalled();
+  });
+
+  it("does not fall back to a different tab's research credentials", async () => {
+    auth.getResearchSessionCredentials.mockResolvedValue(null);
+    expect(await linkCurrentResearchSessionVisitIfPresent({ visitId: publicSessionCode }, publicSessionCode)).toEqual({ linked: false });
+    expect(auth.getResearchSessionCredentials).toHaveBeenCalledWith(publicSessionCode);
+    expect(repository.linkResearchSessionVisit).not.toHaveBeenCalled();
+  });
+
+  it("rejects entry acceptance when browser-bound context is unavailable", async () => {
+    entry.resolveCheckinFlow.mockResolvedValue({ mode: "blocked" });
+    await expect(acceptResearchInvitation({ studyCode: "field-tour-2026", checkinCode: "YALA_01", hasConsented: true, entrySessionId: publicSessionCode })).rejects.toThrow();
+    expect(repository.acceptResearchInvitation).not.toHaveBeenCalled();
+  });
+
+  it("uses the validated entry as the operational key and stores scoped credentials", async () => {
+    entry.resolveCheckinFlow.mockResolvedValue({ mode: "session", session: { evidenceScope: "field_observation", researchStudyId: publicSessionCode, researchFrozenAt: "2026-09-01T00:00:00Z" } });
+    repository.getActiveResearchInvitation.mockResolvedValue({ studyId: publicSessionCode, frozenAt: "2026-09-01T00:00:00.000+00:00", collectionMode: "field_observation" });
+    await acceptResearchInvitation({ studyCode: "field-tour-2026", checkinCode: "YALA_01", hasConsented: true, entrySessionId: publicSessionCode });
+    expect(repository.acceptResearchInvitation).toHaveBeenCalledWith(expect.objectContaining({ entrySessionId: publicSessionCode, operationalSessionHash: `hash:${publicSessionCode}` }));
+    expect(auth.setResearchSessionCredentials).toHaveBeenCalledWith(expect.any(Object), publicSessionCode);
+    expect(auth.getResearchOperationalSessionToken).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { studyId: "22222222-2222-4222-8222-222222222222", frozenAt: "2026-09-01T00:00:00Z", collectionMode: "field_observation" },
+    { studyId: publicSessionCode, frozenAt: "2026-09-02T00:00:00Z", collectionMode: "field_observation" },
+    { studyId: publicSessionCode, frozenAt: "2026-09-01T00:00:00Z", collectionMode: "simulated_usability" },
+    null,
+  ])("rejects changed or unavailable research deployments %#", async (invitation) => {
+    entry.resolveCheckinFlow.mockResolvedValue({ mode: "session", session: { evidenceScope: "field_observation", researchStudyId: publicSessionCode, researchFrozenAt: "2026-09-01T00:00:00Z" } });
+    repository.getActiveResearchInvitation.mockResolvedValue(invitation);
+    await expect(acceptResearchInvitation({ studyCode: "field-tour-2026", checkinCode: "YALA_01", hasConsented: true, entrySessionId: publicSessionCode })).rejects.toThrow();
+    expect(repository.acceptResearchInvitation).not.toHaveBeenCalled();
+    expect(auth.setResearchSessionCredentials).not.toHaveBeenCalled();
+  });
+
+  it("withdraws only the selected Visit and preserves another tab's global session", async () => {
+    auth.getResearchVisitCredentials.mockResolvedValue({ publicSessionCode, accessToken: "scoped-token", withdrawalToken: "scoped-withdrawal" });
+    auth.getResearchSessionCredentials.mockResolvedValue({ publicSessionCode: "22222222-2222-4222-8222-222222222222" });
+    repository.getResearchSessionForAccess.mockResolvedValue({ participantType: "tourist", status: "in_progress", visitId: publicSessionCode, withdrawnAt: null });
+    guards.requireTouristVisitAccess.mockResolvedValue({ touristId: "owner" });
+    repository.withdrawResearchSession.mockResolvedValue({ success: true, alreadyWithdrawn: false });
+    await withdrawResearchSession({ visitId: publicSessionCode });
+    expect(repository.withdrawResearchSession).toHaveBeenCalledWith(expect.objectContaining({ publicSessionCode, withdrawalTokenHash: "hash:scoped-withdrawal" }));
+    expect(auth.clearResearchVisitCredentials).toHaveBeenCalledWith(publicSessionCode);
+    expect(auth.clearResearchSessionCredentials).not.toHaveBeenCalled();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     auth.getResearchOperationalSessionToken.mockResolvedValue("operational-token");

@@ -18,9 +18,42 @@ import {
   getResearchSessionCredentials,
   hashResearchToken,
   setResearchSessionCredentials,
+  setResearchVisitCredentials,
+  getResearchVisitCredentials,
+  clearResearchVisitCredentials,
 } from "@/lib/auth/research-session";
 
 describe("research session credentials", () => {
+  it("keeps two Visit credentials independent when either Visit is withdrawn", async () => {
+    const first = "11111111-1111-4111-8111-111111111111";
+    const second = "22222222-2222-4222-8222-222222222222";
+    const jar = new Map<string, string>();
+    cookieStore.set.mockImplementation((name, value) => jar.set(name, value));
+    cookieStore.get.mockImplementation((name) => jar.has(name) ? { value: jar.get(name) } : undefined);
+    cookieStore.delete.mockImplementation((name) => jar.delete(name));
+    await setResearchVisitCredentials(first, createResearchCredentials(first));
+    await setResearchVisitCredentials(second, createResearchCredentials(second));
+    expect((await getResearchVisitCredentials(first))?.publicSessionCode).toBe(first);
+    expect((await getResearchVisitCredentials(second))?.publicSessionCode).toBe(second);
+    await clearResearchVisitCredentials(first);
+    expect(await getResearchVisitCredentials(first)).toBeNull();
+    expect((await getResearchVisitCredentials(second))?.publicSessionCode).toBe(second);
+  });
+
+  it("keeps credentials separate across entry flows with no global fallback", async () => {
+    const first = "11111111-1111-4111-8111-111111111111";
+    const second = "22222222-2222-4222-8222-222222222222";
+    const jar = new Map<string, string>();
+    cookieStore.set.mockImplementation((name, value) => jar.set(name, value));
+    cookieStore.get.mockImplementation((name) => jar.has(name) ? { value: jar.get(name) } : undefined);
+    await setResearchSessionCredentials(createResearchCredentials(first, first), first);
+    await setResearchSessionCredentials(createResearchCredentials(second, second), second);
+    expect((await getResearchSessionCredentials(first))?.publicSessionCode).toBe(first);
+    expect((await getResearchSessionCredentials(second))?.publicSessionCode).toBe(second);
+    expect(await getResearchSessionCredentials()).toBeNull();
+    expect(cookieStore.set).toHaveBeenCalledWith(`${RESEARCH_SESSION_COOKIE}_${first}`, expect.any(String), expect.objectContaining({ maxAge: 7200 }));
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
