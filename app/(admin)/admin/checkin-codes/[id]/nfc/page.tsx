@@ -49,7 +49,7 @@ export default async function NfcTagsPage({ params, searchParams }: { params: Pr
           <div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-lg font-bold text-slate-950">{tag.label}</h2><p className="mt-1 text-xs text-slate-500">เวอร์ชัน {tag.version} · {new Date(tag.updated_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</p></div><span className="text-sm font-bold text-teal-800">{labels[tag.status]}</span></div>
           <details className="mt-4"><summary className="min-h-11 cursor-pointer py-2 text-sm font-bold text-orange-800">รายละเอียดและจัดการแท็ก</summary>
             {canManage ? <NfcTagControls tag={tag} payload={payload} /> : <p className="text-sm">สิทธิ์อ่านอย่างเดียว</p>}
-            <NfcTagHistory tagId={tag.nfc_tag_id} />
+            <NfcTagHistory tagId={tag.nfc_tag_id} version={tag.version} />
           </details>
         </article>;
       })}

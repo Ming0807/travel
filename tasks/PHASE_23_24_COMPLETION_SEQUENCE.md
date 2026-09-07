@@ -144,3 +144,13 @@ readers reject research scopes and unsupported filters before querying. Explicit
 all-record date/attraction diagnostics remain available. See
 `docs/dashboard/SUMMARY_EVIDENCE_SCOPE_AUDIT.md`. SQL/RPC permissions and a future
 scoped summary read model remain pending; no production SQL or flags changed.
+
+September 7 S4 UI continuation: reproduced and fixed stale lifecycle commands after
+server refresh, reset history by tag/version, and exposed confirmed revocation of
+unverified drafts. This does not change lifecycle authorization or SQL. Actor labels,
+replacement replay UX, installation evidence and authenticated/device QA remain open.
+Verification: 31 focused NFC form/action/service/repository tests passed on Node 22;
+TypeScript, scoped ESLint and whitespace checks passed. Browser fixture checked at
+360/768/1440px with no horizontal overflow or page errors; draft revocation controls
+were exercised without writing production data. No full build rerun for this narrow
+client-state patch; the prior release build is not claimed as new build evidence.

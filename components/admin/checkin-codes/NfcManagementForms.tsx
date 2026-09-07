@@ -41,10 +41,16 @@ export function NfcCreateForm({ checkinCodeId, replacesTagId }: { checkinCodeId:
 }
 
 export function NfcTagControls({ tag, payload }: { tag: AdminNfcTag; payload: string | null }) {
+  // Server refresh preserves client state; new versions must discard stale commands.
+  return <NfcTagControlsForm key={`${tag.nfc_tag_id}:${tag.version}`} tag={tag} payload={payload} />;
+}
+
+function NfcTagControlsForm({ tag, payload }: { tag: AdminNfcTag; payload: string | null }) {
   const { pending, message, save } = useNfcSave();
   const [copyMessage, setCopyMessage] = useState("");
-  const [target, setTarget] = useState(tag.status === "active" ? "inactive" : "active");
   const canVerify = tag.status === "draft" && !tag.verified_at;
+  const [target, setTarget] = useState(canVerify ? "verify" : tag.status === "active" ? "inactive" : "active");
+  const isVerifying = canVerify && target === "verify";
   return <div className="mt-4 space-y-4">
     {payload ? <div className="flex min-w-0 flex-wrap items-start gap-2">
       <code className="min-w-0 flex-1 break-all bg-slate-50 p-3 text-xs leading-5">{payload}</code>
@@ -55,23 +61,28 @@ export function NfcTagControls({ tag, payload }: { tag: AdminNfcTag; payload: st
     {tag.status === "revoked" ? <><p className="flex items-center gap-2 text-sm text-red-800"><Warning size={18} />ยกเลิกถาวรแล้ว</p><NfcCreateForm checkinCodeId={tag.checkin_code_id} replacesTagId={tag.nfc_tag_id} /></> : <form className="grid gap-4 sm:grid-cols-2" onSubmit={(event) => {
       event.preventDefault(); const data = new FormData(event.currentTarget);
       const common = { tagId: tag.nfc_tag_id, version: tag.version, reason: data.get("reason") };
-      save("change", canVerify ? { ...common, operation: "verify", readBackUrl: data.get("readBackUrl"), verificationReference: data.get("reference") } : { ...common, operation: "status", status: target });
+      save("change", isVerifying ? { ...common, operation: "verify", readBackUrl: data.get("readBackUrl"), verificationReference: data.get("reference") } : { ...common, operation: "status", status: target });
     }}>
-      {canVerify ? <>
+      <label className="text-sm font-semibold">การดำเนินการ<select className={field} value={target} disabled={pending} onChange={(event) => setTarget(event.target.value)}>
+        {canVerify ? <option value="verify">ตรวจสอบ URL จากแท็ก</option> : tag.status !== "active" ? <option value="active">เปิดใช้งาน</option> : <option value="inactive">พักใช้งาน</option>}
+        <option value="revoked">ยกเลิกถาวร</option>
+      </select></label>
+      {isVerifying ? <>
         <label className="text-sm font-semibold sm:col-span-2">URL ที่อ่านกลับจากแท็ก<input name="readBackUrl" type="url" required maxLength={500} className={field} /></label>
         <label className="text-sm font-semibold">หลักฐานอ้างอิงการตรวจ<input name="reference" required minLength={3} maxLength={500} className={field} /></label>
-      </> : <label className="text-sm font-semibold">การดำเนินการ<select className={field} value={target} onChange={(event) => setTarget(event.target.value)}>
-        {tag.status !== "active" ? <option value="active">เปิดใช้งาน</option> : <option value="inactive">พักใช้งาน</option>}
-        <option value="revoked">ยกเลิกถาวร</option>
-      </select></label>}
+      </> : null}
       <label className="text-sm font-semibold">เหตุผล<input name="reason" required minLength={3} maxLength={500} className={field} /></label>
-      {!canVerify && target === "revoked" ? <label className="flex items-start gap-2 text-sm text-red-800 sm:col-span-2"><input type="checkbox" required className="mt-1" />ยืนยันยกเลิกแท็กถาวร ไม่สามารถเปิดแท็กเดิมกลับมาได้</label> : null}
-      <div className="sm:col-span-2"><button className={button} disabled={pending || (canVerify && !payload)}><CheckCircle size={18} />{pending ? "กำลังบันทึก" : canVerify ? "ยืนยันผลตรวจ URL" : "บันทึกสถานะ"}</button><p role="status" className="mt-2 text-sm">{message}</p></div>
+      {target === "revoked" ? <label className="flex items-start gap-2 text-sm text-red-800 sm:col-span-2"><input type="checkbox" required className="mt-1" />ยืนยันยกเลิกแท็กถาวร ไม่สามารถเปิดแท็กเดิมกลับมาได้</label> : null}
+      <div className="sm:col-span-2"><button className={button} disabled={pending || (isVerifying && !payload)}><CheckCircle size={18} />{pending ? "กำลังบันทึก" : isVerifying ? "ยืนยันผลตรวจ URL" : "บันทึกสถานะ"}</button><p role="status" className="mt-2 text-sm">{message}</p></div>
     </form>}
   </div>;
 }
 
-export function NfcTagHistory({ tagId }: { tagId: string }) {
+export function NfcTagHistory({ tagId, version }: { tagId: string; version?: number }) {
+  return <NfcTagHistoryRows key={`${tagId}:${version ?? "current"}`} tagId={tagId} />;
+}
+
+function NfcTagHistoryRows({ tagId }: { tagId: string }) {
   const [rows, setRows] = useState<AdminNfcEvent[]>([]);
   const [cursor, setCursor] = useState<number | null | undefined>();
   const [pending, start] = useTransition();

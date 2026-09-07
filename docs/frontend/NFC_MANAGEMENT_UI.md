@@ -11,6 +11,12 @@ Revocation requires a visible confirmation checkbox. Server permission and lifec
 checks apply independently. Network, stale-version and read-back mismatch messages
 are explicit; no service-role database error is shown to staff.
 
+Lifecycle forms reset on tag ID/version changes after server refresh. Pending
+destructive commands, reasons and confirmations are not reused against a newer
+version. Unverified drafts may be permanently revoked with confirmation without
+inventing read-back evidence; activation still requires verification. Loaded history
+resets when the displayed tag/version changes so staff can load the current audit.
+
 Visual QA: synthetic component fixture at `tests/visual/dashboard/nfc.html`,
 360/768/1440 widths. No production tags or research records are changed by this
 fixture. Full authenticated page and physical read-back QA remain required.
