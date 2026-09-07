@@ -181,7 +181,7 @@ try {
   assert.equal((await db.query("SELECT evidence_scope FROM public.checkin_entry_sessions WHERE entry_session_id=$1", [pilotEntry.entry_session_id])).rows[0].evidence_scope, "pilot_internal"); checks++;
   await rejects(db, `UPDATE public.checkin_entry_sessions SET evidence_scope='field_observation' WHERE entry_session_id='${pilotEntry.entry_session_id}'`, /CHECKIN_ENTRY_IMMUTABLE/);
   // Minimal legacy-consent stub tests the new wrapper's SQL gate independently.
-  // Real consent creation remains covered by research-core integration tests.
+  // Real consent creation is exercised later after adding its table dependencies.
   await db.query(`ALTER TABLE public.research_studies ADD COLUMN study_code text;
     UPDATE public.research_studies SET study_code='entry-study', frozen_at=now() WHERE research_study_id='${actor}';
     DELETE FROM public.research_checkin_codes WHERE study_id='${tourist}';
@@ -408,36 +408,54 @@ try {
     await db.query('RESET ROLE');
   }
   await db.query(await readFile(new URL('../supabase/migrations/20260907005000_accept_research_browser_grant.sql',import.meta.url),'utf8'));
-  const atomicCode='40000000-0000-4000-8000-000000000005';
-  await db.query(`CREATE OR REPLACE FUNCTION public.accept_research_invitation(text,text,text,text,text,text)
-    RETURNS jsonb LANGUAGE plpgsql AS $$ BEGIN
-      INSERT INTO public.research_sessions(public_session_code,access_token_hash,withdrawal_token_hash,study_id,checkin_code_id)
-        VALUES ('${atomicCode}',$4,$5,'${actor}',10)
-        ON CONFLICT (public_session_code) DO UPDATE SET access_token_hash=$4,withdrawal_token_hash=$5;
-      RETURN jsonb_build_object('success',true,'public_session_code','${atomicCode}');
-    END; $$`);
+  const coreSql=await readFile(new URL('../supabase/migrations/20260808000000_add_research_core.sql',import.meta.url),'utf8');
+  const section=(start,end)=>{
+    const from=coreSql.indexOf(start),to=coreSql.indexOf(end,from+start.length);
+    assert.ok(from>=0 && to>from,'Research migration section markers must remain valid');
+    return coreSql.slice(from,to);
+  };
+  await db.query(`ALTER TABLE public.research_studies ADD COLUMN consent_version text DEFAULT 'qa-v1',
+      ADD COLUMN notice_version text DEFAULT 'qa-v1';
+    ALTER TABLE public.research_sessions ADD COLUMN operational_session_hash text,
+      ADD COLUMN collection_mode text, ADD COLUMN inclusion_status text, ADD COLUMN consented_at timestamptz;
+    ALTER TABLE public.research_sessions ALTER COLUMN public_session_code SET DEFAULT gen_random_uuid();
+    CREATE UNIQUE INDEX qa_research_operational_session ON public.research_sessions(study_id,operational_session_hash)
+      WHERE operational_session_hash IS NOT NULL AND status NOT IN ('withdrawn','excluded','expired');`);
+  await db.query(section('CREATE TABLE public.research_consents (','CREATE TABLE public.research_responses ('));
+  await db.query(section('CREATE OR REPLACE FUNCTION public.accept_research_invitation(',
+    'CREATE OR REPLACE FUNCTION public.link_research_session_visit('));
   const atomicEntry=await newScopedEntry();
-  const atomicAccept=async (connection=db, token=browserA, browser=grantBrowser, entryBrowser=atomicEntry.browser_hash) =>
+  const atomicAccept=async (connection=db, token=browserA, browser=grantBrowser, entryBrowser=atomicEntry.browser_hash, operationalHash=browserA) =>
     (await connection.query("SELECT public.accept_research_browser_invitation($1,$2,$3,'entry-study','yala-001',$4,$5,$5,'th') AS result",
-      [browser,entryBrowser,atomicEntry.entry_session_id,browserA,token])).rows[0].result;
+      [browser,entryBrowser,atomicEntry.entry_session_id,operationalHash,token])).rows[0].result;
   assert.equal((await atomicAccept(db,browserA,grantBrowser,'bad')).success,false); checks++;
   assert.equal((await atomicAccept(db,browserA,grantBrowser,browserB)).success,false); checks++;
   // No consent survives a failed grant bind (retention gate).
   await db.query("UPDATE public.research_studies SET retention_until=now()-interval '1 second' WHERE research_study_id=$1",[actor]);
   await assert.rejects(atomicAccept(),/RESEARCH_GRANT_BIND_FAILED/); checks++;
-  assert.equal((await db.query('SELECT 1 FROM public.research_sessions WHERE public_session_code=$1',[atomicCode])).rowCount,0); checks++;
+  assert.equal((await db.query('SELECT 1 FROM public.research_sessions WHERE entry_session_id=$1',[atomicEntry.entry_session_id])).rowCount,0); checks++;
+  assert.equal((await db.query('SELECT 1 FROM public.research_consents')).rowCount,0); checks++;
   await db.query("UPDATE public.research_studies SET retention_until=now()+interval '7 days' WHERE research_study_id=$1",[actor]);
   const atomicWriter=client(); await atomicWriter.connect();
   try {
     const results=await Promise.all([atomicAccept(db,browserA),atomicAccept(atomicWriter,browserB)]);
     assert.equal(results.every((result)=>result.success),true); checks++;
   } finally { await atomicWriter.end(); }
-  const atomicSnapshot=async ()=>(await db.query('SELECT * FROM public.research_sessions WHERE public_session_code=$1',[atomicCode])).rows[0];
+  const atomicSnapshot=async ()=>(await db.query('SELECT * FROM public.research_sessions WHERE entry_session_id=$1',[atomicEntry.entry_session_id])).rows[0];
   const stable=await atomicSnapshot();
+  const consents=async ()=>(await db.query('SELECT purpose_key,consent_version,notice_version,has_consented,language FROM public.research_consents WHERE research_session_id=$1 ORDER BY purpose_key',[stable.research_session_id])).rows;
+  const originalConsents=await consents();
+  assert.deepEqual(originalConsents.map((row)=>row.purpose_key),['research_behavioral_correlation','research_evaluation']); checks++;
+  assert.equal(originalConsents.every((row)=>row.has_consented && row.language==='th' && row.consent_version==='qa-v1' && row.notice_version==='qa-v1'),true); checks++;
   assert.equal((await resolveContext('entry',atomicEntry.entry_session_id)).length,1); checks++;
   assert.equal((await atomicAccept(db,'f'.repeat(64))).success,true); checks++;
   assert.equal((await atomicSnapshot()).access_token_hash,stable.access_token_hash); checks++;
   assert.equal((await atomicSnapshot()).withdrawal_token_hash,stable.withdrawal_token_hash); checks++;
+  assert.deepEqual(await consents(),originalConsents); checks++;
+  assert.equal((await atomicAccept(db,browserA,grantBrowser,atomicEntry.browser_hash,'invalid')).error_code,'RESEARCH_INVITATION_INVALID'); checks++;
+  await assert.rejects(atomicAccept(db,browserA,grantBrowser,atomicEntry.browser_hash,browserB),/RESEARCH_GRANT_SESSION_MISMATCH/); checks++;
+  assert.equal((await db.query('SELECT 1 FROM public.research_sessions WHERE entry_session_id=$1',[atomicEntry.entry_session_id])).rowCount,1); checks++;
+  assert.deepEqual(await consents(),originalConsents); checks++;
   assert.equal((await atomicAccept(db,browserA,'d'.repeat(64))).error_code,'RESEARCH_GRANT_MIGRATION_REQUIRED'); checks++;
   await db.query("UPDATE public.research_studies SET frozen_at=frozen_at+interval '1 second' WHERE research_study_id=$1",[actor]);
   assert.equal((await atomicAccept()).error_code,'RESEARCH_STUDY_UNAVAILABLE'); checks++;

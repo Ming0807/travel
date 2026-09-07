@@ -74,3 +74,14 @@ verified migration of existing cookies, selective withdrawal and expiry recovery
 Do not merely wrap the current rotating-token RPC and claim race safety. Preserve
 unmigrated cookies and compatibility while flags are off. Complete full-schema,
 cross-tab and real mobile tests before switching the application to grants.
+
+## SQL Verification Checkpoint
+The disposable harness now installs the original `accept_research_invitation`
+function and `research_consents` DDL directly from the research-core migration for
+atomic acceptance tests. It verifies two concurrent accepts, exactly two purpose
+consents with correct notice/version/language, unchanged tokens and consent rows
+on replay, rollback of both session and consents when grant binding fails, and
+rollback when a different operational hash would create a second session.
+The full run passes 146 assertions. Earlier wrapper tests still use stubs;
+surrounding study/session schemas are minimal, so this is not full-schema staging
+or an authenticated browser test. No new SQL migration for this test checkpoint.

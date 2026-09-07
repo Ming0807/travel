@@ -24,12 +24,13 @@ No seed/reset/delete is required. No rollout environment flags should be enabled
 as part of applying these files. Existing null entry provenance remains unknown;
 there is no inferred historical backfill.
 
-Local evidence: disposable minimal-schema PostgreSQL harness, 138 assertions;
+Local evidence: disposable PostgreSQL harness, 146 assertions;
 read-only NFC object/permission verifier, 14 checks. These do not replace full-schema
 staging, authenticated mobile flows or physical NFC testing. Valid acceptance retries
 still rotate legacy credentials in existing live callers; the new atomic RPC is
-dormant and bounded browser grant integration remains pending. Consent writes in
-the local harness are stubbed; these assertions do not prove full-schema consent.
+dormant and bounded browser grant integration remains pending. Atomic acceptance
+now uses the original consent RPC and consent table DDL; earlier wrapper scenarios
+remain stubbed and surrounding schemas remain minimal. This is not full-schema QA.
 
 Rollback: stop new entry/research rollout first; preserve captured provenance and
 grants. Do not drop tables/columns or restore the unsafe link RPC to undo deployment.

@@ -249,3 +249,12 @@ Local minimal-schema harness passed 138 PostgreSQL assertions, including two wri
 stable access/withdrawal hashes, failed-grant rollback and role denial. Consent creation
 is stubbed, not full-schema evidence. No live caller/flag changed and no production SQL
 applied. Next: stable browser provisioning and end-to-end grant principal integration.
+
+S3 verification follow-up: replaced the atomic-acceptance consent stub with the
+original research-core RPC and consent-table DDL loaded from the source migration.
+146 PostgreSQL assertions passed, including two consent purposes only under parallel
+acceptance, notice/version/language preservation, no consent duplication on retry,
+and complete rollback on failed grants or mismatched operational-session replay.
+Scoped ESLint passed. Earlier wrapper scenarios remain stubbed and surrounding
+schemas minimal; complete-schema and browser rollout gates remain open. No new
+migration, application change or production activation in this verification patch.
