@@ -34,10 +34,10 @@ describe("public dashboard service", () => {
       },
     } as unknown as DashboardViewModel);
 
-    const result = await getPublicDashboardEvidence({ province_id: "2" });
+    const result = await getPublicDashboardEvidence({ province_id: "2", evidence_scope: "simulated_only", evidenceScope: "all_records" });
 
     expect(getPublicDashboardAnalytics).toHaveBeenCalledWith(
-      expect.objectContaining({ province_id: "1", provinceId: "1" }),
+      expect.objectContaining({ province_id: "1", provinceId: "1", evidence_scope: "field_claim", evidenceScope: "field_claim" }),
     );
     expect(result.scope.provinceName).toBe("ยะลา");
   });

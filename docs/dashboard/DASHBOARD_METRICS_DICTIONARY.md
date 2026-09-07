@@ -2703,6 +2703,11 @@ precedence over optional research participation. An unknown or simulated entry
 cannot become field data because the user declined evaluation. Legacy Visits
 without entry snapshots retain the previous rules; they are not reclassified.
 Public/summary SQL paths remain a separate rollout audit gate.
+September 7 application-path audit: public evidence uses live scoped calculations
+and pins `field_claim`. Legacy daily-summary readers now reject research scopes
+and unsupported dimensions instead of silently returning unsegmented totals.
+Database-level grants and scoped summary SQL remain pending. Details:
+`docs/dashboard/SUMMARY_EVIDENCE_SCOPE_AUDIT.md`.
 
 ## 56. Executive Visit Channel Distribution
 

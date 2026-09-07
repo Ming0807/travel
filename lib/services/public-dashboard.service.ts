@@ -13,6 +13,8 @@ export async function getPublicDashboardEvidence(
   const scope = await getPublicDashboardProvinceScope();
   const analytics = await getPublicDashboardAnalytics({
     ...searchParams,
+    evidence_scope: "field_claim",
+    evidenceScope: "field_claim",
     province_id: String(scope.provinceId),
     provinceId: String(scope.provinceId),
   });

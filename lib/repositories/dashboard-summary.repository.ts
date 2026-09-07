@@ -87,6 +87,12 @@ function buildSummaryQuery(
   filters: DashboardFilters,
   extraSelect?: string
 ) {
+  // The legacy table has no evidence or respondent dimensions. Never silently
+  // answer a segmented question with its unsegmented totals.
+  const supported = new Set(["dateFrom", "dateTo", "attractionId", "evidenceScope"]);
+  if (filters.evidenceScope !== "all_records" || Object.entries(filters).some(([key, value]) => value !== undefined && !supported.has(key))) {
+    throw new Error("DASHBOARD_SUMMARY_SCOPE_UNSUPPORTED");
+  }
   let query = supabase
     .from("dashboard_daily_summary")
     .select(extraSelect ?? "*")

@@ -137,3 +137,10 @@ Verified at 360/390/768/1440px without page overflow or page errors using synthe
 fixtures; empty, disabled, incomplete and small-sample states were checked separately.
 No rollout flags or SQL changed. Full executive entry-start conversion aggregation,
 authenticated QA and public summary SQL review remain separate pending work.
+
+September 7 evidence audit: public statistics use the shared live read path, not
+legacy daily aggregates. Public evidence now pins field scope; legacy summary
+readers reject research scopes and unsupported filters before querying. Explicit
+all-record date/attraction diagnostics remain available. See
+`docs/dashboard/SUMMARY_EVIDENCE_SCOPE_AUDIT.md`. SQL/RPC permissions and a future
+scoped summary read model remain pending; no production SQL or flags changed.
