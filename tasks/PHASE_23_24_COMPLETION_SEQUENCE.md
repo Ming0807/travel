@@ -208,3 +208,14 @@ passed 96 assertions including parallel grants, selective revocation, expiry, to
 rotation survival, direct-role denial and bounded cleanup/tombstone retention.
 No app integration, cookie migration or cleanup schedule exists yet; do not mark S3
 complete or activate research. No production SQL applied. See RESEARCH_BROWSER_GRANTS.md.
+
+S3 adapter continuation: typed server-only grant repository and host-only browser
+credential/migration helper added. 15 adapter/auth tests cover malformed/duplicate/
+mismatched RPC data, permission-error containment, exact Visit proof, and preserving
+legacy credentials on missing proof, wrong Visit, database or cookie-write failure.
+The helper is not called by application routes. Visit/entry grant lookup and atomic
+acceptance must be connected before migration can be enabled; cookie growth remains
+unfixed in the running application. No additional SQL or flags in this patch.
+Combined browser adapter plus existing research service/auth tests: 41 passed;
+TypeScript, scoped ESLint and whitespace checks passed. No new production build
+for these unused server modules; no runtime activation or end-to-end claim.

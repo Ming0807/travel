@@ -1,6 +1,6 @@
 # Research Browser Grants Foundation
 
-Status: database foundation only. Not wired into application authentication.
+Status: database foundation plus server-only adapters. Not wired into application authentication.
 Migration: `20260907002000_add_research_browser_grants.sql`.
 
 ## Contract
@@ -36,6 +36,14 @@ no participant answers are duplicated here. The scheduled cleanup integration re
 pending and must use existing authenticated maintenance infrastructure.
 
 ## Remaining Integration
+`research-browser-grant.repository.ts` validates proof and RPC responses and exposes
+no public server action. `research-browser.ts` provides a fixed-size Secure/HttpOnly
+host-only cookie and a dormant legacy Visit migration helper. It must not be called
+by the live flow until grant-based Visit/entry lookup is integrated. It binds, reads
+back the exact Visit, renews the same browser token and only then removes that Visit
+cookie. Failure before removal leaves old credentials untouched. No browser token
+is generated implicitly in migration, avoiding competing initial response tokens.
+
 Issue a stable browser token before concurrent acceptance; add typed server-only
 repository access, exact entry/Visit selection, atomic acceptance/grant creation,
 verified migration of existing cookies, selective withdrawal and expiry recovery.
