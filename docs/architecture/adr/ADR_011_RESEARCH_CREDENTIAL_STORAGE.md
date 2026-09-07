@@ -1,7 +1,9 @@
 # ADR-011: Bounded Research Browser Credentials
 
 ## Status
-Proposed, 2026-09-07. Not implemented; keep the research rollout gate open.
+Proposed, 2026-09-07. Database foundation implemented in
+`20260907002000_add_research_browser_grants.sql`; application integration and cookie
+migration are not implemented. Keep the research rollout gate open.
 
 ## Context
 Entry-scoped cookies isolate simultaneous check-in flows. Visit-scoped cookies

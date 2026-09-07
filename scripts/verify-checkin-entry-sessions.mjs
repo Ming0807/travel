@@ -284,6 +284,62 @@ try {
     await assert.rejects(link(db,completed.visit_id),/permission denied/); checks++;
     await db.query('RESET ROLE');
   }
+  await db.query(`ALTER TABLE public.research_studies ADD COLUMN retention_until timestamptz;
+    ALTER TABLE public.research_sessions ADD COLUMN study_id uuid REFERENCES public.research_studies(research_study_id),
+      ADD COLUMN withdrawal_token_hash text, ADD COLUMN created_at timestamptz NOT NULL DEFAULT now();
+    UPDATE public.research_sessions SET study_id='${actor}',withdrawal_token_hash='${browserB}',status='completed',withdrawn_at=NULL;
+    UPDATE public.research_studies SET retention_until=now()+interval '7 days' WHERE research_study_id='${actor}'`);
+  await db.query(await readFile(new URL("../supabase/migrations/20260907002000_add_research_browser_grants.sql",import.meta.url),"utf8"));
+  const grantBrowser = 'c'.repeat(64);
+  const bind = async (connection=db, code=researchCode, access=browserA, withdrawal=browserB) => (await connection.query(
+    'SELECT public.bind_research_browser_grant($1,$2,$3,$4) AS ok',[grantBrowser,code,access,withdrawal])).rows[0].ok;
+  const resolveGrant = async (hash=grantBrowser, code=researchCode) => (await db.query(
+    'SELECT * FROM public.resolve_research_browser_grant($1,$2)',[hash,code])).rows;
+  assert.equal(await bind(db,researchCode,browserB),false); checks++;
+  assert.equal(await bind(db,researchCode,browserA,browserA),false); checks++;
+  const grantWriter=client(); await grantWriter.connect();
+  try { assert.deepEqual(await Promise.all([bind(db),bind(grantWriter)]),[true,true]); checks++; }
+  finally { await grantWriter.end(); }
+  const grants=await db.query('SELECT * FROM public.research_browser_grants');
+  assert.equal(grants.rowCount,1); checks++;
+  assert.equal(grants.rows[0].expires_at.getTime(),(await db.query('SELECT retention_until FROM public.research_studies WHERE research_study_id=$1',[actor])).rows[0].retention_until.getTime()); checks++;
+  assert.equal((await resolveGrant()).length,1); checks++;
+  assert.equal((await resolveGrant('d'.repeat(64))).length,0); checks++;
+  await db.query('UPDATE public.research_sessions SET access_token_hash=$1 WHERE public_session_code=$2',['e'.repeat(64),researchCode]);
+  assert.equal((await resolveGrant())[0].access_token_hash,'e'.repeat(64)); checks++;
+  const secondResearch='40000000-0000-4000-8000-000000000002';
+  await db.query(`INSERT INTO public.research_sessions(public_session_code,access_token_hash,withdrawal_token_hash,checkin_code_id,study_id)
+    VALUES($1,$2,$3,10,$4)`,[secondResearch,browserA,browserB,actor]);
+  assert.equal(await bind(db,secondResearch),true); checks++;
+  await db.query('SELECT public.revoke_research_browser_grant($1,$2)',[grantBrowser,researchCode]);
+  assert.equal((await resolveGrant()).length,0); checks++;
+  assert.equal((await resolveGrant(grantBrowser,secondResearch)).length,1); checks++;
+  assert.equal(await bind(db,researchCode,'e'.repeat(64)),false); checks++;
+  await db.query("UPDATE public.research_sessions SET status='withdrawn',withdrawn_at=now() WHERE public_session_code=$1",[secondResearch]);
+  assert.equal((await resolveGrant(grantBrowser,secondResearch)).length,0); checks++;
+  assert.equal(await bind(db,secondResearch),false); checks++;
+  for (const role of ['anon','authenticated']) {
+    await db.query(`SET ROLE ${role}`);
+    await assert.rejects(bind(),/permission denied/); checks++;
+    await assert.rejects(resolveGrant(),/permission denied/); checks++;
+    await rejects(db,'SELECT * FROM public.research_browser_grants',/permission denied/);
+    await db.query('RESET ROLE');
+  }
+  await db.query('SET ROLE service_role');
+  await rejects(db,'SELECT * FROM public.research_browser_grants',/permission denied/);
+  await db.query('RESET ROLE');
+  await db.query("UPDATE public.research_sessions SET status='consented',withdrawn_at=NULL,created_at=now()-interval '31 days' WHERE public_session_code=$1",[secondResearch]);
+  assert.equal(await bind(db,secondResearch),false); checks++;
+  await db.query("UPDATE public.research_studies SET retention_until=now()-interval '1 second' WHERE research_study_id=$1",[actor]);
+  assert.equal((await resolveGrant(grantBrowser,secondResearch)).length,0); checks++;
+  await db.query("UPDATE public.research_browser_grants SET created_at=now()-interval '2 days',expires_at=now()-interval '1 day'");
+  assert.equal((await resolveGrant()).length,0); checks++;
+  assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(500) AS count')).rows[0].count,0); checks++;
+  await db.query("UPDATE public.research_browser_grants SET created_at=now()-interval '31 days'");
+  await rejects(db,'SELECT public.cleanup_expired_research_browser_grants(1001)',/RESEARCH_GRANT_CLEANUP_LIMIT_INVALID/);
+  assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(1) AS count')).rows[0].count,1); checks++;
+  assert.equal((await db.query('SELECT count(*)::int AS count FROM public.research_browser_grants')).rows[0].count,1); checks++;
+  assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(500) AS count')).rows[0].count,1); checks++;
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);

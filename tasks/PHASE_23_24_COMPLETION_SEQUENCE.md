@@ -199,3 +199,12 @@ full-schema/mobile QA, acceptance token rotation and exact entry correlation rem
 Migration has NOT been applied to production. S3 stays open.
 The Visit-link change also passed the production build (63 static pages); no new
 UI layout or rollout flags changed. Full-suite and complete-schema QA remain open.
+
+S3 bounded credential foundation: added research_browser_grants and service-only
+bind/resolve/revoke/bounded cleanup RPCs in `20260907002000_add_research_browser_grants.sql`.
+Both legacy token hashes are required to bind. Replays do not extend/revive grants;
+resolution checks live withdrawal/status/retention. Minimal-schema PostgreSQL harness
+passed 96 assertions including parallel grants, selective revocation, expiry, token
+rotation survival, direct-role denial and bounded cleanup/tombstone retention.
+No app integration, cookie migration or cleanup schedule exists yet; do not mark S3
+complete or activate research. No production SQL applied. See RESEARCH_BROWSER_GRANTS.md.

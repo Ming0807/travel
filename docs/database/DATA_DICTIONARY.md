@@ -1,5 +1,14 @@
 # DATA_DICTIONARY.md
 
+## Research Browser Grants (Foundation)
+
+`research_browser_grants` keys `(browser_token_hash, research_session_id)` and stores
+`created_at`, `expires_at`, `revoked_at`. Hashes are SHA-256 hex; the session FK cascades
+on deletion. Session and expiry indexes support revocation lookup and bounded cleanup.
+Direct table access is denied to application roles; service-only bind/resolve/revoke/
+cleanup RPCs enforce proof, lifetime and status. No raw credentials or tourist data.
+See `docs/backend/RESEARCH_BROWSER_GRANTS.md`; application integration is not active.
+
 ## September 7 Research Link Contract
 
 `20260907001000_guard_research_visit_rebinding.sql` replaces
