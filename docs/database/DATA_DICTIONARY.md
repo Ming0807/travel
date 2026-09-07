@@ -1897,3 +1897,14 @@ entry sessions and atomic begin/read/create-Visit RPCs. See
 [Check-in Entry Session Contract](CHECKIN_ENTRY_SESSION_CONTRACT.md) for fields,
 privacy, replay-safe XP and activation gates. The migration is not activated
 in production by this implementation; existing Visits are not backfilled.
+
+### Research Entry Provenance
+
+Migration `20260907003000_correlate_research_entry_sessions.sql` adds
+`research_sessions.entry_session_id`: nullable UUID FK to `checkin_entry_sessions`,
+delete restricted, with a partial lookup index. Null means no recorded exact entry
+association, not QR or NFC. No historical backfill is inferred. Entry-aware consent
+captures this reference transactionally; once set it is immutable. Study, check-in
+code and any linked Visit must match that entry. This supports attraction-visit
+and research evidence integrity; it does not assert physical presence or identify
+a person. See `docs/backend/RESEARCH_VISIT_LINK_INTEGRITY.md`.

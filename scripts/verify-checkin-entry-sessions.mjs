@@ -340,6 +340,49 @@ try {
   assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(1) AS count')).rows[0].count,1); checks++;
   assert.equal((await db.query('SELECT count(*)::int AS count FROM public.research_browser_grants')).rows[0].count,1); checks++;
   assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(500) AS count')).rows[0].count,1); checks++;
+  // Exact entry binding: use the real wrapper/trigger around a consent-write stub.
+  // The stub deliberately returns one session on retry to exercise collision rollback.
+  await db.query(await readFile(new URL('../supabase/migrations/20260907003000_correlate_research_entry_sessions.sql', import.meta.url), 'utf8'));
+  const entryResearchCode = '40000000-0000-4000-8000-000000000003';
+  await db.query(`CREATE OR REPLACE FUNCTION public.accept_research_invitation(text,text,text,text,text,text)
+    RETURNS jsonb LANGUAGE plpgsql AS $$ BEGIN
+      INSERT INTO public.research_sessions(public_session_code,access_token_hash,withdrawal_token_hash,study_id,checkin_code_id)
+        VALUES ('${entryResearchCode}',$4,$5,'${actor}',10)
+        ON CONFLICT (public_session_code) DO UPDATE SET access_token_hash=$4,withdrawal_token_hash=$5;
+      RETURN jsonb_build_object('success',true,'public_session_code','${entryResearchCode}');
+    END; $$`);
+  const boundEntry = await newScopedEntry();
+  const otherEntry = await newScopedEntry();
+  const acceptBound = async (connection, id = boundEntry.entry_session_id, token = browserA) =>
+    (await connection.query("SELECT public.accept_entry_research_invitation($1,'entry-study','yala-001',$2,$3,$3,'th') AS result",[id,browserA,token])).rows[0].result;
+  assert.equal((await acceptBound(db)).success,true); checks++;
+  const boundSnapshot = async () => (await db.query('SELECT * FROM public.research_sessions WHERE public_session_code=$1',[entryResearchCode])).rows[0];
+  assert.equal((await boundSnapshot()).entry_session_id,boundEntry.entry_session_id); checks++;
+  const acceptingTab = client();
+  await acceptingTab.connect();
+  try {
+    const results = await Promise.all([acceptBound(db),acceptBound(acceptingTab)]);
+    assert.equal(results.every((result) => result.success),true); checks++;
+  } finally { await acceptingTab.end(); }
+  const beforeWrongEntry = await boundSnapshot();
+  await assert.rejects(acceptBound(db,otherEntry.entry_session_id,browserB),/RESEARCH_ENTRY_IMMUTABLE/); checks++;
+  assert.deepEqual(await boundSnapshot(),beforeWrongEntry); checks++;
+  const bindVisit = async (visitId) => (await db.query('SELECT public.link_research_session_visit($1,$2,$3,$4) AS result',
+    [entryResearchCode,browserA,visitId,tourist])).rows[0].result;
+  await assert.rejects(bindVisit(linkVisits[0].visit_id),/RESEARCH_ENTRY_MISMATCH/); checks++;
+  assert.equal((await boundSnapshot()).visit_id,null); checks++;
+  const exactVisit = (await db.query('SELECT public.create_checkin_entry_visit($1,$2,$3,$4) AS id',
+    [boundEntry.entry_session_id,boundEntry.browser_hash,'yala-001',tourist])).rows[0].id;
+  assert.equal((await bindVisit(exactVisit)).success,true); checks++;
+  const exactSnapshot = await boundSnapshot();
+  assert.equal((await bindVisit(exactVisit)).success,true); checks++;
+  assert.deepEqual(await boundSnapshot(),exactSnapshot); checks++;
+  await rejects(db,`UPDATE public.research_sessions SET entry_session_id=NULL WHERE public_session_code='${entryResearchCode}'`,/RESEARCH_ENTRY_IMMUTABLE/);
+  await rejects(db,`UPDATE public.research_sessions SET visit_id='${linkVisits[1].visit_id}' WHERE public_session_code='${entryResearchCode}'`,/RESEARCH_ENTRY_MISMATCH/);
+  assert.equal((await db.query('SELECT entry_session_id FROM public.research_sessions WHERE public_session_code=$1',[researchCode])).rows[0].entry_session_id,null); checks++;
+  for (const role of ['anon','authenticated','service_role']) {
+    assert.equal((await db.query("SELECT has_function_privilege($1,'public.guard_research_entry_binding()','EXECUTE') AS allowed",[role])).rows[0].allowed,false); checks++;
+  }
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);

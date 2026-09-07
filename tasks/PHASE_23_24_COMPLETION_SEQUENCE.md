@@ -219,3 +219,15 @@ unfixed in the running application. No additional SQL or flags in this patch.
 Combined browser adapter plus existing research service/auth tests: 41 passed;
 TypeScript, scoped ESLint and whitespace checks passed. No new production build
 for these unused server modules; no runtime activation or end-to-end claim.
+
+S3 exact entry correlation: migration `20260907003000_correlate_research_entry_sessions.sql`
+records immutable entry provenance during entry-aware consent acceptance. Database
+guards reject first-Visit association from another entry at the same code and roll
+back mismatched acceptance, including token updates. Historical sessions remain
+unbound; no guessed backfill. Local minimal-schema harness passed 112 PostgreSQL
+assertions. Consent writes are stubbed, so complete-schema consent/mobile QA remains
+required. Not applied to production; browser-grant activation and valid-retry token
+rotation remain open. No UI or rollout flag changes.
+Read-only local schema verification passed 14 checks; scoped script ESLint and
+whitespace checks passed. No new application build for this SQL/script-only patch.
+Pending September 7 SQL is listed in `docs/deployment/RESEARCH_NFC_SQL_20260907.md`.

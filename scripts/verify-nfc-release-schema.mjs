@@ -47,6 +47,14 @@ try {
       SELECT 1 FROM pg_trigger WHERE tgrelid=to_regclass('public.nfc_tags')
         AND tgname='guard_nfc_replacement_code' AND NOT tgisinternal AND tgenabled='O'
     )
+    UNION ALL
+    SELECT 'research-entry-column', EXISTS (SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='research_sessions' AND column_name='entry_session_id')
+    UNION ALL
+    SELECT 'research-entry-trigger', EXISTS (
+      SELECT 1 FROM pg_trigger WHERE tgrelid=to_regclass('public.research_sessions')
+        AND tgname='guard_research_entry_binding' AND NOT tgisinternal AND tgenabled='O'
+    )
   `);
   await client.query("ROLLBACK");
   for (const row of rows) console.log(`${row.passed ? "PASS" : "MISSING"} ${row.check_name}`);
