@@ -265,3 +265,12 @@ research tests, TypeScript and scoped ESLint passed. No new SQL and no live acti
 switch. Runtime integration must resolve current grant hashes after acceptance,
 not persist the unused proposed raw tokens on retries; provisioning and unified
 service principal remain the next dependencies.
+
+S3 service principal continuation: evaluation/response/operator-task/withdrawal
+services now consume a normalized server-only capability shape. Legacy hashes are
+computed once; the grant adapter preserves existing hashes without double hashing.
+Live credential selection remains legacy-only, with unchanged ownership/status
+guards and selective cookie cleanup. 50 focused tests, TypeScript and scoped lint
+passed. No new SQL, cookie change, or rollout flag activation.
+Production build also passed, generating 63 static pages. Full-suite and actual
+multi-tab browser-grant rollout verification remain separate pending gates.

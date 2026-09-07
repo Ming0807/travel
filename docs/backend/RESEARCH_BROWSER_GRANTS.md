@@ -92,3 +92,11 @@ Success returns only acceptance metadata, never credential hashes. Known refusal
 codes are preserved; malformed/unknown response data and backend errors become
 sanitized error codes. It remains server-only and is not called by live actions.
 This intentionally cannot be consumed as legacy raw-token credentials on replay.
+
+`research-principal.ts` normalizes server capabilities: legacy raw tokens are hashed
+once, while verified grant hashes are used unchanged. Evaluation access, response
+writes, operator task writes and withdrawal now consume this internal principal.
+The live resolver still selects legacy cookies only; no new database dependency or
+grant activation is introduced. Existing participant/status/Visit ownership checks
+remain in `requireCurrentResearchSession`, not in the capability adapter. Never
+return a principal to a browser or serialize it in page data.

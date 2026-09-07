@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { CHECKIN_BROWSER_COOKIE } from "@/lib/auth/checkin-entry";
 import { resolveCheckinFlow } from "@/lib/services/checkin-entry.service";
+import { principalFromLegacy } from "@/lib/auth/research-principal";
 
 import {
   clearResearchSessionCredentials,
@@ -191,11 +192,12 @@ async function requireCurrentResearchSession(options?: {
     : await getResearchSessionCredentials();
   if (!credentials) throw serviceError("SESSION_NOT_FOUND");
 
+  const principal = principalFromLegacy(credentials);
   let session: Awaited<ReturnType<typeof getResearchSessionForAccess>>;
   try {
     session = await getResearchSessionForAccess(
-      credentials.publicSessionCode,
-      hashResearchToken(credentials.accessToken),
+      principal.publicSessionCode,
+      principal.accessTokenHash,
     );
   } catch (error) {
     return mapRepositoryError(error);
@@ -227,7 +229,7 @@ async function requireCurrentResearchSession(options?: {
 
   if (options?.visitId && session.participantType !== "tourist") throw serviceError("VISIT_MISMATCH");
 
-  return { credentials, session };
+  return { principal, session };
 }
 
 export async function getCurrentResearchEvaluation(visitId?: string) {
@@ -305,8 +307,8 @@ export async function saveCurrentResearchResponse(input: ResearchResponseInput) 
   let result: Awaited<ReturnType<typeof saveResearchResponseRpc>>;
   try {
     result = await saveResearchResponseRpc({
-      publicSessionCode: current.credentials.publicSessionCode,
-      accessTokenHash: hashResearchToken(current.credentials.accessToken),
+      publicSessionCode: current.principal.publicSessionCode,
+      accessTokenHash: current.principal.accessTokenHash,
       instrumentKey: parsed.instrumentKey,
       answers: parsed.answers.map(toRepositoryAnswer),
       submit: parsed.submit,
@@ -386,8 +388,8 @@ export async function saveCurrentResearchOperatorAttempt(input: ResearchOperator
   let result: Awaited<ReturnType<typeof saveResearchOperatorAttemptRpc>>;
   try {
     result = await saveResearchOperatorAttemptRpc({
-      publicSessionCode: current.credentials.publicSessionCode,
-      accessTokenHash: hashResearchToken(current.credentials.accessToken),
+      publicSessionCode: current.principal.publicSessionCode,
+      accessTokenHash: current.principal.accessTokenHash,
       taskCode: parsed.taskCode,
       status: parsed.status,
       confidence: parsed.confidence,
@@ -526,16 +528,17 @@ export async function linkResearchSessionVisit(input: ResearchVisitLinkInput, en
 
 export async function withdrawResearchSession(input: ResearchWithdrawalInput = {}) {
   const parsed = parseOrThrow(researchWithdrawalSchema, input);
-  const credentials = parsed.visitId
-    ? (await requireCurrentResearchSession({ allowCompleted: true, visitId: parsed.visitId, participantTypes: ["tourist"] })).credentials
-    : await getResearchSessionCredentials();
-  if (!credentials) throw serviceError("SESSION_NOT_FOUND");
+  const legacy = parsed.visitId ? null : await getResearchSessionCredentials();
+  const principal = parsed.visitId
+    ? (await requireCurrentResearchSession({ allowCompleted: true, visitId: parsed.visitId, participantTypes: ["tourist"] })).principal
+    : legacy ? principalFromLegacy(legacy) : null;
+  if (!principal) throw serviceError("SESSION_NOT_FOUND");
 
   let result: Awaited<ReturnType<typeof withdrawResearchSessionRpc>>;
   try {
     result = await withdrawResearchSessionRpc({
-      publicSessionCode: credentials.publicSessionCode,
-      withdrawalTokenHash: hashResearchToken(credentials.withdrawalToken),
+      publicSessionCode: principal.publicSessionCode,
+      withdrawalTokenHash: principal.withdrawalTokenHash,
       reason: parsed.reason,
       source: parsed.source ?? "tourist_withdrawal",
     });
@@ -547,7 +550,7 @@ export async function withdrawResearchSession(input: ResearchWithdrawalInput = {
   if (parsed.visitId) {
     await clearResearchVisitCredentials(parsed.visitId);
     const global = await getResearchSessionCredentials();
-    if (global?.publicSessionCode === credentials.publicSessionCode) await clearResearchSessionCredentials();
+    if (global?.publicSessionCode === principal.publicSessionCode) await clearResearchSessionCredentials();
   } else {
     await clearResearchSessionCredentials();
   }
