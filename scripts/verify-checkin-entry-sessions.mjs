@@ -246,6 +246,44 @@ try {
   for (const role of ["anon", "authenticated", "service_role"]) {
     assert.equal((await db.query("SELECT has_function_privilege($1,'public.guard_nfc_replacement_code()','EXECUTE') AS allowed", [role])).rows[0].allowed, false); checks++;
   }
+  // Exercise the real link RPC against a minimal session schema, not a link stub.
+  await db.query(`CREATE TABLE public.research_sessions (
+    research_session_id uuid PRIMARY KEY DEFAULT gen_random_uuid(), public_session_code uuid UNIQUE NOT NULL,
+    access_token_hash text NOT NULL, participant_type text NOT NULL DEFAULT 'tourist', status text NOT NULL DEFAULT 'consented',
+    withdrawn_at timestamptz, visit_id uuid REFERENCES public.visits, tourist_id uuid REFERENCES public.tourists,
+    checkin_code_id bigint NOT NULL, started_at timestamptz, updated_at timestamptz NOT NULL DEFAULT now()
+  )`);
+  await db.query(await readFile(new URL("../supabase/migrations/20260907001000_guard_research_visit_rebinding.sql", import.meta.url), "utf8"));
+  const researchCode = "40000000-0000-4000-8000-000000000001";
+  const linkVisits = (await db.query(`INSERT INTO public.visits (tourist_id,attraction_id,checkin_code_id,completion_status)
+    VALUES ('${tourist}',4,10,'started'),('${tourist}',4,10,'started') RETURNING visit_id`)).rows;
+  await db.query("INSERT INTO public.research_sessions (public_session_code,access_token_hash,checkin_code_id) VALUES ($1,$2,10)", [researchCode,browserA]);
+  const link = async (connection, visitId, token = browserA, owner = tourist) => (await connection.query(
+    "SELECT public.link_research_session_visit($1,$2,$3,$4) AS result", [researchCode,token,visitId,owner])).rows[0].result;
+  assert.equal((await link(db,linkVisits[0].visit_id,browserB)).success,false); checks++;
+  assert.equal((await link(db,linkVisits[0].visit_id,browserA,otherTourist)).success,false); checks++;
+  const linker = client();
+  await linker.connect();
+  try {
+    const results = await Promise.all([link(db,linkVisits[0].visit_id),link(linker,linkVisits[1].visit_id)]);
+    assert.equal(results.filter((result) => result.success).length,1); checks++;
+    assert.equal(results.find((result) => !result.success).error_code,'RESEARCH_VISIT_MISMATCH'); checks++;
+  } finally { await linker.end(); }
+  const snapshot = async () => (await db.query("SELECT * FROM public.research_sessions WHERE public_session_code=$1",[researchCode])).rows[0];
+  const linked = await snapshot();
+  assert.equal((await link(db,linked.visit_id)).success,true); checks++;
+  assert.deepEqual(await snapshot(),linked); checks++;
+  await db.query("UPDATE public.research_sessions SET status='completed' WHERE public_session_code=$1",[researchCode]);
+  const completed = await snapshot();
+  assert.equal((await link(db,completed.visit_id)).success,true); checks++;
+  assert.deepEqual(await snapshot(),completed); checks++;
+  await db.query("UPDATE public.research_sessions SET status='withdrawn',withdrawn_at=now() WHERE public_session_code=$1",[researchCode]);
+  assert.equal((await link(db,completed.visit_id)).success,false); checks++;
+  for (const role of ['anon','authenticated']) {
+    await db.query(`SET ROLE ${role}`);
+    await assert.rejects(link(db,completed.visit_id),/permission denied/); checks++;
+    await db.query('RESET ROLE');
+  }
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);

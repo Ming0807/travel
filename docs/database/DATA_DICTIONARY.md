@@ -1,5 +1,14 @@
 # DATA_DICTIONARY.md
 
+## September 7 Research Link Contract
+
+`20260907001000_guard_research_visit_rebinding.sql` replaces
+`link_research_session_visit(uuid,text,uuid,uuid)` without adding columns.
+First Visit association is preserved by the RPC's session-row lock and mismatch
+checks. Same-Visit retries are no-ops, including completed evaluations. Existing
+historical links are not rewritten. Service-role execution only remains in force.
+See `docs/backend/RESEARCH_VISIT_LINK_INTEGRITY.md` for verification boundaries.
+
 ## September 7 NFC Replacement Constraint
 
 Migration `20260907000000_guard_nfc_replacement_code.sql` adds a BEFORE INSERT

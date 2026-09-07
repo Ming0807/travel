@@ -495,9 +495,11 @@ export async function linkResearchSessionVisit(input: ResearchVisitLinkInput, en
     hashResearchToken(credentials.accessToken),
   );
   if (!session) throw serviceError("SESSION_NOT_FOUND");
-  if (session.participantType !== "tourist" || !["consented", "in_progress"].includes(session.status) || session.withdrawnAt) {
+  if (session.participantType !== "tourist" || !["consented", "in_progress", "completed"].includes(session.status) || session.withdrawnAt) {
     throw serviceError("SESSION_NOT_ELIGIBLE");
   }
+  if (session.visitId && session.visitId !== parsed.visitId) throw serviceError("VISIT_MISMATCH");
+  if (session.status === "completed" && !session.visitId) throw serviceError("SESSION_NOT_ELIGIBLE");
 
   let access: Awaited<ReturnType<typeof requireTouristVisitAccess>>;
   try {

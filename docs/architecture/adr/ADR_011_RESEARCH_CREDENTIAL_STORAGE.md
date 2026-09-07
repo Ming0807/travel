@@ -12,6 +12,11 @@ Synthetic measurements using the current payload: 5 Visits = 2,073 bytes;
 No infrastructure limit is assumed from these measurements. The unbounded growth
 itself is incompatible with extended field collection.
 
+Acceptance currently rotates the session's access/withdrawal hashes on retry.
+The grant migration must resolve this explicitly: repeated acceptance must not
+invalidate another live tab or a saved Visit credential. The Visit-link RPC has
+separate first-association/no-op protection; that alone does not fix token rotation.
+
 ## Proposed Decision
 Use one high-entropy HttpOnly browser research credential referencing a server-side
 grant registry. Store only credential hashes; bind individual grants to the exact

@@ -188,3 +188,14 @@ been applied to production by the agent; earlier user SQL confirmation predates 
 Also verified one registration audit event under contention and no direct trigger
 function execution privilege for anon/authenticated/service_role. Read-only schema
 checks passed 12/12 locally. This SQL/script-only change does not need a new UI build.
+
+S3 Visit-link follow-up: existing RPC could replace an already-linked Visit with
+another at the same check-in code. Service now rejects this, and additive migration
+`20260907001000_guard_research_visit_rebinding.sql` serializes first association and
+returns no-op success for same-Visit retries, including completed sessions.
+Local harness passed 67 PostgreSQL assertions; focused service/auth tests passed
+26 tests, scoped lint and TypeScript passed. Minimal research-session schema is used;
+full-schema/mobile QA, acceptance token rotation and exact entry correlation remain.
+Migration has NOT been applied to production. S3 stays open.
+The Visit-link change also passed the production build (63 static pages); no new
+UI layout or rollout flags changed. Full-suite and complete-schema QA remain open.

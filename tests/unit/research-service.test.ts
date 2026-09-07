@@ -58,6 +58,22 @@ import {
 const publicSessionCode = "11111111-1111-4111-8111-111111111111";
 
 describe("research service", () => {
+  it("rejects rebinding an existing research session to another Visit", async () => {
+    auth.getResearchSessionCredentials.mockResolvedValue({ publicSessionCode, accessToken: "token" });
+    repository.getResearchSessionForAccess.mockResolvedValue({ participantType: "tourist", status: "in_progress", visitId: publicSessionCode, withdrawnAt: null });
+    await expect(linkResearchSessionVisit({ visitId: "22222222-2222-4222-8222-222222222222" })).rejects.toMatchObject({ code: "VISIT_MISMATCH" });
+    expect(repository.linkResearchSessionVisit).not.toHaveBeenCalled();
+    expect(auth.setResearchVisitCredentials).not.toHaveBeenCalled();
+  });
+
+  it("allows an owned completed Visit link replay without reopening the evaluation", async () => {
+    auth.getResearchSessionCredentials.mockResolvedValue({ publicSessionCode, accessToken: "token" });
+    repository.getResearchSessionForAccess.mockResolvedValue({ participantType: "tourist", status: "completed", visitId: publicSessionCode, withdrawnAt: null });
+    guards.requireTouristVisitAccess.mockResolvedValue({ touristId: "tourist-id" });
+    repository.linkResearchSessionVisit.mockResolvedValue({ success: true, researchSessionId: "private" });
+    await expect(linkResearchSessionVisit({ visitId: publicSessionCode })).resolves.toEqual({ linked: true });
+    expect(guards.requireTouristVisitAccess).toHaveBeenCalledWith(publicSessionCode);
+  });
   it("rejects a different Visit before saving or withdrawing a global session", async () => {
     auth.getResearchVisitCredentials.mockResolvedValue(null);
     auth.getResearchSessionCredentials.mockResolvedValue({ publicSessionCode, accessToken: "token" });
