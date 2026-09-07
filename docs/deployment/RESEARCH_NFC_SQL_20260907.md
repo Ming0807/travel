@@ -16,16 +16,20 @@ Apply pending migrations in chronological order, after staging verification:
    entry provenance during consent and rejects a Visit belonging to another entry.
 5. `20260907004000_resolve_research_grant_context.sql`: service-only exact Visit/entry
    grant lookup; ambiguous matches return no capability. No runtime activation.
+6. `20260907005000_accept_research_browser_grant.sql`: atomic consent/grant RPC with
+   stable-token replay for verified browser grants. Existing live callers unchanged.
 
 Prerequisites: the existing research core and all September 4-6 NFC/entry migrations.
 No seed/reset/delete is required. No rollout environment flags should be enabled
 as part of applying these files. Existing null entry provenance remains unknown;
 there is no inferred historical backfill.
 
-Local evidence: disposable minimal-schema PostgreSQL harness, 124 assertions;
+Local evidence: disposable minimal-schema PostgreSQL harness, 138 assertions;
 read-only NFC object/permission verifier, 14 checks. These do not replace full-schema
 staging, authenticated mobile flows or physical NFC testing. Valid acceptance retries
-still rotate legacy credentials; bounded browser grant integration remains pending.
+still rotate legacy credentials in existing live callers; the new atomic RPC is
+dormant and bounded browser grant integration remains pending. Consent writes in
+the local harness are stubbed; these assertions do not prove full-schema consent.
 
 Rollback: stop new entry/research rollout first; preserve captured provenance and
 grants. Do not drop tables/columns or restore the unsafe link RPC to undo deployment.

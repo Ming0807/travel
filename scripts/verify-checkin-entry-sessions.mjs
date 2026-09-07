@@ -407,6 +407,46 @@ try {
     await assert.rejects(resolveContext(),/permission denied/); checks++;
     await db.query('RESET ROLE');
   }
+  await db.query(await readFile(new URL('../supabase/migrations/20260907005000_accept_research_browser_grant.sql',import.meta.url),'utf8'));
+  const atomicCode='40000000-0000-4000-8000-000000000005';
+  await db.query(`CREATE OR REPLACE FUNCTION public.accept_research_invitation(text,text,text,text,text,text)
+    RETURNS jsonb LANGUAGE plpgsql AS $$ BEGIN
+      INSERT INTO public.research_sessions(public_session_code,access_token_hash,withdrawal_token_hash,study_id,checkin_code_id)
+        VALUES ('${atomicCode}',$4,$5,'${actor}',10)
+        ON CONFLICT (public_session_code) DO UPDATE SET access_token_hash=$4,withdrawal_token_hash=$5;
+      RETURN jsonb_build_object('success',true,'public_session_code','${atomicCode}');
+    END; $$`);
+  const atomicEntry=await newScopedEntry();
+  const atomicAccept=async (connection=db, token=browserA, browser=grantBrowser, entryBrowser=atomicEntry.browser_hash) =>
+    (await connection.query("SELECT public.accept_research_browser_invitation($1,$2,$3,'entry-study','yala-001',$4,$5,$5,'th') AS result",
+      [browser,entryBrowser,atomicEntry.entry_session_id,browserA,token])).rows[0].result;
+  assert.equal((await atomicAccept(db,browserA,grantBrowser,'bad')).success,false); checks++;
+  assert.equal((await atomicAccept(db,browserA,grantBrowser,browserB)).success,false); checks++;
+  // No consent survives a failed grant bind (retention gate).
+  await db.query("UPDATE public.research_studies SET retention_until=now()-interval '1 second' WHERE research_study_id=$1",[actor]);
+  await assert.rejects(atomicAccept(),/RESEARCH_GRANT_BIND_FAILED/); checks++;
+  assert.equal((await db.query('SELECT 1 FROM public.research_sessions WHERE public_session_code=$1',[atomicCode])).rowCount,0); checks++;
+  await db.query("UPDATE public.research_studies SET retention_until=now()+interval '7 days' WHERE research_study_id=$1",[actor]);
+  const atomicWriter=client(); await atomicWriter.connect();
+  try {
+    const results=await Promise.all([atomicAccept(db,browserA),atomicAccept(atomicWriter,browserB)]);
+    assert.equal(results.every((result)=>result.success),true); checks++;
+  } finally { await atomicWriter.end(); }
+  const atomicSnapshot=async ()=>(await db.query('SELECT * FROM public.research_sessions WHERE public_session_code=$1',[atomicCode])).rows[0];
+  const stable=await atomicSnapshot();
+  assert.equal((await resolveContext('entry',atomicEntry.entry_session_id)).length,1); checks++;
+  assert.equal((await atomicAccept(db,'f'.repeat(64))).success,true); checks++;
+  assert.equal((await atomicSnapshot()).access_token_hash,stable.access_token_hash); checks++;
+  assert.equal((await atomicSnapshot()).withdrawal_token_hash,stable.withdrawal_token_hash); checks++;
+  assert.equal((await atomicAccept(db,browserA,'d'.repeat(64))).error_code,'RESEARCH_GRANT_MIGRATION_REQUIRED'); checks++;
+  await db.query("UPDATE public.research_studies SET frozen_at=frozen_at+interval '1 second' WHERE research_study_id=$1",[actor]);
+  assert.equal((await atomicAccept()).error_code,'RESEARCH_STUDY_UNAVAILABLE'); checks++;
+  assert.equal((await atomicSnapshot()).access_token_hash,stable.access_token_hash); checks++;
+  for (const role of ['anon','authenticated']) {
+    await db.query(`SET ROLE ${role}`);
+    await assert.rejects(atomicAccept(),/permission denied/); checks++;
+    await db.query('RESET ROLE');
+  }
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);

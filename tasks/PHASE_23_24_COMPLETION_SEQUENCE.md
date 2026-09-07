@@ -240,3 +240,12 @@ resolvable by Visit before deleting its old cookie. Local PostgreSQL harness pas
 SQL `20260907004000_resolve_research_grant_context.sql` is not applied to production.
 No application activation: atomic acceptance, stable browser provisioning and live
 service integration remain pending. No new UI build for unused server adapters.
+
+S3 atomic acceptance: `20260907005000_accept_research_browser_grant.sql` adds a
+service-only entry-browser-verified consent/grant transaction. Per-entry serialization
+and existing-grant token reuse protect concurrent/repeated accepts; legacy or revoked
+rights require verified migration. Deployment/freeze validation still runs on retry.
+Local minimal-schema harness passed 138 PostgreSQL assertions, including two writers,
+stable access/withdrawal hashes, failed-grant rollback and role denial. Consent creation
+is stubbed, not full-schema evidence. No live caller/flag changed and no production SQL
+applied. Next: stable browser provisioning and end-to-end grant principal integration.

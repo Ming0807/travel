@@ -4,6 +4,7 @@ Status: database foundation plus server-only adapters. Not wired into applicatio
 Migration: `20260907002000_add_research_browser_grants.sql`.
 Context lookup: `20260907004000_resolve_research_grant_context.sql`, after exact
 entry provenance migration `20260907003000_correlate_research_entry_sessions.sql`.
+Atomic acceptance: `20260907005000_accept_research_browser_grant.sql` (dormant).
 
 ## Contract
 The composite key is a browser credential hash plus research session ID. No raw
@@ -20,6 +21,19 @@ not chart/API response data: never send them to a client, log or export. Live se
 status, withdrawal and study retention are rechecked. Current token hashes are read
 from the session so credential rotation does not invalidate a previously issued grant.
 This does not yet repair cookie-only callers or initial concurrent acceptance.
+
+The new browser acceptance RPC checks the independent entry-browser proof, then
+serializes calls per entry. Existing verified grants reuse current session token
+hashes; proposed new tokens do not invalidate them on retry. Every acceptance still
+passes through the existing deployment, instrument freeze and consent checks.
+Consent and grant binding commit together or both roll back. Existing sessions
+without a resolvable grant return `RESEARCH_GRANT_MIGRATION_REQUIRED`; knowing an
+entry UUID cannot take over old/revoked/ambiguous research access.
+
+This RPC is not a drop-in replacement for cookie-only acceptance: on a replay the
+proposed raw tokens are intentionally not stored. Its caller must resolve the grant,
+not write those proposed tokens into legacy cookies. Stable browser provisioning,
+service integration and explicit legacy migration must precede activation.
 
 Context resolution accepts an exact Visit or entry UUID plus the browser hash,
 restricts to tourist sessions, and reuses the authoritative live-grant resolver.
@@ -55,7 +69,7 @@ cookie. Failure before removal leaves old credentials untouched. No browser toke
 is generated implicitly in migration, avoiding competing initial response tokens.
 
 Issue a stable browser token before concurrent acceptance; add typed server-only
-atomic acceptance/grant creation and integrate the typed context resolver,
+integrate the atomic acceptance RPC and typed context resolver,
 verified migration of existing cookies, selective withdrawal and expiry recovery.
 Do not merely wrap the current rotating-token RPC and claim race safety. Preserve
 unmigrated cookies and compatibility while flags are off. Complete full-schema,
