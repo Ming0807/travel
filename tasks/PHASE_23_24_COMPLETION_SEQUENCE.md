@@ -283,3 +283,11 @@ grant hashes and continued owner denial, as well as legacy behavior. 57 focused
 tests, TypeScript and scoped lint passed. Participation discovery, entry-link and
 acceptance/provisioning integration remain incomplete; no production activation.
 Production build passed (63 static pages); no new SQL migration in this patch.
+
+S3 discovery/link integration: withdrawal participation uses the Visit principal
+with ownership checks; invitation suppression and Visit linking resolve exact entry
+grants. Grant links avoid new Visit cookies, while legacy links retain their existing
+cookie behavior. 61 focused research tests, TypeScript and scoped lint passed.
+No new SQL. Browser cookie provisioning, atomic acceptance action and automatic
+migration remain off/unconnected; this is not end-to-end rollout completion.
+Production build passed with 63 static pages at this checkpoint.

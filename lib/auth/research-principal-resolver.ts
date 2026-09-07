@@ -5,6 +5,19 @@ import { readResearchBrowserToken, hashResearchBrowserToken } from "@/lib/auth/r
 import { resolveResearchBrowserContext } from "@/lib/repositories/research-browser-grant.repository";
 import { principalFromBrowserGrant, principalFromLegacy, type ResearchPrincipal } from "@/lib/auth/research-principal";
 
+export async function resolveResearchEntryPrincipal(entrySessionId?: string): Promise<ResearchPrincipal | null> {
+  if (entrySessionId !== undefined) {
+    z.uuid().parse(entrySessionId);
+    const browser = await readResearchBrowserToken();
+    if (browser) {
+      const grant = await resolveResearchBrowserContext(hashResearchBrowserToken(browser), { kind: "entry", id: entrySessionId });
+      if (grant) return principalFromBrowserGrant(grant);
+    }
+  }
+  const legacy = await getResearchSessionCredentials(entrySessionId);
+  return legacy ? principalFromLegacy(legacy) : null;
+}
+
 export async function resolveResearchPrincipal(visitId?: string): Promise<ResearchPrincipal | null> {
   if (visitId !== undefined) {
     z.uuid().parse(visitId);

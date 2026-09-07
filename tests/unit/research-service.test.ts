@@ -56,11 +56,40 @@ import {
   saveCurrentResearchResponse,
   saveCurrentResearchOperatorAttempt,
   withdrawResearchSession,
+  hasCurrentResearchParticipation,
 } from "@/lib/services/research.service";
 
 const publicSessionCode = "11111111-1111-4111-8111-111111111111";
 
 describe("research service", () => {
+  it("links an owned entry grant without creating a Visit cookie", async () => {
+    browserGrant.read.mockResolvedValue("browser");
+    browserGrant.resolve.mockResolvedValue({publicSessionCode,accessTokenHash:"access-hash",withdrawalTokenHash:"withdraw-hash",visitId:null,entrySessionId:publicSessionCode});
+    repository.getResearchSessionForAccess.mockResolvedValue({participantType:"tourist",status:"consented",visitId:null,withdrawnAt:null});
+    guards.requireTouristVisitAccess.mockResolvedValue({touristId:"owner"});
+    repository.linkResearchSessionVisit.mockResolvedValue({success:true});
+    expect(await linkCurrentResearchSessionVisitIfPresent({visitId:publicSessionCode},publicSessionCode)).toEqual({linked:true});
+    expect(repository.linkResearchSessionVisit).toHaveBeenCalledWith({publicSessionCode,accessTokenHash:"access-hash",visitId:publicSessionCode,touristId:"owner"});
+    expect(auth.setResearchVisitCredentials).not.toHaveBeenCalled();
+  });
+  it("discovers grant participation on the withdrawal page only for the owned Visit", async () => {
+    browserGrant.read.mockResolvedValue("browser");
+    browserGrant.resolve.mockResolvedValue({publicSessionCode,accessTokenHash:"access-hash",withdrawalTokenHash:"withdraw-hash",visitId:publicSessionCode});
+    repository.getResearchSessionForAccess.mockResolvedValue({participantType:"tourist",status:"completed",visitId:publicSessionCode,withdrawnAt:null});
+    guards.requireTouristVisitAccess.mockResolvedValue({touristId:"owner"});
+    expect(await hasCurrentResearchParticipation(publicSessionCode)).toBe(true);
+    expect(repository.getResearchSessionForAccess).toHaveBeenCalledWith(publicSessionCode,"access-hash");
+    guards.requireTouristVisitAccess.mockRejectedValue({code:"VISIT_ACCESS_DENIED"});
+    expect(await hasCurrentResearchParticipation(publicSessionCode)).toBe(false);
+  });
+  it("does not show participation for withdrawn grants or resolver failures", async () => {
+    browserGrant.read.mockResolvedValue("browser");
+    browserGrant.resolve.mockResolvedValue({publicSessionCode,accessTokenHash:"access-hash",withdrawalTokenHash:"withdraw-hash",visitId:publicSessionCode});
+    repository.getResearchSessionForAccess.mockResolvedValue({participantType:"tourist",status:"withdrawn",visitId:publicSessionCode,withdrawnAt:"2026-09-07"});
+    expect(await hasCurrentResearchParticipation(publicSessionCode)).toBe(false);
+    browserGrant.resolve.mockRejectedValue(new Error("unavailable"));
+    expect(await hasCurrentResearchParticipation(publicSessionCode)).toBe(false);
+  });
   it("uses grant hashes unchanged for owned Visit withdrawal", async () => {
     browserGrant.read.mockResolvedValue("browser");
     browserGrant.resolve.mockResolvedValue({publicSessionCode,accessTokenHash:"access-hash",withdrawalTokenHash:"withdraw-hash",visitId:publicSessionCode});

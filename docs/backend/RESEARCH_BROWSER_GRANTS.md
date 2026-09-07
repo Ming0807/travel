@@ -106,6 +106,12 @@ context it reads an existing valid browser cookie and resolves the exact grant.
 Missing browser/grant preserves the independent legacy Visit/global proof path;
 database failures do not fall back. Global/operator selection remains legacy-only.
 All results still pass the session status/participant/Visit-owner checks. No route
-issues the browser cookie yet, and automatic migration stays dormant. Participation
-discovery and entry-link/acceptance paths still need grant integration before the
-legacy cookies can be retired in the live flow.
+issues the browser cookie yet, and automatic migration stays dormant.
+
+Participation discovery for withdrawal now uses the same Visit resolver and checks
+tourist ownership before displaying active participation. Entry-scoped resolution
+also supports invitation suppression and first Visit linking, preserving exact
+entry-cookie selection for legacy callers. A grant-based link does not issue an
+additional Visit cookie; the recorded entry/Visit association is resolved from the
+registry on subsequent requests. Legacy links continue storing their Visit cookie.
+Acceptance/provisioning and automatic legacy migration still require integration.

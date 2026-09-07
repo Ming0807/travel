@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({ browser: vi.fn(), resolve: vi.fn(), visit: vi.
 vi.mock("@/lib/auth/research-browser", () => ({ readResearchBrowserToken: mocks.browser, hashResearchBrowserToken: () => "a".repeat(64) }));
 vi.mock("@/lib/repositories/research-browser-grant.repository", () => ({ resolveResearchBrowserContext: mocks.resolve }));
 vi.mock("@/lib/auth/research-session", () => ({ getResearchVisitCredentials: mocks.visit, getResearchSessionCredentials: mocks.global, hashResearchToken: (v: string) => `hash:${v}` }));
-import { resolveResearchPrincipal } from "@/lib/auth/research-principal-resolver";
+import { resolveResearchEntryPrincipal, resolveResearchPrincipal } from "@/lib/auth/research-principal-resolver";
 const id="11111111-1111-4111-8111-111111111111";
 const legacy={ publicSessionCode:id, accessToken:"old", withdrawalToken:"withdraw" };
 describe("research principal resolver",()=>{
@@ -35,5 +35,15 @@ describe("research principal resolver",()=>{
   it("rejects invalid Visit IDs before looking up rights",async()=>{
     await expect(resolveResearchPrincipal("bad")).rejects.toThrow();
     expect(mocks.browser).not.toHaveBeenCalled();
+  });
+  it("resolves exact entry grants and preserves scoped legacy lookup",async()=>{
+    mocks.browser.mockResolvedValue("browser");
+    mocks.resolve.mockResolvedValue({publicSessionCode:id,accessTokenHash:"access",withdrawalTokenHash:"withdraw",visitId:null});
+    expect(await resolveResearchEntryPrincipal(id)).toMatchObject({source:"browser_grant"});
+    expect(mocks.resolve).toHaveBeenCalledWith("a".repeat(64),{kind:"entry",id});
+    mocks.resolve.mockResolvedValue(null);
+    mocks.global.mockResolvedValue(legacy);
+    expect(await resolveResearchEntryPrincipal(id)).toMatchObject({source:"legacy"});
+    expect(mocks.global).toHaveBeenCalledWith(id);
   });
 });
