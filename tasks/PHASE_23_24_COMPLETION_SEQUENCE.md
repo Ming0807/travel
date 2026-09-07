@@ -178,3 +178,13 @@ cookies or mark S3 complete. Installation evidence remains pending S5 work.
 Current actor-history production build also passed (63 static pages). The visual
 fixture now aliases Next Link explicitly; this fixes its standalone Vite runtime,
 without changing production navigation. No full-suite or live-role sign-off claimed.
+
+S4 database follow-up: reproduced direct cross-code replacement inserts locally.
+Added `20260907000000_guard_nfc_replacement_code.sql` and verified 56 PostgreSQL
+assertions, including two concurrent replacement writers (one successor only),
+draft/unverified successor state, revoked-original immutability and service-role
+cross-code denial. The schema verifier checks the new trigger. Migration has NOT
+been applied to production by the agent; earlier user SQL confirmation predates it.
+Also verified one registration audit event under contention and no direct trigger
+function execution privilege for anon/authenticated/service_role. Read-only schema
+checks passed 12/12 locally. This SQL/script-only change does not need a new UI build.

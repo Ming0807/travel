@@ -42,6 +42,11 @@ try {
       COALESCE(has_function_privilege('service_role', to_regprocedure('public.accept_entry_research_invitation(uuid,text,text,text,text,text,text)'), 'EXECUTE'), false)
       AND NOT COALESCE(has_function_privilege('anon', to_regprocedure('public.accept_entry_research_invitation(uuid,text,text,text,text,text,text)'), 'EXECUTE'), true)
       AND NOT COALESCE(has_function_privilege('authenticated', to_regprocedure('public.accept_entry_research_invitation(uuid,text,text,text,text,text,text)'), 'EXECUTE'), true)
+    UNION ALL
+    SELECT 'replacement-code-trigger', EXISTS (
+      SELECT 1 FROM pg_trigger WHERE tgrelid=to_regclass('public.nfc_tags')
+        AND tgname='guard_nfc_replacement_code' AND NOT tgisinternal AND tgenabled='O'
+    )
   `);
   await client.query("ROLLBACK");
   for (const row of rows) console.log(`${row.passed ? "PASS" : "MISSING"} ${row.check_name}`);

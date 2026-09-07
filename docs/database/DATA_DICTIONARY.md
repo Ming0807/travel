@@ -1,5 +1,13 @@
 # DATA_DICTIONARY.md
 
+## September 7 NFC Replacement Constraint
+
+Migration `20260907000000_guard_nfc_replacement_code.sql` adds a BEFORE INSERT
+trigger on `nfc_tags`: a successor's `checkin_code_id` must equal its original's
+code. Existing revoked-original and unique `replaces_tag_id` constraints remain.
+The trigger locks the original row, applies to service-role inserts and does not
+change historical records. No new columns, participant data or public privileges.
+
 ## 1. Document Purpose
 
 This document defines the initial data dictionary for the **Southern Border Tourism Data & Intelligence Platform**.

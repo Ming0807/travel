@@ -214,6 +214,38 @@ try {
     await rejects(db, `SELECT public.accept_entry_research_invitation('${acceptedEntry.entry_session_id}','entry-study','yala-001','${browserA}','${browserA}','${browserA}','th')`, /permission denied/);
     await db.query("RESET ROLE");
   }
+  // Replacement invariants must also hold for direct service-role writes.
+  await db.query(await readFile(new URL("../supabase/migrations/20260907000000_guard_nfc_replacement_code.sql", import.meta.url), "utf8"));
+  const originalId = "30000000-0000-4000-8000-000000000010";
+  await db.query("INSERT INTO public.checkin_codes (checkin_code_id,code,attraction_id) VALUES (11,'other-entry',5)");
+  await db.query(`INSERT INTO public.nfc_tags (nfc_tag_id,checkin_code_id,label,created_by,updated_by,last_change_reason)
+    VALUES ('${originalId}',10,'Replacement original','${actor}','${actor}','QA replacement original')`);
+  const replacementSql = (code = 10) => `INSERT INTO public.nfc_tags
+    (checkin_code_id,label,created_by,updated_by,last_change_reason,replaces_tag_id)
+    VALUES (${code},'Successor','${actor}','${actor}','QA replacement','${originalId}') RETURNING nfc_tag_id,status`;
+  await rejects(db, replacementSql(), /NFC_REPLACEMENT_REQUIRES_REVOCATION/);
+  await db.query(`UPDATE public.nfc_tags SET status='revoked',last_change_reason='QA damaged tag' WHERE nfc_tag_id='${originalId}'`);
+  await db.query("SET ROLE service_role");
+  await rejects(db, replacementSql(11), /NFC_REPLACEMENT_CODE_MISMATCH/);
+  await db.query("RESET ROLE");
+  const competitor = client();
+  await competitor.connect();
+  try {
+    const outcomes = await Promise.allSettled([db.query(replacementSql()), competitor.query(replacementSql())]);
+    assert.equal(outcomes.filter((result) => result.status === "fulfilled").length, 1); checks++;
+    const failed = outcomes.find((result) => result.status === "rejected");
+    assert.equal(failed.reason.code, "23505"); checks++;
+    const successors = (await db.query("SELECT status,verified_at FROM public.nfc_tags WHERE replaces_tag_id=$1", [originalId])).rows;
+    assert.equal(successors.length, 1); checks++;
+    assert.equal(successors[0].status, "draft"); checks++;
+    assert.equal(successors[0].verified_at, null); checks++;
+    assert.equal((await db.query(`SELECT count(*)::int AS count FROM public.nfc_tag_events e
+      JOIN public.nfc_tags t USING (nfc_tag_id) WHERE t.replaces_tag_id=$1 AND e.event_type='registered'`, [originalId])).rows[0].count, 1); checks++;
+    await rejects(db, `UPDATE public.nfc_tags SET status='active',last_change_reason='QA forbidden resurrection' WHERE nfc_tag_id='${originalId}'`, /NFC_REVOKED_IMMUTABLE/);
+  } finally { await competitor.end(); }
+  for (const role of ["anon", "authenticated", "service_role"]) {
+    assert.equal((await db.query("SELECT has_function_privilege($1,'public.guard_nfc_replacement_code()','EXECUTE') AS allowed", [role])).rows[0].allowed, false); checks++;
+  }
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);

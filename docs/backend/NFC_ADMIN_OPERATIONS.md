@@ -25,6 +25,11 @@ other database errors remain failures. This is replacement-specific idempotency,
 not deduplication of unrelated new-tag creation. Existing revoked successors are
 returned as revoked; create their own replacement rather than resurrecting them.
 
+Migration `20260907000000_guard_nfc_replacement_code.sql` also enforces same-code
+replacement for direct service-role inserts. Apply after the existing NFC migrations.
+It adds a trigger and does not rewrite legacy chains. Audit any existing cross-code
+chains separately; do not silently repair immutable historical assignments.
+
 Create actions return a local `tagHref` for the saved/recovered tag. The `tagId`
 filter is UUID-validated and combined with the route's check-in code, never used
 to bypass code scope or permissions. Clear filters returns to the full code list.
