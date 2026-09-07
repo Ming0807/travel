@@ -274,3 +274,12 @@ guards and selective cookie cleanup. 50 focused tests, TypeScript and scoped lin
 passed. No new SQL, cookie change, or rollout flag activation.
 Production build also passed, generating 63 static pages. Full-suite and actual
 multi-tab browser-grant rollout verification remain separate pending gates.
+
+S3 Visit read integration: live evaluation/response/withdrawal authorization now
+recognizes a pre-existing browser grant through exact Visit context, retaining
+legacy credentials when no grant exists and failing closed on RPC errors. No route
+issues a browser cookie or migrates legacy cookies yet. Tests cover unmodified
+grant hashes and continued owner denial, as well as legacy behavior. 57 focused
+tests, TypeScript and scoped lint passed. Participation discovery, entry-link and
+acceptance/provisioning integration remain incomplete; no production activation.
+Production build passed (63 static pages); no new SQL migration in this patch.

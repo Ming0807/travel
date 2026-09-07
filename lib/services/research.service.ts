@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { CHECKIN_BROWSER_COOKIE } from "@/lib/auth/checkin-entry";
 import { resolveCheckinFlow } from "@/lib/services/checkin-entry.service";
 import { principalFromLegacy } from "@/lib/auth/research-principal";
+import { resolveResearchPrincipal } from "@/lib/auth/research-principal-resolver";
 
 import {
   clearResearchSessionCredentials,
@@ -187,12 +188,13 @@ async function requireCurrentResearchSession(options?: {
   visitId?: string;
   participantTypes?: Array<"tourist" | "operator" | "attraction_manager">;
 }) {
-  const credentials = options?.visitId
-    ? await getResearchVisitCredentials(options.visitId) ?? await getResearchSessionCredentials()
-    : await getResearchSessionCredentials();
-  if (!credentials) throw serviceError("SESSION_NOT_FOUND");
-
-  const principal = principalFromLegacy(credentials);
+  let principal: Awaited<ReturnType<typeof resolveResearchPrincipal>>;
+  try {
+    principal = await resolveResearchPrincipal(options?.visitId);
+  } catch (error) {
+    return mapRepositoryError(error);
+  }
+  if (!principal) throw serviceError("SESSION_NOT_FOUND");
   let session: Awaited<ReturnType<typeof getResearchSessionForAccess>>;
   try {
     session = await getResearchSessionForAccess(

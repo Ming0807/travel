@@ -33,6 +33,9 @@ const guards = vi.hoisted(() => ({
   requireTouristVisitAccess: vi.fn(),
 }));
 const entry = vi.hoisted(() => ({ resolveCheckinFlow: vi.fn() }));
+const browserGrant = vi.hoisted(() => ({ read: vi.fn(), resolve: vi.fn() }));
+vi.mock("@/lib/auth/research-browser", () => ({ readResearchBrowserToken: browserGrant.read, hashResearchBrowserToken: () => "a".repeat(64) }));
+vi.mock("@/lib/repositories/research-browser-grant.repository", () => ({ resolveResearchBrowserContext: browserGrant.resolve }));
 vi.mock("@/lib/services/checkin-entry.service", () => entry);
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => ({ value: "browser-token" }) }) }));
 
@@ -58,6 +61,24 @@ import {
 const publicSessionCode = "11111111-1111-4111-8111-111111111111";
 
 describe("research service", () => {
+  it("uses grant hashes unchanged for owned Visit withdrawal", async () => {
+    browserGrant.read.mockResolvedValue("browser");
+    browserGrant.resolve.mockResolvedValue({publicSessionCode,accessTokenHash:"access-hash",withdrawalTokenHash:"withdraw-hash",visitId:publicSessionCode});
+    repository.getResearchSessionForAccess.mockResolvedValue({participantType:"tourist",status:"in_progress",visitId:publicSessionCode,withdrawnAt:null});
+    guards.requireTouristVisitAccess.mockResolvedValue({touristId:"owner"});
+    repository.withdrawResearchSession.mockResolvedValue({success:true,alreadyWithdrawn:false});
+    await withdrawResearchSession({visitId:publicSessionCode});
+    expect(repository.getResearchSessionForAccess).toHaveBeenCalledWith(publicSessionCode,"access-hash");
+    expect(repository.withdrawResearchSession).toHaveBeenCalledWith(expect.objectContaining({withdrawalTokenHash:"withdraw-hash"}));
+  });
+  it("still rejects a grant when tourist ownership is denied", async () => {
+    browserGrant.read.mockResolvedValue("browser");
+    browserGrant.resolve.mockResolvedValue({publicSessionCode,accessTokenHash:"access-hash",withdrawalTokenHash:"withdraw-hash",visitId:publicSessionCode});
+    repository.getResearchSessionForAccess.mockResolvedValue({participantType:"tourist",status:"in_progress",visitId:publicSessionCode,withdrawnAt:null});
+    guards.requireTouristVisitAccess.mockRejectedValue({code:"VISIT_ACCESS_DENIED"});
+    await expect(withdrawResearchSession({visitId:publicSessionCode})).rejects.toMatchObject({code:"VISIT_ACCESS_DENIED"});
+    expect(repository.withdrawResearchSession).not.toHaveBeenCalled();
+  });
   it("rejects rebinding an existing research session to another Visit", async () => {
     auth.getResearchSessionCredentials.mockResolvedValue({ publicSessionCode, accessToken: "token" });
     repository.getResearchSessionForAccess.mockResolvedValue({ participantType: "tourist", status: "in_progress", visitId: publicSessionCode, withdrawnAt: null });
@@ -146,6 +167,8 @@ describe("research service", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    browserGrant.read.mockReset();
+    browserGrant.resolve.mockReset();
     auth.getResearchOperationalSessionToken.mockResolvedValue("operational-token");
     auth.createResearchCredentials.mockReturnValue({
       publicSessionCode,

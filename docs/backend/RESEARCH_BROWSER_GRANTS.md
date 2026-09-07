@@ -100,3 +100,12 @@ The live resolver still selects legacy cookies only; no new database dependency 
 grant activation is introduced. Existing participant/status/Visit ownership checks
 remain in `requireCurrentResearchSession`, not in the capability adapter. Never
 return a principal to a browser or serialize it in page data.
+
+The evaluation service now calls `resolveResearchPrincipal`: for explicit Visit
+context it reads an existing valid browser cookie and resolves the exact grant.
+Missing browser/grant preserves the independent legacy Visit/global proof path;
+database failures do not fall back. Global/operator selection remains legacy-only.
+All results still pass the session status/participant/Visit-owner checks. No route
+issues the browser cookie yet, and automatic migration stays dormant. Participation
+discovery and entry-link/acceptance paths still need grant integration before the
+legacy cookies can be retired in the live flow.
