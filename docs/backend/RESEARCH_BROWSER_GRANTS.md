@@ -85,3 +85,10 @@ rollback when a different operational hash would create a second session.
 The full run passes 146 assertions. Earlier wrapper tests still use stubs;
 surrounding study/session schemas are minimal, so this is not full-schema staging
 or an authenticated browser test. No new SQL migration for this test checkpoint.
+
+The typed `acceptResearchBrowserInvitation` repository adapter validates both
+browser proofs, entry identity, proposed hashes and language before RPC execution.
+Success returns only acceptance metadata, never credential hashes. Known refusal
+codes are preserved; malformed/unknown response data and backend errors become
+sanitized error codes. It remains server-only and is not called by live actions.
+This intentionally cannot be consumed as legacy raw-token credentials on replay.

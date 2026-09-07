@@ -11,6 +11,36 @@ const grantRow = z.object({ public_session_code: z.uuid(), access_token_hash: ha
 export type ResearchBrowserGrant = { publicSessionCode: string; accessTokenHash: string; withdrawalTokenHash: string; visitId: string | null };
 const context = z.object({ kind: z.enum(["visit", "entry"]), id: z.uuid() }).strict();
 export type ResearchGrantContext = z.infer<typeof context>;
+const acceptance = z.object({
+  browserTokenHash: hash, entryBrowserHash: hash, entrySessionId: z.uuid(),
+  studyCode: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(100),
+  checkinCode: z.string().min(1).max(100), operationalSessionHash: hash,
+  accessTokenHash: hash, withdrawalTokenHash: hash, language: z.enum(["th", "en", "ms"]).nullable(),
+}).strict();
+const acceptanceResult = z.discriminatedUnion("success", [
+  z.object({ success: z.literal(true), already_exists: z.boolean(), public_session_code: z.uuid(),
+    collection_mode: z.enum(["field_observation", "simulated_usability", "pilot_internal"]) }),
+  z.object({ success: z.literal(false), error_code: z.enum([
+    "RESEARCH_INVITATION_INVALID", "RESEARCH_ENTRY_MISMATCH", "RESEARCH_GRANT_MIGRATION_REQUIRED",
+    "RESEARCH_STUDY_UNAVAILABLE", "RESEARCH_SESSION_CONFLICT", "RESEARCH_SESSION_CREATE_FAILED",
+  ]) }),
+]);
+export type ResearchBrowserAcceptanceInput = z.infer<typeof acceptance>;
+
+// Proposed token hashes are not authoritative after replay. Resolve the grant next.
+export async function acceptResearchBrowserInvitation(input: ResearchBrowserAcceptanceInput) {
+  const parsed = acceptance.parse(input);
+  const { data, error } = await createSupabaseServiceRoleClient().rpc("accept_research_browser_invitation", {
+    p_browser_token_hash: parsed.browserTokenHash, p_entry_browser_hash: parsed.entryBrowserHash,
+    p_entry_session_id: parsed.entrySessionId, p_study_code: parsed.studyCode, p_checkin_code: parsed.checkinCode,
+    p_operational_session_hash: parsed.operationalSessionHash, p_access_token_hash: parsed.accessTokenHash,
+    p_withdrawal_token_hash: parsed.withdrawalTokenHash, p_language: parsed.language,
+  });
+  if (error) throw new Error("RESEARCH_GRANT_RPC_FAILED");
+  const result = acceptanceResult.safeParse(data);
+  if (!result.success) throw new Error("RESEARCH_GRANT_RESPONSE_INVALID");
+  return result.data;
+}
 
 export async function resolveResearchBrowserContext(browserTokenHash: string, input: ResearchGrantContext): Promise<(ResearchBrowserGrant & { entrySessionId: string | null }) | null> {
   const browser = hash.parse(browserTokenHash);

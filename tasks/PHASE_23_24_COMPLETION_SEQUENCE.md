@@ -258,3 +258,10 @@ and complete rollback on failed grants or mismatched operational-session replay.
 Scoped ESLint passed. Earlier wrapper scenarios remain stubbed and surrounding
 schemas minimal; complete-schema and browser rollout gates remain open. No new
 migration, application change or production activation in this verification patch.
+
+S3 atomic adapter: added strict server-only TypeScript access to the new acceptance
+RPC, with metadata-only results and sanitized response validation. 48 focused
+research tests, TypeScript and scoped ESLint passed. No new SQL and no live action
+switch. Runtime integration must resolve current grant hashes after acceptance,
+not persist the unused proposed raw tokens on retries; provisioning and unified
+service principal remain the next dependencies.

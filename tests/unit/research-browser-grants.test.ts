@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/service-role", () => ({ createSupabaseServiceRoleClient: () => ({ rpc }) }));
-import { bindResearchBrowserGrant, resolveResearchBrowserGrant, resolveResearchBrowserContext, revokeResearchBrowserGrant } from "@/lib/repositories/research-browser-grant.repository";
+import { acceptResearchBrowserInvitation, bindResearchBrowserGrant, resolveResearchBrowserGrant, resolveResearchBrowserContext, revokeResearchBrowserGrant } from "@/lib/repositories/research-browser-grant.repository";
 const code = "11111111-1111-4111-8111-111111111111";
 const hash = "a".repeat(64);
 
@@ -65,5 +65,30 @@ describe("research browser grant repository", () => {
     expect(rpc).not.toHaveBeenCalled();
     rpc.mockResolvedValue({ data: null, error: { message: "private credential" } });
     await expect(resolveResearchBrowserContext(hash, { kind: "entry", id: code })).rejects.toThrow("RESEARCH_GRANT_RPC_FAILED");
+  });
+  const acceptanceInput = { browserTokenHash: hash, entryBrowserHash: hash, entrySessionId: code,
+    studyCode: "pilot-yala", checkinCode: "yala-001", operationalSessionHash: hash,
+    accessTokenHash: hash, withdrawalTokenHash: hash, language: "th" as const };
+  it("validates atomic acceptance before writing", async () => {
+    await expect(acceptResearchBrowserInvitation({ ...acceptanceInput, entryBrowserHash: "invalid" })).rejects.toThrow();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it("returns acceptance metadata without exposing proposed or returned capabilities", async () => {
+    const result = { success: true, already_exists: true, public_session_code: code, collection_mode: "pilot_internal" };
+    rpc.mockResolvedValue({ data: { ...result, access_token_hash: hash, withdrawal_token_hash: hash }, error: null });
+    expect(await acceptResearchBrowserInvitation(acceptanceInput)).toEqual(result);
+    expect(rpc).toHaveBeenCalledWith("accept_research_browser_invitation", {
+      p_browser_token_hash: hash, p_entry_browser_hash: hash, p_entry_session_id: code,
+      p_study_code: "pilot-yala", p_checkin_code: "yala-001", p_operational_session_hash: hash,
+      p_access_token_hash: hash, p_withdrawal_token_hash: hash, p_language: "th",
+    });
+  });
+  it("preserves known refusal codes and sanitizes unknown responses", async () => {
+    rpc.mockResolvedValue({ data: { success: false, error_code: "RESEARCH_GRANT_MIGRATION_REQUIRED" }, error: null });
+    expect(await acceptResearchBrowserInvitation(acceptanceInput)).toEqual({ success: false, error_code: "RESEARCH_GRANT_MIGRATION_REQUIRED" });
+    for (const data of [null, { success: true }, { success: false, error_code: "private database detail" }]) {
+      rpc.mockResolvedValue({ data, error: null });
+      await expect(acceptResearchBrowserInvitation(acceptanceInput)).rejects.toThrow("RESEARCH_GRANT_RESPONSE_INVALID");
+    }
   });
 });
