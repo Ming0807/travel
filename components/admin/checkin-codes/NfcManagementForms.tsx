@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CheckCircle, Copy, Plus, Warning } from "@phosphor-icons/react";
 import { saveAdminNfcAction, getAdminNfcHistoryAction } from "@/app/actions/admin-nfc-actions";
 import type { AdminNfcTag, AdminNfcEvent } from "@/lib/repositories/admin-nfc.repository";
@@ -12,21 +13,24 @@ function useNfcSave() {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [message, setMessage] = useState("");
+  const [tagHref, setTagHref] = useState<string | null>(null);
   function save(operation: "create" | "change", input: unknown) {
     setMessage("");
+    setTagHref(null);
     start(async () => {
       try {
         const result = await saveAdminNfcAction(operation, input);
         setMessage(result.success ? "บันทึกเรียบร้อย" : result.message);
+        if (result.success && result.tagHref) setTagHref(result.tagHref);
         if (result.success) router.refresh();
       } catch { setMessage("เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่"); }
     });
   }
-  return { pending, message, save };
+  return { pending, message, tagHref, save };
 }
 
 export function NfcCreateForm({ checkinCodeId, replacesTagId }: { checkinCodeId: number; replacesTagId?: string }) {
-  const { pending, message, save } = useNfcSave();
+  const { pending, message, tagHref, save } = useNfcSave();
   return <details className="border-y border-slate-200 py-4">
     <summary className="cursor-pointer text-sm font-bold text-orange-800">{replacesTagId ? "สร้างแท็กทดแทน" : "เพิ่มแท็ก NFC"}</summary>
     <form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={(event) => {
@@ -35,7 +39,9 @@ export function NfcCreateForm({ checkinCodeId, replacesTagId }: { checkinCodeId:
     }}>
       <label className="text-sm font-semibold">ชื่ออ้างอิงแท็ก<input name="label" required maxLength={80} className={field} /></label>
       <label className="text-sm font-semibold">เหตุผลการเพิ่ม<input name="reason" required minLength={3} maxLength={500} className={field} /></label>
-      <div className="sm:col-span-2"><button disabled={pending} className={button}><Plus size={18} />{pending ? "กำลังบันทึก" : "สร้างแท็กฉบับร่าง"}</button><p role="status" className="mt-2 text-sm">{message}</p></div>
+      <div className="sm:col-span-2"><button disabled={pending} className={button}><Plus size={18} />{pending ? "กำลังบันทึก" : "สร้างแท็กฉบับร่าง"}</button><p role="status" className="mt-2 text-sm">{tagHref && replacesTagId ? "แท็กทดแทนพร้อมจัดการ หากเคยสร้างแล้วระบบจะใช้รายการเดิม" : message}</p>
+        {tagHref ? <Link href={tagHref} className="mt-2 inline-flex min-h-11 items-center font-bold text-orange-800 underline">เปิดแท็กที่บันทึก</Link> : null}
+      </div>
     </form>
   </details>;
 }

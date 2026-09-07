@@ -17,6 +17,10 @@ version. Unverified drafts may be permanently revoked with confirmation without
 inventing read-back evidence; activation still requires verification. Loaded history
 resets when the displayed tag/version changes so staff can load the current audit.
 
+After creation, a link opens the exact saved tag even when current pagination or
+status filters exclude it. Replacement retries link the existing successor and
+do not silently rewrite its data. The clear-filter action restores the code list.
+
 Visual QA: synthetic component fixture at `tests/visual/dashboard/nfc.html`,
 360/768/1440 widths. No production tags or research records are changed by this
 fixture. Full authenticated page and physical read-back QA remain required.

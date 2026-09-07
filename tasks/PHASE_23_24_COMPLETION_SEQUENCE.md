@@ -154,3 +154,12 @@ TypeScript, scoped ESLint and whitespace checks passed. Browser fixture checked 
 360/768/1440px with no horizontal overflow or page errors; draft revocation controls
 were exercised without writing production data. No full build rerun for this narrow
 client-state patch; the prior release build is not claimed as new build evidence.
+
+S4 replacement continuation: same-code revoked-original validation, existing-successor
+replay and unique-conflict recovery implemented. Create results link to an exact
+UUID-filtered tag within its code scope. No migration or rollout flag changes.
+Installation evidence, actor labels and authenticated/device QA remain open.
+Verification: 44 focused NFC tests, scoped ESLint, TypeScript and production build
+passed on Node 22. Build generated 63 static pages. Replacement concurrency tests
+mock repository conflicts; live authenticated replay and complete-schema concurrency
+verification remain release gates. No full-suite rerun at this incremental checkpoint.

@@ -22,7 +22,27 @@ export async function listNfcManagement(input: unknown) {
 
 export async function createNfcTag(input: unknown) {
   const { adminId } = await requirePermission("checkin_code.manage");
-  return repository.insertAdminNfcTag(adminNfcCreateSchema.parse(input), adminId);
+  const parsed = adminNfcCreateSchema.parse(input);
+  if (!parsed.replacesTagId) return repository.insertAdminNfcTag(parsed, adminId);
+  const original = await repository.readAdminNfcTag(parsed.replacesTagId);
+  if (!original || original.status !== "revoked") throw new Error("NFC_REPLACEMENT_REQUIRES_REVOCATION");
+  if (original.checkin_code_id !== parsed.checkinCodeId) throw new Error("NFC_REPLACEMENT_CODE_MISMATCH");
+  const readExisting = async () => {
+    const existing = await repository.readAdminNfcReplacement(parsed.replacesTagId!);
+    if (existing && existing.checkin_code_id !== parsed.checkinCodeId) throw new Error("NFC_REPLACEMENT_CODE_MISMATCH");
+    return existing;
+  };
+  const existing = await readExisting();
+  if (existing) return existing;
+  try { return await repository.insertAdminNfcTag(parsed, adminId); }
+  catch (error) {
+    // The unique replacement FK arbitrates concurrent requests; never overwrite the winner.
+    if (error instanceof Error && error.message === "NFC_CREATE_CONFLICT") {
+      const winner = await readExisting();
+      if (winner) return winner;
+    }
+    throw error;
+  }
 }
 
 export async function changeNfcTag(input: unknown) {

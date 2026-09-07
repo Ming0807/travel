@@ -9,7 +9,7 @@ import { getAdminNfcHistoryAction, saveAdminNfcAction } from "@/app/actions/admi
 describe("NFC server action boundary", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    service.createNfcTag.mockResolvedValue({ checkin_code_id: 10 });
+    service.createNfcTag.mockResolvedValue({ checkin_code_id: 10, nfc_tag_id: "11111111-1111-4111-8111-111111111111" });
     service.changeNfcTag.mockResolvedValue({ checkin_code_id: 10 });
   });
 
@@ -21,7 +21,9 @@ describe("NFC server action boundary", () => {
   });
 
   it.each(["create", "change"] as const)("invalidates only the saved tag's code after %s", async (operation) => {
-    expect(await saveAdminNfcAction(operation, { checkinCodeId: 999 })).toEqual({ success: true });
+    const result = await saveAdminNfcAction(operation, { checkinCodeId: 999 });
+    expect(result).toMatchObject({ success: true });
+    if (operation === "create") expect(result).toHaveProperty("tagHref", "/admin/checkin-codes/10/nfc?tagId=11111111-1111-4111-8111-111111111111");
     expect(revalidatePath).toHaveBeenCalledExactlyOnceWith("/admin/checkin-codes/10/nfc");
   });
 

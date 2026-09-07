@@ -18,6 +18,17 @@ Revocation is permanent. Replacements require a revoked original and have their
 own token, verification and activation. A unique replacement reference prevents
 multiple replacements from silently racing. Original audit history remains.
 
+Replacement retries return the existing direct successor without changing its
+label, reason, verification or lifecycle. The service requires a revoked original
+and the same check-in code. A unique-conflict retry reads the winning successor;
+other database errors remain failures. This is replacement-specific idempotency,
+not deduplication of unrelated new-tag creation. Existing revoked successors are
+returned as revoked; create their own replacement rather than resurrecting them.
+
+Create actions return a local `tagHref` for the saved/recovered tag. The `tagId`
+filter is UUID-validated and combined with the route's check-in code, never used
+to bypass code scope or permissions. Clear filters returns to the full code list.
+
 History reads are cursor-paginated by version, twenty events per request. Public
 entry routes never expose admin history. No tourist PII is present in tag events.
 Do not paste participant details into inspection references or change reasons.

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NfcTagControls, NfcTagHistory } from "@/components/admin/checkin-codes/NfcManagementForms";
+import { NfcCreateForm, NfcTagControls, NfcTagHistory } from "@/components/admin/checkin-codes/NfcManagementForms";
 import type { AdminNfcTag } from "@/lib/repositories/admin-nfc.repository";
 
 const actions = vi.hoisted(() => ({ save: vi.fn(), history: vi.fn(), refresh: vi.fn() }));
@@ -77,5 +77,17 @@ describe("NFC lifecycle forms", () => {
     await screen.findByText("Temporary failure");
     expect(screen.getByLabelText("เหตุผล")).toHaveValue("Reopen after maintenance");
     expect(actions.refresh).not.toHaveBeenCalled();
+  });
+
+  it("links a replacement result to the exact saved tag", async () => {
+    const href = `/admin/checkin-codes/10/nfc?tagId=${tag.public_token}`;
+    actions.save.mockResolvedValue({ success: true, tagHref: href });
+    render(<NfcCreateForm checkinCodeId={10} replacesTagId={tag.nfc_tag_id} />);
+    fireEvent.click(screen.getByText("สร้างแท็กทดแทน"));
+    fireEvent.change(screen.getByLabelText("ชื่ออ้างอิงแท็ก"), { target: { value: "Replacement" } });
+    fireEvent.change(screen.getByLabelText("เหตุผลการเพิ่ม"), { target: { value: "Broken tag" } });
+    fireEvent.submit(screen.getByRole("button", { name: "สร้างแท็กฉบับร่าง" }).closest("form")!);
+    expect(await screen.findByRole("link", { name: "เปิดแท็กที่บันทึก" })).toHaveAttribute("href", href);
+    expect(actions.save).toHaveBeenCalledWith("create", expect.objectContaining({ replacesTagId: tag.nfc_tag_id, checkinCodeId: 10 }));
   });
 });

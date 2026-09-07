@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const repository = vi.hoisted(() => ({ readAdminNfcTag: vi.fn(), updateAdminNfcTag: vi.fn(), insertAdminNfcTag: vi.fn(), listAdminNfcTags: vi.fn(), listAdminNfcEvents: vi.fn() }));
+const repository = vi.hoisted(() => ({ readAdminNfcTag: vi.fn(), readAdminNfcReplacement: vi.fn(), updateAdminNfcTag: vi.fn(), insertAdminNfcTag: vi.fn(), listAdminNfcTags: vi.fn(), listAdminNfcEvents: vi.fn() }));
 const guard = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/auth/guards", () => ({ requirePermission: guard }));
 vi.mock("@/lib/repositories/admin-nfc.repository", () => repository);
@@ -77,5 +77,52 @@ describe("NFC management", () => {
   it("never resurrects revoked tags", async () => {
     repository.readAdminNfcTag.mockResolvedValue({ ...tag, status: "revoked" });
     await expect(changeNfcTag({ operation: "status", tagId: id, version: 2, status: "active", reason: "Activate tag" })).rejects.toThrow("NFC_REVOKED_IMMUTABLE");
+  });
+
+  const replacementInput = { checkinCodeId: 10, label: "Replacement", reason: "Damaged tag", replacesTagId: id };
+  it.each([null, { ...tag, status: "active", checkin_code_id: 10 }, { ...tag, status: "revoked", checkin_code_id: 20 }])("rejects invalid replacement originals before creating %#", async (original) => {
+    repository.readAdminNfcTag.mockResolvedValue(original);
+    await expect(createNfcTag(replacementInput)).rejects.toThrow();
+    expect(repository.insertAdminNfcTag).not.toHaveBeenCalled();
+  });
+
+  it("returns the existing replacement on retry without rewriting it", async () => {
+    repository.readAdminNfcTag.mockResolvedValue({ ...tag, status: "revoked", checkin_code_id: 10 });
+    const existing = { ...tag, label: "Previously saved", checkin_code_id: 10, replaces_tag_id: id };
+    repository.readAdminNfcReplacement.mockResolvedValue(existing);
+    expect(await createNfcTag(replacementInput)).toEqual(existing);
+    expect(repository.insertAdminNfcTag).not.toHaveBeenCalled();
+    expect(repository.updateAdminNfcTag).not.toHaveBeenCalled();
+  });
+
+  it("recovers the winning replacement after a concurrent unique conflict", async () => {
+    repository.readAdminNfcTag.mockResolvedValue({ ...tag, status: "revoked", checkin_code_id: 10 });
+    const winner = { ...tag, checkin_code_id: 10, replaces_tag_id: id };
+    repository.readAdminNfcReplacement.mockResolvedValueOnce(null).mockResolvedValueOnce(winner);
+    repository.insertAdminNfcTag.mockRejectedValue(new Error("NFC_CREATE_CONFLICT"));
+    expect(await createNfcTag(replacementInput)).toEqual(winner);
+    expect(repository.insertAdminNfcTag).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not hide unrelated create failures as successful retries", async () => {
+    repository.readAdminNfcTag.mockResolvedValue({ ...tag, status: "revoked", checkin_code_id: 10 });
+    repository.readAdminNfcReplacement.mockResolvedValue(null);
+    repository.insertAdminNfcTag.mockRejectedValue(new Error("NFC_CREATE_FAILED"));
+    await expect(createNfcTag(replacementInput)).rejects.toThrow("NFC_CREATE_FAILED");
+    expect(repository.readAdminNfcReplacement).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a historical successor assigned to another code", async () => {
+    repository.readAdminNfcTag.mockResolvedValue({ ...tag, status: "revoked", checkin_code_id: 10 });
+    repository.readAdminNfcReplacement.mockResolvedValue({ ...tag, checkin_code_id: 20 });
+    await expect(createNfcTag(replacementInput)).rejects.toThrow("NFC_REPLACEMENT_CODE_MISMATCH");
+    expect(repository.insertAdminNfcTag).not.toHaveBeenCalled();
+  });
+
+  it("does not treat an unrelated unique conflict as a saved replacement", async () => {
+    repository.readAdminNfcTag.mockResolvedValue({ ...tag, status: "revoked", checkin_code_id: 10 });
+    repository.readAdminNfcReplacement.mockResolvedValue(null);
+    repository.insertAdminNfcTag.mockRejectedValue(new Error("NFC_CREATE_CONFLICT"));
+    await expect(createNfcTag(replacementInput)).rejects.toThrow("NFC_CREATE_CONFLICT");
   });
 });

@@ -22,7 +22,7 @@ export default async function NfcTagsPage({ params, searchParams }: { params: Pr
   const first = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
   let result;
   let unavailable = false;
-  const parsedFilters = adminNfcFiltersSchema.safeParse({ page: first(query.page) ?? 1, status: first(query.status) || undefined, q: first(query.q), checkinCodeId: id.data });
+  const parsedFilters = adminNfcFiltersSchema.safeParse({ page: first(query.page) ?? 1, status: first(query.status) || undefined, q: first(query.q), tagId: first(query.tagId), checkinCodeId: id.data });
   const invalidFilters = !parsedFilters.success;
   try { result = parsedFilters.success ? await listNfcManagement(parsedFilters.data) : { rows: [], total: 0, page: 1, pageSize: 20 }; }
   catch { unavailable = true; result = { rows: [], total: 0, page: 1, pageSize: 20 }; }
@@ -34,6 +34,7 @@ export default async function NfcTagsPage({ params, searchParams }: { params: Pr
     emptyDescription={invalidFilters ? "ตรวจคำค้น สถานะ และเลขหน้า แล้วค้นหาอีกครั้ง" : unavailable ? "ตรวจการติดตั้ง migration และการเชื่อมต่อ แล้วรีเฟรชอีกครั้ง" : "แท็กใหม่จะเริ่มเป็นฉบับร่างก่อนตรวจและเปิดใช้"}
     filters={<div className="space-y-4">
       <form className="flex flex-wrap items-end gap-3">
+        {parsedFilters.success && parsedFilters.data.tagId ? <input type="hidden" name="tagId" value={parsedFilters.data.tagId} /> : null}
         <label className="min-w-0 flex-1 text-sm font-semibold">ค้นหาชื่อแท็ก<input name="q" maxLength={80} defaultValue={first(query.q) ?? ""} className="mt-1 min-h-11 w-full rounded border border-slate-300 bg-white px-3" /></label>
         <label className="text-sm font-semibold">สถานะ<select name="status" defaultValue={first(query.status) ?? ""} className="mt-1 block min-h-11 rounded border border-slate-300 bg-white px-3"><option value="">ทุกสถานะ</option>{Object.entries(labels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
         <button className="min-h-11 rounded border border-slate-300 bg-white px-4 text-sm font-bold">ค้นหา</button>

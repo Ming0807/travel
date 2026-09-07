@@ -15,6 +15,7 @@ export const adminNfcChangeSchema = z.discriminatedUnion("operation", [
     status: z.enum(["active", "inactive", "revoked"]) }),
 ]);
 export const adminNfcFiltersSchema = z.object({
+  tagId: z.uuid().optional(),
   q: z.string().trim().max(80).optional(),
   page: z.coerce.number().int().min(1).max(10000).default(1),
   status: nfcStatusSchema.optional(),

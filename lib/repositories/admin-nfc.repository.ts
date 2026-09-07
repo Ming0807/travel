@@ -30,11 +30,18 @@ export async function readAdminNfcTag(tagId: string): Promise<AdminNfcTag | null
   return data ? tagSchema.parse(data) : null;
 }
 
-export async function listAdminNfcTags(filters: { page: number; status?: string; checkinCodeId?: number; q?: string }) {
+export async function readAdminNfcReplacement(tagId: string): Promise<AdminNfcTag | null> {
+  const { data, error } = await createSupabaseServiceRoleClient().from("nfc_tags").select(selection).eq("replaces_tag_id", tagId).maybeSingle();
+  if (error) throw new Error("NFC_READ_FAILED");
+  return data ? tagSchema.parse(data) : null;
+}
+
+export async function listAdminNfcTags(filters: { page: number; status?: string; checkinCodeId?: number; q?: string; tagId?: string }) {
   const pageSize = 20;
   let query = createSupabaseServiceRoleClient().from("nfc_tags").select(selection, { count: "exact" });
   if (filters.status) query = query.eq("status", filters.status);
   if (filters.checkinCodeId) query = query.eq("checkin_code_id", filters.checkinCodeId);
+  if (filters.tagId) query = query.eq("nfc_tag_id", filters.tagId);
   if (filters.q) query = query.ilike("label", `%${filters.q.replace(/[\\%_]/g, "\\$&")}%`);
   const { data, count, error } = await query.order("created_at", { ascending: false }).order("nfc_tag_id").range((filters.page - 1) * pageSize, filters.page * pageSize - 1);
   if (error) throw new Error("NFC_LIST_FAILED");
@@ -46,7 +53,7 @@ export async function insertAdminNfcTag(input: { checkinCodeId: number; label: s
     checkin_code_id: input.checkinCodeId, label: input.label, last_change_reason: input.reason,
     replaces_tag_id: input.replacesTagId ?? null, created_by: adminId, updated_by: adminId,
   }).select(selection).single();
-  if (error) throw new Error("NFC_CREATE_FAILED");
+  if (error) throw new Error(error.code === "23505" ? "NFC_CREATE_CONFLICT" : "NFC_CREATE_FAILED");
   return tagSchema.parse(data);
 }
 
