@@ -14,13 +14,15 @@ Apply pending migrations in chronological order, after staging verification:
    registry/RPC foundation. Application integration is still dormant.
 4. `20260907003000_correlate_research_entry_sessions.sql`: captures immutable exact
    entry provenance during consent and rejects a Visit belonging to another entry.
+5. `20260907004000_resolve_research_grant_context.sql`: service-only exact Visit/entry
+   grant lookup; ambiguous matches return no capability. No runtime activation.
 
 Prerequisites: the existing research core and all September 4-6 NFC/entry migrations.
 No seed/reset/delete is required. No rollout environment flags should be enabled
 as part of applying these files. Existing null entry provenance remains unknown;
 there is no inferred historical backfill.
 
-Local evidence: disposable minimal-schema PostgreSQL harness, 112 assertions;
+Local evidence: disposable minimal-schema PostgreSQL harness, 124 assertions;
 read-only NFC object/permission verifier, 14 checks. These do not replace full-schema
 staging, authenticated mobile flows or physical NFC testing. Valid acceptance retries
 still rotate legacy credentials; bounded browser grant integration remains pending.

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/service-role", () => ({ createSupabaseServiceRoleClient: () => ({ rpc }) }));
-import { bindResearchBrowserGrant, resolveResearchBrowserGrant, revokeResearchBrowserGrant } from "@/lib/repositories/research-browser-grant.repository";
+import { bindResearchBrowserGrant, resolveResearchBrowserGrant, resolveResearchBrowserContext, revokeResearchBrowserGrant } from "@/lib/repositories/research-browser-grant.repository";
 const code = "11111111-1111-4111-8111-111111111111";
 const hash = "a".repeat(64);
 
@@ -40,5 +40,30 @@ describe("research browser grant repository", () => {
     rpc.mockResolvedValue({ data: null, error: null });
     await revokeResearchBrowserGrant(hash, code);
     expect(rpc).toHaveBeenCalledWith("revoke_research_browser_grant", { p_browser_token_hash: hash, p_public_session_code: code });
+  });
+  it("resolves only an exact Visit or entry context", async () => {
+    const row = { public_session_code: code, access_token_hash: hash, withdrawal_token_hash: hash, visit_id: code, entry_session_id: code };
+    rpc.mockResolvedValue({ data: [row], error: null });
+    for (const kind of ["visit", "entry"] as const) {
+      expect(await resolveResearchBrowserContext(hash, { kind, id: code })).toMatchObject({ publicSessionCode: code, visitId: code, entrySessionId: code });
+      expect(rpc).toHaveBeenLastCalledWith("resolve_research_browser_context", { p_browser_token_hash: hash, p_context_kind: kind, p_context_id: code });
+    }
+  });
+  it("rejects context substitution and duplicate results", async () => {
+    const row = { public_session_code: code, access_token_hash: hash, withdrawal_token_hash: hash, visit_id: null, entry_session_id: null };
+    rpc.mockResolvedValue({ data: [row], error: null });
+    for (const kind of ["visit", "entry"] as const) {
+      await expect(resolveResearchBrowserContext(hash, { kind, id: code })).rejects.toThrow("RESEARCH_GRANT_CONTEXT_MISMATCH");
+    }
+    rpc.mockResolvedValue({ data: [row, row], error: null });
+    await expect(resolveResearchBrowserContext(hash, { kind: "visit", id: code })).rejects.toThrow();
+    rpc.mockResolvedValue({ data: [], error: null });
+    expect(await resolveResearchBrowserContext(hash, { kind: "entry", id: code })).toBeNull();
+  });
+  it("validates context before RPC and contains backend errors", async () => {
+    await expect(resolveResearchBrowserContext(hash, { kind: "entry", id: "invalid" })).rejects.toThrow();
+    expect(rpc).not.toHaveBeenCalled();
+    rpc.mockResolvedValue({ data: null, error: { message: "private credential" } });
+    await expect(resolveResearchBrowserContext(hash, { kind: "entry", id: code })).rejects.toThrow("RESEARCH_GRANT_RPC_FAILED");
   });
 });

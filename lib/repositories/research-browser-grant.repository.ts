@@ -9,6 +9,25 @@ const grantRow = z.object({ public_session_code: z.uuid(), access_token_hash: ha
 
 // These hashes are RPC capabilities. Never include this result in client props.
 export type ResearchBrowserGrant = { publicSessionCode: string; accessTokenHash: string; withdrawalTokenHash: string; visitId: string | null };
+const context = z.object({ kind: z.enum(["visit", "entry"]), id: z.uuid() }).strict();
+export type ResearchGrantContext = z.infer<typeof context>;
+
+export async function resolveResearchBrowserContext(browserTokenHash: string, input: ResearchGrantContext): Promise<(ResearchBrowserGrant & { entrySessionId: string | null }) | null> {
+  const browser = hash.parse(browserTokenHash);
+  const parsed = context.parse(input);
+  const { data, error } = await createSupabaseServiceRoleClient().rpc("resolve_research_browser_context", {
+    p_browser_token_hash: browser, p_context_kind: parsed.kind, p_context_id: parsed.id,
+  });
+  if (error) throw new Error("RESEARCH_GRANT_RPC_FAILED");
+  const rows = z.array(grantRow.extend({ entry_session_id: z.uuid().nullable() })).max(1).parse(data);
+  if (!rows.length) return null;
+  const row = rows[0];
+  if ((parsed.kind === "visit" ? row.visit_id : row.entry_session_id) !== parsed.id) {
+    throw new Error("RESEARCH_GRANT_CONTEXT_MISMATCH");
+  }
+  return { publicSessionCode: row.public_session_code, accessTokenHash: row.access_token_hash,
+    withdrawalTokenHash: row.withdrawal_token_hash, visitId: row.visit_id, entrySessionId: row.entry_session_id };
+}
 
 export async function bindResearchBrowserGrant(input: z.infer<typeof proof>): Promise<boolean> {
   const parsed = proof.parse(input);

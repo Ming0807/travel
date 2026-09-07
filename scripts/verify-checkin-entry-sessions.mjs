@@ -383,6 +383,30 @@ try {
   for (const role of ['anon','authenticated','service_role']) {
     assert.equal((await db.query("SELECT has_function_privilege($1,'public.guard_research_entry_binding()','EXECUTE') AS allowed",[role])).rows[0].allowed,false); checks++;
   }
+  await db.query(await readFile(new URL('../supabase/migrations/20260907004000_resolve_research_grant_context.sql',import.meta.url),'utf8'));
+  await db.query("UPDATE public.research_studies SET retention_until=now()+interval '7 days' WHERE research_study_id=$1",[actor]);
+  assert.equal(await bind(db,entryResearchCode,browserA,browserA),true); checks++;
+  const resolveContext = async (kind='visit', id=exactVisit, browser=grantBrowser) =>
+    (await db.query('SELECT * FROM public.resolve_research_browser_context($1,$2,$3)',[browser,kind,id])).rows;
+  assert.equal((await resolveContext())[0].public_session_code,entryResearchCode); checks++;
+  assert.equal((await resolveContext('entry',boundEntry.entry_session_id))[0].visit_id,exactVisit); checks++;
+  assert.equal((await resolveContext('entry',otherEntry.entry_session_id)).length,0); checks++;
+  assert.equal((await resolveContext('visit',exactVisit,browserB)).length,0); checks++;
+  assert.equal((await resolveContext('invalid')).length,0); checks++;
+  const ambiguousCode='40000000-0000-4000-8000-000000000004';
+  await db.query(`INSERT INTO public.research_sessions(public_session_code,access_token_hash,withdrawal_token_hash,
+    study_id,checkin_code_id,entry_session_id) VALUES($1,$2,$2,$3,10,$4)`,[ambiguousCode,browserA,actor,boundEntry.entry_session_id]);
+  assert.equal(await bind(db,ambiguousCode,browserA,browserA),true); checks++;
+  assert.equal((await resolveContext('entry',boundEntry.entry_session_id)).length,0); checks++;
+  await db.query('SELECT public.revoke_research_browser_grant($1,$2)',[grantBrowser,ambiguousCode]);
+  assert.equal((await resolveContext('entry',boundEntry.entry_session_id)).length,1); checks++;
+  await db.query("UPDATE public.research_sessions SET status='withdrawn',withdrawn_at=now() WHERE public_session_code=$1",[entryResearchCode]);
+  assert.equal((await resolveContext()).length,0); checks++;
+  for (const role of ['anon','authenticated']) {
+    await db.query(`SET ROLE ${role}`);
+    await assert.rejects(resolveContext(),/permission denied/); checks++;
+    await db.query('RESET ROLE');
+  }
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);

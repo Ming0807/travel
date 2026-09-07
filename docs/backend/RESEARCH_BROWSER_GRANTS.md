@@ -2,6 +2,8 @@
 
 Status: database foundation plus server-only adapters. Not wired into application authentication.
 Migration: `20260907002000_add_research_browser_grants.sql`.
+Context lookup: `20260907004000_resolve_research_grant_context.sql`, after exact
+entry provenance migration `20260907003000_correlate_research_entry_sessions.sql`.
 
 ## Contract
 The composite key is a browser credential hash plus research session ID. No raw
@@ -18,6 +20,14 @@ not chart/API response data: never send them to a client, log or export. Live se
 status, withdrawal and study retention are rechecked. Current token hashes are read
 from the session so credential rotation does not invalidate a previously issued grant.
 This does not yet repair cookie-only callers or initial concurrent acceptance.
+
+Context resolution accepts an exact Visit or entry UUID plus the browser hash,
+restricts to tourist sessions, and reuses the authoritative live-grant resolver.
+It reads at most two matching candidates and returns a result only when exactly
+one remains. Ambiguous sessions fail closed, never newest/first-row selection.
+The server adapter validates the returned context again. Legacy migration now
+proves that Visit-based lookup returns the same public session before retiring
+the cookie; successful public-code lookup alone is insufficient.
 
 Revoke targets one browser/session pair without changing other grants or the
 research consent record. Research withdrawal still uses its authoritative existing
@@ -45,7 +55,7 @@ cookie. Failure before removal leaves old credentials untouched. No browser toke
 is generated implicitly in migration, avoiding competing initial response tokens.
 
 Issue a stable browser token before concurrent acceptance; add typed server-only
-repository access, exact entry/Visit selection, atomic acceptance/grant creation,
+atomic acceptance/grant creation and integrate the typed context resolver,
 verified migration of existing cookies, selective withdrawal and expiry recovery.
 Do not merely wrap the current rotating-token RPC and claim race safety. Preserve
 unmigrated cookies and compatibility while flags are off. Complete full-schema,

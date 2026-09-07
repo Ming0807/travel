@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const store = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn() }));
-const repository = vi.hoisted(() => ({ bindResearchBrowserGrant: vi.fn(), resolveResearchBrowserGrant: vi.fn() }));
+const repository = vi.hoisted(() => ({ bindResearchBrowserGrant: vi.fn(), resolveResearchBrowserContext: vi.fn() }));
 const legacy = vi.hoisted(() => ({ getResearchVisitCredentials: vi.fn(), clearResearchVisitCredentials: vi.fn(), hashResearchToken: (value: string) => `hash:${value}` }));
 vi.mock("next/headers", () => ({ cookies: async () => store }));
 vi.mock("@/lib/repositories/research-browser-grant.repository", () => repository);
@@ -15,7 +15,7 @@ describe("bounded research browser credential", () => {
     store.get.mockReturnValue({ value: "a".repeat(43) });
     legacy.getResearchVisitCredentials.mockResolvedValue({ publicSessionCode: code, accessToken: "access", withdrawalToken: "withdraw" });
     repository.bindResearchBrowserGrant.mockResolvedValue(true);
-    repository.resolveResearchBrowserGrant.mockResolvedValue({ publicSessionCode: code, visitId });
+    repository.resolveResearchBrowserContext.mockResolvedValue({ publicSessionCode: code, visitId });
   });
   it("creates fixed-size random credentials and rejects malformed tokens", async () => {
     const first=createResearchBrowserToken();
@@ -32,12 +32,13 @@ describe("bounded research browser credential", () => {
     await writeResearchBrowserToken(token);
     expect(store.set).toHaveBeenCalledWith(RESEARCH_BROWSER_COOKIE,token,{ httpOnly:true,secure:true,sameSite:"lax",path:"/",maxAge:2592000 });
   });
-  it.each(["missing-browser","missing-legacy","denied","missing-grant","wrong-visit"])("preserves legacy credentials for %s",async (failure) => {
+  it.each(["missing-browser","missing-legacy","denied","missing-grant","wrong-visit","wrong-session"])("preserves legacy credentials for %s",async (failure) => {
     if(failure==="missing-browser") store.get.mockReturnValue(undefined);
     if(failure==="missing-legacy") legacy.getResearchVisitCredentials.mockResolvedValue(null);
     if(failure==="denied") repository.bindResearchBrowserGrant.mockResolvedValue(false);
-    if(failure==="missing-grant") repository.resolveResearchBrowserGrant.mockResolvedValue(null);
-    if(failure==="wrong-visit") repository.resolveResearchBrowserGrant.mockResolvedValue({ visitId:code });
+    if(failure==="missing-grant") repository.resolveResearchBrowserContext.mockResolvedValue(null);
+    if(failure==="wrong-visit") repository.resolveResearchBrowserContext.mockResolvedValue({ visitId:code });
+    if(failure==="wrong-session") repository.resolveResearchBrowserContext.mockResolvedValue({ visitId, publicSessionCode:visitId });
     expect(await migrateResearchVisitCredential(visitId)).toBe(false);
     expect(legacy.clearResearchVisitCredentials).not.toHaveBeenCalled();
     expect(store.set).not.toHaveBeenCalled();
@@ -53,5 +54,6 @@ describe("bounded research browser credential", () => {
     expect(await migrateResearchVisitCredential(visitId)).toBe(true);
     expect(repository.bindResearchBrowserGrant).toHaveBeenCalledWith({ browserTokenHash:hashResearchBrowserToken("a".repeat(43)),publicSessionCode:code,accessTokenHash:"hash:access",withdrawalTokenHash:"hash:withdraw" });
     expect(legacy.clearResearchVisitCredentials).toHaveBeenCalledExactlyOnceWith(visitId);
+    expect(repository.resolveResearchBrowserContext).toHaveBeenCalledExactlyOnceWith(hashResearchBrowserToken("a".repeat(43)),{kind:"visit",id:visitId});
   });
 });

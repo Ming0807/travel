@@ -231,3 +231,12 @@ rotation remain open. No UI or rollout flag changes.
 Read-only local schema verification passed 14 checks; scoped script ESLint and
 whitespace checks passed. No new application build for this SQL/script-only patch.
 Pending September 7 SQL is listed in `docs/deployment/RESEARCH_NFC_SQL_20260907.md`.
+
+S3 context lookup continuation: service-only RPC resolves browser grants by exact
+Visit/entry with live permission checks and ambiguity rejection. Typed adapter
+revalidates context; dormant legacy migration now requires the same session to be
+resolvable by Visit before deleting its old cookie. Local PostgreSQL harness passed
+124 assertions; 45 focused research tests, TypeScript and scoped ESLint passed.
+SQL `20260907004000_resolve_research_grant_context.sql` is not applied to production.
+No application activation: atomic acceptance, stable browser provisioning and live
+service integration remain pending. No new UI build for unused server adapters.

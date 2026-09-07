@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
-import { bindResearchBrowserGrant, resolveResearchBrowserGrant } from "@/lib/repositories/research-browser-grant.repository";
+import { bindResearchBrowserGrant, resolveResearchBrowserContext } from "@/lib/repositories/research-browser-grant.repository";
 import { clearResearchVisitCredentials, getResearchVisitCredentials, hashResearchToken } from "@/lib/auth/research-session";
 
 export const RESEARCH_BROWSER_COOKIE = "__Host-sbtp_research_browser";
@@ -35,8 +35,8 @@ export async function migrateResearchVisitCredential(visitId: string): Promise<b
   const bound = await bindResearchBrowserGrant({ browserTokenHash, publicSessionCode: legacy.publicSessionCode,
     accessTokenHash: hashResearchToken(legacy.accessToken), withdrawalTokenHash: hashResearchToken(legacy.withdrawalToken) });
   if (!bound) return false;
-  const grant = await resolveResearchBrowserGrant(browserTokenHash, legacy.publicSessionCode);
-  if (!grant || grant.visitId !== visitId) return false;
+  const grant = await resolveResearchBrowserContext(browserTokenHash, { kind: "visit", id: visitId });
+  if (!grant || grant.visitId !== visitId || grant.publicSessionCode !== legacy.publicSessionCode) return false;
   // Only retire this cookie after both proof and exact Visit association succeed.
   await writeResearchBrowserToken(browserToken);
   await clearResearchVisitCredentials(visitId);
