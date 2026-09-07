@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { NfcCreateForm, NfcTagControls } from "@/components/admin/checkin-codes/NfcManagementForms";
+import { NfcCreateForm, NfcTagControls, NfcTagHistory } from "@/components/admin/checkin-codes/NfcManagementForms";
 import type { AdminNfcTag } from "@/lib/repositories/admin-nfc.repository";
 import "@/app/globals.css";
 const tag: AdminNfcTag = {
@@ -12,4 +12,5 @@ createRoot(document.getElementById("root")!).render(<main className="min-h-scree
   <h1 className="text-2xl font-bold">NFC · จุดเช็กอินทดสอบ</h1><p className="my-3 text-sm">ข้อมูลจำลองสำหรับตรวจหน้าจอ ไม่มีการบันทึกจริง</p>
   <NfcCreateForm checkinCodeId={10} /><h2 className="mt-6 text-lg font-bold">{tag.label}</h2>
   <NfcTagControls tag={tag} payload={`https://tourism.example/c/fixture-entry?nfc=${tag.public_token}`} />
+  <NfcTagHistory tagId={tag.nfc_tag_id} version={tag.version} />
 </section></main>);

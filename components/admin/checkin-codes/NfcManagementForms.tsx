@@ -8,6 +8,8 @@ import type { AdminNfcTag, AdminNfcEvent } from "@/lib/repositories/admin-nfc.re
 
 const field = "mt-1 min-h-11 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950";
 const button = "inline-flex min-h-11 items-center justify-center gap-2 rounded bg-orange-700 px-4 py-2 text-sm font-bold text-white hover:bg-orange-800 disabled:opacity-50";
+const eventLabels: Record<string, string> = { registered: "ลงทะเบียนแท็ก", verified: "ตรวจสอบ URL", activated: "เปิดใช้งาน", deactivated: "พักใช้งาน", revoked: "ยกเลิกถาวร", updated: "แก้ไขข้อมูล" };
+const statusLabels = { draft: "ฉบับร่าง", active: "เปิดใช้งาน", inactive: "พักใช้งาน", revoked: "ยกเลิกถาวร" };
 
 function useNfcSave() {
   const router = useRouter();
@@ -96,6 +98,8 @@ function NfcTagHistoryRows({ tagId }: { tagId: string }) {
   return <div className="mt-5 border-t border-slate-100 pt-4">
     {rows.map((event) => <div key={event.version} className="border-b border-slate-100 py-3 text-sm">
       <p className="font-semibold">เวอร์ชัน {event.version} · {new Date(event.occurred_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</p>
+      <p className="mt-1 break-words font-medium">{eventLabels[event.event_type] ?? "เปลี่ยนแปลงแท็ก"} · สถานะ: {statusLabels[event.status]}</p>
+      <p className="mt-1 break-words text-slate-600">ผู้ดำเนินการ: {event.actor_name ?? "ไม่พบชื่อแสดงผล"}</p>
       <p className="mt-1 break-words text-slate-600">{event.reason}</p>
     </div>)}
     {cursor !== null ? <button type="button" disabled={pending} className="min-h-11 text-sm font-bold text-orange-800 disabled:opacity-50" onClick={() => start(async () => {

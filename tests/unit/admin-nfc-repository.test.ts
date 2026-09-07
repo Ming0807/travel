@@ -25,6 +25,18 @@ describe("admin NFC bounded queries", () => {
     expect(mock.calls).toContainEqual(["lt", "version", 22]);
     expect(mock.calls).toContainEqual(["limit", 21]);
   });
+  it("returns only the audit actor display name, not account identifiers", async () => {
+    mock.result.data = [{ version: 2, event_type: "activated", status: "active", reason: "Installed", occurred_at: "2026-09-07T00:00:00Z", actor: { display_name: "Test staff", email: "private@example.test", admin_id: "private" } }];
+    const result = await listAdminNfcEvents("tag");
+    expect(result.rows[0]).toHaveProperty("actor_name", "Test staff");
+    expect(JSON.stringify(result)).not.toContain("private");
+    const selection = mock.calls.find((call) => Array.isArray(call) && call[0] === "select");
+    expect(selection).toEqual(["select", "version,event_type,status,reason,occurred_at,actor:admin_users!actor_id(display_name)"]);
+  });
+  it.each([null, { display_name: null }, { display_name: "   " }])("keeps unavailable actor names explicit %#", async (actor) => {
+    mock.result.data = [{ version: 1, event_type: "registered", status: "draft", reason: "Created", occurred_at: "2026-09-07T00:00:00Z", actor }];
+    expect((await listAdminNfcEvents("tag")).rows[0]).toHaveProperty("actor_name", null);
+  });
   it("rejects an update whose observed version no longer matches", async () => {
     mock.result.data = null;
     await expect(updateAdminNfcTag("tag", 3, { status: "active" })).rejects.toThrow("NFC_VERSION_CONFLICT");

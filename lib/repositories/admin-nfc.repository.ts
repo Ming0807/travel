@@ -11,12 +11,12 @@ const tagSchema = z.object({
   created_at: z.string(), updated_at: z.string(),
 });
 export type AdminNfcTag = z.infer<typeof tagSchema>;
-const eventSchema = z.object({ version: z.number().int().positive(), event_type: z.string(), status: nfcStatusSchema, reason: z.string(), occurred_at: z.string() });
+const eventSchema = z.object({ version: z.number().int().positive(), event_type: z.string(), status: nfcStatusSchema, reason: z.string(), occurred_at: z.string(), actor: z.object({ display_name: z.string().nullable() }).nullable() }).transform(({ actor, ...event }) => ({ ...event, actor_name: actor?.display_name?.trim() || null }));
 export type AdminNfcEvent = z.infer<typeof eventSchema>;
 const selection = "nfc_tag_id,public_token,checkin_code_id,code_snapshot,label,status,version,verified_at,verification_reference,replaces_tag_id,created_at,updated_at";
 
 export async function listAdminNfcEvents(tagId: string, beforeVersion?: number) {
-  let query = createSupabaseServiceRoleClient().from("nfc_tag_events").select("version,event_type,status,reason,occurred_at").eq("nfc_tag_id", tagId);
+  let query = createSupabaseServiceRoleClient().from("nfc_tag_events").select("version,event_type,status,reason,occurred_at,actor:admin_users!actor_id(display_name)").eq("nfc_tag_id", tagId);
   if (beforeVersion) query = query.lt("version", beforeVersion);
   const { data, error } = await query.order("version", { ascending: false }).limit(21);
   if (error) throw new Error("NFC_HISTORY_FAILED");

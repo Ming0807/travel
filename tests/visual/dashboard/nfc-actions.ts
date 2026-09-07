@@ -1,2 +1,2 @@
 export async function saveAdminNfcAction() { return { success: true as const }; }
-export async function getAdminNfcHistoryAction() { return { success: true as const, rows: [], nextVersion: null }; }
+export async function getAdminNfcHistoryAction() { return { success: true as const, rows: [{ version: 1, event_type: "registered", status: "draft" as const, actor_name: "เจ้าหน้าที่ทดสอบประจำจุดเช็กอินทางเข้าหลัก", reason: "ลงทะเบียนแท็กทดสอบสำหรับตรวจหน้าจอ ไม่ใช่ข้อมูลจากสถานที่จริง", occurred_at: "2026-09-07T00:00:00Z" }], nextVersion: null }; }

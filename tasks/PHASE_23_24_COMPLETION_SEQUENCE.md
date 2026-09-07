@@ -163,3 +163,18 @@ Verification: 44 focused NFC tests, scoped ESLint, TypeScript and production bui
 passed on Node 22. Build generated 63 static pages. Replacement concurrency tests
 mock repository conflicts; live authenticated replay and complete-schema concurrency
 verification remain release gates. No full-suite rerun at this incremental checkpoint.
+
+S4 actor history: added current staff display names through the existing actor FK,
+localized event/status labels and explicit missing-name fallback without exposing
+email/account identifiers. 49 focused NFC tests, TypeScript and scoped lint passed.
+Synthetic browser history checked at 360/768/1440px without overflow/page errors.
+Authenticated PostgREST join/role QA remains required; no new migration.
+
+S3 cookie review found unbounded Visit credential headers (20 synthetic Visit
+cookies: 8,298 bytes, excluding other cookies). ADR-011 proposes a bounded browser
+credential and server-side grant registry with verified legacy migration. This is
+not implemented and remains a research rollout blocker; do not evict old Visit
+cookies or mark S3 complete. Installation evidence remains pending S5 work.
+Current actor-history production build also passed (63 static pages). The visual
+fixture now aliases Next Link explicitly; this fixes its standalone Vite runtime,
+without changing production navigation. No full-suite or live-role sign-off claimed.

@@ -21,6 +21,9 @@ After creation, a link opens the exact saved tag even when current pagination or
 status filters exclude it. Replacement retries link the existing successor and
 do not silently rewrite its data. The clear-filter action restores the code list.
 
+Audit history shows localized event type, resulting status, current actor display
+name, Bangkok time, version and reason. Long names/reasons wrap on small screens.
+
 Visual QA: synthetic component fixture at `tests/visual/dashboard/nfc.html`,
 360/768/1440 widths. No production tags or research records are changed by this
 fixture. Full authenticated page and physical read-back QA remain required.

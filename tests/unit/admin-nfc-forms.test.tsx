@@ -90,4 +90,12 @@ describe("NFC lifecycle forms", () => {
     expect(await screen.findByRole("link", { name: "เปิดแท็กที่บันทึก" })).toHaveAttribute("href", href);
     expect(actions.save).toHaveBeenCalledWith("create", expect.objectContaining({ replacesTagId: tag.nfc_tag_id, checkinCodeId: 10 }));
   });
+
+  it("shows an audit action and actor without relying only on a reason", async () => {
+    actions.history.mockResolvedValue({ success: true, rows: [{ version: 2, event_type: "verified", status: "draft", actor_name: "Test staff", reason: "Read-back inspection", occurred_at: tag.updated_at }], nextVersion: null });
+    render(<NfcTagHistory tagId={tag.nfc_tag_id} />);
+    fireEvent.click(screen.getByRole("button", { name: "ดูประวัติการเปลี่ยนแปลง" }));
+    expect(await screen.findByText("ผู้ดำเนินการ: Test staff")).toBeInTheDocument();
+    expect(screen.getByText("ตรวจสอบ URL · สถานะ: ฉบับร่าง")).toBeInTheDocument();
+  });
 });

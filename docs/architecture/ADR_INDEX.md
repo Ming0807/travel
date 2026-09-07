@@ -42,6 +42,9 @@ These ADRs should be read with the latest product strategy:
 
 ## ADR Template
 
+Pending proposal: [ADR-011: Bounded Research Browser Credentials](adr/ADR_011_RESEARCH_CREDENTIAL_STORAGE.md).
+Implementation and migration are not complete; this does not authorize rollout.
+
 New ADRs should follow this format:
 
 ```markdown

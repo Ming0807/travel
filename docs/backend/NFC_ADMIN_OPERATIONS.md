@@ -33,6 +33,11 @@ History reads are cursor-paginated by version, twenty events per request. Public
 entry routes never expose admin history. No tourist PII is present in tag events.
 Do not paste participant details into inspection references or change reasons.
 
+Audit rows include the current admin display name via the existing actor foreign
+key, not email, account UUID or other profile fields. Names are not historical
+snapshots and may change when staff edit their profiles; event actor IDs remain
+immutable in storage. Missing names are labeled unavailable, never guessed.
+
 Activation SQL revalidates publication, active dates, spot and assignment snapshots.
 Tags do not prove physical presence; copied NFC URLs retain NFC attribution.
 Both public rollout flags stay off until installation/device and research gates pass.
