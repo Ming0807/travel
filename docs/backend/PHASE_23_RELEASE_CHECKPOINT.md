@@ -28,6 +28,21 @@ user-reported until read-only object/grant verification succeeds; do not rerun
 migrations just because SQL Editor execution may not populate migration history.
 Use `node scripts/verify-nfc-release-schema.mjs` for the narrow read-only check.
 
+September 8 verifier update: 39 catalog checks now include all six browser-grant
+RPCs, service-role-only execution, security-definer/empty-search-path settings,
+grant-table RLS, denied table/column access for anon/authenticated/service_role,
+and valid ready primary/session/expiry indexes. The query runs inside `BEGIN READ
+ONLY` and reads no participant records. Required migration order also includes the
+six September 7 additions in `docs/deployment/RESEARCH_NFC_SQL_20260907.md`.
+Missing objects or permission mismatches fail the command; a green result still
+does not verify SQL function bodies, authenticated application behavior or device QA.
+
+Local disposable PostgreSQL passed 159 assertions, including seven rollback-only
+negative probes of this same catalog query: anonymous RPC execute, missing service
+execute, disabled RLS, direct column read, unsafe search path, missing expiry index
+and missing cleanup function. The standalone read-only command passed 39 checks
+after rollback. No production connection or migration was attempted in this update.
+
 September 6 verification: Supabase REST OpenAPI (read-only) exposes all three new
 tables, the three research snapshot columns and the entry-aware consent RPC.
 The direct PostgreSQL hostname did not resolve, so production grants/triggers were

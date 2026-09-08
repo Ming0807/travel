@@ -70,6 +70,14 @@ disposable localhost database. Server and database container were stopped afterw
 
 ## S1/S2 Verification
 
+September 8 release-verifier checkpoint: expanded the read-only catalog gate from
+14 to 39 checks to cover grant RPC existence/execution privileges, definer search
+paths, table RLS/direct column access and valid indexes. The disposable PostgreSQL
+harness now passes 159 assertions and proves seven deliberately broken configurations
+are rejected by the same query, rolling back each mutation. Standalone verifier
+passed locally; no production connection or SQL change. Catalog checks do not prove
+function-body correctness, full-schema compatibility or mobile behavior.
+
 New migration: `20260905000000_snapshot_entry_research_scope.sql`, after the
 NFC registry and entry-session migrations. Tested in disposable local PostgreSQL:
 36 assertions covering frozen/paused/expired/ambiguous/mismatched deployments,

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { loadEnvFile } from "node:process";
 import pg from "pg";
+import { researchGrantReleaseChecks } from "./research-grant-release-checks.mjs";
 
 if (!process.env.SUPABASE_DATABASE_URL) {
   try { loadEnvFile(".env.local"); } catch { /* Environment may be provided externally. */ }
@@ -16,7 +17,7 @@ catch {
   console.error("Database connection configuration is invalid. No SQL was applied.");
   process.exit(2);
 }
-const local = ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+const local = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname);
 const client = new pg.Client({
   connectionString, connectionTimeoutMillis: 10000, statement_timeout: 10000,
   application_name: "tourism-nfc-schema-readonly",
@@ -56,6 +57,7 @@ try {
         AND tgname='guard_research_entry_binding' AND NOT tgisinternal AND tgenabled='O'
     )
   `);
+  rows.push(...(await client.query(researchGrantReleaseChecks)).rows);
   await client.query("ROLLBACK");
   for (const row of rows) console.log(`${row.passed ? "PASS" : "MISSING"} ${row.check_name}`);
   if (rows.some((row) => !row.passed)) process.exitCode = 1;

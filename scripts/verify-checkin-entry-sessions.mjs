@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import pg from "pg";
+import { researchGrantReleaseChecks } from "./research-grant-release-checks.mjs";
 
 const connectionString = process.env.ENTRY_SESSION_TEST_DATABASE_URL;
 if (!connectionString) throw new Error("ENTRY_SESSION_TEST_DATABASE_URL is required");
@@ -483,6 +484,32 @@ try {
     await assert.rejects(atomicAccept(),/permission denied/); checks++;
     await db.query('RESET ROLE');
   }
+  const releaseChecks = async () => (await db.query(researchGrantReleaseChecks)).rows;
+  const healthy = await releaseChecks();
+  assert.equal(healthy.length,25); checks++;
+  assert.deepEqual(healthy.filter(row => !row.passed),[]); checks++;
+  const mutations = [
+    ['GRANT EXECUTE ON FUNCTION public.resolve_research_browser_grant(text,uuid) TO anon',
+      'research-rpc-service-only:resolve_research_browser_grant(text,uuid)'],
+    ['REVOKE EXECUTE ON FUNCTION public.cleanup_expired_research_browser_grants(integer) FROM service_role',
+      'research-rpc-service-only:cleanup_expired_research_browser_grants(integer)'],
+    ['ALTER TABLE public.research_browser_grants DISABLE ROW LEVEL SECURITY', 'research-grants-rls'],
+    ['GRANT SELECT(browser_token_hash) ON public.research_browser_grants TO authenticated',
+      'research-grants-no-direct-access:authenticated'],
+    ['ALTER FUNCTION public.resolve_research_browser_grant(text,uuid) SET search_path=public',
+      'research-rpc-definer-path:resolve_research_browser_grant(text,uuid)'],
+    ['DROP INDEX public.idx_research_browser_grants_expiry', 'research-grants-index:idx_research_browser_grants_expiry'],
+    ['DROP FUNCTION public.cleanup_expired_research_browser_grants(integer)',
+      'research-rpc:cleanup_expired_research_browser_grants(integer)'],
+  ];
+  for (const [mutation, expected] of mutations) {
+    await db.query('BEGIN');
+    try {
+      await db.query(mutation);
+      assert.equal((await releaseChecks()).find(row => row.check_name === expected)?.passed,false); checks++;
+    } finally { await db.query('ROLLBACK'); }
+  }
+  assert.deepEqual((await releaseChecks()).filter(row => !row.passed),[]); checks++;
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);
