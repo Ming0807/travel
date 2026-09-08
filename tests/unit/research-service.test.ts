@@ -34,7 +34,7 @@ const guards = vi.hoisted(() => ({
 }));
 const entry = vi.hoisted(() => ({ resolveCheckinFlow: vi.fn() }));
 const browserGrant = vi.hoisted(() => ({ read: vi.fn(), resolve: vi.fn(), accept: vi.fn() }));
-vi.mock("@/lib/auth/research-browser", () => ({ readResearchBrowserToken: browserGrant.read, hashResearchBrowserToken: () => "a".repeat(64) }));
+vi.mock("@/lib/auth/research-browser", () => ({ readResearchBrowserToken: browserGrant.read, hashResearchBrowserToken: () => "a".repeat(64), bindLegacyResearchEntryGrant: async()=>false }));
 vi.mock("@/lib/repositories/research-browser-grant.repository", () => ({ resolveResearchBrowserContext: browserGrant.resolve, acceptResearchBrowserInvitation: browserGrant.accept }));
 vi.mock("@/lib/config/checkin-entry", () => ({getCheckinEntryConfig:()=>({sessionsEnabled:true,hashSecret:"s".repeat(32)})}));
 vi.mock("@/lib/services/checkin-entry.service", () => entry);

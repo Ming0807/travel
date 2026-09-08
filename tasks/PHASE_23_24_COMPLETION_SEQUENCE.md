@@ -301,3 +301,11 @@ no browser cookie is issued by a live route and no production SQL was applied.
 Verification: 37 focused service/resolver tests, TypeScript, scoped ESLint and
 whitespace checks passed. No new full build at this narrow service checkpoint;
 the preceding build is not claimed as current end-to-end activation evidence.
+
+September 8 S3 legacy entry preparation: atomic acceptance now attempts verified
+binding of an existing entry-scoped legacy credential using both token hashes and
+exact entry/session readback. Old cookies are never deleted during preparation.
+Missing or mismatched provenance cannot be inferred and atomic refusal remains
+authoritative. 46 focused service/auth tests passed. No new SQL or browser-cookie
+provisioning; no rollout activation or full-schema end-to-end claim.
+TypeScript and scoped ESLint passed; no new full build for this incremental helper.

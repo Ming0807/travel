@@ -2,7 +2,20 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { bindResearchBrowserGrant, resolveResearchBrowserContext } from "@/lib/repositories/research-browser-grant.repository";
-import { clearResearchVisitCredentials, getResearchVisitCredentials, hashResearchToken } from "@/lib/auth/research-session";
+import { clearResearchVisitCredentials, getResearchVisitCredentials, getResearchSessionCredentials, hashResearchToken } from "@/lib/auth/research-session";
+
+export async function bindLegacyResearchEntryGrant(entrySessionId: string): Promise<boolean> {
+  const browser = await readResearchBrowserToken();
+  if (!browser) return false;
+  const legacy = await getResearchSessionCredentials(entrySessionId);
+  if (!legacy) return false;
+  const browserTokenHash = hashResearchBrowserToken(browser);
+  if (!await bindResearchBrowserGrant({ browserTokenHash, publicSessionCode: legacy.publicSessionCode,
+    accessTokenHash: hashResearchToken(legacy.accessToken), withdrawalTokenHash: hashResearchToken(legacy.withdrawalToken) })) return false;
+  const grant = await resolveResearchBrowserContext(browserTokenHash, { kind: "entry", id: entrySessionId });
+  // Keep old cookies: a historical session without exact provenance cannot migrate.
+  return Boolean(grant && grant.entrySessionId === entrySessionId && grant.publicSessionCode === legacy.publicSessionCode);
+}
 
 export const RESEARCH_BROWSER_COOKIE = "__Host-sbtp_research_browser";
 const tokenPattern = /^[A-Za-z0-9_-]{43}$/;

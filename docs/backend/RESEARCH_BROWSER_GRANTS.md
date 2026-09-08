@@ -124,3 +124,11 @@ proposed raw tokens to legacy cookies. RPC/readback failure is a safe retryable
 error, not a fallback to rotating legacy acceptance. Requests without the new
 cookie keep the legacy path. Cookie provisioning and automatic migration remain
 unimplemented; this does not activate the new flow for existing users.
+
+Before atomic acceptance, a request with the new browser credential may bind its
+existing entry-scoped legacy proof using both token hashes. Exact entry/session
+readback is required. This preparation never deletes legacy cookies or creates a
+new browser token. Historical sessions without recorded entry provenance cannot
+be guessed into an entry. Missing/denied legacy proof does not bypass the atomic
+RPC's migration-required guard; database errors abort safely without rotating
+legacy credentials. Cookie provisioning remains the activation dependency.

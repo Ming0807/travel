@@ -2,7 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { CHECKIN_BROWSER_COOKIE, hashCheckinBrowserId } from "@/lib/auth/checkin-entry";
 import { getCheckinEntryConfig } from "@/lib/config/checkin-entry";
-import { readResearchBrowserToken, hashResearchBrowserToken } from "@/lib/auth/research-browser";
+import { readResearchBrowserToken, hashResearchBrowserToken, bindLegacyResearchEntryGrant } from "@/lib/auth/research-browser";
 import { acceptResearchBrowserInvitation, resolveResearchBrowserContext } from "@/lib/repositories/research-browser-grant.repository";
 import { resolveCheckinFlow } from "@/lib/services/checkin-entry.service";
 import { principalFromLegacy } from "@/lib/auth/research-principal";
@@ -469,6 +469,8 @@ export async function acceptResearchInvitation(input: ResearchAcceptanceInput) {
     const browserTokenHash = hashResearchBrowserToken(researchBrowser);
     let accepted: Awaited<ReturnType<typeof acceptResearchBrowserInvitation>>;
     try {
+      // Legacy proof may establish a grant; failure never authorizes token takeover.
+      await bindLegacyResearchEntryGrant(parsed.entrySessionId);
       accepted = await acceptResearchBrowserInvitation({
         browserTokenHash, entryBrowserHash: hashCheckinBrowserId(browserId, config.hashSecret),
         entrySessionId: parsed.entrySessionId, studyCode: parsed.studyCode, checkinCode: parsed.checkinCode,

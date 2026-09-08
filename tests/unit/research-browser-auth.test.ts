@@ -1,15 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const store = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn() }));
 const repository = vi.hoisted(() => ({ bindResearchBrowserGrant: vi.fn(), resolveResearchBrowserContext: vi.fn() }));
-const legacy = vi.hoisted(() => ({ getResearchVisitCredentials: vi.fn(), clearResearchVisitCredentials: vi.fn(), hashResearchToken: (value: string) => `hash:${value}` }));
+const legacy = vi.hoisted(() => ({ getResearchSessionCredentials: vi.fn(), getResearchVisitCredentials: vi.fn(), clearResearchVisitCredentials: vi.fn(), hashResearchToken: (value: string) => `hash:${value}` }));
 vi.mock("next/headers", () => ({ cookies: async () => store }));
 vi.mock("@/lib/repositories/research-browser-grant.repository", () => repository);
 vi.mock("@/lib/auth/research-session", () => legacy);
-import { RESEARCH_BROWSER_COOKIE, createResearchBrowserToken, hashResearchBrowserToken, readResearchBrowserToken, writeResearchBrowserToken, migrateResearchVisitCredential } from "@/lib/auth/research-browser";
+import { RESEARCH_BROWSER_COOKIE, createResearchBrowserToken, hashResearchBrowserToken, readResearchBrowserToken, writeResearchBrowserToken, migrateResearchVisitCredential, bindLegacyResearchEntryGrant } from "@/lib/auth/research-browser";
 const visitId="11111111-1111-4111-8111-111111111111";
 const code="22222222-2222-4222-8222-222222222222";
 
 describe("bounded research browser credential", () => {
+  it.each(["matching","wrong-entry","wrong-session","missing-grant","denied"])("binds entry legacy proof only for %s and never deletes cookies",async(scenario)=>{
+    legacy.getResearchSessionCredentials.mockResolvedValue({publicSessionCode:code,accessToken:"access",withdrawalToken:"withdraw"});
+    repository.resolveResearchBrowserContext.mockResolvedValue({publicSessionCode:code,entrySessionId:visitId});
+    if(scenario==="wrong-entry") repository.resolveResearchBrowserContext.mockResolvedValue({publicSessionCode:code,entrySessionId:code});
+    if(scenario==="wrong-session") repository.resolveResearchBrowserContext.mockResolvedValue({publicSessionCode:visitId,entrySessionId:visitId});
+    if(scenario==="missing-grant") repository.resolveResearchBrowserContext.mockResolvedValue(null);
+    if(scenario==="denied") repository.bindResearchBrowserGrant.mockResolvedValue(false);
+    expect(await bindLegacyResearchEntryGrant(visitId)).toBe(scenario==="matching");
+    expect(legacy.getResearchSessionCredentials).toHaveBeenCalledWith(visitId);
+    expect(legacy.clearResearchVisitCredentials).not.toHaveBeenCalled();
+    expect(store.set).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.resetAllMocks();
     store.get.mockReturnValue({ value: "a".repeat(43) });
