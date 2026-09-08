@@ -23,6 +23,15 @@ and the decline link remains actionable. A deliberate 409 produces the expected
 network console error; it is not a JavaScript exception or unexpected regression.
 Screenshots are local QA artifacts under `.tmp/research-browser-*.png`.
 
+## Regression Checkpoint
+The September 8 full Vitest run passed 348 files / 2,564 tests in 480.42s on
+Node 22. This run preceded three additional component regression tests. A focused
+rerun of preparation component, route and config tests then passed 3 files /
+11 tests, including unsupported Web Locks, initial network failure and unmount
+during cookie delivery. The unmount test asserts that lock release waits for
+cookie read-back and neither request receives an abort signal.
+These tests change no runtime code, migration or production flag.
+
 ## Limits
 The endpoint and cookie are mocked; the test cookie is not the production
 `__Host-` Secure cookie. This proves actual browser Web Lock coordination and

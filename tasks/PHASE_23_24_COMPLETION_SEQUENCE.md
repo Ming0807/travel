@@ -21,6 +21,18 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+Current checkpoint (2026-09-08): S3 has exact-context grant reads, atomic
+acceptance, legacy entry-proof preparation and default-off browser provisioning.
+Local Chromium verifies two-tab preparation against a mocked endpoint; this is
+not full HTTPS/database/mobile acceptance. Automatic legacy Visit migration,
+cleanup scheduling and full-schema staging remain open. S3 therefore stays
+unchecked. Earlier dated sections below are historical checkpoints, not the
+current implementation status. See `docs/backend/RESEARCH_BROWSER_GRANTS.md`.
+
+Regression checkpoint: full Vitest run passed 348 files / 2,564 tests. Three
+subsequent browser-preparation lifecycle regressions passed in a focused 3-file /
+11-test rerun. This is local test evidence, not closure of the S3 rollout gates.
+
 - [x] S1: Snapshot active frozen deployment scope at entry; ambiguous/unavailable
   deployment stays unknown. Preserve study/freeze provenance without consent.
 - [x] S2: Share evidence predicates across executive/attraction/peer analytics.

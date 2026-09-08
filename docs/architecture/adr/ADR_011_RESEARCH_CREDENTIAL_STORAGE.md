@@ -1,9 +1,12 @@
 # ADR-011: Bounded Research Browser Credentials
 
 ## Status
-Proposed, 2026-09-07. Database foundation implemented in
-`20260907002000_add_research_browser_grants.sql`; application integration and cookie
-migration are not implemented. Keep the research rollout gate open.
+Proposed, 2026-09-07; implementation checkpoint updated 2026-09-08. Database
+foundation, exact-context server integration, atomic acceptance and default-off
+browser preparation are implemented. Automatic legacy Visit migration, cleanup
+scheduling and full rollout verification remain pending. Keep the research rollout
+gate open; implemented code is not production activation approval.
+See [current readiness](../../backend/RESEARCH_BROWSER_GRANTS.md).
 
 ## Context
 Entry-scoped cookies isolate simultaneous check-in flows. Visit-scoped cookies
@@ -14,7 +17,7 @@ Synthetic measurements using the current payload: 5 Visits = 2,073 bytes;
 No infrastructure limit is assumed from these measurements. The unbounded growth
 itself is incompatible with extended field collection.
 
-Acceptance currently rotates the session's access/withdrawal hashes on retry.
+Legacy acceptance rotates the session's access/withdrawal hashes on retry.
 The grant migration must resolve this explicitly: repeated acceptance must not
 invalidate another live tab or a saved Visit credential. The Visit-link RPC has
 separate first-association/no-op protection; that alone does not fix token rotation.

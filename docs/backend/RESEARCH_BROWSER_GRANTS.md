@@ -1,10 +1,29 @@
 # Research Browser Grants Foundation
 
-Status: database foundation plus server-only adapters. Not wired into application authentication.
+Status (September 8): server integration implemented; browser provisioning is
+default-off. Production activation is not approved. The checkpoints below describe
+incremental implementation, not evidence that rollout gates have passed.
 Migration: `20260907002000_add_research_browser_grants.sql`.
 Context lookup: `20260907004000_resolve_research_grant_context.sql`, after exact
 entry provenance migration `20260907003000_correlate_research_entry_sessions.sql`.
-Atomic acceptance: `20260907005000_accept_research_browser_grant.sql` (dormant).
+Atomic acceptance: `20260907005000_accept_research_browser_grant.sql`.
+
+## Current Readiness
+- Implemented: exact entry/Visit grant resolution, normalized server principals,
+  evaluation/withdrawal ownership checks, grant-aware linking and atomic acceptance.
+- Implemented behind `RESEARCH_BROWSER_GRANTS_ENABLED`: same-origin cookie
+  preparation with cross-tab Web Locks and cookie read-back before consent submit.
+- Implemented compatibility: entry-scoped legacy proof preparation without deleting
+  old cookies. Requests without a browser credential retain legacy acceptance.
+- Pending: automatic legacy Visit migration, historical null-entry recovery,
+  scheduled cleanup and a bounded global/operator credential strategy.
+- Verified locally: 146 PostgreSQL harness assertions with minimal surrounding
+  schema, focused service/component tests, and real Chromium two-tab UI preparation
+  against an intercepted endpoint. See
+  [browser QA](../testing/RESEARCH_BROWSER_PREPARATION_QA.md).
+- Release gates: full-schema staging, real HTTPS cookie/consent flow, authenticated
+  roles, mobile/in-app browsers and rollout/retention review. No production SQL or
+  feature flags were changed by these checks.
 
 ## Contract
 The composite key is a browser credential hash plus research session ID. No raw
@@ -20,7 +39,8 @@ server-side RPC credential hashes and the linked Visit. These are capabilities,
 not chart/API response data: never send them to a client, log or export. Live session
 status, withdrawal and study retention are rechecked. Current token hashes are read
 from the session so credential rotation does not invalidate a previously issued grant.
-This does not yet repair cookie-only callers or initial concurrent acceptance.
+Legacy cookie-only callers remain supported; grant-aware acceptance below handles
+concurrent requests once a stable browser credential has been prepared.
 
 The new browser acceptance RPC checks the independent entry-browser proof, then
 serializes calls per entry. Existing verified grants reuse current session token
@@ -33,7 +53,9 @@ entry UUID cannot take over old/revoked/ambiguous research access.
 This RPC is not a drop-in replacement for cookie-only acceptance: on a replay the
 proposed raw tokens are intentionally not stored. Its caller must resolve the grant,
 not write those proposed tokens into legacy cookies. Stable browser provisioning,
-service integration and explicit legacy migration must precede activation.
+service integration and explicit legacy migration must precede activation. The
+service and preparation path are implemented; remaining migration and QA gates
+are listed above.
 
 Context resolution accepts an exact Visit or entry UUID plus the browser hash,
 restricts to tourist sessions, and reuses the authoritative live-grant resolver.
@@ -59,17 +81,17 @@ cascades grants. Include this metadata window in the retention review before rol
 no participant answers are duplicated here. The scheduled cleanup integration remains
 pending and must use existing authenticated maintenance infrastructure.
 
-## Remaining Integration
+## Legacy Migration Boundary
 `research-browser-grant.repository.ts` validates proof and RPC responses and exposes
 no public server action. `research-browser.ts` provides a fixed-size Secure/HttpOnly
-host-only cookie and a dormant legacy Visit migration helper. It must not be called
-by the live flow until grant-based Visit/entry lookup is integrated. It binds, reads
+host-only cookie and a dormant legacy Visit migration helper. Automatic invocation
+still requires migration/recovery QA even though grant lookup is integrated. It binds, reads
 back the exact Visit, renews the same browser token and only then removes that Visit
 cookie. Failure before removal leaves old credentials untouched. No browser token
 is generated implicitly in migration, avoiding competing initial response tokens.
 
-Issue a stable browser token before concurrent acceptance; add typed server-only
-integrate the atomic acceptance RPC and typed context resolver,
+The preparation endpoint issues a stable browser token before concurrent acceptance;
+the typed atomic acceptance RPC and context resolver are integrated. Complete
 verified migration of existing cookies, selective withdrawal and expiry recovery.
 Do not merely wrap the current rotating-token RPC and claim race safety. Preserve
 unmigrated cookies and compatibility while flags are off. Complete full-schema,
@@ -90,14 +112,14 @@ The typed `acceptResearchBrowserInvitation` repository adapter validates both
 browser proofs, entry identity, proposed hashes and language before RPC execution.
 Success returns only acceptance metadata, never credential hashes. Known refusal
 codes are preserved; malformed/unknown response data and backend errors become
-sanitized error codes. It remains server-only and is not called by live actions.
+sanitized error codes. It remains server-only and is called by grant-aware acceptance.
 This intentionally cannot be consumed as legacy raw-token credentials on replay.
 
 `research-principal.ts` normalizes server capabilities: legacy raw tokens are hashed
 once, while verified grant hashes are used unchanged. Evaluation access, response
 writes, operator task writes and withdrawal now consume this internal principal.
-The live resolver still selects legacy cookies only; no new database dependency or
-grant activation is introduced. Existing participant/status/Visit ownership checks
+The resolver supports exact-context grants with independent legacy proof fallback.
+Provisioning remains default-off. Existing participant/status/Visit ownership checks
 remain in `requireCurrentResearchSession`, not in the capability adapter. Never
 return a principal to a browser or serialize it in page data.
 
@@ -106,7 +128,7 @@ context it reads an existing valid browser cookie and resolves the exact grant.
 Missing browser/grant preserves the independent legacy Visit/global proof path;
 database failures do not fall back. Global/operator selection remains legacy-only.
 All results still pass the session status/participant/Visit-owner checks. No route
-issues the browser cookie yet, and automatic migration stays dormant.
+issues the browser cookie unless provisioning is enabled; automatic migration stays dormant.
 
 Participation discovery for withdrawal now uses the same Visit resolver and checks
 tourist ownership before displaying active participation. Entry-scoped resolution
@@ -114,7 +136,7 @@ also supports invitation suppression and first Visit linking, preserving exact
 entry-cookie selection for legacy callers. A grant-based link does not issue an
 additional Visit cookie; the recorded entry/Visit association is resolved from the
 registry on subsequent requests. Legacy links continue storing their Visit cookie.
-Acceptance/provisioning and automatic legacy migration still require integration.
+Acceptance/provisioning are integrated below; automatic legacy migration is pending.
 
 Acceptance now selects the atomic RPC when an entry-aware request already has a
 valid research browser credential. It independently hashes the validated check-in
@@ -122,8 +144,8 @@ browser ID, retains the study/freeze preflight, and verifies the resulting grant
 by entry and public session code before returning success. It never writes the
 proposed raw tokens to legacy cookies. RPC/readback failure is a safe retryable
 error, not a fallback to rotating legacy acceptance. Requests without the new
-cookie keep the legacy path. Cookie provisioning and automatic migration remain
-unimplemented; this does not activate the new flow for existing users.
+cookie keep the legacy path. Cookie provisioning is default-off and automatic
+migration remains unimplemented; existing users are not automatically switched.
 
 Before atomic acceptance, a request with the new browser credential may bind its
 existing entry-scoped legacy proof using both token hashes. Exact entry/session
@@ -131,7 +153,7 @@ readback is required. This preparation never deletes legacy cookies or creates a
 new browser token. Historical sessions without recorded entry provenance cannot
 be guessed into an entry. Missing/denied legacy proof does not bypass the atomic
 RPC's migration-required guard; database errors abort safely without rotating
-legacy credentials. Cookie provisioning remains the activation dependency.
+legacy credentials. Default-off provisioning and the remaining QA gates control rollout.
 
 ## Default-Off Provisioning
 `RESEARCH_BROWSER_GRANTS_ENABLED` enables preparation on entry-aware invitations.
