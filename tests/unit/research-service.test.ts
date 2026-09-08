@@ -33,11 +33,12 @@ const guards = vi.hoisted(() => ({
   requireTouristVisitAccess: vi.fn(),
 }));
 const entry = vi.hoisted(() => ({ resolveCheckinFlow: vi.fn() }));
-const browserGrant = vi.hoisted(() => ({ read: vi.fn(), resolve: vi.fn() }));
+const browserGrant = vi.hoisted(() => ({ read: vi.fn(), resolve: vi.fn(), accept: vi.fn() }));
 vi.mock("@/lib/auth/research-browser", () => ({ readResearchBrowserToken: browserGrant.read, hashResearchBrowserToken: () => "a".repeat(64) }));
-vi.mock("@/lib/repositories/research-browser-grant.repository", () => ({ resolveResearchBrowserContext: browserGrant.resolve }));
+vi.mock("@/lib/repositories/research-browser-grant.repository", () => ({ resolveResearchBrowserContext: browserGrant.resolve, acceptResearchBrowserInvitation: browserGrant.accept }));
+vi.mock("@/lib/config/checkin-entry", () => ({getCheckinEntryConfig:()=>({sessionsEnabled:true,hashSecret:"s".repeat(32)})}));
 vi.mock("@/lib/services/checkin-entry.service", () => entry);
-vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => ({ value: "browser-token" }) }) }));
+vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => ({ value: "11111111-1111-4111-8111-111111111111" }) }) }));
 
 vi.mock("@/lib/repositories/research.repository", () => repository);
 vi.mock("@/lib/auth/research-session", () => auth);
@@ -62,6 +63,22 @@ import {
 const publicSessionCode = "11111111-1111-4111-8111-111111111111";
 
 describe("research service", () => {
+  it.each(["success","missing-grant","wrong-session","rpc-failure"])("handles atomic acceptance %s without writing proposed cookies",async(scenario)=>{
+    browserGrant.read.mockResolvedValue("browser");
+    entry.resolveCheckinFlow.mockResolvedValue({mode:"session",session:{evidenceScope:"field_observation",researchStudyId:publicSessionCode,researchFrozenAt:"2026-09-01T00:00:00Z"}});
+    repository.getActiveResearchInvitation.mockResolvedValue({studyId:publicSessionCode,frozenAt:"2026-09-01T00:00:00Z",collectionMode:"field_observation"});
+    browserGrant.accept.mockResolvedValue({success:true,already_exists:true,public_session_code:publicSessionCode,collection_mode:"field_observation"});
+    browserGrant.resolve.mockResolvedValue({publicSessionCode});
+    if(scenario==="missing-grant") browserGrant.resolve.mockResolvedValue(null);
+    if(scenario==="wrong-session") browserGrant.resolve.mockResolvedValue({publicSessionCode:"other"});
+    if(scenario==="rpc-failure") browserGrant.accept.mockRejectedValue(new Error("private detail"));
+    const result=acceptResearchInvitation({studyCode:"field-tour-2026",checkinCode:"YALA_01",hasConsented:true,entrySessionId:publicSessionCode});
+    if(scenario==="success") await expect(result).resolves.toEqual({accepted:true,alreadyExists:true,collectionMode:"field_observation"});
+    else await expect(result).rejects.toMatchObject({code:"RESEARCH_UNAVAILABLE"});
+    expect(auth.setResearchSessionCredentials).not.toHaveBeenCalled();
+    expect(auth.setResearchVisitCredentials).not.toHaveBeenCalled();
+    expect(repository.acceptResearchInvitation).not.toHaveBeenCalled();
+  });
   it("links an owned entry grant without creating a Visit cookie", async () => {
     browserGrant.read.mockResolvedValue("browser");
     browserGrant.resolve.mockResolvedValue({publicSessionCode,accessTokenHash:"access-hash",withdrawalTokenHash:"withdraw-hash",visitId:null,entrySessionId:publicSessionCode});
@@ -198,6 +215,7 @@ describe("research service", () => {
     vi.clearAllMocks();
     browserGrant.read.mockReset();
     browserGrant.resolve.mockReset();
+    browserGrant.accept.mockReset();
     auth.getResearchOperationalSessionToken.mockResolvedValue("operational-token");
     auth.createResearchCredentials.mockReturnValue({
       publicSessionCode,

@@ -115,3 +115,12 @@ entry-cookie selection for legacy callers. A grant-based link does not issue an
 additional Visit cookie; the recorded entry/Visit association is resolved from the
 registry on subsequent requests. Legacy links continue storing their Visit cookie.
 Acceptance/provisioning and automatic legacy migration still require integration.
+
+Acceptance now selects the atomic RPC when an entry-aware request already has a
+valid research browser credential. It independently hashes the validated check-in
+browser ID, retains the study/freeze preflight, and verifies the resulting grant
+by entry and public session code before returning success. It never writes the
+proposed raw tokens to legacy cookies. RPC/readback failure is a safe retryable
+error, not a fallback to rotating legacy acceptance. Requests without the new
+cookie keep the legacy path. Cookie provisioning and automatic migration remain
+unimplemented; this does not activate the new flow for existing users.

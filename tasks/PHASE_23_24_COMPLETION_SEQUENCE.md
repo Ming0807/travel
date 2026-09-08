@@ -291,3 +291,13 @@ cookie behavior. 61 focused research tests, TypeScript and scoped lint passed.
 No new SQL. Browser cookie provisioning, atomic acceptance action and automatic
 migration remain off/unconnected; this is not end-to-end rollout completion.
 Production build passed with 63 static pages at this checkpoint.
+
+September 8 S3 acceptance integration: entry-aware acceptance with an existing
+research browser cookie now uses the atomic RPC, independent entry-browser proof,
+and exact grant readback. No proposed raw token is written on replay; failed
+readback/RPC does not fall back to the rotating legacy path. No-cookie callers
+retain the existing flow. Provisioning and automatic migration are still pending;
+no browser cookie is issued by a live route and no production SQL was applied.
+Verification: 37 focused service/resolver tests, TypeScript, scoped ESLint and
+whitespace checks passed. No new full build at this narrow service checkpoint;
+the preceding build is not claimed as current end-to-end activation evidence.

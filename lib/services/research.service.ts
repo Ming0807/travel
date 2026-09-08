@@ -1,6 +1,9 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { CHECKIN_BROWSER_COOKIE } from "@/lib/auth/checkin-entry";
+import { CHECKIN_BROWSER_COOKIE, hashCheckinBrowserId } from "@/lib/auth/checkin-entry";
+import { getCheckinEntryConfig } from "@/lib/config/checkin-entry";
+import { readResearchBrowserToken, hashResearchBrowserToken } from "@/lib/auth/research-browser";
+import { acceptResearchBrowserInvitation, resolveResearchBrowserContext } from "@/lib/repositories/research-browser-grant.repository";
 import { resolveCheckinFlow } from "@/lib/services/checkin-entry.service";
 import { principalFromLegacy } from "@/lib/auth/research-principal";
 import { resolveResearchEntryPrincipal, resolveResearchPrincipal } from "@/lib/auth/research-principal-resolver";
@@ -457,6 +460,33 @@ export async function acceptResearchInvitation(input: ResearchAcceptanceInput) {
   }
   const operationalSessionToken = parsed.entrySessionId ?? await getResearchOperationalSessionToken();
   const credentials = createResearchCredentials("00000000-0000-4000-8000-000000000000", operationalSessionToken);
+
+  const researchBrowser = parsed.entrySessionId ? await readResearchBrowserToken() : null;
+  if (researchBrowser && parsed.entrySessionId) {
+    const browserId = (await cookies()).get(CHECKIN_BROWSER_COOKIE)?.value;
+    const config = getCheckinEntryConfig();
+    if (!browserId || !config.sessionsEnabled || !config.hashSecret) throw serviceError("RESEARCH_UNAVAILABLE");
+    const browserTokenHash = hashResearchBrowserToken(researchBrowser);
+    let accepted: Awaited<ReturnType<typeof acceptResearchBrowserInvitation>>;
+    try {
+      accepted = await acceptResearchBrowserInvitation({
+        browserTokenHash, entryBrowserHash: hashCheckinBrowserId(browserId, config.hashSecret),
+        entrySessionId: parsed.entrySessionId, studyCode: parsed.studyCode, checkinCode: parsed.checkinCode,
+        operationalSessionHash: hashResearchToken(operationalSessionToken),
+        accessTokenHash: credentials.accessTokenHash, withdrawalTokenHash: credentials.withdrawalTokenHash,
+        language: parsed.language ?? null,
+      });
+      if (accepted.success) {
+        const grant = await resolveResearchBrowserContext(browserTokenHash, { kind: "entry", id: parsed.entrySessionId });
+        if (!grant || grant.publicSessionCode !== accepted.public_session_code) throw new Error("RESEARCH_GRANT_READBACK_FAILED");
+      }
+    } catch {
+      throw serviceError("RESEARCH_UNAVAILABLE");
+    }
+    if (!accepted.success) mapRpcFailure(accepted.error_code);
+    // Replay may retain old hashes: never persist the proposed raw tokens here.
+    return { accepted: true as const, alreadyExists: accepted.already_exists, collectionMode: accepted.collection_mode };
+  }
 
   let result: Awaited<ReturnType<typeof acceptResearchInvitationRpc>>;
   try {
