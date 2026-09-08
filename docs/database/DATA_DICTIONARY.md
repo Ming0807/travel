@@ -1908,3 +1908,26 @@ captures this reference transactionally; once set it is immutable. Study, check-
 code and any linked Visit must match that entry. This supports attraction-visit
 and research evidence integrity; it does not assert physical presence or identify
 a person. See `docs/backend/RESEARCH_VISIT_LINK_INTEGRITY.md`.
+
+### NFC Field Checks (September 8, Unapplied Foundation)
+
+`nfc_field_checks`, migration `20260908000000_add_nfc_field_checks.sql`:
+
+| Column | Type / rule | Meaning |
+|---|---|---|
+| request_id | UUID primary key | Stable submission/retry identity; changed payload cannot reuse it |
+| nfc_tag_id | UUID FK, delete restricted | Existing tag, no duplicate attraction assignment |
+| tag_version / tag_status | Positive integer / lifecycle enum | Immutable tag snapshot at report submission |
+| actor_id | UUID FK admin_users, delete restricted | Authenticated staff reporter, not client-selected |
+| location_note | Trimmed 3-300 characters | Installation/inspection position, no visitor address |
+| device_label | Trimmed 2-120 characters | Tested model/browser label |
+| platform | ios / android / other | Device platform |
+| nfc_result / qr_result | passed / failed / not_tested | Separate staff-reported results, not presence proof |
+| notes | Maximum 1,000 characters | Required explanation when a channel fails |
+| evidence_reference | Maximum 300 characters | Optional internal evidence reference, not media/URL storage |
+| reported_at | Server timestamptz | Submission time, not a historical inspection claim |
+
+At least one channel must be tested. RPC-only inserts, immutable UPDATE/DELETE,
+public RLS denial and service-role SELECT; tag/time/request index supports scoped
+ten-row history pages. No consent/Visit/tag activation is performed. UI and photo
+linkage remain pending. See `docs/backend/NFC_FIELD_CHECK_RECORDS.md`.

@@ -510,6 +510,37 @@ try {
     } finally { await db.query('ROLLBACK'); }
   }
   assert.deepEqual((await releaseChecks()).filter(row => !row.passed),[]); checks++;
+  await db.query(await readFile(new URL('../supabase/migrations/20260908000000_add_nfc_field_checks.sql', import.meta.url),'utf8'));
+  const fieldTag=(await db.query(`INSERT INTO public.nfc_tags(checkin_code_id,label,last_change_reason,created_by,updated_by)
+    VALUES(10,'Field QA','Field QA',$1,$1) RETURNING nfc_tag_id,version`,[actor])).rows[0];
+  const fieldRequest='50000000-0000-4000-8000-000000000001';
+  const fieldArgs=[fieldRequest,fieldTag.nfc_tag_id,fieldTag.version,actor,'Entrance gate','Android Chrome','android','failed','passed','Tag unreadable','QA-001'];
+  const fieldSql='SELECT public.record_nfc_field_check($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) AS id';
+  const fieldWriter=client(); await fieldWriter.connect();
+  try {
+    const responses=await Promise.all([db.query(fieldSql,fieldArgs),fieldWriter.query(fieldSql,fieldArgs)]);
+    assert.deepEqual(responses.map(result=>result.rows[0].id),[fieldRequest,fieldRequest]); checks++;
+  } finally { await fieldWriter.end(); }
+  assert.equal((await db.query('SELECT count(*)::int AS count FROM public.nfc_field_checks')).rows[0].count,1); checks++;
+  await assert.rejects(db.query(fieldSql,fieldArgs.map((value,index)=>index===5?'Other device':value)),/NFC_FIELD_REQUEST_CONFLICT/); checks++;
+  const newFieldArgs=()=>fieldArgs.map((value,index)=>index===0?'50000000-0000-4000-8000-000000000002':value);
+  await assert.rejects(db.query(fieldSql,newFieldArgs().map((value,index)=>index===7?'passed':value)),/NFC_FIELD_PASS_NOT_ELIGIBLE/); checks++;
+  await assert.rejects(db.query(fieldSql,newFieldArgs().map((value,index)=>index===9?'':value)),/check constraint/); checks++;
+  await db.query("UPDATE public.nfc_tags SET label='Changed after inspection',last_change_reason='QA version' WHERE nfc_tag_id=$1",[fieldTag.nfc_tag_id]);
+  assert.equal((await db.query(fieldSql,fieldArgs)).rows[0].id,fieldRequest); checks++;
+  await assert.rejects(db.query(fieldSql,newFieldArgs()),/NFC_VERSION_CONFLICT/); checks++;
+  await rejects(db,"UPDATE public.nfc_field_checks SET notes='rewrite'",/NFC_FIELD_HISTORY_IMMUTABLE/);
+  await rejects(db,'DELETE FROM public.nfc_field_checks',/NFC_FIELD_HISTORY_IMMUTABLE/);
+  for(const role of ['anon','authenticated']) {
+    await db.query(`SET ROLE ${role}`);
+    await assert.rejects(db.query(fieldSql,fieldArgs),/permission denied/); checks++;
+    await rejects(db,'SELECT * FROM public.nfc_field_checks',/permission denied/);
+    await db.query('RESET ROLE');
+  }
+  await db.query('SET ROLE service_role');
+  assert.equal((await db.query(fieldSql,fieldArgs)).rows[0].id,fieldRequest); checks++;
+  await rejects(db,"UPDATE public.nfc_field_checks SET notes='rewrite'",/permission denied/);
+  await db.query('RESET ROLE');
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);

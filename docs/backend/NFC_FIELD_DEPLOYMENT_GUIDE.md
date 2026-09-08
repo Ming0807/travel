@@ -19,6 +19,8 @@ Record site/spot, tag ID, installation reference, inspector, date/time, device,
 OS/browser, actual destination URL, QR fallback result and any failures. Keep
 installation photos free of identifiable visitors. The installation-record UI
 is not complete; retain approved operational evidence separately until then.
+The append-only database/service foundation is documented in
+`NFC_FIELD_CHECK_RECORDS.md`; its new September 8 migration is not production-approved.
 
 Test supported iPhone and Android devices, guest and signed-in flows, NFC/QR
 fallback, weak connection, retry, browser handoff and certificate completion.

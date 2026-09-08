@@ -70,6 +70,13 @@ disposable localhost database. Server and database container were stopped afterw
 
 ## S1/S2 Verification
 
+S5 foundation checkpoint (September 8): added append-only staff field-check records,
+separate NFC/QR outcomes, tag-version/status snapshots and request-id retry protection.
+Service permission guards derive the inspector from the authenticated admin; history
+is scoped/paginated. Local PostgreSQL passed 174 assertions. New unapplied migration:
+`20260908000000_add_nfc_field_checks.sql`. UI/evidence photos and full-schema staging
+remain pending, so S5 is not complete. See `docs/backend/NFC_FIELD_CHECK_RECORDS.md`.
+
 September 8 release-verifier checkpoint: expanded the read-only catalog gate from
 14 to 39 checks to cover grant RPC existence/execution privileges, definer search
 paths, table RLS/direct column access and valid indexes. The disposable PostgreSQL
