@@ -2,6 +2,25 @@
 
 ## 1. Document Purpose
 
+### Research Browser Grant Maintenance (September 8 Checkpoint)
+
+Implemented endpoint: `GET /api/cron/research-browser-maintenance`, protected by
+`CRON_SECRET` and independently default-off. Scheduler registration remains a
+rollout task; no production schedule or environment value was changed.
+
+The route calls `cleanup_expired_research_browser_grants(500)` exactly once.
+The existing SQL function only removes expired grants whose creation is at least
+30 days old, retaining revoked-grant tombstones through the maximum legacy
+credential lifetime. It does not delete consent, answers, tourist or Visit data.
+Row locks are skipped rather than waiting; repeat invocations are safe and bounded.
+
+Operations: alert on 401/503; inspect repeated `batchFull` results for backlog.
+An authorized disabled response is an explicit skip, not evidence cleanup ran.
+Do not expose grants/hashes in logs or use deleted counts as tourism metrics.
+The local PostgreSQL harness passes 149 assertions including role denial,
+service-role execution, tombstone retention and cleanup under a held row lock.
+The surrounding schema remains minimal, so full-schema staging is still required.
+
 This document defines background job requirements for the **Southern Border Tourism Data & Intelligence Platform**.
 
 MVP can run without many background jobs, but production readiness requires planning for scheduled tasks, cleanup, summaries, exports, and maintenance.

@@ -337,8 +337,26 @@ try {
   assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(500) AS count')).rows[0].count,0); checks++;
   await db.query("UPDATE public.research_browser_grants SET created_at=now()-interval '31 days'");
   await rejects(db,'SELECT public.cleanup_expired_research_browser_grants(1001)',/RESEARCH_GRANT_CLEANUP_LIMIT_INVALID/);
-  assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(1) AS count')).rows[0].count,1); checks++;
-  assert.equal((await db.query('SELECT count(*)::int AS count FROM public.research_browser_grants')).rows[0].count,1); checks++;
+  for (const role of ['anon', 'authenticated']) {
+    await db.query(`SET ROLE ${role}`);
+    await rejects(db,'SELECT public.cleanup_expired_research_browser_grants(1)',/permission denied/);
+    await db.query('RESET ROLE');
+  }
+  const cleanupLocker=client();
+  await cleanupLocker.connect();
+  try {
+    await cleanupLocker.query('BEGIN');
+    await cleanupLocker.query('SELECT browser_token_hash FROM public.research_browser_grants LIMIT 1 FOR UPDATE');
+    await db.query('SET ROLE service_role');
+    assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(1) AS count')).rows[0].count,1); checks++;
+    assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(500) AS count')).rows[0].count,0); checks++;
+    await db.query('RESET ROLE');
+    assert.equal((await db.query('SELECT count(*)::int AS count FROM public.research_browser_grants')).rows[0].count,1); checks++;
+  } finally {
+    await db.query('RESET ROLE');
+    await cleanupLocker.query('ROLLBACK');
+    await cleanupLocker.end();
+  }
   assert.equal((await db.query('SELECT public.cleanup_expired_research_browser_grants(500) AS count')).rows[0].count,1); checks++;
   // Exact entry binding: use the real wrapper/trigger around a consent-write stub.
   // The stub deliberately returns one session on retry to exercise collision rollback.

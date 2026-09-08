@@ -2,6 +2,17 @@ import "server-only";
 import { z } from "zod";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
+export async function cleanupExpiredResearchBrowserGrants(limit = 500): Promise<number> {
+  const batchLimit = z.number().int().min(1).max(1000).parse(limit);
+  const { data, error } = await createSupabaseServiceRoleClient().rpc("cleanup_expired_research_browser_grants", {
+    p_limit: batchLimit,
+  });
+  if (error) throw new Error("RESEARCH_GRANT_RPC_FAILED");
+  const result = z.number().int().min(0).max(batchLimit).safeParse(data);
+  if (!result.success) throw new Error("RESEARCH_GRANT_RESPONSE_INVALID");
+  return result.data;
+}
+
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const identity = z.object({ browserTokenHash: hash, publicSessionCode: z.uuid() });
 const proof = identity.extend({ accessTokenHash: hash, withdrawalTokenHash: hash });

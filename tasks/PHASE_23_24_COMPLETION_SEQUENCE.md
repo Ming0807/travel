@@ -33,6 +33,18 @@ Regression checkpoint: full Vitest run passed 348 files / 2,564 tests. Three
 subsequent browser-preparation lifecycle regressions passed in a focused 3-file /
 11-test rerun. This is local test evidence, not closure of the S3 rollout gates.
 
+Cleanup checkpoint: implemented a separately default-off cron endpoint, one fixed
+500-row batch, secret authentication and sanitized count-only responses. Scheduler
+registration remains pending; enrollment can be paused independently of retention
+work. Focused repository/config/maintenance tests: 24 passed. Local PostgreSQL:
+149 assertions passed, including retained tombstones, role checks and SKIP LOCKED
+under a held row lock. No new SQL migration or production activation.
+Production build passed (64 generated static pages, new dynamic maintenance route).
+Real local Next server smoke passed: missing bearer 401; valid local-only bearer
+with cleanup disabled 200 plus explicit skip and no-store. No enabled cleanup was
+called against application environment credentials; PostgreSQL tests used only the
+disposable localhost database. Server and database container were stopped afterward.
+
 - [x] S1: Snapshot active frozen deployment scope at entry; ambiguous/unavailable
   deployment stays unknown. Preserve study/freeze provenance without consent.
 - [x] S2: Share evidence predicates across executive/attraction/peer analytics.

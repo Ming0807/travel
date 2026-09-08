@@ -15,8 +15,10 @@ Atomic acceptance: `20260907005000_accept_research_browser_grant.sql`.
   preparation with cross-tab Web Locks and cookie read-back before consent submit.
 - Implemented compatibility: entry-scoped legacy proof preparation without deleting
   old cookies. Requests without a browser credential retain legacy acceptance.
+- Implemented default-off: protected bounded cleanup endpoint; scheduler registration
+  and production retention review remain rollout gates.
 - Pending: automatic legacy Visit migration, historical null-entry recovery,
-  scheduled cleanup and a bounded global/operator credential strategy.
+  cleanup scheduling and a bounded global/operator credential strategy.
 - Verified locally: 146 PostgreSQL harness assertions with minimal surrounding
   schema, focused service/component tests, and real Chromium two-tab UI preparation
   against an intercepted endpoint. See
@@ -78,8 +80,11 @@ Cleanup accepts 1..1000 rows per call, uses expiry order and SKIP LOCKED. Expire
 rows/tombstones are retained until 30 days after grant creation so a removed
 revocation cannot be reissued with a still-valid legacy credential. Session deletion
 cascades grants. Include this metadata window in the retention review before rollout;
-no participant answers are duplicated here. The scheduled cleanup integration remains
-pending and must use existing authenticated maintenance infrastructure.
+no participant answers are duplicated here. The protected maintenance endpoint is
+implemented using the existing cron bearer-authentication pattern. It is separately
+default-off and calls one 500-row batch, with sanitized counts/errors only. It does
+not register or enable a production schedule. See `BACKGROUND_JOBS.md` and
+`RESEARCH_BROWSER_GRANT_CLEANUP_ENABLED` in `ENVIRONMENT.md`.
 
 ## Legacy Migration Boundary
 `research-browser-grant.repository.ts` validates proof and RPC responses and exposes

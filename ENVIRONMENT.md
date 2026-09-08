@@ -176,3 +176,14 @@ Entry-aware invitations prepare a Secure HttpOnly host-only cookie using Web Loc
 and verify delivery before enabling consent. Unsupported/blocked browsers can
 decline research and continue. This flag is server-only; no actual environment
 values were enabled by the agent.
+
+`RESEARCH_BROWSER_GRANT_CLEANUP_ENABLED=false` controls the separate
+`GET /api/cron/research-browser-maintenance` job. Accepts exactly `true`/`false`;
+unset/empty is disabled. It uses the same minimum-32-character `CRON_SECRET`
+bearer protection as Story maintenance. It intentionally does not depend on the
+new-participation flag so retention work can continue while enrollment is paused.
+Enable only after the browser-grant migration, retention review and staging QA.
+No schedule is added to `vercel.json` yet; register the protected endpoint in the
+approved scheduler during rollout. One invocation deletes at most 500 eligible
+grants. Monitor failures and repeated `batchFull: true` results before adjusting
+the schedule. This is not a consent/response deletion job.

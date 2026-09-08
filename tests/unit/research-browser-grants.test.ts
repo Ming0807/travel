@@ -1,12 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase/service-role", () => ({ createSupabaseServiceRoleClient: () => ({ rpc }) }));
-import { acceptResearchBrowserInvitation, bindResearchBrowserGrant, resolveResearchBrowserGrant, resolveResearchBrowserContext, revokeResearchBrowserGrant } from "@/lib/repositories/research-browser-grant.repository";
+import { acceptResearchBrowserInvitation, bindResearchBrowserGrant, resolveResearchBrowserGrant, resolveResearchBrowserContext, revokeResearchBrowserGrant, cleanupExpiredResearchBrowserGrants } from "@/lib/repositories/research-browser-grant.repository";
 const code = "11111111-1111-4111-8111-111111111111";
 const hash = "a".repeat(64);
 
 describe("research browser grant repository", () => {
   beforeEach(() => vi.resetAllMocks());
+  it("cleans one bounded batch and accepts only a valid deletion count", async () => {
+    rpc.mockResolvedValue({ data: 500, error: null });
+    expect(await cleanupExpiredResearchBrowserGrants()).toBe(500);
+    expect(rpc).toHaveBeenCalledWith("cleanup_expired_research_browser_grants", { p_limit: 500 });
+    rpc.mockResolvedValue({ data: 0, error: null });
+    expect(await cleanupExpiredResearchBrowserGrants(1)).toBe(0);
+    for (const data of [null, "1", -1, 1.5, 501]) {
+      rpc.mockResolvedValue({ data, error: null });
+      await expect(cleanupExpiredResearchBrowserGrants()).rejects.toThrow("RESEARCH_GRANT_RESPONSE_INVALID");
+    }
+  });
+  it("rejects invalid cleanup limits before RPC and sanitizes database failures", async () => {
+    for (const limit of [0, 1001, 1.5, NaN]) {
+      await expect(cleanupExpiredResearchBrowserGrants(limit)).rejects.toThrow();
+    }
+    expect(rpc).not.toHaveBeenCalled();
+    rpc.mockResolvedValue({ data: null, error: { message: "private database details" } });
+    await expect(cleanupExpiredResearchBrowserGrants()).rejects.toThrow("RESEARCH_GRANT_RPC_FAILED");
+  });
   it("validates proof before database calls", async () => {
     await expect(bindResearchBrowserGrant({ browserTokenHash: "bad", publicSessionCode: code, accessTokenHash: hash, withdrawalTokenHash: hash })).rejects.toThrow();
     expect(rpc).not.toHaveBeenCalled();

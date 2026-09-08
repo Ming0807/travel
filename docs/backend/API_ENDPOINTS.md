@@ -14,6 +14,15 @@ Event recording is non-critical and must never block Story reading.
 | Method | Path | Status | Purpose | Protection |
 |---|---|---|---|---|
 | `GET` | `/api/cron/story-engagement-maintenance` | Implemented; production cron registration pending deployment | Aggregate complete Bangkok calendar days, then purge expired raw/dedup/rate records. | `Authorization: Bearer $CRON_SECRET`; production Vercel cron only. |
+| `GET` | `/api/cron/research-browser-maintenance` | Implemented, default-off; scheduler registration pending rollout | Delete one batch of up to 500 expired browser grants after the SQL tombstone retention window. | `Authorization: Bearer $CRON_SECRET` (minimum 32 characters) and `RESEARCH_BROWSER_GRANT_CLEANUP_ENABLED=true`. |
+
+Research maintenance ignores caller-supplied batch parameters. All responses are
+`no-store`: missing/invalid authentication returns 401; an authorized disabled job
+returns 200 with `maintenance: { skipped: true, reason: "disabled" }` and no database
+call; enabled success returns only `deletedGrants`, `batchLimit`, and `batchFull`.
+A full batch signals possible backlog, not an exact remaining count. Zero deletions
+does not prove no eligible rows exist because concurrent locks are skipped.
+Configuration/database failures return sanitized `MAINTENANCE_FAILED` with 503.
 
 ## Admin Content Export Endpoints
 
