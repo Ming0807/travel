@@ -3,8 +3,8 @@
 ## Status
 Proposed, 2026-09-07; implementation checkpoint updated 2026-09-08. Database
 foundation, exact-context server integration, atomic acceptance and default-off
-browser preparation are implemented. Automatic legacy Visit migration, cleanup
-scheduling and full rollout verification remain pending. Keep the research rollout
+browser preparation and opportunistic legacy Visit migration are implemented.
+Cleanup scheduling, historical recovery and full rollout verification remain pending. Keep the research rollout
 gate open; implemented code is not production activation approval.
 See [current readiness](../../backend/RESEARCH_BROWSER_GRANTS.md).
 

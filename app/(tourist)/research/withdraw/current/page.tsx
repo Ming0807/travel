@@ -4,6 +4,8 @@ import { ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 
 import { withdrawResearchSessionAction } from "@/app/actions/research-actions";
 import { hasCurrentResearchParticipation } from "@/lib/services/research.service";
+import { ResearchVisitCredentialMigration } from "@/components/research/ResearchVisitCredentialMigration";
+import { researchBrowserProvisioningEnabled } from "@/lib/config/research-browser";
 
 export default async function ResearchWithdrawalPage({
   searchParams,
@@ -20,6 +22,7 @@ export default async function ResearchWithdrawalPage({
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-12 text-ink">
+      {active && visitId && researchBrowserProvisioningEnabled() ? <ResearchVisitCredentialMigration visitId={visitId} /> : null}
       <div className="mx-auto max-w-xl border border-slate-200 bg-white p-6 sm:p-8">
         <ShieldCheck aria-hidden="true" className="text-teal" size={42} weight="fill" />
         <h1 className="mt-4 text-2xl font-black">ถอนตัวจากการวิจัย</h1>

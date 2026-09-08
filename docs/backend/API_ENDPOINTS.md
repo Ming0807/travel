@@ -24,6 +24,19 @@ A full batch signals possible backlog, not an exact remaining count. Zero deleti
 does not prove no eligible rows exist because concurrent locks are skipped.
 Configuration/database failures return sanitized `MAINTENANCE_FAILED` with 503.
 
+## Research Visit Credential Migration
+
+`POST /api/research/browser/migrate?visitId=<uuid>` is same-origin, no-store and
+default-off under `RESEARCH_BROWSER_GRANTS_ENABLED`. Requires exactly one query
+parameter; duplicate/unknown parameters or invalid UUID return 400, cross-origin
+403, disabled 404. It never creates a browser token implicitly. An existing browser
+cookie and Visit-scoped legacy proof are required, followed by current tourist
+ownership and research-session checks. Exact grant read-back precedes deletion of
+only that Visit cookie; other/global credentials remain intact.
+Returns only `{ migrated: boolean }`; failures return 503 with `migrated: false`.
+False can mean absent/ineligible legacy proof, not evidence that the Visit exists.
+This maintenance endpoint does not accept consent or edit research responses.
+
 ## Admin Content Export Endpoints
 
 Content exports require their module-specific export permission, accept `format=csv|xlsx`, enforce

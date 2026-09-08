@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const store = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn() }));
 const repository = vi.hoisted(() => ({ bindResearchBrowserGrant: vi.fn(), resolveResearchBrowserContext: vi.fn() }));
+const access = vi.hoisted(() => ({ requireTouristVisitAccess: vi.fn(), getResearchSessionForAccess: vi.fn() }));
+vi.mock("@/lib/auth/guards", () => ({ requireTouristVisitAccess: access.requireTouristVisitAccess }));
+vi.mock("@/lib/repositories/research.repository", () => ({ getResearchSessionForAccess: access.getResearchSessionForAccess }));
 const legacy = vi.hoisted(() => ({ getResearchSessionCredentials: vi.fn(), getResearchVisitCredentials: vi.fn(), clearResearchVisitCredentials: vi.fn(), hashResearchToken: (value: string) => `hash:${value}` }));
 vi.mock("next/headers", () => ({ cookies: async () => store }));
 vi.mock("@/lib/repositories/research-browser-grant.repository", () => repository);
@@ -28,6 +31,21 @@ describe("bounded research browser credential", () => {
     legacy.getResearchVisitCredentials.mockResolvedValue({ publicSessionCode: code, accessToken: "access", withdrawalToken: "withdraw" });
     repository.bindResearchBrowserGrant.mockResolvedValue(true);
     repository.resolveResearchBrowserContext.mockResolvedValue({ publicSessionCode: code, visitId });
+    access.requireTouristVisitAccess.mockResolvedValue({});
+    access.getResearchSessionForAccess.mockResolvedValue({ publicSessionCode: code, visitId, participantType: "tourist", status: "consented", withdrawnAt: null });
+  });
+  it.each(["wrong-owner", "wrong-visit", "wrong-type", "withdrawn", "expired", "missing-session"])("does not bind or remove credentials for %s", async (failure) => {
+    if (failure === "wrong-owner") access.requireTouristVisitAccess.mockRejectedValue(new Error("denied"));
+    else if (failure === "missing-session") access.getResearchSessionForAccess.mockResolvedValue(null);
+    else access.getResearchSessionForAccess.mockResolvedValue({
+      publicSessionCode: code, visitId: failure === "wrong-visit" ? code : visitId,
+      participantType: failure === "wrong-type" ? "operator" : "tourist",
+      status: failure === "expired" ? "expired" : "consented",
+      withdrawnAt: failure === "withdrawn" ? "2026-09-08" : null,
+    });
+    await migrateResearchVisitCredential(visitId).catch(() => false);
+    expect(repository.bindResearchBrowserGrant).not.toHaveBeenCalled();
+    expect(legacy.clearResearchVisitCredentials).not.toHaveBeenCalled();
   });
   it("creates fixed-size random credentials and rejects malformed tokens", async () => {
     const first=createResearchBrowserToken();

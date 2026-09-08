@@ -32,6 +32,17 @@ during cookie delivery. The unmount test asserts that lock release waits for
 cookie read-back and neither request receives an abort signal.
 These tests change no runtime code, migration or production flag.
 
+## Visit Migration Checkpoint
+Run `research-migration-qa.js` through the same Playwright CLI fixture. Two real
+Chromium tabs passed one mocked cookie issuance, six serialized requests (prepare,
+verify, migrate per tab), two migration calls only after cookie delivery and no
+page exceptions. A deliberate 503 left the existing button and decline link usable.
+The fixture mocks migration and cannot prove database binding or deletion of the
+real secure legacy cookie. Separate helper tests cover ownership, exact Visit,
+participant/status checks and preservation on failure; staging remains required.
+The research-wide unit rerun passed 27 files / 210 tests. Both original preparation
+and migration two-tab scripts passed after extracting the shared client helper.
+
 ## Limits
 The endpoint and cookie are mocked; the test cookie is not the production
 `__Host-` Secure cookie. This proves actual browser Web Lock coordination and

@@ -177,6 +177,13 @@ and verify delivery before enabling consent. Unsupported/blocked browsers can
 decline research and continue. This flag is server-only; no actual environment
 values were enabled by the agent.
 
+This same flag enables optional Visit-credential migration on authorized evaluation
+and Visit-scoped withdrawal pages. Preparation and migration share one browser lock.
+Migration verifies owner, legacy proof and exact session/Visit read-back before
+removing only that Visit cookie. Errors preserve legacy access and never disable
+the existing form. Global/operator cookies and historical entry provenance are not
+bulk-migrated or guessed. Include these cases in staging before enabling the flag.
+
 `RESEARCH_BROWSER_GRANT_CLEANUP_ENABLED=false` controls the separate
 `GET /api/cron/research-browser-maintenance` job. Accepts exactly `true`/`false`;
 unset/empty is disabled. It uses the same minimum-32-character `CRON_SECRET`

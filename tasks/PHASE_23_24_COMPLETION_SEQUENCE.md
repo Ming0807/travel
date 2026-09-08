@@ -24,10 +24,19 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 Current checkpoint (2026-09-08): S3 has exact-context grant reads, atomic
 acceptance, legacy entry-proof preparation and default-off browser provisioning.
 Local Chromium verifies two-tab preparation against a mocked endpoint; this is
-not full HTTPS/database/mobile acceptance. Automatic legacy Visit migration,
-cleanup scheduling and full-schema staging remain open. S3 therefore stays
+not full HTTPS/database/mobile acceptance. Legacy recovery, cleanup scheduling
+and full-schema staging remain open. S3 therefore stays
 unchecked. Earlier dated sections below are historical checkpoints, not the
 current implementation status. See `docs/backend/RESEARCH_BROWSER_GRANTS.md`.
+
+Visit migration checkpoint: added same-origin strictly Visit-scoped migration and
+optional background invocation from authorized evaluation/withdrawal pages, under
+the existing default-off rollout flag. Server verifies ownership and legacy session
+before bind/read-back/retiring only that Visit cookie. A shared client helper holds
+the Web Lock through preparation and migration. Failure leaves forms usable.
+Research-wide tests passed 27 files / 210 tests; build passed with 65 generated static
+pages. Real Chromium two-tab mocked migration QA passed. Historical/global recovery
+and actual HTTPS/full-schema/mobile validation remain open; no new SQL or flag change.
 
 Regression checkpoint: full Vitest run passed 348 files / 2,564 tests. Three
 subsequent browser-preparation lifecycle regressions passed in a focused 3-file /

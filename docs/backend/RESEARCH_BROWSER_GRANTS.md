@@ -17,7 +17,9 @@ Atomic acceptance: `20260907005000_accept_research_browser_grant.sql`.
   old cookies. Requests without a browser credential retain legacy acceptance.
 - Implemented default-off: protected bounded cleanup endpoint; scheduler registration
   and production retention review remain rollout gates.
-- Pending: automatic legacy Visit migration, historical null-entry recovery,
+- Implemented default-off: opportunistic Visit migration on authorized evaluation
+  and Visit-scoped withdrawal pages, preserving legacy access on failure.
+- Pending: historical null-entry recovery,
   cleanup scheduling and a bounded global/operator credential strategy.
 - Verified locally: 146 PostgreSQL harness assertions with minimal surrounding
   schema, focused service/component tests, and real Chromium two-tab UI preparation
@@ -89,8 +91,13 @@ not register or enable a production schedule. See `BACKGROUND_JOBS.md` and
 ## Legacy Migration Boundary
 `research-browser-grant.repository.ts` validates proof and RPC responses and exposes
 no public server action. `research-browser.ts` provides a fixed-size Secure/HttpOnly
-host-only cookie and a dormant legacy Visit migration helper. Automatic invocation
-still requires migration/recovery QA even though grant lookup is integrated. It binds, reads
+host-only cookie and a legacy Visit migration helper. With the rollout flag enabled,
+authorized evaluation (including completed) and Visit-scoped withdrawal pages run
+optional migration in the background. A shared Web Lock covers preparation,
+cookie verification and migration. Unsupported/failed preparation does not block
+the existing form. The same-origin migration POST accepts exactly one Visit UUID.
+The helper checks current tourist ownership and the legacy session's exact Visit,
+participant type and active/completed status before binding. It binds, reads
 back the exact Visit, renews the same browser token and only then removes that Visit
 cookie. Failure before removal leaves old credentials untouched. No browser token
 is generated implicitly in migration, avoiding competing initial response tokens.
@@ -133,7 +140,7 @@ context it reads an existing valid browser cookie and resolves the exact grant.
 Missing browser/grant preserves the independent legacy Visit/global proof path;
 database failures do not fall back. Global/operator selection remains legacy-only.
 All results still pass the session status/participant/Visit-owner checks. No route
-issues the browser cookie unless provisioning is enabled; automatic migration stays dormant.
+issues the browser cookie unless provisioning is enabled; migration shares this gate.
 
 Participation discovery for withdrawal now uses the same Visit resolver and checks
 tourist ownership before displaying active participation. Entry-scoped resolution
@@ -141,7 +148,7 @@ also supports invitation suppression and first Visit linking, preserving exact
 entry-cookie selection for legacy callers. A grant-based link does not issue an
 additional Visit cookie; the recorded entry/Visit association is resolved from the
 registry on subsequent requests. Legacy links continue storing their Visit cookie.
-Acceptance/provisioning are integrated below; automatic legacy migration is pending.
+Acceptance/provisioning and the optional Visit migration path are integrated below.
 
 Acceptance now selects the atomic RPC when an entry-aware request already has a
 valid research browser credential. It independently hashes the validated check-in
@@ -149,8 +156,8 @@ browser ID, retains the study/freeze preflight, and verifies the resulting grant
 by entry and public session code before returning success. It never writes the
 proposed raw tokens to legacy cookies. RPC/readback failure is a safe retryable
 error, not a fallback to rotating legacy acceptance. Requests without the new
-cookie keep the legacy path. Cookie provisioning is default-off and automatic
-migration remains unimplemented; existing users are not automatically switched.
+cookie keep the legacy path. Provisioning and opportunistic Visit migration are
+default-off; no bulk migration or cookie eviction occurs.
 
 Before atomic acceptance, a request with the new browser credential may bind its
 existing entry-scoped legacy proof using both token hashes. Exact entry/session

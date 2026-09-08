@@ -1,6 +1,9 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+import { z } from "zod";
+import { requireTouristVisitAccess } from "@/lib/auth/guards";
+import { getResearchSessionForAccess } from "@/lib/repositories/research.repository";
 import { bindResearchBrowserGrant, resolveResearchBrowserContext } from "@/lib/repositories/research-browser-grant.repository";
 import { clearResearchVisitCredentials, getResearchVisitCredentials, getResearchSessionCredentials, hashResearchToken } from "@/lib/auth/research-session";
 
@@ -40,10 +43,16 @@ export async function writeResearchBrowserToken(token: string) {
 }
 
 export async function migrateResearchVisitCredential(visitId: string): Promise<boolean> {
+  z.uuid().parse(visitId);
   const browserToken = await readResearchBrowserToken();
   if (!browserToken) return false;
   const legacy = await getResearchVisitCredentials(visitId);
   if (!legacy) return false;
+  await requireTouristVisitAccess(visitId);
+  const session = await getResearchSessionForAccess(legacy.publicSessionCode, hashResearchToken(legacy.accessToken));
+  if (!session || session.publicSessionCode !== legacy.publicSessionCode || session.visitId !== visitId
+    || session.participantType !== "tourist" || session.withdrawnAt
+    || !["consented", "in_progress", "completed"].includes(session.status)) return false;
   const browserTokenHash = hashResearchBrowserToken(browserToken);
   const bound = await bindResearchBrowserGrant({ browserTokenHash, publicSessionCode: legacy.publicSessionCode,
     accessTokenHash: hashResearchToken(legacy.accessToken), withdrawalTokenHash: hashResearchToken(legacy.withdrawalToken) });

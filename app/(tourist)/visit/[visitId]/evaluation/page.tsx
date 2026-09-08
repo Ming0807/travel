@@ -4,6 +4,8 @@ import { CheckCircle, ClipboardText } from "@phosphor-icons/react/dist/ssr";
 
 import { ResearchEvaluationForm } from "@/components/research/ResearchEvaluationForm";
 import { getCurrentResearchEvaluation } from "@/lib/services/research.service";
+import { ResearchVisitCredentialMigration } from "@/components/research/ResearchVisitCredentialMigration";
+import { researchBrowserProvisioningEnabled } from "@/lib/config/research-browser";
 
 export default async function ResearchEvaluationPage({
   params,
@@ -22,6 +24,7 @@ export default async function ResearchEvaluationPage({
   if (evaluation.status === "submitted") {
     return (
       <main className="min-h-screen bg-slate-50 px-4 py-12 text-ink">
+        {researchBrowserProvisioningEnabled() ? <ResearchVisitCredentialMigration visitId={visitId} /> : null}
         <div className="mx-auto max-w-lg border border-slate-200 bg-white p-7 text-center">
           <CheckCircle aria-hidden="true" className="mx-auto text-emerald-700" size={52} weight="fill" />
           <h1 className="mt-4 text-2xl font-black">ส่งแบบประเมินเรียบร้อยแล้ว</h1>
@@ -34,6 +37,7 @@ export default async function ResearchEvaluationPage({
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 pb-32 pt-8 text-ink sm:pt-12">
+      {researchBrowserProvisioningEnabled() ? <ResearchVisitCredentialMigration visitId={visitId} /> : null}
       <div className="mx-auto max-w-2xl">
         <header className="border-b border-slate-300 pb-6">
           <span className="flex size-11 items-center justify-center bg-coral text-white">

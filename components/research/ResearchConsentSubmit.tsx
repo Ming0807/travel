@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { withPreparedResearchBrowser } from "@/lib/services/research-browser.client";
 
 export function ResearchConsentSubmit({ prepareBrowser }: { prepareBrowser: boolean }) {
   const [state, setState] = useState<"loading" | "ready" | "failed">(prepareBrowser ? "loading" : "ready");
@@ -9,14 +10,8 @@ export function ResearchConsentSubmit({ prepareBrowser }: { prepareBrowser: bool
     let active = true;
     async function prepare() {
       try {
-        if (!navigator.locks) throw new Error("LOCKS_UNAVAILABLE");
         // Do not abort the fetch: hold the cross-tab lock until cookie delivery ends.
-        await navigator.locks.request("research-browser-provision", async () => {
-          const response = await fetch("/api/research/browser", { method: "POST", credentials: "same-origin", cache: "no-store" });
-          if (!response.ok || (await response.json()).ready !== true) throw new Error("PREPARATION_FAILED");
-          const check = await fetch("/api/research/browser", { method: "POST", credentials: "same-origin", cache: "no-store", headers: { "x-research-cookie-check": "verify" } });
-          if (!check.ok || (await check.json()).ready !== true) throw new Error("COOKIE_UNAVAILABLE");
-        });
+        await withPreparedResearchBrowser();
         if (active) setState("ready");
       } catch {
         if (active) setState("failed");
