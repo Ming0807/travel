@@ -319,3 +319,12 @@ TypeScript passed. No environment activation or SQL change. Real browser/mobile
 multi-tab and complete-schema staging remain required before enabling the flag.
 Production build passed, generating 64 static pages including the new endpoint.
 No real-device or screenshot verification is claimed for the preparation states.
+
+September 8 preparation browser QA: actual component rendered in Chromium with
+two simultaneous tabs and a delayed mocked endpoint. One cookie issuance, four
+requests and maximum one active request; both submit buttons became ready.
+360/768/1440px overflow checks passed, and ready/failed mobile screenshots were
+inspected. On deliberate 409, consent remains disabled and decline still navigates.
+See `docs/testing/RESEARCH_BROWSER_PREPARATION_QA.md`. This does not verify real
+Secure-cookie delivery, full Next/Supabase flow, or physical mobile browsers.
+No application behavior, environment flags or SQL changed in this QA checkpoint.
