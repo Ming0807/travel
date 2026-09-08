@@ -168,3 +168,13 @@ server-resolved screen filters rather than unrelated browser query parameters.
 change. `getAdminNfcHistoryAction` returns twenty history events with a version
 cursor. These are authenticated Next.js Server Actions, not anonymous REST routes.
 See [NFC Admin Operations](NFC_ADMIN_OPERATIONS.md) for permissions and lifecycle.
+
+## Research Browser Preparation
+
+`POST /api/research/browser`: same-origin only, default-off via
+`RESEARCH_BROWSER_GRANTS_ENABLED`. Issues a missing HttpOnly research browser cookie
+without granting participation or recording consent. Returns `{ ready: true }` only,
+never token data, with `Cache-Control: no-store`. Existing cookies remain unchanged.
+The header `x-research-cookie-check: verify` checks delivery without reissuing.
+Statuses: 403 origin denied, 404 disabled, 409 verification missing cookie,
+503 configuration/write failure. No body or participant data is accepted.

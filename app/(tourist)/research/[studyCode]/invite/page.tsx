@@ -4,6 +4,8 @@ import { CalendarBlank, Clock, Envelope, ShieldCheck } from "@phosphor-icons/rea
 
 import { acceptResearchInvitationAction } from "@/app/actions/research-actions";
 import { getOptionalResearchInvitation } from "@/lib/services/research.service";
+import { ResearchConsentSubmit } from "@/components/research/ResearchConsentSubmit";
+import { researchBrowserProvisioningEnabled } from "@/lib/config/research-browser";
 
 const errors: Record<string, string> = {
   consent_required: "กรุณาทำเครื่องหมายยืนยันหลังจากอ่านรายละเอียดแล้ว",
@@ -37,6 +39,8 @@ export default async function ResearchInvitationPage({
   if (!invitation) notFound();
 
   const returnTo = safeReturnPath(query.returnTo, `/checkin/${checkinCode}/start`);
+  const returnUrl = new URL(returnTo, "https://research.invalid");
+  const prepareBrowser = researchBrowserProvisioningEnabled() && returnUrl.searchParams.has("flow");
   const errorCode = Array.isArray(query.error) ? query.error[0] : query.error;
   const retentionLabel = invitation.retentionUntil
     ? new Intl.DateTimeFormat("th-TH", { dateStyle: "long" }).format(new Date(invitation.retentionUntil))
@@ -108,9 +112,7 @@ export default async function ResearchInvitationPage({
             />
             <span>ฉันอ่านและเข้าใจข้อมูลข้างต้น และยินยอมเข้าร่วมการวิจัยโดยสมัครใจ</span>
           </label>
-          <button type="submit" className="min-h-14 w-full bg-teal px-5 py-3 font-black text-white hover:bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2">
-            ยืนยันเข้าร่วมการวิจัย
-          </button>
+          <ResearchConsentSubmit prepareBrowser={prepareBrowser} />
           <Link href={returnTo} className="flex min-h-12 w-full items-center justify-center border border-slate-300 bg-white px-5 py-3 text-center font-bold text-slate-700 hover:bg-slate-100">
             ไม่เข้าร่วม และสร้างใบประกาศต่อ
           </Link>

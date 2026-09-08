@@ -132,3 +132,15 @@ new browser token. Historical sessions without recorded entry provenance cannot
 be guessed into an entry. Missing/denied legacy proof does not bypass the atomic
 RPC's migration-required guard; database errors abort safely without rotating
 legacy credentials. Cookie provisioning remains the activation dependency.
+
+## Default-Off Provisioning
+`RESEARCH_BROWSER_GRANTS_ENABLED` enables preparation on entry-aware invitations.
+The same-origin POST `/api/research/browser` only issues a missing credential; it
+does not create consent, grants or tourist data and never returns token contents.
+Existing cookies are not rotated/renewed. Responses are no-store. A second request
+must receive the cookie before submit becomes ready. Web Locks serialize cooperating
+tabs until both requests finish; requests are not aborted on component unmount.
+Unsupported locks or blocked cookies leave consent disabled, with decline available.
+No environment flag was changed. Physical/mobile multi-tab verification and legacy
+migration QA remain release gates; mocked lock tests do not prove device behavior.
+The lock coordinates the app UI, not manually crafted requests.

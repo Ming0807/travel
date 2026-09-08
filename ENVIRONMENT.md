@@ -166,3 +166,13 @@ rate-limit continuity; it does not change Story content or tourist records.
 `CRON_SECRET` protects Vercel's daily Story-engagement maintenance route. Use a
 different random value with at least 32 characters. Vercel sends it as
 `Authorization: Bearer $CRON_SECRET`; the route fails closed when it is missing.
+
+## Research Browser Grant Rollout
+
+`RESEARCH_BROWSER_GRANTS_ENABLED=false` by default; accepts exactly `true`/`false`.
+Enabling requires entry sessions and their hash secret, all research/browser-grant
+migrations, and staged multi-tab/mobile QA. Do not enable merely because SQL ran.
+Entry-aware invitations prepare a Secure HttpOnly host-only cookie using Web Locks
+and verify delivery before enabling consent. Unsupported/blocked browsers can
+decline research and continue. This flag is server-only; no actual environment
+values were enabled by the agent.

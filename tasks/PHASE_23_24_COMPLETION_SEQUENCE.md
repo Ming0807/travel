@@ -309,3 +309,13 @@ Missing or mismatched provenance cannot be inferred and atomic refusal remains
 authoritative. 46 focused service/auth tests passed. No new SQL or browser-cookie
 provisioning; no rollout activation or full-schema end-to-end claim.
 TypeScript and scoped ESLint passed; no new full build for this incremental helper.
+
+September 8 S3 provisioning: added default-off server flag, same-origin/no-store
+browser-cookie preparation endpoint, and consent submit preparation under a Web
+Lock. A second request verifies cookie delivery; existing cookies are not rotated.
+Failed preparation leaves decline available and consent disabled. 36 focused
+route/config/service tests plus 3 client preparation tests passed; scoped lint and
+TypeScript passed. No environment activation or SQL change. Real browser/mobile
+multi-tab and complete-schema staging remain required before enabling the flag.
+Production build passed, generating 64 static pages including the new endpoint.
+No real-device or screenshot verification is claimed for the preparation states.
