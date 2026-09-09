@@ -115,3 +115,10 @@ successfully after build regenerated route types. Real local Next server with th
 flag forced false returned 404 `FEATURE_DISABLED` and `private, no-store` for both
 GET and POST. No enabled live-provider request was performed. The local smoke
 server was stopped afterward. No full-suite or real-device acceptance is claimed.
+
+Deletion groundwork: evidence deletions now reject provider-reported failures.
+Cloudinary must return `ok` or `not found` (idempotent retry); Supabase must return
+without an error. Unknown Cloudinary outcomes are not treated as success. These
+checks apply only to the evidence bucket, preserving legacy deletion behavior.
+24 focused storage tests passed. No real files were deleted and no cleanup job
+has been enabled; atomic orphan claims and reconciliation remain required.

@@ -1,8 +1,8 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ env: vi.fn(), bucket: vi.fn(), upload: vi.fn(), signed: vi.fn(), stream: vi.fn(), privateUrl: vi.fn(), publicUrl: vi.fn() }));
+const mocks = vi.hoisted(() => ({ env: vi.fn(), bucket: vi.fn(), upload: vi.fn(), signed: vi.fn(), stream: vi.fn(), privateUrl: vi.fn(), publicUrl: vi.fn(), remove: vi.fn(), destroy: vi.fn() }));
 vi.mock("@/lib/config/server-env", () => ({ getServerEnv: mocks.env }));
-vi.mock("@/lib/supabase/service-role", () => ({ createSupabaseServiceRoleClient: () => ({ storage: { getBucket: mocks.bucket, from: () => ({ upload: mocks.upload, createSignedUrl: mocks.signed }) } }) }));
-vi.mock("cloudinary", () => ({ v2: { config: vi.fn(), uploader: { upload_stream: mocks.stream }, utils: { private_download_url: mocks.privateUrl }, url: mocks.publicUrl } }));
+vi.mock("@/lib/supabase/service-role", () => ({ createSupabaseServiceRoleClient: () => ({ storage: { getBucket: mocks.bucket, from: () => ({ upload: mocks.upload, createSignedUrl: mocks.signed, remove: mocks.remove }) } }) }));
+vi.mock("cloudinary", () => ({ v2: { config: vi.fn(), uploader: { upload_stream: mocks.stream, destroy: mocks.destroy }, utils: { private_download_url: mocks.privateUrl }, url: mocks.publicUrl } }));
 import { uploadPrivateFile, createPrivateFileSignedUrl, deletePrivateFile } from "@/lib/storage/private-files";
 const path = "nfc-evidence/11111111-1111-4111-8111-111111111111.webp";
 beforeEach(() => {
@@ -45,6 +45,25 @@ it("forces Cloudinary authenticated delivery despite a public CMS configuration"
 it("leaves legacy public-image storage behavior unchanged", async () => {
   await uploadPrivateFile({ bucket: "visit-photos", path: "visits/test.webp", data: Buffer.from("image"), contentType: "image/webp" });
   expect(mocks.bucket).not.toHaveBeenCalled(); expect(mocks.upload).toHaveBeenCalledOnce();
+});
+it("does not report successful evidence deletion when Supabase rejects it", async () => {
+  mocks.remove.mockResolvedValue({ error: { message: "private provider details" } });
+  await expect(deletePrivateFile({ bucket: "nfc-evidence", path })).rejects.toThrow("NFC_EVIDENCE_DELETE_FAILED");
+  mocks.remove.mockResolvedValue({ error: null });
+  await expect(deletePrivateFile({ bucket: "nfc-evidence", path })).resolves.toBeUndefined();
+  expect(mocks.remove).toHaveBeenLastCalledWith([path]);
+});
+it("requires a recognized Cloudinary deletion result and permits missing-file retries", async () => {
+  const reference = `cloudinary:image:authenticated:v1:webp:tourism/${path.slice(0, -5)}`;
+  for (const result of [undefined, {}, { result: "error" }]) {
+    mocks.destroy.mockResolvedValue(result);
+    await expect(deletePrivateFile({ bucket: "nfc-evidence", path: reference })).rejects.toThrow("NFC_EVIDENCE_DELETE_FAILED");
+  }
+  for (const result of ["ok", "not found"]) {
+    mocks.destroy.mockResolvedValue({ result });
+    await expect(deletePrivateFile({ bucket: "nfc-evidence", path: reference })).resolves.toBeUndefined();
+  }
+  expect(mocks.destroy).toHaveBeenLastCalledWith(`tourism/${path.slice(0, -5)}`, { resource_type: "image", type: "authenticated", invalidate: true });
 });
 it("preserves Cloudinary public delivery for existing visit media", async () => {
   mocks.env.mockReturnValue({ ...mocks.env(), STORAGE_PROVIDER: "cloudinary" });

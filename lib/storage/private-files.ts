@@ -240,17 +240,21 @@ export async function deletePrivateFile(params: DeletePrivateFileParams) {
 
   if (cloudinaryReference) {
     configureCloudinary();
-    await cloudinary.uploader.destroy(cloudinaryReference.publicId, {
+    const result = await cloudinary.uploader.destroy(cloudinaryReference.publicId, {
       resource_type: cloudinaryReference.resourceType,
       type: cloudinaryReference.deliveryType,
       invalidate: true
     });
+    if (params.bucket === "nfc-evidence" && result?.result !== "ok" && result?.result !== "not found") {
+      throw new Error("NFC_EVIDENCE_DELETE_FAILED");
+    }
     return;
   }
 
   const safePath = assertSafeStoragePath(params.path);
   const supabase = createSupabaseServiceRoleClient();
-  await supabase.storage.from(params.bucket).remove([safePath]);
+  const result = await supabase.storage.from(params.bucket).remove([safePath]);
+  if (params.bucket === "nfc-evidence" && (!result || result.error)) throw new Error("NFC_EVIDENCE_DELETE_FAILED");
 }
 
 export async function createPrivateFileSignedUrl(
