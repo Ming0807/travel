@@ -4,7 +4,30 @@ import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 import { getServerEnv, type ServerEnv } from "@/lib/config/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 
-export type PrivateBucketName = "visit-photos" | "certificate-files" | "export-files" | "southern-border-tourism";
+export type PrivateBucketName = "visit-photos" | "certificate-files" | "export-files" | "southern-border-tourism" | "nfc-evidence";
+
+const evidencePath = /^nfc-evidence\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.webp$/;
+function assertEvidenceBucketIsolation(bucket: PrivateBucketName, path: string) {
+  const key = parseCloudinaryReference(path)?.publicId ?? path;
+  if (bucket !== "nfc-evidence" && (key.startsWith("nfc-evidence/") || key.includes("/nfc-evidence/"))) {
+    throw new Error("NFC_EVIDENCE_BUCKET_MISMATCH");
+  }
+}
+function assertEvidencePath(path: string) {
+  if (!evidencePath.test(path)) throw new Error("NFC_EVIDENCE_PATH_INVALID");
+}
+
+async function assertEvidenceBucketPrivate() {
+  const { data, error } = await createSupabaseServiceRoleClient().storage.getBucket("nfc-evidence");
+  if (error || !data || data.public !== false) throw new Error("NFC_EVIDENCE_BUCKET_NOT_PRIVATE");
+}
+
+function assertEvidenceReference(reference: CloudinaryReference) {
+  const prefix = buildCloudinaryPublicId("nfc-evidence/");
+  const key = reference.publicId.startsWith(prefix) ? reference.publicId.slice(prefix.length) : "";
+  if (reference.deliveryType !== "authenticated" || reference.resourceType !== "image" || reference.format !== "webp"
+    || !evidencePath.test(`nfc-evidence/${key}.webp`)) throw new Error("NFC_EVIDENCE_REFERENCE_INVALID");
+}
 
 type CloudinaryResourceType = "image" | "raw";
 type CloudinaryDeliveryType = "authenticated" | "upload";
@@ -120,6 +143,7 @@ function parseCloudinaryReference(path: string): CloudinaryReference | null {
 async function uploadSupabasePrivateFile(params: UploadPrivateFileParams): Promise<UploadedPrivateFile> {
   const safePath = assertSafeStoragePath(params.path);
   const supabase = createSupabaseServiceRoleClient();
+  if (params.bucket === "nfc-evidence") await assertEvidenceBucketPrivate();
   const { error } = await supabase.storage.from(params.bucket).upload(safePath, params.data, {
     contentType: params.contentType,
     upsert: false
@@ -143,7 +167,7 @@ async function uploadCloudinaryPrivateFile(params: UploadPrivateFileParams): Pro
   const env = getServerEnv();
   configureCloudinary(env);
 
-  const deliveryType = env.CLOUDINARY_DELIVERY_TYPE;
+  const deliveryType = params.bucket === "nfc-evidence" ? "authenticated" : env.CLOUDINARY_DELIVERY_TYPE;
   const publicId = buildCloudinaryPublicId(safePath, env);
 
   const result = await new Promise<UploadApiResponse>((resolve, reject) => {
@@ -188,6 +212,11 @@ async function uploadCloudinaryPrivateFile(params: UploadPrivateFileParams): Pro
 }
 
 export async function uploadPrivateFile(params: UploadPrivateFileParams): Promise<UploadedPrivateFile> {
+  assertEvidenceBucketIsolation(params.bucket, params.path);
+  if (params.bucket === "nfc-evidence") {
+    assertEvidencePath(params.path);
+    if (params.contentType !== "image/webp") throw new Error("NFC_EVIDENCE_TYPE_INVALID");
+  }
   const provider = getServerEnv().STORAGE_PROVIDER;
 
   if (provider === "cloudinary") {
@@ -202,7 +231,12 @@ export async function uploadPrivateFile(params: UploadPrivateFileParams): Promis
 }
 
 export async function deletePrivateFile(params: DeletePrivateFileParams) {
+  assertEvidenceBucketIsolation(params.bucket, params.path);
   const cloudinaryReference = parseCloudinaryReference(params.path);
+  if (params.bucket === "nfc-evidence") {
+    if (cloudinaryReference) assertEvidenceReference(cloudinaryReference);
+    else assertEvidencePath(params.path);
+  }
 
   if (cloudinaryReference) {
     configureCloudinary();
@@ -224,7 +258,13 @@ export async function createPrivateFileSignedUrl(
   path: string,
   ttlSeconds = getServerEnv().CERTIFICATE_SIGNED_URL_TTL_SECONDS
 ) {
+  assertEvidenceBucketIsolation(bucket, path);
   const cloudinaryReference = parseCloudinaryReference(path);
+  if (bucket === "nfc-evidence") {
+    if (!Number.isInteger(ttlSeconds) || ttlSeconds < 1 || ttlSeconds > 300) throw new Error("NFC_EVIDENCE_TTL_INVALID");
+    if (cloudinaryReference) assertEvidenceReference(cloudinaryReference);
+    else { assertEvidencePath(path); await assertEvidenceBucketPrivate(); }
+  }
 
   if (cloudinaryReference) {
     configureCloudinary();

@@ -21,6 +21,14 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+September 9 S5 storage checkpoint: the existing private-file adapter now reserves
+an evidence namespace, verifies Supabase bucket privacy, forces authenticated
+Cloudinary delivery and bounds evidence link lifetime to five minutes. Public CMS
+media selection must not be used for these photos. This is adapter groundwork,
+not an upload workflow: bucket provisioning, metadata/report linkage, guarded
+upload/preview, mobile controls and provider/staging checks remain open. No SQL
+or production flags changed. See `docs/security/NFC_EVIDENCE_STORAGE.md`.
+
 Current checkpoint (2026-09-08): S3 has exact-context grant reads, atomic
 acceptance, legacy entry-proof preparation and default-off browser provisioning.
 Local Chromium verifies two-tab preparation against a mocked endpoint; this is

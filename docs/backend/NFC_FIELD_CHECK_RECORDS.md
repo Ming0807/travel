@@ -4,6 +4,10 @@ Status: database/service foundation and admin form/history implemented. Evidence
 linkage and full-schema staging remain pending. Do not activate this migration in production
 as part of this checkpoint.
 
+The private storage adapter groundwork is documented in
+`docs/security/NFC_EVIDENCE_STORAGE.md`. No photo upload endpoint or bucket
+provisioning is included yet; the current evidence reference remains plain text.
+
 ## Purpose And Boundary
 Staff report an inspection at a known tag. This is operational evidence for
 Attractions Visited data quality, not a tourist Visit, verified physical presence,
@@ -41,7 +45,7 @@ change. Do not drop records to roll back application code.
 - Implemented per-tag inspection form, result controls and paginated history.
 - Request ID stays stable on network retries; corrected reports require a new ID.
 - Add approved media references for optional non-identifying installation photos;
-  do not introduce another upload path or expose private media.
+  reuse image processing and private storage, not the public CMS media picker.
 - Implemented missing-migration, stale-version and failed-save recovery messages.
 - Verify full-schema role access, realistic devices and field acceptance before rollout.
 
