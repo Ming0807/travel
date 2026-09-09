@@ -29,11 +29,10 @@ deletion. Do not use the public CMS media picker for installation evidence.
 ## Remaining Release Gates
 
 1. Provision the private bucket and integrate the tested metadata/report RPCs.
-2. Connect client image preparation to the bounded HTTP endpoint;
-   prevent uploads above the accepted request size before platform limits.
+2. Verify client image preparation and bounded HTTP upload on supported devices.
 3. Add orphan cleanup without deleting
    evidence already attached to an immutable report.
-4. Add optional mobile photo controls, clear privacy guidance, and retry recovery.
+4. Verify mobile photo controls and recovery through actual provider/network failures.
 5. Verify real provider privacy, role denial, expired links, and full-schema staging.
 
 Unit tests use mocked providers and prove adapter decisions only. They do not
@@ -73,7 +72,7 @@ documented retention policy must be completed before real uploads are enabled.
 ## Guarded Application Services
 
 `lib/services/nfc-evidence.service.ts` is connected to the default-off
-`/api/admin/nfc/evidence` route; inspection-form integration remains pending.
+`/api/admin/nfc/evidence` route and optional inspection-form picker.
 `uploadNfcEvidence` requires `checkin_code.manage`, takes the inspector only from
 the guard, checks the tag version and metadata schema before remote upload, and
 reuses admin decoding/re-encoding. Input limit is 3 MiB and 24 million pixels;

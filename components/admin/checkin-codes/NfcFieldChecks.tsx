@@ -5,23 +5,27 @@ import { getAdminNfcFieldChecksAction, saveAdminNfcFieldCheckAction } from "@/ap
 import { nfcFieldCheckSchema, type NfcFieldCheckInput } from "@/lib/validation/nfc-field-check";
 import type { AdminNfcTag } from "@/lib/repositories/admin-nfc.repository";
 import type { NfcFieldCheckRecord } from "@/lib/repositories/nfc-field-check.repository";
+import { NfcEvidencePhoto, NfcEvidencePicker } from "@/components/admin/checkin-codes/NfcEvidencePhotos";
 
 const field = "mt-1 min-h-11 w-full min-w-0 rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 disabled:bg-slate-50";
 const button = "inline-flex min-h-11 items-center justify-center gap-2 rounded border border-slate-300 px-4 py-2 text-sm font-bold disabled:opacity-50";
 const results = { not_tested: "ยังไม่ทดสอบ", passed: "ผ่าน", failed: "ไม่ผ่าน" };
 const tones = { not_tested: "bg-slate-100 text-slate-600", passed: "bg-emerald-50 text-emerald-800", failed: "bg-rose-50 text-rose-800" };
 
-export function NfcFieldChecks({ tag, canManage }: { tag: AdminNfcTag; canManage: boolean }) {
-  return <NfcFieldChecksPanel key={`${tag.nfc_tag_id}:${tag.version}`} tag={tag} canManage={canManage} />;
+export function NfcFieldChecks({ tag, canManage, evidenceEnabled = false }: { tag: AdminNfcTag; canManage: boolean; evidenceEnabled?: boolean }) {
+  return <NfcFieldChecksPanel key={`${tag.nfc_tag_id}:${tag.version}:${evidenceEnabled}`} tag={tag} canManage={canManage} evidenceEnabled={evidenceEnabled} />;
 }
 
-function NfcFieldChecksPanel({ tag, canManage }: { tag: AdminNfcTag; canManage: boolean }) {
+function NfcFieldChecksPanel({ tag, canManage, evidenceEnabled }: { tag: AdminNfcTag; canManage: boolean; evidenceEnabled: boolean }) {
   const [pending, start] = useTransition();
   const [message, setMessage] = useState("");
   const [saved, setSaved] = useState(false);
   const [attempt, setAttempt] = useState<NfcFieldCheckInput | null>(null);
   const [history, setHistory] = useState<{ rows: NfcFieldCheckRecord[]; page: number; total: number; pageSize: number } | null>(null);
   const [historyError, setHistoryError] = useState("");
+  const [assetIds, setAssetIds] = useState<string[]>([]);
+  const [photoBlocked, setPhotoBlocked] = useState(false);
+  const [photoReset, setPhotoReset] = useState(0);
   async function load(page = 1) {
     setHistoryError("");
     try {
@@ -47,11 +51,13 @@ function NfcFieldChecksPanel({ tag, canManage }: { tag: AdminNfcTag; canManage: 
       <summary className="min-h-11 cursor-pointer py-2 text-sm font-bold text-orange-800">บันทึกการตรวจครั้งใหม่</summary>
       <form className="mt-3 space-y-4" onSubmit={(event) => {
         event.preventDefault();
+        if (photoBlocked) { setMessage("กรุณารอรูปอัปโหลดเสร็จ หรือยกเลิกรูปที่อัปโหลดไม่สำเร็จ"); return; }
         if (attempt) { if (!saved) submit(attempt); return; }
         const data = new FormData(event.currentTarget);
         const parsed = nfcFieldCheckSchema.safeParse({ requestId: crypto.randomUUID(), tagId: tag.nfc_tag_id, version: tag.version,
           locationNote: data.get("location"), deviceLabel: data.get("device"), platform: data.get("platform"),
-          nfcResult: data.get("nfc"), qrResult: data.get("qr"), notes: data.get("notes"), evidenceReference: data.get("reference") });
+          nfcResult: data.get("nfc"), qrResult: data.get("qr"), notes: data.get("notes"), evidenceReference: data.get("reference"),
+          ...(evidenceEnabled ? { assetIds } : {}) });
         if (!parsed.success) { setMessage(parsed.error.issues[0].message); return; }
         submit(parsed.data);
       }}>
@@ -65,9 +71,10 @@ function NfcFieldChecksPanel({ tag, canManage }: { tag: AdminNfcTag; canManage: 
           </select></label>)}
           <label className="text-sm font-semibold sm:col-span-2">ปัญหาหรือหมายเหตุ<textarea name="notes" rows={3} maxLength={1000} className={field} /></label>
         </fieldset>
+        {evidenceEnabled && <NfcEvidencePicker key={photoReset} tagId={tag.nfc_tag_id} version={tag.version} disabled={pending || attempt !== null} onChange={setAssetIds} onBlockedChange={setPhotoBlocked} />}
         <div className="flex flex-wrap gap-2">
-          {!saved && <button disabled={pending} className={`${button} border-orange-700 bg-orange-700 text-white hover:bg-orange-800`}><CheckCircle size={18} />{pending ? "กำลังบันทึก" : attempt ? "ลองส่งรายการเดิมอีกครั้ง" : "บันทึกผลตรวจ"}</button>}
-          {attempt && <button type="button" disabled={pending} className={button} onClick={() => { setAttempt(null); setSaved(false); setMessage(""); }}>เริ่มรายการใหม่</button>}
+          {!saved && <button disabled={pending || photoBlocked} className={`${button} border-orange-700 bg-orange-700 text-white hover:bg-orange-800`}><CheckCircle size={18} />{pending ? "กำลังบันทึก" : attempt ? "ลองส่งรายการเดิมอีกครั้ง" : "บันทึกผลตรวจ"}</button>}
+          {attempt && <button type="button" disabled={pending} className={button} onClick={() => { setAttempt(null); setSaved(false); setMessage(""); setAssetIds([]); setPhotoBlocked(false); setPhotoReset(value => value + 1); }}>เริ่มรายการใหม่</button>}
         </div>
         {attempt && !saved && <p className="text-xs leading-5 text-slate-600">ก่อนเริ่มรายการใหม่ กรุณาตรวจประวัติ รายการก่อนหน้าอาจบันทึกสำเร็จแล้ว</p>}
         {message && <p role="status" className="text-sm leading-6 text-slate-800">{message}</p>}
@@ -86,6 +93,7 @@ function NfcFieldChecksPanel({ tag, canManage }: { tag: AdminNfcTag; canManage: 
         <div className="flex flex-wrap gap-2">{(["nfc", "qr"] as const).map((channel) => <span key={channel} className={`rounded px-2 py-1 text-xs font-bold ${tones[row[`${channel}_result`] ]}`}>{channel.toUpperCase()}: {results[row[`${channel}_result`]]}</span>)}</div>
         {row.notes && <p className="whitespace-pre-wrap break-words leading-6">{row.notes}</p>}
         {row.evidence_reference && <p className="break-all text-xs text-slate-500">หลักฐาน: {row.evidence_reference}</p>}
+        {evidenceEnabled && !!row.photos?.length && <div className="grid gap-3 sm:grid-cols-3">{row.photos.map(photo => <NfcEvidencePhoto key={photo.asset_id} assetId={photo.asset_id} tagId={tag.nfc_tag_id} position={photo.position} />)}</div>}
         <details><summary className="cursor-pointer py-2 text-xs text-slate-500">ข้อมูลอ้างอิงการตรวจ</summary><p className="break-all text-xs leading-5 text-slate-500">รายการ {row.request_id}<br />ผู้บันทึก {row.actor_id}</p></details>
       </li>)}</ol>
       {history.total > history.pageSize && <nav aria-label="หน้าประวัติการตรวจ" className="flex items-center justify-between gap-2 pt-3">

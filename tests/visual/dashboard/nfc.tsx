@@ -14,5 +14,5 @@ createRoot(document.getElementById("root")!).render(<main className="min-h-scree
   <NfcCreateForm checkinCodeId={10} /><h2 className="mt-6 text-lg font-bold">{tag.label}</h2>
   <NfcTagControls tag={tag} payload={`https://tourism.example/c/fixture-entry?nfc=${tag.public_token}`} />
   <NfcTagHistory tagId={tag.nfc_tag_id} version={tag.version} />
-  <NfcFieldChecks tag={tag} canManage />
+  <NfcFieldChecks tag={tag} canManage evidenceEnabled />
 </section></main>);

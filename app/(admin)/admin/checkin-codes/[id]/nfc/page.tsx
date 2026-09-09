@@ -9,6 +9,7 @@ import { listNfcManagement } from "@/lib/services/admin-nfc.service";
 import { buildNfcPayload } from "@/lib/nfc/contract";
 import { adminNfcFiltersSchema } from "@/lib/validation/admin-nfc";
 import { NfcFieldChecks } from "@/components/admin/checkin-codes/NfcFieldChecks";
+import { nfcEvidenceUploadEnabled } from "@/lib/config/nfc-evidence";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "NFC Tags | Admin" };
 const labels = { draft: "ฉบับร่าง", active: "เปิดใช้งาน", inactive: "พักใช้งาน", revoked: "ยกเลิกถาวร" };
@@ -28,6 +29,8 @@ export default async function NfcTagsPage({ params, searchParams }: { params: Pr
   try { result = parsedFilters.success ? await listNfcManagement(parsedFilters.data) : { rows: [], total: 0, page: 1, pageSize: 20 }; }
   catch { unavailable = true; result = { rows: [], total: 0, page: 1, pageSize: 20 }; }
   const canManage = hasPermission(guard.actor, "checkin_code.manage");
+  let evidenceEnabled = false;
+  try { evidenceEnabled = nfcEvidenceUploadEnabled(); } catch { /* Keep existing tag management available on invalid rollout configuration. */ }
   return <ListPageShell admin={guard} eyebrow="Check-in Operations" title={`NFC · ${code.label || code.code}`} description={`${code.attraction_name_th ?? code.code}${code.photo_spot_name_th ? ` · ${code.photo_spot_name_th}` : ""}`} hideCreateButton
     total={result.total} page={result.page} pageSize={result.pageSize}
     headerActions={<Link href="/admin/checkin-codes" className="text-sm font-bold text-orange-800">กลับจุดเช็กอิน</Link>}
@@ -52,7 +55,7 @@ export default async function NfcTagsPage({ params, searchParams }: { params: Pr
           <details className="mt-4"><summary className="min-h-11 cursor-pointer py-2 text-sm font-bold text-orange-800">รายละเอียดและจัดการแท็ก</summary>
             {canManage ? <NfcTagControls tag={tag} payload={payload} /> : <p className="text-sm">สิทธิ์อ่านอย่างเดียว</p>}
             <NfcTagHistory tagId={tag.nfc_tag_id} version={tag.version} />
-            <NfcFieldChecks tag={tag} canManage={canManage} />
+            <NfcFieldChecks tag={tag} canManage={canManage} evidenceEnabled={evidenceEnabled} />
           </details>
         </article>;
       })}

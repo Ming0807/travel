@@ -67,8 +67,8 @@ same transaction, accepts zero to three ordered asset IDs, and rejects attaching
 photos retrospectively to an existing report.
 
 Private upload/preview services now exist with admin guards, bounded WebP
-processing and ID-based previews. They are not yet wired into HTTP routes or
-the inspection form; the currently rendered form still records text references.
+processing and ID-based previews. Default-off HTTP routes and the optional
+inspection-form picker/history preview are wired; rollout acceptance remains open.
 See `docs/security/NFC_EVIDENCE_STORAGE.md` for remaining upload/recovery gates.
 
 ### Photo-Aware Report Contract
@@ -84,7 +84,8 @@ also use the photo RPC, preserving exact request intent across retries.
 When enabled, history includes at most three ordered `{ asset_id, position }`
 items per report, without private paths. When disabled, history uses the original
 selection without the photo relationship. Disabling does not delete evidence.
-The form still has no photo picker or photo-history rendering at this checkpoint.
+The optional picker and on-demand photo-history rendering use this contract under
+the same server-provided evidence flag. Unset/false keeps the original text form.
 
 Verification: 15 focused service/repository/form tests, TypeScript and scoped
 ESLint passed. The pagination test now waits for the transition-disabled control

@@ -21,6 +21,14 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 photo UI checkpoint (September 9): the optional per-tag picker and on-demand
+historical photo previews are wired under the default-off flag. Upload failures
+block submission until retried/cancelled; report retries preserve photo IDs.
+13 focused tests, scoped lint, TypeScript and production build passed. Chromium
+fixture screenshots/overflow checks passed at 360/768/1440px with mocked endpoints.
+See `docs/testing/NFC_EVIDENCE_UI_QA.md`. Orphan reconciliation, private provider
+provisioning and actual staging/device acceptance remain open; S5 is not complete.
+
 September 9 S5 storage checkpoint: the existing private-file adapter now reserves
 an evidence namespace, verifies Supabase bucket privacy, forces authenticated
 Cloudinary delivery and bounds evidence link lifetime to five minutes. Public CMS
