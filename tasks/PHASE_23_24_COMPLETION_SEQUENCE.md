@@ -55,6 +55,12 @@ HTTP gate verification: 38 focused tests, scoped lint, post-build TypeScript and
 production build passed (66 static pages). Actual local Next GET/POST disabled
 smoke returned 404/FEATURE_DISABLED with no-store; no enabled provider upload.
 
+S5 report integration: optional ordered `assetIds` select the atomic photo RPC,
+only under the evidence flag; absent IDs retain the legacy RPC. No failure path
+silently saves a report without its selected photos. Enabled history reads return
+only bounded ordered photo IDs/positions, not paths. UI picker/history rendering
+and orphan cleanup remain open; no new SQL or rollout activation in this patch.
+
 Current checkpoint (2026-09-08): S3 has exact-context grant reads, atomic
 acceptance, legacy entry-proof preparation and default-off browser provisioning.
 Local Chromium verifies two-tab preparation against a mocked endpoint; this is

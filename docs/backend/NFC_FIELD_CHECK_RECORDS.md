@@ -64,9 +64,29 @@ including private-path constraints, immutable metadata, atomic photo claims,
 cross-actor/tag rejection, upload expiry, replay identity and role denial. The
 new `record_nfc_field_check_with_photos` RPC wraps the existing report RPC in the
 same transaction, accepts zero to three ordered asset IDs, and rejects attaching
-photos retrospectively to an existing report. Application integration is pending.
+photos retrospectively to an existing report.
 
 Private upload/preview services now exist with admin guards, bounded WebP
 processing and ID-based previews. They are not yet wired into HTTP routes or
 the inspection form; the currently rendered form still records text references.
 See `docs/security/NFC_EVIDENCE_STORAGE.md` for remaining upload/recovery gates.
+
+### Photo-Aware Report Contract
+
+`saveAdminNfcFieldCheckAction` now accepts optional `assetIds` (zero to three
+distinct UUIDs, ordered). Omitting the field keeps the original report RPC and
+does not require the photo migration. Providing it requires the evidence rollout
+flag and always calls `record_nfc_field_check_with_photos`; errors never fall back
+to a text-only write. The authenticated inspector remains server-derived. Database
+scope, expiry, claim and replay checks are authoritative. Empty explicit arrays
+also use the photo RPC, preserving exact request intent across retries.
+
+When enabled, history includes at most three ordered `{ asset_id, position }`
+items per report, without private paths. When disabled, history uses the original
+selection without the photo relationship. Disabling does not delete evidence.
+The form still has no photo picker or photo-history rendering at this checkpoint.
+
+Verification: 15 focused service/repository/form tests, TypeScript and scoped
+ESLint passed. The pagination test now waits for the transition-disabled control
+to become enabled and verifies the rendered second page. No new full build,
+provider upload or production SQL execution in this report-integration checkpoint.

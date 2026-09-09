@@ -35,3 +35,29 @@ it("bounds history to the exact tag and stable ten-row pages", async () => {
   await expect(listNfcFieldChecks(id, 10001)).rejects.toThrow();
   expect(mocks.from).toHaveBeenCalledTimes(1);
 });
+it("sends ordered photo IDs to only the atomic photo RPC without fallback", async () => {
+  mocks.rpc.mockResolvedValue({ data: id, error: null });
+  expect(await insertNfcFieldCheck({ ...input, assetIds: [id] }, id)).toBe(id);
+  expect(mocks.rpc).toHaveBeenCalledWith("record_nfc_field_check_with_photos", expect.objectContaining({ p_asset_ids: [id], p_actor_id: id }));
+  mocks.rpc.mockResolvedValue({ error: { message: "NFC_EVIDENCE_NOT_AVAILABLE" } });
+  await expect(insertNfcFieldCheck({ ...input, assetIds: [id] }, id)).rejects.toThrow("NFC_EVIDENCE_NOT_AVAILABLE");
+  expect(mocks.rpc).toHaveBeenCalledTimes(2);
+  expect(mocks.rpc.mock.calls.every(call => call[0] === "record_nfc_field_check_with_photos")).toBe(true);
+});
+it("rejects duplicate and oversized photo lists before making any write", async () => {
+  await expect(insertNfcFieldCheck({ ...input, assetIds: [id, id] }, id)).rejects.toThrow();
+  await expect(insertNfcFieldCheck({ ...input, assetIds: [id, id, id, id] }, id)).rejects.toThrow();
+  expect(mocks.rpc).not.toHaveBeenCalled();
+});
+it("includes only bounded ordered photo identifiers in enabled history", async () => {
+  const other = "22222222-2222-4222-8222-222222222222";
+  mocks.range.mockResolvedValue({ data: [{ request_id: id, nfc_tag_id: id, tag_version: 2, tag_status: "active", actor_id: id,
+    location_note: "Gate", device_label: "Android", platform: "android", nfc_result: "passed", qr_result: "passed",
+    notes: "", evidence_reference: "", reported_at: "2026-09-09T00:00:00Z",
+    photos: [{ asset_id: other, position: 2 }, { asset_id: id, position: 1 }],
+  }], count: 1, error: null });
+  const result = await listNfcFieldChecks(id, 1, true);
+  expect(result.rows[0].photos?.map(photo => photo.asset_id)).toEqual([id, other]);
+  expect(mocks.select.mock.calls[0][0]).toContain("photos:nfc_field_check_photos(asset_id,position)");
+  expect(mocks.select.mock.calls[0][0]).not.toContain("storage_path");
+});

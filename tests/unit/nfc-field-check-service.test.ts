@@ -1,5 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ permission: vi.fn(), insert: vi.fn(), list: vi.fn() }));
+const mocks = vi.hoisted(() => ({ permission: vi.fn(), insert: vi.fn(), list: vi.fn(), enabled: vi.fn() }));
+vi.mock("@/lib/config/nfc-evidence", () => ({ nfcEvidenceUploadEnabled: mocks.enabled }));
 vi.mock("@/lib/auth/guards", () => ({ requirePermission: mocks.permission }));
 vi.mock("@/lib/repositories/nfc-field-check.repository", () => ({ insertNfcFieldCheck: mocks.insert, listNfcFieldChecks: mocks.list }));
 import { recordNfcFieldCheck, getNfcFieldChecks } from "@/lib/services/nfc-field-check.service";
@@ -25,4 +26,19 @@ it("requires read permission and bounded pagination", async () => {
   expect(mocks.list).toHaveBeenCalledWith(id, 1);
   await expect(getNfcFieldChecks({ tagId: id, page: 0 })).rejects.toThrow();
   expect(mocks.list).toHaveBeenCalledTimes(1);
+});
+it("keeps legacy reports available while photo writes remain default-off", async () => {
+  mocks.enabled.mockReturnValue(false);
+  await recordNfcFieldCheck(input);
+  expect(mocks.enabled).not.toHaveBeenCalled();
+  await expect(recordNfcFieldCheck({ ...input, assetIds: [id] })).rejects.toThrow("NFC_EVIDENCE_DISABLED");
+  expect(mocks.insert).toHaveBeenCalledTimes(1);
+  mocks.enabled.mockReturnValue(true);
+  await recordNfcFieldCheck({ ...input, assetIds: [id] });
+  expect(mocks.insert).toHaveBeenLastCalledWith({ ...input, assetIds: [id] }, id);
+});
+it("requests photo IDs in history only when the photo rollout is enabled", async () => {
+  mocks.enabled.mockReturnValue(true);
+  await getNfcFieldChecks({ tagId: id });
+  expect(mocks.list).toHaveBeenCalledWith(id, 1, true);
 });

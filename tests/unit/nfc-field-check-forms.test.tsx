@@ -41,9 +41,13 @@ it("keeps read-only users out of the write form and shows history errors", async
   expect(mocks.save).not.toHaveBeenCalled();
 });
 it("requests paginated history for the exact tag", async () => {
-  mocks.list.mockResolvedValue({ success: true, rows: [], total: 11, page: 1, pageSize: 10 });
+  mocks.list.mockResolvedValueOnce({ success: true, rows: [], total: 11, page: 1, pageSize: 10 })
+    .mockResolvedValueOnce({ success: true, rows: [], total: 11, page: 2, pageSize: 10 });
   render(<NfcFieldChecks tag={tag} canManage={false} />);
   fireEvent.click(screen.getByRole("button", { name: "โหลดประวัติ" }));
-  fireEvent.click(await screen.findByRole("button", { name: "หน้าถัดไป" }));
+  const next = await screen.findByRole("button", { name: "หน้าถัดไป" });
+  await waitFor(() => expect(next).toBeEnabled());
+  fireEvent.click(next);
   await waitFor(() => expect(mocks.list).toHaveBeenLastCalledWith({ tagId: tag.nfc_tag_id, page: 2 }));
+  expect(await screen.findByText("หน้า 2 / 2")).toBeInTheDocument();
 });

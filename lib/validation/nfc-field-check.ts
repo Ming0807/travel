@@ -8,6 +8,7 @@ export const nfcFieldCheckSchema = z.object({
   platform: z.enum(["ios", "android", "other"]),
   nfcResult: nfcFieldResultSchema, qrResult: nfcFieldResultSchema,
   notes: z.string().trim().max(1000), evidenceReference: z.string().trim().max(300),
+  assetIds: z.array(z.uuid()).max(3).refine(ids => new Set(ids).size === ids.length, "รูปหลักฐานต้องไม่ซ้ำกัน").optional(),
 }).strict().superRefine((value, context) => {
   if (value.nfcResult === "not_tested" && value.qrResult === "not_tested") {
     context.addIssue({ code: "custom", path: ["nfcResult"], message: "กรุณาบันทึกผลทดสอบอย่างน้อยหนึ่งช่องทาง" });

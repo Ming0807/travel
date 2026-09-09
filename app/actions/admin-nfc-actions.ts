@@ -15,6 +15,9 @@ export async function saveAdminNfcFieldCheckAction(input: unknown) {
       NFC_VERSION_CONFLICT: "แท็กมีการเปลี่ยนแปลง กรุณารีเฟรชก่อนบันทึกผลตรวจใหม่",
       NFC_FIELD_REQUEST_CONFLICT: "เลขรายการนี้เคยใช้กับข้อมูลอื่นแล้ว กรุณาตรวจประวัติก่อนเริ่มรายการใหม่",
       NFC_FIELD_PASS_NOT_ELIGIBLE: "ยังบันทึก NFC ผ่านไม่ได้ กรุณาตรวจ URL และสถานะแท็กก่อน",
+      NFC_EVIDENCE_DISABLED: "ยังไม่เปิดบันทึกรูปหลักฐาน กรุณาตรวจสถานะระบบกับผู้ดูแล",
+      NFC_EVIDENCE_NOT_AVAILABLE: "รูปหลักฐานไม่พร้อมใช้งาน อาจหมดอายุหรือผูกกับรายงานอื่นแล้ว กรุณาตรวจประวัติก่อนเริ่มรายการใหม่",
+      NFC_EVIDENCE_INPUT_INVALID: "กรุณาเลือกรูปหลักฐานไม่ซ้ำกันและไม่เกิน 3 รูป",
     };
     return { success: false as const, message: error instanceof Error && messages[error.message]
       ? messages[error.message] : "ยังยืนยันการบันทึกไม่ได้ กรุณาลองส่งรายการเดิมอีกครั้ง หรือตรวจ migration และสิทธิ์" };
