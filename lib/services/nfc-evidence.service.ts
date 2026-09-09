@@ -6,13 +6,14 @@ import { readAdminNfcTag } from "@/lib/repositories/admin-nfc.repository";
 import { readNfcEvidenceAsset, registerNfcEvidenceAsset, type NfcEvidenceMetadata } from "@/lib/repositories/nfc-evidence.repository";
 import { createPrivateFileSignedUrl, uploadPrivateFile } from "@/lib/storage/private-files";
 import { readAndValidateAdminImageFile, renderAdminImageWebpVariant, type UploadableAdminImageFile } from "@/lib/services/admin-image-processing.service";
+import { NFC_EVIDENCE_UPLOAD_MAX_BYTES, NFC_EVIDENCE_STORED_MAX_BYTES } from "@/lib/nfc/evidence-upload-policy";
 
 const uploadContext = z.object({ tagId: z.uuid(), version: z.number().int().positive() }).strict();
-const maxUploadBytes = 3 * 1024 * 1024;
-const maxStoredBytes = 2 * 1024 * 1024;
+const maxUploadBytes = NFC_EVIDENCE_UPLOAD_MAX_BYTES;
+const maxStoredBytes = NFC_EVIDENCE_STORED_MAX_BYTES;
 
 export async function uploadNfcEvidence(input: unknown, file: UploadableAdminImageFile) {
-  const { adminId } = await requirePermission("checkin_code.manage");
+  const { adminId } = await requirePermission("checkin_code.manage", { unauthenticated: "throw" });
   const context = uploadContext.parse(input);
   const tag = await readAdminNfcTag(context.tagId);
   if (!tag) throw new Error("NFC_NOT_FOUND");
@@ -48,7 +49,7 @@ export async function uploadNfcEvidence(input: unknown, file: UploadableAdminIma
 }
 
 export async function getNfcEvidencePreview(input: unknown) {
-  const { adminId } = await requirePermission("checkin_code.read");
+  const { adminId } = await requirePermission("checkin_code.read", { unauthenticated: "throw" });
   const value = z.object({ assetId: z.uuid(), tagId: z.uuid() }).strict().parse(input);
   const asset = await readNfcEvidenceAsset(value.assetId);
   if (!asset || asset.nfc_tag_id !== value.tagId) throw new Error("NFC_EVIDENCE_NOT_AVAILABLE");

@@ -44,6 +44,17 @@ HTTP body limits, private bucket provisioning, upload retry recovery, orphan
 cleanup, report-photo UI and full-provider staging remain open. No SQL applied
 or rollout flags enabled; existing QR/CMS upload paths remain unchanged.
 
+S5 HTTP continuation: added default-off raw-image POST and ID-scoped preview GET
+at `/api/admin/nfc/evidence`. Same-origin write checks, throwing auth guards,
+3-MiB stream limits (including chunked data), no-store responses and sanitized
+errors are implemented. Feature flag remains unset/false; no real uploads,
+production SQL or bucket provisioning were performed. Client preparation,
+report-photo UI, orphan recovery and actual provider acceptance remain open.
+
+HTTP gate verification: 38 focused tests, scoped lint, post-build TypeScript and
+production build passed (66 static pages). Actual local Next GET/POST disabled
+smoke returned 404/FEATURE_DISABLED with no-store; no enabled provider upload.
+
 Current checkpoint (2026-09-08): S3 has exact-context grant reads, atomic
 acceptance, legacy entry-proof preparation and default-off browser provisioning.
 Local Chromium verifies two-tab preparation against a mocked endpoint; this is

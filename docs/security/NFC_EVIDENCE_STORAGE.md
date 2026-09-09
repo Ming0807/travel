@@ -1,6 +1,6 @@
 # NFC Evidence Storage Boundary
 
-Status (2026-09-09): storage adapter, guarded upload/preview services, and tested,
+Status (2026-09-09): storage adapter, default-off HTTP upload/preview, and tested,
 unapplied metadata/linkage SQL.
 No evidence upload endpoint, bucket provisioning or photo workflow is activated.
 This does not complete the S5 installation-photo feature.
@@ -21,17 +21,17 @@ This does not complete the S5 installation-photo feature.
   current provider and delivery behavior.
 
 The adapter is server-only but does not establish user authorization or decode
-image bytes. A future application service must require admin permissions, resolve
-the stored asset by ID, verify its tag/report scope, and re-encode validated image
+image bytes. The application service requires admin permissions, resolves
+the stored asset by ID, verifies its tag/report scope, and re-encodes validated image
 bytes before upload. Never accept arbitrary client storage paths for preview or
 deletion. Do not use the public CMS media picker for installation evidence.
 
 ## Remaining Release Gates
 
 1. Provision the private bucket and integrate the tested metadata/report RPCs.
-2. Connect bounded HTTP body handling/client preparation to the image service;
+2. Connect client image preparation to the bounded HTTP endpoint;
    prevent uploads above the accepted request size before platform limits.
-3. Add permission-checked HTTP upload/preview and orphan cleanup without deleting
+3. Add orphan cleanup without deleting
    evidence already attached to an immutable report.
 4. Add optional mobile photo controls, clear privacy guidance, and retry recovery.
 5. Verify real provider privacy, role denial, expired links, and full-schema staging.
@@ -53,7 +53,7 @@ September 8 field-check migration. Do not run it in production at this checkpoin
 private upload: UUID, tag/version, authenticated inspector, provider/path, SHA-256,
 WebP byte size (at most 2 MiB), and dimensions (at most 2560 on either side).
 Identical registration retries return the same asset; changed payloads conflict.
-The SQL does not verify actual remote bytes: the future upload service must decode,
+The SQL does not verify actual remote bytes: the upload service must decode,
 re-encode, hash and measure them, and must not trust client-supplied metadata.
 
 `record_nfc_field_check_with_photos` accepts up to three ordered unique asset IDs.
@@ -72,13 +72,14 @@ documented retention policy must be completed before real uploads are enabled.
 
 ## Guarded Application Services
 
-`lib/services/nfc-evidence.service.ts` is not connected to a route or UI yet.
+`lib/services/nfc-evidence.service.ts` is connected to the default-off
+`/api/admin/nfc/evidence` route; inspection-form integration remains pending.
 `uploadNfcEvidence` requires `checkin_code.manage`, takes the inspector only from
 the guard, checks the tag version and metadata schema before remote upload, and
 reuses admin decoding/re-encoding. Input limit is 3 MiB and 24 million pixels;
 output is WebP inside 2560 x 2560, at most 2 MiB, quality 82 with one quality-72
 retry. Oversized output is rejected. Original bytes, filenames and EXIF are not
-stored. The endpoint must additionally bound streamed HTTP bytes before parsing.
+stored. The HTTP endpoint bounds streamed bytes before service processing.
 
 Metadata uses server-derived UUID/hash/dimensions/size. The response contains only
 asset ID, dimensions and byte count. A lost registration response is reconciled by
@@ -91,7 +92,7 @@ must be integrated before exposing this service to users.
 than storage paths, and checks the exact tag. Unattached photos require the same
 inspector and a non-future creation time within 24 hours. Attached report photos
 are available to authorized report readers. Links expire after 60 seconds.
-The HTTP wrapper must apply no-store and avoid placing these in public image
+The HTTP wrapper applies no-store; callers must avoid placing these in public image
 optimization/CDN caches. Public CMS and tourist QR upload services are unchanged.
 
 Service/repository/storage checkpoint: 29 focused tests passed, including real
@@ -99,3 +100,19 @@ Sharp JPEG-to-WebP processing, orientation correction and EXIF removal. Provider
 calls and permissions are mocked; actual Supabase relationship resolution and
 remote delivery are still staging gates. Scoped lint and TypeScript passed; no
 full build or live-provider upload is claimed for this unconnected service.
+
+HTTP checkpoint: POST accepts raw binary raster images with exact tag/version
+query parameters, same-origin and admin guards before reading the body. The body
+reader rejects more than 3 MiB even without a length header, rejects inconsistent
+lengths, and cancels oversized streams. Compressed HTTP bodies are not accepted.
+GET returns a short-lived preview URL, never a public cacheable image response.
+Both routes fail closed unless `NFC_EVIDENCE_UPLOAD_ENABLED` is literally `true`.
+The existing limiter is per-instance (10 upload attempts/admin/minute), not a
+distributed storage quota. See `docs/backend/API_ENDPOINTS.md` for the contract.
+
+HTTP verification: 38 focused tests across six files, scoped ESLint, and TypeScript
+passed. Production build passed (66 generated static pages). TypeScript was rerun
+successfully after build regenerated route types. Real local Next server with the
+flag forced false returned 404 `FEATURE_DISABLED` and `private, no-store` for both
+GET and POST. No enabled live-provider request was performed. The local smoke
+server was stopped afterward. No full-suite or real-device acceptance is claimed.

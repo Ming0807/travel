@@ -200,3 +200,28 @@ never token data, with `Cache-Control: no-store`. Existing cookies remain unchan
 The header `x-research-cookie-check: verify` checks delivery without reissuing.
 Statuses: 403 origin denied, 404 disabled, 409 verification missing cookie,
 503 configuration/write failure. No body or participant data is accepted.
+
+## NFC Installation Evidence (Default-Off)
+
+`POST /api/admin/nfc/evidence?tagId=<uuid>&version=<positive integer>` accepts a
+raw JPEG/PNG/WebP body, not multipart or base64. Requires same-origin, admin
+`checkin_code.manage`, and `NFC_EVIDENCE_UPLOAD_ENABLED=true`. Authentication throws
+401/403 rather than redirecting to an HTML login page. Exact query keys only;
+compressed request bodies are rejected. The streaming reader enforces 3 MiB even
+without Content-Length. The existing per-instance limiter permits 10 attempts per
+admin per minute; this is not a distributed quota and needs deployment review.
+
+Success: `{ success: true, data: { assetId, width, height, sizeBytes } }`. No private
+storage path is returned. The client must prepare oversized originals before
+sending; the server revalidates and re-encodes within its own limits.
+
+`GET /api/admin/nfc/evidence?assetId=<uuid>&tagId=<uuid>` requires read permission
+and exact asset/tag scope. Returns `{ success: true, data: { url, expiresIn: 60 } }`.
+Pending assets are uploader-only within 24 hours; attached evidence follows report
+read permissions. Do not pass these URLs to public image optimization or CDN caches.
+
+All responses use `private, no-store`, `nosniff`, and `no-referrer`. Failures follow
+`{ success: false, error: { code, message } }`: 400 invalid input, 401/403 access,
+404 disabled, 409 stale/unavailable, 413 size, 415 type/encoding, 429 rate limit,
+503 sanitized processing/storage/configuration failure. This route stays disabled
+until UI, orphan recovery and full-provider acceptance are complete.

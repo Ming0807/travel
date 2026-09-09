@@ -35,7 +35,7 @@ it("rejects spoofed actor and stale tag before processing", async () => {
 });
 it("stores server-processed private bytes and returns no storage path", async () => {
   const result = await uploadNfcEvidence(context, file);
-  expect(mocks.permission).toHaveBeenCalledWith("checkin_code.manage");
+  expect(mocks.permission).toHaveBeenCalledWith("checkin_code.manage", { unauthenticated: "throw" });
   expect(mocks.decode).toHaveBeenCalledWith(file, { maxSizeMb: 3, maxPixels: 24_000_000 });
   expect(mocks.upload).toHaveBeenCalledWith({ bucket: "nfc-evidence", path: `nfc-evidence/${result.assetId}.webp`, data: Buffer.from("webp"), contentType: "image/webp" });
   expect(mocks.register.mock.calls[0][0]).toMatchObject({ actor_id: id, tag_version: 2, size_bytes: 4, sha256: expect.stringMatching(/^[0-9a-f]{64}$/) });
@@ -77,7 +77,7 @@ it("scopes pending previews to the uploader and a 24-hour window", async () => {
 it("allows authorized report evidence and signs for only 60 seconds", async () => {
   mocks.read.mockResolvedValue({ ...asset(), actor_id: other, created_at: "2020-01-01T00:00:00Z", nfc_field_check_photos: [{ request_id: id }] });
   expect(await getNfcEvidencePreview(preview)).toBe("https://private.test/timed");
-  expect(mocks.permission).toHaveBeenCalledWith("checkin_code.read");
+  expect(mocks.permission).toHaveBeenCalledWith("checkin_code.read", { unauthenticated: "throw" });
   expect(mocks.sign).toHaveBeenCalledWith("nfc-evidence", `nfc-evidence/${id}.webp`, 60);
 });
 it("re-encodes real image bytes with orientation applied and metadata removed", async () => {
