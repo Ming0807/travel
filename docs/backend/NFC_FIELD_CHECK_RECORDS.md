@@ -4,9 +4,9 @@ Status: database/service foundation and admin form/history implemented. Evidence
 linkage and full-schema staging remain pending. Do not activate this migration in production
 as part of this checkpoint.
 
-The private storage adapter groundwork is documented in
-`docs/security/NFC_EVIDENCE_STORAGE.md`. No photo upload endpoint or bucket
-provisioning is included yet; the current evidence reference remains plain text.
+The private storage adapter and additive photo-registry migration are documented
+in `docs/security/NFC_EVIDENCE_STORAGE.md`. No photo upload endpoint or bucket
+provisioning is included yet; the current UI evidence reference remains plain text.
 
 ## Purpose And Boundary
 Staff report an inspection at a known tag. This is operational evidence for
@@ -58,3 +58,10 @@ the existing tag list server render. No NFC/QR lifecycle behavior is changed.
 Local PostgreSQL harness: 174 assertions including simultaneous duplicate submission,
 payload conflict, stale version, immutable history, role denial and preserved retry
 after a tag changes. The harness uses minimal surrounding schema, not full staging.
+
+September 9 photo-registry checkpoint: the expanded harness passes 209 assertions,
+including private-path constraints, immutable metadata, atomic photo claims,
+cross-actor/tag rejection, upload expiry, replay identity and role denial. The
+new `record_nfc_field_check_with_photos` RPC wraps the existing report RPC in the
+same transaction, accepts zero to three ordered asset IDs, and rejects attaching
+photos retrospectively to an existing report. Application integration is pending.

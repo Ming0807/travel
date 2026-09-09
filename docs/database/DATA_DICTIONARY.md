@@ -1929,5 +1929,23 @@ a person. See `docs/backend/RESEARCH_VISIT_LINK_INTEGRITY.md`.
 
 At least one channel must be tested. RPC-only inserts, immutable UPDATE/DELETE,
 public RLS denial and service-role SELECT; tag/time/request index supports scoped
-ten-row history pages. No consent/Visit/tag activation is performed. UI and photo
-linkage remain pending. See `docs/backend/NFC_FIELD_CHECK_RECORDS.md`.
+ten-row history pages. No consent/Visit/tag activation is performed. Admin form and
+history are implemented; photo UI integration remains pending. See
+`docs/backend/NFC_FIELD_CHECK_RECORDS.md`.
+
+### NFC Evidence Assets (September 9, Unapplied)
+
+Migration `20260909000000_add_nfc_evidence_assets.sql` adds:
+
+- `nfc_evidence_assets`: immutable asset UUID, tag FK/version, inspector FK,
+  provider (`supabase`/`cloudinary`), unique private storage path, SHA-256 digest,
+  byte size (1-2,097,152), width/height (1-2560), server creation timestamp.
+- `nfc_field_check_photos`: report FK, globally unique asset FK, position 1-3;
+  primary key `(request_id, position)` preserves ordered report evidence.
+
+All FKs restrict deletion. RLS denies public access; service-role reads and
+service-only registration/report RPCs enforce immutable writes. Tag/time and
+creation-time indexes support scoped reads and future orphan inspection. Photos
+must match report actor/tag/version and be unclaimed within 24 hours when attached;
+claims are atomic with report creation. No visitor identity/GPS is added. These
+tables do not prove physical presence. No bucket or cleanup job is provisioned.

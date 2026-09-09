@@ -20,7 +20,15 @@ OS/browser, actual destination URL, QR fallback result and any failures. Keep
 installation photos free of identifiable visitors. The installation-record UI
 is not complete; retain approved operational evidence separately until then.
 The append-only database/service foundation is documented in
-`NFC_FIELD_CHECK_RECORDS.md`; its new September 8 migration is not production-approved.
+`NFC_FIELD_CHECK_RECORDS.md`. The following additive migrations remain on hold:
+
+1. `20260908000000_add_nfc_field_checks.sql` (after registry/lifecycle migrations).
+2. `20260909000000_add_nfc_evidence_assets.sql` (depends on the first file).
+
+The report form/history exists, but photo upload, private bucket provisioning,
+cleanup and complete staging verification remain unfinished. Do not run these
+migrations merely because the application commits have been pushed. Neither file
+activates tags, enables collection flags or replaces hardware acceptance tests.
 
 Test supported iPhone and Android devices, guest and signed-in flows, NFC/QR
 fallback, weak connection, retry, browser handoff and certificate completion.

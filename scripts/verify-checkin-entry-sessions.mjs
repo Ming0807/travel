@@ -541,6 +541,64 @@ try {
   assert.equal((await db.query(fieldSql,fieldArgs)).rows[0].id,fieldRequest); checks++;
   await rejects(db,"UPDATE public.nfc_field_checks SET notes='rewrite'",/permission denied/);
   await db.query('RESET ROLE');
+  await db.query(await readFile(new URL('../supabase/migrations/20260909000000_add_nfc_evidence_assets.sql', import.meta.url),'utf8'));
+  const evidenceTag=(await db.query('SELECT nfc_tag_id,version FROM public.nfc_tags WHERE nfc_tag_id=$1',[fieldTag.nfc_tag_id])).rows[0];
+  const assetId='60000000-0000-4000-8000-000000000001';
+  const registerSql='SELECT public.register_nfc_evidence_asset($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS id';
+  const assetArgs=[assetId,evidenceTag.nfc_tag_id,evidenceTag.version,actor,'supabase',`nfc-evidence/${assetId}.webp`,'a'.repeat(64),1024,800,600];
+  assert.equal((await db.query(registerSql,assetArgs)).rows[0].id,assetId); checks++;
+  assert.equal((await db.query(registerSql,assetArgs)).rows[0].id,assetId); checks++;
+  await assert.rejects(db.query(registerSql,assetArgs.map((v,i)=>i===7?2048:v)),/NFC_EVIDENCE_REQUEST_CONFLICT/); checks++;
+  const photoSql='SELECT public.record_nfc_field_check_with_photos($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) AS id';
+  const photoRequest='60000000-0000-4000-8000-000000000010';
+  const photoArgs=[photoRequest,evidenceTag.nfc_tag_id,evidenceTag.version,actor,...fieldArgs.slice(4),[assetId]];
+  const photoWriter=client(); await photoWriter.connect();
+  try {
+    const results=await Promise.all([db.query(photoSql,photoArgs),photoWriter.query(photoSql,photoArgs)]);
+    assert.deepEqual(results.map(result=>result.rows[0].id),[photoRequest,photoRequest]); checks++;
+  } finally { await photoWriter.end(); }
+  assert.equal((await db.query('SELECT count(*)::int AS n FROM public.nfc_field_check_photos')).rows[0].n,1); checks++;
+  await assert.rejects(db.query(photoSql,[...photoArgs.slice(0,11),[]]),/NFC_FIELD_REQUEST_CONFLICT/); checks++;
+  await assert.rejects(db.query(photoSql,photoArgs.map((v,i)=>i===0?'60000000-0000-4000-8000-000000000011':v)),/NFC_EVIDENCE_NOT_AVAILABLE/); checks++;
+  const missingRequest='60000000-0000-4000-8000-000000000012';
+  const invalidArgs=[missingRequest,...photoArgs.slice(1,11),['60000000-0000-4000-8000-000000000099']];
+  await assert.rejects(db.query(photoSql,invalidArgs),/NFC_EVIDENCE_NOT_AVAILABLE/); checks++;
+  assert.equal((await db.query('SELECT 1 FROM public.nfc_field_checks WHERE request_id=$1',[missingRequest])).rowCount,0); checks++;
+  await assert.rejects(db.query(photoSql,[missingRequest,...photoArgs.slice(1,11),[assetId,assetId]]),/NFC_EVIDENCE_INPUT_INVALID/); checks++;
+  await rejects(db,"UPDATE public.nfc_evidence_assets SET width=10",/NFC_FIELD_HISTORY_IMMUTABLE/);
+  await rejects(db,'DELETE FROM public.nfc_field_check_photos',/NFC_FIELD_HISTORY_IMMUTABLE/);
+  const cloudAsset='60000000-0000-4000-8000-000000000002';
+  const cloudArgs=[cloudAsset,...assetArgs.slice(1,4),'cloudinary',`cloudinary:image:authenticated:v1:webp:tourism/nfc-evidence/${cloudAsset}`,...assetArgs.slice(6)];
+  await assert.rejects(db.query(registerSql,cloudArgs.map((v,i)=>i===5?v.replace(':authenticated:',':upload:'):v)),/check constraint/); checks++;
+  assert.equal((await db.query(registerSql,cloudArgs)).rows[0].id,cloudAsset); checks++;
+  const wrongActorArgs=[missingRequest,...photoArgs.slice(1,11),[cloudAsset]];
+  wrongActorArgs[3]='60000000-0000-4000-8000-000000000088';
+  await assert.rejects(db.query(photoSql,wrongActorArgs),/NFC_EVIDENCE_NOT_AVAILABLE/); checks++;
+  const wrongTagArgs=[missingRequest,...photoArgs.slice(1,11),[cloudAsset]];
+  wrongTagArgs[1]='60000000-0000-4000-8000-000000000089';
+  await assert.rejects(db.query(photoSql,wrongTagArgs),/NFC_EVIDENCE_NOT_AVAILABLE/); checks++;
+  const expiredAsset='60000000-0000-4000-8000-000000000003';
+  await db.query(`INSERT INTO public.nfc_evidence_assets(asset_id,nfc_tag_id,tag_version,actor_id,provider,storage_path,sha256,size_bytes,width,height,created_at)
+    VALUES($1,$2,$3,$4,'supabase',$5,$6,1024,800,600,now()-interval '25 hours')`,
+    [expiredAsset,evidenceTag.nfc_tag_id,evidenceTag.version,actor,`nfc-evidence/${expiredAsset}.webp`,'a'.repeat(64)]);
+  await assert.rejects(db.query(photoSql,[missingRequest,...photoArgs.slice(1,11),[expiredAsset]]),/NFC_EVIDENCE_NOT_AVAILABLE/); checks++;
+  await assert.rejects(db.query(photoSql,[missingRequest,...photoArgs.slice(1,11),[assetId,cloudAsset,expiredAsset,missingRequest]]),/NFC_EVIDENCE_INPUT_INVALID/); checks++;
+  await assert.rejects(db.query(photoSql,[fieldRequest,...fieldArgs.slice(1),[cloudAsset]]),/NFC_FIELD_REQUEST_CONFLICT/); checks++;
+  await db.query("UPDATE public.nfc_tags SET label='After evidence',last_change_reason='QA evidence retry' WHERE nfc_tag_id=$1",[evidenceTag.nfc_tag_id]);
+  assert.equal((await db.query(photoSql,photoArgs)).rows[0].id,photoRequest); checks++;
+  await assert.rejects(db.query(photoSql,[missingRequest,...photoArgs.slice(1,11),[cloudAsset]]),/NFC_VERSION_CONFLICT/); checks++;
+  assert.equal((await db.query('SELECT 1 FROM public.nfc_field_check_photos WHERE asset_id=$1',[cloudAsset])).rowCount,0); checks++;
+  for(const role of ['anon','authenticated','service_role']) {
+    await db.query(`SET ROLE ${role}`);
+    if(role!=='service_role') {
+      await assert.rejects(db.query(registerSql,assetArgs),/permission denied/); checks++;
+      await assert.rejects(db.query(photoSql,photoArgs),/permission denied/); checks++;
+      await rejects(db,'SELECT * FROM public.nfc_evidence_assets',/permission denied/);
+    } else { assert.equal((await db.query(photoSql,photoArgs)).rows[0].id,photoRequest); checks++; }
+    await rejects(db,'DELETE FROM public.nfc_evidence_assets',/permission denied/);
+    await rejects(db,`INSERT INTO public.nfc_field_check_photos(request_id,asset_id,position) VALUES('${photoRequest}','${cloudAsset}',2)`,/permission denied/);
+    await db.query('RESET ROLE');
+  }
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);

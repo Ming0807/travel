@@ -29,6 +29,13 @@ not an upload workflow: bucket provisioning, metadata/report linkage, guarded
 upload/preview, mobile controls and provider/staging checks remain open. No SQL
 or production flags changed. See `docs/security/NFC_EVIDENCE_STORAGE.md`.
 
+September 9 S5 metadata continuation: added an unapplied migration for immutable
+private asset metadata and atomic ordered report-photo claims (up to three).
+Registration/report retries preserve identity; cross-actor/tag/version, expired,
+missing and already claimed assets are rejected. Disposable PostgreSQL harness
+passes 209 assertions. Upload/preview services, bucket provisioning, mobile UI,
+orphan cleanup and full-provider/staging validation remain open; S5 stays unchecked.
+
 Current checkpoint (2026-09-08): S3 has exact-context grant reads, atomic
 acceptance, legacy entry-proof preparation and default-off browser provisioning.
 Local Chromium verifies two-tab preparation against a mocked endpoint; this is
