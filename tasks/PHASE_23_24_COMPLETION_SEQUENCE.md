@@ -28,6 +28,11 @@ PostgreSQL verification: 230 assertions passed. Migration
 Next: guarded worker/retry integration, unregistered-object reconciliation, then
 private-provider staging and device acceptance. No deletion job is enabled.
 
+S5 processor checkpoint (September 9): server-only bounded cleanup processor now
+validates claims, requires admin permission plus a default-off flag, and completes
+only confirmed deletions. 30 focused processor/storage tests passed. No route/cron
+is connected; unregistered-object reconciliation and staging remain open.
+
 S5 photo UI checkpoint (September 9): the optional per-tag picker and on-demand
 historical photo previews are wired under the default-off flag. Upload failures
 block submission until retried/cancelled; report retries preserve photo IDs.

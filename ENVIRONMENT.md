@@ -197,6 +197,12 @@ the schedule. This is not a consent/response deletion job.
 
 ## NFC Installation Photo Rollout
 
+`NFC_EVIDENCE_CLEANUP_ENABLED=false` by default. Only literal `true` permits the
+server-only cleanup processor, which also requires `checkin_code.manage`.
+No route or cron currently calls it. Keep disabled until the cleanup migration,
+private-provider staging and orphan reconciliation have been accepted. This flag
+is independent of upload enablement and must never use a `NEXT_PUBLIC_` prefix.
+
 `NFC_EVIDENCE_UPLOAD_ENABLED=false` by default (unset/empty also disabled); only
 literal `true` enables `/api/admin/nfc/evidence` POST and GET. Do not enable it yet.
 Required gates: private provider/bucket configuration, September 8 field-report

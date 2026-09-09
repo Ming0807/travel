@@ -136,3 +136,13 @@ This migration is held for staging, not applied to production. No worker or cron
 is enabled. Provider deletion must succeed before completion is called. Remote
 objects whose metadata registration never committed are not covered by this queue;
 provider reconciliation and live-provider acceptance remain activation blockers.
+
+Cleanup processor checkpoint: `runNfcEvidenceCleanup` is server-only, requires
+`checkin_code.manage` and literal `NFC_EVIDENCE_CLEANUP_ENABLED=true`. It has no
+HTTP route or scheduled caller. The repository validates the entire claimed batch,
+unique asset IDs, provider/path agreement and asset-ID/path binding before deletion.
+The storage adapter additionally enforces the configured private namespace.
+Each provider deletion must succeed before the completion RPC. Failures leave
+claims pending, continue the bounded batch and return counts without private paths.
+30 focused processor/storage tests passed with mocked providers; this does not
+replace live-provider acceptance or unregistered-object reconciliation.
