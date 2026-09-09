@@ -36,6 +36,14 @@ missing and already claimed assets are rejected. Disposable PostgreSQL harness
 passes 209 assertions. Upload/preview services, bucket provisioning, mobile UI,
 orphan cleanup and full-provider/staging validation remain open; S5 stays unchecked.
 
+September 9 S5 service continuation: implemented permission-checked private image
+upload and preview services (not HTTP routes). Server-derived metadata, bounded
+WebP encoding, exact readback on ambiguous registration and pending-image owner/
+age checks are covered by 29 focused tests, including actual image processing.
+HTTP body limits, private bucket provisioning, upload retry recovery, orphan
+cleanup, report-photo UI and full-provider staging remain open. No SQL applied
+or rollout flags enabled; existing QR/CMS upload paths remain unchanged.
+
 Current checkpoint (2026-09-08): S3 has exact-context grant reads, atomic
 acceptance, legacy entry-proof preparation and default-off browser provisioning.
 Local Chromium verifies two-tab preparation against a mocked endpoint; this is

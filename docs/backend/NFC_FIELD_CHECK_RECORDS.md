@@ -65,3 +65,8 @@ cross-actor/tag rejection, upload expiry, replay identity and role denial. The
 new `record_nfc_field_check_with_photos` RPC wraps the existing report RPC in the
 same transaction, accepts zero to three ordered asset IDs, and rejects attaching
 photos retrospectively to an existing report. Application integration is pending.
+
+Private upload/preview services now exist with admin guards, bounded WebP
+processing and ID-based previews. They are not yet wired into HTTP routes or
+the inspection form; the currently rendered form still records text references.
+See `docs/security/NFC_EVIDENCE_STORAGE.md` for remaining upload/recovery gates.
