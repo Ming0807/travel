@@ -70,6 +70,15 @@ disposable localhost database. Server and database container were stopped afterw
 
 ## S1/S2 Verification
 
+S5 UI checkpoint (September 9): per-tag field inspection form and ten-row history
+are connected through permission-guarded actions. Pending/uncertain saves retain
+the exact request and freeze fields for retry; new reports require explicit action.
+Read-only staff see no form. No photos/upload path added yet and no SQL applied.
+Verification: 15 focused tests, scoped ESLint and production build passed; mocked
+Chromium submission/history and overflow checks passed at 360/768/1440px. The first
+parallel test run was interrupted after a source-label fix; the final single-worker
+rerun passed. No claim of full authenticated staging acceptance.
+
 S5 foundation checkpoint (September 8): added append-only staff field-check records,
 separate NFC/QR outcomes, tag-version/status snapshots and request-id retry protection.
 Service permission guards derive the inspector from the authenticated admin; history

@@ -1,6 +1,25 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { changeNfcTag, createNfcTag, getNfcHistory } from "@/lib/services/admin-nfc.service";
+import { getNfcFieldChecks, recordNfcFieldCheck } from "@/lib/services/nfc-field-check.service";
+
+export async function getAdminNfcFieldChecksAction(input: unknown) {
+  try { return { success: true as const, ...await getNfcFieldChecks(input) }; }
+  catch { return { success: false as const, message: "ยังอ่านผลตรวจหน้างานไม่ได้ กรุณาตรวจ migration หรือสิทธิ์ แล้วลองใหม่" }; }
+}
+
+export async function saveAdminNfcFieldCheckAction(input: unknown) {
+  try { return { success: true as const, requestId: await recordNfcFieldCheck(input) }; }
+  catch (error) {
+    const messages: Record<string, string> = {
+      NFC_VERSION_CONFLICT: "แท็กมีการเปลี่ยนแปลง กรุณารีเฟรชก่อนบันทึกผลตรวจใหม่",
+      NFC_FIELD_REQUEST_CONFLICT: "เลขรายการนี้เคยใช้กับข้อมูลอื่นแล้ว กรุณาตรวจประวัติก่อนเริ่มรายการใหม่",
+      NFC_FIELD_PASS_NOT_ELIGIBLE: "ยังบันทึก NFC ผ่านไม่ได้ กรุณาตรวจ URL และสถานะแท็กก่อน",
+    };
+    return { success: false as const, message: error instanceof Error && messages[error.message]
+      ? messages[error.message] : "ยังยืนยันการบันทึกไม่ได้ กรุณาลองส่งรายการเดิมอีกครั้ง หรือตรวจ migration และสิทธิ์" };
+  }
+}
 
 export async function getAdminNfcHistoryAction(input: unknown) {
   try { return { success: true as const, ...await getNfcHistory(input) }; }

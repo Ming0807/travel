@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { NfcCreateForm, NfcTagControls, NfcTagHistory } from "@/components/admin/checkin-codes/NfcManagementForms";
 import type { AdminNfcTag } from "@/lib/repositories/admin-nfc.repository";
 import "@/app/globals.css";
+import { NfcFieldChecks } from "@/components/admin/checkin-codes/NfcFieldChecks";
 const tag: AdminNfcTag = {
   nfc_tag_id: "11111111-1111-4111-8111-111111111111", public_token: "11111111-1111-4111-8111-111111111111",
   checkin_code_id: 10, code_snapshot: "fixture-entry", label: "แท็กทดสอบทางเข้าหลัก", status: "draft", version: 1,
@@ -13,4 +14,5 @@ createRoot(document.getElementById("root")!).render(<main className="min-h-scree
   <NfcCreateForm checkinCodeId={10} /><h2 className="mt-6 text-lg font-bold">{tag.label}</h2>
   <NfcTagControls tag={tag} payload={`https://tourism.example/c/fixture-entry?nfc=${tag.public_token}`} />
   <NfcTagHistory tagId={tag.nfc_tag_id} version={tag.version} />
+  <NfcFieldChecks tag={tag} canManage />
 </section></main>);

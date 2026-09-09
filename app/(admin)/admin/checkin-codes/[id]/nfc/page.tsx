@@ -8,6 +8,7 @@ import { getAdminCheckinCodeById } from "@/lib/repositories/admin-checkin-code.r
 import { listNfcManagement } from "@/lib/services/admin-nfc.service";
 import { buildNfcPayload } from "@/lib/nfc/contract";
 import { adminNfcFiltersSchema } from "@/lib/validation/admin-nfc";
+import { NfcFieldChecks } from "@/components/admin/checkin-codes/NfcFieldChecks";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "NFC Tags | Admin" };
 const labels = { draft: "ฉบับร่าง", active: "เปิดใช้งาน", inactive: "พักใช้งาน", revoked: "ยกเลิกถาวร" };
@@ -51,6 +52,7 @@ export default async function NfcTagsPage({ params, searchParams }: { params: Pr
           <details className="mt-4"><summary className="min-h-11 cursor-pointer py-2 text-sm font-bold text-orange-800">รายละเอียดและจัดการแท็ก</summary>
             {canManage ? <NfcTagControls tag={tag} payload={payload} /> : <p className="text-sm">สิทธิ์อ่านอย่างเดียว</p>}
             <NfcTagHistory tagId={tag.nfc_tag_id} version={tag.version} />
+            <NfcFieldChecks tag={tag} canManage={canManage} />
           </details>
         </article>;
       })}

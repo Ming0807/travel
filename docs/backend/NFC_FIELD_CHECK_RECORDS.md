@@ -1,7 +1,7 @@
 # NFC Field Check Records
 
-Status: database/service foundation, 2026-09-08. Admin form, evidence-photo linkage
-and full-schema staging remain pending. Do not activate this migration in production
+Status: database/service foundation and admin form/history implemented. Evidence-photo
+linkage and full-schema staging remain pending. Do not activate this migration in production
 as part of this checkpoint.
 
 ## Purpose And Boundary
@@ -38,12 +38,18 @@ Additive migration: `20260908000000_add_nfc_field_checks.sql`, after the NFC reg
 and current lifecycle guards. No seed, reset, public flag, schedule or existing tag
 change. Do not drop records to roll back application code.
 
-- Implement an explicit per-tag inspection form, result controls and paginated history.
-- Keep request ID stable on network retries; require a new ID for a corrected report.
+- Implemented per-tag inspection form, result controls and paginated history.
+- Request ID stays stable on network retries; corrected reports require a new ID.
 - Add approved media references for optional non-identifying installation photos;
   do not introduce another upload path or expose private media.
-- Add user-visible missing-migration, stale-version and failed-save recovery states.
+- Implemented missing-migration, stale-version and failed-save recovery messages.
 - Verify full-schema role access, realistic devices and field acceptance before rollout.
+
+Server actions `saveAdminNfcFieldCheckAction` and `getAdminNfcFieldChecksAction`
+expose the guarded service to the per-tag panel. Errors are sanitized with specific
+stale-version, replay-conflict and ineligible-pass recovery messages. History loads
+only on request and after successful save; missing migration does not query during
+the existing tag list server render. No NFC/QR lifecycle behavior is changed.
 
 Local PostgreSQL harness: 174 assertions including simultaneous duplicate submission,
 payload conflict, stale version, immutable history, role denial and preserved retry
