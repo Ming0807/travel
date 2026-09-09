@@ -1949,3 +1949,14 @@ creation-time indexes support scoped reads and future orphan inspection. Photos
 must match report actor/tag/version and be unclaimed within 24 hours when attached;
 claims are atomic with report creation. No visitor identity/GPS is added. These
 tables do not prove physical presence. No bucket or cleanup job is provisioned.
+
+### NFC Evidence Cleanup Queue (September 9, Held Migration)
+
+`nfc_evidence_cleanup`: `asset_id` is the primary key and restrictive FK to
+`nfc_evidence_assets`; `queued_at` records admission and nullable `deleted_at`
+records confirmed provider deletion. A partial index covers pending work.
+Metadata is retained. RLS denies public access; service role has SELECT only and
+uses claim/complete RPCs. Claims select only unattached assets older than seven
+days, enforce batch capacity (1-100), and prevent later report attachment.
+No cron or remote deletion is created by this migration. Unregistered provider
+objects require separate reconciliation. Migration: `20260909001000_queue_nfc_orphan_cleanup.sql`.

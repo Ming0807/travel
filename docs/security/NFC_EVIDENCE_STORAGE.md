@@ -122,3 +122,17 @@ without an error. Unknown Cloudinary outcomes are not treated as success. These
 checks apply only to the evidence bucket, preserving legacy deletion behavior.
 24 focused storage tests passed. No real files were deleted and no cleanup job
 has been enabled; atomic orphan claims and reconciliation remain required.
+
+September 9 cleanup-schema checkpoint: migration
+`20260909001000_queue_nfc_orphan_cleanup.sql` adds durable claims for registered,
+unattached assets older than seven days. Pending claims consume batch capacity;
+concurrent admission is serialized and attachment/cleanup use the same asset lock.
+A claimed asset cannot later be attached. Completion is idempotent and retains
+metadata. Only service-role RPCs can claim/complete; direct deletion is denied.
+The disposable PostgreSQL harness passes 230 assertions, including bounded retry,
+concurrent callers, retained report images and role restrictions.
+
+This migration is held for staging, not applied to production. No worker or cron
+is enabled. Provider deletion must succeed before completion is called. Remote
+objects whose metadata registration never committed are not covered by this queue;
+provider reconciliation and live-provider acceptance remain activation blockers.

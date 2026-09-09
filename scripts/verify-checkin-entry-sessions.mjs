@@ -599,6 +599,50 @@ try {
     await rejects(db,`INSERT INTO public.nfc_field_check_photos(request_id,asset_id,position) VALUES('${photoRequest}','${cloudAsset}',2)`,/permission denied/);
     await db.query('RESET ROLE');
   }
+  await db.query(await readFile(new URL('../supabase/migrations/20260909001000_queue_nfc_orphan_cleanup.sql', import.meta.url),'utf8'));
+  const orphanId='70000000-0000-4000-8000-000000000001';
+  await db.query(`INSERT INTO public.nfc_evidence_assets(asset_id,nfc_tag_id,tag_version,actor_id,provider,storage_path,sha256,size_bytes,width,height,created_at)
+    VALUES($1,$2,$3,$4,'supabase',$5,$6,1024,800,600,now()-interval '8 days')`,
+    [orphanId,evidenceTag.nfc_tag_id,evidenceTag.version,actor,`nfc-evidence/${orphanId}.webp`,'b'.repeat(64)]);
+  const cleanupSql='SELECT * FROM public.claim_nfc_evidence_cleanup($1)';
+  await assert.rejects(db.query(cleanupSql,[101]),/NFC_CLEANUP_LIMIT_INVALID/); checks++;
+  const cleanupRows=(await db.query(cleanupSql,[25])).rows;
+  assert.deepEqual(cleanupRows.map(row=>row.asset_id),[orphanId]); checks++;
+  assert.deepEqual((await db.query(cleanupSql,[25])).rows,cleanupRows); checks++;
+  await assert.rejects(db.query('INSERT INTO public.nfc_field_check_photos(request_id,asset_id,position) VALUES($1,$2,2)',[photoRequest,orphanId]),/NFC_EVIDENCE_NOT_AVAILABLE/); checks++;
+  assert.equal((await db.query('SELECT public.complete_nfc_evidence_cleanup($1) AS done',[orphanId])).rows[0].done,true); checks++;
+  const cleanupCompletedAt=(await db.query('SELECT deleted_at FROM public.nfc_evidence_cleanup WHERE asset_id=$1',[orphanId])).rows[0].deleted_at;
+  assert.equal((await db.query('SELECT public.complete_nfc_evidence_cleanup($1) AS done',[orphanId])).rows[0].done,true); checks++;
+  assert.deepEqual((await db.query('SELECT deleted_at FROM public.nfc_evidence_cleanup WHERE asset_id=$1',[orphanId])).rows[0].deleted_at,cleanupCompletedAt); checks++;
+  assert.equal((await db.query(cleanupSql,[25])).rowCount,0); checks++;
+  assert.equal((await db.query('SELECT 1 FROM public.nfc_evidence_assets WHERE asset_id=$1',[orphanId])).rowCount,1); checks++;
+  assert.equal((await db.query('SELECT 1 FROM public.nfc_field_check_photos WHERE asset_id=$1',[assetId])).rowCount,1); checks++;
+  const oldAssets=['70000000-0000-4000-8000-000000000002','70000000-0000-4000-8000-000000000003','70000000-0000-4000-8000-000000000004'];
+  for(const id of oldAssets) {
+    await db.query(`INSERT INTO public.nfc_evidence_assets(asset_id,nfc_tag_id,tag_version,actor_id,provider,storage_path,sha256,size_bytes,width,height,created_at)
+      VALUES($1,$2,$3,$4,'supabase',$5,$6,1024,800,600,now()-interval '8 days')`,
+      [id,evidenceTag.nfc_tag_id,evidenceTag.version,actor,`nfc-evidence/${id}.webp`,'c'.repeat(64)]);
+  }
+  // Owner-only fixture models a report photo that has aged beyond retention.
+  await db.query('INSERT INTO public.nfc_field_check_photos(request_id,asset_id,position) VALUES($1,$2,2)',[photoRequest,oldAssets[0]]);
+  const cleanupWriter=client(); await cleanupWriter.connect();
+  try {
+    const batches=await Promise.all([db.query(cleanupSql,[1]),cleanupWriter.query(cleanupSql,[1])]);
+    assert.deepEqual(batches.map(batch=>batch.rows.map(row=>row.asset_id)),[[oldAssets[1]],[oldAssets[1]]]); checks++;
+  } finally { await cleanupWriter.end(); }
+  assert.equal((await db.query('SELECT count(*)::int AS n FROM public.nfc_evidence_cleanup WHERE deleted_at IS NULL')).rows[0].n,1); checks++;
+  await db.query('SELECT public.complete_nfc_evidence_cleanup($1)',[oldAssets[1]]);
+  assert.deepEqual((await db.query(cleanupSql,[1])).rows.map(row=>row.asset_id),[oldAssets[2]]); checks++;
+  assert.equal((await db.query('SELECT 1 FROM public.nfc_evidence_cleanup WHERE asset_id=$1',[oldAssets[0]])).rowCount,0); checks++;
+  for(const role of ['anon','authenticated','service_role']) {
+    await db.query(`SET ROLE ${role}`);
+    if(role!=='service_role') {
+      await assert.rejects(db.query(cleanupSql,[25]),/permission denied/); checks++;
+      await assert.rejects(db.query('SELECT public.complete_nfc_evidence_cleanup($1)',[orphanId]),/permission denied/); checks++;
+    }
+    await rejects(db,'DELETE FROM public.nfc_evidence_cleanup',/permission denied/);
+    await db.query('RESET ROLE');
+  }
   console.log(`Check-in entry sessions: ${checks} PostgreSQL assertions passed.`);
 } finally {
   await db.end().catch(() => undefined);

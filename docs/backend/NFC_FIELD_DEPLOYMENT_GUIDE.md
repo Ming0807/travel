@@ -37,6 +37,12 @@ NFC URL attribution is not verified physical presence or a unique-person count.
 
 ## Activation and Inspection
 
+Evidence cleanup also requires the held migration
+`20260909001000_queue_nfc_orphan_cleanup.sql`, after the field-check and evidence
+asset migrations. It creates a queue only, not a scheduled deletion job. Do not
+enable uploads or cleanup until worker, provider reconciliation and staging gates
+are complete. Application push is not approval to run this migration.
+
 Activate only after the release/device gates pass. Use visible official-domain
 and site labels with a readable QR fallback; inspect for replacement stickers
 and physical tampering. Device support varies: no universal Web NFC writer is

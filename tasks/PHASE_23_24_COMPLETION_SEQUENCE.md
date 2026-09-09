@@ -21,6 +21,13 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 cleanup-schema checkpoint (September 9): registered orphan images now have a
+bounded durable queue with attachment exclusion and service-only RPCs. Disposable
+PostgreSQL verification: 230 assertions passed. Migration
+`20260909001000_queue_nfc_orphan_cleanup.sql` remains unapplied to production.
+Next: guarded worker/retry integration, unregistered-object reconciliation, then
+private-provider staging and device acceptance. No deletion job is enabled.
+
 S5 photo UI checkpoint (September 9): the optional per-tag picker and on-demand
 historical photo previews are wired under the default-off flag. Upload failures
 block submission until retried/cancelled; report retries preserve photo IDs.
