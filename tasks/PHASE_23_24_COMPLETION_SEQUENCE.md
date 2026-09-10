@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 SQL race QA: 70 PostgreSQL assertions pass, including observed row-lock waits
+while actor deactivation, tag version change and tag revocation commit before
+finalization resumes. Denied finalization leaves no partial asset. Minimal parent
+schema only; full-schema report/cleanup and provider staging remain outstanding.
+
 S5 terminal retry UX: expired/abandoned intents return 410 rather than transient
 503. Picker suppresses retry on 409/410, retains report blocking, and permits
 explicit cancellation. Route/client/form tests (24 total), TypeScript and scoped

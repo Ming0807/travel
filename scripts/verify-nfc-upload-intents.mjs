@@ -144,6 +144,41 @@ try {
   const cloudRace=await Promise.all([db.query(finalize,cloudFinish),worker.query(finalize,cloudFinish)]);
   assert.equal(cloudRace[0].rows[0].asset_id,c.asset_id); checks++;
   assert.equal(cloudRace[1].rows[0].asset_id,c.asset_id); checks++;
+  const guarded=(await db.query(sql,input())).rows[0];
+  const guardedFinish=[guarded.asset_id,actor,"local-project",guarded.object_key,"a".repeat(64),1000,640,480];
+  const workerPid=(await worker.query("SELECT pg_backend_pid() AS pid")).rows[0].pid;
+  // Observe the row-lock wait, then commit revocation/version changes before
+  // allowing finalization to continue. A sleep alone cannot establish this race.
+  for (const scenario of [
+    { update:"UPDATE public.admin_users SET is_active=false WHERE admin_id=$1", restore:"UPDATE public.admin_users SET is_active=true WHERE admin_id=$1", id:actor, error:/NFC_UPLOAD_ACTOR_UNAVAILABLE/ },
+    { update:"UPDATE public.nfc_tags SET version=2 WHERE nfc_tag_id=$1", restore:"UPDATE public.nfc_tags SET version=1 WHERE nfc_tag_id=$1", id:tag, error:/NFC_VERSION_CONFLICT/ },
+    { update:"UPDATE public.nfc_tags SET status='revoked' WHERE nfc_tag_id=$1", restore:"UPDATE public.nfc_tags SET status='draft' WHERE nfc_tag_id=$1", id:tag, error:/NFC_UPLOAD_TAG_UNAVAILABLE/ },
+  ]) {
+    await db.query("RESET ROLE; BEGIN");
+    let result;
+    try {
+      await db.query(scenario.update,[scenario.id]);
+      result=worker.query(finalize,guardedFinish).then(value=>({value}),error=>({error}));
+      let blocked=false;
+      for (let attempt=0;attempt<100;attempt++) {
+        blocked=(await db.query("SELECT pg_backend_pid()=ANY(pg_blocking_pids($1)) AS blocked",[workerPid])).rows[0].blocked;
+        if (blocked) break;
+        await new Promise(resolve=>setTimeout(resolve,20));
+      }
+      assert.equal(blocked,true,"finalization must wait for the actor/tag update"); checks++;
+      await db.query("COMMIT");
+    } catch (error) {
+      await db.query("ROLLBACK");
+      if (result) await result;
+      throw error;
+    }
+    assert.match(String((await result).error),scenario.error); checks++;
+    assert.equal((await db.query("SELECT state FROM public.nfc_evidence_upload_intents WHERE asset_id=$1",[guarded.asset_id])).rows[0].state,"prepared"); checks++;
+    assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_assets WHERE asset_id=$1",[guarded.asset_id])).rows[0].total,0); checks++;
+    await db.query(scenario.restore,[scenario.id]);
+    await db.query("SET ROLE service_role");
+  }
+  assert.equal((await worker.query(finalize,guardedFinish)).rows[0].asset_id,guarded.asset_id); checks++;
   for (const role of ["anon","authenticated"]) {
     await db.query(`RESET ROLE; SET ROLE ${role}`);
     await assert.rejects(db.query(finalize,cloudFinish),/permission denied/); checks++;

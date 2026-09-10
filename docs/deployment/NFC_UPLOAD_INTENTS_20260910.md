@@ -271,3 +271,15 @@ without offering an ineffective retry. Network failures preserve existing retry.
 Route (10), client (8), and form (6) tests pass, along with TypeScript/scoped lint.
 No full build or real-device visual QA was repeated for this error-state change.
 No SQL, flag, provider deletion, or production activation changed.
+
+### Finalization Authorization Races
+
+The disposable PostgreSQL runner now passes 70 assertions. New two-connection
+scenarios hold an actor/tag UPDATE transaction and observe `pg_blocking_pids`
+before committing it. Finalization then rejects a disabled actor, changed tag
+version, or revoked tag. Each rejection leaves the intent prepared and creates
+no asset; restoring valid context permits successful finalization of that intent.
+This proves the tested row-lock behavior with actual PostgreSQL, not production
+RBAC or provider verification. The fixture still has minimal parent tables;
+full-schema report attachment/cleanup and real-provider gates remain open.
+The isolated container is removed by the runner. No migration was changed.
