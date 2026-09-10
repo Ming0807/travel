@@ -295,3 +295,19 @@ for unavailable/tag/request/finalization conflicts, so the picker stops retrying
 instead of presenting them as transient 503. Twenty-eight route/client/form tests,
 TypeScript and scoped lint pass. No full build repeated for this mapping change.
 Full report-schema attachment races and private-provider staging remain open.
+
+### Real Report Module Integration
+
+The runner now applies the complete September 8 field-check migration, replacing
+its former request-id-only report table and history trigger stub. It then applies
+the real September 9 evidence/cleanup and September 10 intent migrations together.
+Eighty-five PostgreSQL assertions pass. Two reports competing for one finalized
+asset yield exactly one report and attachment; same-request replay is idempotent.
+Invalid report input rolls back without claiming its asset. Attached evidence
+remains excluded from cleanup after fixture-only aging beyond seven days.
+
+This is complete report-module DDL, not the complete platform schema: admin/tag
+parent tables remain minimal and application RBAC/provider APIs are not exercised.
+Private-provider staging, real mobile use and worker/reconciliation gates remain.
+Scoped script lint passes and the disposable container was removed. No application
+build repeated for this test-only change; no production SQL was applied.

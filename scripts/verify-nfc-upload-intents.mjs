@@ -33,12 +33,10 @@ try {
   if (!db) throw new Error("Disposable PostgreSQL did not become ready");
   await db.query(`CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN BYPASSRLS;
     CREATE TABLE public.admin_users(admin_id uuid PRIMARY KEY,is_active boolean NOT NULL DEFAULT true);
-    CREATE TABLE public.nfc_tags(nfc_tag_id uuid PRIMARY KEY,version integer NOT NULL,status text NOT NULL);
+    CREATE TABLE public.nfc_tags(nfc_tag_id uuid PRIMARY KEY,version integer NOT NULL,status text NOT NULL,verified_at timestamptz);
     INSERT INTO public.admin_users VALUES ('${actor}',true),('${other}',true);
-    INSERT INTO public.nfc_tags VALUES ('${tag}',1,'draft');`);
-  await db.query(`CREATE TABLE public.nfc_field_checks(request_id uuid PRIMARY KEY);
-    CREATE FUNCTION public.guard_nfc_field_check_history() RETURNS trigger LANGUAGE plpgsql AS $$
-      BEGIN RAISE EXCEPTION 'NFC_HISTORY_IMMUTABLE'; END; $$;`);
+    INSERT INTO public.nfc_tags(nfc_tag_id,version,status) VALUES ('${tag}',1,'draft');`);
+  await db.query(readFileSync("supabase/migrations/20260908000000_add_nfc_field_checks.sql","utf8"));
   await db.query(readFileSync("supabase/migrations/20260909000000_add_nfc_evidence_assets.sql","utf8"));
   await db.query(readFileSync("supabase/migrations/20260909001000_queue_nfc_orphan_cleanup.sql","utf8"));
   if (existsSync(migration)) await db.query(readFileSync(migration,"utf8"));
@@ -206,6 +204,26 @@ try {
   assert.match(String((await cleanupRetry).error),/NFC_UPLOAD_NOT_AVAILABLE/); checks++;
   assert.equal((await db.query("SELECT state FROM public.nfc_evidence_upload_intents WHERE asset_id=$1",[guarded.asset_id])).rows[0].state,"available"); checks++;
   assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_assets WHERE asset_id=$1",[guarded.asset_id])).rows[0].total,1); checks++;
+  const reportSql="SELECT public.record_nfc_field_check_with_photos($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) AS request_id";
+  const reportInput=assetId=>[randomUUID(),tag,1,actor,"Main gate","QA browser","other","not_tested","passed","","",[assetId]];
+  const reportA=reportInput(first.asset_id),reportB=reportInput(first.asset_id);
+  const reportRace=await Promise.allSettled([db.query(reportSql,reportA),worker.query(reportSql,reportB)]);
+  assert.equal(reportRace.filter(result=>result.status==="fulfilled").length,1); checks++;
+  assert.match(String(reportRace.find(result=>result.status==="rejected")?.reason),/NFC_EVIDENCE_NOT_AVAILABLE/); checks++;
+  const winner=reportRace[0].status==="fulfilled"?reportA:reportB;
+  assert.equal((await db.query(reportSql,winner)).rows[0].request_id,winner[0]); checks++;
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_field_check_photos WHERE asset_id=$1",[first.asset_id])).rows[0].total,1); checks++;
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_field_checks WHERE request_id=ANY($1::uuid[])",[[reportA[0],reportB[0]]])).rows[0].total,1); checks++;
+  const invalidReport=reportInput(c.asset_id); invalidReport[4]="x";
+  await assert.rejects(db.query(reportSql,invalidReport),/check constraint/); checks++;
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_field_check_photos WHERE asset_id=$1",[c.asset_id])).rows[0].total,0); checks++;
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_field_checks WHERE request_id=$1",[invalidReport[0]])).rows[0].total,0); checks++;
+  // Attachment remains the exclusion authority even after normal retention age.
+  await db.query("RESET ROLE; ALTER TABLE public.nfc_evidence_assets DISABLE TRIGGER USER");
+  await db.query("UPDATE public.nfc_evidence_assets SET created_at=now()-interval '8 days' WHERE asset_id=$1",[first.asset_id]);
+  await db.query("ALTER TABLE public.nfc_evidence_assets ENABLE TRIGGER USER; SET ROLE service_role");
+  assert.ok(!(await db.query("SELECT * FROM public.claim_nfc_evidence_cleanup(25)")).rows.some(row=>row.asset_id===first.asset_id)); checks++;
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_cleanup WHERE asset_id=$1",[first.asset_id])).rows[0].total,0); checks++;
   for (const role of ["anon","authenticated"]) {
     await db.query(`RESET ROLE; SET ROLE ${role}`);
     await assert.rejects(db.query(finalize,cloudFinish),/permission denied/); checks++;

@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 report module integration: runner loads real field-check DDL/RPC instead of a
+report stub. Eighty-five PostgreSQL assertions pass, including competing report
+attachments, exact replay, invalid-report rollback and aged attached-photo cleanup
+exclusion. Admin/tag parent schema is still minimal; provider/full-platform QA
+and reconciliation are not complete. Test-only change, no production activation.
+
 S5 cleanup/retry race: 75 PostgreSQL assertions pass. An available retry waits
 for cleanup's asset lock and rejects after the claim commits. Immutable records
 remain intact. Recovery conflicts now map to 409 and suppress ineffective browser
