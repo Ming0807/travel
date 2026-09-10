@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 exact locator discovery: pinned Cloudinary authenticated image lookup recovers
+the actual version by exact public ID before byte readback; Supabase uses its
+deterministic key. Errors stop confirmation, never imply safe absence. Eighty-four
+focused tests pass; TypeScript/lint pass. SDK mocked, full orchestration and real
+provider staging remain. No SQL, folder enumeration, deletion or live activation.
+
 S5 authorized confirmation: service guard, exact actor-owned intent read, verified
 readback and authoritative finalize are connected internally. Candidate locators
 cannot change durable content/ownership; errors do not cause deletion or success.

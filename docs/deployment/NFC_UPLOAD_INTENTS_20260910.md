@@ -184,3 +184,21 @@ and scoped lint pass. Guards/database/providers are mocked except the loopback H
 suite; this is not complete authenticated Next/Supabase integration. Automatic
 upload-or-recover orchestration, Cloudinary version discovery, client retry identity,
 worker reconciliation and real provider staging remain required. No new SQL/build.
+
+### Exact Locator Discovery
+
+Confirmation can now discover a lost Cloudinary upload version using the installed
+SDK's exact `api.resource(publicId)` call with explicit image/authenticated type
+and pinned cloud/account credentials. It never lists folders. Returned public ID,
+resource type, delivery type, format and positive safe-integer version must match;
+only then does independent byte readback proceed. Supabase keys are deterministic
+and require no listing. HTTP/provider errors including 404 remain unavailable,
+not permission to delete or proof that an in-flight upload cannot appear later.
+
+The SDK timeout is 15 seconds (its socket timeout, not a total process deadline).
+No global Cloudinary configuration is changed by discovery. Exact-key metadata
+does not by itself prove content; confirmation still requires hash readback.
+Eighty-four tests across six focused repository/storage/service/HTTP suites pass.
+TypeScript and scoped lint pass. Provider SDK responses remain mocked; real
+Cloudinary/Supabase acceptance and complete retry orchestration are still pending.
+No new SQL, live route or build is included in this checkpoint.
