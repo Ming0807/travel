@@ -21,6 +21,13 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S6 repository checkpoint (September 10): added an independent executive entry-start
+read with exact-count pagination, a 10,000-row/25-request ceiling, stable ordering,
+Bangkok bounds and as-of cutoff. Blocked or incomplete results contain no partial
+rows. Nine mocked tests and scoped lint pass. Service/aggregate/UI/export wiring
+and real PostgREST QA remain pending; no live query or chart changed. Contract and
+snapshot limitations: `docs/dashboard/EXECUTIVE_ENTRY_COHORT.md`.
+
 September 10 analytics boundary review: fixed attraction entry/funnel timestamp
 filters to use exclusive next-day Bangkok midnight. Disposable PostgreSQL confirms
 the old upper bound dropped microsecond records at the end of the day. Three native
