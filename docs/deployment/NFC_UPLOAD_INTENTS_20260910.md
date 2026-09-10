@@ -311,3 +311,13 @@ parent tables remain minimal and application RBAC/provider APIs are not exercise
 Private-provider staging, real mobile use and worker/reconciliation gates remain.
 Scoped script lint passes and the disposable container was removed. No application
 build repeated for this test-only change; no production SQL was applied.
+
+### Expiry Before Provider Access
+
+Confirmation now rejects prepared intents with invalid, future or at-least-24-hour
+timestamps before locator discovery/readback. This avoids provider calls that the
+finalizer cannot accept; SQL remains authoritative if expiry occurs during I/O.
+Available intents still reach authoritative finalization even when their creation
+time is old, preserving retry semantics for finalized evidence. Thirty-eight
+confirmation/orchestration/route tests, TypeScript and scoped lint pass. No new
+SQL or full build; provider staging remains a separate gate.

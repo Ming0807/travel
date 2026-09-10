@@ -12,6 +12,10 @@ export async function confirmNfcEvidenceUpload(input: unknown) {
   const intent = await readOwnedNfcUploadIntent(value.assetId, adminId);
   if (!intent || intent.asset_id !== value.assetId || intent.actor_id !== adminId) throw new Error("NFC_UPLOAD_NOT_FOUND");
   if (intent.state === "abandoned") throw new Error("NFC_UPLOAD_ABANDONED");
+  if (intent.state === "prepared") {
+    const age = Date.now() - Date.parse(intent.created_at);
+    if (!Number.isFinite(age) || age < 0 || age >= 86400000) throw new Error("NFC_UPLOAD_EXPIRED");
+  }
   const storagePath = intent.storage_path ?? value.storagePath ?? await discoverNfcEvidenceLocator(intent);
   if (intent.storage_path && value.storagePath && value.storagePath !== intent.storage_path) throw new Error("NFC_UPLOAD_FINALIZE_CONFLICT");
   // The optional locator is only a candidate. Readback enforces the exact durable

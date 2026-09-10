@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 early expiry: confirmation rejects expired prepared intents before provider
+discovery/readback, while finalized history remains subject to SQL authorization
+and cleanup checks. Thirty-eight focused tests, TypeScript and lint pass. No SQL
+or production activation; background recovery and real-provider QA still pending.
+
 S5 report module integration: runner loads real field-check DDL/RPC instead of a
 report stub. Eighty-five PostgreSQL assertions pass, including competing report
 attachments, exact replay, invalid-report rollback and aged attached-photo cleanup
