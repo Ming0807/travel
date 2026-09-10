@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 lifecycle adapter follow-up: finalize/abandon server adapters now enforce exact
+acknowledgements and sanitized errors. Twenty-six adapter tests, TypeScript and
+scoped lint pass. Still dormant: authorization, verified provider bytes/account,
+client retries and reconciliation must be integrated before rollout. No new SQL.
+
 S5 lifecycle checkpoint (September 10): held finalize/stale-abandon migration
 atomically registers asset metadata and protects immutable terminal states.
 Actual asset/cleanup DDL in local PostgreSQL passes 57 assertions, including

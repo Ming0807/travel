@@ -90,5 +90,16 @@ retry identity, recovery leases/backoff, full-schema race QA, real admin access
 and provider staging remain required before activation. No live route calls these
 RPCs and there is no scheduler or remote reconciliation/deletion path yet.
 
+### Lifecycle Adapter Checkpoint
+
+The dormant server repository now exposes finalize and stale-abandon adapters.
+They validate inputs before RPC calls, require the exact asset UUID or literal
+true acknowledgement, and map only bounded database error codes. They do not
+authorize callers or verify remote content; those remain mandatory upstream work.
+An ambiguous finalize response must trigger readback/exact retry, not deletion.
+Twenty-six adapter tests, Node 22 TypeScript and scoped ESLint pass. This checkpoint
+changes no live route, environment flag or SQL; no new build or provider test is
+claimed. The preceding 57-assertion SQL result is a separate lifecycle checkpoint.
+
 Rollback for this dormant foundation is to leave callers disabled and retain any
 recorded intent metadata. Do not drop the table or delete storage to undo a release.

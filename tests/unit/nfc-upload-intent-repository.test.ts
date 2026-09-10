@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
 const mocks=vi.hoisted(()=>({ rpc:vi.fn() }));
 vi.mock("@/lib/supabase/service-role",()=>({ createSupabaseServiceRoleClient:()=>mocks }));
-import { prepareNfcEvidenceUpload } from "@/lib/repositories/nfc-upload-intent.repository";
+import { prepareNfcEvidenceUpload, finalizeNfcEvidenceUpload, abandonStaleNfcEvidenceUpload } from "@/lib/repositories/nfc-upload-intent.repository";
 const input={
   request_id:"10000000-0000-4000-8000-000000000001",actor_id:"20000000-0000-4000-8000-000000000001",
   nfc_tag_id:"30000000-0000-4000-8000-000000000001",tag_version:1,provider:"supabase",
@@ -50,4 +50,37 @@ it("preserves bounded conflict codes without leaking database details",async()=>
   await expect(prepareNfcEvidenceUpload(input)).rejects.toThrow("NFC_UPLOAD_REQUEST_CONFLICT");
   mocks.rpc.mockResolvedValue({data:null,error:{message:"private database detail"}});
   await expect(prepareNfcEvidenceUpload(input)).rejects.toThrow("NFC_UPLOAD_PREPARE_FAILED");
+});
+const verification={assetId:asset,actorId:input.actor_id,providerAccount:input.provider_account,
+  storagePath:row.object_key,sha256:input.sha256,sizeBytes:1000,width:640,height:480};
+it("finalizes only the exact acknowledged asset",async()=>{
+  mocks.rpc.mockResolvedValue({data:asset,error:null});
+  expect(await finalizeNfcEvidenceUpload(verification)).toBe(asset);
+  expect(mocks.rpc).toHaveBeenCalledWith("finalize_nfc_evidence_upload",{
+    p_asset_id:asset,p_actor_id:input.actor_id,p_account:input.provider_account,p_path:row.object_key,
+    p_sha256:input.sha256,p_size:1000,p_width:640,p_height:480,
+  });
+});
+it.each([null,true,[],"50000000-0000-4000-8000-000000000001"])("rejects ambiguous finalization acknowledgement %j",async data=>{
+  mocks.rpc.mockResolvedValue({data,error:null});
+  await expect(finalizeNfcEvidenceUpload(verification)).rejects.toThrow("NFC_UPLOAD_RESPONSE_INVALID");
+});
+it("requires explicit abandonment acknowledgement",async()=>{
+  mocks.rpc.mockResolvedValue({data:true,error:null});
+  await expect(abandonStaleNfcEvidenceUpload({assetId:asset,operatorId:input.actor_id})).resolves.toBe(true);
+  expect(mocks.rpc).toHaveBeenCalledWith("abandon_stale_nfc_evidence_upload",{p_asset_id:asset,p_operator_id:input.actor_id});
+  mocks.rpc.mockResolvedValue({data:false,error:null});
+  await expect(abandonStaleNfcEvidenceUpload({assetId:asset,operatorId:input.actor_id})).rejects.toThrow("NFC_UPLOAD_RESPONSE_INVALID");
+});
+it("preserves terminal-state refusals but sanitizes unknown lifecycle errors",async()=>{
+  mocks.rpc.mockResolvedValue({data:null,error:{message:"NFC_UPLOAD_ABANDONED"}});
+  await expect(finalizeNfcEvidenceUpload(verification)).rejects.toThrow("NFC_UPLOAD_ABANDONED");
+  mocks.rpc.mockResolvedValue({data:null,error:{message:"private provider detail"}});
+  await expect(finalizeNfcEvidenceUpload(verification)).rejects.toThrow("NFC_UPLOAD_FINALIZE_FAILED");
+  await expect(abandonStaleNfcEvidenceUpload({assetId:asset,operatorId:input.actor_id})).rejects.toThrow("NFC_UPLOAD_ABANDON_FAILED");
+});
+it("rejects invalid lifecycle input without contacting the database",async()=>{
+  await expect(finalizeNfcEvidenceUpload({...verification,sizeBytes:0})).rejects.toThrow();
+  await expect(abandonStaleNfcEvidenceUpload({assetId:asset,operatorId:"invalid"})).rejects.toThrow();
+  expect(mocks.rpc).not.toHaveBeenCalled();
 });

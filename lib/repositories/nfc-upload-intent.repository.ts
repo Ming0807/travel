@@ -21,6 +21,8 @@ export type NfcEvidenceUploadIntent = z.infer<typeof preparedSchema>;
 const knownErrors = new Set([
   "NFC_UPLOAD_INPUT_INVALID", "NFC_UPLOAD_ACTOR_UNAVAILABLE", "NFC_UPLOAD_TAG_UNAVAILABLE",
   "NFC_UPLOAD_REQUEST_CONFLICT", "NFC_VERSION_CONFLICT", "NFC_UPLOAD_PENDING_LIMIT",
+  "NFC_UPLOAD_FINALIZE_CONFLICT", "NFC_UPLOAD_ABANDONED", "NFC_UPLOAD_NOT_FOUND",
+  "NFC_UPLOAD_NOT_AVAILABLE", "NFC_UPLOAD_EXPIRED", "NFC_UPLOAD_NOT_ABANDONABLE", "NFC_UPLOAD_NOT_STALE",
 ]);
 
 // Dormant server-only adapter. The caller must authorize checkin_code.manage.
@@ -54,4 +56,35 @@ export async function prepareNfcEvidenceUpload(input: unknown): Promise<NfcEvide
       : ordered(intent.abandoned_at) && intent.finalized_at === null && intent.storage_path === null;
   if (!validState) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
   return intent;
+}
+
+const verifiedContentSchema = z.object({
+  assetId: z.uuid(), actorId: z.uuid(), providerAccount: bindingSchema.shape.provider_account,
+  storagePath: z.string().min(1).max(500), sha256: bindingSchema.shape.sha256,
+  sizeBytes: bindingSchema.shape.size_bytes, width: bindingSchema.shape.width, height: bindingSchema.shape.height,
+}).strict();
+
+// Caller must authorize the actor and independently verify provider account/content.
+// A lost acknowledgement must be resolved by exact retry, never by deleting the file.
+export async function finalizeNfcEvidenceUpload(input: unknown): Promise<string> {
+  const value = verifiedContentSchema.parse(input);
+  const { data, error } = await createSupabaseServiceRoleClient().rpc("finalize_nfc_evidence_upload", {
+    p_asset_id: value.assetId, p_actor_id: value.actorId, p_account: value.providerAccount,
+    p_path: value.storagePath, p_sha256: value.sha256, p_size: value.sizeBytes,
+    p_width: value.width, p_height: value.height,
+  });
+  if (error) throw new Error(knownErrors.has(error.message) ? error.message : "NFC_UPLOAD_FINALIZE_FAILED");
+  if (data !== value.assetId) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
+  return value.assetId;
+}
+
+// Operator permission is required upstream. This retains metadata, not provider deletion.
+export async function abandonStaleNfcEvidenceUpload(input: unknown): Promise<true> {
+  const value = z.object({ assetId: z.uuid(), operatorId: z.uuid() }).strict().parse(input);
+  const { data, error } = await createSupabaseServiceRoleClient().rpc("abandon_stale_nfc_evidence_upload", {
+    p_asset_id: value.assetId, p_operator_id: value.operatorId,
+  });
+  if (error) throw new Error(knownErrors.has(error.message) ? error.message : "NFC_UPLOAD_ABANDON_FAILED");
+  if (data !== true) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
+  return true;
 }
