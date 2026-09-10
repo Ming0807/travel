@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 processed upload orchestration connects guard/content validation, preparation,
+pinned upload and confirmation with one same-asset recovery attempt on upload
+error. Available retries skip upload; expired/abandoned work stops. Eight focused
+tests and TypeScript/lint pass. Still dormant: raw-file processing/browser request
+identity, full provider staging and recovery worker are not complete. No new SQL.
+
 S5 exact locator discovery: pinned Cloudinary authenticated image lookup recovers
 the actual version by exact public ID before byte readback; Supabase uses its
 deterministic key. Errors stop confirmation, never imply safe absence. Eighty-four

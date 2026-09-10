@@ -202,3 +202,24 @@ Eighty-four tests across six focused repository/storage/service/HTTP suites pass
 TypeScript and scoped lint pass. Provider SDK responses remain mocked; real
 Cloudinary/Supabase acceptance and complete retry orchestration are still pending.
 No new SQL, live route or build is included in this checkpoint.
+
+### Recoverable Processed Upload Orchestration
+
+`uploadProcessedNfcEvidenceRecoverably` connects authorization, server-side WebP
+metadata/hash validation, durable preparation, pinned no-overwrite upload and
+independent confirmation. It accepts only bounded metadata-stripped single-frame
+WebP bytes from a future server image-processing caller, not arbitrary original
+phone files. It copies bytes before awaiting metadata to preserve content binding.
+
+Exact available retries confirm without upload; abandoned/expired intents stop.
+An upload error (including an ambiguous response or duplicate object) invokes
+confirmation once on the same asset; no new request ID, deletion or unbounded
+upload loop is introduced. Preparation failure causes no provider call. Failure
+to recover remains an error, not a fabricated success. Database finalization
+remains authoritative for concurrent expiry, tag change or abandonment.
+
+Eight orchestration tests pass with real generated WebP and mocked dependencies;
+TypeScript/scoped lint pass. This is not live end-to-end evidence. Source-image
+processing integration, browser retry identity, real provider staging, recovery
+worker/late-arrival reconciliation and default-off route integration remain open.
+No new SQL or live behavior change in this checkpoint.
