@@ -4,6 +4,14 @@
 Proposed, 2026-09-10. Existing registered-asset cleanup is implemented but disabled.
 This proposal does not authorize a migration, provider deletion or rollout.
 
+September 10 implementation checkpoint: a held preparation-only schema/RPC and
+strict server adapter now persist actor-scoped retry identity, processed content
+and pinned destination. Disposable PostgreSQL passes 33 assertions, including
+simultaneous retry/admission; 16 adapter tests pass. There is no live caller or
+finalize/abandon transition. The first implementation gate below remains open;
+preparation is not the entire race-safe recovery protocol. Deployment hold and
+remaining gates: `docs/deployment/NFC_UPLOAD_INTENTS_20260910.md`.
+
 ## Context
 The current upload writes the provider object before registering immutable asset
 metadata. Exact readback handles a lost registration response, but a failed

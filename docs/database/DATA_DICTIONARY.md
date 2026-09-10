@@ -1960,3 +1960,15 @@ uses claim/complete RPCs. Claims select only unattached assets older than seven
 days, enforce batch capacity (1-100), and prevent later report attachment.
 No cron or remote deletion is created by this migration. Unregistered provider
 objects require separate reconciliation. Migration: `20260909001000_queue_nfc_orphan_cleanup.sql`.
+
+### NFC Upload Intents (September 10, Held Preparation Foundation)
+
+`nfc_evidence_upload_intents` records database-generated asset UUID, actor-scoped
+request UUID, actor/tag restrictive FKs and tag version, pinned provider/account,
+storage prefix/exact object key, processed SHA-256, bytes (1-2,097,152), dimensions
+(1-2560), `prepared` state and server creation timestamp. Unique constraints cover
+`(actor_id, request_id)` and `(provider, provider_account, object_key)`. A partial
+actor/pending index supports bounded admission. RLS denies public access, service
+role has read only, and the service-only preparation RPC serializes actor admission
+and exact retries. There is no runtime caller, finalize/abandon RPC or remote upload
+in this foundation. Details and hold: `docs/deployment/NFC_UPLOAD_INTENTS_20260910.md`.

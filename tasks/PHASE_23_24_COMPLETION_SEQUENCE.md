@@ -21,6 +21,15 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 durable preparation checkpoint (September 10): held upload-intent migration
+and dormant TypeScript adapter added per ADR-012. Database-generated IDs, exact
+actor/request/content/provider binding, live actor/tag checks and bounded pending
+admission pass 33 PostgreSQL assertions; adapter validation passes 16 tests and
+scoped lint. No route/flag activation or production SQL. Finalize/abandon, pinned
+storage adapters, client retries and recovery worker remain open. Remote migration
+history could not resolve its hostname; no production state claim is made.
+Hold/runbook: docs/deployment/NFC_UPLOAD_INTENTS_20260910.md.
+
 S6 real PostgREST checkpoint (September 10): added a disposable local integration
 runner exercising the actual executive repository and Supabase HTTP client against
 PostgreSQL 16/PostgREST 14.12. Eight tests pass with a two-row provider cap, tied
