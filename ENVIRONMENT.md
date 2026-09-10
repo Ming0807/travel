@@ -210,3 +210,14 @@ and September 9 evidence migrations, photo/report UI integration, upload recover
 orphan cleanup/retention, and full-schema/provider/device QA. No production flag
 or SQL was applied by the agent. Turning it off blocks new uploads and preview URL
 issuance; previously issued 60-second links expire independently.
+
+`NFC_EVIDENCE_RECOVERY_ENABLED=false` by default. Unset/empty also disable it;
+only literal `true` enables recoverable POST uploads, and malformed values fail
+closed. The upload flag above must also be enabled. When recovery is enabled,
+POST requires a UUID `X-NFC-Upload-Request-ID`; it never falls back to legacy
+upload after a recovery failure. Keep disabled pending the September 10 upload
+intent preparation/finalization migrations, full-schema and private-provider
+staging verification, and recovery/cleanup acceptance. No production SQL or
+flags were changed. Browser retries retain the request ID and prepared bytes
+only for the same File object and tag version in the current page; this is not
+reload-persistent recovery and stores no photo in localStorage.

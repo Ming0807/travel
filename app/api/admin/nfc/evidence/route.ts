@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
-import { nfcEvidenceUploadEnabled } from "@/lib/config/nfc-evidence";
+import { nfcEvidenceUploadEnabled, nfcEvidenceRecoveryEnabled } from "@/lib/config/nfc-evidence";
 import { readBoundedRequestBody, RequestBodyLimitError } from "@/lib/http/bounded-request-body";
 import { NFC_EVIDENCE_UPLOAD_MAX_BYTES } from "@/lib/nfc/evidence-upload-policy";
 import { AdminImageUploadError, ADMIN_IMAGE_UPLOAD_ALLOWED_TYPES } from "@/lib/services/admin-image-processing.service";
 import { uploadNfcEvidence, getNfcEvidencePreview } from "@/lib/services/nfc-evidence.service";
+import { uploadNfcEvidenceRecoverably } from "@/lib/services/nfc-recoverable-source.service";
 import { rateLimit } from "@/lib/utils/rate-limit";
 
 export const runtime = "nodejs";
@@ -40,8 +41,13 @@ export async function POST(request: Request) {
     if (!(ADMIN_IMAGE_UPLOAD_ALLOWED_TYPES as readonly string[]).includes(type) || ![null, "identity"].includes(request.headers.get("content-encoding"))) {
       return failure("IMAGE_TYPE_INVALID", "รองรับไฟล์ JPG, PNG และ WebP เท่านั้น", 415);
     }
+    const recovery = nfcEvidenceRecoveryEnabled();
+    const requestId = recovery ? z.uuid().parse(request.headers.get("X-NFC-Upload-Request-ID")) : null;
     const buffer = await readBoundedRequestBody(request, NFC_EVIDENCE_UPLOAD_MAX_BYTES);
-    const result = await uploadNfcEvidence(context, { type, size: buffer.byteLength, arrayBuffer: async () => buffer });
+    const file = { type, size: buffer.byteLength, arrayBuffer: async () => buffer };
+    const result = requestId
+      ? await uploadNfcEvidenceRecoverably({ ...context, requestId }, file)
+      : await uploadNfcEvidence(context, file);
     return NextResponse.json({ success: true, data: result }, { headers });
   } catch (error) { return handleError(error); }
 }

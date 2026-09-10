@@ -32,3 +32,21 @@ it("accepts only a validated short-lived HTTPS preview response", async () => {
   mocks.fetch.mockResolvedValue(Response.json({ success: true, data: { url: "https://private.test/photo", expiresIn: 60 } }));
   expect(await loadNfcEvidencePhoto(id, id)).toBe("https://private.test/photo");
 });
+it("reuses request identity and prepared bytes after a lost response",async()=>{
+  const original=new File(["source"],"retry.jpg",{type:"image/jpeg"});
+  mocks.fetch.mockRejectedValueOnce(new Error("lost response"));
+  await expect(uploadNfcEvidencePhoto(original,context,vi.fn())).rejects.toThrow();
+  mocks.fetch.mockResolvedValueOnce(Response.json({success:true,data:{assetId:id,width:800,height:600,sizeBytes:4}}));
+  await uploadNfcEvidencePhoto(original,context,vi.fn());
+  expect(mocks.prepare).toHaveBeenCalledOnce();
+  const first=mocks.fetch.mock.calls[0][1],second=mocks.fetch.mock.calls[1][1];
+  expect(first.headers["X-NFC-Upload-Request-ID"]).toMatch(/^[0-9a-f-]{36}$/);
+  expect(second.headers["X-NFC-Upload-Request-ID"]).toBe(first.headers["X-NFC-Upload-Request-ID"]);
+  expect(second.body).toBe(first.body);
+});
+it("does not share retry identity across tag versions",async()=>{
+  const original=new File(["source"],"version.jpg",{type:"image/jpeg"});mocks.fetch.mockRejectedValue(new Error("lost"));
+  await expect(uploadNfcEvidencePhoto(original,context,vi.fn())).rejects.toThrow();
+  await expect(uploadNfcEvidencePhoto(original,{...context,version:2},vi.fn())).rejects.toThrow();
+  expect(mocks.fetch.mock.calls[0][1].headers["X-NFC-Upload-Request-ID"]).not.toBe(mocks.fetch.mock.calls[1][1].headers["X-NFC-Upload-Request-ID"]);
+});

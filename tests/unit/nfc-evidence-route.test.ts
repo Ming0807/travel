@@ -1,6 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ enabled: vi.fn(), permission: vi.fn(), limit: vi.fn(), upload: vi.fn(), preview: vi.fn() }));
-vi.mock("@/lib/config/nfc-evidence", () => ({ nfcEvidenceUploadEnabled: mocks.enabled }));
+const mocks = vi.hoisted(() => ({ enabled: vi.fn(), recovery:vi.fn(), recoverUpload:vi.fn(), permission: vi.fn(), limit: vi.fn(), upload: vi.fn(), preview: vi.fn() }));
+vi.mock("@/lib/config/nfc-evidence", () => ({ nfcEvidenceUploadEnabled: mocks.enabled,nfcEvidenceRecoveryEnabled:mocks.recovery }));
+vi.mock("@/lib/services/nfc-recoverable-source.service",()=>({uploadNfcEvidenceRecoverably:mocks.recoverUpload}));
 vi.mock("@/lib/auth/guards", () => ({ requirePermission: mocks.permission, AdminAuthError: class extends Error { code = "UNAUTHORIZED"; } }));
 vi.mock("@/lib/utils/rate-limit", () => ({ rateLimit: mocks.limit }));
 vi.mock("@/lib/services/nfc-evidence.service", () => ({ uploadNfcEvidence: mocks.upload, getNfcEvidencePreview: mocks.preview }));
@@ -59,4 +60,17 @@ it("returns short-lived private preview metadata and sanitizes failures", async 
   mocks.preview.mockRejectedValue(new Error("private database password"));
   const failed = await GET(new Request(url));
   expect(failed.status).toBe(503); expect(await failed.text()).not.toContain("password");
+});
+it("requires stable request identity only on the separately enabled recovery path",async()=>{
+  mocks.recovery.mockReturnValue(true);
+  expect((await POST(request())).status).toBe(400);
+  expect(mocks.upload).not.toHaveBeenCalled();expect(mocks.recoverUpload).not.toHaveBeenCalled();
+  mocks.recoverUpload.mockResolvedValue({assetId:id,width:800,height:600,sizeBytes:100});
+  expect((await POST(request({"X-NFC-Upload-Request-ID":id}))).status).toBe(200);
+  expect(mocks.recoverUpload.mock.calls[0][0]).toEqual({tagId:id,version:2,requestId:id});
+  expect(mocks.upload).not.toHaveBeenCalled();
+});
+it("never falls back to legacy upload after a recovery failure",async()=>{
+  mocks.recovery.mockReturnValue(true);mocks.recoverUpload.mockRejectedValue(new Error("NFC_READBACK_UNAVAILABLE"));
+  expect((await POST(request({"X-NFC-Upload-Request-ID":id}))).status).toBe(503);expect(mocks.upload).not.toHaveBeenCalled();
 });

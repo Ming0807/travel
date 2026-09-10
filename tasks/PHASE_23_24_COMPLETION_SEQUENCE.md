@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 default-off route checkpoint: stable browser request IDs/prepared-byte reuse
+now connect to recoverable POST behind independent `NFC_EVIDENCE_RECOVERY_ENABLED`.
+Missing identity and recovery failures cannot fall back to legacy upload. Thirty
+focused tests pass. Still held: full-schema/provider/device QA, persistent recovery
+and late-arrival reconciliation. No production SQL or flags changed.
+
 S5 source-image integration: legacy and dormant recovery source services now share
 the existing bounded WebP processing policy. Recovery validates actor/tag first and
 retains request ID into orchestration. Twenty-three focused tests, TypeScript/lint

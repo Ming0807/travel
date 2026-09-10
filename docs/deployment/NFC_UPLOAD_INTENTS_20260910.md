@@ -239,3 +239,25 @@ prove cross-deployment byte determinism or real mobile uploads. Reprocessing a
 retry with changed encoder output will fail the stored hash binding rather than
 silently replace content. Browser retry IDs and prepared-byte retention must still
 be integrated before enabling a recovery route. No new flag or route is added.
+
+### Default-Off Route and Browser Retry Integration
+
+The existing evidence POST now selects recovery only when both upload and
+`NFC_EVIDENCE_RECOVERY_ENABLED` are literally true. Recovery requires a UUID
+`X-NFC-Upload-Request-ID`, keeps existing origin/auth/rate/body checks, and never
+falls back to legacy upload after an error. GET preview behavior is unchanged.
+The browser retains prepared bytes and request identity for the same File and
+tag version after ambiguous failure. Preparation failures discard the pending
+entry; validated success releases it. No persistent browser storage is used.
+
+Thirty focused client/config/route/source/orchestration tests pass. These are
+mocked route/service tests, not live provider or device acceptance. Page reload
+and cross-session retries are not recovered by this in-memory cache. Historical
+checkpoints above describe their state at delivery; route wiring is now present
+but disabled. Production flags and all held migrations remain unchanged.
+
+Node 22 production build passes including TypeScript and 66 generated static
+pages; scoped ESLint passes. The missing root `vite` dependency from the earlier
+Vercel log is present in package.json/lockfile and resolves during this build.
+Push was attempted once, stalled without output and was stopped; remote release
+and Vercel deployment are not verified.
