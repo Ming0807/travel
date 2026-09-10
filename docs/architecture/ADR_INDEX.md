@@ -45,6 +45,10 @@ These ADRs should be read with the latest product strategy:
 Pending proposal: [ADR-011: Bounded Research Browser Credentials](adr/ADR_011_RESEARCH_CREDENTIAL_STORAGE.md).
 Implementation and migration are not complete; this does not authorize rollout.
 
+Pending proposal: [ADR-012: Recoverable Private NFC Evidence Uploads](adr/ADR_012_NFC_EVIDENCE_UPLOAD_RECOVERY.md).
+Defines durable upload intents and exact-locator reconciliation for the remaining
+unregistered-object gap. No new migration or activation is authorized by this ADR.
+
 New ADRs should follow this format:
 
 ```markdown

@@ -21,6 +21,13 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+September 10 S5 recovery design: ADR-012 identifies the unresolved crash window
+between provider upload and metadata registration. Proposed next implementation
+uses durable intents, pinned destinations and exact-locator reconciliation, with
+late-provider-write rechecks. This is a design, not implemented recovery. Keep
+upload/cleanup flags disabled; do not infer S5 completion from registered-asset
+cleanup alone. See `docs/architecture/adr/ADR_012_NFC_EVIDENCE_UPLOAD_RECOVERY.md`.
+
 S5 cleanup-schema checkpoint (September 9): registered orphan images now have a
 bounded durable queue with attachment exclusion and service-only RPCs. Disposable
 PostgreSQL verification: 230 assertions passed. Migration
