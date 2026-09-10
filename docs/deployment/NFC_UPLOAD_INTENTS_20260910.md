@@ -148,5 +148,19 @@ host, corrupted bytes and stalled fetch abortion. Node 22 TypeScript and scoped
 lint pass. No real provider call, live route integration, new SQL or production
 build is claimed. Client retry/discovery and authorized orchestration remain open.
 
+### Loopback HTTP Verification
+
+`tests/integration/nfc-readback-http.test.ts` runs actual Node HTTP fetch/streaming
+against a unique loopback listener with generated WebP bytes. Four tests verify
+successful readback, excess bytes, truncated content and refusal to follow even
+same-origin redirects. Signing and destination configuration are fixture adapters;
+this is not real Supabase/Cloudinary signing or provider acceptance. The listener
+and connections are closed after the suite.
+
+A new regression reproduced configuration drift during asynchronous signing.
+Readback now revalidates the pinned destination after signing, before fetch.
+Twelve unit plus four HTTP integration tests pass, along with TypeScript and
+scoped lint. No new SQL, rollout or production build in this follow-up.
+
 Rollback for this dormant foundation is to leave callers disabled and retain any
 recorded intent metadata. Do not drop the table or delete storage to undo a release.

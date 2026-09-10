@@ -67,3 +67,12 @@ it("aborts a stalled fetch after the bounded readback deadline",async()=>{
     expect(mocks.fetch.mock.calls[0][1].signal.aborted).toBe(true);
   } finally {vi.useRealTimers();}
 });
+it("rechecks the pinned destination after asynchronous signing",async()=>{
+  const {input}=await fixture();
+  mocks.sign.mockImplementation(async()=>{
+    mocks.destination.mockReturnValue({...mocks.destination(),provider_account:"changed"});
+    return "https://test.supabase.co/storage/v1/object/sign/nfc-evidence/test?token=secret";
+  });
+  await expect(verifyNfcEvidenceReadback(input)).rejects.toThrow("NFC_UPLOAD_DESTINATION_CHANGED");
+  expect(mocks.fetch).not.toHaveBeenCalled();
+});

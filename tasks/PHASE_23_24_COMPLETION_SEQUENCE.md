@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 readback HTTP follow-up: four real loopback HTTP tests verify successful bytes,
+overflow/truncation and no redirects. Twelve unit tests include a reproduced/fixed
+destination change during signing. TypeScript/lint pass. Real provider signing,
+version discovery and complete authorized upload/retry orchestration remain open.
+
 S5 readback adapter: private signer-generated URLs, pinned destination/key checks,
 restricted origins/no redirects, bounded stream and timeout, actual hash/WebP
 dimension verification. Forty-two focused storage tests, lint and TypeScript pass.

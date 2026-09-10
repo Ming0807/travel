@@ -17,9 +17,12 @@ const schema = z.object({
 // Missing/error responses are not proof of permanent absence or safe deletion.
 export async function verifyNfcEvidenceReadback(input: unknown) {
   const expected = schema.parse(input);
-  const destination = getNfcUploadDestination();
-  if (destination.provider !== expected.provider || destination.provider_account !== expected.provider_account
-    || destination.storage_prefix !== expected.storage_prefix) throw new Error("NFC_UPLOAD_DESTINATION_CHANGED");
+  const assertDestination = () => {
+    const destination = getNfcUploadDestination();
+    if (destination.provider !== expected.provider || destination.provider_account !== expected.provider_account
+      || destination.storage_prefix !== expected.storage_prefix) throw new Error("NFC_UPLOAD_DESTINATION_CHANGED");
+  };
+  assertDestination();
   const key = `${expected.storage_prefix}/${expected.asset_id}${expected.provider === "supabase" ? ".webp" : ""}`;
   const pathMatches = expected.provider === "supabase" ? expected.storage_path === key
     : /^cloudinary:image:authenticated:v[1-9][0-9]{0,15}:webp:/.test(expected.storage_path)
@@ -28,6 +31,7 @@ export async function verifyNfcEvidenceReadback(input: unknown) {
   let signed: string;
   try { signed = await createPrivateFileSignedUrl("nfc-evidence", expected.storage_path, 60); }
   catch { throw new Error("NFC_READBACK_UNAVAILABLE"); }
+  assertDestination();
   let url: URL;
   try { url = new URL(signed); } catch { throw new Error("NFC_READBACK_URL_INVALID"); }
   const allowedOrigin = expected.provider === "supabase"
