@@ -101,5 +101,28 @@ Twenty-six adapter tests, Node 22 TypeScript and scoped ESLint pass. This checkp
 changes no live route, environment flag or SQL; no new build or provider test is
 claimed. The preceding 57-assertion SQL result is a separate lifecycle checkpoint.
 
+### Pinned Upload Adapter Checkpoint
+
+`lib/storage/nfc-prepared-storage.ts` derives the current destination and rejects
+provider/account/prefix changes against the persisted intent. Supabase account
+identity is SHA-256 of the canonical API endpoint (origin plus path without trailing
+slashes); this supports distinct custom/self-hosted endpoints without storing URL
+credentials. Cloudinary identity is its cloud name plus normalized public-ID
+prefix. Existing intents with other account conventions fail closed; do not rewrite
+them or infer equivalent destinations after a configuration change.
+
+Only prepared intents may upload. Copied bytes must match hash, byte count, WebP
+format and single-frame dimensions before upload. Destination is rechecked after
+decoding. Existing private upload behavior supplies no-overwrite and authenticated
+Cloudinary delivery; returned provider/bucket/key/version syntax is checked.
+Ambiguous or conflicting responses never cause deletion or automatic finalize.
+
+Thirty-one focused prepared/legacy storage tests pass using actual Sharp fixture
+bytes and mocked providers, including configuration changes and caller-buffer
+mutation during decoding. TypeScript and scoped lint pass. No remote provider
+upload/readback was performed. This dormant adapter is not connected to live
+routes; independent remote-byte verification and duplicate-object recovery remain
+required before activation. No SQL or UI changes are included.
+
 Rollback for this dormant foundation is to leave callers disabled and retain any
 recorded intent metadata. Do not drop the table or delete storage to undo a release.

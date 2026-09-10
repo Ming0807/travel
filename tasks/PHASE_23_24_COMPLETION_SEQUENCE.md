@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 pinned-upload adapter: validates prepared intent destination against configured
+provider/account/prefix, copies and verifies WebP content before asynchronous upload,
+and checks the returned exact private locator. Thirty-one focused storage tests,
+TypeScript and scoped lint pass. Providers mocked; no live route or remote upload.
+Independent readback, duplicate-object handling and retry orchestration remain.
+
 S5 lifecycle adapter follow-up: finalize/abandon server adapters now enforce exact
 acknowledgements and sanitized errors. Twenty-six adapter tests, TypeScript and
 scoped lint pass. Still dormant: authorization, verified provider bytes/account,
