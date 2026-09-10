@@ -21,6 +21,16 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S6 real PostgREST checkpoint (September 10): added a disposable local integration
+runner exercising the actual executive repository and Supabase HTTP client against
+PostgreSQL 16/PostgREST 14.12. Eight tests pass with a two-row provider cap, tied
+timestamps, abandoned entries, nested outcomes, Bangkok microseconds and four
+location filters. Fixture unique indexes match the foundation migration; a failed
+object-shape assumption was corrected against actual array responses, not hidden.
+TypeScript and scoped lint passed. No application logic, SQL rollout or flags
+changed. This is minimal relationship-schema QA, not full-schema/auth/RLS or
+large-data staging evidence. See docs/testing/EXECUTIVE_ENTRY_POSTGREST_QA.md.
+
 S6 chart-size follow-up (September 10): reproduced and fixed Recharts initial
 negative dimensions using its supported initialDimension prop. Five chart tests,
 lint and TypeScript pass; Chromium 360/768/1440 rerun now rejects dimension warnings
