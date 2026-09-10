@@ -223,3 +223,19 @@ TypeScript/scoped lint pass. This is not live end-to-end evidence. Source-image
 processing integration, browser retry identity, real provider staging, recovery
 worker/late-arrival reconciliation and default-off route integration remain open.
 No new SQL or live behavior change in this checkpoint.
+
+### Source Image Integration
+
+The dormant `uploadNfcEvidenceRecoverably` source service now checks permission and
+live tag/version before processing, then passes the same request ID and generated
+WebP to recoverable orchestration. Legacy and recovery paths share
+`processNfcEvidenceImage`: 3 MiB input, 24 MP decode ceiling, 2560px output and
+2 MiB stored cap with the existing 82/72 quality fallback. Legacy authorization,
+schema availability check and upload behavior remain unchanged.
+
+Twenty-three source/legacy/orchestration tests pass; TypeScript and scoped lint
+pass. Processing and storage are mocked in these service tests; this does not
+prove cross-deployment byte determinism or real mobile uploads. Reprocessing a
+retry with changed encoder output will fail the stored hash binding rather than
+silently replace content. Browser retry IDs and prepared-byte retention must still
+be integrated before enabling a recovery route. No new flag or route is added.

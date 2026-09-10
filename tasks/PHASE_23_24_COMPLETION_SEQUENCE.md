@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 source-image integration: legacy and dormant recovery source services now share
+the existing bounded WebP processing policy. Recovery validates actor/tag first and
+retains request ID into orchestration. Twenty-three focused tests, TypeScript/lint
+pass. Production route unchanged; stable browser IDs/bytes and rollout gate remain.
+
 S5 processed upload orchestration connects guard/content validation, preparation,
 pinned upload and confirmation with one same-asset recovery attempt on upload
 error. Available retries skip upload; expired/abandoned work stops. Eight focused

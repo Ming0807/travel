@@ -5,12 +5,10 @@ import { requirePermission } from "@/lib/auth/guards";
 import { readAdminNfcTag } from "@/lib/repositories/admin-nfc.repository";
 import { readNfcEvidenceAsset, registerNfcEvidenceAsset, type NfcEvidenceMetadata } from "@/lib/repositories/nfc-evidence.repository";
 import { createPrivateFileSignedUrl, uploadPrivateFile } from "@/lib/storage/private-files";
-import { readAndValidateAdminImageFile, renderAdminImageWebpVariant, type UploadableAdminImageFile } from "@/lib/services/admin-image-processing.service";
-import { NFC_EVIDENCE_UPLOAD_MAX_BYTES, NFC_EVIDENCE_STORED_MAX_BYTES } from "@/lib/nfc/evidence-upload-policy";
+import type { UploadableAdminImageFile } from "@/lib/services/admin-image-processing.service";
+import { processNfcEvidenceImage } from "@/lib/services/nfc-evidence-image.service";
 
 const uploadContext = z.object({ tagId: z.uuid(), version: z.number().int().positive() }).strict();
-const maxUploadBytes = NFC_EVIDENCE_UPLOAD_MAX_BYTES;
-const maxStoredBytes = NFC_EVIDENCE_STORED_MAX_BYTES;
 
 export async function uploadNfcEvidence(input: unknown, file: UploadableAdminImageFile) {
   const { adminId } = await requirePermission("checkin_code.manage", { unauthenticated: "throw" });
@@ -21,15 +19,7 @@ export async function uploadNfcEvidence(input: unknown, file: UploadableAdminIma
   const assetId = randomUUID();
   // Check schema availability before creating a remote object.
   if (await readNfcEvidenceAsset(assetId)) throw new Error("NFC_EVIDENCE_REQUEST_CONFLICT");
-  const decoded = await readAndValidateAdminImageFile(file, { maxSizeMb: 3, maxPixels: 24_000_000 });
-  if (decoded.inputBuffer.byteLength > maxUploadBytes || decoded.inputBuffer.byteLength !== file.size) {
-    throw new Error("NFC_EVIDENCE_SIZE_INVALID");
-  }
-  let image = await renderAdminImageWebpVariant(decoded.inputBuffer, { maxWidth: 2560, quality: 82, maxPixels: 24_000_000 });
-  if (image.sizeBytes > maxStoredBytes) {
-    image = await renderAdminImageWebpVariant(decoded.inputBuffer, { maxWidth: 2560, quality: 72, maxPixels: 24_000_000 });
-  }
-  if (image.sizeBytes > maxStoredBytes) throw new Error("NFC_EVIDENCE_SIZE_INVALID");
+  const image = await processNfcEvidenceImage(file);
   const stored = await uploadPrivateFile({ bucket: "nfc-evidence", path: `nfc-evidence/${assetId}.webp`, data: image.buffer, contentType: "image/webp" });
   if (stored.provider !== "supabase" && stored.provider !== "cloudinary") throw new Error("NFC_EVIDENCE_PROVIDER_INVALID");
   const metadata: NfcEvidenceMetadata = {
