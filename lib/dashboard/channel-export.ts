@@ -1,9 +1,10 @@
 import type { AttractionAnalyticsViewModel } from "@/lib/services/attraction-analytics.service";
 type ChannelData = AttractionAnalyticsViewModel["channels"];
+export type EntryChannelExportData = Pick<ChannelData, "status" | "asOf" | "note" | "channels" | "daily" | "entries">;
 type ExportRow = { Section: string; Metric: string; Value: string | number; Denominator: string | number; Note: string };
 const visible = (value: number | null) => value === null ? "SUPPRESSED_OR_UNAVAILABLE" : value;
 
-export function buildChannelExportRows(data: ChannelData): ExportRow[] {
+export function buildEntryChannelExportRows(data: EntryChannelExportData): ExportRow[] {
   const rows: ExportRow[] = [
     { Section: "Entry channel metadata", Metric: "status", Value: data.status, Denominator: "", Note: data.note },
     { Section: "Entry channel metadata", Metric: "as_of", Value: data.asOf, Denominator: "", Note: "Outcome cutoff; entry-date cohort, not Visit-date cohort" },
@@ -24,6 +25,11 @@ export function buildChannelExportRows(data: ChannelData): ExportRow[] {
   for (const day of data.daily) {
     for (const channel of ["qr", "nfc"] as const) rows.push({ Section: "Entry channel daily trend", Metric: `${day.date}_${channel}`, Value: visible(day[channel]), Denominator: "", Note: "Bangkok entry-start date; distinct sessions" });
   }
-  rows.push({ Section: "Entry attribution coverage", Metric: "linked_visit_percent", Value: visible(data.attributionCoverage), Denominator: data.attributionVisitBase, Note: "Visit-date base, NOT entry conversion; includes entries started before selected dates" });
+  return rows;
+}
+
+export function buildChannelExportRows(data: ChannelData): ExportRow[] {
+  const rows = buildEntryChannelExportRows(data);
+  if (data.status === "ready") rows.push({ Section: "Entry attribution coverage", Metric: "linked_visit_percent", Value: visible(data.attributionCoverage), Denominator: data.attributionVisitBase, Note: "Visit-date base, NOT entry conversion; includes entries started before selected dates" });
   return rows;
 }

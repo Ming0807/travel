@@ -2,8 +2,9 @@
 
 ## Current State
 
-The filter-support helper and server-only repository are implemented. Neither is
-connected to a live executive chart or export yet. No migration or flag activation
+The filter-support helper, server-only repository, authorized aggregation service
+and export-row builder are implemented. They are not connected to a live executive
+chart or download route yet. No migration or flag activation
 is part of this checkpoint. Existing executive Visit-channel distribution remains
 unchanged and uses the Visit-date cohort.
 
@@ -48,8 +49,26 @@ changing totals, duplicate pages, date/location filters and sanitized failures.
 Scoped ESLint and Node 22 TypeScript pass. Real PostgREST relation resolution and query plans remain
 staging gates; mocked tests do not establish those properties.
 
-- Add an authorized service using the shared entry evidence-scope and outcome logic.
-- Return explicit unsupported/incomplete/error/empty states without false zeros.
 - Wire chart, accessible table and CSV/XLSX to one aggregate and cutoff.
 - Provide a clear action to remove post-entry filters without dropping date/scope.
 - Verify responsive states, authorization, suppression and real database behavior.
+
+## Aggregation and Export Contract
+
+`getExecutiveEntryAnalytics` authorizes `dashboard.read` before validating filters
+or reading storage. It reuses `buildAttractionChannelAnalytics` for immutable scope,
+outcome cutoff and complementary small-cell suppression. Only aggregate fields
+are returned; no entry/Visit IDs, respondent values or raw rows cross this boundary.
+Query failure returns `unavailable`, distinct from an empty successful cohort.
+
+`buildExecutiveEntryExportRows` shares the core entry-channel export serializer
+with attraction analytics. It omits Visit-date attribution coverage entirely.
+Blocked/unavailable results return metadata only, not zero-filled metrics. The
+existing attraction serializer still appends its real Visit-coverage row unchanged.
+The export-row builder is not a download endpoint: route export permission and
+privacy controls still have to be preserved when integrating it.
+
+Nineteen focused service/repository/export tests pass. They verify real shared
+aggregation with mocked reads/guards, including post-cutoff outcomes and suppression.
+This does not claim a live database read, new chart, or completed export route.
+Scoped ESLint and current Node 22 TypeScript also passed at this checkpoint.

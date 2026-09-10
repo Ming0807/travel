@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S6 aggregation checkpoint (September 10): added permission-checked executive entry
+service and shared export-row serialization. Actual attraction scope/cutoff/privacy
+math is reused, raw IDs are omitted and Visit-date coverage is not fabricated for
+the entry cohort. Nineteen focused tests pass. No live dashboard/download route
+calls these yet; UI, clear-filter action, endpoint integration and staging remain.
+
 S6 repository checkpoint (September 10): added an independent executive entry-start
 read with exact-count pagination, a 10,000-row/25-request ceiling, stable ordering,
 Bangkok bounds and as-of cutoff. Blocked or incomplete results contain no partial
