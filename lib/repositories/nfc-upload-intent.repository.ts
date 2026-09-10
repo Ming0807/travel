@@ -40,13 +40,23 @@ export async function prepareNfcEvidenceUpload(input: unknown): Promise<NfcEvide
   if (error) throw new Error(knownErrors.has(error.message) ? error.message : "NFC_UPLOAD_PREPARE_FAILED");
   const parsed = z.array(preparedSchema).length(1).safeParse(data);
   if (!parsed.success) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
-  const intent = parsed.data[0];
-  const objectKey = `${binding.storage_prefix}/${intent.asset_id}${binding.provider === "supabase" ? ".webp" : ""}`;
-  if (intent.object_key !== objectKey || Object.entries(binding).some(([key, value]) => intent[key as keyof NfcEvidenceUploadIntent] !== value)) {
+  const intent = validateIntent(parsed.data[0]);
+  if (Object.entries(binding).some(([key, value]) => intent[key as keyof NfcEvidenceUploadIntent] !== value)) {
+    throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
+  }
+  return intent;
+}
+
+function validateIntent(data: unknown): NfcEvidenceUploadIntent {
+  const parsed = preparedSchema.safeParse(data);
+  if (!parsed.success) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
+  const intent = parsed.data;
+  const objectKey = `${intent.storage_prefix}/${intent.asset_id}${intent.provider === "supabase" ? ".webp" : ""}`;
+  if (intent.object_key !== objectKey || (intent.provider === "supabase" && intent.storage_prefix !== "nfc-evidence")) {
     throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
   }
   const ordered = (time: string | null) => time !== null && Date.parse(time) >= Date.parse(intent.created_at);
-  const storageMatches = binding.provider === "supabase" ? intent.storage_path === objectKey
+  const storageMatches = intent.provider === "supabase" ? intent.storage_path === objectKey
     : intent.storage_path?.replace(/^cloudinary:image:authenticated:v[1-9][0-9]{0,15}:webp:/, "") === objectKey
       && /^cloudinary:image:authenticated:v[1-9][0-9]{0,15}:webp:/.test(intent.storage_path);
   const validState = intent.state === "prepared"
@@ -55,6 +65,18 @@ export async function prepareNfcEvidenceUpload(input: unknown): Promise<NfcEvide
       ? ordered(intent.finalized_at) && intent.abandoned_at === null && storageMatches
       : ordered(intent.abandoned_at) && intent.finalized_at === null && intent.storage_path === null;
   if (!validState) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
+  return intent;
+}
+
+export async function readOwnedNfcUploadIntent(assetId: string, actorId: string): Promise<NfcEvidenceUploadIntent | null> {
+  z.uuid().parse(assetId); z.uuid().parse(actorId);
+  const { data, error } = await createSupabaseServiceRoleClient().from("nfc_evidence_upload_intents")
+    .select("asset_id,request_id,actor_id,nfc_tag_id,tag_version,provider,provider_account,storage_prefix,object_key,sha256,size_bytes,width,height,state,created_at,finalized_at,abandoned_at,storage_path")
+    .eq("asset_id", assetId).eq("actor_id", actorId).maybeSingle();
+  if (error) throw new Error("NFC_UPLOAD_READ_FAILED");
+  if (!data) return null;
+  const intent = validateIntent(data);
+  if (intent.asset_id !== assetId || intent.actor_id !== actorId) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
   return intent;
 }
 

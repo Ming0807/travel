@@ -164,3 +164,23 @@ scoped lint. No new SQL, rollout or production build in this follow-up.
 
 Rollback for this dormant foundation is to leave callers disabled and retain any
 recorded intent metadata. Do not drop the table or delete storage to undo a release.
+
+### Authorized Confirmation Service
+
+`confirmNfcEvidenceUpload` now requires current `checkin_code.manage`, reads the
+exact actor-owned intent with strict metadata/state validation, verifies private
+bytes, and calls the authoritative finalize RPC. Browser-supplied hashes, sizes
+and accounts are rejected. An optional candidate storage locator is still checked
+against the durable exact key and actual content; finalized intents cannot change
+their stored locator. Missing Cloudinary versions are not invented.
+
+Available retries revalidate readback and call finalize again so current tag/actor
+and cleanup decisions remain authoritative. Failed or ambiguous finalization never
+returns success and never deletes provider data. Only asset ID/dimensions/byte count
+are returned. The service is dormant with no route or rollout flag change.
+
+The focused confirmation/repository/readback/HTTP suite passes 55 tests. TypeScript
+and scoped lint pass. Guards/database/providers are mocked except the loopback HTTP
+suite; this is not complete authenticated Next/Supabase integration. Automatic
+upload-or-recover orchestration, Cloudinary version discovery, client retry identity,
+worker reconciliation and real provider staging remain required. No new SQL/build.

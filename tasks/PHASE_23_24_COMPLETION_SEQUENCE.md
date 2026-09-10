@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 authorized confirmation: service guard, exact actor-owned intent read, verified
+readback and authoritative finalize are connected internally. Candidate locators
+cannot change durable content/ownership; errors do not cause deletion or success.
+Fifty-five focused tests pass, plus TypeScript/lint. No live route or new SQL;
+full upload/recover orchestration and authenticated provider staging remain open.
+
 S5 readback HTTP follow-up: four real loopback HTTP tests verify successful bytes,
 overflow/truncation and no redirects. Twelve unit tests include a reproduced/fixed
 destination change during signing. TypeScript/lint pass. Real provider signing,
