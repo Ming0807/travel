@@ -21,6 +21,22 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+September 10 analytics boundary review: fixed attraction entry/funnel timestamp
+filters to use exclusive next-day Bangkok midnight. Disposable PostgreSQL confirms
+the old upper bound dropped microsecond records at the end of the day. Three native
+Node calendar tests pass. This improves S6 input integrity but does not complete
+the executive entry-start cohort aggregation or authenticated analytics QA.
+
+S6 implementation constraint from repository review: executive filters include
+origin, age, transport, purpose and satisfaction, which are not known for entries
+that abandon before Visit/survey submission. Do not join those filters into the
+entry denominator and present it as whole-flow conversion. The entry-cohort panel
+must explicitly report unsupported post-entry filters (with a way to clear them),
+or use a separately named conditional cohort. Never silently ignore these filters.
+Reuse immutable evidence-scope attribution, Bangkok entry-start bounds and one
+as-of cutoff; keep the existing Visit-date distribution separate. Chart/table/export
+must share the same result and blocked-state metadata.
+
 September 10 S5 recovery design: ADR-012 identifies the unresolved crash window
 between provider upload and metadata registration. Proposed next implementation
 uses durable intents, pinned destinations and exact-locator reconciliation, with

@@ -40,7 +40,20 @@ passing result or production code fix is claimed for it.
 
 ## Remaining Gates
 
-- Record the focused rerun result after the test setup change.
+- Follow-up: the unchanged default forks-pool rerun completed successfully with
+  both media tests passing. Total elapsed time was 247.68 seconds, of which
+  224.39 seconds was module import and 6.45 seconds test execution. This verifies
+  the test setup change, not an uninterrupted full-suite pass.
 - Obtain an uninterrupted full-suite result on a stable runner.
 - Implement and verify ADR-012 recovery before enabling private evidence uploads.
 - Complete real-provider, authorization and device staging before rollout.
+
+## Analytics Date Boundary Follow-up
+
+The attraction entry/funnel timestamp upper bound was corrected to exclusive
+next-day Bangkok midnight. PostgreSQL reproduced the microsecond omission; three
+native Node calendar tests passed. Scoped ESLint covering the utility, repository,
+native tests and media test passed. The full TypeScript process was explicitly
+cancelled after prolonged execution without a result; it is not recorded as passing.
+These changes are held in a local commit pending the remaining release check.
+No SQL or feature flags changed. The disposable PostgreSQL container was stopped.

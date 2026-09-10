@@ -11,6 +11,7 @@
     "lint": "node --max-old-space-size=4096 ./node_modules/eslint/bin/eslint.js .",
     "typecheck": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit",
     "test": "vitest run",
+    "test:node": "node --test tests/node/*.test.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:admin-live": "playwright test --config=playwright.admin-live.config.ts",

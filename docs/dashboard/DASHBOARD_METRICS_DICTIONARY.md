@@ -2729,3 +2729,14 @@ Database-level grants and scoped summary SQL remain pending. Details:
 - Interpretation: indicates channel attribution of saved Visits. Copied NFC URLs
   retain NFC attribution and do not prove a physical tap. Not a research answer
   coverage or evidence-strength measure; no such badge is shown.
+
+### Attraction Timestamp Date Boundaries (2026-09-10)
+
+Entry-channel and funnel-event reads use Bangkok civil dates as a half-open range:
+`timestamp >= dateFrom 00:00+07:00 AND timestamp < (dateTo + 1 day) 00:00+07:00`.
+This includes PostgreSQL microsecond timestamps in the final millisecond without
+including next-day records. Visit-date filtering and metric denominators are
+unchanged. `bangkokDateRangeBounds` validates dates and handles calendar rollover.
+Native Node 22 regression checks: `pnpm run test:node` (separate from Vitest).
+Disposable PostgreSQL reproduced exclusion of `23:59:59.999999+07:00` under the old
+inclusive millisecond bound and inclusion under the new half-open bound.

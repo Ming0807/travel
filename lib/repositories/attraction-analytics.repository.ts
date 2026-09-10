@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getCheckinEntryConfig } from "@/lib/config/checkin-entry";
+import { bangkokDateRangeBounds } from "@/lib/utils/bangkok-datetime";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { listLiveDestinationProvinceIds } from "@/lib/repositories/destination-scope.repository";
 import { asRecord, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
@@ -46,6 +47,7 @@ export async function listAttractionAnalyticsOptions(): Promise<AttractionAnalyt
 }
 
 export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFilters): Promise<AttractionAnalyticsRows | null> {
+  const timestampRange = bangkokDateRangeBounds(filters.dateFrom, filters.dateTo);
   const channelTrackingEnabled = getCheckinEntryConfig().sessionsEnabled;
   const liveProvinceIds = await listLiveDestinationProvinceIds();
   if (liveProvinceIds.length === 0) return null;
@@ -131,8 +133,8 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
       .from("funnel_events")
       .select("event_id, visit_id, checkin_code_id, research_session_id, event_type, event_time, metadata")
       .in("checkin_code_id", funnelCodeIds)
-      .gte("event_time", `${filters.dateFrom}T00:00:00+07:00`)
-      .lte("event_time", `${filters.dateTo}T23:59:59.999+07:00`)
+      .gte("event_time", timestampRange.fromInclusive)
+      .lt("event_time", timestampRange.toExclusive)
       .order("event_time", { ascending: true })
       .limit(ATTRACTION_ANALYTICS_FUNNEL_LIMIT + 1);
     if (error) throw new Error("ATTRACTION_ANALYTICS_FUNNEL_FAILED");
@@ -151,8 +153,8 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
         visits(visit_id, created_at, certificates(certificate_id, generated_at), satisfaction_surveys(survey_id, submitted_at))
       `)
       .eq("attraction_id_snapshot", filters.attractionId)
-      .gte("created_at", `${filters.dateFrom}T00:00:00+07:00`)
-      .lte("created_at", `${filters.dateTo}T23:59:59.999+07:00`)
+      .gte("created_at", timestampRange.fromInclusive)
+      .lt("created_at", timestampRange.toExclusive)
       .order("created_at", { ascending: true })
       .limit(ATTRACTION_ANALYTICS_ENTRY_LIMIT + 1);
     if (filters.campaignId) entryQuery = entryQuery.eq("campaign_id_snapshot", filters.campaignId);

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
@@ -63,10 +63,10 @@ describe("FormRichText managed media insertion", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "เลือกรูปทดสอบ" }),
     );
-    await userEvent.type(
-      screen.getByLabelText("คำอธิบายรูปภาพ"),
-      "มัสยิดกลางปัตตานียามเย็น",
-    );
+    // This contract tests media serialization, not per-keystroke text editing.
+    fireEvent.change(screen.getByLabelText("คำอธิบายรูปภาพ"), {
+      target: { value: "มัสยิดกลางปัตตานียามเย็น" },
+    });
     await userEvent.click(screen.getByRole("button", { name: "ขนาดกลาง" }));
     await userEvent.click(screen.getByRole("button", { name: "ชิดขวา" }));
     await userEvent.click(screen.getByRole("button", { name: "แทรกรูปภาพ" }));
