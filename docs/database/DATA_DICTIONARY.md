@@ -1972,3 +1972,11 @@ actor/pending index supports bounded admission. RLS denies public access, servic
 role has read only, and the service-only preparation RPC serializes actor admission
 and exact retries. There is no runtime caller, finalize/abandon RPC or remote upload
 in this foundation. Details and hold: `docs/deployment/NFC_UPLOAD_INTENTS_20260910.md`.
+
+Held lifecycle follow-up `20260910001000_finalize_nfc_evidence_upload_intents.sql`
+adds `available`/`abandoned`, nullable `finalized_at`, `abandoned_at` and verified
+`storage_path` with state/timestamp checks. Binding metadata and terminal history
+are immutable. Service-only finalize atomically registers the asset; stale abandon
+retains a tombstone without deleting provider data. An insert guard prevents
+legacy registration from bypassing intent state. The RPC caller still must verify
+admin permission and remote content/account; SQL does not inspect provider bytes.

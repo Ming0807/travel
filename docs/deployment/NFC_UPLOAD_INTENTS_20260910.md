@@ -2,6 +2,10 @@
 
 Migration: `20260910000000_prepare_nfc_evidence_upload_intents.sql`.
 
+Held follow-up: `20260910001000_finalize_nfc_evidence_upload_intents.sql`, after
+preparation and the September 9 asset/cleanup migrations. Neither is authorized
+for production application by this checkpoint.
+
 Do not apply to production or enable recovery yet. This is preparation only, not
 the complete ADR-012 recovery protocol. No existing upload route calls the new
 repository; tourist uploads, public CMS uploads and current report attachment are
@@ -58,13 +62,33 @@ it did not apply SQL and does not establish production migration status.
 
 ## Remaining Gates
 
-The schema intentionally accepts only `prepared`. A reviewed follow-up must add
-atomic finalize/abandon transitions, register immutable asset metadata, coordinate
-report/cleanup locks, and preserve late-arrival tombstones. No state transition
-should be enabled by manually updating rows. Pinned storage verification, client
+The preparation migration alone accepts only `prepared`. The held lifecycle
+follow-up adds atomic finalize/abandon transitions and immutable terminal history.
+Finalization validates actor, live tag version, pinned account/path and processed
+content metadata, then updates the intent and inserts asset metadata in one
+transaction. The shared asset advisory lock serializes retries with legacy
+registration. An asset insert guard rejects registration of prepared/abandoned
+intents outside finalization; assets without intents retain legacy behavior.
+
+Only prepared intents older than 24 hours can be abandoned by an authorized
+operator; finalization refuses that same expired cohort. Available assets cannot
+be abandoned, and retries return the same result. The 24-hour boundary is a
+finalization eligibility deadline, not proof that a provider write has settled.
+Abandonment performs no deletion and retains tombstones for late-arrival checks.
+An existing cleanup claim blocks finalization retry; existing report attachment
+continues using immutable asset rows and its established cleanup locking.
+
+Lifecycle QA passes 57 PostgreSQL assertions, including forced asset-insert
+rollback, concurrent finalization, stale abandon/finalize contention, legacy
+registration bypass rejection and role denial. The adapter's terminal-state
+validation passes 18 tests. Scoped lint and Node 22 TypeScript pass. The fixture
+uses actual asset and cleanup migrations but minimal admin/tag/report parents;
+it does not verify complete report submission, full RBAC or real provider bytes.
+
+No state transition should be enabled by manually updating rows. Pinned storage verification, client
 retry identity, recovery leases/backoff, full-schema race QA, real admin access
-and provider staging remain required before activation. There is no cleanup path
-for prepared intents yet; activating now would exhaust the bounded queue.
+and provider staging remain required before activation. No live route calls these
+RPCs and there is no scheduler or remote reconciliation/deletion path yet.
 
 Rollback for this dormant foundation is to leave callers disabled and retain any
 recorded intent metadata. Do not drop the table or delete storage to undo a release.

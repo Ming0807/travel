@@ -12,6 +12,12 @@ finalize/abandon transition. The first implementation gate below remains open;
 preparation is not the entire race-safe recovery protocol. Deployment hold and
 remaining gates: `docs/deployment/NFC_UPLOAD_INTENTS_20260910.md`.
 
+Lifecycle follow-up: held finalize/abandon RPCs now serialize on the existing
+asset authority and protect immutable terminal states. Actual asset/cleanup DDL
+is included in disposable QA; forced registration failure rolls back the intent.
+This is not a completed recovery protocol: remote verification, live adapters,
+report-end-to-end races and late-provider-write reconciliation are still open.
+
 ## Context
 The current upload writes the provider object before registering immutable asset
 metadata. Exact readback handles a lost registration response, but a failed

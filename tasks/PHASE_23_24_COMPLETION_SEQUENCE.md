@@ -21,6 +21,13 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 lifecycle checkpoint (September 10): held finalize/stale-abandon migration
+atomically registers asset metadata and protects immutable terminal states.
+Actual asset/cleanup DDL in local PostgreSQL passes 57 assertions, including
+rollback, concurrent retries and legacy registration rejection. Eighteen adapter
+tests, lint and TypeScript pass. No live RPC caller, remote storage verification,
+deletion or production SQL. Full report/race and provider settlement gates remain.
+
 S5 durable preparation checkpoint (September 10): held upload-intent migration
 and dormant TypeScript adapter added per ADR-012. Database-generated IDs, exact
 actor/request/content/provider binding, live actor/tag checks and bounded pending

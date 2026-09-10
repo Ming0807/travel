@@ -11,8 +11,11 @@ const bindingSchema = z.object({
   width: z.number().int().min(1).max(2560), height: z.number().int().min(1).max(2560),
 });
 const preparedSchema = bindingSchema.extend({
-  asset_id: z.uuid(), object_key: z.string(), state: z.literal("prepared"),
+  asset_id: z.uuid(), object_key: z.string(), state: z.enum(["prepared", "available", "abandoned"]),
   created_at: z.iso.datetime({ offset: true }),
+  finalized_at: z.iso.datetime({ offset: true }).nullable().default(null),
+  abandoned_at: z.iso.datetime({ offset: true }).nullable().default(null),
+  storage_path: z.string().nullable().default(null),
 }).strict();
 export type NfcEvidenceUploadIntent = z.infer<typeof preparedSchema>;
 const knownErrors = new Set([
@@ -40,5 +43,15 @@ export async function prepareNfcEvidenceUpload(input: unknown): Promise<NfcEvide
   if (intent.object_key !== objectKey || Object.entries(binding).some(([key, value]) => intent[key as keyof NfcEvidenceUploadIntent] !== value)) {
     throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
   }
+  const ordered = (time: string | null) => time !== null && Date.parse(time) >= Date.parse(intent.created_at);
+  const storageMatches = binding.provider === "supabase" ? intent.storage_path === objectKey
+    : intent.storage_path?.replace(/^cloudinary:image:authenticated:v[1-9][0-9]{0,15}:webp:/, "") === objectKey
+      && /^cloudinary:image:authenticated:v[1-9][0-9]{0,15}:webp:/.test(intent.storage_path);
+  const validState = intent.state === "prepared"
+    ? intent.finalized_at === null && intent.abandoned_at === null && intent.storage_path === null
+    : intent.state === "available"
+      ? ordered(intent.finalized_at) && intent.abandoned_at === null && storageMatches
+      : ordered(intent.abandoned_at) && intent.finalized_at === null && intent.storage_path === null;
+  if (!validState) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
   return intent;
 }

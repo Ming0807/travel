@@ -36,7 +36,14 @@ try {
     CREATE TABLE public.nfc_tags(nfc_tag_id uuid PRIMARY KEY,version integer NOT NULL,status text NOT NULL);
     INSERT INTO public.admin_users VALUES ('${actor}',true),('${other}',true);
     INSERT INTO public.nfc_tags VALUES ('${tag}',1,'draft');`);
+  await db.query(`CREATE TABLE public.nfc_field_checks(request_id uuid PRIMARY KEY);
+    CREATE FUNCTION public.guard_nfc_field_check_history() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN RAISE EXCEPTION 'NFC_HISTORY_IMMUTABLE'; END; $$;`);
+  await db.query(readFileSync("supabase/migrations/20260909000000_add_nfc_evidence_assets.sql","utf8"));
+  await db.query(readFileSync("supabase/migrations/20260909001000_queue_nfc_orphan_cleanup.sql","utf8"));
   if (existsSync(migration)) await db.query(readFileSync(migration,"utf8"));
+  const lifecycle="supabase/migrations/20260910001000_finalize_nfc_evidence_upload_intents.sql";
+  if (existsSync(lifecycle)) await db.query(readFileSync(lifecycle,"utf8"));
   await db.query("SET ROLE service_role");
   const firstInput = input();
   const first = (await db.query(sql,firstInput)).rows[0];
@@ -93,6 +100,55 @@ try {
   const failure=admission.find(result=>result.status==="rejected");
   assert.match(String(failure?.reason),/NFC_UPLOAD_PENDING_LIMIT/); checks++;
   assert.equal((await db.query("SELECT count(*)::integer AS total FROM public.nfc_evidence_upload_intents WHERE actor_id=$1",[other])).rows[0].total,20); checks++;
+  const finalize="SELECT public.finalize_nfc_evidence_upload($1,$2,$3,$4,$5,$6,$7,$8) AS asset_id";
+  const finish=[first.asset_id,actor,"local-project",first.object_key,"a".repeat(64),1000,640,480];
+  const finalized=await db.query(finalize,finish);
+  assert.equal(finalized.rows[0].asset_id,first.asset_id); checks++;
+  assert.equal((await db.query(finalize,finish)).rows[0].asset_id,first.asset_id); checks++;
+  assert.equal((await db.query("SELECT state FROM public.nfc_evidence_upload_intents WHERE asset_id=$1",[first.asset_id])).rows[0].state,"available"); checks++;
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_assets WHERE asset_id=$1",[first.asset_id])).rows[0].total,1); checks++;
+  await assert.rejects(db.query("SELECT public.abandon_stale_nfc_evidence_upload($1,$2)",[first.asset_id,actor]),/NFC_UPLOAD_NOT_ABANDONABLE/); checks++;
+  for (const [index,value] of [[1,other],[2,"wrong-account"],[3,"wrong/path"],[4,"b".repeat(64)]]) {
+    const changed=[...finish]; changed[index]=value;
+    await assert.rejects(db.query(finalize,changed),/NFC_UPLOAD_FINALIZE_CONFLICT/); checks++;
+  }
+  const stale=(await db.query(sql,input())).rows[0];
+  await assert.rejects(db.query("SELECT public.abandon_stale_nfc_evidence_upload($1,$2)",[stale.asset_id,actor]),/NFC_UPLOAD_NOT_STALE/); checks++;
+  await db.query("RESET ROLE");
+  // Fixture-only time travel; production callers cannot mutate intent metadata.
+  await db.query("ALTER TABLE public.nfc_evidence_upload_intents DISABLE TRIGGER USER");
+  await db.query("UPDATE public.nfc_evidence_upload_intents SET created_at=now()-interval '25 hours' WHERE asset_id=$1",[stale.asset_id]);
+  await db.query("ALTER TABLE public.nfc_evidence_upload_intents ENABLE TRIGGER USER");
+  await db.query("SET ROLE service_role");
+  const staleFinish=[stale.asset_id,actor,"local-project",stale.object_key,"a".repeat(64),1000,640,480];
+  const settlement=await Promise.allSettled([
+    db.query("SELECT public.abandon_stale_nfc_evidence_upload($1,$2)",[stale.asset_id,actor]),worker.query(finalize,staleFinish),
+  ]);
+  assert.equal(settlement[0].status,"fulfilled"); checks++;
+  assert.equal(settlement[1].status,"rejected"); checks++;
+  assert.equal((await db.query("SELECT state FROM public.nfc_evidence_upload_intents WHERE asset_id=$1",[stale.asset_id])).rows[0].state,"abandoned"); checks++;
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_assets WHERE asset_id=$1",[stale.asset_id])).rows[0].total,0); checks++;
+  await assert.rejects(db.query("SELECT public.register_nfc_evidence_asset($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+    [stale.asset_id,tag,1,actor,"supabase",stale.object_key,"a".repeat(64),1000,640,480]),/NFC_UPLOAD_FINALIZE_REQUIRED/); checks++;
+  await db.query("RESET ROLE");
+  await assert.rejects(db.query("UPDATE public.nfc_evidence_upload_intents SET state='available',storage_path=$2 WHERE asset_id=$1",[c.asset_id,"cloudinary:image:authenticated:v1:webp:"+c.object_key]),/check constraint/); checks++;
+  await db.query(`CREATE FUNCTION public.qa_reject_asset() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN IF NEW.asset_id='${c.asset_id}' THEN RAISE EXCEPTION 'QA_INSERT_FAILURE'; END IF; RETURN NEW; END; $$;
+    CREATE TRIGGER qa_reject_asset BEFORE INSERT ON public.nfc_evidence_assets FOR EACH ROW EXECUTE FUNCTION public.qa_reject_asset();`);
+  await db.query("SET ROLE service_role");
+  const cloudFinish=[c.asset_id,actor,"test-cloud","cloudinary:image:authenticated:v123:webp:"+c.object_key,"a".repeat(64),1000,640,480];
+  await assert.rejects(db.query(finalize,cloudFinish),/QA_INSERT_FAILURE/); checks++;
+  assert.equal((await db.query("SELECT state FROM public.nfc_evidence_upload_intents WHERE asset_id=$1",[c.asset_id])).rows[0].state,"prepared"); checks++;
+  await db.query("RESET ROLE; DROP TRIGGER qa_reject_asset ON public.nfc_evidence_assets");
+  await db.query("SET ROLE service_role");
+  const cloudRace=await Promise.all([db.query(finalize,cloudFinish),worker.query(finalize,cloudFinish)]);
+  assert.equal(cloudRace[0].rows[0].asset_id,c.asset_id); checks++;
+  assert.equal(cloudRace[1].rows[0].asset_id,c.asset_id); checks++;
+  for (const role of ["anon","authenticated"]) {
+    await db.query(`RESET ROLE; SET ROLE ${role}`);
+    await assert.rejects(db.query(finalize,cloudFinish),/permission denied/); checks++;
+    await assert.rejects(db.query("SELECT public.abandon_stale_nfc_evidence_upload($1,$2)",[stale.asset_id,actor]),/permission denied/); checks++;
+  }
   console.log(`NFC upload intent PostgreSQL QA passed: ${checks} assertions.`);
 } finally {
   for (const db of clients) await db.end();

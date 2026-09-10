@@ -8,7 +8,7 @@ const input={
   provider_account:"test-project",storage_prefix:"nfc-evidence",sha256:"a".repeat(64),size_bytes:1000,width:640,height:480,
 };
 const asset="40000000-0000-4000-8000-000000000001";
-const row={...input,asset_id:asset,object_key:`nfc-evidence/${asset}.webp`,state:"prepared",created_at:"2026-09-10T00:00:00+00:00"};
+const row={...input,asset_id:asset,object_key:`nfc-evidence/${asset}.webp`,state:"prepared",created_at:"2026-09-10T00:00:00+00:00",finalized_at:null,abandoned_at:null,storage_path:null};
 beforeEach(()=>{vi.resetAllMocks();mocks.rpc.mockResolvedValue({data:[row],error:null});});
 it("validates the durable binding and sends only preparation metadata",async()=>{
   expect(await prepareNfcEvidenceUpload(input)).toEqual(row);
@@ -33,6 +33,13 @@ it("accepts a pinned Cloudinary public ID without inventing a version",async()=>
   const cloud={...input,provider:"cloudinary",provider_account:"test-cloud",storage_prefix:"project/nfc-evidence"};
   mocks.rpc.mockResolvedValue({data:[{...row,...cloud,object_key:`project/nfc-evidence/${asset}`}],error:null});
   expect((await prepareNfcEvidenceUpload(cloud)).object_key).toBe(`project/nfc-evidence/${asset}`);
+});
+it.each([
+  {state:"available",finalized_at:"2026-09-10T01:00:00+00:00",storage_path:row.object_key},
+  {state:"abandoned",abandoned_at:"2026-09-11T01:00:00+00:00"},
+])("returns validated terminal state on retry without implying another upload %j",async lifecycle=>{
+  mocks.rpc.mockResolvedValue({data:[{...row,...lifecycle}],error:null});
+  expect((await prepareNfcEvidenceUpload(input)).state).toBe(lifecycle.state);
 });
 it.each([{storage_prefix:"../nfc-evidence"},{provider_account:"https://user:secret@host"},{size_bytes:2097153}])("rejects invalid preparation before database access %j",async patch=>{
   await expect(prepareNfcEvidenceUpload({...input,...patch})).rejects.toThrow();
