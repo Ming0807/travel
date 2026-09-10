@@ -37,6 +37,16 @@ Reuse immutable evidence-scope attribution, Bangkok entry-start bounds and one
 as-of cutoff; keep the existing Visit-date distribution separate. Chart/table/export
 must share the same result and blocked-state metadata.
 
+S6 filter-contract checkpoint: `getEntryCohortFilterSupport` now identifies the
+seven post-entry filter fields without returning selected respondent values.
+Native tests cover each field, combinations and allowed date/location/scope inputs;
+six native date/filter tests pass together. The helper is not yet connected to a
+new executive entry-cohort query or UI. Remaining work is the independent bounded
+entry read, shared aggregate, chart/table/export wiring and blocked-filter action.
+Scoped ESLint and current Node 22 TypeScript passed (6,081 files; 42.57 seconds
+incremental compiler total). No SQL, live query, chart or feature flag changed in
+this contract checkpoint. The preceding analytics date fix `23d8dd1` is pushed.
+
 September 10 S5 recovery design: ADR-012 identifies the unresolved crash window
 between provider upload and metadata registration. Proposed next implementation
 uses durable intents, pinned destinations and exact-locator reconciliation, with

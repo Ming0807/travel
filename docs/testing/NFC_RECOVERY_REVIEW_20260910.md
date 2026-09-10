@@ -57,3 +57,9 @@ native tests and media test passed. The full TypeScript process was explicitly
 cancelled after prolonged execution without a result; it is not recorded as passing.
 These changes are held in a local commit pending the remaining release check.
 No SQL or feature flags changed. The disposable PostgreSQL container was stopped.
+
+Follow-up: Node 22 TypeScript completed successfully with extended diagnostics
+(6,080 files; 111.34 seconds compiler total; 49.62 seconds I/O read and 22.17
+seconds checking). This closes the TypeScript hold on `23d8dd1`. It does not turn
+the earlier interrupted full Vitest attempt into a pass. Subsequent changes need
+their own validation checkpoint.
