@@ -50,3 +50,7 @@ it("does not share retry identity across tag versions",async()=>{
   await expect(uploadNfcEvidencePhoto(original,{...context,version:2},vi.fn())).rejects.toThrow();
   expect(mocks.fetch.mock.calls[0][1].headers["X-NFC-Upload-Request-ID"]).not.toBe(mocks.fetch.mock.calls[1][1].headers["X-NFC-Upload-Request-ID"]);
 });
+it.each([409, 410])("marks terminal status %s as non-retryable without trusting server error text", async status => {
+  mocks.fetch.mockResolvedValue(Response.json({ error: { message: "private provider credentials" } }, { status }));
+  await expect(uploadNfcEvidencePhoto(new File(["x"], "retired.jpg"), context, vi.fn())).rejects.toMatchObject({ retryable: false });
+});

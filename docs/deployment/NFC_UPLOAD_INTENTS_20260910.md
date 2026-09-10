@@ -261,3 +261,13 @@ pages; scoped ESLint passes. The missing root `vite` dependency from the earlier
 Vercel log is present in package.json/lockfile and resolves during this build.
 Push was attempted once, stalled without output and was stopped; remote release
 and Vercel deployment are not verified.
+
+### Terminal Retry UX
+
+Expired/abandoned recovery requests now return sanitized HTTP 410, distinct from
+transient 503. Client 409/410 errors are non-retryable; the evidence picker retains
+the failed selection and blocks report submission until explicit cancellation,
+without offering an ineffective retry. Network failures preserve existing retry.
+Route (10), client (8), and form (6) tests pass, along with TypeScript/scoped lint.
+No full build or real-device visual QA was repeated for this error-state change.
+No SQL, flag, provider deletion, or production activation changed.

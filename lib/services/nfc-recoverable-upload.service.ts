@@ -7,8 +7,7 @@ import { prepareNfcEvidenceUpload } from "@/lib/repositories/nfc-upload-intent.r
 import { getNfcUploadDestination, uploadPreparedNfcEvidence } from "@/lib/storage/nfc-prepared-storage";
 import { confirmNfcEvidenceUpload } from "@/lib/services/nfc-evidence-confirmation.service";
 
-// Dormant orchestration for server-processed, metadata-stripped WebP bytes.
-// Source upload decoding and stable browser request identity are separate gates.
+// Recovery route is default-off pending provider and full-schema staging gates.
 export async function uploadProcessedNfcEvidenceRecoverably(input: unknown, bytes: Buffer) {
   const { adminId } = await requirePermission("checkin_code.manage", { unauthenticated: "throw" });
   const context = z.object({ requestId: z.uuid(), tagId: z.uuid(), version: z.number().int().positive() }).strict().parse(input);

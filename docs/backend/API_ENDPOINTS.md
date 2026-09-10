@@ -225,3 +225,11 @@ All responses use `private, no-store`, `nosniff`, and `no-referrer`. Failures fo
 404 disabled, 409 stale/unavailable, 413 size, 415 type/encoding, 429 rate limit,
 503 sanitized processing/storage/configuration failure. This route stays disabled
 until UI, orphan recovery and full-provider acceptance are complete.
+
+With the independent default-off `NFC_EVIDENCE_RECOVERY_ENABLED=true`, POST also
+requires a UUID `X-NFC-Upload-Request-ID`. The current browser page reuses identity
+and prepared bytes after an uncertain failure. Recovery never falls back to the
+legacy path. Expired/abandoned intents return 410 `NFC_UPLOAD_RETIRED`; the picker
+removes retry for 409/410 while preserving explicit cancellation and report-write
+blocking. Transient errors still permit retry. Error text comes from local client
+messages, not raw provider responses. Reload-persistent recovery remains pending.

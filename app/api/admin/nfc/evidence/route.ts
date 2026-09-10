@@ -15,6 +15,9 @@ function failure(code: string, message: string, status: number) {
   return NextResponse.json({ success: false, error: { code, message } }, { status, headers });
 }
 function handleError(error: unknown) {
+  if (error instanceof Error && ["NFC_UPLOAD_EXPIRED", "NFC_UPLOAD_ABANDONED"].includes(error.message)) {
+    return failure("NFC_UPLOAD_RETIRED", "คำขออัปโหลดนี้สิ้นสุดแล้ว กรุณายกเลิกรูปนี้และโหลดหน้าใหม่", 410);
+  }
   if (error instanceof AdminAuthError) return failure(error.code, "ไม่มีสิทธิ์เข้าถึงรูปหลักฐาน", error.code === "UNAUTHORIZED" ? 401 : 403);
   if (error instanceof RequestBodyLimitError) return failure("IMAGE_SIZE_INVALID", "กรุณาใช้รูปภาพขนาดไม่เกิน 3 MiB", 413);
   if (error instanceof z.ZodError || error instanceof AdminImageUploadError) return failure("IMAGE_INPUT_INVALID", "กรุณาตรวจรูปภาพและข้อมูลแท็กอีกครั้ง", 400);

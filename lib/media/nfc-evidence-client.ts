@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { NfcEvidenceUploadError } from "@/lib/nfc/evidence-upload-error";
 import { prepareAdminImageForUpload } from "@/lib/media/admin-image-upload-client";
 import { NFC_EVIDENCE_UPLOAD_MAX_BYTES, NFC_EVIDENCE_STORED_MAX_BYTES } from "@/lib/nfc/evidence-upload-policy";
 
@@ -27,6 +28,8 @@ export async function uploadNfcEvidencePhoto(file: File, input: { tagId: string;
   try { response = await fetch(`/api/admin/nfc/evidence?${query}`, { method: "POST", body: prepared.file, headers: { "Content-Type": prepared.file.type, "X-NFC-Upload-Request-ID": prepared.requestId }, cache: "no-store" }); }
   catch { throw new Error("ยังยืนยันการอัปโหลดไม่ได้ กรุณาตรวจการเชื่อมต่อแล้วลองใหม่"); }
   if (!response.ok) {
+    if (response.status === 409) throw new NfcEvidenceUploadError("ข้อมูลแท็กหรือรูปหลักฐานเปลี่ยนไป กรุณายกเลิกรูปนี้และโหลดหน้าใหม่", false);
+    if (response.status === 410) throw new NfcEvidenceUploadError("คำขออัปโหลดนี้สิ้นสุดแล้ว กรุณายกเลิกรูปนี้และโหลดหน้าใหม่", false);
     const messages: Record<number, string> = { 401: "กรุณาเข้าสู่ระบบใหม่", 403: "ไม่มีสิทธิ์อัปโหลดรูปหลักฐาน", 404: "ยังไม่เปิดรับรูปหลักฐาน", 409: "ข้อมูลแท็กเปลี่ยนไป กรุณาโหลดหน้าใหม่", 413: "รูปใหญ่เกินขนาดที่รับได้ กรุณาเลือกรูปอื่น", 429: "ส่งรูปถี่เกินไป กรุณารอสักครู่" };
     throw new Error(messages[response.status] ?? "ยังยืนยันการอัปโหลดไม่ได้ กรุณาลองอีกครั้ง");
   }

@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 terminal retry UX: expired/abandoned intents return 410 rather than transient
+503. Picker suppresses retry on 409/410, retains report blocking, and permits
+explicit cancellation. Route/client/form tests (24 total), TypeScript and scoped
+lint pass. Provider/full-schema/reconciliation rollout gates remain open.
+
 S5 default-off route checkpoint: stable browser request IDs/prepared-byte reuse
 now connect to recoverable POST behind independent `NFC_EVIDENCE_RECOVERY_ENABLED`.
 Missing identity and recovery failures cannot fall back to legacy upload. Thirty

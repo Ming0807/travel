@@ -74,3 +74,11 @@ it("never falls back to legacy upload after a recovery failure",async()=>{
   mocks.recovery.mockReturnValue(true);mocks.recoverUpload.mockRejectedValue(new Error("NFC_READBACK_UNAVAILABLE"));
   expect((await POST(request({"X-NFC-Upload-Request-ID":id}))).status).toBe(503);expect(mocks.upload).not.toHaveBeenCalled();
 });
+it.each(["NFC_UPLOAD_EXPIRED", "NFC_UPLOAD_ABANDONED"])("returns terminal status for %s without legacy fallback", async code => {
+  mocks.recovery.mockReturnValue(true);
+  mocks.recoverUpload.mockRejectedValue(new Error(code));
+  const response = await POST(request({ "X-NFC-Upload-Request-ID": id }));
+  expect(response.status).toBe(410);
+  expect((await response.json()).error.code).toBe("NFC_UPLOAD_RETIRED");
+  expect(mocks.upload).not.toHaveBeenCalled();
+});

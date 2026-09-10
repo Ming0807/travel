@@ -5,6 +5,7 @@ vi.mock("@/lib/media/nfc-evidence-client", () => ({ uploadNfcEvidencePhoto: mock
 vi.mock("@/app/actions/admin-nfc-actions", () => ({ saveAdminNfcFieldCheckAction: mocks.save, getAdminNfcFieldChecksAction: mocks.list }));
 import { NfcFieldChecks } from "@/components/admin/checkin-codes/NfcFieldChecks";
 import { NfcEvidencePhoto, NfcEvidencePicker } from "@/components/admin/checkin-codes/NfcEvidencePhotos";
+import { NfcEvidenceUploadError } from "@/lib/nfc/evidence-upload-error";
 import type { AdminNfcTag } from "@/lib/repositories/admin-nfc.repository";
 const id = "11111111-1111-4111-8111-111111111111";
 const tag: AdminNfcTag = { nfc_tag_id: id, public_token: id, version: 1, status: "draft", verified_at: null, verification_reference: null, checkin_code_id: 10, code_snapshot: "yala", label: "Gate", replaces_tag_id: null, created_at: "2026-09-08", updated_at: "2026-09-08" };
@@ -56,6 +57,18 @@ it("requires explicit cancellation after a failed upload", async () => {
   expect(blocked).toHaveBeenLastCalledWith(true);
   fireEvent.click(screen.getByRole("button", { name: "ยกเลิกรูปนี้" }));
   expect(blocked).toHaveBeenLastCalledWith(false);
+});
+it("stops retrying retired uploads but permits explicit cancellation", async () => {
+  mocks.upload.mockRejectedValue(new NfcEvidenceUploadError("คำขอสิ้นสุดแล้ว", false));
+  const blocked = vi.fn();
+  render(<NfcEvidencePicker tagId={id} version={1} disabled={false} onChange={vi.fn()} onBlockedChange={blocked} />);
+  fireEvent.change(screen.getByLabelText("เลือกรูปหลักฐาน"), { target: { files: [file] } });
+  await screen.findByRole("alert");
+  expect(screen.queryByRole("button", { name: "ลองอัปโหลดใหม่" })).not.toBeInTheDocument();
+  expect(blocked).toHaveBeenLastCalledWith(true);
+  fireEvent.click(screen.getByRole("button", { name: "ยกเลิกรูปนี้" }));
+  expect(blocked).toHaveBeenLastCalledWith(false);
+  expect(screen.getByLabelText("เลือกรูปหลักฐาน")).toBeEnabled();
 });
 it("revokes local image URLs when a selected photo is removed", async () => {
   mocks.upload.mockResolvedValue({ assetId: id, previewFile: file, sizeBytes: 100 });

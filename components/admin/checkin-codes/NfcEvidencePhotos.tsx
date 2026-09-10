@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowClockwise, ImageSquare, Trash, X } from "@phosphor-icons/react";
 import { loadNfcEvidencePhoto, uploadNfcEvidencePhoto } from "@/lib/media/nfc-evidence-client";
+import { NfcEvidenceUploadError } from "@/lib/nfc/evidence-upload-error";
 
 const button = "inline-flex min-h-11 items-center justify-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50";
 type Photo = { assetId: string; url: string; sizeBytes: number };
@@ -10,6 +11,7 @@ export function NfcEvidencePicker({ tagId, version, disabled, onChange, onBlocke
 }) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [failed, setFailed] = useState<File | null>(null);
+  const [retryable, setRetryable] = useState(true);
   const [stage, setStage] = useState<"preparing" | "uploading" | null>(null);
   const [error, setError] = useState("");
   const urls = useRef(new Set<string>());
@@ -18,7 +20,7 @@ export function NfcEvidencePicker({ tagId, version, disabled, onChange, onBlocke
   useEffect(() => { alive.current = true; const owned = urls.current; return () => { alive.current = false; for (const url of owned) URL.revokeObjectURL(url); owned.clear(); }; }, []);
   async function upload(file: File) {
     if (disabled || working.current || photos.length >= 3) return;
-    working.current = true; onBlockedChange(true); setError(""); setFailed(null);
+    working.current = true; onBlockedChange(true); setError(""); setFailed(null); setRetryable(true);
     try {
       const result = await uploadNfcEvidencePhoto(file, { tagId, version }, next => { if (alive.current) setStage(next); });
       if (!alive.current) return;
@@ -26,7 +28,7 @@ export function NfcEvidencePicker({ tagId, version, disabled, onChange, onBlocke
       const next = [...photos, { assetId: result.assetId, url, sizeBytes: result.sizeBytes }];
       setPhotos(next); onChange(next.map(photo => photo.assetId)); onBlockedChange(false);
     } catch (failure) {
-      if (alive.current) { setFailed(file); setError(failure instanceof Error ? failure.message : "อัปโหลดไม่สำเร็จ กรุณาลองใหม่"); }
+      if (alive.current) { setFailed(file); setRetryable(!(failure instanceof NfcEvidenceUploadError) || failure.retryable); setError(failure instanceof Error ? failure.message : "อัปโหลดไม่สำเร็จ กรุณาลองใหม่"); }
     } finally { working.current = false; if (alive.current) setStage(null); }
   }
   return <section aria-label="รูปหลักฐานการติดตั้ง" className="space-y-3 border-t border-slate-200 pt-4">
@@ -35,7 +37,7 @@ export function NfcEvidencePicker({ tagId, version, disabled, onChange, onBlocke
     <label className="block text-sm font-semibold">เลือกรูปหลักฐาน<input type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled || stage !== null || failed !== null || photos.length >= 3} className="mt-2 block min-h-11 w-full min-w-0 text-sm file:mr-3 file:rounded file:border-0 file:bg-orange-50 file:px-3 file:py-3 file:font-semibold file:text-orange-800" onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void upload(file); }} /></label>
     {stage && <p role="status" className="text-sm text-orange-800">{stage === "preparing" ? "กำลังปรับขนาดรูป…" : "กำลังอัปโหลดรูป…"}</p>}
     {error && <p role="alert" className="text-sm leading-6 text-rose-700">{error}</p>}
-    {failed && <div className="flex flex-wrap gap-2"><button type="button" disabled={disabled} className={button} onClick={() => void upload(failed)}><ArrowClockwise size={18} />ลองอัปโหลดใหม่</button><button type="button" disabled={disabled} className={button} onClick={() => { setFailed(null); setError(""); onBlockedChange(false); }}><X size={18} />ยกเลิกรูปนี้</button></div>}
+    {failed && <div className="flex flex-wrap gap-2">{retryable && <button type="button" disabled={disabled} className={button} onClick={() => void upload(failed)}><ArrowClockwise size={18} />ลองอัปโหลดใหม่</button>}<button type="button" disabled={disabled} className={button} onClick={() => { setFailed(null); setError(""); onBlockedChange(false); }}><X size={18} />ยกเลิกรูปนี้</button></div>}
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{photos.map((photo, index) => <figure key={photo.assetId} className="min-w-0 overflow-hidden rounded border border-slate-200">
       {/* Private/local evidence must not enter the public image optimizer. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}

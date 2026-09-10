@@ -5,7 +5,7 @@ import { readOwnedNfcUploadIntent, finalizeNfcEvidenceUpload } from "@/lib/repos
 import { verifyNfcEvidenceReadback } from "@/lib/storage/nfc-evidence-readback";
 import { discoverNfcEvidenceLocator } from "@/lib/storage/nfc-evidence-discovery";
 
-// Dormant service; no route until complete retry/discovery and staging gates pass.
+// Called by the separately gated recovery route, never by the legacy upload path.
 export async function confirmNfcEvidenceUpload(input: unknown) {
   const { adminId } = await requirePermission("checkin_code.manage", { unauthenticated: "throw" });
   const value = z.object({ assetId: z.uuid(), storagePath: z.string().min(1).max(500).optional() }).strict().parse(input);
