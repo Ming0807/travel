@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 cleanup/retry race: 75 PostgreSQL assertions pass. An available retry waits
+for cleanup's asset lock and rejects after the claim commits. Immutable records
+remain intact. Recovery conflicts now map to 409 and suppress ineffective browser
+retry; 28 focused tests, TypeScript and lint pass. No production changes.
+
 S5 SQL race QA: 70 PostgreSQL assertions pass, including observed row-lock waits
 while actor deactivation, tag version change and tag revocation commit before
 finalization resumes. Denied finalization leaves no partial asset. Minimal parent

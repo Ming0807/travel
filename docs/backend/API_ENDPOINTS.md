@@ -233,3 +233,7 @@ legacy path. Expired/abandoned intents return 410 `NFC_UPLOAD_RETIRED`; the pick
 removes retry for 409/410 while preserving explicit cancellation and report-write
 blocking. Transient errors still permit retry. Error text comes from local client
 messages, not raw provider responses. Reload-persistent recovery remains pending.
+
+Recovery returns 409 for a claimed/unavailable asset, unavailable tag, request
+binding conflict or finalization conflict. These do not trigger legacy fallback
+or automatic replacement uploads. Provider/readback outages remain sanitized 503.

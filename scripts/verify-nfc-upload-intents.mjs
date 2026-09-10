@@ -179,6 +179,33 @@ try {
     await db.query("SET ROLE service_role");
   }
   assert.equal((await worker.query(finalize,guardedFinish)).rows[0].asset_id,guarded.asset_id); checks++;
+  await db.query("RESET ROLE");
+  // Fixture-only aging makes this registered, unattached asset cleanup-eligible.
+  await db.query("ALTER TABLE public.nfc_evidence_assets DISABLE TRIGGER USER");
+  await db.query("UPDATE public.nfc_evidence_assets SET created_at=now()-interval '8 days' WHERE asset_id=$1",[guarded.asset_id]);
+  await db.query("ALTER TABLE public.nfc_evidence_assets ENABLE TRIGGER USER");
+  await db.query("SET ROLE service_role; BEGIN");
+  let cleanupRetry;
+  try {
+    const claimed=await db.query("SELECT * FROM public.claim_nfc_evidence_cleanup(25)");
+    assert.ok(claimed.rows.some(row=>row.asset_id===guarded.asset_id)); checks++;
+    cleanupRetry=worker.query(finalize,guardedFinish).then(value=>({value}),error=>({error}));
+    let blocked=false;
+    for (let attempt=0;attempt<100;attempt++) {
+      blocked=(await db.query("SELECT pg_backend_pid()=ANY(pg_blocking_pids($1)) AS blocked",[workerPid])).rows[0].blocked;
+      if (blocked) break;
+      await new Promise(resolve=>setTimeout(resolve,20));
+    }
+    assert.equal(blocked,true,"available retry must wait for the cleanup asset lock"); checks++;
+    await db.query("COMMIT");
+  } catch (error) {
+    await db.query("ROLLBACK");
+    if (cleanupRetry) await cleanupRetry;
+    throw error;
+  }
+  assert.match(String((await cleanupRetry).error),/NFC_UPLOAD_NOT_AVAILABLE/); checks++;
+  assert.equal((await db.query("SELECT state FROM public.nfc_evidence_upload_intents WHERE asset_id=$1",[guarded.asset_id])).rows[0].state,"available"); checks++;
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_assets WHERE asset_id=$1",[guarded.asset_id])).rows[0].total,1); checks++;
   for (const role of ["anon","authenticated"]) {
     await db.query(`RESET ROLE; SET ROLE ${role}`);
     await assert.rejects(db.query(finalize,cloudFinish),/permission denied/); checks++;

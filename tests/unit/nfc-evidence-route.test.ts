@@ -82,3 +82,11 @@ it.each(["NFC_UPLOAD_EXPIRED", "NFC_UPLOAD_ABANDONED"])("returns terminal status
   expect((await response.json()).error.code).toBe("NFC_UPLOAD_RETIRED");
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+it.each(["NFC_UPLOAD_NOT_AVAILABLE", "NFC_UPLOAD_TAG_UNAVAILABLE", "NFC_UPLOAD_REQUEST_CONFLICT", "NFC_UPLOAD_FINALIZE_CONFLICT"])("returns a non-retryable conflict for %s", async code => {
+  mocks.recovery.mockReturnValue(true);
+  mocks.recoverUpload.mockRejectedValue(new Error(code));
+  const response = await POST(request({ "X-NFC-Upload-Request-ID": id }));
+  expect(response.status).toBe(409);
+  expect((await response.json()).error.code).toBe("NFC_EVIDENCE_UNAVAILABLE");
+  expect(mocks.upload).not.toHaveBeenCalled();
+});

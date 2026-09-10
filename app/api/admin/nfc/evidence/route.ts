@@ -21,7 +21,8 @@ function handleError(error: unknown) {
   if (error instanceof AdminAuthError) return failure(error.code, "ไม่มีสิทธิ์เข้าถึงรูปหลักฐาน", error.code === "UNAUTHORIZED" ? 401 : 403);
   if (error instanceof RequestBodyLimitError) return failure("IMAGE_SIZE_INVALID", "กรุณาใช้รูปภาพขนาดไม่เกิน 3 MiB", 413);
   if (error instanceof z.ZodError || error instanceof AdminImageUploadError) return failure("IMAGE_INPUT_INVALID", "กรุณาตรวจรูปภาพและข้อมูลแท็กอีกครั้ง", 400);
-  if (error instanceof Error && ["NFC_VERSION_CONFLICT", "NFC_EVIDENCE_NOT_AVAILABLE", "NFC_NOT_FOUND"].includes(error.message)) {
+  if (error instanceof Error && ["NFC_VERSION_CONFLICT", "NFC_EVIDENCE_NOT_AVAILABLE", "NFC_NOT_FOUND",
+    "NFC_UPLOAD_NOT_AVAILABLE", "NFC_UPLOAD_TAG_UNAVAILABLE", "NFC_UPLOAD_REQUEST_CONFLICT", "NFC_UPLOAD_FINALIZE_CONFLICT"].includes(error.message)) {
     return failure("NFC_EVIDENCE_UNAVAILABLE", "ข้อมูลแท็กหรือรูปหลักฐานเปลี่ยนไป กรุณาโหลดหน้าใหม่", 409);
   }
   if (error instanceof Error && error.message === "NFC_EVIDENCE_SIZE_INVALID") return failure("IMAGE_SIZE_INVALID", "รูปภาพยังมีขนาดใหญ่เกินไป กรุณาลดขนาดแล้วลองใหม่", 413);

@@ -283,3 +283,15 @@ This proves the tested row-lock behavior with actual PostgreSQL, not production
 RBAC or provider verification. The fixture still has minimal parent tables;
 full-schema report attachment/cleanup and real-provider gates remain open.
 The isolated container is removed by the runner. No migration was changed.
+
+### Cleanup Claim Versus Available Retry
+
+PostgreSQL QA now passes 75 assertions. A cleanup transaction claims an aged,
+unattached registered asset while a second connection retries finalization.
+The test observes the actual blocking lock, commits cleanup, then verifies that
+retry returns `NFC_UPLOAD_NOT_AVAILABLE` and preserves both immutable records.
+No remote deletion occurs in this test. API mapping now returns sanitized 409
+for unavailable/tag/request/finalization conflicts, so the picker stops retrying
+instead of presenting them as transient 503. Twenty-eight route/client/form tests,
+TypeScript and scoped lint pass. No full build repeated for this mapping change.
+Full report-schema attachment races and private-provider staging remain open.
