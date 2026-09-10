@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 readback adapter: private signer-generated URLs, pinned destination/key checks,
+restricted origins/no redirects, bounded stream and timeout, actual hash/WebP
+dimension verification. Forty-two focused storage tests, lint and TypeScript pass.
+Provider/network mocks only. Missing/error responses never authorize deletion;
+Cloudinary lost-version discovery, live provider staging and orchestration remain.
+
 S5 pinned-upload adapter: validates prepared intent destination against configured
 provider/account/prefix, copies and verifies WebP content before asynchronous upload,
 and checks the returned exact private locator. Thirty-one focused storage tests,

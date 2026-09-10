@@ -124,5 +124,29 @@ upload/readback was performed. This dormant adapter is not connected to live
 routes; independent remote-byte verification and duplicate-object recovery remain
 required before activation. No SQL or UI changes are included.
 
+### Independent Readback Adapter
+
+The dormant `nfc-evidence-readback.ts` validates pinned account/provider/key and
+requests a private 60-second URL from the existing signer, never from browser
+input. Downloads are restricted to the configured Supabase origin or Cloudinary's
+API origin, reject redirects, disable caching, and abort after 15 seconds of
+fetch/body reading. Streamed bytes cannot exceed the expected size (at most 2 MiB).
+Actual SHA-256, byte count, WebP format and single-frame dimensions must match.
+The result contains metadata only, not the signed URL or photo bytes.
+
+HTTP failures including 404 are unavailable, not authoritative absence or a reason
+to delete. Signing/provider discovery has its own integration requirements; the
+15-second bound is on download, not the entire signing operation. Cloudinary
+private download may need provider-specific staging verification (including any
+redirect behavior); the adapter fails closed instead of following unknown hosts.
+It verifies returned bytes for the exact public ID but does not establish immutable
+Cloudinary version history or discover a version lost before upload acknowledgement.
+
+Forty-two prepared/readback/legacy storage tests pass with actual generated WebP
+bytes and mocked network/providers, including overflow, changed account, foreign
+host, corrupted bytes and stalled fetch abortion. Node 22 TypeScript and scoped
+lint pass. No real provider call, live route integration, new SQL or production
+build is claimed. Client retry/discovery and authorized orchestration remain open.
+
 Rollback for this dormant foundation is to leave callers disabled and retain any
 recorded intent metadata. Do not drop the table or delete storage to undo a release.
