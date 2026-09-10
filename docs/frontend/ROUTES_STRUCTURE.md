@@ -1453,3 +1453,12 @@ Public participant routes never accept internal research IDs or secret tokens in
 `/admin/checkin-codes/[id]/nfc` manages tags for one existing code. Requires
 `checkin_code.read`; writes require `checkin_code.manage`. See
 [NFC Management UI](NFC_MANAGEMENT_UI.md). Public rollout remains disabled.
+
+### Executive Entry Cohort
+
+`/admin/dashboard` now displays entry-start QR/NFC conversion separately from the
+Visit-date channel distribution. The authenticated executive service supplies the
+same aggregate to the chart, denominator table and summary CSV/XLSX export. Unsupported
+post-entry filters expose a scoped clear action; incomplete/unavailable states do
+not show partial metrics. No new public route or rollout flag is introduced.
+See `docs/dashboard/EXECUTIVE_ENTRY_COHORT.md` for semantics and remaining QA gates.

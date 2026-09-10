@@ -4,6 +4,7 @@ vi.mock("@/lib/auth/guards", () => ({ requirePermission: mocks.guard }));
 vi.mock("@/lib/repositories/executive-entry.repository", () => ({ readExecutiveEntryCohort: mocks.read }));
 import { getExecutiveEntryAnalytics } from "@/lib/services/executive-entry.service";
 import { buildExecutiveEntryExportRows } from "@/lib/dashboard/executive-entry-export";
+import { buildDashboardSummaryExportRows } from "@/lib/dashboard/dashboard-summary-export";
 const filters = { dateFrom: "2026-09-01", dateTo: "2026-09-10", evidenceScope: "field_claim" };
 const asOf = "2026-09-10T00:00:00Z";
 const rows = Array.from({ length: 20 }, (_, i) => ({ entry_session_id: `entry-${i}`, entry_channel: "qr", evidence_scope: "field_observation", created_at: "2026-09-01T00:00:00Z", visit_id: `visit-${i}`, visits: { created_at: "2026-09-02T00:00:00Z", certificates: [{ generated_at: i < 10 ? "2026-09-03T00:00:00Z" : "2026-09-11T00:00:00Z" }] } }));
@@ -26,6 +27,9 @@ it("shares scope, cutoff and suppression math without exporting raw IDs or Visit
   const exported = buildExecutiveEntryExportRows(result);
   expect(exported.find(row => row.Metric === "qr_certificates_percent")).toMatchObject({ Value: 50, Denominator: 20 });
   expect(exported.some(row => row.Section === "Entry attribution coverage")).toBe(false);
+  const summary = buildDashboardSummaryExportRows({ kpis: [], executive: { entryCohort: result, visitTrend: [], visitsByProvince: [], topAttractions: [] } });
+  expect(summary.find(row => row.Metric === "qr_certificates_percent")).toMatchObject({ Value: 50, Denominator: 20 });
+  expect(summary.every(row => Object.keys(row).join() === Object.keys(summary[0]).join())).toBe(true);
 });
 it.each(["disabled","unsupported_filters","incomplete"])("preserves %s without partial metrics", async status => {
   mocks.read.mockResolvedValue({ status, asOf, rows, unsupportedFilters: ["ageGroup"] });

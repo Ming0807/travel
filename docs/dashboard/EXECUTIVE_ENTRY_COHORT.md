@@ -3,8 +3,8 @@
 ## Current State
 
 The filter-support helper, server-only repository, authorized aggregation service
-and export-row builder are implemented. They are not connected to a live executive
-chart or download route yet. No migration or flag activation
+and export-row builder are implemented and wired to the authenticated executive
+response, chart/table and existing summary CSV/XLSX serializer. No migration or flag activation
 is part of this checkpoint. Existing executive Visit-channel distribution remains
 unchanged and uses the Visit-date cohort.
 
@@ -49,8 +49,6 @@ changing totals, duplicate pages, date/location filters and sanitized failures.
 Scoped ESLint and Node 22 TypeScript pass. Real PostgREST relation resolution and query plans remain
 staging gates; mocked tests do not establish those properties.
 
-- Wire chart, accessible table and CSV/XLSX to one aggregate and cutoff.
-- Provide a clear action to remove post-entry filters without dropping date/scope.
 - Verify responsive states, authorization, suppression and real database behavior.
 
 ## Aggregation and Export Contract
@@ -72,3 +70,28 @@ Nineteen focused service/repository/export tests pass. They verify real shared
 aggregation with mocked reads/guards, including post-cutoff outcomes and suppression.
 This does not claim a live database read, new chart, or completed export route.
 Scoped ESLint and current Node 22 TypeScript also passed at this checkpoint.
+
+## UI Integration Checkpoint
+
+Authenticated executive responses now call the entry service; other dashboard
+modules and the public response path do not. The existing summary export receives
+that same view-model field and preserves column parity for CSV/XLSX. Separate
+requests may have different as-of cutoffs, each explicitly reported.
+
+The shared chart renders entry trends/conversion and the accessible numerator/base
+table. Unsupported post-entry filters show an explanation and a scoped clear link
+that retains date, location and evidence selection. Blocked states show no charts
+or fake zeros. The existing Visit-channel panel remains separate.
+
+Verification: eight shared/wrapper UI tests passed; the updated dashboard service
+and wrapper suite passed 41 tests; 16 service/summary-export/Visit-channel tests
+passed. Scoped ESLint and TypeScript passed. Chromium fixture checks passed at
+360/768/1440px for conversion switching, table access, clear-filter scope, page
+overflow and page errors. Mobile ready/blocked and desktop ready screenshots were
+visually reviewed. Fixture data is synthetic and does not verify production data.
+Recharts emitted transient initial-size warnings; settled screenshots rendered
+nonblank charts. These warnings are not claimed resolved. The first cold Vite
+navigation timed out; a subsequent completed run passed without changing timeouts.
+Node 22 production build completed successfully, including TypeScript and 66
+generated static pages. Authenticated database staging remains a separate gate;
+the local build does not prove the live PostgREST relationship or rollout state.

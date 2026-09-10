@@ -5,6 +5,7 @@ import { ExecutiveExperienceSummary } from "@/components/dashboard/ExecutiveExpe
 import { ExecutiveFunnelSummary } from "@/components/dashboard/ExecutiveFunnelSummary";
 import { ExecutiveDecisionSummary } from "@/components/dashboard/ExecutiveDecisionSummary";
 import { ExecutiveVisitChannels } from "@/components/dashboard/ExecutiveVisitChannels";
+import { ExecutiveEntryPanel } from "@/components/dashboard/ExecutiveEntryPanel";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { buildDashboardNavigationHref } from "@/components/dashboard/dashboard-navigation";
@@ -89,6 +90,7 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
       </div>
 
       {data.executive.visitChannels ? <ExecutiveVisitChannels data={data.executive.visitChannels} /> : null}
+      {data.executive.entryCohort ? <ExecutiveEntryPanel result={data.executive.entryCohort} filters={data.filters} /> : null}
 
       {data.dataQualityWarnings.length > 0 ? (
         <details className="rounded-md border border-amber-200 bg-[#FFFBEB] px-4 py-2.5" data-print-hide>

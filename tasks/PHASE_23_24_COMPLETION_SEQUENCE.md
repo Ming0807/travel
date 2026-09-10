@@ -21,6 +21,15 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S6 UI/export integration (September 10): authenticated executive responses now
+include the independently scoped entry aggregate, shared responsive chart/table,
+unsupported-filter clear action and summary export rows. Public responses and
+non-executive modules do not run this new read. UI/service/export tests, lint and
+TypeScript passed; Chromium fixture verified 360/768/1440 without page overflow or
+page errors. Initial Recharts size warnings remain documented. Production build
+passed with 66 generated static pages; real PostgREST/authenticated staging still
+requires verification and S6 stays open.
+
 S6 aggregation checkpoint (September 10): added permission-checked executive entry
 service and shared export-row serialization. Actual attraction scope/cutoff/privacy
 math is reused, raw IDs are omitted and Visit-date coverage is not fabricated for

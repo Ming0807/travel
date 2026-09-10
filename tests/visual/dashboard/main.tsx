@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
+import { ExecutiveEntryPanel } from "@/components/dashboard/ExecutiveEntryPanel";
 import { AttractionAnalyticsWorkspace } from "@/components/dashboard/AttractionAnalyticsWorkspace";
 import { AttractionAnalyticsFilters } from "@/components/dashboard/AttractionAnalyticsFilters";
 import { executiveFixture } from "./executive-fixture";
@@ -31,7 +32,7 @@ const state = new URLSearchParams(window.location.search).get("state");
 const surface = new URLSearchParams(window.location.search).get("page");
 const executiveData = executiveFixture(state);
 const displayedFilters = surface === "executive" ? executiveData.filters : filters;
-const focusedSurface = surface === "executive" || surface === "attraction" || surface === "attraction-filter";
+const focusedSurface = surface === "executive" || surface === "attraction" || surface === "attraction-filter" || surface === "entry";
 const data = state === "empty" ? [] : state === "low" ? rows.slice(0, 2).map((row) => ({ ...row, value: 1, percent: 0.5 })) : rows;
 
 createRoot(document.getElementById("root")!).render(
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")!).render(
         <ExportPrivacyDialog endpoint="/fixture-export-disabled" exportType="summary" label="รายงานสรุป" searchParams="evidence_scope=pilot_only" />
       </header>
       {!focusedSurface ? <><DashboardFilters filters={displayedFilters} options={options} /><DashboardSavedViews filters={displayedFilters} /></> : null}
+      {surface === "entry" ? <ExecutiveEntryPanel filters={filters} result={state === "unsupported" ? { status: "unsupported_filters", asOf: null, data: null, unsupportedFilters: ["satisfactionMin"] } : { status: "ready", asOf: "2026-09-10T00:00:00Z", data: attractionFixture(state).channels, unsupportedFilters: [] }} /> : null}
       {surface === "executive" ? <div className="space-y-4" data-print-report="executive"><div data-print-hide><DashboardFilters filters={displayedFilters} options={options} /><DashboardSavedViews filters={displayedFilters} /></div><DashboardContentState data={executiveData} page="overview" /><ExecutiveOverview data={executiveData} /></div> : surface === "attraction" ? <AttractionAnalyticsWorkspace data={attractionFixture(state)} /> : surface === "attraction-filter" ? (
         <section className="border border-slate-200 bg-white">
           <div className="border-b border-slate-200 p-5"><h2 className="text-lg font-black">ขอบเขตหลักฐานรายสถานที่</h2><p className="mt-1 text-sm text-slate-600">ข้อมูลจำลองสำหรับตรวจ responsive ของแบบฟอร์มเท่านั้น</p></div>
@@ -52,7 +54,7 @@ createRoot(document.getElementById("root")!).render(
             filters={state === "active" ? { attractionId: 4, dateFrom: "2026-08-01", dateTo: "2026-08-31", evidenceScope: "field_claim", entryChannel: "nfc", campaignId: 7, checkinCodeId: 10 } : null}
           />
         </section>
-      ) : <>
+      ) : surface === "entry" ? null : <>
       <TrendChart points={state === "empty" ? [] : [{ label: "2026-08-01", value: 14 }, { label: "2026-08-02", value: 23 }, { label: "2026-08-03", value: 18 }]} />
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <BarChartCard title="วัตถุประสงค์การเดินทาง" definition="จำนวนคำตอบแยกตามวัตถุประสงค์" data={data} emptyDescription="ไม่มีคำตอบในขอบเขตนี้" sampleCount={state === "low" ? 2 : 2000} />

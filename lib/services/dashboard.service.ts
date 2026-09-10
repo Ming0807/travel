@@ -674,11 +674,16 @@ export async function getDashboardAnalytics(searchParams: RawSearchParams, activ
     throw mapAdminError(error as AdminAuthError);
   }
 
-  return buildDashboardResponse(parsed.data as DashboardFilters, activeTab, {
+  const response = await buildDashboardResponse(parsed.data as DashboardFilters, activeTab, {
     displayName: guard.displayName,
     email: guard.email,
     permissions: guard.permissions
   });
+  if (activeTab === "executive") {
+    const { getExecutiveEntryAnalytics } = await import("@/lib/services/executive-entry.service");
+    response.executive.entryCohort = await getExecutiveEntryAnalytics(parsed.data);
+  }
+  return response;
 }
 
 export async function getPublicDashboardAnalytics(searchParams: RawSearchParams, activeTab: string = "executive"): Promise<DashboardViewModel> {

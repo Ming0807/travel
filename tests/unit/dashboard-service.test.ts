@@ -1,4 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+const entryAnalytics = vi.hoisted(() => vi.fn(async () => ({ status: "disabled", asOf: null, unsupportedFilters: [], data: null })));
+vi.mock("@/lib/services/executive-entry.service", () => ({ getExecutiveEntryAnalytics: entryAnalytics }));
 
 // ──────────────────────────────────────────────
 // 1. Mock server-only (throws in test env)
@@ -315,6 +317,15 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
   });
 
   // ── 6a. Empty data ──────────────────────────
+  it("adds independently scoped entry analytics only to the executive response", async () => {
+    mockPayload.current = makePayload();
+    const result = await getDashboardAnalytics({});
+    expect(entryAnalytics).toHaveBeenCalledWith(mockFilterResult.data);
+    expect(result.executive.entryCohort).toMatchObject({ status: "disabled", data: null });
+    entryAnalytics.mockClear();
+    await getDashboardAnalytics({}, "expenses");
+    expect(entryAnalytics).not.toHaveBeenCalled();
+  });
 
   it("returns No data for all KPIs when there are no visits", async () => {
     mockPayload.current = makePayload();

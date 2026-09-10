@@ -179,6 +179,7 @@ export type DashboardViewModel = {
   referenceOptions: DashboardReferenceOptions;
   kpis: DashboardKpi[];
   executive: {
+    entryCohort?: import("@/lib/services/executive-entry.service").ExecutiveEntryAnalytics;
     visitChannels?: DashboardVisitChannels;
     visitTrend: TrendPoint[];
     visitsByProvince: DistributionItem[];

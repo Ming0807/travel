@@ -1,4 +1,5 @@
 import type { DashboardViewModel } from "@/types/dashboard";
+import { buildExecutiveEntryExportRows } from "@/lib/dashboard/executive-entry-export";
 
 export function buildDashboardSummaryExportRows(data: Pick<DashboardViewModel, "kpis" | "executive">): Array<Record<string, unknown>> {
   // Keep every section's columns present so CSV and spreadsheet writers agree.
@@ -10,6 +11,7 @@ export function buildDashboardSummaryExportRows(data: Pick<DashboardViewModel, "
   };
 
   return [
+    ...(data.executive.entryCohort ? buildExecutiveEntryExportRows(data.executive.entryCohort).map(row => ({ ...columns, ...row })) : []),
     ...(data.executive.visitChannels ? [{
       ...columns, Section: "Visit Channels", Metric: "status", Value: data.executive.visitChannels.status,
       Definition: "Unique filtered Visit cohort, not page views or scan counts",

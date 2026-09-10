@@ -2,10 +2,10 @@
 
 import { useId, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { AttractionAnalyticsViewModel } from "@/lib/services/attraction-analytics.service";
+import type { EntryChannelExportData } from "@/lib/dashboard/channel-export";
 import { DASHBOARD_CHART_AXIS_TICK, DASHBOARD_CHART_TOKENS as colors, DASHBOARD_CHART_TOOLTIP } from "./dashboard-chart-theme";
 
-type Channels = AttractionAnalyticsViewModel["channels"];
+type Channels = EntryChannelExportData;
 const stateCopy = {
   tracking_not_activated: "ยังไม่เปิดเก็บช่องทาง QR / NFC",
   no_entries: "ยังไม่มีรอบเข้าใช้งานในช่วงวันที่เลือก",
