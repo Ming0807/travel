@@ -95,3 +95,14 @@ navigation timed out; a subsequent completed run passed without changing timeout
 Node 22 production build completed successfully, including TypeScript and 66
 generated static pages. Authenticated database staging remains a separate gate;
 the local build does not prove the live PostgREST relationship or rollout state.
+
+### Initial Chart Size Follow-up
+
+The previously documented negative-size warning was reproduced in an SSR test.
+The shared channel panel now supplies Recharts `initialDimension` (280 x 288),
+while the existing responsive container and ResizeObserver still determine the
+actual measured size. Five focused chart tests, lint and TypeScript pass. Browser
+QA now rejects dimension warnings and passed at 360/768/1440px, including conversion,
+table and clear-filter checks; the updated mobile screenshot was visually reviewed.
+The first cold navigation timed out, then a completed rerun passed. The fixture
+server/browser were stopped. No new full build was run for this one-prop follow-up.

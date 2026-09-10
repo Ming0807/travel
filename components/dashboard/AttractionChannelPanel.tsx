@@ -51,7 +51,7 @@ export function AttractionChannelPanel({ data, incomplete = false }: { data: Cha
         </div>
         <p className="mt-4 text-xs leading-5 text-slate-500">{view === "trend" ? "วันเริ่มเข้าใช้งานตามเวลาไทย · หน่วย: รอบ" : "ร้อยละจากรอบเริ่มเข้าใช้งานของช่องทางเดียวกัน · ฐาน QR และ NFC แสดงด้านบน"}</p>
         {hasValues ? <div className="mt-3 h-72 min-w-0 sm:h-80" role="img" aria-label={view === "trend" ? "แนวโน้มรายวัน QR และ NFC" : "อัตราทำขั้นตอนสำเร็จ QR และ NFC"}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 280, height: 288 }}>
             {view === "trend" ? <LineChart data={data.daily} margin={{ top: 12, right: 12, left: -15, bottom: 8 }}>
               <CartesianGrid stroke={colors.grid} vertical={false} />
               <XAxis dataKey="date" tick={DASHBOARD_CHART_AXIS_TICK} tickFormatter={(date: string) => date.slice(5)} axisLine={false} tickLine={false} minTickGap={24} />

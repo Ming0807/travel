@@ -4,6 +4,9 @@ try {
   const page = await browser.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => {
+    if (message.type() === 'warning' && message.text().includes('width(') && message.text().includes('height(')) errors.push(message.text());
+  });
   for (const width of [360,768,1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('http://127.0.0.1:4175/?page=entry&state=channels', { waitUntil: 'networkidle' });

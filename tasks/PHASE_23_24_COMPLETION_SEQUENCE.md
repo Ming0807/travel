@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S6 chart-size follow-up (September 10): reproduced and fixed Recharts initial
+negative dimensions using its supported initialDimension prop. Five chart tests,
+lint and TypeScript pass; Chromium 360/768/1440 rerun now rejects dimension warnings
+and passed. No formula, filter, SQL or rollout changes. Prior full-build evidence
+belongs to the UI integration checkpoint, not this follow-up.
+
 S6 UI/export integration (September 10): authenticated executive responses now
 include the independently scoped entry aggregate, shared responsive chart/table,
 unsupported-filter clear action and summary export rows. Public responses and
