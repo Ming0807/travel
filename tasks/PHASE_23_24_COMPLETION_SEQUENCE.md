@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 worker design: `NFC_RECOVERY_WORKER_IMPLEMENTATION.md` defines W1-W7 for
+durable leases/fencing, retry fairness, independent machine authorization,
+transactional worker finalization, provider outcome classification, operator
+review and late-arrival reconciliation. This is the next implementation sequence;
+the existing owner-only browser confirmation must not be bypassed. No new SQL.
+
 S5 provider wait bound: exact Cloudinary discovery has a 15-second caller deadline
 in addition to socket timeout. Late results cannot finalize; no absence/deletion
 inference. Thirty focused tests pass. This does not cancel remote work or replace

@@ -1,0 +1,108 @@
+# NFC Recovery Worker Implementation
+
+Status: design checkpoint, September 11, 2026. Part of Phase 23 S5 and ADR-012.
+Not production activation approval. No migration or scheduled job accompanies
+this document. Preserve the existing upload, recovery and cleanup flags as off.
+
+## Required Outcome
+
+Recover durable upload intents after the browser/process disappears. Make
+progress across failures without deleting unrelated or late-arriving objects.
+Keep operational installation evidence separate from tourist uploads and CMS.
+The existing browser retry path is useful but does not satisfy this outcome.
+
+## Authority Boundaries
+
+- Browser confirmation remains owner-only using current `checkin_code.manage`.
+- A worker must not call the owner-only service with a forged admin session.
+- Machine authentication must be independently verified before queue access.
+  Reuse the application's verified cron-auth pattern only after inspecting its
+  timing-safe comparison, secret validation and deployment restrictions.
+- Worker finalization needs a dedicated RPC/capability, not a relaxed browser
+  RPC. Bind it to the exact job lease, original asset and verified content.
+- Recheck original actor availability and the current tag/version in the
+  transaction. Disabled owners or changed tags go to explicit review; never
+  silently reassign evidence to the scheduler or another administrator.
+- Operators reviewing blocked jobs need a defined permission and audit event.
+  Viewing/retrying a job must not grant permission to override content binding.
+
+## Durable Queue
+
+Add a separate job table referencing immutable upload intents with RESTRICT
+deletion. Do not add mutable scheduling fields to immutable evidence history.
+
+Required fields: asset ID (unique FK), next attempt timestamp, attempt count,
+lease token, lease expiry, last bounded outcome category, last attempt timestamp,
+review-required flag, and completion timestamp. No raw error text, signed URLs,
+provider credentials or source photos. Index due uncompleted jobs in stable
+`next_attempt_at, asset_id` order.
+
+Use database time. Create jobs transactionally with preparation, including an
+idempotent migration backfill for existing intents. A first retry delay prevents
+the worker competing immediately with an ordinary foreground upload. The delay
+is a scheduling choice, not evidence that the provider has finished.
+
+Claim bounded batches with `FOR UPDATE SKIP LOCKED`; issue a new unpredictable
+lease token for each claim. Expired leases can be reclaimed. Every outcome update
+and worker finalization must compare the exact current, unexpired token. A late
+worker cannot acknowledge or finalize under a replacement worker's lease.
+
+Backoff advances `next_attempt_at` so a failing early item cannot consume every
+batch. Use capped exponential backoff and bounded jitter. Separate retryable
+provider failure from content conflict, changed namespace and authorization
+failure; the latter require review. Bound attempts per invocation and stop
+claiming before the runtime deadline. Do not claim a large batch that cannot fit
+within the lease/runtime budget. Lease duration must cover the bounded operation
+budget or be renewed with the same fencing token.
+
+## Processing Rules
+
+1. Read durable binding and revalidate the leased job. Never accept a browser
+   locator, account, expected hash or actor as worker authority.
+2. For a prepared, eligible intent, discover only its exact private locator and
+   verify bytes/dimensions. Atomically finalize and acknowledge the leased job.
+3. An expired prepared intent may be abandoned transactionally. Abandonment is
+   not deletion approval and must preserve the tombstone and reconciliation job.
+4. Available intents do not need reupload. Verify metadata consistency and
+   acknowledge recovery; attached report evidence remains immutable.
+5. Provider 404, timeout and connection errors remain distinct bounded outcomes.
+   The current discovery adapter collapses these to unavailable for browser
+   safety; a worker-specific adapter must distinguish authenticated absence from
+   temporary failures without leaking raw provider responses.
+6. Abandoned jobs require exact-key late-arrival checks. Keep periodic checks
+   until an explicitly validated settlement policy permits completion. No finite
+   absence count by itself proves that an earlier provider request cannot finish.
+7. Remote deletion requires independently checked provider namespace, exact key,
+   content/ownership evidence and transactionally valid abandonment. Never route
+   an unbound legacy record through the current generic delete helper.
+
+## Delivery Tasks
+
+- [ ] W1: Queue DDL, preparation/backfill integration, claim/renew/outcome RPCs,
+  fencing, bounded input validation, RLS and indexes. Hold production SQL.
+- [ ] W2: Real PostgreSQL concurrency tests: duplicate admission, two claimers,
+  expired lease takeover, stale acknowledgement, retry fairness, rollback and
+  anon/authenticated denial. Include real field-report module DDL.
+- [ ] W3: Strict typed repository plus machine-auth service boundary. Dedicated
+  leased finalization/abandonment transaction; preserve browser owner guards.
+- [ ] W4: Exact-provider outcome adapter and recovery processor. No remote
+  deletion until settlement and namespace gates are satisfied.
+- [ ] W5: Metadata-only operator review, pagination, retry history, clear
+  pending/review/completed states and explicit permission/audit coverage.
+- [ ] W6: Registered cleanup lease/backoff parity and legacy read-only inventory.
+  Unbound legacy objects require a separate reviewed reconciliation decision.
+- [ ] W7: Private Supabase/Cloudinary staging, crash-boundary and late-arrival
+  scenarios, runtime budget, monitoring, rollback and physical-device acceptance.
+
+## Acceptance Evidence
+
+Every crash boundary must be exercised: before/after preparation, during provider
+I/O, after provider commit with lost response, before/after finalization, after
+lease expiry and during cleanup acknowledgement. Prove one immutable asset, no
+duplicate report attachment, no stale lease success and no cross-account delete.
+
+Use real PostgreSQL for transactional claims and locks, loopback HTTP for network
+failure handling, and private staging providers for actual SDK semantics. Mocked
+tests cannot establish cloud settlement, machine authentication, RLS across the
+complete platform schema or physical NFC/QR behavior. Record those gaps rather
+than marking Phase 23 complete from the existing 287 unit/component tests.

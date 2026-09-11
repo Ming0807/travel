@@ -76,6 +76,11 @@ age alone is insufficient to establish ownership or safe deletion.
 
 ### Operations
 
+September 11 worker design and ordered implementation gates are specified in
+`tasks/NFC_RECOVERY_WORKER_IMPLEMENTATION.md`. In particular, worker authority
+must be lease-bound and independent of browser owner sessions. Do not bypass the
+existing owner guard to turn `confirmNfcEvidenceUpload` into a cron handler.
+
 Keep preparation/recovery and cleanup independently disabled until accepted.
 Record bounded failure categories and retry timing without exposing private paths
 to the browser. Add backoff/lease scheduling so permanently failing early items do
