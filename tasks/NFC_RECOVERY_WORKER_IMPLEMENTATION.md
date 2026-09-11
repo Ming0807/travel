@@ -1,14 +1,14 @@
 # NFC Recovery Worker Implementation
 
-Status: design checkpoint, September 11, 2026. Part of Phase 23 S5 and ADR-012.
-Not production activation approval. The initial design had no migration or job;
-the held implementation checkpoint below adds scheduling SQL only. Preserve the
-existing upload, recovery and cleanup flags as off.
+Status: partial held implementation, September 11, 2026. Part of Phase 23 S5 and
+ADR-012. Not production activation approval. Preserve the existing upload,
+recovery and cleanup flags as off.
 
 Implementation checkpoint: held `20260911000000_add_nfc_recovery_leases.sql`
 adds queue admission/backfill, claims, renewal and deferred/review outcomes.
-W1 remains partial: no completion/leased finalization or operator review actions.
-The disposable PostgreSQL suite passes 106 assertions. No scheduler is connected.
+The subsequent held transactions add leased finalization and intent reading.
+The disposable PostgreSQL suite passes 135 assertions. Operator review and
+complete processing are still open. No scheduler is connected.
 
 ## Required Outcome
 
@@ -72,9 +72,10 @@ budget or be renewed with the same fencing token.
 4. Available intents do not need reupload. Verify metadata consistency and
    acknowledge recovery; attached report evidence remains immutable.
 5. Provider 404, timeout and connection errors remain distinct bounded outcomes.
-   The current discovery adapter collapses these to unavailable for browser
-   safety; a worker-specific adapter must distinguish authenticated absence from
-   temporary failures without leaking raw provider responses.
+   Browser discovery still collapses provider errors to unavailable. The worker
+   locator inspector distinguishes exact-key structured Cloudinary not-found
+   responses from outages; all candidates still need byte verification. Supabase
+   absence classification during readback remains to be implemented and staged.
 6. Abandoned jobs require exact-key late-arrival checks. Keep periodic checks
    until an explicitly validated settlement policy permits completion. No finite
    absence count by itself proves that an earlier provider request cannot finish.
@@ -110,6 +111,15 @@ Leased intent reading now has a held service-only RPC and typed adapter reusing
 the existing binding/state validator. PostgreSQL QA passes 135 assertions,
 including lock-wait expiry denial; three repository/worker suites pass 94 tests.
 Processing, abandonment and provider staging remain open; W3 is not complete.
+
+W4 incremental checkpoint: `inspectNfcRecoveryLocator` exposes only located,
+absent, provider_unavailable, namespace_changed or content_conflict. Cloudinary
+absence requires a parsed numeric 404 with the exact resource-not-found key;
+unknown/malformed messages remain unavailable. The account binding is rechecked
+after I/O, and a 15-second deadline bounds both browser and worker discovery.
+Supabase returns a deterministic candidate, not proof of existence. Forty-two
+discovery/confirmation tests pass, including late response and browser regression
+coverage. Real private-provider staging and byte-readback outcomes remain open.
 
 Every crash boundary must be exercised: before/after preparation, during provider
 I/O, after provider commit with lost response, before/after finalization, after

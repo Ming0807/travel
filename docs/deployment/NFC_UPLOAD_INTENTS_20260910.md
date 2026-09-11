@@ -429,3 +429,19 @@ PostgreSQL assertions, 94 repository/worker unit tests, typecheck and scoped
 ESLint passing. The lock-wait test blocks a worker until expiry and proves that
 it receives no intent. These are isolated local tests, not full-schema/provider
 staging or physical NFC acceptance. The broader recovery processor remains open.
+
+### Worker Locator Outcome Checkpoint
+
+The dormant worker locator inspector now differentiates exact-key structured
+Cloudinary absence observations, outages, content conflict and namespace changes.
+Both successful and failed provider I/O recheck the durable destination binding.
+The existing browser API still converts an absence observation to unavailable.
+The installed Cloudinary SDK's parsed-error envelope was inspected; only numeric
+404 with the exact resource-not-found message/key is recognized. Other response
+formats fail closed, pending private-provider staging validation.
+
+The 15-second bounded wait also applies to worker inspection. Supabase supplies
+only a deterministic locator candidate and still needs byte verification; no
+absence observation authorizes deletion or job completion. Forty-two discovery
+and confirmation tests, TypeScript and scoped ESLint pass. No migration, cron
+activation or production provider operation was added in this checkpoint.

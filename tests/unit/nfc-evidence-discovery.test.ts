@@ -3,7 +3,7 @@ const mocks=vi.hoisted(()=>({env:vi.fn(),destination:vi.fn(),resource:vi.fn()}))
 vi.mock("@/lib/config/server-env",()=>({getServerEnv:mocks.env}));
 vi.mock("@/lib/storage/nfc-prepared-storage",()=>({getNfcUploadDestination:mocks.destination}));
 vi.mock("cloudinary",()=>({v2:{api:{resource:mocks.resource}}}));
-import { discoverNfcEvidenceLocator } from "@/lib/storage/nfc-evidence-discovery";
+import { discoverNfcEvidenceLocator, inspectNfcRecoveryLocator } from "@/lib/storage/nfc-evidence-discovery";
 afterEach(()=>vi.useRealTimers());
 const asset="40000000-0000-4000-8000-000000000001";
 const intent={asset_id:asset,provider:"cloudinary",provider_account:"test-cloud",storage_prefix:"tourism/nfc-evidence",object_key:`tourism/nfc-evidence/${asset}`};
@@ -46,4 +46,47 @@ it("clears the deadline after successful discovery",async()=>{
   vi.useFakeTimers();
   await discoverNfcEvidenceLocator(intent);
   expect(vi.getTimerCount()).toBe(0);
+});
+it("returns only a private locator candidate for worker byte verification",async()=>{
+  expect(await inspectNfcRecoveryLocator(intent)).toEqual({status:"located",storagePath:`cloudinary:image:authenticated:v123:webp:${intent.object_key}`});
+});
+it("distinguishes a structured provider 404 without exposing its message",async()=>{
+  mocks.resource.mockRejectedValue({error:{http_code:404,message:`Resource not found - ${intent.object_key}`}});
+  expect(await inspectNfcRecoveryLocator(intent)).toEqual({status:"absent"});
+  await expect(discoverNfcEvidenceLocator(intent)).rejects.toThrow("NFC_UPLOAD_DISCOVERY_UNAVAILABLE");
+});
+it.each([{http_code:404}, {error:{http_code:"404",message:"missing"}},
+  {error:{http_code:404,message:"Resource not found - another/key"}},
+  {error:{http_code:404,message:"Server return invalid JSON response. Status Code 404"}},
+  {error:{http_code:403,message:"private"}}, {error:{http_code:500,message:"private"}}])("keeps unproven absence or outages unavailable",async error=>{
+  mocks.resource.mockRejectedValue(error);
+  expect(await inspectNfcRecoveryLocator(intent)).toEqual({status:"provider_unavailable"});
+});
+it("rechecks account binding after provider I/O",async()=>{
+  mocks.resource.mockImplementation(async()=>{
+    mocks.destination.mockReturnValue({...mocks.destination(),provider_account:"changed"});
+    return {public_id:intent.object_key,resource_type:"image",type:"authenticated",format:"webp",version:123};
+  });
+  expect(await inspectNfcRecoveryLocator(intent)).toEqual({status:"namespace_changed"});
+});
+it("reports metadata conflicts for operator review",async()=>{
+  mocks.resource.mockResolvedValue({public_id:"wrong"});
+  expect(await inspectNfcRecoveryLocator(intent)).toEqual({status:"content_conflict"});
+});
+it("returns unavailable at the worker deadline and ignores a late success",async()=>{
+  vi.useFakeTimers();
+  let resolve!: (value:unknown)=>void;
+  mocks.resource.mockReturnValue(new Promise(value=>{resolve=value;}));
+  const pending=inspectNfcRecoveryLocator(intent);
+  await vi.advanceTimersByTimeAsync(15000);
+  expect(await pending).toEqual({status:"provider_unavailable"});
+  resolve({public_id:intent.object_key,resource_type:"image",type:"authenticated",format:"webp",version:123});
+  await Promise.resolve();
+  expect(vi.getTimerCount()).toBe(0);
+});
+it("does not interpret a deterministic Supabase key as evidence of existence",async()=>{
+  const supabase={...intent,provider:"supabase",provider_account:"project",storage_prefix:"nfc-evidence",object_key:`nfc-evidence/${asset}.webp`};
+  mocks.destination.mockReturnValue(supabase);
+  expect(await inspectNfcRecoveryLocator(supabase)).toEqual({status:"located",storagePath:supabase.object_key});
+  expect(mocks.resource).not.toHaveBeenCalled();
 });
