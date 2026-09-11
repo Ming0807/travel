@@ -262,6 +262,29 @@ try {
   await db.query("SELECT public.renew_nfc_evidence_recovery($1,$2)",[replacement.asset_id,replacement.lease_token]); checks++;
   await db.query("SELECT public.defer_nfc_evidence_recovery($1,$2,'content_conflict')",[replacement.asset_id,replacement.lease_token]);
   assert.equal((await db.query("SELECT review_required FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1",[replacement.asset_id])).rows[0].review_required,true); checks++;
+  await db.query("RESET ROLE");
+  await db.query("UPDATE public.nfc_evidence_recovery_jobs SET next_attempt_at=now()-interval '1 second' WHERE asset_id=$1",[queued.asset_id]);
+  await db.query("SET ROLE service_role");
+  const expiring=(await db.query("SELECT * FROM public.claim_nfc_evidence_recovery(1)")).rows[0];
+  await db.query("RESET ROLE");
+  await db.query("UPDATE public.nfc_evidence_recovery_jobs SET lease_expires_at=clock_timestamp()+interval '2 seconds' WHERE asset_id=$1",[expiring.asset_id]);
+  await db.query("BEGIN");
+  let renewal;
+  try {
+    await db.query("SELECT 1 FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1 FOR UPDATE",[expiring.asset_id]);
+    renewal=worker.query("SELECT public.renew_nfc_evidence_recovery($1,$2)",[expiring.asset_id,expiring.lease_token]).then(value=>({value}),error=>({error}));
+    let blocked=false;
+    for(let attempt=0;attempt<100;attempt++) {
+      blocked=(await db.query("SELECT pg_backend_pid()=ANY(pg_blocking_pids($1)) AS blocked",[workerPid])).rows[0].blocked;
+      if(blocked) break;
+      await new Promise(resolve=>setTimeout(resolve,10));
+    }
+    assert.equal(blocked,true); checks++;
+    await db.query("SELECT pg_sleep(greatest(0,extract(epoch FROM lease_expires_at-clock_timestamp()))+0.1) FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1",[expiring.asset_id]);
+    await db.query("COMMIT");
+  } catch(error) {await db.query("ROLLBACK");if(renewal) await renewal;throw error;}
+  assert.match(String((await renewal).error),/NFC_RECOVERY_LEASE_LOST/); checks++;
+  await db.query("SET ROLE service_role");
   await assert.rejects(db.query("UPDATE public.nfc_evidence_recovery_jobs SET completed_at=now()"),/permission denied/); checks++;
   for (const role of ["anon","authenticated"]) {
     await db.query(`RESET ROLE; SET ROLE ${role}`);

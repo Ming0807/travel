@@ -359,3 +359,9 @@ stale lease takeover/fencing, deferred timing, review state and role denial.
 No route, cron, finalization, completion or deletion is implemented by this SQL.
 Machine authorization, leased finalization and operator review are still required.
 Existing provider/browser guards remain intact. Production flags are unchanged.
+
+Lease renewal race follow-up: an actual lock-wait test exposed renewal succeeding
+after expiry when the UPDATE qualified the row before waiting. The held September
+11 migration now locks the job first and checks token/expiry using database time
+after the lock. PostgreSQL QA passes 108 assertions, including observed blocking
+and expiry during the wait. This edits the unreleased migration, not production.

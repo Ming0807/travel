@@ -21,6 +21,10 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+W1 renewal race fixed before release: waiting renewal could revive an expired
+lease. Held SQL now locks before evaluating expiry/token. Real PostgreSQL
+regression reproduces the old failure and passes after the fix (108 assertions).
+
 W1 scheduling foundation: held September 11 recovery lease migration implements
 transactional admission/backfill, SKIP LOCKED claims, renewal, token fencing,
 backoff and review outcomes. PostgreSQL suite passes 106 assertions. W1 is partial:

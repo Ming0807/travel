@@ -53,12 +53,15 @@ $$;
 
 CREATE FUNCTION public.renew_nfc_evidence_recovery(p_asset_id uuid,p_lease_token uuid)
 RETURNS timestamptz LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE v_expiry timestamptz;
+DECLARE v_expiry timestamptz; v_job public.nfc_evidence_recovery_jobs%ROWTYPE;
 BEGIN
+  -- Check expiry after acquiring the lock, not before a potentially long wait.
+  SELECT * INTO v_job FROM public.nfc_evidence_recovery_jobs WHERE asset_id=p_asset_id FOR UPDATE;
+  IF NOT FOUND OR p_lease_token IS NULL OR v_job.lease_token IS DISTINCT FROM p_lease_token
+    OR v_job.lease_expires_at IS NULL OR v_job.lease_expires_at<=clock_timestamp()
+    OR v_job.completed_at IS NOT NULL OR v_job.review_required THEN RAISE EXCEPTION 'NFC_RECOVERY_LEASE_LOST'; END IF;
   UPDATE public.nfc_evidence_recovery_jobs SET lease_expires_at=clock_timestamp()+interval '2 minutes'
-    WHERE asset_id=p_asset_id AND lease_token=p_lease_token AND lease_expires_at>clock_timestamp()
-      AND completed_at IS NULL AND NOT review_required RETURNING lease_expires_at INTO v_expiry;
-  IF NOT FOUND THEN RAISE EXCEPTION 'NFC_RECOVERY_LEASE_LOST'; END IF;
+    WHERE asset_id=p_asset_id RETURNING lease_expires_at INTO v_expiry;
   RETURN v_expiry;
 END;
 $$;
