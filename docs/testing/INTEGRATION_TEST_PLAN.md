@@ -1,5 +1,34 @@
 # INTEGRATION_TEST_PLAN.md
 
+## NFC Recovery Processor: Disposable Database Suite
+
+Run explicitly in PowerShell when Docker is available:
+
+```powershell
+$env:NFC_RECOVERY_POSTGRES_QA = '1'
+pnpm dlx node@22 node_modules/vitest/vitest.mjs run tests/integration/nfc-recovery-postgres.test.ts --maxWorkers=1
+Remove-Item Env:NFC_RECOVERY_POSTGRES_QA
+```
+
+The suite creates its own PostgreSQL 16 container on a random loopback port,
+applies the held NFC module migrations, and removes its container/connections
+after success or test failure. It never accepts an external database URL.
+Without the explicit flag, these ten Docker-dependent cases are skipped.
+
+Coverage uses the real recovery processor, auth gate, repository validation,
+SQL transactions and HTTP byte verification. Cases cover one immutable asset,
+missing/unavailable content, mismatched bytes, expired-lease takeover, revoked
+tags, lost finalization acknowledgement, retained tombstones/late arrival, and
+disabled/unauthenticated execution. Exact result assertions also prevent private
+locators or lease metadata leaking through processor results.
+
+Limits: parent admin/tag tables are minimal fixtures; the RPC transport uses
+parameterized PostgreSQL calls with JSON serialization rather than PostgREST.
+Private signing/destination configuration are replaced with loopback fixtures.
+This is not full-platform RLS, real cloud upload, private-provider staging or
+production activation approval. Actual provider late-write settlement remains
+an independent acceptance gate.
+
 ## 1. Document Purpose
 
 This document defines the integration test plan for the **Southern Border Tourism Data & Intelligence Platform**.

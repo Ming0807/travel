@@ -504,3 +504,15 @@ Unknown errors leave the lease unacknowledged to expire and recover safely. The
 processor is covered in the 201-test eight-suite NFC regression. This is neither
 production activation nor provider staging evidence; leave all upload/recovery
 worker flags off and do not run held September 11 SQL in production yet.
+
+### Disposable Processor Integration Checkpoint
+
+Ten opt-in integration tests now exercise the actual TypeScript processor and
+repository adapters with the real NFC SQL migrations on disposable PostgreSQL
+16, plus actual HTTP response bytes. Cases include lost finalization response,
+lease expiry/takeover, revoked tags during I/O, 404/503, mismatched content, and
+abandoned intent late arrival. No duplicate asset or false completion was
+observed in these cases. The database RPC transport is a parameterized test
+bridge, not PostgREST; signing/destination are loopback substitutes and parent
+admin/tag tables remain minimal fixtures. See the integration test plan for the
+opt-in command. All held migration and default-off requirements above remain.

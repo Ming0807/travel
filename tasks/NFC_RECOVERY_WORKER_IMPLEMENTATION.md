@@ -145,6 +145,18 @@ lease, signed URL, owner or bytes, and performs no remote deletion. Eight NFC
 unit/integration suites pass 201 tests. Private-provider/full-schema staging,
 operator review UI and scheduler runtime observability remain open.
 
+W4 database/HTTP integration checkpoint: the opt-in
+`tests/integration/nfc-recovery-postgres.test.ts` runs the actual processor,
+machine-auth gate, repository validators, locator inspection and byte readback
+against disposable PostgreSQL 16 and loopback HTTP. Ten cases pass: one-time
+recovery, 404/503 deferral, content mismatch review, lease expiry and takeover,
+tag revocation during I/O, unauthorized/disabled calls, lost finalization
+acknowledgement, and expired tombstone followed by a late arrival. SQL results
+are real, JSON-serialized through a test RPC transport; private signing and
+destination configuration are substituted locally. This does not establish
+PostgREST transport behavior, complete-platform RLS, cloud upload settlement or
+provider signing semantics. No production activation or SQL application occurred.
+
 Every crash boundary must be exercised: before/after preparation, during provider
 I/O, after provider commit with lost response, before/after finalization, after
 lease expiry and during cleanup acknowledgement. Prove one immutable asset, no
