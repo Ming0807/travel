@@ -105,8 +105,11 @@ budget or be renewed with the same fencing token.
 W3 incremental checkpoint: the typed leased-finalization adapter now rejects
 caller-supplied actor IDs, validates verified content and lease input, requires an
 exact asset acknowledgement, and preserves only known database outcomes. The
-recovery repository/worker suite passes 55 tests. Leased intent reading, processing,
-abandonment and provider staging are still open; W3 is not complete.
+recovery repository/worker suite passed 55 tests at that checkpoint.
+Leased intent reading now has a held service-only RPC and typed adapter reusing
+the existing binding/state validator. PostgreSQL QA passes 135 assertions,
+including lock-wait expiry denial; three repository/worker suites pass 94 tests.
+Processing, abandonment and provider staging remain open; W3 is not complete.
 
 Every crash boundary must be exercised: before/after preparation, during provider
 I/O, after provider commit with lost response, before/after finalization, after

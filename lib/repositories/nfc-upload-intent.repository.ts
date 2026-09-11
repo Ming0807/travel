@@ -80,6 +80,21 @@ export async function readOwnedNfcUploadIntent(assetId: string, actorId: string)
   return intent;
 }
 
+// Internal machine-authorized worker only. The RPC checks live lease ownership;
+// returned metadata is a snapshot, not authority to finalize or delete a file.
+export async function readLeasedNfcRecoveryIntent(input: unknown): Promise<NfcEvidenceUploadIntent> {
+  const value = z.object({ assetId: z.uuid(), leaseToken: z.uuid() }).strict().parse(input);
+  const { data, error } = await createSupabaseServiceRoleClient().rpc("read_leased_nfc_recovery_intent", {
+    p_asset_id: value.assetId, p_lease_token: value.leaseToken,
+  });
+  if (error) throw new Error(error.message === "NFC_RECOVERY_LEASE_LOST" || error.message === "NFC_UPLOAD_NOT_FOUND"
+    ? error.message : "NFC_RECOVERY_READ_FAILED");
+  if (!Array.isArray(data) || data.length !== 1) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
+  const intent = validateIntent(data[0]);
+  if (intent.asset_id !== value.assetId) throw new Error("NFC_UPLOAD_RESPONSE_INVALID");
+  return intent;
+}
+
 const verifiedContentSchema = z.object({
   assetId: z.uuid(), actorId: z.uuid(), providerAccount: bindingSchema.shape.provider_account,
   storagePath: z.string().min(1).max(500), sha256: bindingSchema.shape.sha256,

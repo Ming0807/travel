@@ -1986,8 +1986,8 @@ admin permission and remote content/account; SQL does not inspect provider bytes
 asset_id is a PK/FK with RESTRICT deletion. next_attempt_at, attempt_count,
 lease_token, lease_expires_at and last_attempt_at govern bounded retries.
 last_outcome is an allowlisted category, never raw provider error text.
-review_required prevents automatic retry of conflicts. completed_at is reserved
-for forthcoming lease-bound completion and has no writable application path yet.
+review_required prevents automatic retry of conflicts. completed_at is written
+only by the held lease-bound finalization transaction described below.
 RLS denies anonymous/authenticated access; service_role has SELECT only and
 service-only claim/renew/defer RPCs. Admission is transactional with new intents
 and backfills existing intents. No private URLs or credentials are stored here.
@@ -1999,3 +1999,10 @@ the recovery job's completed_at while clearing its lease. It checks lease expiry
 before/after authoritative finalization and derives actor_id from the intent.
 Service-role only; machine authorization and remote-byte verification are caller
 requirements. SQL: `20260911001000_finalize_leased_nfc_recovery.sql`, not deployed.
+
+Held `read_leased_nfc_recovery_intent(asset_id, lease_token)` returns exactly the
+intent bound to a live unfinished recovery lease. It locks the job before checking
+expiry, validates expiry again before returning, and accepts no actor parameter.
+Its snapshot is not permission to finalize/delete and it does not renew the lease.
+Service-role only; metadata must remain internal to the machine-authorized worker.
+SQL: `20260911002000_read_leased_nfc_recovery_intent.sql`, not deployed.

@@ -412,3 +412,20 @@ implementation all 55 recovery repository/worker tests and typecheck pass.
 The caller still must verify machine authorization and remote content. This is
 not a complete processor, does not enable cron, and adds no migration. Existing
 September 11 migrations remain held pending remaining integration/staging gates.
+
+### Held Lease-Bound Intent Read
+
+`20260911002000_read_leased_nfc_recovery_intent.sql` follows the two earlier
+September 11 worker migrations. Do not run it in production yet. It authorizes
+an internal metadata snapshot with a live lease, locks before checking expiry,
+accepts no caller-supplied actor and denies browser roles. It neither renews
+the job nor authorizes finalization/deletion. No route or scheduler is enabled.
+
+The TypeScript adapter requires one matching asset and reuses the existing
+intent validator for state, content and exact private locator consistency.
+Unknown database failures are sanitized. Existing owner-only browser reads are
+unchanged. New cases failed before implementation; final evidence is 135 real
+PostgreSQL assertions, 94 repository/worker unit tests, typecheck and scoped
+ESLint passing. The lock-wait test blocks a worker until expiry and proves that
+it receives no intent. These are isolated local tests, not full-schema/provider
+staging or physical NFC acceptance. The broader recovery processor remains open.

@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
 const mocks=vi.hoisted(()=>({ rpc:vi.fn(),from:vi.fn(),select:vi.fn(),eq:vi.fn(),maybeSingle:vi.fn() }));
 vi.mock("@/lib/supabase/service-role",()=>({ createSupabaseServiceRoleClient:()=>mocks }));
-import { prepareNfcEvidenceUpload, finalizeNfcEvidenceUpload, abandonStaleNfcEvidenceUpload, readOwnedNfcUploadIntent } from "@/lib/repositories/nfc-upload-intent.repository";
+import { prepareNfcEvidenceUpload, finalizeNfcEvidenceUpload, abandonStaleNfcEvidenceUpload, readOwnedNfcUploadIntent, readLeasedNfcRecoveryIntent } from "@/lib/repositories/nfc-upload-intent.repository";
 const input={
   request_id:"10000000-0000-4000-8000-000000000001",actor_id:"20000000-0000-4000-8000-000000000001",
   nfc_tag_id:"30000000-0000-4000-8000-000000000001",tag_version:1,provider:"supabase",
@@ -9,6 +9,29 @@ const input={
 };
 const asset="40000000-0000-4000-8000-000000000001";
 const row={...input,asset_id:asset,object_key:`nfc-evidence/${asset}.webp`,state:"prepared",created_at:"2026-09-10T00:00:00+00:00",finalized_at:null,abandoned_at:null,storage_path:null};
+const leaseInput={assetId:asset,leaseToken:"40000000-0000-4000-8000-000000000002"};
+it("reads one validated durable intent using a lease, not a browser actor",async()=>{
+  expect(await readLeasedNfcRecoveryIntent(leaseInput)).toEqual(row);
+  expect(mocks.rpc).toHaveBeenCalledWith("read_leased_nfc_recovery_intent",{p_asset_id:asset,p_lease_token:leaseInput.leaseToken});
+  expect(mocks.from).not.toHaveBeenCalled();
+});
+it.each([null,[],[row,row],[{...row,asset_id:input.actor_id}], [{...row,object_key:"another/file.webp"}],
+  [{...row,state:"available"}]])("rejects ambiguous or inconsistent leased intent",async data=>{
+  mocks.rpc.mockResolvedValue({data,error:null});
+  await expect(readLeasedNfcRecoveryIntent(leaseInput)).rejects.toThrow("NFC_UPLOAD_RESPONSE_INVALID");
+});
+it("rejects lease actor injection before any database access",async()=>{
+  await expect(readLeasedNfcRecoveryIntent({...leaseInput,actorId:input.actor_id})).rejects.toThrow();
+  expect(mocks.rpc).not.toHaveBeenCalled();
+});
+it.each(["NFC_RECOVERY_LEASE_LOST","NFC_UPLOAD_NOT_FOUND"])("preserves the known lease read outcome %s",async message=>{
+  mocks.rpc.mockResolvedValue({error:{message}});
+  await expect(readLeasedNfcRecoveryIntent(leaseInput)).rejects.toThrow(message);
+});
+it("sanitizes unknown lease read database errors",async()=>{
+  mocks.rpc.mockResolvedValue({error:{message:"private connection details"}});
+  await expect(readLeasedNfcRecoveryIntent(leaseInput)).rejects.toThrow("NFC_RECOVERY_READ_FAILED");
+});
 beforeEach(()=>{vi.resetAllMocks();mocks.rpc.mockResolvedValue({data:[row],error:null});
   for(const fn of [mocks.from,mocks.select,mocks.eq]) fn.mockReturnValue(mocks);
   mocks.maybeSingle.mockResolvedValue({data:row,error:null});
