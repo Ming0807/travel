@@ -132,6 +132,19 @@ pass 70 tests, including seven real loopback HTTP cases. Actual private-provider
 staging and complete processing remain open. An absence observation is not a
 settlement proof, job-completion decision or deletion permission.
 
+W4 processor checkpoint: `runAuthorizedNfcRecovery` claims one job only after
+machine authorization and the default-off worker gate. It reads durable intent
+metadata under a lease, renews before provider work, verifies bytes before
+finalization, and returns only aggregate outcomes. Fresh prepared intents may
+continue to finalization; stale ones transition to an abandoned tombstone under
+the same fenced lease. A verified late arrival for an abandoned intent goes to
+review, not automatic registration. Provider failure/absence defer with bounded
+outcomes; namespace/content/actor/tag conflicts require review. Unknown failures
+do not acknowledge the job. The processor exposes no HTTP route, cron handler,
+lease, signed URL, owner or bytes, and performs no remote deletion. Eight NFC
+unit/integration suites pass 201 tests. Private-provider/full-schema staging,
+operator review UI and scheduler runtime observability remain open.
+
 Every crash boundary must be exercised: before/after preparation, during provider
 I/O, after provider commit with lost response, before/after finalization, after
 lease expiry and during cleanup acknowledgement. Prove one immutable asset, no

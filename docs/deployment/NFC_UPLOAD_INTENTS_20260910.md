@@ -485,3 +485,22 @@ retained job/lease, idempotent retry and browser-role denial. Three adapter/work
 suites pass 106 tests after 12 new cases first failed without implementation.
 TypeScript and scoped ESLint pass. Processor integration, full-schema/private
 provider staging and operator review are still required before activation.
+
+### Dormant One-Job Recovery Processor
+
+`runAuthorizedNfcRecovery` is an internal server module with no route or cron
+registration. It reuses the exact timing-safe machine authorization and strict
+default-off `NFC_EVIDENCE_WORKER_ENABLED` gate before claiming a single job.
+It never serializes the job lease, original actor, private locator, signed URL or
+file bytes. The job is read through its live fenced lease, renewed before remote
+I/O, and finalized only after readback verifies the durable binding and actual
+bytes. The final transaction again checks active actor/tag/current binding.
+
+Fresh prepared intents can complete normally; stale ones use the held lease-bound
+abandonment transition. If a remote object appears after tombstoning, the worker
+marks a content conflict for review and never reactivates or deletes it. Exact
+absence/outage defer; changed namespace/content/actor/tag states require review.
+Unknown errors leave the lease unacknowledged to expire and recover safely. The
+processor is covered in the 201-test eight-suite NFC regression. This is neither
+production activation nor provider staging evidence; leave all upload/recovery
+worker flags off and do not run held September 11 SQL in production yet.
