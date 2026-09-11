@@ -332,3 +332,13 @@ and become enabled before clicking, without raising timeouts or weakening payloa
 identity assertions. Scoped ESLint passes. No production behavior, SQL, flags or
 storage operations changed. This sweep does not cover all platform tests, real
 provider integration, physical NFC hardware or browser screenshots.
+
+### Bounded Provider Discovery
+
+Cloudinary exact-resource discovery now bounds caller wait to 15 seconds in
+addition to the SDK socket timeout. Deadline cleanup occurs on success/failure;
+a response arriving after the deadline cannot proceed to readback/finalization.
+This is not cancellation of the underlying SDK request, and timeout remains
+unavailable rather than proof of absence or permission to delete. Thirty focused
+discovery/confirmation tests pass, including a deliberately unsettled SDK promise
+and late response. Real-provider behavior and reconciliation remain rollout gates.

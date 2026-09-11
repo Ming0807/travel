@@ -1,9 +1,10 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const mocks=vi.hoisted(()=>({env:vi.fn(),destination:vi.fn(),resource:vi.fn()}));
 vi.mock("@/lib/config/server-env",()=>({getServerEnv:mocks.env}));
 vi.mock("@/lib/storage/nfc-prepared-storage",()=>({getNfcUploadDestination:mocks.destination}));
 vi.mock("cloudinary",()=>({v2:{api:{resource:mocks.resource}}}));
 import { discoverNfcEvidenceLocator } from "@/lib/storage/nfc-evidence-discovery";
+afterEach(()=>vi.useRealTimers());
 const asset="40000000-0000-4000-8000-000000000001";
 const intent={asset_id:asset,provider:"cloudinary",provider_account:"test-cloud",storage_prefix:"tourism/nfc-evidence",object_key:`tourism/nfc-evidence/${asset}`};
 beforeEach(()=>{vi.resetAllMocks();mocks.destination.mockReturnValue({provider:intent.provider,provider_account:intent.provider_account,storage_prefix:intent.storage_prefix});
@@ -29,4 +30,20 @@ it("returns the deterministic Supabase key without listing storage",async()=>{
   const supabase={...intent,provider:"supabase",provider_account:"project",storage_prefix:"nfc-evidence",object_key:`nfc-evidence/${asset}.webp`};
   mocks.destination.mockReturnValue(supabase);
   expect(await discoverNfcEvidenceLocator(supabase)).toBe(supabase.object_key);expect(mocks.resource).not.toHaveBeenCalled();
+});
+it("bounds stalled discovery even when the SDK does not settle",async()=>{
+  vi.useFakeTimers();
+  let resolve!: (value:unknown)=>void;
+  mocks.resource.mockReturnValue(new Promise(value=>{resolve=value;}));
+  const outcome=discoverNfcEvidenceLocator(intent).catch(error=>error);
+  await vi.advanceTimersByTimeAsync(15000);
+  expect(await outcome).toMatchObject({message:"NFC_UPLOAD_DISCOVERY_UNAVAILABLE"});
+  resolve({public_id:intent.object_key,resource_type:"image",type:"authenticated",format:"webp",version:123});
+  await Promise.resolve();
+  expect(vi.getTimerCount()).toBe(0);
+});
+it("clears the deadline after successful discovery",async()=>{
+  vi.useFakeTimers();
+  await discoverNfcEvidenceLocator(intent);
+  expect(vi.getTimerCount()).toBe(0);
 });

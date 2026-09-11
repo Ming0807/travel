@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+S5 provider wait bound: exact Cloudinary discovery has a 15-second caller deadline
+in addition to socket timeout. Late results cannot finalize; no absence/deletion
+inference. Thirty focused tests pass. This does not cancel remote work or replace
+the pending lease/backoff/late-arrival reconciliation implementation.
+
 September 11 regression sweep: all 26 NFC/admin-NFC test files pass (287 tests).
 Fixed only a field-report retry test that clicked before React transition settled;
 it now waits for an enabled retry control and still asserts exact request reuse.

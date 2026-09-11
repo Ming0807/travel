@@ -23,11 +23,18 @@ export async function discoverNfcEvidenceLocator(input: unknown): Promise<string
     throw new Error("NFC_UPLOAD_DESTINATION_CHANGED");
   }
   let response: unknown;
+  let deadline: ReturnType<typeof setTimeout> | undefined;
   try {
-    response = await cloudinary.api.resource(key, { cloud_name: binding.provider_account,
-      api_key: env.CLOUDINARY_API_KEY, api_secret: env.CLOUDINARY_API_SECRET,
-      resource_type: "image", type: "authenticated", timeout: 15000 });
+    // SDK timeout is a socket timeout. Bound our wait independently; timeout is
+    // not cancellation of provider work and never establishes permanent absence.
+    response = await Promise.race([
+      cloudinary.api.resource(key, { cloud_name: binding.provider_account,
+        api_key: env.CLOUDINARY_API_KEY, api_secret: env.CLOUDINARY_API_SECRET,
+        resource_type: "image", type: "authenticated", timeout: 15000 }),
+      new Promise<never>((_, reject) => { deadline = setTimeout(() => reject(new Error("NFC_UPLOAD_DISCOVERY_UNAVAILABLE")), 15000); }),
+    ]);
   } catch { throw new Error("NFC_UPLOAD_DISCOVERY_UNAVAILABLE"); }
+  finally { if (deadline !== undefined) clearTimeout(deadline); }
   const parsed = resourceSchema.safeParse(response);
   if (!parsed.success || parsed.data.public_id !== key) throw new Error("NFC_UPLOAD_DISCOVERY_CONFLICT");
   return `cloudinary:image:authenticated:v${parsed.data.version}:webp:${key}`;
