@@ -221,3 +221,11 @@ staging verification, and recovery/cleanup acceptance. No production SQL or
 flags were changed. Browser retries retain the request ID and prepared bytes
 only for the same File object and tag version in the current page; this is not
 reload-persistent recovery and stores no photo in localStorage.
+
+`NFC_EVIDENCE_WORKER_ENABLED=false` is the independent, server-only recovery
+worker gate. Unset/empty are disabled; malformed values fail closed. Keep off.
+The dormant worker claim entry verifies an exact Bearer `CRON_SECRET` using
+timing-safe comparison (32-512 characters, no whitespace) before checking the
+flag or claiming one job. No route/cron invokes this helper yet. Do not enable
+until leased finalization, runtime limits, provider staging and reconciliation
+are accepted. Upload disablement is independent from recovery of existing work.

@@ -21,6 +21,10 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+W3 machine claim boundary: default-off server worker helper verifies CRON_SECRET
+with timing-safe comparison and claims only one job. Thirty-three worker/repository
+tests pass. Still no route, scheduler, leased finalization or provider deletion.
+
 W3 repository foundation: strict claim/renew/defer adapters added with 18 passing
 unit tests. No caller or machine authority yet; leased finalization/completion
 remains outstanding. Production flags and held SQL status are unchanged.

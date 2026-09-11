@@ -373,3 +373,10 @@ pass through; other RPC failures are sanitized. Eighteen mocked adapter tests pa
 No live caller, machine authorization, completion or provider deletion is added.
 The database remains authoritative for expiry; adapter timestamp checks validate
 internal consistency rather than trusting the application clock to extend leases.
+
+Machine claim boundary: dormant `claimAuthorizedNfcRecoveryWork` verifies exact
+Bearer CRON_SECRET before reading the independent default-off worker gate or
+claiming a single job. Invalid authorization/configuration cannot touch the queue;
+claim failure is not returned as an empty success. Thirty-three worker/repository
+tests pass. This authorizes scheduling only, not owner impersonation, finalization
+or deletion. No route or cron invokes it and no production flag changed.
