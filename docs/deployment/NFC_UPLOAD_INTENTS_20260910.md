@@ -468,3 +468,20 @@ Final verification: 70 tests in four suites pass, including seven real loopback
 HTTP cases (verified bytes, oversized/truncated content, redirect denial, 404,
 503 and worker metadata). TypeScript and scoped ESLint pass. No migration or
 production activation is part of this change. The complete worker remains open.
+
+### Held Leased Abandonment
+
+New `20260911003000_abandon_leased_nfc_recovery.sql` follows the held lease-read
+migration. Do not run it in production yet. Machine-authorized workers may retire
+only stale intents with a live lease; the original actor is derived in SQL and
+must remain active. The lease is checked before and after the existing transition.
+The job is not completed or deleted and retains its lease so the caller can
+inspect late-arriving content and defer through the existing fenced queue RPC.
+No caller-supplied operator is accepted and no remote storage operation occurs.
+
+Real PostgreSQL QA passes 148 assertions, including non-stale rejection, bad
+tokens, forced expiry during update with rollback, takeover and old-token denial,
+retained job/lease, idempotent retry and browser-role denial. Three adapter/worker
+suites pass 106 tests after 12 new cases first failed without implementation.
+TypeScript and scoped ESLint pass. Processor integration, full-schema/private
+provider staging and operator review are still required before activation.

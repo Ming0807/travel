@@ -111,7 +111,11 @@ recovery repository/worker suite passed 55 tests at that checkpoint.
 Leased intent reading now has a held service-only RPC and typed adapter reusing
 the existing binding/state validator. PostgreSQL QA passes 135 assertions,
 including lock-wait expiry denial; three repository/worker suites pass 94 tests.
-Processing, abandonment and provider staging remain open; W3 is not complete.
+The held leased-abandonment transaction and strict adapter now retain the job
+for late-arrival reconciliation, derive the original actor, and roll back if
+lease expiry occurs during transition. PostgreSQL QA now passes 148 assertions;
+three repository/worker suites pass 106 tests. Complete processing and provider
+staging remain open; this is not activation approval.
 
 W4 incremental checkpoint: `inspectNfcRecoveryLocator` exposes only located,
 absent, provider_unavailable, namespace_changed or content_conflict. Cloudinary

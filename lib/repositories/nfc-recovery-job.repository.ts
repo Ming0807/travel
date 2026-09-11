@@ -72,3 +72,19 @@ export async function finalizeLeasedNfcRecovery(input: unknown): Promise<string>
   if (data !== value.assetId) throw new Error("NFC_RECOVERY_RESPONSE_INVALID");
   return value.assetId;
 }
+
+const abandonmentOutcomes = new Set([
+  "NFC_RECOVERY_LEASE_LOST", "NFC_UPLOAD_ACTOR_UNAVAILABLE", "NFC_UPLOAD_NOT_FOUND",
+  "NFC_UPLOAD_NOT_ABANDONABLE", "NFC_UPLOAD_NOT_STALE",
+]);
+
+// Retires an expired intent only; caller must still reconcile/defer the retained job.
+export async function abandonLeasedNfcRecovery(input: unknown): Promise<true> {
+  const value = lease.parse(input);
+  const { data, error } = await createSupabaseServiceRoleClient().rpc("abandon_leased_nfc_recovery", {
+    p_asset_id: value.assetId, p_lease_token: value.leaseToken,
+  });
+  if (error) throw new Error(abandonmentOutcomes.has(error.message) ? error.message : "NFC_RECOVERY_ABANDON_FAILED");
+  if (data !== true) throw new Error("NFC_RECOVERY_RESPONSE_INVALID");
+  return true;
+}

@@ -2006,3 +2006,10 @@ expiry, validates expiry again before returning, and accepts no actor parameter.
 Its snapshot is not permission to finalize/delete and it does not renew the lease.
 Service-role only; metadata must remain internal to the machine-authorized worker.
 SQL: `20260911002000_read_leased_nfc_recovery_intent.sql`, not deployed.
+
+Held `abandon_leased_nfc_recovery(asset_id, lease_token)` derives the original
+actor and invokes the stale-intent transition under a live fenced lease. It
+rechecks expiry after transition and rolls back on expired authority. The job
+and lease remain for subsequent reconciliation/defer; completed_at stays null.
+Original actor availability is required. No provider deletion is authorized.
+SQL: `20260911003000_abandon_leased_nfc_recovery.sql`, not deployed.
