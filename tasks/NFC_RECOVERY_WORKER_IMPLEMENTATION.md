@@ -102,6 +102,12 @@ budget or be renewed with the same fencing token.
 
 ## Acceptance Evidence
 
+W3 incremental checkpoint: the typed leased-finalization adapter now rejects
+caller-supplied actor IDs, validates verified content and lease input, requires an
+exact asset acknowledgement, and preserves only known database outcomes. The
+recovery repository/worker suite passes 55 tests. Leased intent reading, processing,
+abandonment and provider staging are still open; W3 is not complete.
+
 Every crash boundary must be exercised: before/after preparation, during provider
 I/O, after provider commit with lost response, before/after finalization, after
 lease expiry and during cleanup acknowledgement. Prove one immutable asset, no

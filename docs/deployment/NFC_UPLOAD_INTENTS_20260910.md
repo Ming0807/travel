@@ -395,3 +395,20 @@ content; SQL does not contact storage. No deletion permission is added.
 atomic completion, role denial, and forced expiry during asset insertion with full
 rollback. A fresh lease then succeeds on the same intent. Parent admin/tag tables
 remain minimal. DO NOT run either September 11 migration in production yet.
+
+### Release Build And Typed Finalization Checkpoint
+
+Node 22 production build at `cab868c` passes TypeScript and generates 66/66 static
+pages. The direct pinned Vite dependency and lockfile resolve the earlier Vercel
+TS2307 failure in both dashboard visual configurations, without excluding tests
+or disabling type checking. `main` was pushed from `2a0330b` to `cab868c`;
+the Vercel deployment result has not been independently verified.
+
+The subsequent dormant `finalizeLeasedNfcRecovery` adapter validates lease and
+verified-content input, rejects actor injection, forwards exact RPC arguments,
+requires the same asset UUID acknowledgement, and sanitizes unknown DB errors.
+Its 22 new regression cases first failed with the missing implementation; after
+implementation all 55 recovery repository/worker tests and typecheck pass.
+The caller still must verify machine authorization and remote content. This is
+not a complete processor, does not enable cron, and adds no migration. Existing
+September 11 migrations remain held pending remaining integration/staging gates.

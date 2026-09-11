@@ -14,8 +14,8 @@ const job = z.object({
 export type NfcRecoveryJob = z.infer<typeof job>;
 export type NfcRecoveryOutcome = z.infer<typeof outcome>;
 
-// Server-only scheduling adapter. Machine authorization is required upstream;
-// these calls alone confer no finalization or deletion authority.
+// Server-only worker adapters. Machine authorization is required upstream;
+// a claimed job alone confers no finalization or deletion authority.
 export async function claimNfcRecoveryJobs(limit = 1): Promise<NfcRecoveryJob[]> {
   z.number().int().min(1).max(5).parse(limit);
   const { data, error } = await createSupabaseServiceRoleClient().rpc("claim_nfc_evidence_recovery", { p_limit: limit });
@@ -45,4 +45,30 @@ export async function deferNfcRecoveryJob(input: unknown): Promise<true> {
   if (error) throw new Error(error.message === "NFC_RECOVERY_LEASE_LOST" ? error.message : "NFC_RECOVERY_DEFER_FAILED");
   if (data !== true) throw new Error("NFC_RECOVERY_RESPONSE_INVALID");
   return true;
+}
+
+const verifiedContent = lease.extend({
+  providerAccount: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/),
+  storagePath: z.string().min(1).max(500), sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  sizeBytes: z.number().int().min(1).max(2097152),
+  width: z.number().int().min(1).max(2560), height: z.number().int().min(1).max(2560),
+});
+const finalizationOutcomes = new Set([
+  "NFC_RECOVERY_LEASE_LOST", "NFC_UPLOAD_ACTOR_UNAVAILABLE", "NFC_UPLOAD_TAG_UNAVAILABLE",
+  "NFC_VERSION_CONFLICT", "NFC_UPLOAD_FINALIZE_CONFLICT", "NFC_UPLOAD_NOT_AVAILABLE",
+  "NFC_UPLOAD_EXPIRED", "NFC_UPLOAD_ABANDONED", "NFC_UPLOAD_NOT_FOUND",
+]);
+
+// Caller must verify remote content and its durable namespace first. SQL derives
+// the owner and atomically completes the job; a lost acknowledgement is not deletion permission.
+export async function finalizeLeasedNfcRecovery(input: unknown): Promise<string> {
+  const value = verifiedContent.parse(input);
+  const { data, error } = await createSupabaseServiceRoleClient().rpc("finalize_leased_nfc_recovery", {
+    p_asset_id: value.assetId, p_lease_token: value.leaseToken, p_account: value.providerAccount,
+    p_path: value.storagePath, p_sha256: value.sha256, p_size: value.sizeBytes,
+    p_width: value.width, p_height: value.height,
+  });
+  if (error) throw new Error(finalizationOutcomes.has(error.message) ? error.message : "NFC_RECOVERY_FINALIZE_FAILED");
+  if (data !== value.assetId) throw new Error("NFC_RECOVERY_RESPONSE_INVALID");
+  return value.assetId;
 }
