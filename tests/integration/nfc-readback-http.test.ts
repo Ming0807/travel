@@ -7,10 +7,12 @@ const state=vi.hoisted(()=>({origin:"",route:"/ok",hits:[] as string[]}));
 vi.mock("@/lib/storage/nfc-prepared-storage",()=>({getNfcUploadDestination:()=>({provider:"supabase",provider_account:"local-qa",storage_prefix:"nfc-evidence"})}));
 vi.mock("@/lib/config/public-env",()=>({getPublicEnv:()=>({NEXT_PUBLIC_SUPABASE_URL:state.origin})}));
 vi.mock("@/lib/storage/private-files",()=>({createPrivateFileSignedUrl:async()=>`${state.origin}${state.route}`}));
-import { verifyNfcEvidenceReadback } from "@/lib/storage/nfc-evidence-readback";
+import { verifyNfcEvidenceReadback, inspectNfcRecoveryReadback } from "@/lib/storage/nfc-evidence-readback";
 let bytes:Buffer;
 const server=createServer((request,response)=>{
   state.hits.push(request.url ?? "");
+  if(request.url==="/missing") {response.writeHead(404);response.end("private provider details");return;}
+  if(request.url==="/unavailable") {response.writeHead(503);response.end("private provider details");return;}
   if(request.url==="/redirect") {response.writeHead(302,{Location:"/ok"});response.end();return;}
   if(request.url==="/oversized") {response.writeHead(200);response.write(bytes);response.end(Buffer.from([0]));return;}
   if(request.url==="/truncated") {response.writeHead(200);response.end(bytes.subarray(0,bytes.length-1));return;}
@@ -44,4 +46,18 @@ it("does not follow redirects even to the allowed origin",async()=>{
   state.route="/redirect";state.hits=[];
   await expect(verifyNfcEvidenceReadback(input())).rejects.toThrow("NFC_READBACK_UNAVAILABLE");
   expect(state.hits).toEqual(["/redirect"]);
+});
+it("classifies an actual 404 as an observation while preserving the browser contract",async()=>{
+  state.route="/missing";
+  expect(await inspectNfcRecoveryReadback(input())).toEqual({status:"absent"});
+  await expect(verifyNfcEvidenceReadback(input())).rejects.toThrow("NFC_READBACK_UNAVAILABLE");
+});
+it("classifies an actual outage without returning its response body",async()=>{
+  state.route="/unavailable";
+  expect(await inspectNfcRecoveryReadback(input())).toEqual({status:"provider_unavailable"});
+});
+it("verifies actual HTTP bytes before returning worker metadata",async()=>{
+  state.route="/ok";
+  expect(await inspectNfcRecoveryReadback(input())).toEqual({status:"verified",content:{storagePath:input().storage_path,
+    sha256:input().sha256,sizeBytes:bytes.length,width:4,height:5}});
 });

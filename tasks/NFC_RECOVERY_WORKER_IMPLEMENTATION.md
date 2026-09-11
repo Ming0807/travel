@@ -75,7 +75,8 @@ budget or be renewed with the same fencing token.
    Browser discovery still collapses provider errors to unavailable. The worker
    locator inspector distinguishes exact-key structured Cloudinary not-found
    responses from outages; all candidates still need byte verification. Supabase
-   absence classification during readback remains to be implemented and staged.
+   signed-endpoint 404 is now an absence observation during byte readback;
+   private-provider signing/error semantics still require staging verification.
 6. Abandoned jobs require exact-key late-arrival checks. Keep periodic checks
    until an explicitly validated settlement policy permits completion. No finite
    absence count by itself proves that an earlier provider request cannot finish.
@@ -119,7 +120,13 @@ unknown/malformed messages remain unavailable. The account binding is rechecked
 after I/O, and a 15-second deadline bounds both browser and worker discovery.
 Supabase returns a deterministic candidate, not proof of existence. Forty-two
 discovery/confirmation tests pass, including late response and browser regression
-coverage. Real private-provider staging and byte-readback outcomes remain open.
+coverage. The subsequent readback inspector exposes verified metadata or bounded
+absence/outage/review outcomes, preserving the browser error contract. Signing
+now has a 15-second deadline independent of the fetch deadline; a late signing
+response never starts a download. Four readback/discovery/confirmation suites
+pass 70 tests, including seven real loopback HTTP cases. Actual private-provider
+staging and complete processing remain open. An absence observation is not a
+settlement proof, job-completion decision or deletion permission.
 
 Every crash boundary must be exercised: before/after preparation, during provider
 I/O, after provider commit with lost response, before/after finalization, after

@@ -445,3 +445,26 @@ only a deterministic locator candidate and still needs byte verification; no
 absence observation authorizes deletion or job completion. Forty-two discovery
 and confirmation tests, TypeScript and scoped ESLint pass. No migration, cron
 activation or production provider operation was added in this checkpoint.
+
+### Bounded Worker Readback Checkpoint
+
+Signing now has an independent 15-second deadline; an unresolved SDK signing
+promise cannot indefinitely block readback, and its late response cannot start
+a fetch. The existing fetch abort deadline remains 15 seconds. Durable account
+binding is checked after receiving HTTP headers and after reading the stream.
+The worker inspector returns verified metadata only after byte count, SHA-256,
+WebP format, dimensions and single-frame checks pass. No bytes or signed URLs
+are included in observations.
+
+A 404 from the validated signed endpoint is an absence observation for worker
+scheduling only. Authentication failures, rate limits and outages remain
+unavailable. Browser callers still receive NFC_READBACK_UNAVAILABLE for 404.
+This is not proof that a private object can never arrive or that credentials
+were accepted, and it grants no deletion/completion authority. Signing failures
+remain unavailable until actual private-provider semantics are staged.
+
+The stalled-signing regression first timed out against the old implementation.
+Final verification: 70 tests in four suites pass, including seven real loopback
+HTTP cases (verified bytes, oversized/truncated content, redirect denial, 404,
+503 and worker metadata). TypeScript and scoped ESLint pass. No migration or
+production activation is part of this change. The complete worker remains open.
