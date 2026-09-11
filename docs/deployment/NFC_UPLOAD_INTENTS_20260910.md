@@ -365,3 +365,11 @@ after expiry when the UPDATE qualified the row before waiting. The held Septembe
 11 migration now locks the job first and checks token/expiry using database time
 after the lock. PostgreSQL QA passes 108 assertions, including observed blocking
 and expiry during the wait. This edits the unreleased migration, not production.
+
+Typed scheduling adapter checkpoint: `nfc-recovery-job.repository.ts` validates
+bounded unique claims, strict row shape, token/timestamp consistency, renewal
+timestamps and literal-true deferred acknowledgements. Only lease-lost errors
+pass through; other RPC failures are sanitized. Eighteen mocked adapter tests pass.
+No live caller, machine authorization, completion or provider deletion is added.
+The database remains authoritative for expiry; adapter timestamp checks validate
+internal consistency rather than trusting the application clock to extend leases.

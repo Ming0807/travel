@@ -21,6 +21,10 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+W3 repository foundation: strict claim/renew/defer adapters added with 18 passing
+unit tests. No caller or machine authority yet; leased finalization/completion
+remains outstanding. Production flags and held SQL status are unchanged.
+
 W1 renewal race fixed before release: waiting renewal could revive an expired
 lease. Held SQL now locks before evaluating expiry/token. Real PostgreSQL
 regression reproduces the old failure and passes after the fix (108 assertions).
