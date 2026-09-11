@@ -231,6 +231,7 @@ try {
   }
   await db.query("RESET ROLE");
   await db.query(readFileSync("supabase/migrations/20260911000000_add_nfc_recovery_leases.sql","utf8"));
+  await db.query(readFileSync("supabase/migrations/20260911001000_finalize_leased_nfc_recovery.sql","utf8"));
   assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_recovery_jobs")).rows[0].total,
     (await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_upload_intents")).rows[0].total); checks++;
   await db.query("SET ROLE service_role");
@@ -286,10 +287,48 @@ try {
   assert.match(String((await renewal).error),/NFC_RECOVERY_LEASE_LOST/); checks++;
   await db.query("SET ROLE service_role");
   await assert.rejects(db.query("UPDATE public.nfc_evidence_recovery_jobs SET completed_at=now()"),/permission denied/); checks++;
+  // Isolate one prepared intent for the worker's atomic finalization contract.
+  await db.query("RESET ROLE");
+  await db.query("UPDATE public.nfc_evidence_recovery_jobs SET next_attempt_at=now()+interval '1 hour'");
+  await db.query("UPDATE public.nfc_evidence_recovery_jobs SET next_attempt_at=now()-interval '1 second',lease_token=NULL,lease_expires_at=NULL,review_required=false WHERE asset_id=$1",[queued.asset_id]);
+  await db.query("SET ROLE service_role");
+  const finishing=(await db.query("SELECT * FROM public.claim_nfc_evidence_recovery(1)")).rows[0];
+  const leasedSql="SELECT public.finalize_leased_nfc_recovery($1,$2,$3,$4,$5,$6,$7,$8) AS asset_id";
+  const leasedInput=[queued.asset_id,finishing.lease_token,"local-project",queued.object_key,"a".repeat(64),1000,640,480];
+  await assert.rejects(db.query(leasedSql,[...leasedInput.slice(0,1),randomUUID(),...leasedInput.slice(2)]),/NFC_RECOVERY_LEASE_LOST/); checks++;
+  const badContent=[...leasedInput];badContent[4]="b".repeat(64);
+  await assert.rejects(db.query(leasedSql,badContent),/NFC_UPLOAD_FINALIZE_CONFLICT/); checks++;
+  assert.equal((await db.query("SELECT completed_at FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1",[queued.asset_id])).rows[0].completed_at,null); checks++;
+  assert.equal((await db.query("SELECT state FROM public.nfc_evidence_upload_intents WHERE asset_id=$1",[queued.asset_id])).rows[0].state,"prepared"); checks++;
+  await db.query("RESET ROLE");
+  await db.query(`CREATE FUNCTION public.qa_delay_recovery_insert() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN IF NEW.asset_id='${queued.asset_id}' THEN
+      PERFORM pg_sleep(greatest(0,extract(epoch FROM lease_expires_at-clock_timestamp()))+0.1)
+        FROM public.nfc_evidence_recovery_jobs WHERE asset_id=NEW.asset_id;
+    END IF; RETURN NEW; END; $$;
+    CREATE TRIGGER qa_delay_recovery_insert BEFORE INSERT ON public.nfc_evidence_assets
+      FOR EACH ROW EXECUTE FUNCTION public.qa_delay_recovery_insert();`);
+  await db.query("UPDATE public.nfc_evidence_recovery_jobs SET lease_expires_at=clock_timestamp()+interval '3 seconds' WHERE asset_id=$1",[queued.asset_id]);
+  await db.query("SET ROLE service_role");
+  await assert.rejects(db.query(leasedSql,leasedInput),/NFC_RECOVERY_LEASE_LOST/); checks++;
+  assert.equal((await db.query("SELECT state FROM public.nfc_evidence_upload_intents WHERE asset_id=$1",[queued.asset_id])).rows[0].state,"prepared"); checks++;
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_assets WHERE asset_id=$1",[queued.asset_id])).rows[0].total,0); checks++;
+  assert.equal((await db.query("SELECT completed_at FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1",[queued.asset_id])).rows[0].completed_at,null); checks++;
+  await db.query("RESET ROLE; DROP TRIGGER qa_delay_recovery_insert ON public.nfc_evidence_assets; SET ROLE service_role");
+  const freshLease=(await db.query("SELECT * FROM public.claim_nfc_evidence_recovery(1)")).rows[0];
+  assert.equal(freshLease.asset_id,queued.asset_id); checks++;
+  leasedInput[1]=freshLease.lease_token;
+  assert.equal((await db.query(leasedSql,leasedInput)).rows[0].asset_id,queued.asset_id); checks++;
+  const finishedJob=(await db.query("SELECT * FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1",[queued.asset_id])).rows[0];
+  assert.ok(finishedJob.completed_at); checks++;
+  assert.equal(finishedJob.lease_token,null); checks++;
+  assert.equal((await db.query("SELECT actor_id FROM public.nfc_evidence_assets WHERE asset_id=$1",[queued.asset_id])).rows[0].actor_id,actor); checks++;
+  await assert.rejects(db.query(leasedSql,leasedInput),/NFC_RECOVERY_LEASE_LOST/); checks++;
   for (const role of ["anon","authenticated"]) {
     await db.query(`RESET ROLE; SET ROLE ${role}`);
     await assert.rejects(db.query("SELECT * FROM public.claim_nfc_evidence_recovery(1)"),/permission denied/); checks++;
     await assert.rejects(db.query("SELECT * FROM public.nfc_evidence_recovery_jobs"),/permission denied/); checks++;
+    await assert.rejects(db.query(leasedSql,leasedInput),/permission denied/); checks++;
   }
   console.log(`NFC upload intent PostgreSQL QA passed: ${checks} assertions.`);
 } finally {

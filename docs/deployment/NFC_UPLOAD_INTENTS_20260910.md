@@ -380,3 +380,18 @@ claiming a single job. Invalid authorization/configuration cannot touch the queu
 claim failure is not returned as an empty success. Thirty-three worker/repository
 tests pass. This authorizes scheduling only, not owner impersonation, finalization
 or deletion. No route or cron invokes it and no production flag changed.
+
+### Held Leased Finalization
+
+New held SQL `20260911001000_finalize_leased_nfc_recovery.sql` follows the recovery
+lease migration. It locks/validates the job, derives the original actor from the
+intent, invokes existing actor/tag/content/cleanup checks, and atomically marks
+the job complete. Expiry is checked again after finalization's possible lock waits;
+failure rolls back asset registration and intent transition. No scheduler-supplied
+actor is accepted. Caller must still verify machine authority and actual remote
+content; SQL does not contact storage. No deletion permission is added.
+
+124 PostgreSQL assertions pass, including stale token denial, mismatched content,
+atomic completion, role denial, and forced expiry during asset insertion with full
+rollback. A fresh lease then succeeds on the same intent. Parent admin/tag tables
+remain minimal. DO NOT run either September 11 migration in production yet.

@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+W3 leased finalization SQL: held transaction validates token/expiry, derives owner
+from intent and atomically finalizes/completes. Expiry during insert rolls back
+everything. 124 PostgreSQL assertions pass. Typed adapter/provider processor and
+staging are still pending; no production SQL or scheduled caller enabled.
+
 W3 machine claim boundary: default-off server worker helper verifies CRON_SECRET
 with timing-safe comparison and claims only one job. Thirty-three worker/repository
 tests pass. Still no route, scheduler, leased finalization or provider deletion.

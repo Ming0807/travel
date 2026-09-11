@@ -1993,3 +1993,9 @@ service-only claim/renew/defer RPCs. Admission is transactional with new intents
 and backfills existing intents. No private URLs or credentials are stored here.
 Migration `20260911000000_add_nfc_recovery_leases.sql` is held, not applied to
 production. It does not authorize provider deletion or activate a worker.
+
+Held `finalize_leased_nfc_recovery` RPC atomically finalizes an intent and sets
+the recovery job's completed_at while clearing its lease. It checks lease expiry
+before/after authoritative finalization and derives actor_id from the intent.
+Service-role only; machine authorization and remote-byte verification are caller
+requirements. SQL: `20260911001000_finalize_leased_nfc_recovery.sql`, not deployed.
