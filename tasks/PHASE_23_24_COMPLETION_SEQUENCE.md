@@ -21,6 +21,12 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+W1 scheduling foundation: held September 11 recovery lease migration implements
+transactional admission/backfill, SKIP LOCKED claims, renewal, token fencing,
+backoff and review outcomes. PostgreSQL suite passes 106 assertions. W1 is partial:
+leased completion/finalization and machine authorization are not wired. No
+production migration or flag activation; do not run this SQL in Supabase yet.
+
 S5 worker design: `NFC_RECOVERY_WORKER_IMPLEMENTATION.md` defines W1-W7 for
 durable leases/fencing, retry fairness, independent machine authorization,
 transactional worker finalization, provider outcome classification, operator

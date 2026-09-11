@@ -1980,3 +1980,16 @@ are immutable. Service-only finalize atomically registers the asset; stale aband
 retains a tombstone without deleting provider data. An insert guard prevents
 legacy registration from bypassing intent state. The RPC caller still must verify
 admin permission and remote content/account; SQL does not inspect provider bytes.
+## Held NFC Recovery Scheduling (September 11, 2026)
+
+`nfc_evidence_recovery_jobs` is one scheduling row per immutable upload intent;
+asset_id is a PK/FK with RESTRICT deletion. next_attempt_at, attempt_count,
+lease_token, lease_expires_at and last_attempt_at govern bounded retries.
+last_outcome is an allowlisted category, never raw provider error text.
+review_required prevents automatic retry of conflicts. completed_at is reserved
+for forthcoming lease-bound completion and has no writable application path yet.
+RLS denies anonymous/authenticated access; service_role has SELECT only and
+service-only claim/renew/defer RPCs. Admission is transactional with new intents
+and backfills existing intents. No private URLs or credentials are stored here.
+Migration `20260911000000_add_nfc_recovery_leases.sql` is held, not applied to
+production. It does not authorize provider deletion or activate a worker.

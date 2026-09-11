@@ -342,3 +342,20 @@ This is not cancellation of the underlying SDK request, and timeout remains
 unavailable rather than proof of absence or permission to delete. Thirty focused
 discovery/confirmation tests pass, including a deliberately unsettled SDK promise
 and late response. Real-provider behavior and reconciliation remain rollout gates.
+
+### September 11 Held Recovery Queue
+
+DO NOT APPLY TO PRODUCTION YET:
+`supabase/migrations/20260911000000_add_nfc_recovery_leases.sql` depends on both
+September 10 intent migrations. Adds a separate scheduling table, transactional
+AFTER INSERT admission and existing-intent backfill. New jobs wait five minutes
+before being due; this is not a provider settlement assertion. Claims accept
+1-5 jobs, use SKIP LOCKED and two-minute tokenized leases. Renewal/defer reject
+stale tokens. Retry delay starts at 30 seconds, doubles to a 3600-second base cap,
+and adds up to ten percent jitter. Conflicts/authorization changes require review.
+
+106 actual PostgreSQL assertions pass, including concurrent claim separation,
+stale lease takeover/fencing, deferred timing, review state and role denial.
+No route, cron, finalization, completion or deletion is implemented by this SQL.
+Machine authorization, leased finalization and operator review are still required.
+Existing provider/browser guards remain intact. Production flags are unchanged.

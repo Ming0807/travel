@@ -1,8 +1,14 @@
 # NFC Recovery Worker Implementation
 
 Status: design checkpoint, September 11, 2026. Part of Phase 23 S5 and ADR-012.
-Not production activation approval. No migration or scheduled job accompanies
-this document. Preserve the existing upload, recovery and cleanup flags as off.
+Not production activation approval. The initial design had no migration or job;
+the held implementation checkpoint below adds scheduling SQL only. Preserve the
+existing upload, recovery and cleanup flags as off.
+
+Implementation checkpoint: held `20260911000000_add_nfc_recovery_leases.sql`
+adds queue admission/backfill, claims, renewal and deferred/review outcomes.
+W1 remains partial: no completion/leased finalization or operator review actions.
+The disposable PostgreSQL suite passes 106 assertions. No scheduler is connected.
 
 ## Required Outcome
 

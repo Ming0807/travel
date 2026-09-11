@@ -229,6 +229,45 @@ try {
     await assert.rejects(db.query(finalize,cloudFinish),/permission denied/); checks++;
     await assert.rejects(db.query("SELECT public.abandon_stale_nfc_evidence_upload($1,$2)",[stale.asset_id,actor]),/permission denied/); checks++;
   }
+  await db.query("RESET ROLE");
+  await db.query(readFileSync("supabase/migrations/20260911000000_add_nfc_recovery_leases.sql","utf8"));
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_recovery_jobs")).rows[0].total,
+    (await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_upload_intents")).rows[0].total); checks++;
+  await db.query("SET ROLE service_role");
+  const queued=(await db.query(sql,input())).rows[0];
+  assert.equal((await db.query("SELECT count(*)::int AS total FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1",[queued.asset_id])).rows[0].total,1); checks++;
+  assert.equal((await db.query("SELECT * FROM public.claim_nfc_evidence_recovery(5)")).rowCount,0); checks++;
+  await db.query("RESET ROLE");
+  await db.query("UPDATE public.nfc_evidence_recovery_jobs SET next_attempt_at=now()-interval '1 second' WHERE asset_id=ANY($1::uuid[])",[[first.asset_id,c.asset_id]]);
+  await db.query("SET ROLE service_role");
+  const leases=await Promise.all([db.query("SELECT * FROM public.claim_nfc_evidence_recovery(1)"),worker.query("SELECT * FROM public.claim_nfc_evidence_recovery(1)")]);
+  const leaseA=leases[0].rows[0],leaseB=leases[1].rows[0];
+  assert.notEqual(leaseA.asset_id,leaseB.asset_id); checks++;
+  assert.notEqual(leaseA.lease_token,leaseB.lease_token); checks++;
+  assert.equal((await db.query("SELECT * FROM public.claim_nfc_evidence_recovery(5)")).rowCount,0); checks++;
+  await assert.rejects(db.query("SELECT public.defer_nfc_evidence_recovery($1,$2,'provider_unavailable')",[leaseA.asset_id,leaseB.lease_token]),/NFC_RECOVERY_LEASE_LOST/); checks++;
+  await db.query("SELECT public.defer_nfc_evidence_recovery($1,$2,'provider_unavailable')",[leaseA.asset_id,leaseA.lease_token]);
+  const deferred=(await db.query("SELECT *,extract(epoch FROM next_attempt_at-clock_timestamp()) AS delay FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1",[leaseA.asset_id])).rows[0];
+  assert.equal(deferred.lease_token,null); checks++;
+  assert.ok(Number(deferred.delay)>20 && Number(deferred.delay)<=33); checks++;
+  await db.query("RESET ROLE");
+  await db.query("UPDATE public.nfc_evidence_recovery_jobs SET last_attempt_at=now()-interval '3 minutes',lease_expires_at=now()-interval '1 second' WHERE asset_id=$1",[leaseB.asset_id]);
+  await db.query("SET ROLE service_role");
+  const replacement=(await db.query("SELECT * FROM public.claim_nfc_evidence_recovery(1)")).rows[0];
+  assert.equal(replacement.asset_id,leaseB.asset_id); checks++;
+  assert.notEqual(replacement.lease_token,leaseB.lease_token); checks++;
+  assert.equal(replacement.attempt_count,2); checks++;
+  await assert.rejects(worker.query("SELECT public.renew_nfc_evidence_recovery($1,$2)",[leaseB.asset_id,leaseB.lease_token]),/NFC_RECOVERY_LEASE_LOST/); checks++;
+  await assert.rejects(worker.query("SELECT public.defer_nfc_evidence_recovery($1,$2,'absent')",[leaseB.asset_id,leaseB.lease_token]),/NFC_RECOVERY_LEASE_LOST/); checks++;
+  await db.query("SELECT public.renew_nfc_evidence_recovery($1,$2)",[replacement.asset_id,replacement.lease_token]); checks++;
+  await db.query("SELECT public.defer_nfc_evidence_recovery($1,$2,'content_conflict')",[replacement.asset_id,replacement.lease_token]);
+  assert.equal((await db.query("SELECT review_required FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1",[replacement.asset_id])).rows[0].review_required,true); checks++;
+  await assert.rejects(db.query("UPDATE public.nfc_evidence_recovery_jobs SET completed_at=now()"),/permission denied/); checks++;
+  for (const role of ["anon","authenticated"]) {
+    await db.query(`RESET ROLE; SET ROLE ${role}`);
+    await assert.rejects(db.query("SELECT * FROM public.claim_nfc_evidence_recovery(1)"),/permission denied/); checks++;
+    await assert.rejects(db.query("SELECT * FROM public.nfc_evidence_recovery_jobs"),/permission denied/); checks++;
+  }
   console.log(`NFC upload intent PostgreSQL QA passed: ${checks} assertions.`);
 } finally {
   for (const db of clients) await db.end();
