@@ -19,7 +19,9 @@ it("keeps the exact request and payload across an uncertain network retry", asyn
   fireEvent.click(screen.getByRole("button", { name: "บันทึกผลตรวจ" }));
   await screen.findByText("ยังยืนยันการบันทึกไม่ได้ กรุณาลองส่งรายการเดิมอีกครั้ง");
   expect(screen.getByLabelText("ตำแหน่งติดตั้ง")).toBeDisabled();
-  fireEvent.click(screen.getByRole("button", { name: "ลองส่งรายการเดิมอีกครั้ง" }));
+  const retry = await screen.findByRole("button", { name: "ลองส่งรายการเดิมอีกครั้ง" });
+  await waitFor(() => expect(retry).toBeEnabled());
+  fireEvent.click(retry);
   await screen.findByText("บันทึกผลตรวจแล้ว สถานะแท็กยังไม่เปลี่ยน");
   expect(mocks.save.mock.calls[0][0]).toEqual(mocks.save.mock.calls[1][0]);
   expect(mocks.save.mock.calls[0][0]).toMatchObject({ tagId: tag.nfc_tag_id, version: 1, nfcResult: "not_tested", qrResult: "passed" });

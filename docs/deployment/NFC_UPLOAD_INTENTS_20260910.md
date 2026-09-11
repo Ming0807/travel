@@ -321,3 +321,14 @@ Available intents still reach authoritative finalization even when their creatio
 time is old, preserving retry semantics for finalized evidence. Thirty-eight
 confirmation/orchestration/route tests, TypeScript and scoped lint pass. No new
 SQL or full build; provider staging remains a separate gate.
+
+### September 11 NFC Regression Sweep
+
+All 26 `nfc-*` and `admin-nfc-*` unit/component test files pass (287 tests) on
+Node 22. The initial 22-file run exposed a timing assumption in the field-report
+retry test: error text rendered while the React transition still displayed the
+disabled saving button. The test now waits for the named retry button to exist
+and become enabled before clicking, without raising timeouts or weakening payload
+identity assertions. Scoped ESLint passes. No production behavior, SQL, flags or
+storage operations changed. This sweep does not cover all platform tests, real
+provider integration, physical NFC hardware or browser screenshots.

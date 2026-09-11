@@ -21,6 +21,11 @@ This supersedes earlier no-push checkpoints, but not the production SQL/flag hol
 
 ## Delivery Order
 
+September 11 regression sweep: all 26 NFC/admin-NFC test files pass (287 tests).
+Fixed only a field-report retry test that clicked before React transition settled;
+it now waits for an enabled retry control and still asserts exact request reuse.
+No application/SQL changes. Full-platform/provider/device and worker gates remain.
+
 S5 early expiry: confirmation rejects expired prepared intents before provider
 discovery/readback, while finalized history remains subject to SQL authorization
 and cleanup checks. Thirty-eight focused tests, TypeScript and lint pass. No SQL
