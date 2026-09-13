@@ -34,6 +34,8 @@ bounded queue/history RPCs preserves context and supplies genuine history.
   accessible controls and pagination; verify desktop/mobile screenshots.
 - [ ] W5.5: Retry policy with current authority checks and transactional operator
   audit. No generic reset of review-required jobs and no content override.
+  Backend foundation implemented and locally verified; browser action, retained
+  request UX and complete-platform acceptance remain open.
 - [ ] W5.6: SQL/adapter/service/UI verification and operator acceptance notes.
 
 ## Acceptance Boundaries
@@ -89,3 +91,19 @@ component tests (74.83 seconds, mostly module import), giving 37 passing cases
 across separate successful results. This is not a claim that the combined run
 passed. Full live-admin auth integration and operator acceptance are not
 established by the fixture.
+
+## Retry Foundation Evidence (September 13, 2026)
+
+The held retry RPC, receipt table, strict adapter and permission-first service
+are implemented. An independent default-off operator retry gate supplements the
+recovery gate. No browser action or scheduler invokes this service yet. The
+history validator/UI recognizes the bounded retry_requested event.
+
+The disposable processor/review/retry suite passes 33 cases; retry unit tests
+pass 22 and review unit tests pass 15, totaling 70. New SQL tests first failed
+because the RPC was absent. Tests then caught a due-time crossing during an
+authority lock wait; a final database-time recheck now rejects that request.
+Concurrent requests produce one receipt/audit per attempt. Exact replay remains
+idempotent after worker completion but requires current permission. Audit
+failure rolls back scheduling and history. Full deployed-schema/session behavior
+and retry UI are not proven by these tests. W5.5 remains incomplete.

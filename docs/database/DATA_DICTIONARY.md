@@ -2033,3 +2033,29 @@ returns at most 21 events, and serializes bigint IDs as decimal strings. Unknown
 or mismatched scope returns no rows. Neither RPC exposes raw job/intent records.
 Application callers require `checkin_code.manage`; reads are audited separately.
 No retry/reset/deletion capability is added. This migration remains held.
+
+### Held NFC Operator Retry Receipts
+
+`20260913000000_add_nfc_recovery_operator_retry.sql` adds the service-read-only
+`nfc_evidence_recovery_retry_requests` table: UUID request key, restricted FKs to
+asset/tag/operator, observed attempt count, controlled reason code, requested
+timestamp and scheduled timestamp. `(asset_id,attempt_count)` is unique. Browser
+roles cannot read/write this table or execute the retry RPC. The event enum gains
+`retry_requested`; operator identity remains in the receipt/audit, not the public
+metadata history projection.
+
+`request_nfc_evidence_recovery_retry(request_id,tag_id,asset_id,operator_id,
+attempt_count,reason)` is a service-only transaction. The server derives operator
+identity from the current authenticated guard. SQL checks active operator and
+locks a qualifying active role assignment (super_admin or explicit
+checkin_code.manage/system.all), including on exact replay. A request advisory
+lock serializes request identity; job/asset locks serialize new scheduling.
+
+Only absent/provider_unavailable work with no lease, completion or review hold,
+matching observed attempt count, a last attempt at least 60 seconds ago and a
+future due time qualifies. Original owner must remain active and tag/version
+must match. Due time is checked again after authority lock waits. A receipt,
+queue reschedule, retry event and audit_logs insert commit atomically; audit
+failure rolls back all four. Exact authorized replay returns the saved request
+ID without another mutation even after worker progress. Other binding reuse is
+rejected. No content/lifecycle override, provider I/O or deletion is authorized.

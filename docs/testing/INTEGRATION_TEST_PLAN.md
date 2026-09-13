@@ -13,7 +13,7 @@ Remove-Item Env:NFC_RECOVERY_POSTGRES_QA
 The suite creates its own PostgreSQL 16 container on a random loopback port,
 applies the held NFC module migrations, and removes its container/connections
 after success or test failure. It never accepts an external database URL.
-Without the explicit flag, these fifteen Docker-dependent cases are skipped.
+Without the explicit flag, these 33 Docker-dependent cases are skipped.
 
 Coverage uses the real recovery processor, auth gate, repository validation,
 SQL transactions and HTTP byte verification. Cases cover one immutable asset,
@@ -34,6 +34,14 @@ queue-transition events, truthful installation snapshots, rollback, role denial,
 tag isolation, 20-row pages with lookahead, and history cursor serialization
 through the real review repository adapters. These extend the original ten
 processor cases to fifteen integration cases.
+
+The held September 13 operator retry migration extends this suite to 33 cases.
+It adds minimal RBAC/audit fixtures and verifies the real retry adapter/RPC,
+exact replay after worker completion, conflicting request IDs, simultaneous
+admission, revoked grants, inactive roles, explicit system.all, lease/review/
+completion/timing denial, scoped authority, and rollback when mandatory audit
+fails. A lock-wait test proves that scheduling rechecks database time after
+waiting for tag authority. These fixtures are not a complete-platform RBAC test.
 
 ## 1. Document Purpose
 

@@ -24,6 +24,7 @@ vi.mock("@/lib/storage/private-files", () => ({ createPrivateFileSignedUrl: asyn
 import { runAuthorizedNfcRecovery } from "@/lib/services/nfc-recovery-processor.service";
 import { prepareNfcEvidenceUpload } from "@/lib/repositories/nfc-upload-intent.repository";
 import { listNfcRecoveryReview, listNfcRecoveryReviewHistory } from "@/lib/repositories/nfc-recovery-review.repository";
+import { enqueueNfcRecoveryRetry } from "@/lib/repositories/nfc-recovery-retry.repository";
 
 // No external connection string is accepted. Only this suite's disposable container is used.
 describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with real PostgreSQL and HTTP", () => {
@@ -39,9 +40,12 @@ describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with
   let started = false;
   let admin: Db;
   let worker: Db;
+  let peer: Db;
+  let control: Db;
   let bytes: Buffer;
   let actor: string;
   let tag: string;
+  let operator: string;
   let snapshotAsset: unknown;
   const server = createServer(async (_request, response) => {
     state.hits++;
@@ -75,7 +79,16 @@ describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with
     await admin.query(`CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN;
       CREATE ROLE service_role NOLOGIN BYPASSRLS;
       CREATE TABLE public.admin_users(admin_id uuid PRIMARY KEY,is_active boolean NOT NULL DEFAULT true);
-      CREATE TABLE public.nfc_tags(nfc_tag_id uuid PRIMARY KEY,version integer NOT NULL,status text NOT NULL,verified_at timestamptz);`);
+      CREATE TABLE public.nfc_tags(nfc_tag_id uuid PRIMARY KEY,version integer NOT NULL,status text NOT NULL,verified_at timestamptz);
+      CREATE TABLE public.roles(role_id bigint PRIMARY KEY,role_name text NOT NULL UNIQUE,is_active boolean NOT NULL DEFAULT true);
+      CREATE TABLE public.permissions(permission_id bigint PRIMARY KEY,permission_name text NOT NULL UNIQUE);
+      CREATE TABLE public.admin_user_roles(admin_id uuid REFERENCES public.admin_users,role_id bigint REFERENCES public.roles,PRIMARY KEY(admin_id,role_id));
+      CREATE TABLE public.role_permissions(role_id bigint REFERENCES public.roles,permission_id bigint REFERENCES public.permissions,PRIMARY KEY(role_id,permission_id));
+      CREATE TABLE public.audit_logs(log_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),admin_id uuid REFERENCES public.admin_users,
+        action varchar(150),entity_type varchar(100),entity_id text,old_data jsonb,new_data jsonb,ip_address varchar(45),created_at timestamptz NOT NULL DEFAULT now());
+      INSERT INTO public.roles VALUES(1,'super_admin',true),(2,'custom_operator',true),(3,'viewer',true);
+      INSERT INTO public.permissions VALUES(1,'checkin_code.manage'),(2,'system.all');
+      INSERT INTO public.role_permissions VALUES(2,1);`);
     for (const file of [
       "20260908000000_add_nfc_field_checks.sql", "20260909000000_add_nfc_evidence_assets.sql",
       "20260909001000_queue_nfc_orphan_cleanup.sql", "20260910000000_prepare_nfc_evidence_upload_intents.sql",
@@ -93,12 +106,16 @@ describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with
       }
       await admin.query(readFileSync(`supabase/migrations/${file}`, "utf8"));
     }
+    const retryMigration = "supabase/migrations/20260913000000_add_nfc_recovery_operator_retry.sql";
+    await admin.query(readFileSync(retryMigration, "utf8"));
     worker = new pg.Client(config); await worker.connect(); clients.push(worker);
     await worker.query("SET ROLE service_role");
+    peer = new pg.Client(config); await peer.connect(); clients.push(peer); await peer.query("SET ROLE service_role");
+    control = new pg.Client(config); await control.connect(); clients.push(control);
     const tableFunctions = new Set(["prepare_nfc_evidence_upload", "claim_nfc_evidence_recovery", "read_leased_nfc_recovery_intent"]);
     const scalarFunctions = new Set(["renew_nfc_evidence_recovery", "defer_nfc_evidence_recovery",
       "finalize_leased_nfc_recovery", "abandon_leased_nfc_recovery", "list_nfc_evidence_recovery",
-      "list_nfc_evidence_recovery_history"]);
+      "list_nfc_evidence_recovery_history", "request_nfc_evidence_recovery_retry"]);
     state.rpc = async (name, args) => {
       if (!tableFunctions.has(name) && !scalarFunctions.has(name)) throw new Error("Unexpected QA RPC");
       const entries = Object.entries(args);
@@ -130,8 +147,10 @@ describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with
     state.beforeResponse = async () => {};
     // Isolate cases without deleting immutable evidence or modifying its lifecycle guards.
     await admin.query("UPDATE public.nfc_evidence_recovery_jobs SET next_attempt_at=clock_timestamp()+interval '1 day'");
-    actor = randomUUID(); tag = randomUUID();
+    actor = randomUUID(); tag = randomUUID(); operator = randomUUID();
     await admin.query("INSERT INTO public.admin_users VALUES($1,true)", [actor]);
+    await admin.query("INSERT INTO public.admin_users VALUES($1,true)", [operator]);
+    await admin.query("INSERT INTO public.admin_user_roles VALUES($1,1)", [operator]);
     await admin.query("INSERT INTO public.nfc_tags(nfc_tag_id,version,status) VALUES($1,1,'draft')", [tag]);
   });
   afterAll(async () => {
@@ -300,5 +319,150 @@ describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with
   it("backfills one truthful snapshot without inventing historical attempts", async () => {
     expect((await worker.query("SELECT event_type,attempt_count FROM public.nfc_evidence_recovery_events WHERE asset_id=$1", [snapshotAsset])).rows)
       .toEqual([{ event_type: "snapshot", attempt_count: 0 }]);
+  });
+  async function retryCandidate() {
+    const intent = await prepare(); state.status = 503; await run();
+    await admin.query(`UPDATE public.nfc_evidence_recovery_jobs SET last_attempt_at=clock_timestamp()-interval '2 minutes',
+      next_attempt_at=clock_timestamp()+interval '1 hour' WHERE asset_id=$1`, [intent.asset_id]);
+    return { p_request_id: randomUUID(), p_tag_id: tag, p_asset_id: intent.asset_id, p_operator_id: operator,
+      p_attempt_count: 1, p_reason: "provider_restored" };
+  }
+  const retry = (args: Record<string, unknown>) => state.rpc("request_nfc_evidence_recovery_retry", args);
+  it("atomically queues an operator retry once and preserves acknowledgement after worker progress", async () => {
+    const args = await retryCandidate();
+    const requestId = await enqueueNfcRecoveryRetry({ requestId: args.p_request_id, tagId: args.p_tag_id, assetId: args.p_asset_id,
+      operatorId: args.p_operator_id, expectedAttemptCount: args.p_attempt_count, reason: args.p_reason });
+    const first = { data: requestId, error: null };
+    expect(first).toEqual({ data: args.p_request_id, error: null });
+    expect(await snapshot(args.p_asset_id)).toMatchObject({ attempt_count: 1, assets: 0, lease_token: null, last_outcome: "provider_unavailable" });
+    state.status = 200; expect(await run()).toEqual({ status: "completed" });
+    expect(await retry(args)).toEqual(first);
+    expect((await admin.query("SELECT count(*)::int AS count FROM public.audit_logs WHERE action='nfc_recovery.retry_requested' AND entity_id=$1", [args.p_asset_id])).rows[0].count).toBe(1);
+    expect((await worker.query("SELECT count(*)::int AS count FROM public.nfc_evidence_recovery_events WHERE event_type='retry_requested' AND asset_id=$1", [args.p_asset_id])).rows[0].count).toBe(1);
+    expect(await snapshot(args.p_asset_id)).toMatchObject({ assets: 1, attempt_count: 2 });
+    expect((await listNfcRecoveryReviewHistory({ tagId: tag, assetId: args.p_asset_id })).rows.some(event => event.event_type === "retry_requested")).toBe(true);
+  });
+  it("rejects changed retry request bindings without a second audit", async () => {
+    const args = await retryCandidate(); await retry(args);
+    expect((await retry({ ...args, p_reason: "connectivity_restored" })).error?.message).toBe("NFC_RECOVERY_RETRY_REQUEST_CONFLICT");
+  });
+  it.each(["review", "completed", "leased", "due", "fresh", "stale_attempt"])("does not reset %s work", async mode => {
+    const args = await retryCandidate();
+    if (mode === "review") await admin.query("UPDATE public.nfc_evidence_recovery_jobs SET review_required=true WHERE asset_id=$1", [args.p_asset_id]);
+    if (mode === "completed") await admin.query("UPDATE public.nfc_evidence_recovery_jobs SET completed_at=clock_timestamp() WHERE asset_id=$1", [args.p_asset_id]);
+    if (mode === "due" || mode === "leased") await admin.query("UPDATE public.nfc_evidence_recovery_jobs SET next_attempt_at=clock_timestamp() WHERE asset_id=$1", [args.p_asset_id]);
+    if (mode === "leased") await state.rpc("claim_nfc_evidence_recovery", { p_limit: 1 });
+    if (mode === "fresh") await admin.query("UPDATE public.nfc_evidence_recovery_jobs SET last_attempt_at=clock_timestamp() WHERE asset_id=$1", [args.p_asset_id]);
+    const result = await retry({ ...args, ...(mode === "stale_attempt" ? { p_attempt_count: 0 } : {}) });
+    expect(result.error?.message).toBe(mode === "stale_attempt" ? "NFC_RECOVERY_RETRY_STALE" : "NFC_RECOVERY_RETRY_UNAVAILABLE");
+    expect((await admin.query("SELECT count(*)::int AS count FROM public.audit_logs WHERE entity_id=$1", [args.p_asset_id])).rows[0].count).toBe(0);
+  });
+  it("requires active current grants, including on exact request replay", async () => {
+    const args = await retryCandidate();
+    await admin.query("DELETE FROM public.admin_user_roles WHERE admin_id=$1", [operator]);
+    expect((await retry(args)).error?.message).toBe("NFC_RECOVERY_RETRY_FORBIDDEN");
+    await admin.query("INSERT INTO public.admin_user_roles VALUES($1,2)", [operator]);
+    expect((await retry(args)).error).toBeNull();
+    await admin.query("DELETE FROM public.admin_user_roles WHERE admin_id=$1", [operator]);
+    expect((await retry(args)).error?.message).toBe("NFC_RECOVERY_RETRY_FORBIDDEN");
+  });
+  it("rechecks original owner and live tag authority", async () => {
+    const args = await retryCandidate();
+    await admin.query("UPDATE public.admin_users SET is_active=false WHERE admin_id=$1", [actor]);
+    expect((await retry(args)).error?.message).toBe("NFC_UPLOAD_ACTOR_UNAVAILABLE");
+    await admin.query("UPDATE public.admin_users SET is_active=true WHERE admin_id=$1", [actor]);
+    await admin.query("UPDATE public.nfc_tags SET version=2 WHERE nfc_tag_id=$1", [tag]);
+    expect((await retry(args)).error?.message).toBe("NFC_VERSION_CONFLICT");
+    expect((await retry({ ...args, p_tag_id: randomUUID() })).error?.message).toBe("NFC_RECOVERY_RETRY_SCOPE_INVALID");
+  });
+  it("rolls back queue, receipt and journal if mandatory audit fails", async () => {
+    const args = await retryCandidate();
+    await admin.query(`CREATE FUNCTION public.fail_retry_audit_qa() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN RAISE EXCEPTION 'QA mandatory audit unavailable'; END $$;
+      CREATE TRIGGER fail_retry_audit_qa BEFORE INSERT ON public.audit_logs FOR EACH ROW EXECUTE FUNCTION public.fail_retry_audit_qa();`);
+    try { expect((await retry(args)).error?.message).toBe("QA mandatory audit unavailable"); }
+    finally { await admin.query("DROP TRIGGER fail_retry_audit_qa ON public.audit_logs; DROP FUNCTION public.fail_retry_audit_qa()"); }
+    expect((await worker.query("SELECT count(*)::int AS count FROM public.nfc_evidence_recovery_retry_requests WHERE request_id=$1", [args.p_request_id])).rows[0].count).toBe(0);
+    expect((await worker.query("SELECT count(*)::int AS count FROM public.nfc_evidence_recovery_events WHERE asset_id=$1 AND event_type='retry_requested'", [args.p_asset_id])).rows[0].count).toBe(0);
+    expect(await run()).toEqual({ status: "idle" });
+    expect((await retry(args)).error).toBeNull();
+  });
+  const retrySql = "SELECT public.request_nfc_evidence_recovery_retry($1,$2,$3,$4,$5,$6) AS request_id";
+  const retryValues = (args: Awaited<ReturnType<typeof retryCandidate>>) => [args.p_request_id,args.p_tag_id,args.p_asset_id,args.p_operator_id,args.p_attempt_count,args.p_reason];
+  it.each([true,false])("serializes simultaneous retries (same request: %s)", async same => {
+    const args = await retryCandidate(); const other = { ...args, p_request_id: same ? args.p_request_id : randomUUID() };
+    const results = await Promise.allSettled([worker.query(retrySql,retryValues(args)),peer.query(retrySql,retryValues(other))]);
+    expect(results.filter(result => result.status === "fulfilled")).toHaveLength(same ? 2 : 1);
+    expect((await admin.query("SELECT count(*)::int AS count FROM public.audit_logs WHERE entity_id=$1", [args.p_asset_id])).rows[0].count).toBe(1);
+    expect((await worker.query("SELECT count(*)::int AS count FROM public.nfc_evidence_recovery_retry_requests WHERE asset_id=$1", [args.p_asset_id])).rows[0].count).toBe(1);
+  });
+  async function waitForLock(pid: unknown) {
+    for (let attempt = 0; attempt < 80; attempt++) {
+      if ((await admin.query("SELECT wait_event_type FROM pg_stat_activity WHERE pid=$1", [pid])).rows[0]?.wait_event_type === "Lock") return;
+      await new Promise(resolve => setTimeout(resolve,25));
+    }
+    throw new Error("Expected concurrent PostgreSQL lock wait");
+  }
+  it("holds the qualifying permission until retry commit, then denies revoked replay", async () => {
+    const args = await retryCandidate();
+    const workerPid = (await worker.query("SELECT pg_backend_pid() AS pid")).rows[0].pid;
+    const controlPid = (await control.query("SELECT pg_backend_pid() AS pid")).rows[0].pid;
+    await admin.query("BEGIN");
+    await admin.query("SELECT asset_id FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1 FOR UPDATE", [args.p_asset_id]);
+    const pending = retry(args);
+    let revoke: Promise<unknown> | undefined;
+    try {
+      await waitForLock(workerPid);
+      revoke = control.query("DELETE FROM public.admin_user_roles WHERE admin_id=$1", [operator]);
+      await waitForLock(controlPid);
+    } finally { await admin.query("COMMIT"); }
+    expect((await pending).error).toBeNull(); await revoke;
+    expect((await retry(args)).error?.message).toBe("NFC_RECOVERY_RETRY_FORBIDDEN");
+  });
+  it("denies new retry RPC and receipt access to browser roles", async () => {
+    const args = await retryCandidate();
+    for (const role of ["anon","authenticated"]) {
+      await admin.query(`SET ROLE ${role}`);
+      try {
+        await expect(admin.query(retrySql,retryValues(args))).rejects.toThrow(/permission denied/);
+        await expect(admin.query("SELECT * FROM public.nfc_evidence_recovery_retry_requests")).rejects.toThrow(/permission denied/);
+      } finally { await admin.query("RESET ROLE"); }
+    }
+    await expect(worker.query("DELETE FROM public.nfc_evidence_recovery_retry_requests")).rejects.toThrow(/permission denied/);
+  });
+  it("rejects invalid reason, inactive operator and cross-operator replay", async () => {
+    const args = await retryCandidate();
+    expect((await retry({ ...args, p_reason: "override_content" })).error?.message).toBe("NFC_RECOVERY_RETRY_INPUT_INVALID");
+    await admin.query("UPDATE public.admin_users SET is_active=false WHERE admin_id=$1", [operator]);
+    expect((await retry(args)).error?.message).toBe("NFC_RECOVERY_RETRY_FORBIDDEN");
+    await admin.query("UPDATE public.admin_users SET is_active=true WHERE admin_id=$1", [operator]);
+    await retry(args); await admin.query("INSERT INTO public.admin_user_roles VALUES($1,1)", [actor]);
+    expect((await retry({ ...args, p_operator_id: actor })).error?.message).toBe("NFC_RECOVERY_RETRY_REQUEST_CONFLICT");
+  });
+  it("does not reschedule work that becomes due during an authority lock wait", async () => {
+    const args = await retryCandidate();
+    const pid = (await worker.query("SELECT pg_backend_pid() AS pid")).rows[0].pid;
+    await admin.query("UPDATE public.nfc_evidence_recovery_jobs SET next_attempt_at=clock_timestamp()+interval '3 seconds' WHERE asset_id=$1", [args.p_asset_id]);
+    await admin.query("BEGIN"); await admin.query("SELECT nfc_tag_id FROM public.nfc_tags WHERE nfc_tag_id=$1 FOR UPDATE", [tag]);
+    const pending = retry(args);
+    try {
+      await waitForLock(pid);
+      await admin.query("SELECT pg_sleep(greatest(0,extract(epoch FROM next_attempt_at-clock_timestamp()))+0.1) FROM public.nfc_evidence_recovery_jobs WHERE asset_id=$1", [args.p_asset_id]);
+    } finally { await admin.query("COMMIT"); }
+    expect((await pending).error?.message).toBe("NFC_RECOVERY_RETRY_UNAVAILABLE");
+  }, 15000);
+  it("accepts explicit system.all but never an inactive role", async () => {
+    const args = await retryCandidate();
+    await admin.query("UPDATE public.admin_user_roles SET role_id=3 WHERE admin_id=$1", [operator]);
+    expect((await retry(args)).error?.message).toBe("NFC_RECOVERY_RETRY_FORBIDDEN");
+    await admin.query("INSERT INTO public.role_permissions VALUES(3,2)");
+    try {
+      expect((await retry(args)).error).toBeNull();
+      await admin.query("UPDATE public.roles SET is_active=false WHERE role_id=3");
+      expect((await retry(args)).error?.message).toBe("NFC_RECOVERY_RETRY_FORBIDDEN");
+    } finally {
+      await admin.query("UPDATE public.roles SET is_active=true WHERE role_id=3");
+      await admin.query("DELETE FROM public.role_permissions WHERE role_id=3 AND permission_id=2");
+    }
   });
 });

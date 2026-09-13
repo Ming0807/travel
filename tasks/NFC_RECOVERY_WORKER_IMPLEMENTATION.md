@@ -166,6 +166,13 @@ no operator mutation or review reset exists yet. Detailed tasks/evidence are in
 `tasks/NFC_RECOVERY_OPERATOR_REVIEW.md`. The PostgreSQL processor/review suite now
 passes 15 cases. This does not complete W5 retry policy or staging acceptance.
 
+September 13 retry foundation: the held operator scheduling RPC and internal
+service now preserve current RBAC, owner/tag authority and exact request identity;
+queue, receipt, event and mandatory audit are atomic. The extended disposable
+suite passes 33 cases, plus 37 retry/review unit tests. The new independent retry
+gate remains off. Browser action/UX, complete-platform permission verification
+and provider staging are still open; see the operator review task for details.
+
 Every crash boundary must be exercised: before/after preparation, during provider
 I/O, after provider commit with lost response, before/after finalization, after
 lease expiry and during cleanup acknowledgement. Prove one immutable asset, no

@@ -12,7 +12,7 @@ const outcomes = { provider_unavailable: "ติดต่อพื้นที�
   content_conflict: "ไฟล์หรือสถานะรายการไม่ตรงตามเงื่อนไข", namespace_changed: "ปลายทางจัดเก็บเปลี่ยนแปลง",
   actor_unavailable: "ผู้บันทึกไม่มีสิทธิ์ใช้งานแล้ว", tag_changed: "แท็กหรือเวอร์ชันมีการเปลี่ยนแปลง" };
 const events = { snapshot: "ข้อมูล ณ วันที่เริ่มเก็บประวัติ", queued: "เข้าคิวกู้คืน", claimed: "เริ่มตรวจสอบ",
-  renewed: "ต่อเวลาการตรวจสอบ", deferred: "กำหนดตรวจซ้ำ", review: "ส่งให้ผู้ดูแลตรวจสอบ", completed: "กู้คืนสำเร็จ" };
+  renewed: "ต่อเวลาการตรวจสอบ", deferred: "กำหนดตรวจซ้ำ", review: "ส่งให้ผู้ดูแลตรวจสอบ", completed: "กู้คืนสำเร็จ", retry_requested: "ผู้ดูแลจัดคิวตรวจซ้ำ" };
 const format = (value: string | null) => value ? new Date(value).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" }) : "ยังไม่มี";
 
 export function NfcRecoveryReview({ tagId }: { tagId: string }) {

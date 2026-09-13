@@ -527,3 +527,24 @@ new tables on initial page render. Do not apply this migration or enable flags
 in production based only on local UI/integration evidence. W5 retry policy,
 transactional mutation audit and complete-platform/private-provider staging
 remain separate gates; see `tasks/NFC_RECOVERY_OPERATOR_REVIEW.md`.
+
+### September 13 Held Operator Retry Foundation
+
+New held migration `20260913000000_add_nfc_recovery_operator_retry.sql` depends
+on the September 11 operator journal and the existing admin/RBAC/audit schema.
+It adds immutable-by-privilege retry receipts and a service-only scheduling RPC.
+Current operator grants, original owner, tag version, queue state, timing and
+request identity are checked. Queue/receipt/event/audit rollback together.
+
+The internal typed service requires both recovery and the new independent
+`NFC_EVIDENCE_OPERATOR_RETRY_ENABLED` gate, with permission checked first.
+It has no browser action or route caller yet. Leave all flags off; this is not
+permission to run the migration in production or resolve review-required jobs.
+
+Local verification: 33 disposable PostgreSQL/HTTP cases, 22 retry adapter/service
+tests and 15 review adapter/service tests pass (70 total). These cover exact and
+competing requests, mandatory-audit rollback, live permission revocation, inactive
+roles, system.all, tag/owner changes and due time crossing during lock wait.
+The database harness uses minimal parent/RBAC/audit fixtures and a parameterized
+RPC bridge, not the complete deployed Supabase schema or PostgREST. Production
+session integration, retry UI and staging remain open.

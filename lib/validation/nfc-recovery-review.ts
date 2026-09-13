@@ -14,7 +14,7 @@ export const nfcRecoveryReviewRow = z.object({
 }).strict().refine(row => (row.status === "completed") === (row.completed_at !== null));
 export const nfcRecoveryHistoryRow = z.object({
   event_id: eventId, occurred_at: timestamp,
-  event_type: z.enum(["snapshot", "queued", "claimed", "renewed", "deferred", "review", "completed"]),
+  event_type: z.enum(["snapshot", "queued", "claimed", "renewed", "deferred", "review", "completed", "retry_requested"]),
   attempt_count: z.number().int().nonnegative().safe(), outcome: outcome.nullable(), next_attempt_at: timestamp,
 }).strict();
 export type NfcRecoveryReviewRow = z.infer<typeof nfcRecoveryReviewRow>;

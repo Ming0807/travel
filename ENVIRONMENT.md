@@ -229,3 +229,12 @@ timing-safe comparison (32-512 characters, no whitespace) before checking the
 flag or claiming one job. No route/cron invokes this helper yet. Do not enable
 until leased finalization, runtime limits, provider staging and reconciliation
 are accepted. Upload disablement is independent from recovery of existing work.
+
+`NFC_EVIDENCE_OPERATOR_RETRY_ENABLED=false` is the independent server-only
+operator scheduling gate. Unset/empty also disable it; only literal `true` is
+accepted for enablement. It also requires `NFC_EVIDENCE_RECOVERY_ENABLED=true`
+and current `checkin_code.manage`. The internal service is not yet connected to
+a browser action or scheduler. Keep disabled pending the held September 13
+retry migration, full-schema/RBAC acceptance and retry UI verification. This
+only schedules verification, not an upload, completion override or deletion.
+The worker's independent gate remains authoritative for actual processing.
