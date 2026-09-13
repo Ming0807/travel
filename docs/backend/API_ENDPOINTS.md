@@ -237,3 +237,20 @@ messages, not raw provider responses. Reload-persistent recovery remains pending
 Recovery returns 409 for a claimed/unavailable asset, unavailable tag, request
 binding conflict or finalization conflict. These do not trigger legacy fallback
 or automatic replacement uploads. Provider/readback outages remain sanitized 503.
+
+### NFC Recovery Operator Read Actions (Held)
+
+`getAdminNfcRecoveryAction({tagId,page?})` and
+`getAdminNfcRecoveryHistoryAction({tagId,assetId,beforeId?})` are server actions,
+not unauthenticated REST endpoints. Both require `checkin_code.manage` before
+validation/database access, then the strict default-off
+`NFC_EVIDENCE_RECOVERY_ENABLED` gate. Disabled returns `{success:true,enabled:false}`
+without touching held tables. Failures return local generic text, never database
+or provider details. Successful reads record bounded `nfc_recovery.review_read`
+or `nfc_recovery.history_read` metadata through the existing best-effort audit
+service. This read audit is not a transactional mutation audit guarantee.
+
+Listing returns 20 rows, page/pageSize and hasMore. History returns 20 rows and
+nextBeforeId (the last displayed event ID, not the lookahead row). Strict input
+and response schemas reject extra/private properties and malformed pagination.
+These actions cannot retry jobs, alter evidence, release review holds or delete.

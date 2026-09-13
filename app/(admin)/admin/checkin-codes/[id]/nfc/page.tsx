@@ -9,6 +9,7 @@ import { listNfcManagement } from "@/lib/services/admin-nfc.service";
 import { buildNfcPayload } from "@/lib/nfc/contract";
 import { adminNfcFiltersSchema } from "@/lib/validation/admin-nfc";
 import { NfcFieldChecks } from "@/components/admin/checkin-codes/NfcFieldChecks";
+import { NfcRecoveryReview } from "@/components/admin/checkin-codes/NfcRecoveryReview";
 import { nfcEvidenceUploadEnabled } from "@/lib/config/nfc-evidence";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "NFC Tags | Admin" };
@@ -56,6 +57,7 @@ export default async function NfcTagsPage({ params, searchParams }: { params: Pr
             {canManage ? <NfcTagControls tag={tag} payload={payload} /> : <p className="text-sm">สิทธิ์อ่านอย่างเดียว</p>}
             <NfcTagHistory tagId={tag.nfc_tag_id} version={tag.version} />
             <NfcFieldChecks tag={tag} canManage={canManage} evidenceEnabled={evidenceEnabled} />
+            {canManage && <NfcRecoveryReview tagId={tag.nfc_tag_id} />}
           </details>
         </article>;
       })}

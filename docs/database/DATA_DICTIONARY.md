@@ -2013,3 +2013,23 @@ rechecks expiry after transition and rolls back on expired authority. The job
 and lease remain for subsequent reconciliation/defer; completed_at stays null.
 Original actor availability is required. No provider deletion is authorized.
 SQL: `20260911003000_abandon_leased_nfc_recovery.sql`, not deployed.
+
+### Held NFC Recovery Operator Journal
+
+`20260911004000_add_nfc_recovery_review.sql` adds
+`nfc_evidence_recovery_events`: identity `event_id`, restricted asset FK,
+`occurred_at`, bounded `event_type`, `attempt_count`, bounded `outcome` and
+`next_attempt_at`. Queue insert/claim/renew/defer/review/completion transitions
+append events in the same transaction. Existing jobs receive one `snapshot`,
+not reconstructed past attempts. Service role has SELECT only; browser roles
+have no table or function access. No owner, lease token, hash or locator is stored
+in this journal. A tag/creation index and asset/event index support bounded reads.
+
+Service-only `list_nfc_evidence_recovery(tag_id,page)` returns up to 21 metadata
+rows for a 20-row page (page 1..10000). It derives waiting/ready/processing/review/
+completed using database statement time, independently of intent lifecycle.
+`list_nfc_evidence_recovery_history(tag_id,asset_id,before_id)` scopes both IDs,
+returns at most 21 events, and serializes bigint IDs as decimal strings. Unknown
+or mismatched scope returns no rows. Neither RPC exposes raw job/intent records.
+Application callers require `checkin_code.manage`; reads are audited separately.
+No retry/reset/deletion capability is added. This migration remains held.

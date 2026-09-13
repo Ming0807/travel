@@ -4,11 +4,12 @@ Status: partial held implementation, September 11, 2026. Part of Phase 23 S5 and
 ADR-012. Not production activation approval. Preserve the existing upload,
 recovery and cleanup flags as off.
 
-Implementation checkpoint: held `20260911000000_add_nfc_recovery_leases.sql`
-adds queue admission/backfill, claims, renewal and deferred/review outcomes.
-The subsequent held transactions add leased finalization and intent reading.
-The disposable PostgreSQL suite passes 135 assertions. Operator review and
-complete processing are still open. No scheduler is connected.
+Implementation checkpoint: held September 11 migrations add queue admission,
+leases, fenced finalization/abandonment/reading and operator event history.
+The dormant processor and tag-local read-only review panel are implemented.
+The latest disposable PostgreSQL processor/review suite passes 15 cases, in
+addition to the separately documented SQL concurrency verifier. Operator retry,
+private-provider acceptance and activation remain open. No scheduler is connected.
 
 ## Required Outcome
 
@@ -156,6 +157,14 @@ are real, JSON-serialized through a test RPC transport; private signing and
 destination configuration are substituted locally. This does not establish
 PostgREST transport behavior, complete-platform RLS, cloud upload settlement or
 provider signing semantics. No production activation or SQL application occurred.
+
+W5 incremental checkpoint: held `20260911004000_add_nfc_recovery_review.sql`
+records bounded queue transitions atomically and provides metadata-only paged
+tag/history RPCs. Strict adapters and permission-first/default-off services feed
+a lazy-loaded tag-local admin panel. Existing best-effort read auditing is used;
+no operator mutation or review reset exists yet. Detailed tasks/evidence are in
+`tasks/NFC_RECOVERY_OPERATOR_REVIEW.md`. The PostgreSQL processor/review suite now
+passes 15 cases. This does not complete W5 retry policy or staging acceptance.
 
 Every crash boundary must be exercised: before/after preparation, during provider
 I/O, after provider commit with lost response, before/after finalization, after

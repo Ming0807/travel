@@ -13,7 +13,7 @@ Remove-Item Env:NFC_RECOVERY_POSTGRES_QA
 The suite creates its own PostgreSQL 16 container on a random loopback port,
 applies the held NFC module migrations, and removes its container/connections
 after success or test failure. It never accepts an external database URL.
-Without the explicit flag, these ten Docker-dependent cases are skipped.
+Without the explicit flag, these fifteen Docker-dependent cases are skipped.
 
 Coverage uses the real recovery processor, auth gate, repository validation,
 SQL transactions and HTTP byte verification. Cases cover one immutable asset,
@@ -28,6 +28,12 @@ Private signing/destination configuration are replaced with loopback fixtures.
 This is not full-platform RLS, real cloud upload, private-provider staging or
 production activation approval. Actual provider late-write settlement remains
 an independent acceptance gate.
+
+The suite also applies the held operator journal migration. It verifies actual
+queue-transition events, truthful installation snapshots, rollback, role denial,
+tag isolation, 20-row pages with lookahead, and history cursor serialization
+through the real review repository adapters. These extend the original ten
+processor cases to fifteen integration cases.
 
 ## 1. Document Purpose
 

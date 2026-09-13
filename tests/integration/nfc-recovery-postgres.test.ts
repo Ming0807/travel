@@ -23,6 +23,7 @@ vi.mock("@/lib/config/public-env", () => ({ getPublicEnv: () => ({ NEXT_PUBLIC_S
 vi.mock("@/lib/storage/private-files", () => ({ createPrivateFileSignedUrl: async () => `${state.origin}/evidence` }));
 import { runAuthorizedNfcRecovery } from "@/lib/services/nfc-recovery-processor.service";
 import { prepareNfcEvidenceUpload } from "@/lib/repositories/nfc-upload-intent.repository";
+import { listNfcRecoveryReview, listNfcRecoveryReviewHistory } from "@/lib/repositories/nfc-recovery-review.repository";
 
 // No external connection string is accepted. Only this suite's disposable container is used.
 describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with real PostgreSQL and HTTP", () => {
@@ -41,6 +42,7 @@ describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with
   let bytes: Buffer;
   let actor: string;
   let tag: string;
+  let snapshotAsset: unknown;
   const server = createServer(async (_request, response) => {
     state.hits++;
     try {
@@ -80,12 +82,23 @@ describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with
       "20260910001000_finalize_nfc_evidence_upload_intents.sql", "20260911000000_add_nfc_recovery_leases.sql",
       "20260911001000_finalize_leased_nfc_recovery.sql", "20260911002000_read_leased_nfc_recovery_intent.sql",
       "20260911003000_abandon_leased_nfc_recovery.sql",
-    ]) await admin.query(readFileSync(`supabase/migrations/${file}`, "utf8"));
+      "20260911004000_add_nfc_recovery_review.sql",
+    ]) {
+      if (file === "20260911004000_add_nfc_recovery_review.sql") {
+        const seedActor = randomUUID(); const seedTag = randomUUID();
+        await admin.query("INSERT INTO public.admin_users VALUES($1,true)", [seedActor]);
+        await admin.query("INSERT INTO public.nfc_tags(nfc_tag_id,version,status) VALUES($1,1,'draft')", [seedTag]);
+        snapshotAsset = (await admin.query("SELECT asset_id FROM public.prepare_nfc_evidence_upload($1,$2,1,$3,'supabase','local-qa','nfc-evidence',$4,100,4,5)",
+          [randomUUID(), seedTag, seedActor, "a".repeat(64)])).rows[0].asset_id;
+      }
+      await admin.query(readFileSync(`supabase/migrations/${file}`, "utf8"));
+    }
     worker = new pg.Client(config); await worker.connect(); clients.push(worker);
     await worker.query("SET ROLE service_role");
     const tableFunctions = new Set(["prepare_nfc_evidence_upload", "claim_nfc_evidence_recovery", "read_leased_nfc_recovery_intent"]);
     const scalarFunctions = new Set(["renew_nfc_evidence_recovery", "defer_nfc_evidence_recovery",
-      "finalize_leased_nfc_recovery", "abandon_leased_nfc_recovery"]);
+      "finalize_leased_nfc_recovery", "abandon_leased_nfc_recovery", "list_nfc_evidence_recovery",
+      "list_nfc_evidence_recovery_history"]);
     state.rpc = async (name, args) => {
       if (!tableFunctions.has(name) && !scalarFunctions.has(name)) throw new Error("Unexpected QA RPC");
       const entries = Object.entries(args);
@@ -213,5 +226,77 @@ describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with
     expect(await run()).toEqual({ status: "disabled" });
     expect(await snapshot(intent.asset_id)).toMatchObject({ state: "prepared", attempt_count: 0, assets: 0, lease_token: null });
     expect(state.hits).toBe(0);
+  });
+  it("records actual transitions atomically and returns only scoped metadata", async () => {
+    const intent = await prepare(); state.status = 503;
+    await run();
+    await admin.query("UPDATE public.nfc_evidence_recovery_jobs SET next_attempt_at=clock_timestamp() WHERE asset_id=$1", [intent.asset_id]);
+    state.status = 200; await run();
+    const events = (await worker.query("SELECT event_type FROM public.nfc_evidence_recovery_events WHERE asset_id=$1 ORDER BY event_id", [intent.asset_id])).rows;
+    expect(events.map(event => event.event_type)).toEqual(["queued", "claimed", "renewed", "deferred", "claimed", "renewed", "completed"]);
+    const result = await state.rpc("list_nfc_evidence_recovery", { p_tag_id: tag, p_page: 1 });
+    expect(result.error).toBeNull();
+    expect(result.data).toMatchObject({ page: 1, rows: [{ asset_id: intent.asset_id, status: "completed", intent_state: "available" }] });
+    expect(await listNfcRecoveryReview({ tagId: tag })).toMatchObject({ page: 1, pageSize: 20, hasMore: false,
+      rows: [{ asset_id: intent.asset_id, status: "completed" }] });
+    for (const field of ["lease_token", "actor_id", "storage_path", "provider_account", "sha256", "object_key"]) {
+      expect(JSON.stringify(result.data)).not.toContain(`"${field}"`);
+    }
+    expect(await state.rpc("list_nfc_evidence_recovery_history", { p_tag_id: randomUUID(), p_asset_id: intent.asset_id })).toEqual({ data: { rows: [] }, error: null });
+    await admin.query("BEGIN");
+    try {
+      await admin.query("INSERT INTO public.nfc_evidence_recovery_events(asset_id,event_type,attempt_count,next_attempt_at) VALUES($1,'snapshot',2,clock_timestamp())", [intent.asset_id]);
+    } finally { await admin.query("ROLLBACK"); }
+    expect((await worker.query("SELECT count(*)::integer AS count FROM public.nfc_evidence_recovery_events WHERE asset_id=$1", [intent.asset_id])).rows[0].count).toBe(7);
+    const pending = await prepare();
+    await admin.query("BEGIN");
+    try {
+      await admin.query("UPDATE public.nfc_evidence_recovery_jobs SET completed_at=clock_timestamp() WHERE asset_id=$1", [pending.asset_id]);
+      expect((await admin.query("SELECT count(*)::integer AS count FROM public.nfc_evidence_recovery_events WHERE asset_id=$1", [pending.asset_id])).rows[0].count).toBe(2);
+    } finally { await admin.query("ROLLBACK"); }
+    expect((await worker.query("SELECT count(*)::integer AS count FROM public.nfc_evidence_recovery_events WHERE asset_id=$1", [pending.asset_id])).rows[0].count).toBe(1);
+  });
+  it("bounds tag pages and history cursors without exposing another tag", async () => {
+    const intent = await prepare();
+    // Synthetic journal entries exercise pagination independently of provider timing.
+    await admin.query(`INSERT INTO public.nfc_evidence_recovery_events(asset_id,event_type,attempt_count,next_attempt_at)
+      SELECT $1,'snapshot',0,clock_timestamp() FROM generate_series(1,24)`, [intent.asset_id]);
+    const first = await state.rpc("list_nfc_evidence_recovery_history", { p_tag_id: tag, p_asset_id: intent.asset_id });
+    const rows = (first.data as { rows: { event_id: string }[] }).rows;
+    expect(rows).toHaveLength(21);
+    expect(rows.every(row => typeof row.event_id === "string")).toBe(true);
+    const second = await state.rpc("list_nfc_evidence_recovery_history", { p_tag_id: tag, p_asset_id: intent.asset_id, p_before_id: rows[19].event_id });
+    expect((second.data as { rows: unknown[] }).rows).toHaveLength(5);
+    const validated = await listNfcRecoveryReviewHistory({ tagId: tag, assetId: intent.asset_id });
+    expect(validated.rows).toHaveLength(20); expect(validated.nextBeforeId).toBe(rows[19].event_id);
+    expect(await state.rpc("list_nfc_evidence_recovery", { p_tag_id: randomUUID(), p_page: 1 })).toEqual({ data: { rows: [], page: 1 }, error: null });
+    expect((await state.rpc("list_nfc_evidence_recovery", { p_tag_id: tag, p_page: 10001 })).error?.message).toBe("NFC_RECOVERY_FILTER_INVALID");
+  });
+  it("pages tag jobs with a 21-row lookahead and no duplicate boundary", async () => {
+    await prepare(); await run();
+    for (let index = 0; index < 20; index++) await prepare();
+    const first = await listNfcRecoveryReview({ tagId: tag });
+    const second = await listNfcRecoveryReview({ tagId: tag, page: 2 });
+    expect(first.rows).toHaveLength(20); expect(first.hasMore).toBe(true);
+    expect(second.rows).toHaveLength(1); expect(second.hasMore).toBe(false);
+    expect(new Set([...first.rows, ...second.rows].map(row => row.asset_id)).size).toBe(21);
+  });
+  it("denies browser roles and service-role journal mutation", async () => {
+    const intent = await prepare();
+    await expect(worker.query("DELETE FROM public.nfc_evidence_recovery_events WHERE asset_id=$1", [intent.asset_id])).rejects.toThrow(/permission denied/);
+    await expect(worker.query("UPDATE public.nfc_evidence_recovery_events SET outcome='absent' WHERE asset_id=$1", [intent.asset_id])).rejects.toThrow(/permission denied/);
+    await expect(worker.query("INSERT INTO public.nfc_evidence_recovery_events(asset_id,event_type,attempt_count,next_attempt_at) VALUES($1,'queued',0,now())", [intent.asset_id])).rejects.toThrow(/permission denied/);
+    for (const role of ["anon", "authenticated"]) {
+      await admin.query(`SET ROLE ${role}`);
+      try {
+        await expect(admin.query("SELECT public.list_nfc_evidence_recovery($1,1)", [tag])).rejects.toThrow(/permission denied/);
+        await expect(admin.query("SELECT public.list_nfc_evidence_recovery_history($1,$2)", [tag, intent.asset_id])).rejects.toThrow(/permission denied/);
+        await expect(admin.query("SELECT * FROM public.nfc_evidence_recovery_events")).rejects.toThrow(/permission denied/);
+      } finally { await admin.query("RESET ROLE"); }
+    }
+  });
+  it("backfills one truthful snapshot without inventing historical attempts", async () => {
+    expect((await worker.query("SELECT event_type,attempt_count FROM public.nfc_evidence_recovery_events WHERE asset_id=$1", [snapshotAsset])).rows)
+      .toEqual([{ event_type: "snapshot", attempt_count: 0 }]);
   });
 });

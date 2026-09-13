@@ -516,3 +516,14 @@ observed in these cases. The database RPC transport is a parameterized test
 bridge, not PostgREST; signing/destination are loopback substitutes and parent
 admin/tag tables remain minimal fixtures. See the integration test plan for the
 opt-in command. All held migration and default-off requirements above remain.
+
+### Held Operator Review Surface
+
+`20260911004000_add_nfc_recovery_review.sql` adds transactional bounded event
+history and service-only metadata projections, with no retry/delete RPC. The
+tag-local admin panel loads on demand through permission-checked, audited server
+actions. It safely reports disabled while recovery is off and does not read the
+new tables on initial page render. Do not apply this migration or enable flags
+in production based only on local UI/integration evidence. W5 retry policy,
+transactional mutation audit and complete-platform/private-provider staging
+remain separate gates; see `tasks/NFC_RECOVERY_OPERATOR_REVIEW.md`.

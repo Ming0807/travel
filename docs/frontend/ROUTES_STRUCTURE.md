@@ -1,5 +1,16 @@
 # ROUTES_STRUCTURE.md
 
+## NFC Recovery Operator Panel
+
+`/admin/checkin-codes/[id]/nfc` includes a lazy-loaded recovery panel beneath each
+tag's operational details for administrators with `checkin_code.manage`.
+Existing tag/read-only/field-check workflows remain unchanged. The panel shows
+queue status separately from file lifecycle, attempt counts, bounded outcomes
+and paginated event history; no private image, locator, owner or lease token is
+rendered. Disabled, empty, unavailable and loading states are distinct.
+Recovery tables are not queried on initial page render. No retry/delete control
+is exposed until the separately specified mutation policy is implemented.
+
 ## 1. Document Purpose
 
 This document defines the recommended route structure for the **Southern Border Tourism Data & Intelligence Platform**.
