@@ -236,7 +236,9 @@ describe.runIf(process.env.NFC_RECOVERY_POSTGRES_QA === "1")("NFC processor with
     expect(events.map(event => event.event_type)).toEqual(["queued", "claimed", "renewed", "deferred", "claimed", "renewed", "completed"]);
     const result = await state.rpc("list_nfc_evidence_recovery", { p_tag_id: tag, p_page: 1 });
     expect(result.error).toBeNull();
-    expect(result.data).toMatchObject({ page: 1, rows: [{ asset_id: intent.asset_id, status: "completed", intent_state: "available" }] });
+    expect(result.data).toMatchObject({ page: 1, rows: [{ asset_id: intent.asset_id, status: "completed", intent_state: "available", last_outcome: null }] });
+    const outcomes = (await worker.query("SELECT event_type,outcome FROM public.nfc_evidence_recovery_events WHERE asset_id=$1 AND event_type IN ('deferred','completed') ORDER BY event_id", [intent.asset_id])).rows;
+    expect(outcomes).toEqual([{ event_type: "deferred", outcome: "provider_unavailable" }, { event_type: "completed", outcome: null }]);
     expect(await listNfcRecoveryReview({ tagId: tag })).toMatchObject({ page: 1, pageSize: 20, hasMore: false,
       rows: [{ asset_id: intent.asset_id, status: "completed" }] });
     for (const field of ["lease_token", "actor_id", "storage_path", "provider_account", "sha256", "object_key"]) {

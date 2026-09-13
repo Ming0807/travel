@@ -29,7 +29,7 @@ BEGIN
   END IF;
   INSERT INTO public.nfc_evidence_recovery_events(asset_id,event_type,attempt_count,outcome,next_attempt_at)
     VALUES(NEW.asset_id,v_event,NEW.attempt_count,
-      CASE WHEN v_event IN ('deferred','review','completed') THEN NEW.last_outcome ELSE NULL END,NEW.next_attempt_at);
+      CASE WHEN v_event IN ('deferred','review') THEN NEW.last_outcome ELSE NULL END,NEW.next_attempt_at);
   RETURN NEW;
 END;
 $$;
@@ -48,7 +48,7 @@ BEGIN
   END IF;
   SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY r.created_at DESC,r.asset_id DESC),'[]'::jsonb) INTO v_rows FROM (
     SELECT i.asset_id,i.tag_version,i.state AS intent_state,i.created_at,j.attempt_count,j.last_attempt_at,
-      j.next_attempt_at,j.last_outcome,j.completed_at,
+      j.next_attempt_at,CASE WHEN j.completed_at IS NULL THEN j.last_outcome ELSE NULL END AS last_outcome,j.completed_at,
       CASE WHEN j.completed_at IS NOT NULL THEN 'completed' WHEN j.review_required THEN 'review'
         WHEN j.lease_expires_at>statement_timestamp() THEN 'processing'
         WHEN j.next_attempt_at<=statement_timestamp() THEN 'ready' ELSE 'waiting' END AS status

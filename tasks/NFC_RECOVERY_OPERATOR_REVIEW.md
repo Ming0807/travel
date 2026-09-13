@@ -38,6 +38,31 @@ bounded queue/history RPCs preserves context and supplies genuine history.
 
 ## Acceptance Boundaries
 
+### Retry Mutation Contract
+
+The operator queues an inspection; the request never uploads, finalizes, deletes
+or performs provider I/O. Only deferred absent/provider_unavailable jobs with no
+lease, no completion and no review hold qualify. The observed attempt count must
+still match. A 60-second minimum since the last worker attempt prevents rapid
+manual polling; jobs already due need no manual rescheduling. Keep worker attempt
+counts/backoff history, and allow at most one manual request per asset/attempt.
+
+Use a browser-generated request UUID retained across ambiguous failures, a
+controlled reason code, exact tag/asset scope and observed attempt count. SQL
+serializes request identity and job authority. It verifies the current operator's
+active admin/role assignment (super_admin or explicit checkin_code.manage /
+system.all), then original owner availability and live tag/version for a new
+request. This matches the current guard: generic content roles do not implicitly
+grant checkin_code.manage. Lock qualifying RBAC rows until transaction end.
+
+The queue update, immutable retry receipt, bounded retry_requested event and
+audit_logs entry must commit together. Any audit failure rolls back all changes.
+An exact authorized replay returns the existing receipt even after the worker
+progresses; it never reschedules twice. Changed request bindings are conflicts.
+Never accept a client-supplied operator identity. Review-required, leased and
+completed jobs cannot be reset by this contract. SQL and UI remain held until
+transactional/concurrency/permission and browser acceptance checks pass.
+
 No production SQL, scheduler activation, remote deletion or automatic review
 resolution. Do not treat a content-conflict review as an ordinary retry. Read
 auditing uses existing application audit behavior; mutation audit must be in the
