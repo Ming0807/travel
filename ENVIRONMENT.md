@@ -233,8 +233,8 @@ are accepted. Upload disablement is independent from recovery of existing work.
 `NFC_EVIDENCE_OPERATOR_RETRY_ENABLED=false` is the independent server-only
 operator scheduling gate. Unset/empty also disable it; only literal `true` is
 accepted for enablement. It also requires `NFC_EVIDENCE_RECOVERY_ENABLED=true`
-and current `checkin_code.manage`. The internal service is not yet connected to
-a browser action or scheduler. Keep disabled pending the held September 13
-retry migration, full-schema/RBAC acceptance and retry UI verification. This
+and current `checkin_code.manage`. A gated browser action now invokes the service;
+no scheduler is activated. Keep disabled pending the held September 13
+retry migration, full-schema/RBAC and operator acceptance. This
 only schedules verification, not an upload, completion override or deletion.
 The worker's independent gate remains authoritative for actual processing.

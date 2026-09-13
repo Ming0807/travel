@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { ArrowClockwise, CaretLeft, CaretRight, ClockCounterClockwise, ShieldCheck } from "@phosphor-icons/react";
 import { getAdminNfcRecoveryAction, getAdminNfcRecoveryHistoryAction } from "@/app/actions/admin-nfc-recovery-actions";
 import type { NfcRecoveryHistoryRow, NfcRecoveryReviewRow } from "@/lib/validation/nfc-recovery-review";
+import { NfcRecoveryRetryForm } from "@/components/admin/checkin-codes/NfcRecoveryRetryForm";
 
 const button = "inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition-colors hover:border-orange-400 hover:bg-orange-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 disabled:opacity-50";
 const statuses = { waiting: "รอตามกำหนด", ready: "พร้อมกู้คืน", processing: "กำลังตรวจสอบ", review: "ต้องตรวจสอบ", completed: "กู้คืนสำเร็จ" };
@@ -23,7 +24,8 @@ function RecoveryPanel({ tagId }: { tagId: string }) {
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [disabled, setDisabled] = useState(false);
-  const [result, setResult] = useState<{ rows: NfcRecoveryReviewRow[]; page: number; hasMore: boolean } | null>(null);
+  const [result, setResult] = useState<{ rows: NfcRecoveryReviewRow[]; page: number; hasMore: boolean; retryEnabled?: boolean } | null>(null);
+  const [retryTarget, setRetryTarget] = useState<NfcRecoveryReviewRow | null>(null);
   function load(page = 1) {
     start(async () => {
       setError("");
@@ -41,6 +43,8 @@ function RecoveryPanel({ tagId }: { tagId: string }) {
         <p className="mt-1 text-xs leading-5 text-slate-500">หลักฐานการติดตั้งแท็ก NFC</p></div>
       <button type="button" className={button} disabled={pending} onClick={() => load(result?.page ?? 1)}><ArrowClockwise size={18} className={pending ? "motion-safe:animate-spin" : ""} />{loaded ? "รีเฟรชรายการกู้คืน" : "โหลดรายการกู้คืน"}</button>
     </header>
+    {retryTarget && <NfcRecoveryRetryForm key={retryTarget.asset_id} tagId={tagId} assetId={retryTarget.asset_id} expectedAttemptCount={retryTarget.attempt_count}
+      onClose={() => setRetryTarget(null)} onScheduled={() => load(result?.page ?? 1)} />}
     {pending && <p role="status" className="mt-3 text-sm text-slate-600">กำลังอ่านรายการ…</p>}
     {error ? <p role="alert" className="mt-4 border-l-4 border-amber-500 bg-amber-50 p-3 text-sm leading-6 text-amber-950">{error}</p>
       : disabled ? <p role="status" className="py-5 text-sm text-slate-600">ยังไม่เปิดระบบกู้คืนหลักฐาน</p>
@@ -60,6 +64,8 @@ function RecoveryPanel({ tagId }: { tagId: string }) {
               <div><dt className="text-xs text-slate-500">{row.status === "completed" ? "สำเร็จเมื่อ" : "การดำเนินการถัดไป"}</dt><dd className="mt-1 text-slate-800">{row.status === "completed" ? format(row.completed_at) : row.status === "review" ? "รอผู้ดูแลตรวจสอบ" : row.status === "processing" ? "อยู่ระหว่างตรวจสอบ" : row.status === "ready" ? "รอรอบประมวลผล" : format(row.next_attempt_at)}</dd></div>
             </dl>
             {row.last_outcome && <p className={`mt-3 border-l-2 pl-3 text-sm leading-6 ${row.status === "review" ? "border-amber-500 text-amber-900" : "border-slate-300 text-slate-600"}`}>{outcomes[row.last_outcome]}</p>}
+            {result.retryEnabled && row.status === "waiting" && row.attempt_count > 0 && (row.last_outcome === "absent" || row.last_outcome === "provider_unavailable") &&
+              <button type="button" className={`${button} mt-3`} disabled={pending || retryTarget !== null} onClick={() => setRetryTarget(row)}><ArrowClockwise size={18} />จัดคิวตรวจซ้ำ</button>}
             <RecoveryHistory tagId={tagId} assetId={row.asset_id} />
           </li>)}</ol>
           {(result.page > 1 || result.hasMore) && <nav aria-label="หน้ารายการกู้คืน" className="flex items-center justify-between gap-3 border-t border-slate-200 pt-4">

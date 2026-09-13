@@ -61,6 +61,10 @@ describe("metadata review repository", () => {
   });
 });
 describe("operator authorization and audit", () => {
+  it.each([{ value: "true", enabled: true }, { value: "false", enabled: false }, { value: "", enabled: false }, { value: "yes", enabled: false }])("exposes only an explicitly enabled retry gate ($value)", async ({ value, enabled }) => {
+    vi.stubEnv("NFC_EVIDENCE_OPERATOR_RETRY_ENABLED", value);
+    expect(await getNfcRecoveryReview({ tagId })).toMatchObject({ enabled: true, retryEnabled: enabled, rows: [row()] });
+  });
   it("checks manage permission before reading and audits only bounded metadata", async () => {
     expect(await getNfcRecoveryReview({ tagId })).toMatchObject({ enabled: true, page: 1 });
     expect(mocks.guard).toHaveBeenCalledWith("checkin_code.manage");

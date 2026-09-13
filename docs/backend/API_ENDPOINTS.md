@@ -254,3 +254,14 @@ Listing returns 20 rows, page/pageSize and hasMore. History returns 20 rows and
 nextBeforeId (the last displayed event ID, not the lookahead row). Strict input
 and response schemas reject extra/private properties and malformed pagination.
 These actions cannot retry jobs, alter evidence, release review holds or delete.
+
+### NFC Recovery Retry Action (Held)
+
+`requestAdminNfcRecoveryRetryAction({requestId,tagId,assetId,expectedAttemptCount,reason})`
+requires current manage permission and both recovery/operator-retry gates. The
+server derives the operator identity; the transactional RPC rechecks authority.
+Success returns the exact requestId and means queued, not recovered. Known
+validation/policy rejection returns `success:false,outcome:rejected`; missing or
+unknown acknowledgement returns `outcome:uncertain`. Clients retain and replay
+the exact request rather than infer rollback. No raw provider/database error is
+returned. Scheduling, receipt, event and mutation audit commit atomically.

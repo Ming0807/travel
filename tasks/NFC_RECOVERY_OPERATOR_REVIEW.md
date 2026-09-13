@@ -34,8 +34,8 @@ bounded queue/history RPCs preserves context and supplies genuine history.
   accessible controls and pagination; verify desktop/mobile screenshots.
 - [ ] W5.5: Retry policy with current authority checks and transactional operator
   audit. No generic reset of review-required jobs and no content override.
-  Backend foundation implemented and locally verified; browser action, retained
-  request UX and complete-platform acceptance remain open.
+  Backend, gated browser action and retained-request UX implemented and locally
+  verified; complete-platform and operator acceptance remain open.
 - [ ] W5.6: SQL/adapter/service/UI verification and operator acceptance notes.
 
 ## Acceptance Boundaries
@@ -96,7 +96,8 @@ established by the fixture.
 
 The held retry RPC, receipt table, strict adapter and permission-first service
 are implemented. An independent default-off operator retry gate supplements the
-recovery gate. No browser action or scheduler invokes this service yet. The
+recovery gate. A gated browser action now invokes this service; no scheduler is
+activated. The
 history validator/UI recognizes the bounded retry_requested event.
 
 The disposable processor/review/retry suite passes 33 cases; retry unit tests
@@ -106,4 +107,24 @@ authority lock wait; a final database-time recheck now rejects that request.
 Concurrent requests produce one receipt/audit per attempt. Exact replay remains
 idempotent after worker completion but requires current permission. Audit
 failure rolls back scheduling and history. Full deployed-schema/session behavior
-and retry UI are not proven by these tests. W5.5 remains incomplete.
+are not proven by these tests. W5.5 remains incomplete.
+
+## Retry Browser Evidence (September 13, 2026)
+
+Four focused suites pass 42 tests, including duplicate pending submission,
+ambiguous response replay, mismatched acknowledgement, definite rejection and
+retention after list refresh removes the target row. The refresh error test now
+waits for the actual enabled control before interaction; its initial run clicked
+while the previous transition was still pending.
+Four additional flag cases pass in a separate 19-test review-suite rerun,
+bringing distinct passing cases to 46. Invalid operator flags suppress retry
+without hiding the read-only listing.
+
+Playwright fixture passes at 360/768/1440 pixels with no document overflow or
+page exception. All three screenshots inspected. This proves fixture interaction,
+not live authentication/provider behavior. Full reload/navigation still loses
+the in-memory request; database uniqueness remains the duplicate-write guard.
+No production flags, SQL or scheduler activated.
+Scoped ESLint and TypeScript pass. The production build compiles successfully,
+passes its TypeScript phase and generates all 66 static pages. Browser fixture
+and its Vite server were closed after verification.

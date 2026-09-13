@@ -1,6 +1,6 @@
 import "server-only";
 import { requirePermission } from "@/lib/auth/guards";
-import { nfcEvidenceRecoveryEnabled } from "@/lib/config/nfc-evidence";
+import { nfcEvidenceRecoveryEnabled, nfcEvidenceOperatorRetryEnabled } from "@/lib/config/nfc-evidence";
 import { listNfcRecoveryReview, listNfcRecoveryReviewHistory } from "@/lib/repositories/nfc-recovery-review.repository";
 import { nfcRecoveryReviewFilters, nfcRecoveryHistoryFilters } from "@/lib/validation/nfc-recovery-review";
 import { logAuditAction } from "@/lib/services/audit-log.service";
@@ -12,7 +12,9 @@ export async function getNfcRecoveryReview(input: unknown) {
   const result = await listNfcRecoveryReview(filters);
   await logAuditAction({ actor: guard.actor, action: "nfc_recovery.review_read", entityType: "nfc_tag", entityId: filters.tagId,
     metadata: { page: result.page, count: result.rows.length, hasMore: result.hasMore } });
-  return { enabled: true as const, ...result };
+  let retryEnabled = false;
+  try { retryEnabled = nfcEvidenceOperatorRetryEnabled(); } catch { /* Invalid mutation rollout must not hide read-only review. */ }
+  return { enabled: true as const, ...result, retryEnabled };
 }
 
 export async function getNfcRecoveryReviewHistory(input: unknown) {

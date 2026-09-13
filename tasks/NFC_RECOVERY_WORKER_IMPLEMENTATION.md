@@ -170,8 +170,11 @@ September 13 retry foundation: the held operator scheduling RPC and internal
 service now preserve current RBAC, owner/tag authority and exact request identity;
 queue, receipt, event and mandatory audit are atomic. The extended disposable
 suite passes 33 cases, plus 37 retry/review unit tests. The new independent retry
-gate remains off. Browser action/UX, complete-platform permission verification
-and provider staging are still open; see the operator review task for details.
+gate remains off. A subsequent gated browser action/form checkpoint now passes
+46 distinct focused cases, responsive fixture checks and production build. It
+retains request identity through ambiguous results and list refreshes, not full
+page reload. Complete-platform permission verification, operator acceptance
+and provider staging remain open; see the operator review task for details.
 
 Every crash boundary must be exercised: before/after preparation, during provider
 I/O, after provider commit with lost response, before/after finalization, after

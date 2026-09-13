@@ -8,8 +8,13 @@ Existing tag/read-only/field-check workflows remain unchanged. The panel shows
 queue status separately from file lifecycle, attempt counts, bounded outcomes
 and paginated event history; no private image, locator, owner or lease token is
 rendered. Disabled, empty, unavailable and loading states are distinct.
-Recovery tables are not queried on initial page render. No retry/delete control
-is exposed until the separately specified mutation policy is implemented.
+Recovery tables are not queried on initial page render. The independently gated
+retry form is offered for deferred absent/provider-unavailable jobs only. SQL
+rechecks eligibility, current authority and timing; no delete or review reset is
+offered. The form retains the exact UUID, scope, reason and observed attempt
+through ambiguous responses and list refreshes, including an empty/error list.
+It distinguishes scheduling acknowledgement from recovery completion. Retention
+is in-memory, not persistent across a full browser reload or navigation.
 
 ## 1. Document Purpose
 
