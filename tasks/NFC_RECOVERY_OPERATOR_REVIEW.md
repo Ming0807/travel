@@ -19,6 +19,14 @@ staging remain open. No production SQL or flags were changed.
 
 ### Remaining Session Acceptance
 
+Real-guard boundary evidence: `nfc-recovery-retry-session.test.ts` passes five
+cases with the actual action, service, permission extraction and retry adapter.
+Only Supabase client responses and Next navigation are substituted. Missing or
+failed session verification performs no service-role database access; inactive
+and unprivileged admins never call the scheduling RPC. An explicit custom grant
+uses the server-derived operator, and an injected payload identity is rejected.
+This is stronger than a mocked guard but still not a live-cookie/PostgREST test.
+
 Local regression checkpoint: the new assertions first failed for all three
 typed auth outcomes and the guard option. After the fix, retry service/action/
 form suites pass 46 cases. The action suppresses private auth detail and never
