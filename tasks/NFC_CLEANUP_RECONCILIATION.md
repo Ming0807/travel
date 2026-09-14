@@ -28,9 +28,12 @@ require a separately scoped private-provider inventory and reconciliation.
 - [x] W6.2 Strict repository, manage-permission-first service and default-off
   inventory action; do not reuse destructive claim RPC for a read operation.
   Repository, row validation, permission-first service and sanitized action are
-  implemented. Inventory has an independent default-off flag; no UI caller yet.
-- [ ] W6.3 Tag-local operator inventory with explicit retention/legacy/cleanup
+  implemented. Inventory has an independent default-off flag and an on-demand UI caller.
+- [x] W6.3 Tag-local operator inventory with explicit retention/legacy/cleanup
   states, mobile layout and no deletion controls. Audit reads without raw locators.
+  Manage-only panel uses server cursors, clears stale data after failures, and
+  resets on tag change. Local component/fixture verification is complete;
+  authenticated staging and production activation remain separate gates.
 - [ ] W6.4 Registered cleanup lease/backoff replacement: exact fencing, current
   report-attachment exclusion, provider/account/key/content binding and fairness.
   No generic delete fallback for unbound legacy evidence.
@@ -65,3 +68,55 @@ arguments; cases now use explicit object wrappers, and the corrected 12 reposito
 tests pass. Do not rely on the earlier malformed-response test run as evidence.
 Scoped ESLint, TypeScript and production build pass (66 generated static pages).
 No flags enabled, production migration applied, provider call or deletion run.
+
+## Inventory UI Verification
+
+The panel adds seven component tests for on-demand loading, historical cleanup
+meaning, cursor navigation, stale-row removal, disabled/empty states, duplicate
+clicks and tag changes. Together with repository/service tests, 28 tests pass.
+Scoped ESLint passes. Playwright exercises the actual component with mocked
+actions at 360/768/1440 pixels: no horizontal overflow, distinct next-page rows,
+back navigation and no page exceptions. Screenshots were visually inspected.
+The isolated fixture has a favicon 404, not an application request failure.
+These checks do not prove live Supabase session, provider or migration readiness.
+The follow-up production build also passes TypeScript and generates 66 static
+pages. No production migration or flag was changed for this UI checkpoint.
+
+## W6.4 Implementation Sequence
+
+Keep the legacy runner disconnected throughout this work. Implement and verify
+these boundaries in order; do not equate a database lease with remote delete
+fencing.
+
+1. Add held queue admission and leases for registered, finalized, intent-bound
+   evidence only. Require matching immutable asset/intent metadata and exclude
+   report attachments under the existing asset-row lock. Retain unbound legacy
+   evidence for reconciliation, never infer its provider account from settings.
+2. Claim due work using bounded `SKIP LOCKED` selection, attempt count and
+   `next_attempt_at`. Expired leases may be reclaimed with a new token; old tokens
+   cannot renew, defer or acknowledge. Failed early items must not starve later
+   due work. Recheck expiry after lock waits, not only on transaction entry.
+3. Read the durable provider/account/key/content binding through a leased,
+   machine-only RPC. Recheck current configured account before provider I/O.
+   Namespace or content conflicts require review; outages use bounded backoff.
+   Do not fall back to generic `deletePrivateFile` on any binding failure.
+4. Establish provider-specific settlement and mutation preconditions before
+   implementing deletion. A successful readback followed by an unconditional
+   delete has a replacement race; an expired database lease cannot cancel a
+   request already sent to a provider. Verify available object-version/identity
+   preconditions and in-flight upload handling for each provider. If those
+   guarantees cannot be established, retain the object and require review.
+5. Persist append-only bounded outcomes and retain tombstones. Lost provider
+   acknowledgements require reconciliation, not automatic claims of current
+   absence. Distinguish deletion response, independent absence observation and
+   settlement; do not reuse historical `deleted_at` as all three facts.
+6. Add real PostgreSQL tests for report/admission races, stale lease tokens,
+   expiry during lock waits, backoff fairness and repeated acknowledgements.
+   Add provider-adapter tests for account swaps, content replacement, timeouts,
+   late upload completion and lost acknowledgements. Live private-provider
+   staging remains required before scheduler wiring or flag activation.
+
+Evidence reviewed: `20260909001000_queue_nfc_orphan_cleanup.sql`, the cleanup
+service/repository, prepared upload binding and NFC readback adapter. The current
+generic runner has no provider precondition or lease token and is not safe to
+activate merely because inventory UI verification passes.

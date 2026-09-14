@@ -4,6 +4,7 @@ const root = fileURLToPath(new URL("../../../", import.meta.url));
 export default defineConfig({
   root: fileURLToPath(new URL(".", import.meta.url)),
   resolve: { alias: [
+    { find: "@/app/actions/admin-nfc-inventory-actions", replacement: fileURLToPath(new URL("./nfc-inventory-actions.ts", import.meta.url)) },
     { find: "@/app/actions/admin-nfc-retry-actions", replacement: fileURLToPath(new URL("./nfc-retry-actions.ts", import.meta.url)) },
     { find: "@/app/actions/admin-nfc-recovery-actions", replacement: fileURLToPath(new URL("./nfc-recovery-actions.ts", import.meta.url)) },
     { find: "@/app/actions/admin-nfc-actions", replacement: fileURLToPath(new URL("./nfc-actions.ts", import.meta.url)) },

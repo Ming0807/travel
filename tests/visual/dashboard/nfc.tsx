@@ -4,6 +4,7 @@ import type { AdminNfcTag } from "@/lib/repositories/admin-nfc.repository";
 import "@/app/globals.css";
 import { NfcFieldChecks } from "@/components/admin/checkin-codes/NfcFieldChecks";
 import { NfcRecoveryReview } from "@/components/admin/checkin-codes/NfcRecoveryReview";
+import { NfcEvidenceInventory } from "@/components/admin/checkin-codes/NfcEvidenceInventory";
 const tag: AdminNfcTag = {
   nfc_tag_id: "11111111-1111-4111-8111-111111111111", public_token: "11111111-1111-4111-8111-111111111111",
   checkin_code_id: 10, code_snapshot: "fixture-entry", label: "แท็กทดสอบทางเข้าหลัก", status: "draft", version: 1,
@@ -17,4 +18,5 @@ createRoot(document.getElementById("root")!).render(<main className="min-h-scree
   <NfcTagHistory tagId={tag.nfc_tag_id} version={tag.version} />
   <NfcFieldChecks tag={tag} canManage evidenceEnabled />
   <NfcRecoveryReview tagId={tag.nfc_tag_id} />
+  <NfcEvidenceInventory tagId={tag.nfc_tag_id} />
 </section></main>);

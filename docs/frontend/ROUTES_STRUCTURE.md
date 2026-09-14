@@ -1470,6 +1470,16 @@ Public participant routes never accept internal research IDs or secret tokens in
 `checkin_code.read`; writes require `checkin_code.manage`. See
 [NFC Management UI](NFC_MANAGEMENT_UI.md). Public rollout remains disabled.
 
+The tag detail also contains a manage-only evidence inventory. It reads on demand
+through the permission-checked action and independent default-off inventory flag;
+initial page render does not query the held inventory RPC. Cursor pages show
+registered asset IDs, timestamps, providers, report attachment, upload-intent
+presence and historical cleanup state. No private locators or deletion controls
+are exposed. A deletion acknowledgement is not current provider-absence proof.
+Failed refreshes clear stale rows; changing tags resets the panel. Rows stack on
+mobile and use two columns from the small breakpoint. Local fixture coverage is
+not a substitute for authenticated staging verification.
+
 ### Executive Entry Cohort
 
 `/admin/dashboard` now displays entry-start QR/NFC conversion separately from the
