@@ -2059,3 +2059,13 @@ queue reschedule, retry event and audit_logs insert commit atomically; audit
 failure rolls back all four. Exact authorized replay returns the saved request
 ID without another mutation even after worker progress. Other binding reuse is
 rejected. No content/lifecycle override, provider I/O or deletion is authorized.
+# NFC Evidence Inventory (Held September 14)
+
+`list_nfc_evidence_inventory(uuid,uuid)` reads registered evidence for one tag,
+ordered by asset UUID with 21-row lookahead. Returns only asset_id, created_at,
+provider, attached, has_intent and cleanup_state (none/pending/acknowledged).
+No storage path, owner, content hash, namespace or deletion authority is returned.
+The cursor must be the last displayed row, not the lookahead. Composite
+`idx_nfc_evidence_assets_tag_cursor` supports tag/cursor scanning.
+Service-role execution only; callers still require application manage permission.
+Acknowledged reflects an existing cleanup record, not provider absence proof.
