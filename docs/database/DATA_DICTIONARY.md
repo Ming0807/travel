@@ -1,5 +1,27 @@
 # DATA_DICTIONARY.md
 
+## Held NFC Cleanup Leases
+
+`20260914001000_add_nfc_cleanup_leases.sql` adds `nfc_evidence_cleanup_jobs`.
+Its asset primary key references both the retained cleanup tombstone and upload
+intent. Fields are `next_attempt_at`, `attempt_count`, `lease_token`,
+`lease_expires_at`, `last_attempt_at`, `last_outcome`, and `review_required`.
+Paired lease fields, positive lease duration and review-without-lease constraints
+are enforced. A partial due index supports bounded claims. RLS denies browser
+roles; service role has SELECT and explicit RPC execution only, not direct writes.
+
+Admission requires registered evidence and a matching available intent, both
+older than seven days, with no report attachment or pre-existing tombstone.
+Claims use 2-minute leases and 1-5 item batches. Retry delays start at 30 seconds
+with jitter and cap at 1 hour before jitter. Content/namespace/settlement conflicts
+require review. The leased binding RPC exposes private metadata only to internal
+machine-authorized callers; it must never be serialized to a browser.
+
+This migration revokes service execution of legacy asset-only claim/completion
+RPCs. Existing tombstones are retained, not backfilled into the new queue.
+No completion/deletion endpoint is added. A lease permits reconciliation, not
+provider deletion, and does not prove upload settlement. Migration remains held.
+
 ## Research Browser Grants (Foundation)
 
 `research_browser_grants` keys `(browser_token_hash, research_session_id)` and stores

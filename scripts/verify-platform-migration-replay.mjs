@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import pg from "pg";
+import { verifyNfcCleanupLeases } from "./qa/nfc-cleanup-leases.mjs";
 
 const name = `tourism-schema-replay-${randomUUID().slice(0, 8)}`;
 let started = false;
@@ -137,6 +138,8 @@ try {
     await assert.rejects(db.query(inventory, [tag, null]), /permission denied/);
   }
   console.log("PASS readonly inventory: exact fields, 20+lookahead cursor, tag scope, attachment, pending/acknowledged cleanup, legacy/intent distinction and browser denial.");
+  current = "held NFC cleanup lease foundation";
+  await verifyNfcCleanupLeases(db, { tag, actor });
   console.log("Auth/storage are minimal DDL compatibility stubs; no live sessions or provider behavior proven.");
 } catch (error) {
   console.error(`FAIL after ${applied} migrations at ${current}: ${error.message}`);

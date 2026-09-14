@@ -120,3 +120,23 @@ Evidence reviewed: `20260909001000_queue_nfc_orphan_cleanup.sql`, the cleanup
 service/repository, prepared upload binding and NFC readback adapter. The current
 generic runner has no provider precondition or lease token and is not safe to
 activate merely because inventory UI verification passes.
+
+## Held Lease Foundation Checkpoint
+
+Migration `20260914001000_add_nfc_cleanup_leases.sql` implements bounded bound-only
+admission, 2-minute leases, strict leased metadata reads, renewal and backoff/review.
+It revokes service execution of old asset-only claim/completion RPCs. Do not apply
+it to production as a routine UI migration: the legacy runner intentionally stops
+working after this change, and no replacement deletion runner is activated.
+
+Disposable PostgreSQL replay passes all 76 migrations and exercises exclusion of
+attached/recent/unbound assets, unique live claims, exact binding reads, stale
+tokens, reclaimed leases, due-work fairness, conflict review and permission denial.
+A second PostgreSQL connection proves the reader is waiting on a row lock and
+then releases it after expiry; the read correctly rejects the expired token.
+The red run failed because the new claim RPC did not exist before implementation.
+
+W6.4 remains open: concurrent attachment/admission and concurrent-claimer stress
+coverage, append-only outcomes, repository/worker integration and provider-specific
+settlement/deletion preconditions are still required. No provider calls, production
+SQL, scheduler activation or file deletion occurred during this checkpoint.
