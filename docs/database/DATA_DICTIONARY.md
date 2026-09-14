@@ -1,5 +1,17 @@
 # DATA_DICTIONARY.md
 
+## Held NFC Cleanup History
+
+`20260914002000_add_nfc_cleanup_events.sql` adds append-only
+`nfc_evidence_cleanup_events`: identity `event_id`, `asset_id` FK, `occurred_at`,
+`event_type`, `attempt_count`, bounded `outcome`, and `next_attempt_at`.
+The queue trigger records queued/claimed/renewed/deferred/review transitions in
+the same transaction. Existing jobs receive a snapshot, not invented history.
+An asset/event index supports later bounded history reads. RLS denies browser
+access; service role has SELECT only. UPDATE/DELETE triggers preserve history.
+No owner, path, account, lease token, raw provider error or deletion proof is stored.
+No browser history route or cleanup activation is introduced by this held SQL.
+
 ## Held NFC Cleanup Leases
 
 `20260914001000_add_nfc_cleanup_leases.sql` adds `nfc_evidence_cleanup_jobs`.

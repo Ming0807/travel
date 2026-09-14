@@ -136,7 +136,7 @@ A second PostgreSQL connection proves the reader is waiting on a row lock and
 then releases it after expiry; the read correctly rejects the expired token.
 The red run failed because the new claim RPC did not exist before implementation.
 
-W6.4 remains open: broader concurrent-claimer stress coverage, append-only outcomes,
+W6.4 remains open: broader concurrent-claimer stress coverage,
 repository/worker integration and provider-specific
 settlement/deletion preconditions are still required. No provider calls, production
 SQL, scheduler activation or file deletion occurred during this checkpoint.
@@ -150,3 +150,11 @@ rows as well as outcomes. No production SQL change was needed for these cases.
 The first harness run could not observe another session's wait under service_role;
 only the disposable test observer is reset to database owner to read activity.
 RPC claims still execute under service_role. Corrected replay passes 76 migrations.
+
+The next held migration adds atomic append-only cleanup scheduling history using
+the established recovery-event pattern. PostgreSQL tests verify ordered bounded
+metadata, no event for rejected tokens, denied browser reads/service deletes,
+immutable updates and rollback of both queue renewal and its event. The red run
+failed on the absent event table. No private locators or lease tokens are recorded.
+Operator history UI and provider settlement/deletion outcomes remain unimplemented;
+these scheduling events must not be presented as remote deletion confirmation.

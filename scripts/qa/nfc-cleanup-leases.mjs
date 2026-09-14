@@ -124,6 +124,26 @@ export async function verifyNfcCleanupLeases(db, { tag, actor }) {
     assert.equal((await db.query("SELECT count(*)::int AS n FROM public.nfc_field_check_photos WHERE asset_id=$1", [reserved])).rows[0].n, 0);
   } finally { await racer.query("ROLLBACK").catch(() => undefined); await racer.end(); }
   await db.query("SET ROLE service_role");
+  const events = (await db.query("SELECT * FROM public.nfc_evidence_cleanup_events WHERE asset_id=$1 ORDER BY event_id", [first[0].asset_id])).rows;
+  assert.deepEqual(events.map(event => event.event_type), ["queued", "claimed", "deferred"]);
+  assert.deepEqual(events.map(event => event.outcome), [null, null, "provider_unavailable"]);
+  assert.deepEqual(Object.keys(events[0]).sort(), ["asset_id", "attempt_count", "event_id", "event_type", "next_attempt_at", "occurred_at", "outcome"]);
+  const beforeRejected = events.length;
+  await assert.rejects(db.query(defer, [first[0].asset_id, randomUUID(), "absent"]), /NFC_CLEANUP_LEASE_LOST/);
+  assert.equal((await db.query("SELECT count(*)::int AS n FROM public.nfc_evidence_cleanup_events WHERE asset_id=$1", [first[0].asset_id])).rows[0].n, beforeRejected);
+  await assert.rejects(db.query("DELETE FROM public.nfc_evidence_cleanup_events WHERE asset_id=$1", [first[0].asset_id]), /permission denied/);
+  await db.query("RESET ROLE");
+  await assert.rejects(db.query("UPDATE public.nfc_evidence_cleanup_events SET outcome='absent' WHERE asset_id=$1", [first[0].asset_id]), /NFC_CLEANUP_HISTORY_IMMUTABLE/);
+  await db.query("SET ROLE service_role");
+  const live = (await db.query("SELECT lease_token,lease_expires_at FROM public.nfc_evidence_cleanup_jobs WHERE asset_id=$1", [cleanupFirst])).rows[0];
+  const eventCount = async () => (await db.query("SELECT count(*)::int AS n FROM public.nfc_evidence_cleanup_events WHERE asset_id=$1", [cleanupFirst])).rows[0].n;
+  const beforeRollback = await eventCount();
+  await db.query("BEGIN");
+  await db.query("SELECT public.renew_nfc_cleanup_job($1,$2)", [cleanupFirst, live.lease_token]);
+  assert.equal(await eventCount(), beforeRollback + 1);
+  await db.query("ROLLBACK");
+  assert.equal(await eventCount(), beforeRollback);
+  assert.equal((await db.query("SELECT lease_expires_at FROM public.nfc_evidence_cleanup_jobs WHERE asset_id=$1", [cleanupFirst])).rows[0].lease_expires_at.getTime(), live.lease_expires_at.getTime());
   await assert.rejects(db.query("SELECT public.claim_nfc_evidence_cleanup(1)"), /permission denied/);
   await assert.rejects(db.query("SELECT public.complete_nfc_evidence_cleanup($1)", [reclaimed.asset_id]), /permission denied/);
   assert.equal((await db.query("SELECT count(*)::int AS n FROM public.nfc_evidence_cleanup WHERE asset_id=ANY($1::uuid[]) AND deleted_at IS NOT NULL", [eligible])).rows[0].n, 0);
@@ -132,6 +152,8 @@ export async function verifyNfcCleanupLeases(db, { tag, actor }) {
     await assert.rejects(db.query(claim, [1]), /permission denied/);
     await assert.rejects(db.query(read, [third.asset_id, third.lease_token]), /permission denied/);
     await assert.rejects(db.query("SELECT * FROM public.nfc_evidence_cleanup_jobs"), /permission denied/);
+    await assert.rejects(db.query("SELECT * FROM public.nfc_evidence_cleanup_events"), /permission denied/);
   }
   console.log("PASS held cleanup jobs: bound admission, report/legacy/recent exclusion, distinct leases, binding read, stale fencing including lock-wait expiry, attachment/admission races in both orders, competing claim exclusion, backoff fairness, review and browser/legacy-RPC denial. No provider calls.");
+  console.log("PASS cleanup history: exact metadata, ordered transitions, rejected-token silence, append-only permissions and queue/event rollback atomicity.");
 }
