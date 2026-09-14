@@ -1,5 +1,26 @@
 # MIGRATION_GUIDE.md
 
+## Local Platform Replay
+
+Run `node scripts/verify-platform-migration-replay.mjs` with Docker available.
+The verifier creates and removes its own PostgreSQL 16 container on a random
+loopback port. It accepts no external database URL and does not load `.env`.
+It applies all timestamped repository migrations, including held migrations,
+only inside that disposable database.
+
+Existing prerequisite: `20260730110000_add_destination_launch_scope.sql` requires
+exactly one Yala province row. A completely empty replay stops at migration 41
+without it. The verifier explicitly inserts only that reference row immediately
+before the migration. Do not interpret its success as a seed-free `supabase db
+reset` guarantee or change already-applied historical SQL without a migration
+baseline/reconciliation plan.
+
+Auth users/functions and storage tables are minimal compatibility stubs, not the
+Supabase services. The test also exercises NFC retry with real migrated admin,
+RBAC, attraction, check-in, tag, receipt and audit tables. This checks SQL-level
+authorization and replay, not browser authentication, PostgREST, storage policy
+behavior or provider signing. Keep those release gates separate.
+
 ## 1. Document Purpose
 
 This document defines the database migration guide for the **Southern Border Tourism Data & Intelligence Platform**.

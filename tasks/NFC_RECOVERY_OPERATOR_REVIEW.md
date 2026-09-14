@@ -2,6 +2,37 @@
 
 Part of Phase 23 S5 / W5. Held implementation; not rollout approval.
 
+## Platform Schema Checkpoint (September 14, 2026)
+
+`node scripts/verify-platform-migration-replay.mjs` passes all 74 repository
+migrations on disposable PostgreSQL 16, with the explicit Yala reference-data
+prerequisite required by the existing destination-launch migration. It then
+checks retry against the actual migrated platform tables and tag triggers:
+explicit operator grant succeeds, unauthorized actor fails, exact replay creates
+one receipt/audit, revoked grant blocks replay, and both browser roles cannot
+execute the RPC or read receipts. The container is removed after the run.
+
+This replaces the earlier minimal parent-table evidence for this SQL scenario,
+not for every concurrency scenario. Auth/storage bootstrap remains stubbed;
+live session/guard/PostgREST behavior, operator acceptance and private-provider
+staging remain open. No production SQL or flags were changed.
+
+### Remaining Session Acceptance
+
+- Exercise an expired session before submission. The current service uses the
+  guard's default redirect path, while the action catches unknown errors as an
+  uncertain acknowledgement. Verify and correct this boundary so a known
+  pre-mutation auth failure does not trap the operator in an unhelpful retry loop.
+- On private staging, verify the authenticated operator is server-derived and
+  cannot be replaced by request payload fields; exercise inactive admin and
+  revoked custom-role permission before an exact replay.
+- Verify history after successful scheduling and after a lost response. Preserve
+  the original request for ambiguous delivery and never present queue receipt as
+  proof of recovered bytes. Full navigation recovery remains a separate gap.
+- Record operator confirmation on mobile and desktop, including review-required
+  evidence with no reset button. Do not enable either production gate from local
+  SQL or fixture evidence alone.
+
 ## Design
 
 Extend the existing NFC tag management surface with a lazy-loaded metadata panel.
