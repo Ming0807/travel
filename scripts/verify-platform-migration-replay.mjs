@@ -102,11 +102,19 @@ try {
   await db.query("RESET ROLE; SET ROLE service_role");
   await db.query(`SELECT public.finalize_nfc_evidence_upload($1,$2,'local-qa',$3,$4,100,4,5)`,
     [asset, actor, `nfc-evidence/${asset}.webp`, "a".repeat(64)]);
+  const legacyAssets = [];
   for (let index = 0; index < 23; index++) {
     const legacy = randomUUID();
+    legacyAssets.push(legacy);
     await db.query(`SELECT public.register_nfc_evidence_asset($1,$2,1,$3,'supabase',$4,$5,100,4,5)`,
       [legacy, tag, actor, `nfc-evidence/${legacy}.webp`, "b".repeat(64)]);
   }
+  await db.query(`SELECT public.record_nfc_field_check_with_photos($1,$2,1,$3,
+    'Local QA location','QA device','other','not_tested','passed','','',$4::uuid[])`,
+    [randomUUID(), tag, actor, [asset]]);
+  await db.query("RESET ROLE");
+  await db.query(`INSERT INTO public.nfc_evidence_cleanup(asset_id,deleted_at) VALUES($1,NULL),($2,now())`, legacyAssets.slice(0, 2));
+  await db.query("SET ROLE service_role");
   const inventory = "SELECT public.list_nfc_evidence_inventory($1,$2) AS inventory";
   await db.query("BEGIN READ ONLY");
   const first = (await db.query(inventory, [tag, null])).rows[0].inventory.rows;
@@ -116,14 +124,19 @@ try {
   const all = [...first.slice(0, 20), ...second];
   assert.equal(all.length, 24); assert.equal(new Set(all.map(row => row.asset_id)).size, 24);
   assert.equal(all.filter(row => row.has_intent).length, 1);
-  assert.ok(all.every(row => row.cleanup_state === "none" && !row.attached));
+  assert.equal(all.filter(row => row.attached).length, 1);
+  assert.equal(all.find(row => row.asset_id === asset).attached, true);
+  assert.equal(all.find(row => row.asset_id === asset).cleanup_state, "none");
+  assert.equal(all.find(row => row.asset_id === legacyAssets[0]).cleanup_state, "pending");
+  assert.equal(all.find(row => row.asset_id === legacyAssets[1]).cleanup_state, "acknowledged");
+  assert.equal(all.filter(row => row.cleanup_state === "none").length, 22);
   assert.deepEqual((await db.query(inventory, [randomUUID(), null])).rows[0].inventory.rows, []);
   await db.query("ROLLBACK");
   for (const browserRole of ["anon", "authenticated"]) {
     await db.query(`RESET ROLE; SET ROLE ${browserRole}`);
     await assert.rejects(db.query(inventory, [tag, null]), /permission denied/);
   }
-  console.log("PASS readonly inventory: exact fields, 20+lookahead cursor, tag scope, legacy/intent distinction and browser denial.");
+  console.log("PASS readonly inventory: exact fields, 20+lookahead cursor, tag scope, attachment, pending/acknowledged cleanup, legacy/intent distinction and browser denial.");
   console.log("Auth/storage are minimal DDL compatibility stubs; no live sessions or provider behavior proven.");
 } catch (error) {
   console.error(`FAIL after ${applied} migrations at ${current}: ${error.message}`);

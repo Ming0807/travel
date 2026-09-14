@@ -1,5 +1,18 @@
 # API_ENDPOINTS.md
 
+## NFC Evidence Inventory Action (Held)
+
+`getAdminNfcEvidenceInventoryAction({tagId,afterAssetId?})` checks current
+`checkin_code.manage` with unauthenticated errors thrown, validates strict input,
+then checks default-off `NFC_EVIDENCE_INVENTORY_ENABLED`. Disabled returns success
+with enabled:false without accessing inventory tables. Enabled returns at most
+20 metadata rows and nextAfterAssetId from the final displayed row, not lookahead.
+UUIDs normalize to lowercase before cursor comparisons. Private/extra fields,
+duplicate or unordered rows and attached-with-cleanup contradictions fail closed.
+Successful reads use existing best-effort audit with count/hasMore only. This is
+not transactional mutation auditing. Failures return bounded local text. No claim,
+cleanup acknowledgement, storage I/O or deletion is called.
+
 ## Public Story Engagement Endpoint
 
 | Method | Path | Status | Purpose | Privacy rules |

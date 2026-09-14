@@ -20,13 +20,15 @@ require a separately scoped private-provider inventory and reconciliation.
 
 ## Ordered Tasks
 
-- [ ] W6.1 Metadata-only, tag-scoped inventory RPC; page 20 plus lookahead,
+- [x] W6.1 Metadata-only, tag-scoped inventory RPC; page 20 plus lookahead,
   deterministic asset-ID cursor, no path/owner/hash/provider account in output.
   Verify readonly transaction and anonymous/authenticated denial on PostgreSQL.
-  RPC implemented; local replay verifies pagination, exact metadata fields and
-  legacy/intent distinction. Attached and legacy acknowledgement fixtures remain.
-- [ ] W6.2 Strict repository, manage-permission-first service and default-off
+  Local replay verifies pagination, exact metadata fields, legacy/intent
+  distinction, real report attachment and pending/acknowledged cleanup fixtures.
+- [x] W6.2 Strict repository, manage-permission-first service and default-off
   inventory action; do not reuse destructive claim RPC for a read operation.
+  Repository, row validation, permission-first service and sanitized action are
+  implemented. Inventory has an independent default-off flag; no UI caller yet.
 - [ ] W6.3 Tag-local operator inventory with explicit retention/legacy/cleanup
   states, mobile layout and no deletion controls. Audit reads without raw locators.
 - [ ] W6.4 Registered cleanup lease/backoff replacement: exact fencing, current
@@ -55,3 +57,11 @@ lookahead; exactly one has an intent; another tag returns no rows. A read-only
 transaction accepts the RPC and both browser roles are denied. No production
 migration, inventory endpoint or deletion was activated. Auth/storage remain
 compatibility stubs. W6 is not complete.
+
+The follow-up replay covers a real report attachment and seeded legacy pending/
+acknowledged cleanup rows. Repository/service/action/config suites pass 23 cases.
+TypeScript caught a parameterized-test shape that spread row arrays as separate
+arguments; cases now use explicit object wrappers, and the corrected 12 repository
+tests pass. Do not rely on the earlier malformed-response test run as evidence.
+Scoped ESLint, TypeScript and production build pass (66 generated static pages).
+No flags enabled, production migration applied, provider call or deletion run.

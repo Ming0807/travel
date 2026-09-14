@@ -238,3 +238,9 @@ no scheduler is activated. Keep disabled pending the held September 13
 retry migration, full-schema/RBAC and operator acceptance. This
 only schedules verification, not an upload, completion override or deletion.
 The worker's independent gate remains authoritative for actual processing.
+
+`NFC_EVIDENCE_INVENTORY_ENABLED=false` controls read-only registered NFC evidence
+inventory independently of upload, recovery and cleanup. Unset/empty/false are
+off; only literal true enables it. Keep off until the held September 14 inventory
+migration and operator acceptance are complete. Enabling inventory grants no
+provider access or deletion capability; application manage permission is required.
