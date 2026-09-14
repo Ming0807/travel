@@ -158,3 +158,15 @@ immutable updates and rollback of both queue renewal and its event. The red run
 failed on the absent event table. No private locators or lease tokens are recorded.
 Operator history UI and provider settlement/deletion outcomes remain unimplemented;
 these scheduling events must not be presented as remote deletion confirmation.
+
+The internal cleanup job repository now validates bounded claim batches, unique
+asset/token pairs, lease timestamps, strict inputs and exact acknowledgement.
+Leased binding responses must match the requested asset and canonical private
+Supabase or versioned authenticated Cloudinary key. Unknown database errors are
+sanitized; known lease-loss remains distinguishable. Eighteen mocked-RPC tests
+pass, including Cloudinary namespace and input rejection. This is an adapter,
+not machine authentication or a provider mutation permission check. No live
+caller, route, deletion helper or scheduler is connected; real repository-to-
+PostgREST acceptance and the processor remain outstanding.
+Scoped ESLint and project `tsc --noEmit` pass for this adapter checkpoint. No
+production build was rerun for this internal, currently unreferenced module.
