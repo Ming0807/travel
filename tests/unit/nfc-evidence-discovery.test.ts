@@ -3,10 +3,33 @@ const mocks=vi.hoisted(()=>({env:vi.fn(),destination:vi.fn(),resource:vi.fn()}))
 vi.mock("@/lib/config/server-env",()=>({getServerEnv:mocks.env}));
 vi.mock("@/lib/storage/nfc-prepared-storage",()=>({getNfcUploadDestination:mocks.destination}));
 vi.mock("cloudinary",()=>({v2:{api:{resource:mocks.resource}}}));
-import { discoverNfcEvidenceLocator, inspectNfcRecoveryLocator } from "@/lib/storage/nfc-evidence-discovery";
+import { discoverNfcEvidenceLocator, inspectNfcRecoveryLocator, inspectNfcProviderIdentity } from "@/lib/storage/nfc-evidence-discovery";
 afterEach(()=>vi.useRealTimers());
 const asset="40000000-0000-4000-8000-000000000001";
 const intent={asset_id:asset,provider:"cloudinary",provider_account:"test-cloud",storage_prefix:"tourism/nfc-evidence",object_key:`tourism/nfc-evidence/${asset}`};
+it("observes the provider asset identity without changing legacy locator output", async () => {
+  mocks.resource.mockResolvedValue({public_id:intent.object_key,resource_type:"image",type:"authenticated",format:"webp",version:123,asset_id:"providerAsset123"});
+  expect(await inspectNfcProviderIdentity(intent)).toEqual({ status:"identity_observed", provider:"cloudinary",
+    providerAssetId:"providerAsset123", providerVersion:123,
+    storagePath:`cloudinary:image:authenticated:v123:webp:${intent.object_key}` });
+  expect(await inspectNfcRecoveryLocator(intent)).toEqual({status:"located",storagePath:`cloudinary:image:authenticated:v123:webp:${intent.object_key}`});
+});
+it.each([undefined, "", "../private", 123])("does not invent a missing or malformed provider ID", async asset_id => {
+  mocks.resource.mockResolvedValue({public_id:intent.object_key,resource_type:"image",type:"authenticated",format:"webp",version:123,asset_id});
+  expect(await inspectNfcProviderIdentity(intent)).toEqual({status:"identity_unavailable"});
+});
+it("does not present a deterministic Supabase path as provider identity", async () => {
+  const value={...intent,provider:"supabase",storage_prefix:"nfc-evidence",object_key:`nfc-evidence/${asset}.webp`};
+  mocks.destination.mockReturnValue(value);
+  expect(await inspectNfcProviderIdentity(value)).toEqual({status:"identity_unavailable"});
+  expect(mocks.resource).not.toHaveBeenCalled();
+});
+it("keeps account changes and unavailable identity reads distinct", async () => {
+  mocks.resource.mockRejectedValue({error:{http_code:503,message:"private"}});
+  expect(await inspectNfcProviderIdentity(intent)).toEqual({status:"provider_unavailable"});
+  mocks.destination.mockReturnValue({...intent,provider_account:"changed"});
+  expect(await inspectNfcProviderIdentity(intent)).toEqual({status:"namespace_changed"});
+});
 beforeEach(()=>{vi.resetAllMocks();mocks.destination.mockReturnValue({provider:intent.provider,provider_account:intent.provider_account,storage_prefix:intent.storage_prefix});
   mocks.env.mockReturnValue({CLOUDINARY_CLOUD_NAME:"test-cloud",CLOUDINARY_API_KEY:"test-key",CLOUDINARY_API_SECRET:"test-secret"});
   mocks.resource.mockResolvedValue({public_id:intent.object_key,resource_type:"image",type:"authenticated",format:"webp",version:123});});

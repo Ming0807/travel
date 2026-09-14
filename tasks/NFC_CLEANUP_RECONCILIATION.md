@@ -176,3 +176,13 @@ caller, route, deletion helper or scheduler is connected; real repository-to-
 PostgREST acceptance and the processor remain outstanding.
 Scoped ESLint and project `tsc --noEmit` pass for this adapter checkpoint. No
 production build was rerun for this internal, currently unreferenced module.
+
+The shared exact-key discovery adapter now also offers an internal provider
+identity observation. Cloudinary observations retain validated provider asset ID
+and version from the same account-pinned metadata response. Missing/malformed IDs
+and deterministic Supabase paths return `identity_unavailable`, never an invented
+identity. Existing public locator/recovery return shapes remain unchanged.
+Discovery and recovery processor suites pass 58 tests (7 new identity cases);
+Scoped ESLint and project TypeScript checks pass. This is not yet a persisted receipt, verified content,
+Supabase version discovery or deletion authorization. No provider was contacted
+by the mocked tests and no worker caller is enabled.
