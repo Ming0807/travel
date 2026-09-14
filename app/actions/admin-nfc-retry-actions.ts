@@ -1,5 +1,6 @@
 "use server";
 import { ZodError } from "zod";
+import { AdminAuthError } from "@/lib/auth/guards";
 import { requestNfcRecoveryRetry } from "@/lib/services/nfc-recovery-retry.service";
 
 const rejected = new Map([
@@ -21,6 +22,14 @@ export async function requestAdminNfcRecoveryRetryAction(input: unknown) {
       message: "ยังไม่เปิดการจัดคิวตรวจซ้ำโดยผู้ดูแล" };
     return { success: true as const, requestId: result.requestId };
   } catch (error) {
+    // The service checks session authority before validation or the scheduling RPC.
+    if (error instanceof AdminAuthError) return {
+      success: false as const, outcome: "rejected" as const,
+      code: error.code === "UNAUTHORIZED" ? "unauthorized" : "forbidden",
+      message: error.code === "UNAUTHORIZED"
+        ? "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่ แล้วตรวจประวัติคำขอก่อนดำเนินการต่อ"
+        : "บัญชีนี้ไม่มีสิทธิ์จัดคิวตรวจซ้ำ กรุณาติดต่อผู้ดูแลระบบ",
+    };
     const known = error instanceof ZodError ? rejected.get("NFC_RECOVERY_RETRY_INPUT_INVALID")
       : error instanceof Error ? rejected.get(error.message) : undefined;
     if (known) return { success: false as const, outcome: "rejected" as const, ...known };

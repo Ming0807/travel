@@ -15,7 +15,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 it("derives operator from the current guard and calls only the atomic RPC", async () => {
   expect(await requestNfcRecoveryRetry(input)).toEqual({ enabled: true, requestId: input.requestId });
-  expect(mocks.guard).toHaveBeenCalledWith("checkin_code.manage");
+  expect(mocks.guard).toHaveBeenCalledWith("checkin_code.manage", { unauthenticated: "throw" });
   expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("request_nfc_evidence_recovery_retry", { p_request_id: input.requestId,
     p_tag_id: input.tagId, p_asset_id: input.assetId, p_operator_id: operatorId, p_attempt_count: 2, p_reason: "provider_restored" });
 });

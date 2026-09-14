@@ -265,3 +265,9 @@ validation/policy rejection returns `success:false,outcome:rejected`; missing or
 unknown acknowledgement returns `outcome:uncertain`. Clients retain and replay
 the exact request rather than infer rollback. No raw provider/database error is
 returned. Scheduling, receipt, event and mutation audit commit atomically.
+The retry service requests `unauthenticated:throw` from the guard so an expired
+session is not swallowed as a redirect exception. A typed `AdminAuthError`
+becomes a bounded unauthorized/forbidden rejection before the RPC. An unrelated
+error carrying a similar string/code must not imply rollback. If a previous
+delivery was uncertain, authentication rejection of a later replay does not
+prove that the earlier delivery failed; the operator must inspect history.

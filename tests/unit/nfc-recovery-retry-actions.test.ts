@@ -2,8 +2,15 @@ import { beforeEach, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ retry: vi.fn() }));
 vi.mock("@/lib/services/nfc-recovery-retry.service", () => ({ requestNfcRecoveryRetry: mocks.retry }));
 import { requestAdminNfcRecoveryRetryAction } from "@/app/actions/admin-nfc-retry-actions";
+import { AdminAuthError } from "@/lib/auth/guards";
 const requestId = "40000000-0000-4000-8000-000000000001";
 beforeEach(() => vi.resetAllMocks());
+it.each(["UNAUTHORIZED", "FORBIDDEN", "ADMIN_INACTIVE"] as const)("reports known pre-mutation auth failure %s as rejection", async code => {
+  mocks.retry.mockRejectedValue(new AdminAuthError(code, "private auth detail"));
+  const result = await requestAdminNfcRecoveryRetryAction({});
+  expect(result).toMatchObject({ success: false, outcome: "rejected", code: code === "UNAUTHORIZED" ? "unauthorized" : "forbidden" });
+  expect(JSON.stringify(result)).not.toContain("private auth detail");
+});
 it("returns the committed request acknowledgement without claiming file recovery", async () => {
   mocks.retry.mockResolvedValue({ enabled: true, requestId });
   expect(await requestAdminNfcRecoveryRetryAction({ requestId })).toEqual({ success: true, requestId });

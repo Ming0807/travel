@@ -6,7 +6,7 @@ import { nfcRecoveryRetryInput } from "@/lib/validation/nfc-recovery-retry";
 
 // Permission-checked operator entry; both rollout gates remain disabled by default.
 export async function requestNfcRecoveryRetry(input: unknown) {
-  const { adminId } = await requirePermission("checkin_code.manage");
+  const { adminId } = await requirePermission("checkin_code.manage", { unauthenticated: "throw" });
   const value = nfcRecoveryRetryInput.parse(input);
   if (!nfcEvidenceRecoveryEnabled() || !nfcEvidenceOperatorRetryEnabled()) return { enabled: false as const };
   const requestId = await enqueueNfcRecoveryRetry({ ...value, operatorId: adminId });

@@ -19,10 +19,19 @@ staging remain open. No production SQL or flags were changed.
 
 ### Remaining Session Acceptance
 
-- Exercise an expired session before submission. The current service uses the
-  guard's default redirect path, while the action catches unknown errors as an
-  uncertain acknowledgement. Verify and correct this boundary so a known
-  pre-mutation auth failure does not trap the operator in an unhelpful retry loop.
+Local regression checkpoint: the new assertions first failed for all three
+typed auth outcomes and the guard option. After the fix, retry service/action/
+form suites pass 46 cases. The action suppresses private auth detail and never
+reclassifies an unknown delivery error as proof of rollback. Live session
+acceptance below remains required.
+Scoped ESLint, TypeScript and whitespace checks pass. No full production build
+was rerun for this narrow auth-error change; the prior retry-form build remains
+the latest full build evidence.
+
+- Exercise an expired session before submission on staging. The local boundary
+  now requests typed auth errors instead of redirect, and maps those errors to
+  a definite rejection. Unknown post-delivery errors remain uncertain. This
+  does not establish the outcome of any earlier uncertain request.
 - On private staging, verify the authenticated operator is server-derived and
   cannot be replaced by request payload fields; exercise inactive admin and
   revoked custom-role permission before an exact replay.
