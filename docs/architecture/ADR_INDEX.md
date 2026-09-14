@@ -22,6 +22,7 @@ ADRs document significant architectural decisions, the context that led to them,
 | [ADR-008](adr/ADR_008_PRIVACY_BY_DESIGN.md) | Privacy by Design | Accepted | 2025-01 |
 | [ADR-009](adr/ADR_009_STORAGE_PROVIDER_STRATEGY.md) | Storage Provider Strategy | Accepted | 2026-05 |
 | [ADR-010](adr/ADR_010_NFC_CANONICAL_ENTRY.md) | NFC Canonical Entry and Revocable Registry | Accepted; rollout gated | 2026-09-04 |
+| [ADR-013](adr/ADR_013_NFC_PROVIDER_DELETE_IDENTITY.md) | NFC Provider Delete Identity | Accepted boundary; implementation held | 2026-09-14 |
 
 ---
 

@@ -11,6 +11,12 @@ Do not connect this service to a scheduler or expose it to operators as safe cle
 
 ## Required Outcome
 
+Provider deletion boundary and SDK capability evidence are recorded in
+`docs/architecture/adr/ADR_013_NFC_PROVIDER_DELETE_IDENTITY.md`. In particular,
+Supabase's documented exact-version API is newer than the installed remove signature;
+Cloudinary immutable asset IDs are not yet retained by this platform. Build durable
+read-only provider observations before implementing destructive processing.
+
 Inspect existing registered evidence without mutation first. Separate retained
 report evidence, registered intent-bound evidence, pre-intent legacy evidence and
 existing cleanup tombstones. Inventory classification does not grant deletion.
