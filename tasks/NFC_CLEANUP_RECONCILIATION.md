@@ -136,7 +136,17 @@ A second PostgreSQL connection proves the reader is waiting on a row lock and
 then releases it after expiry; the read correctly rejects the expired token.
 The red run failed because the new claim RPC did not exist before implementation.
 
-W6.4 remains open: concurrent attachment/admission and concurrent-claimer stress
-coverage, append-only outcomes, repository/worker integration and provider-specific
+W6.4 remains open: broader concurrent-claimer stress coverage, append-only outcomes,
+repository/worker integration and provider-specific
 settlement/deletion preconditions are still required. No provider calls, production
 SQL, scheduler activation or file deletion occurred during this checkpoint.
+
+The follow-up replay uses two actual database connections and open transactions
+to verify both attachment/admission orderings. A report's uncommitted asset lock
+makes cleanup skip that asset and claim another. An uncommitted cleanup admission
+excludes a second claimer; an attachment waits, then rejects with
+`NFC_EVIDENCE_NOT_AVAILABLE` after admission commits. Assertions inspect stored
+rows as well as outcomes. No production SQL change was needed for these cases.
+The first harness run could not observe another session's wait under service_role;
+only the disposable test observer is reset to database owner to read activity.
+RPC claims still execute under service_role. Corrected replay passes 76 migrations.

@@ -81,6 +81,49 @@ export async function verifyNfcCleanupLeases(db, { tag, actor }) {
     await blocker.query("COMMIT");
     await rejected;
   } finally { await blocker.query("ROLLBACK").catch(() => undefined); await blocker.end(); }
+  await db.query("RESET ROLE");
+  // Isolate the new race fixtures from earlier retry scheduling.
+  await db.query("UPDATE public.nfc_evidence_cleanup_jobs SET next_attempt_at=clock_timestamp()+interval '1 day'");
+  const reportFirst = await fixture();
+  const cleanupFirst = await fixture();
+  const racer = new pg.Client({ host: connection.host, port: connection.port, user: connection.user,
+    database: connection.database, statement_timeout: 10000 });
+  await racer.connect();
+  try {
+    await racer.query("BEGIN");
+    await racer.query("INSERT INTO public.nfc_field_check_photos(request_id,asset_id,position) VALUES($1,$2,3)", [report, reportFirst]);
+    await db.query("SET ROLE service_role");
+    const nonblocked = (await db.query(claim, [1])).rows;
+    assert.equal(nonblocked.length, 1);
+    assert.equal(nonblocked[0].asset_id, cleanupFirst);
+    await racer.query("COMMIT");
+    assert.equal((await db.query("SELECT count(*)::int AS n FROM public.nfc_evidence_cleanup WHERE asset_id=$1", [reportFirst])).rows[0].n, 0);
+
+    await db.query("RESET ROLE");
+    const reserved = await fixture();
+    await racer.query("BEGIN; SET LOCAL ROLE service_role");
+    const reservedClaim = (await racer.query(claim, [1])).rows;
+    assert.equal(reservedClaim.length, 1); assert.equal(reservedClaim[0].asset_id, reserved);
+    // Observe lock waits as the disposable database owner, not service_role.
+    await racer.query("RESET ROLE");
+    // A competing claimer cannot see/claim the uncommitted admission.
+    await db.query("SET ROLE service_role");
+    assert.deepEqual((await db.query(claim, [1])).rows, []);
+    await db.query("RESET ROLE");
+    const outcome = db.query("INSERT INTO public.nfc_field_check_photos(request_id,asset_id,position) VALUES($1,$2,3)", [report, reserved])
+      .then(() => ({ accepted: true }), error => ({ accepted: false, message: error.message }));
+    let waiting = false;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      waiting = (await racer.query("SELECT wait_event_type='Lock' AS waiting FROM pg_stat_activity WHERE pid=$1", [db.processID])).rows[0]?.waiting;
+      if (waiting) break;
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    assert.equal(waiting, true);
+    await racer.query("COMMIT");
+    assert.deepEqual(await outcome, { accepted: false, message: "NFC_EVIDENCE_NOT_AVAILABLE" });
+    assert.equal((await db.query("SELECT count(*)::int AS n FROM public.nfc_field_check_photos WHERE asset_id=$1", [reserved])).rows[0].n, 0);
+  } finally { await racer.query("ROLLBACK").catch(() => undefined); await racer.end(); }
+  await db.query("SET ROLE service_role");
   await assert.rejects(db.query("SELECT public.claim_nfc_evidence_cleanup(1)"), /permission denied/);
   await assert.rejects(db.query("SELECT public.complete_nfc_evidence_cleanup($1)", [reclaimed.asset_id]), /permission denied/);
   assert.equal((await db.query("SELECT count(*)::int AS n FROM public.nfc_evidence_cleanup WHERE asset_id=ANY($1::uuid[]) AND deleted_at IS NOT NULL", [eligible])).rows[0].n, 0);
@@ -90,5 +133,5 @@ export async function verifyNfcCleanupLeases(db, { tag, actor }) {
     await assert.rejects(db.query(read, [third.asset_id, third.lease_token]), /permission denied/);
     await assert.rejects(db.query("SELECT * FROM public.nfc_evidence_cleanup_jobs"), /permission denied/);
   }
-  console.log("PASS held cleanup jobs: bound admission, report/legacy/recent exclusion, distinct leases, binding read, stale fencing including lock-wait expiry, backoff fairness, review and browser/legacy-RPC denial. No provider calls.");
+  console.log("PASS held cleanup jobs: bound admission, report/legacy/recent exclusion, distinct leases, binding read, stale fencing including lock-wait expiry, attachment/admission races in both orders, competing claim exclusion, backoff fairness, review and browser/legacy-RPC denial. No provider calls.");
 }
