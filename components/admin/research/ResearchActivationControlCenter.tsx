@@ -6,6 +6,7 @@ import {
   recordResearchPilotReviewAction,
 } from "@/app/actions/admin-research-actions";
 import type { AdminResearchStudyDetail } from "@/lib/repositories/admin-research.repository";
+import { ResearchEvidenceVersionFields } from "@/components/admin/research/ResearchEvidenceVersionFields";
 
 const EVIDENCE_LABELS = {
   expert_review: "ผู้เชี่ยวชาญตรวจเครื่องมือ",
@@ -31,6 +32,7 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
       latestByType.set(item.evidenceType, item);
     }
   });
+  const evidenceVersionKey = Object.keys(EVIDENCE_LABELS).map((type) => latestByType.get(type)?.versionNumber ?? 0).join(":");
   const canReviewPilot = detail.study.studyKind === "pilot" && ["paused", "closed"].includes(detail.study.status);
 
   return (
@@ -75,9 +77,8 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
           <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2 px-5 font-black"><ClipboardText aria-hidden="true" /> บันทึกหลักฐาน Expert review / Pretest / Mobile QA</summary>
           <form action={recordResearchActivationEvidenceAction} className="grid gap-4 border-t border-[var(--admin-border)] bg-slate-50 p-5 sm:grid-cols-2 xl:grid-cols-4">
             <input type="hidden" name="studyId" value={detail.study.researchStudyId} />
-            <label className="text-sm font-bold">ประเภทหลักฐาน<select name="evidenceType" className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{Object.entries(EVIDENCE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+            <ResearchEvidenceVersionFields key={`${detail.study.researchStudyId}:${detail.activationEvidence.length}:${evidenceVersionKey}`} labels={EVIDENCE_LABELS} evidence={detail.activationEvidence.map(({ evidenceType, versionNumber }) => ({ evidenceType, versionNumber }))} />
             <label className="text-sm font-bold">สถานะ<select name="status" defaultValue="passed" className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="passed">ผ่าน</option><option value="failed">ไม่ผ่าน</option><option value="not_required">ไม่จำเป็น (มีเหตุผลรองรับ)</option></select></label>
-            <label className="text-sm font-bold">รุ่นหลักฐาน<input type="number" name="versionNumber" min="1" defaultValue="1" required className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
             <label className="text-sm font-bold">วันที่หลักฐาน<input type="date" name="evidenceDate" required className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
             <label className="text-sm font-bold xl:col-span-2">เลขอ้างอิง/ตำแหน่งไฟล์<input name="reference" required maxLength={500} className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
             <label className="text-sm font-bold">จำนวนผู้ทดสอบ<input type="number" name="participantCount" min="0" max="10000" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>

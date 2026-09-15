@@ -61,6 +61,29 @@ Move the implemented Phase 18 research foundation into a controlled Yala pilot w
 Detailed tasks 21.9a-e and release criteria are in
 `docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md`.
 
+#### 2026-09-15: Evidence Entry Follow-up (21.9c, Partial)
+
+- The draft-Pilot evidence form proposes the highest recorded version plus one
+  separately for expert review, cognitive pretest, and mobile QA. A type with no
+  records starts at one. This replaces the unconditional version-one default,
+  which conflicts with the existing study/type/version unique constraint.
+- Staff can edit the proposed number. Type switching preserves manual entries;
+  clearing a number remains an invalid required field rather than accepting a
+  hidden default. A refreshed ledger or different study starts a fresh entry.
+- The interactive fields receive only evidence type/version pairs and labels.
+  References, summaries, and participant metrics are not added to their props.
+- This is a proposal from the loaded snapshot, not a version reservation.
+  Concurrent submissions still rely on the existing database unique constraint.
+  Permissions, audit logging, draft-only gates, and immutable freeze are unchanged.
+- No approval, test outcome, date, participant count, or freeze manifest is
+  generated. Other guided-workflow and real-device acceptance tasks remain open.
+- Verification: six interactive-field tests plus eleven existing admin research
+  validation tests passed on Node 22 (17 total); scoped ESLint and full-project
+  `tsc --noEmit` passed. Initial Vitest worker startup timed out before running
+  tests; the completed run used one threads worker without weakening assertions.
+  Authenticated browser/mobile acceptance and a fresh production build were not
+  run for this checkpoint; this is not a full Phase 21 release sign-off.
+
 ## Exit Gate
 
 Final collection begins only after the instrument/version freeze and required ethics/administrative approval are documented. Declining research must never block the normal tourist reward flow.
