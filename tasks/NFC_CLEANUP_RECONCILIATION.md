@@ -186,3 +186,15 @@ Discovery and recovery processor suites pass 58 tests (7 new identity cases);
 Scoped ESLint and project TypeScript checks pass. This is not yet a persisted receipt, verified content,
 Supabase version discovery or deletion authorization. No provider was contacted
 by the mocked tests and no worker caller is enabled.
+
+The internal inspection claim entry now authenticates the machine before checking
+its independent default-off `NFC_EVIDENCE_INSPECTION_WORKER_ENABLED` flag. It claims
+one job just in time. Recovery/legacy cleanup flags cannot activate this entry.
+This is read-only with respect to providers, not PostgreSQL: claiming mutates the
+queue and reserves evidence. No route, scheduler or provider processor is wired.
+The worker and repository suites pass 32 tests, including invalid/missing machine
+credentials, disabled/malformed flags, one-item claims and propagated failures.
+September 15 verification note: scoped ESLint and project TypeScript processes
+were stopped after prolonged execution without a result on the slow local host.
+Neither check is recorded as passing for this entry-point change. Repeat them
+before release; no route, flag, migration or scheduler was activated.

@@ -197,11 +197,19 @@ the schedule. This is not a consent/response deletion job.
 
 ## NFC Installation Photo Rollout
 
-`NFC_EVIDENCE_CLEANUP_ENABLED=false` by default. Only literal `true` permits the
-server-only cleanup processor, which also requires `checkin_code.manage`.
-No route or cron currently calls it. Keep disabled until the cleanup migration,
-private-provider staging and orphan reconciliation have been accepted. This flag
-is independent of upload enablement and must never use a `NEXT_PUBLIC_` prefix.
+`NFC_EVIDENCE_CLEANUP_ENABLED=false` is the legacy cleanup flag. Keep it disabled;
+the held September 14 lease migration revokes its asset-only claim/completion RPCs.
+No route or cron calls the legacy processor and it must not be reconnected.
+
+`NFC_EVIDENCE_INSPECTION_WORKER_ENABLED=false` is a separate server-only flag for
+the new internal inspection claim entry. Unset/empty/`false` disables it; only
+literal `true` opts in and other values fail closed. Authentication using the
+configured `CRON_SECRET` occurs before flag evaluation or queue access. It claims
+one job and returns private lease metadata only to internal machine callers.
+This is not provider-read-only at the database layer: claiming admits tombstones
+and leases, so do not enable it before acceptance. No route/scheduler is connected.
+It does not grant deletion authority and is independent of recovery, upload and
+legacy cleanup flags. Never use a `NEXT_PUBLIC_` prefix for these flags.
 
 `NFC_EVIDENCE_UPLOAD_ENABLED=false` by default (unset/empty also disabled); only
 literal `true` enables `/api/admin/nfc/evidence` POST and GET. Do not enable it yet.
