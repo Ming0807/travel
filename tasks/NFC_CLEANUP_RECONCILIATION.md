@@ -198,3 +198,10 @@ September 15 verification note: scoped ESLint and project TypeScript processes
 were stopped after prolonged execution without a result on the slow local host.
 Neither check is recorded as passing for this entry-point change. Repeat them
 before release; no route, flag, migration or scheduler was activated.
+
+September 15 follow-up: the same scoped ESLint command was rerun alone and
+completed successfully, followed by a full project `tsc --noEmit` which also
+completed successfully. No compiler exclusions, lint rules or source scope were
+changed to obtain these results. This closes the two interrupted local checks
+for commit `65c4034`, not the provider/staging/release gates. Disk free space was
+approximately 13 GB on C and 203 GB on D; the cause of host slowness is unproven.
