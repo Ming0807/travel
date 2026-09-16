@@ -103,6 +103,18 @@ Detailed tasks 21.9a-e and release criteria are in
   total, including 44.33s I/O reads and 2.81s checking. No exclusions or compiler
   checks were weakened. Browser QA and production build remain release gates.
 
+### Approval Input Follow-up
+
+- Approval actions reject missing/unknown ethics and analysis enums instead of
+  converting them into an ethics exemption or descriptive-associational approval.
+  A pending ethics state is not a recorded exemption.
+- Draft forms without an existing decision show required empty selections;
+  existing explicit decisions remain prefilled. The evidence confirmation and
+  permission-checked service remain mandatory. No stored approval is rewritten.
+- Verification: 30 action/schema tests passed, scoped ESLint passed, and the
+  full-project TypeScript check passed (6,150 files, 46.30s). Authenticated
+  browser QA and a fresh production build remain outstanding for this checkpoint.
+
 ## Exit Gate
 
 Final collection begins only after the instrument/version freeze and required ethics/administrative approval are documented. Declining research must never block the normal tourist reward flow.

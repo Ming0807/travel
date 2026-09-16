@@ -20,7 +20,7 @@ import {
   transitionAdminResearchStudy,
 } from "@/lib/services/admin-research.service";
 import type { ResearchStudyStatus } from "@/lib/repositories/admin-research.repository";
-import { adminResearchActivationEvidenceSchema } from "@/lib/validation/admin-research";
+import { adminResearchActivationEvidenceSchema, adminResearchApprovalSchema } from "@/lib/validation/admin-research";
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -154,7 +154,8 @@ export async function recordResearchApprovalAction(formData: FormData) {
   let result = "approval_recorded";
   try {
     if (formData.get("confirmRecordedEvidence") !== "true") throw new Error("CONFIRM_REQUIRED");
-    const ethicsReviewStatus = text(formData, "ethicsReviewStatus") === "approved" ? "approved" as const : "not_required" as const;
+    const ethicsReviewStatus = adminResearchApprovalSchema.shape.ethicsReviewStatus.parse(text(formData, "ethicsReviewStatus"));
+    const analysisWording = adminResearchApprovalSchema.shape.analysisWording.parse(text(formData, "analysisWording"));
     await recordAdminResearchApproval({
       studyId,
       advisorApprovedAt: dayToIso(text(formData, "advisorApprovedAt")) ?? "",
@@ -165,9 +166,7 @@ export async function recordResearchApprovalAction(formData: FormData) {
       approvedGeographicBoundary: text(formData, "approvedGeographicBoundary"),
       approvedObjectives: text(formData, "approvedObjectives").split(/\r?\n/).map((value) => value.trim()).filter(Boolean),
       approvedResearchQuestions: text(formData, "approvedResearchQuestions").split(/\r?\n/).map((value) => value.trim()).filter(Boolean),
-      analysisWording: (["exploratory", "confirmatory"] as const).includes(text(formData, "analysisWording") as "exploratory" | "confirmatory")
-        ? text(formData, "analysisWording") as "exploratory" | "confirmatory"
-        : "descriptive_associational",
+      analysisWording,
       confirmRecordedEvidence: true,
     });
   } catch {
