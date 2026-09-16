@@ -84,6 +84,25 @@ Detailed tasks 21.9a-e and release criteria are in
   Authenticated browser/mobile acceptance and a fresh production build were not
   run for this checkpoint; this is not a full Phase 21 release sign-off.
 
+### 2026-09-16: Explicit Evidence Outcomes
+
+- Reject missing or unrecognized evidence types/statuses in the server action
+  using the existing schema enums. Previously the action silently converted them
+  to `expert_review` / `passed`, before the service could validate the original
+  value. Legitimate explicit outcomes still use the same permission-checked
+  service and audit path.
+- The evidence form now starts with a required empty status selection; staff
+  choose the real outcome. No existing evidence rows or activation gates change.
+- Regression coverage exercises invalid status/type, all three allowed outcomes,
+  and sanitized service failures. This does not replace authenticated browser QA.
+- Checkpoint verification: 20 action/schema tests passed using Node environment
+  (these tests do not require a DOM); scoped ESLint passed. The default jsdom
+  worker timed out before executing schema tests. Full-project TypeScript was
+  intentionally stopped after prolonged execution without a result. A subsequent
+  full-project `tsc --noEmit --extendedDiagnostics` passed: 6,149 files, 84.41s
+  total, including 44.33s I/O reads and 2.81s checking. No exclusions or compiler
+  checks were weakened. Browser QA and production build remain release gates.
+
 ## Exit Gate
 
 Final collection begins only after the instrument/version freeze and required ethics/administrative approval are documented. Declining research must never block the normal tourist reward flow.

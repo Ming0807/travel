@@ -20,6 +20,7 @@ import {
   transitionAdminResearchStudy,
 } from "@/lib/services/admin-research.service";
 import type { ResearchStudyStatus } from "@/lib/repositories/admin-research.repository";
+import { adminResearchActivationEvidenceSchema } from "@/lib/validation/admin-research";
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -80,10 +81,8 @@ export async function recordResearchActivationEvidenceAction(formData: FormData)
   const studyId = text(formData, "studyId");
   let result = "activation_evidence_recorded";
   try {
-    const rawType = text(formData, "evidenceType");
-    const evidenceType = rawType === "cognitive_pretest" || rawType === "mobile_flow_qa" ? rawType : "expert_review";
-    const rawStatus = text(formData, "status");
-    const status = rawStatus === "failed" || rawStatus === "not_required" ? rawStatus : "passed";
+    const evidenceType = adminResearchActivationEvidenceSchema.shape.evidenceType.parse(text(formData, "evidenceType"));
+    const status = adminResearchActivationEvidenceSchema.shape.status.parse(text(formData, "status"));
     await recordAdminResearchActivationEvidence({
       studyId,
       evidenceType,
