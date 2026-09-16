@@ -84,7 +84,7 @@ describe("/api/admin/export/research", () => {
     const response = await GET(request("?studyId=11111111-1111-4111-8111-111111111111&dataset=participants&format=xlsx"));
 
     expect(response.status).toBe(200);
-    expect(mocks.requirePermission).toHaveBeenCalledWith("research.export");
+    expect(mocks.requirePermission).toHaveBeenCalledWith("research.export", { unauthenticated: "throw" });
     expect(mocks.logAuditAction).toHaveBeenCalledWith(
       expect.objectContaining({
         actor,
@@ -105,6 +105,23 @@ describe("/api/admin/export/research", () => {
     expect(mocks.logAuditAction).toHaveBeenCalledWith(
       expect.objectContaining({ action: "export.research.invalid_filters", result: "failed" }),
     );
+  });
+
+  it("returns JSON 401 rather than swallowing an unauthenticated redirect", async () => {
+    const { GET } = await loadRoute();
+    const { AdminAuthError } = await import("@/lib/auth/guards");
+    mocks.requirePermission.mockImplementationOnce(async (_permission, options) => {
+      if (options?.unauthenticated !== "throw") throw new Error("NEXT_REDIRECT");
+      throw new AdminAuthError("UNAUTHORIZED", "Please sign in to continue.");
+    });
+    const response = await GET(request());
+    expect(response.status).toBe(401);
+    expect(response.headers.get("content-type")).toContain("application/json");
+    expect(mocks.loadDeidentifiedResearchExport).not.toHaveBeenCalled();
+    expect(mocks.createExportResponse).not.toHaveBeenCalled();
+    expect(mocks.logAuditAction).toHaveBeenCalledWith(expect.objectContaining({
+      action: "export.research.denied", result: "denied", metadata: { code: "UNAUTHORIZED" },
+    }));
   });
 
   it("audits privacy-threshold rejection without exposing row data", async () => {

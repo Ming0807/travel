@@ -115,6 +115,25 @@ Detailed tasks 21.9a-e and release criteria are in
   full-project TypeScript check passed (6,150 files, 46.30s). Authenticated
   browser QA and a fresh production build remain outstanding for this checkpoint.
 
+### Production Build and Anonymous Runtime Check
+
+- The Node 22 production build passed after the evidence/approval changes,
+  including TypeScript and 66 generated static pages. This closes the build gate
+  noted in the preceding checkpoints, not the authenticated/mobile QA gates.
+- Running the built application exposed a real export bug: an anonymous request
+  to `/api/admin/export/research` caught `NEXT_REDIRECT` and returned 500. The API
+  now explicitly requests the guard's unauthenticated-throw mode, preserving its
+  JSON 401 response and denial audit instead of using page navigation behavior.
+- A regression test reproduced the 500 before the fix. Twelve export-route and
+  privacy tests passed afterward, scoped ESLint passed, and a fresh production
+  build passed again with TypeScript and 66 generated static pages.
+- Anonymous HTTP requests against `next start` on loopback then verified 307
+  login redirects for the research index/detail and JSON 401 for the export API.
+  The temporary server was stopped. No participant records or approvals were
+  created; normal request-denial audit logging remained enabled.
+- These are HTTP authorization checks, not visual screenshots, authenticated
+  permission coverage, or a full participant-flow acceptance test.
+
 ## Exit Gate
 
 Final collection begins only after the instrument/version freeze and required ethics/administrative approval are documented. Declining research must never block the normal tourist reward flow.

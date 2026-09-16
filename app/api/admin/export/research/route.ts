@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   let exportContext: { studyId: string; dataset: string } | null = null;
 
   try {
-    const guard = await requirePermission("research.export");
+    const guard = await requirePermission("research.export", { unauthenticated: "throw" });
     actor = guard.actor;
     const parsed = adminResearchExportFiltersSchema.safeParse({
       studyId: request.nextUrl.searchParams.get("studyId"),
