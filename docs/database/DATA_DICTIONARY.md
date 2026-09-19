@@ -2113,3 +2113,6 @@ The cursor must be the last displayed row, not the lookahead. Composite
 `idx_nfc_evidence_assets_tag_cursor` supports tag/cursor scanning.
 Service-role execution only; callers still require application manage permission.
 Acknowledged reflects an existing cleanup record, not provider absence proof.
+### Ban Na Tham pilot catalog scope
+
+Migration `20260919001000_scope_na_tham_pilot_catalog.sql` archives public catalog records outside the confirmed Ban Na Tham pilot area. It also deactivates related QR/NFC entry configuration and routes that contain archived stops. Historical visits, surveys, certificates, stamps, and funnel events are retained for auditability and remain available only through explicitly selected internal evidence scopes.
