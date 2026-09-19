@@ -28,6 +28,11 @@ const statusOptions = [
   { value: "false", label: "Draft" },
 ];
 
+const lifecycleOptions = [
+  { value: "true", label: "กำลังใช้งาน" },
+  { value: "false", label: "เก็บถาวร" },
+];
+
 export default async function AdminRoutesPage({
   searchParams,
 }: {
@@ -36,7 +41,9 @@ export default async function AdminRoutesPage({
   await requirePermission("route.read");
   const raw = await searchParams;
   const parsed = adminRouteFiltersSchema.safeParse(raw);
-  const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
+  const filters = parsed.success
+    ? { ...parsed.data, isActive: parsed.data.isActive ?? true }
+    : { page: 1, pageSize: 20, isActive: true };
   const { items, total, page, pageSize } = await listAdminRoutes(filters);
 
   return (
@@ -61,6 +68,12 @@ export default async function AdminRoutesPage({
             label="สถานะ"
             paramKey="isPublished"
             options={statusOptions}
+          />
+          <FilterSelect
+            label="การใช้งาน"
+            paramKey="isActive"
+            options={lifecycleOptions}
+            allLabel="กำลังใช้งาน"
           />
         </FilterBar>
       }
@@ -95,6 +108,7 @@ export default async function AdminRoutesPage({
                     <td className="px-4 py-3 text-right">
                       <RouteStatusActions
                         routeId={route.route_id}
+                        routeName={route.name_th}
                         isPublished={route.is_published}
                         isActive={route.is_active}
                       />
@@ -139,6 +153,7 @@ export default async function AdminRoutesPage({
                   <div className="flex items-center justify-end border-t border-slate-100 pt-4">
                     <RouteStatusActions
                       routeId={route.route_id}
+                      routeName={route.name_th}
                       isPublished={route.is_published}
                       isActive={route.is_active}
                     />

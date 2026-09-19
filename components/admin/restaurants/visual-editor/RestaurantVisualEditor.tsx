@@ -10,6 +10,7 @@ import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.rep
 import type { AdminSelectOption } from "@/components/admin/restaurants/RestaurantForm";
 import Image from "next/image";
 import type { AdminRestaurantCategory } from "@/lib/repositories/admin-restaurant-category.repository";
+import type { NearbyAttractionOption } from "@/components/admin/restaurants/NearbyAttractionPicker";
 
 type EditorSection = "header" | "content" | "location" | "settings" | "cover" | null;
 
@@ -17,6 +18,8 @@ interface RestaurantVisualEditorProps {
   restaurant: AdminRestaurantRow;
   provinces: AdminSelectOption[];
   categories: AdminRestaurantCategory[];
+  nearbyAttractions?: NearbyAttractionOption[];
+  selectedAttractionIds?: number[];
   coverMediaId?: number | null;
   coverMediaUrl?: string | null;
 }
@@ -37,6 +40,8 @@ export function RestaurantVisualEditor({
   restaurant,
   provinces,
   categories,
+  nearbyAttractions = [],
+  selectedAttractionIds = [],
   coverMediaId: initialCoverMediaId,
   coverMediaUrl: initialCoverMediaUrl,
 }: RestaurantVisualEditorProps) {
@@ -278,6 +283,8 @@ export function RestaurantVisualEditor({
           restaurant={restaurant}
           provinces={provinces}
           categories={categories}
+          nearbyAttractions={nearbyAttractions}
+          selectedAttractionIds={selectedAttractionIds}
           onClose={() => setActiveSection(null)}
         />
       </Drawer>

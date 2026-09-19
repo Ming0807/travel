@@ -176,7 +176,7 @@ describe("Phase 22 attraction evidence scope", () => {
       })),
     ];
 
-    const result = buildAttractionChannelAnalytics(entries, visits, "field_claim", true, "2026-09-03T00:00:00Z");
+    const result = buildAttractionChannelAnalytics(entries, visits, "all_records", true, "2026-09-03T00:00:00Z");
 
     expect(result.status).toBe("ready");
     expect(result.entries).toBeNull();
@@ -201,7 +201,7 @@ describe("Phase 22 attraction evidence scope", () => {
   });
 
   it("excludes pilot and simulated records from default field claims", () => {
-    expect(visitMatchesEvidenceScope({}, "field_claim")).toBe(true);
+    expect(visitMatchesEvidenceScope({}, "field_claim")).toBe(false);
     expect(visitMatchesEvidenceScope(researchVisit("pilot", "field_observation"), "field_claim")).toBe(false);
     expect(visitMatchesEvidenceScope(researchVisit("final_collection", "simulated_usability"), "field_claim")).toBe(false);
     expect(visitMatchesEvidenceScope(researchVisit("final_collection", "field_observation"), "field_claim")).toBe(true);
@@ -310,7 +310,7 @@ describe("Phase 22 attraction evidence scope", () => {
       attractionTypeId: 7,
       dateFrom: "2026-08-01",
       dateTo: "2026-08-31",
-      evidenceScope: "field_claim",
+      evidenceScope: "all_records",
     });
 
     expect(result.status).toBe("ready");
@@ -342,7 +342,7 @@ describe("Phase 22 attraction evidence scope", () => {
       attractionTypeId: 7,
       dateFrom: "2026-08-01",
       dateTo: "2026-08-31",
-      evidenceScope: "field_claim",
+      evidenceScope: "all_records",
     });
 
     expect(result.peers[0].overallSatisfaction).toEqual({ value: null, sampleSize: 6, suppressed: true });

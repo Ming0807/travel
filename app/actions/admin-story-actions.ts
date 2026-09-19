@@ -249,6 +249,37 @@ export async function changeStoryStatusAction(storyId: number, newStatus: string
   }
 }
 
+export async function archiveStoryAction(storyId: number): Promise<ActionResult> {
+  try {
+    const guard = await requirePermission("story.delete");
+    const current = await getAdminStoryById(storyId);
+    if (!current) return { success: false, error: "ไม่พบบทความนี้ อาจถูกลบหรือย้ายแล้ว" };
+
+    await updateAdminStoryStatus(storyId, {
+      status: "archived",
+      is_published: false,
+    });
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "travel_story.archive",
+      entityType: "travel_story",
+      entityId: storyId,
+      oldValues: {
+        status: current.status,
+        is_published: current.is_published,
+      },
+      newValues: { status: "archived", is_published: false },
+    });
+
+    revalidatePath("/admin/stories");
+    revalidatePublicStoryContent(current.slug);
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    return { success: false, error: "ยังลบบทความออกจากระบบไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
 export async function searchStoryRecommendationCandidatesAction(
   input: unknown
 ): Promise<ActionResult<StoryRecommendationCandidate[]>> {

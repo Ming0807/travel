@@ -475,7 +475,7 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
       expenseCoverage: visits.length > 0 ? round((new Set(expenses.map((expense) => stringValue(expense.visit_id))).size / visits.length) * 100) : null,
       smallCellThreshold: ATTRACTION_SMALL_CELL_THRESHOLD,
       scopeNote: parsed.data.evidenceScope === "field_claim"
-        ? "รวม Operational visits และ final field_observation; ตัด pilot_internal, simulated_usability และ Pilot study ออกจากข้อสรุปหลัก"
+        ? "นับเฉพาะ field_observation ที่จำแนกแล้ว; ตัดข้อมูลเดิมที่ยังไม่จำแนก pilot_internal, simulated_usability และ Pilot study ออกจากข้อสรุปหลัก"
         : "ขอบเขตนี้เปิดเพื่อการตรวจสอบภายใน ห้ามใช้แทนข้อสรุปภาคสนามโดยไม่ระบุ collection mode",
     },
     peerComparison,

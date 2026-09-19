@@ -31,6 +31,11 @@ const statusOptions = [
   { value: "false", label: "Draft" },
 ];
 
+const lifecycleOptions = [
+  { value: "true", label: "กำลังใช้งาน" },
+  { value: "false", label: "เก็บถาวร" },
+];
+
 export default async function AdminAccommodationsPage({
   searchParams,
 }: {
@@ -39,7 +44,9 @@ export default async function AdminAccommodationsPage({
   await requirePermission("attraction.read");
   const raw = await searchParams;
   const parsed = adminAccommodationFiltersSchema.safeParse(raw);
-  const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
+  const filters = parsed.success
+    ? { ...parsed.data, isActive: parsed.data.isActive ?? true }
+    : { page: 1, pageSize: 20, isActive: true };
   const { items, total, page, pageSize } = await listAdminAccommodations(filters);
 
   return (
@@ -64,6 +71,12 @@ export default async function AdminAccommodationsPage({
             label="สถานะ"
             paramKey="isPublished"
             options={statusOptions}
+          />
+          <FilterSelect
+            label="การใช้งาน"
+            paramKey="isActive"
+            options={lifecycleOptions}
+            allLabel="กำลังใช้งาน"
           />
         </FilterBar>
       }
@@ -114,6 +127,7 @@ export default async function AdminAccommodationsPage({
               <td className="px-4 py-3">
                 <AccommodationStatusActions
                   accommodationId={accommodation.accommodation_id}
+                  accommodationName={accommodation.name_th}
                   isPublished={accommodation.is_published}
                   isActive={accommodation.is_active}
                 />
@@ -171,6 +185,7 @@ export default async function AdminAccommodationsPage({
             <div className="flex items-center justify-end border-t border-slate-100 pt-4">
               <AccommodationStatusActions
                 accommodationId={accommodation.accommodation_id}
+                accommodationName={accommodation.name_th}
                 isPublished={accommodation.is_published}
                 isActive={accommodation.is_active}
               />

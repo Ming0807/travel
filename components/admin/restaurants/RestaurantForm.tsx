@@ -11,6 +11,10 @@ import { Image, List } from "@phosphor-icons/react";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import { RestaurantCategoryPicker } from "@/components/admin/restaurants/RestaurantCategoryPicker";
 import type { AdminRestaurantCategory } from "@/lib/repositories/admin-restaurant-category.repository";
+import {
+  NearbyAttractionPicker,
+  type NearbyAttractionOption,
+} from "@/components/admin/restaurants/NearbyAttractionPicker";
 
 export type AdminSelectOption = {
   id: number;
@@ -21,6 +25,8 @@ type RestaurantFormProps = {
   restaurant?: AdminRestaurantRow | null;
   provinces: AdminSelectOption[];
   categories: AdminRestaurantCategory[];
+  nearbyAttractions?: NearbyAttractionOption[];
+  selectedAttractionIds?: number[];
   submitLabel?: string;
 };
 
@@ -40,12 +46,15 @@ const FIELD_LABELS = {
   coverImageUrl: "รูปภาพปก",
   coverMediaId: "รูปภาพปก",
   categoryIds: "หมวดหมู่ร้านอาหาร",
+  nearbyAttractionIds: "สถานที่ท่องเที่ยวใกล้เคียง",
 };
 
 export function RestaurantForm({
   restaurant,
   provinces,
   categories,
+  nearbyAttractions = [],
+  selectedAttractionIds = [],
   submitLabel = "บันทึกข้อมูล"
 }: RestaurantFormProps) {
   const router = useRouter();
@@ -202,6 +211,14 @@ export function RestaurantForm({
                 {coverSelectionError ? <p role="alert" className="mt-2 text-sm font-semibold text-rose-600">{coverSelectionError}</p> : null}
               </label>
             </div>
+          </AdminFormSection>
+
+          <AdminFormSection title="เชื่อมโยงสถานที่">
+            <NearbyAttractionPicker
+              attractions={nearbyAttractions}
+              selectedAttractionIds={selectedAttractionIds}
+              error={fe("nearbyAttractionIds")}
+            />
           </AdminFormSection>
         </div>
       </div>

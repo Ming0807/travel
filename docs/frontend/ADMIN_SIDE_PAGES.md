@@ -180,6 +180,29 @@ Dashboard sections remain aggregate analysis surfaces. Travel behavior, expense,
 
 Raw device tokens, provider identities, private storage paths, and unrestricted direct identifiers must never appear on these pages.
 
+## Safe Content Archiving
+
+Attractions, restaurants, accommodations, routes, and stories use a reversible
+`ลบออกจากระบบ` command. The command requires confirmation and archives the
+record instead of physically deleting it. Archived destination content is
+unpublished and removed from public pages and new relationship pickers, while
+visits, QR/NFC events, surveys, certificates, reviews, and analytics remain
+unchanged. Admin lists open on active content and expose an explicit archived
+filter for review and restoration.
+
+Restaurant Add/Edit includes a nearby-attraction picker sourced only from active
+pilot attractions. It supports up to 12 selections. Saving the setting updates
+the restaurant-to-attraction and attraction-to-restaurant views atomically, so
+both public detail pages present the same curated relationship set. Saving a
+different editor drawer does not clear the saved relationships.
+
+The default dashboard scope also requires the attraction to remain active and
+published, and requires explicit `field_observation` evidence. Archiving an
+attraction therefore removes its visits, funnel events, surveys, certificates,
+and expense rows from the advisor-facing dashboard without deleting history.
+Unclassified legacy/test records remain available only through the explicitly
+labelled internal `all_records` scope.
+
 ## Tourist Records
 
 The tourist list is an operational, privacy-aware view of profiles created through the check-in flow.

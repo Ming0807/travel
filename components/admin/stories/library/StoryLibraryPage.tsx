@@ -248,7 +248,7 @@ export async function StoryLibraryPage({
                 ) : null}
                 <td className="px-4 py-3"><StatusBadge label={status.label} tone={status.tone} /></td>
                 <td className="px-4 py-3 text-right">
-                  <StoryStatusActions storyId={story.story_id} mode={mode} />
+                  <StoryStatusActions storyId={story.story_id} storyTitle={story.title} status={story.status} mode={mode} />
                 </td>
               </tr>
             );
@@ -275,7 +275,7 @@ export async function StoryLibraryPage({
                 <div className="text-xs text-slate-500">
                   {isEditorial ? <StatusBadge label={readiness.label} tone={readiness.tone} /> : formatAdminDate(story.created_at)}
                 </div>
-                <StoryStatusActions storyId={story.story_id} mode={mode} />
+                <StoryStatusActions storyId={story.story_id} storyTitle={story.title} status={story.status} mode={mode} />
               </div>
             </article>
           );

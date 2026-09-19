@@ -50,7 +50,8 @@ export const adminRestaurantFiltersSchema = adminPaginationSchema.extend({
     (value) => (typeof value === "string" && value.trim() !== "" ? value.trim().toLowerCase() : undefined),
     z.string().max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional()
   ),
-  isPublished: optionalBooleanQuery
+  isPublished: optionalBooleanQuery,
+  isActive: optionalBooleanQuery,
 });
 
 const categoryIds = z.preprocess(
@@ -58,6 +59,13 @@ const categoryIds = z.preprocess(
     ? []
     : Array.isArray(value) ? value : [value],
   z.array(z.coerce.number().int().positive()).max(12),
+).transform((values) => Array.from(new Set(values)));
+
+const nearbyAttractionIds = z.preprocess(
+  (value) => value === undefined || value === null || value === ""
+    ? []
+    : Array.isArray(value) ? value : [value],
+  z.array(z.coerce.number().int().positive()).max(12, "เลือกสถานที่ใกล้เคียงได้สูงสุด 12 แห่ง"),
 ).transform((values) => Array.from(new Set(values)));
 
 export const adminRestaurantMutationSchema = z.object({
@@ -74,6 +82,7 @@ export const adminRestaurantMutationSchema = z.object({
   descriptionEn: optionalText,
   foodType: optionalShortText,
   categoryIds,
+  nearbyAttractionIds,
   latitude: optionalCoordinate(-90, 90),
   longitude: optionalCoordinate(-180, 180),
   addressText: optionalText,
@@ -96,6 +105,7 @@ export function restaurantMutationFormValues(formData: FormData) {
   return {
     ...Object.fromEntries(formData),
     categoryIds: formData.getAll("categoryIds"),
+    nearbyAttractionIds: formData.getAll("nearbyAttractionIds"),
   };
 }
 

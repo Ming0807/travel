@@ -18,8 +18,9 @@ describe("dashboard evidence scope", () => {
     }
     expect(visitMatchesDashboardEvidenceScope({ checkin_entry_sessions: [{ evidence_scope: "field_observation" }] }, "field_claim")).toBe(true);
   });
-  it("keeps unlinked operational visits in field claims and excludes pilot/simulated visits", () => {
-    expect(visitMatchesDashboardEvidenceScope(visit(), "field_claim")).toBe(true);
+  it("requires explicit field evidence and excludes unclassified, pilot, and simulated visits", () => {
+    expect(visitMatchesDashboardEvidenceScope(visit(), "field_claim")).toBe(false);
+    expect(visitMatchesDashboardEvidenceScope({ checkin_entry_sessions: [{ evidence_scope: "operational_unclassified" }] }, "field_claim")).toBe(false);
     expect(visitMatchesDashboardEvidenceScope(visit("field_observation", "final_collection"), "field_claim")).toBe(true);
     expect(visitMatchesDashboardEvidenceScope(visit("pilot_internal", "pilot"), "field_claim")).toBe(false);
     expect(visitMatchesDashboardEvidenceScope(visit("simulated_usability", "pilot"), "field_claim")).toBe(false);

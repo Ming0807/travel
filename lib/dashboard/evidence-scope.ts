@@ -38,9 +38,9 @@ export function visitMatchesDashboardEvidenceScope(row: Row, scope: DashboardEvi
     return sessions.some((session) => session.collection_mode === "simulated_usability");
   }
 
-  // Existing operational visits without a research session remain valid field
-  // records. Explicit pilot and simulated sessions are excluded from field claims.
-  if (sessions.length === 0) return true;
+  // Field reporting is strict: unclassified legacy/test rows remain available
+  // only through all_records and must never be presented as field evidence.
+  if (sessions.length === 0) return false;
   return sessions.some((session) => studyKind(session) === "final_collection" && session.collection_mode === "field_observation");
 }
 
@@ -48,7 +48,7 @@ export function entryMatchesDashboardEvidenceScope(row: Row, scope: DashboardEvi
   if (scope === "all_records") return true;
   if (scope === "pilot_only") return row.evidence_scope === "pilot_internal";
   if (scope === "simulated_only") return row.evidence_scope === "simulated_usability";
-  return row.evidence_scope === "field_observation" || row.evidence_scope === "operational_unclassified";
+  return row.evidence_scope === "field_observation";
 }
 
 export function filterVisitsByDashboardEvidenceScope<T extends Row>(rows: T[], scope: DashboardEvidenceScope): T[] {

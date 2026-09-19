@@ -1818,6 +1818,16 @@ Migration `20260812000000_create_restaurant_categories.sql` replaces free-text r
 
 Restaurant create/update RPCs call `sync_restaurant_categories(bigint, bigint[], boolean)` inside the same transaction. They reject inactive or unknown categories and prevent a published restaurant from having no active category. `set_restaurant_category_active(...)` also prevents archiving the final active category of a published restaurant. Category usage and public navigation counts are aggregated by database functions rather than loading all assignments into application memory. Mutation execution is limited to `service_role`.
 
+Migration `20260919000000_sync_restaurant_attractions.sql` adds
+`sync_restaurant_attractions(bigint, bigint[])`. It deduplicates at most 12
+ordered active attraction IDs, validates the complete request before mutation,
+and replaces both `restaurant_attractions` and
+`attraction_related_restaurants` in one transaction. The companion create and
+update RPCs combine restaurant fields, category assignments, and nearby
+attractions into one atomic database statement. Execution is restricted to
+`service_role`; public readers continue to require active, published content in
+the live destination scope.
+
 ---
 
 ## 47. Attraction Related Content Intelligence

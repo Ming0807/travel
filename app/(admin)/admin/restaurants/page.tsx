@@ -32,6 +32,11 @@ const statusOptions = [
   { value: "false", label: "Draft" },
 ];
 
+const lifecycleOptions = [
+  { value: "true", label: "กำลังใช้งาน" },
+  { value: "false", label: "เก็บถาวร" },
+];
+
 export default async function AdminRestaurantsPage({
   searchParams,
 }: {
@@ -40,7 +45,9 @@ export default async function AdminRestaurantsPage({
   await requirePermission("restaurant.read");
   const raw = await searchParams;
   const parsed = adminRestaurantFiltersSchema.safeParse(raw);
-  const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
+  const filters = parsed.success
+    ? { ...parsed.data, isActive: parsed.data.isActive ?? true }
+    : { page: 1, pageSize: 20, isActive: true };
   const [{ items, total, page, pageSize }, categories] = await Promise.all([
     listAdminRestaurants(filters),
     listAdminRestaurantCategories({ activeOnly: true }),
@@ -75,6 +82,12 @@ export default async function AdminRestaurantsPage({
             label="สถานะ"
             paramKey="isPublished"
             options={statusOptions}
+          />
+          <FilterSelect
+            label="การใช้งาน"
+            paramKey="isActive"
+            options={lifecycleOptions}
+            allLabel="กำลังใช้งาน"
           />
           <FilterSelect
             label="หมวดหมู่"
@@ -129,6 +142,7 @@ export default async function AdminRestaurantsPage({
                     <td className="px-4 py-3">
                       <RestaurantStatusActions
                         restaurantId={restaurant.restaurant_id}
+                        restaurantName={restaurant.name_th}
                         isPublished={restaurant.is_published}
                         isActive={restaurant.is_active}
                       />
@@ -184,6 +198,7 @@ export default async function AdminRestaurantsPage({
                   <div className="mt-2 flex items-center justify-end border-t border-slate-100 pt-4">
                     <RestaurantStatusActions
                       restaurantId={restaurant.restaurant_id}
+                      restaurantName={restaurant.name_th}
                       isPublished={restaurant.is_published}
                       isActive={restaurant.is_active}
                     />

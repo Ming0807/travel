@@ -161,7 +161,7 @@ export async function getDashboardReferenceOptions(): Promise<DashboardReference
     await Promise.all([
       supabase.from("provinces").select("province_id, province_name_th, province_name_en").eq("is_active", true).order("province_name_en"),
       supabase.from("districts").select("district_id, district_name_th, district_name_en").eq("is_active", true).order("district_name_th"),
-      supabase.from("attractions").select("attraction_id, name_th, name_en").order("name_th").limit(500),
+      supabase.from("attractions").select("attraction_id, name_th, name_en").eq("is_active", true).eq("is_published", true).order("name_th").limit(500),
       supabase.from("attraction_types").select("attraction_type_id, type_name_th, type_name_en").eq("is_active", true).order("display_order"),
       supabase.from("countries").select("country_id, country_name_th, country_name_en").eq("is_active", true).order("country_name_en"),
       supabase.from("age_groups").select("label").eq("is_active", true).order("display_order"),
@@ -235,6 +235,8 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
           province_id,
           district_id,
           attraction_type_id,
+          is_active,
+          is_published,
           provinces (province_name_th, province_name_en),
           districts (district_name_th, district_name_en),
           attraction_types!attractions_attraction_type_id_fkey (type_name_th, type_name_en)
@@ -252,6 +254,8 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
   let visitsQuery = supabase.from("visits").select(visitSelection)
     .gte("visit_date", filters.dateFrom)
     .lte("visit_date", filters.dateTo)
+    .eq("attractions.is_active", true)
+    .eq("attractions.is_published", true)
     .limit(DASHBOARD_ROW_LIMIT);
 
   if (filters.attractionId) visitsQuery = visitsQuery.eq("attraction_id", filters.attractionId);
@@ -276,12 +280,14 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
           attraction_id,
           tourist_id,
           tourists!inner (origin_country_id, origin_province_id, age_group),
-          attractions!inner (attraction_id, name_th, name_en, province_id, district_id, attraction_type_id)
+          attractions!inner (attraction_id, name_th, name_en, province_id, district_id, attraction_type_id, is_active, is_published)
         )
       `
     )
     .gte("visits.visit_date", filters.dateFrom)
     .lte("visits.visit_date", filters.dateTo)
+    .eq("visits.attractions.is_active", true)
+    .eq("visits.attractions.is_published", true)
     .limit(DASHBOARD_ROW_LIMIT);
 
   let stampsQuery = supabase
@@ -298,11 +304,13 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
           tourist_id,
           tourists!inner (origin_country_id, origin_province_id, age_group)
         ),
-        attractions!inner (attraction_id, name_th, name_en, province_id, district_id, attraction_type_id)
+        attractions!inner (attraction_id, name_th, name_en, province_id, district_id, attraction_type_id, is_active, is_published)
       `
     )
     .gte("earned_at", `${filters.dateFrom}T00:00:00.000Z`)
     .lte("earned_at", `${filters.dateTo}T23:59:59.999Z`)
+    .eq("attractions.is_active", true)
+    .eq("attractions.is_published", true)
     .limit(DASHBOARD_ROW_LIMIT);
 
   let surveysQuery = supabase
@@ -327,12 +335,14 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
           attraction_id,
           tourist_id,
           tourists!inner (origin_country_id, origin_province_id, age_group),
-          attractions!inner (attraction_id, name_th, name_en, province_id, district_id, attraction_type_id, provinces (province_name_th, province_name_en))
+          attractions!inner (attraction_id, name_th, name_en, province_id, district_id, attraction_type_id, is_active, is_published, provinces (province_name_th, province_name_en))
         )
       `
     )
     .gte("visits.visit_date", filters.dateFrom)
     .lte("visits.visit_date", filters.dateTo)
+    .eq("visits.attractions.is_active", true)
+    .eq("visits.attractions.is_published", true)
     .limit(DASHBOARD_ROW_LIMIT);
 
   if (filters.satisfactionMin) surveysQuery = surveysQuery.gte("overall_score", filters.satisfactionMin);
@@ -354,12 +364,14 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
           attraction_id,
           tourist_id,
           tourists!inner (origin_country_id, origin_province_id, age_group),
-          attractions!inner (attraction_id, name_th, name_en, province_id, district_id, attraction_type_id)
+          attractions!inner (attraction_id, name_th, name_en, province_id, district_id, attraction_type_id, is_active, is_published)
         )
       `
     )
     .gte("visits.visit_date", filters.dateFrom)
     .lte("visits.visit_date", filters.dateTo)
+    .eq("visits.attractions.is_active", true)
+    .eq("visits.attractions.is_published", true)
     .limit(DASHBOARD_ROW_LIMIT);
 
   const funnelQuery = supabase
@@ -372,15 +384,17 @@ export async function getDashboardRepositoryPayload(filters: DashboardFilters, a
         event_time,
         checkin_code_id,
         metadata,
-        checkin_codes (
+        checkin_codes!inner (
           attraction_id,
           photo_spot_id,
-          attractions (attraction_id, province_id, district_id, attraction_type_id)
+          attractions!inner (attraction_id, province_id, district_id, attraction_type_id, is_active, is_published)
         )
       `
     )
     .gte("event_time", `${filters.dateFrom}T00:00:00.000Z`)
     .lte("event_time", `${filters.dateTo}T23:59:59.999Z`)
+    .eq("checkin_codes.attractions.is_active", true)
+    .eq("checkin_codes.attractions.is_published", true)
     .limit(DASHBOARD_ROW_LIMIT);
 
   if (filters.attractionId) {

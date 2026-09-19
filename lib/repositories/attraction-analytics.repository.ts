@@ -38,7 +38,7 @@ export async function listAttractionAnalyticsOptions(): Promise<AttractionAnalyt
   const liveProvinceIds = await listLiveDestinationProvinceIds();
   if (liveProvinceIds.length === 0) return [];
   const supabase = createSupabaseServiceRoleClient();
-  const { data, error } = await supabase.from("attractions").select("attraction_id, name_th").eq("is_active", true).in("province_id", liveProvinceIds).order("name_th").limit(500);
+  const { data, error } = await supabase.from("attractions").select("attraction_id, name_th").eq("is_active", true).eq("is_published", true).in("province_id", liveProvinceIds).order("name_th").limit(500);
   if (error) throw new Error("ATTRACTION_ANALYTICS_OPTIONS_FAILED");
   return (data ?? []).map((raw) => {
     const row = asRecord(raw);
@@ -53,8 +53,8 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
   if (liveProvinceIds.length === 0) return null;
   const supabase = createSupabaseServiceRoleClient();
   const [{ data: attractionData, error: attractionError }, { data: attractionOptions, error: optionsError }, { data: codeData, error: codeError }] = await Promise.all([
-    supabase.from("attractions").select("attraction_id, name_th, province_id, attraction_type_id, districts(district_name_th), attraction_types!attractions_attraction_type_id_fkey(type_name_th)").eq("attraction_id", filters.attractionId).in("province_id", liveProvinceIds).maybeSingle(),
-    supabase.from("attractions").select("attraction_id, name_th").eq("is_active", true).in("province_id", liveProvinceIds).order("name_th").limit(500),
+    supabase.from("attractions").select("attraction_id, name_th, province_id, attraction_type_id, districts(district_name_th), attraction_types!attractions_attraction_type_id_fkey(type_name_th)").eq("attraction_id", filters.attractionId).eq("is_active", true).eq("is_published", true).in("province_id", liveProvinceIds).maybeSingle(),
+    supabase.from("attractions").select("attraction_id, name_th").eq("is_active", true).eq("is_published", true).in("province_id", liveProvinceIds).order("name_th").limit(500),
     supabase.from("checkin_codes").select("checkin_code_id, code, label, campaign_id").eq("attraction_id", filters.attractionId).order("code").limit(500),
   ]);
   if (attractionError || optionsError || codeError) throw new Error("ATTRACTION_ANALYTICS_REFERENCE_FAILED");
@@ -110,7 +110,7 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
   const peerSelection: string = `
           visit_id, tourist_id, attraction_id,
           ${channelTrackingEnabled ? "checkin_entry_sessions(evidence_scope)," : ""}
-          attractions!inner(attraction_id, name_th, province_id, attraction_type_id, is_active),
+          attractions!inner(attraction_id, name_th, province_id, attraction_type_id, is_active, is_published),
           visit_photos(photo_id), certificates(certificate_id), tourist_stamps(stamp_id, status),
           visit_expenses(expense_categories(name_th), spending_ranges(range_label_th)),
           satisfaction_surveys(overall_score, safety_score, cleanliness_score, accessibility_score, information_score, value_score, revisit_intention, recommend_intention),
@@ -119,7 +119,7 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
   const [{ data: visitData, error: visitError }, peerResult] = await Promise.all([
     visitQuery,
     allowedCodeIds === null && !filters.entryChannel && selectedAttractionTypeId
-      ? supabase.from("visits").select(peerSelection).eq("attractions.province_id", selectedProvinceId).eq("attractions.attraction_type_id", selectedAttractionTypeId).eq("attractions.is_active", true).gte("visit_date", filters.dateFrom).lte("visit_date", filters.dateTo).limit(ATTRACTION_ANALYTICS_VISIT_LIMIT + 1)
+      ? supabase.from("visits").select(peerSelection).eq("attractions.province_id", selectedProvinceId).eq("attractions.attraction_type_id", selectedAttractionTypeId).eq("attractions.is_active", true).eq("attractions.is_published", true).gte("visit_date", filters.dateFrom).lte("visit_date", filters.dateTo).limit(ATTRACTION_ANALYTICS_VISIT_LIMIT + 1)
       : Promise.resolve({ data: [], error: null }),
   ]);
   if (visitError) throw new Error("ATTRACTION_ANALYTICS_VISITS_FAILED");

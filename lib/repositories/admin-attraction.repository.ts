@@ -660,12 +660,14 @@ export async function getAdminDistricts() {
   return data;
 }
 
-export async function getAdminAttractionsList() {
+export async function getAdminAttractionsList(options: { activeOnly?: boolean } = { activeOnly: true }) {
   const supabase = createSupabaseServiceRoleClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("attractions")
     .select("attraction_id, name_th, is_active, is_published")
     .order("name_th");
+  if (options.activeOnly !== false) query = query.eq("is_active", true);
+  const { data, error } = await query;
   if (error) throw new Error("ADMIN_ATTRACTIONS_LIST_FAILED");
   return data || [];
 }

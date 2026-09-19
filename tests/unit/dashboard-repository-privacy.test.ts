@@ -4,6 +4,7 @@ vi.mock("server-only", () => ({}));
 
 const queryState = vi.hoisted(() => ({
   selections: [] as Array<{ table: string; columns: string }>,
+  equalityFilters: [] as Array<{ table: string; column: string; value: unknown }>,
 }));
 const entryConfig = vi.hoisted(() => ({ sessionsEnabled: false }));
 vi.mock("@/lib/config/checkin-entry", () => ({ getCheckinEntryConfig: () => entryConfig }));
@@ -14,7 +15,10 @@ function createQuery(table: string) {
       queryState.selections.push({ table, columns });
       return query;
     }),
-    eq: vi.fn(() => query),
+    eq: vi.fn((column: string, value: unknown) => {
+      queryState.equalityFilters.push({ table, column, value });
+      return query;
+    }),
     gte: vi.fn(() => query),
     lte: vi.fn(() => query),
     order: vi.fn(() => query),
@@ -38,6 +42,7 @@ import { getDashboardRepositoryPayload } from "@/lib/repositories/dashboard.repo
 describe("dashboard repository privacy", () => {
   beforeEach(() => {
     queryState.selections = [];
+    queryState.equalityFilters = [];
     entryConfig.sessionsEnabled = false;
   });
 
@@ -62,5 +67,17 @@ describe("dashboard repository privacy", () => {
     const selection = queryState.selections.find((row) => row.table === "visits")?.columns;
     expect(selection).toContain("checkin_entry_sessions(evidence_scope,entry_channel)");
     expect(selection).not.toContain("browser_hash");
+  });
+
+  it("limits the default dashboard to active published pilot attractions", async () => {
+    await getDashboardRepositoryPayload({ dateFrom: "2026-08-01", dateTo: "2026-08-05" }, "executive");
+
+    expect(queryState.equalityFilters).toEqual(expect.arrayContaining([
+      { table: "visits", column: "attractions.is_active", value: true },
+      { table: "visits", column: "attractions.is_published", value: true },
+      { table: "certificates", column: "visits.attractions.is_active", value: true },
+      { table: "satisfaction_surveys", column: "visits.attractions.is_active", value: true },
+      { table: "funnel_events", column: "checkin_codes.attractions.is_active", value: true },
+    ]));
   });
 });

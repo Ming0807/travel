@@ -40,6 +40,20 @@ function restaurantMutationError<TData = unknown>(error: unknown, fallback: stri
       fieldErrors: { categoryIds: ["กรุณาเลือกหมวดหมู่ที่เปิดใช้งาน"] },
     };
   }
+  if (code === "RESTAURANT_ATTRACTION_LIMIT_EXCEEDED") {
+    return {
+      success: false,
+      error: "เลือกสถานที่ท่องเที่ยวใกล้เคียงได้สูงสุด 12 แห่ง",
+      fieldErrors: { nearbyAttractionIds: ["กรุณาลดจำนวนสถานที่ให้เหลือไม่เกิน 12 แห่ง"] },
+    };
+  }
+  if (code === "RESTAURANT_ATTRACTION_INVALID") {
+    return {
+      success: false,
+      error: "มีสถานที่ท่องเที่ยวที่ถูกเก็บถาวรหรือไม่มีอยู่ในระบบ",
+      fieldErrors: { nearbyAttractionIds: ["กรุณาเลือกเฉพาะสถานที่ที่กำลังใช้งาน"] },
+    };
+  }
   return { success: false, error: fallback };
 }
 
@@ -62,7 +76,8 @@ export async function createRestaurantAction(_prevState: ActionResult<{ id: numb
       return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
-    const created = await createAdminRestaurant(parsed.data);
+    const syncNearbyAttractions = formData.get("syncNearbyAttractions") === "true";
+    const created = await createAdminRestaurant(parsed.data, { syncNearbyAttractions });
 
     // Link cover media if provided
     const coverStoragePath = formData.get("coverStoragePath");
@@ -104,7 +119,8 @@ export async function updateRestaurantAction(restaurantId: number, _prevState: A
     const old = await getAdminRestaurantById(restaurantId);
     if (!old) return { success: false, error: "ไม่พบร้านอาหารนี้ อาจถูกลบหรือย้ายแล้ว" };
 
-    const updated = await updateAdminRestaurant(restaurantId, parsed.data);
+    const syncNearbyAttractions = formData.get("syncNearbyAttractions") === "true";
+    const updated = await updateAdminRestaurant(restaurantId, parsed.data, { syncNearbyAttractions });
 
     const coverMediaAction = formData.get("coverMediaAction");
 
@@ -181,5 +197,34 @@ export async function toggleRestaurantActiveAction(restaurantId: number): Promis
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังเปลี่ยนสถานะใช้งานไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
+export async function archiveRestaurantAction(restaurantId: number): Promise<ActionResult> {
+  try {
+    const guard = await requirePermission("restaurant.delete");
+    const current = await getAdminRestaurantById(restaurantId);
+    if (!current) return { success: false, error: "ไม่พบร้านอาหารนี้ อาจถูกลบหรือย้ายแล้ว" };
+
+    await updateAdminRestaurantStatus(restaurantId, {
+      is_active: false,
+      is_published: false,
+    });
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "restaurant.archive",
+      entityType: "restaurant",
+      entityId: restaurantId,
+      oldValues: {
+        is_active: current.is_active,
+        is_published: current.is_published,
+      },
+      newValues: { is_active: false, is_published: false },
+    });
+
+    revalidateRestaurantPaths(restaurantId);
+    return { success: true };
+  } catch (error) {
+    return restaurantMutationError(error, "ยังลบร้านอาหารออกจากระบบไม่ได้ กรุณาลองอีกครั้ง");
   }
 }

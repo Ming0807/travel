@@ -29,11 +29,13 @@ export async function readExecutiveEntryCohort(filters: DashboardFiltersInput) {
     if (pages++ >= MAX_PAGES) return blocked("incomplete");
     let query = supabase.from("checkin_entry_sessions").select(`
       entry_session_id,entry_channel,evidence_scope,visit_id,created_at,
-      attractions!inner(attraction_id,province_id,district_id,attraction_type_id),
+      attractions!inner(attraction_id,province_id,district_id,attraction_type_id,is_active,is_published),
       visits(visit_id,created_at,certificates(certificate_id,generated_at),satisfaction_surveys(survey_id,submitted_at))
     `, { count: "exact" })
       .gte("created_at",bounds.fromInclusive).lt("created_at",bounds.toExclusive)
       .lte("created_at",asOf)
+      .eq("attractions.is_active", true)
+      .eq("attractions.is_published", true)
       .order("created_at",{ ascending: true }).order("entry_session_id",{ ascending: true });
     if (filters.attractionId !== undefined) query = query.eq("attraction_id_snapshot",filters.attractionId);
     if (filters.provinceId !== undefined) query = query.eq("attractions.province_id",filters.provinceId);

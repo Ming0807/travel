@@ -165,6 +165,7 @@ export async function listAdminRestaurants(filters: AdminRestaurantFilters): Pro
   if (filters.foodType) query = query.ilike("food_type", `%${escapeAdminRestaurantIlike(filters.foodType)}%`);
   if (categoryRestaurantIds) query = query.in("restaurant_id", categoryRestaurantIds);
   if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
+  if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
 
   const { data, error, count } = await query;
 
@@ -237,13 +238,56 @@ export async function findRestaurantBySlug(slug: string, excludeRestaurantId?: n
   return data ? Number(data.restaurant_id) : null;
 }
 
-export async function createAdminRestaurant(input: AdminRestaurantMutationInput): Promise<AdminRestaurantRow> {
-  await assertLiveDestinationProvinceId(input.provinceId);
+export async function listAdminRestaurantAttractionIds(restaurantId: number): Promise<number[]> {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
-    .rpc("create_restaurant_with_categories", {
+    .from("restaurant_attractions")
+    .select("attraction_id, display_order")
+    .eq("restaurant_id", restaurantId)
+    .order("display_order", { ascending: true });
+
+  if (error) throw new Error("ADMIN_RESTAURANT_ATTRACTIONS_READ_FAILED");
+  return (data ?? [])
+    .map((row) => Number(row.attraction_id))
+    .filter((id) => Number.isSafeInteger(id) && id > 0);
+}
+
+export async function syncAdminRestaurantAttractions(
+  restaurantId: number,
+  attractionIds: number[],
+): Promise<void> {
+  const supabase = createSupabaseServiceRoleClient();
+  const uniqueIds = Array.from(new Set(attractionIds));
+  const { error } = await supabase.rpc("sync_restaurant_attractions", {
+    p_restaurant_id: restaurantId,
+    p_attraction_ids: uniqueIds,
+  });
+
+  if (!error) return;
+  const message = typeof error.message === "string" ? error.message : "";
+  if (message.includes("RESTAURANT_ATTRACTION_LIMIT_EXCEEDED")) {
+    throw new Error("RESTAURANT_ATTRACTION_LIMIT_EXCEEDED");
+  }
+  if (message.includes("RESTAURANT_ATTRACTION_INVALID")) {
+    throw new Error("RESTAURANT_ATTRACTION_INVALID");
+  }
+  throw new Error("ADMIN_RESTAURANT_ATTRACTIONS_SYNC_FAILED");
+}
+
+export async function createAdminRestaurant(
+  input: AdminRestaurantMutationInput,
+  options: { syncNearbyAttractions?: boolean } = {},
+): Promise<AdminRestaurantRow> {
+  await assertLiveDestinationProvinceId(input.provinceId);
+  const supabase = createSupabaseServiceRoleClient();
+  const rpcName = options.syncNearbyAttractions
+    ? "create_restaurant_with_categories_and_attractions"
+    : "create_restaurant_with_categories";
+  const { data, error } = await supabase
+    .rpc(rpcName, {
       p_payload: toPayload(input),
       p_category_ids: input.categoryIds,
+      ...(options.syncNearbyAttractions ? { p_attraction_ids: input.nearbyAttractionIds } : {}),
       p_is_published: input.isPublished,
     });
 
@@ -252,6 +296,8 @@ export async function createAdminRestaurant(input: AdminRestaurantMutationInput)
     if (error.code === "23505") throw new Error("DUPLICATE_SLUG");
     if (message.includes("RESTAURANT_CATEGORY_REQUIRED")) throw new Error("RESTAURANT_CATEGORY_REQUIRED");
     if (message.includes("RESTAURANT_CATEGORY_INVALID")) throw new Error("RESTAURANT_CATEGORY_INVALID");
+    if (message.includes("RESTAURANT_ATTRACTION_LIMIT_EXCEEDED")) throw new Error("RESTAURANT_ATTRACTION_LIMIT_EXCEEDED");
+    if (message.includes("RESTAURANT_ATTRACTION_INVALID")) throw new Error("RESTAURANT_ATTRACTION_INVALID");
     throw new Error("ADMIN_RESTAURANT_CREATE_FAILED");
   }
 
@@ -261,13 +307,21 @@ export async function createAdminRestaurant(input: AdminRestaurantMutationInput)
   return created;
 }
 
-export async function updateAdminRestaurant(restaurantId: number, input: AdminRestaurantMutationInput): Promise<AdminRestaurantRow> {
+export async function updateAdminRestaurant(
+  restaurantId: number,
+  input: AdminRestaurantMutationInput,
+  options: { syncNearbyAttractions?: boolean } = {},
+): Promise<AdminRestaurantRow> {
   await assertLiveDestinationProvinceId(input.provinceId);
   const supabase = createSupabaseServiceRoleClient();
-  const { error } = await supabase.rpc("update_restaurant_with_categories", {
+  const rpcName = options.syncNearbyAttractions
+    ? "update_restaurant_with_categories_and_attractions"
+    : "update_restaurant_with_categories";
+  const { error } = await supabase.rpc(rpcName, {
     p_restaurant_id: restaurantId,
     p_payload: toPayload(input),
     p_category_ids: input.categoryIds,
+    ...(options.syncNearbyAttractions ? { p_attraction_ids: input.nearbyAttractionIds } : {}),
     p_is_published: input.isPublished,
   });
 
@@ -276,6 +330,8 @@ export async function updateAdminRestaurant(restaurantId: number, input: AdminRe
     if (error.code === "23505") throw new Error("DUPLICATE_SLUG");
     if (message.includes("RESTAURANT_CATEGORY_REQUIRED")) throw new Error("RESTAURANT_CATEGORY_REQUIRED");
     if (message.includes("RESTAURANT_CATEGORY_INVALID")) throw new Error("RESTAURANT_CATEGORY_INVALID");
+    if (message.includes("RESTAURANT_ATTRACTION_LIMIT_EXCEEDED")) throw new Error("RESTAURANT_ATTRACTION_LIMIT_EXCEEDED");
+    if (message.includes("RESTAURANT_ATTRACTION_INVALID")) throw new Error("RESTAURANT_ATTRACTION_INVALID");
     throw new Error("ADMIN_RESTAURANT_UPDATE_FAILED");
   }
 

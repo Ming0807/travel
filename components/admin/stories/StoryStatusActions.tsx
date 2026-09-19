@@ -1,14 +1,19 @@
 import { ArrowRight, Image as ImageIcon, PencilSimple } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import type { StoryLibraryMode } from "@/lib/content/story-library";
+import { CmsArchiveButton } from "@/components/admin/content/CmsArchiveButton";
 
 interface StoryStatusActionsProps {
   storyId: number;
+  storyTitle: string;
+  status: string;
   mode?: StoryLibraryMode;
 }
 
 export function StoryStatusActions({
   storyId,
+  storyTitle,
+  status,
   mode = "editorial",
 }: StoryStatusActionsProps) {
   return (
@@ -36,6 +41,9 @@ export function StoryStatusActions({
           <><PencilSimple size={18} weight="bold" /><span className="sr-only">แก้ไขบทความ</span></>
         )}
       </Link>
+      {status !== "archived" ? (
+        <CmsArchiveButton entityId={storyId} entityName={storyTitle} entityType="story" />
+      ) : null}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { RestaurantForm } from "@/components/admin/restaurants/RestaurantForm";
 import { requirePermission } from "@/lib/auth/guards";
 import { listLiveDestinationProvinces } from "@/lib/repositories/destination-scope.repository";
 import { listAdminRestaurantCategories } from "@/lib/repositories/admin-restaurant-category.repository";
+import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
 
 export const metadata: Metadata = {
   title: "New Restaurant | Admin",
@@ -13,9 +14,10 @@ export const metadata: Metadata = {
 export default async function NewAdminRestaurantPage() {
   await requirePermission("restaurant.create");
 
-  const [provinces, categories] = await Promise.all([
+  const [provinces, categories, attractions] = await Promise.all([
     listLiveDestinationProvinces(),
     listAdminRestaurantCategories({ activeOnly: true }),
+    getAdminAttractionsList(),
   ]);
 
   return (
@@ -31,6 +33,11 @@ export default async function NewAdminRestaurantPage() {
           <RestaurantForm 
             provinces={provinces.map(p => ({ id: p.provinceId, label: p.nameTh }))}
             categories={categories}
+            nearbyAttractions={attractions.map((attraction) => ({
+              id: Number(attraction.attraction_id),
+              label: attraction.name_th,
+              isPublished: attraction.is_published === true,
+            }))}
           />
         </div>
       </div>

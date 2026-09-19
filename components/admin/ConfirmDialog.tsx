@@ -11,6 +11,7 @@ type ConfirmDialogProps = {
   title: string;
   message: string;
   detail?: string;
+  error?: string | null;
   confirmLabel?: string;
   cancelLabel?: string;
   tone?: "danger" | "warning" | "info";
@@ -39,6 +40,7 @@ export function ConfirmDialog({
   title,
   message,
   detail,
+  error,
   confirmLabel = "ยืนยัน",
   cancelLabel = "ยกเลิก",
   tone = "danger",
@@ -121,6 +123,11 @@ export function ConfirmDialog({
         <p id={messageId} className="mt-2 text-sm leading-6 text-slate-600">{message}</p>
         {detail ? (
           <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
+        ) : null}
+        {error ? (
+          <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">
+            {error}
+          </p>
         ) : null}
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

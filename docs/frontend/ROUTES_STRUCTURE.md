@@ -226,6 +226,13 @@ that are currently live. Hero media uses the managed full image with responsive
 sizes, while related cards prefer managed thumbnails. Failed media renders an
 honest Thai fallback.
 
+Admin Restaurant Add/Edit curates these relationships from active attractions
+only. Archived attractions remain resolvable by historical visit and survey
+filters but are excluded from new QR points, route stops, and hospitality
+relationships. Public directories and detail pages always require both active
+and published records, so archiving content removes it without rewriting past
+research or operational evidence.
+
 Contact actions are conditional. Phone links require a valid telephone value,
 website links require HTTPS, and map links require valid coordinates. The
 public pages do not invent booking, availability, amenities, or contact actions

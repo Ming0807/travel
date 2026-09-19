@@ -7,14 +7,16 @@ import {
   toggleAccommodationPublishAction,
   toggleAccommodationActiveAction,
 } from "@/app/actions/admin-accommodation-actions";
+import { CmsArchiveButton } from "@/components/admin/content/CmsArchiveButton";
 
 type Props = {
   accommodationId: number;
+  accommodationName: string;
   isPublished: boolean;
   isActive: boolean;
 };
 
-export function AccommodationStatusActions({ accommodationId, isPublished, isActive }: Props) {
+export function AccommodationStatusActions({ accommodationId, accommodationName, isPublished, isActive }: Props) {
   const router = useRouter();
 
   const handlePublishToggle = async () => {
@@ -61,6 +63,13 @@ export function AccommodationStatusActions({ accommodationId, isPublished, isAct
       >
         {isActive ? <CheckCircle size={16} weight="fill" aria-hidden="true" /> : <XCircle size={16} weight="fill" aria-hidden="true" />}
       </button>
+      {isActive ? (
+        <CmsArchiveButton
+          entityId={accommodationId}
+          entityName={accommodationName}
+          entityType="accommodation"
+        />
+      ) : null}
     </div>
   );
 }

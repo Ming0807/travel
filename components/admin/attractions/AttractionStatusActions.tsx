@@ -7,15 +7,18 @@ import {
   toggleAttractionPublishAction,
   toggleAttractionActiveAction,
 } from "@/app/actions/admin-attraction-actions";
+import { CmsArchiveButton } from "@/components/admin/content/CmsArchiveButton";
 
 interface AttractionStatusActionsProps {
   attractionId: number;
+  attractionName: string;
   isPublished: boolean;
   isActive: boolean;
 }
 
 export function AttractionStatusActions({
   attractionId,
+  attractionName,
   isPublished,
   isActive,
 }: AttractionStatusActionsProps) {
@@ -91,6 +94,13 @@ export function AttractionStatusActions({
       >
         <Power size={16} weight="bold" aria-hidden="true" />
       </button>
+      {isActive ? (
+        <CmsArchiveButton
+          entityId={attractionId}
+          entityName={attractionName}
+          entityType="attraction"
+        />
+      ) : null}
     </div>
   );
 }

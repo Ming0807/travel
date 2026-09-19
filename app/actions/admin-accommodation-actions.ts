@@ -164,3 +164,33 @@ export async function toggleAccommodationActiveAction(accommodationId: number): 
     return { success: false, error: "ยังเปลี่ยนสถานะใช้งานไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
+
+export async function archiveAccommodationAction(accommodationId: number): Promise<ActionResult> {
+  try {
+    const guard = await requirePermission("attraction.delete");
+    const current = await getAdminAccommodationById(accommodationId);
+    if (!current) return { success: false, error: "ไม่พบที่พักนี้ อาจถูกลบหรือย้ายแล้ว" };
+
+    await updateAdminAccommodationStatus(accommodationId, {
+      is_active: false,
+      is_published: false,
+    });
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "accommodation.archive",
+      entityType: "accommodation",
+      entityId: accommodationId,
+      oldValues: {
+        is_active: current.is_active,
+        is_published: current.is_published,
+      },
+      newValues: { is_active: false, is_published: false },
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    return { success: false, error: "ยังลบที่พักออกจากระบบไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}

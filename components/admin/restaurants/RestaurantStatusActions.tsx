@@ -8,14 +8,16 @@ import {
   toggleRestaurantPublishAction,
   toggleRestaurantActiveAction,
 } from "@/app/actions/admin-restaurant-actions";
+import { CmsArchiveButton } from "@/components/admin/content/CmsArchiveButton";
 
 type RestaurantStatusActionsProps = {
   restaurantId: number;
+  restaurantName: string;
   isPublished: boolean;
   isActive: boolean;
 };
 
-export function RestaurantStatusActions({ restaurantId, isPublished, isActive }: RestaurantStatusActionsProps) {
+export function RestaurantStatusActions({ restaurantId, restaurantName, isPublished, isActive }: RestaurantStatusActionsProps) {
   const router = useRouter();
 
   const handlePublishToggle = async () => {
@@ -62,6 +64,13 @@ export function RestaurantStatusActions({ restaurantId, isPublished, isActive }:
       >
         {isActive ? <CheckCircle size={16} weight="fill" aria-hidden="true" /> : <XCircle size={16} weight="fill" aria-hidden="true" />}
       </button>
+      {isActive ? (
+        <CmsArchiveButton
+          entityId={restaurantId}
+          entityName={restaurantName}
+          entityType="restaurant"
+        />
+      ) : null}
     </div>
   );
 }

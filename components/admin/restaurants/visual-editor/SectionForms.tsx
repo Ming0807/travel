@@ -10,12 +10,18 @@ import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import type { AdminSelectOption } from "@/components/admin/restaurants/RestaurantForm";
 import { RestaurantCategoryPicker } from "@/components/admin/restaurants/RestaurantCategoryPicker";
 import type { AdminRestaurantCategory } from "@/lib/repositories/admin-restaurant-category.repository";
+import {
+  NearbyAttractionPicker,
+  type NearbyAttractionOption,
+} from "@/components/admin/restaurants/NearbyAttractionPicker";
 
 type SectionFormProps = {
   restaurant: AdminRestaurantRow;
   onClose: () => void;
   provinces?: AdminSelectOption[];
   categories?: AdminRestaurantCategory[];
+  nearbyAttractions?: NearbyAttractionOption[];
+  selectedAttractionIds?: number[];
   coverMediaId?: number | null;
   coverMediaUrl?: string | null;
   onCoverChange?: (mediaId: number | null, mediaUrl: string | null) => void;
@@ -296,7 +302,14 @@ export function LocationForm({ restaurant, onClose }: SectionFormProps) {
   );
 }
 
-export function SettingsForm({ restaurant, provinces = [], categories = [], onClose }: SectionFormProps) {
+export function SettingsForm({
+  restaurant,
+  provinces = [],
+  categories = [],
+  nearbyAttractions = [],
+  selectedAttractionIds = [],
+  onClose,
+}: SectionFormProps) {
   const router = useRouter();
   const action = updateRestaurantAction.bind(null, restaurant.restaurant_id);
   const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number }>, FormData>(action, { success: false });
@@ -347,6 +360,11 @@ export function SettingsForm({ restaurant, provinces = [], categories = [], onCl
             categories={categories}
             selectedCategoryIds={restaurant.category_ids}
             error={state.fieldErrors?.categoryIds?.[0]}
+          />
+          <NearbyAttractionPicker
+            attractions={nearbyAttractions}
+            selectedAttractionIds={selectedAttractionIds}
+            error={state.fieldErrors?.nearbyAttractionIds?.[0]}
           />
           <input type="hidden" name="coverMediaId" value="" />
           <input type="hidden" name="coverMediaAction" value="none" />

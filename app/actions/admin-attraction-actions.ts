@@ -230,6 +230,36 @@ export async function toggleAttractionActiveAction(attractionId: number): Promis
   }
 }
 
+export async function archiveAttractionAction(attractionId: number): Promise<ActionResult> {
+  try {
+    const guard = await requirePermission("attraction.delete");
+    const current = await getAdminAttractionById(attractionId);
+    if (!current) return { success: false, error: "ไม่พบสถานที่นี้ อาจถูกลบหรือย้ายแล้ว" };
+
+    await updateAdminAttractionStatus(attractionId, {
+      is_active: false,
+      is_published: false,
+    });
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "attraction.archive",
+      entityType: "attraction",
+      entityId: attractionId,
+      oldValues: {
+        is_active: current.is_active,
+        is_published: current.is_published,
+      },
+      newValues: { is_active: false, is_published: false },
+    });
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    return { success: false, error: "ยังลบสถานที่ออกจากระบบไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
 // Inline field update for the visual editor.
 
 export async function updateAttractionFieldAction(

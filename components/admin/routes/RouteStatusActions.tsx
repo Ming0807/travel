@@ -4,15 +4,18 @@ import { useTransition } from "react";
 import { Eye, EyeSlash, PencilSimple, MapPinLine, Power, Image as ImageIcon } from "@phosphor-icons/react";
 import { toggleRoutePublishAction, toggleRouteActiveAction } from "@/app/actions/admin-route-actions";
 import Link from "next/link";
+import { CmsArchiveButton } from "@/components/admin/content/CmsArchiveButton";
 
 interface RouteStatusActionsProps {
   routeId: number;
+  routeName: string;
   isPublished: boolean;
   isActive: boolean;
 }
 
 export function RouteStatusActions({
   routeId,
+  routeName,
   isPublished,
   isActive,
 }: RouteStatusActionsProps) {
@@ -75,6 +78,9 @@ export function RouteStatusActions({
       >
         <Power size={16} weight="bold" />
       </button>
+      {isActive ? (
+        <CmsArchiveButton entityId={routeId} entityName={routeName} entityType="route" />
+      ) : null}
     </div>
   );
 }

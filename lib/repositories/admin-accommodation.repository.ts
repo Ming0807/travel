@@ -105,6 +105,7 @@ export async function listAdminAccommodations(filters: AdminAccommodationFilters
   if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
   if (filters.accommodationType) query = query.ilike("accommodation_type", `%${filters.accommodationType}%`);
   if (filters.isPublished !== undefined) query = query.eq("is_published", filters.isPublished);
+  if (filters.isActive !== undefined) query = query.eq("is_active", filters.isActive);
 
   const { data, error, count } = await query;
 

@@ -46,7 +46,8 @@ export const adminAccommodationFiltersSchema = adminPaginationSchema.extend({
     (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
     z.string().max(100).optional()
   ),
-  isPublished: optionalBooleanQuery
+  isPublished: optionalBooleanQuery,
+  isActive: optionalBooleanQuery,
 });
 
 export const adminAccommodationMutationSchema = z.object({

@@ -156,6 +156,37 @@ export async function toggleRouteActiveAction(routeId: number): Promise<ActionRe
   }
 }
 
+export async function archiveRouteAction(routeId: number): Promise<ActionResult> {
+  try {
+    const guard = await requirePermission("route.delete");
+    const current = await getAdminRouteById(routeId);
+    if (!current) return { success: false, error: "ไม่พบเส้นทางนี้ อาจถูกลบหรือย้ายแล้ว" };
+
+    await updateAdminRouteStatus(routeId, {
+      is_active: false,
+      is_published: false,
+    });
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "suggested_route.archive",
+      entityType: "suggested_route",
+      entityId: routeId,
+      oldValues: {
+        is_active: current.is_active,
+        is_published: current.is_published,
+      },
+      newValues: { is_active: false, is_published: false },
+    });
+
+    revalidatePath("/admin/routes");
+    revalidatePath("/routes", "layout");
+    return { success: true };
+  } catch (error) {
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    return { success: false, error: "ยังลบเส้นทางออกจากระบบไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
 export async function updateRouteStopsAction(routeId: number, _prevState: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
     const guard = await requirePermission("route.update");

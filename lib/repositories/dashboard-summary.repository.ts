@@ -125,11 +125,9 @@ async function filterRowsByAttractionDimensions<T extends { attraction_id: numbe
   filters: DashboardFilters
 ): Promise<T[]> {
   const { provinceId, districtId, attractionTypeId } = getAttractionDimensionIds(filters);
-  if (!provinceId && !districtId && !attractionTypeId) return rows;
-
   // Fetch matching attraction IDs from the attractions table
   const supabase = createSupabaseServiceRoleClient();
-  let attrQuery = supabase.from("attractions").select("attraction_id");
+  let attrQuery = supabase.from("attractions").select("attraction_id").eq("is_active", true).eq("is_published", true);
 
   if (provinceId) attrQuery = attrQuery.eq("province_id", provinceId);
   if (districtId) attrQuery = attrQuery.eq("district_id", districtId);

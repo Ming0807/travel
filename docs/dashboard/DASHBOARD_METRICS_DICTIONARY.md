@@ -2504,7 +2504,7 @@ All general dashboard routes use one typed quality model before rendering a conc
 
 | Scope | Included records | Reporting rule |
 |---|---|---|
-| `field_claim` | Operational visits without a research session, plus included final-collection field observations | Default for field reporting; excludes explicit pilot and simulated sessions |
+| `field_claim` | Explicitly classified `field_observation` entry sessions or included final-collection field observations | Default for advisor/field reporting; excludes unclassified legacy/test, pilot, and simulated sessions |
 | `all_records` | Every record matching the remaining filters | Internal inspection only; separate the scope before external reporting |
 | `pilot_only` | Included pilot study or `pilot_internal` sessions | Pilot QA only |
 | `simulated_only` | Included `simulated_usability` sessions | Usability testing only; never a tourism field claim |

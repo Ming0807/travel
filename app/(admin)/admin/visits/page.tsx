@@ -65,7 +65,7 @@ export default async function AdminVisitsPage({
   const [{ items, total, page, pageSize }, provinces, attractions] = await Promise.all([
     listAdminVisits(filters),
     getAdminProvinces(),
-    getAdminAttractionsList(),
+    getAdminAttractionsList({ activeOnly: false }),
   ]);
 
   const provinceOptions = provinces.map((province) => ({

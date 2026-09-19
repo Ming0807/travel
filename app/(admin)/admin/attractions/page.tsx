@@ -31,6 +31,11 @@ const statusOptions = [
   { value: "false", label: "Draft" },
 ];
 
+const lifecycleOptions = [
+  { value: "true", label: "กำลังใช้งาน" },
+  { value: "false", label: "เก็บถาวร" },
+];
+
 export default async function AdminAttractionsPage({
   searchParams,
 }: {
@@ -39,7 +44,9 @@ export default async function AdminAttractionsPage({
   await requirePermission("attraction.read");
   const raw = await searchParams;
   const parsed = adminAttractionFiltersSchema.safeParse(raw);
-  const filters = parsed.success ? parsed.data : { page: 1, pageSize: 20 };
+  const filters = parsed.success
+    ? { ...parsed.data, isActive: parsed.data.isActive ?? true }
+    : { page: 1, pageSize: 20, isActive: true };
   const [attractionsResult, provinces, attractionTypes] = await Promise.all([
     listAdminAttractions(filters),
     getAdminProvinces(),
@@ -69,6 +76,12 @@ export default async function AdminAttractionsPage({
             label="สถานะ"
             paramKey="isPublished"
             options={statusOptions}
+          />
+          <FilterSelect
+            label="การใช้งาน"
+            paramKey="isActive"
+            options={lifecycleOptions}
+            allLabel="กำลังใช้งาน"
           />
           <FilterSelect
             label="จังหวัด"
@@ -140,6 +153,7 @@ export default async function AdminAttractionsPage({
                     <td className="px-4 py-3">
                       <AttractionStatusActions
                         attractionId={attraction.attraction_id}
+                        attractionName={attraction.name_th}
                         isPublished={attraction.is_published}
                         isActive={attraction.is_active}
                       />
@@ -202,6 +216,7 @@ export default async function AdminAttractionsPage({
                   <div className="mt-2 flex items-center justify-end border-t border-slate-100 pt-4">
                     <AttractionStatusActions
                       attractionId={attraction.attraction_id}
+                      attractionName={attraction.name_th}
                       isPublished={attraction.is_published}
                       isActive={attraction.is_active}
                     />
