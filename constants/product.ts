@@ -51,4 +51,4 @@ export const REWARD_FIRST_FLOW = [
 ] as const;
 
 /** External 360 Vista virtual tour URL — โปรเจกต์ของอีกทีมหนึ่ง */
-export const VISTA_360_EXTERNAL_URL = "https://resonant-biscuit-10a328.netlify.app/";
+export const VISTA_360_EXTERNAL_URL = "https://yala360.yru.ac.th/Natham/";

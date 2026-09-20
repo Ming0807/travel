@@ -1,14 +1,29 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Compass, QrCode } from "@phosphor-icons/react/dist/ssr";
+import { Compass, FilePdf, QrCode } from "@phosphor-icons/react/dist/ssr";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
+
+const NA_THAM_WORKING_GROUP_TITLE = "คณะทำงานขับเคลื่อนการท่องเที่ยวโดยชุมชน ตำบลหน้าถ้ำ";
+const NA_THAM_BLUEPRINT_PATH = "/documents/na-tham-tourism-living-blueprint.pdf";
+const YRU_LOGO_PATH = "/partners/yala-rajabhat-university.png";
 
 function stripMarkup(value: string) {
   return value.replace(/<br\s*\/?\s*>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function HeroTitle({ title }: { title: string }) {
+  const naThamMarker = "ตำบลหน้าถ้ำ";
+  const naThamIndex = title.indexOf(naThamMarker);
+  if (naThamIndex >= 0) {
+    return (
+      <>
+        <span className="block">{title.slice(0, naThamIndex).trim()}</span>
+        <span className="mt-1 block text-coral">{naThamMarker}</span>
+      </>
+    );
+  }
+
   const [before, after] = title.split("ยะลา", 2);
   if (after === undefined) return <>{title}</>;
   return (
@@ -23,7 +38,7 @@ function HeroTitle({ title }: { title: string }) {
 }
 
 export function HomepageHero({
-  title = "เที่ยวยะลาให้ลึกกว่าเดิม",
+  title = NA_THAM_WORKING_GROUP_TITLE,
   subtitle = "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์",
   description = "เช็กอินสถานที่สำคัญ สะสมตราประทับ รับใบประกาศดิจิทัล และร่วมเรียนรู้วิถีชีวิตวัฒนธรรมยะลาไปด้วยกัน",
   images = [
@@ -42,9 +57,10 @@ export function HomepageHero({
   };
 
   const img0 = getImageUrl(images?.[0]);
-  const cleanTitle = /ปัตตานี|นราธิวาส/.test(title)
-    ? "เที่ยวยะลาให้ลึกกว่าเดิม"
-    : stripMarkup(title) || "เที่ยวยะลาให้ลึกกว่าเดิม";
+  const strippedTitle = stripMarkup(title);
+  const cleanTitle = /ปัตตานี|นราธิวาส|ค้นพบความมหัศจรรย์ที่ซ่อนเร้น|เที่ยวยะลาให้ลึกกว่าเดิม/.test(strippedTitle)
+    ? NA_THAM_WORKING_GROUP_TITLE
+    : strippedTitle || NA_THAM_WORKING_GROUP_TITLE;
   const cleanSubtitle = /ปัตตานี|นราธิวาส/.test(subtitle)
     ? "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์"
     : stripMarkup(subtitle) || "ออกเดินทางสู่ดินแดนแห่งมนต์เสน่ห์";
@@ -86,16 +102,16 @@ export function HomepageHero({
         <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-orange-500/20 via-orange-400/5 to-transparent" />
       </div>
 
-      <div className="relative mx-auto min-h-[520px] max-w-7xl px-4 pt-10 sm:min-h-[520px] sm:px-6 sm:pt-14 lg:min-h-[560px] lg:px-8 lg:pt-20">
+      <div className="relative mx-auto min-h-[570px] max-w-7xl px-4 pt-10 sm:min-h-[560px] sm:px-6 sm:pt-14 lg:min-h-[590px] lg:px-8 lg:pt-20">
         {/* Left-Aligned Headline & CTA Actions */}
         <div className="relative z-10 max-w-2xl pb-20 sm:pb-24 lg:pb-28">
           <p className="text-sm font-black text-coral sm:text-base">{cleanSubtitle}</p>
 
-          <h1 className="mt-3 text-[2rem] font-black leading-[1.18] text-ink sm:text-4xl lg:text-[3.25rem]">
-            <span className="block text-ink">เปิดประสบการณ์</span>
-            <span className="mt-1 block text-balance">
-              <HeroTitle title={cleanTitle} />
-            </span>
+          <h1
+            aria-label={cleanTitle}
+            className="mt-3 max-w-3xl text-[2rem] font-black leading-[1.18] text-ink sm:text-4xl lg:text-[2.75rem]"
+          >
+            <HeroTitle title={cleanTitle} />
           </h1>
 
           <p className="mt-4 max-w-lg text-sm font-medium leading-7 text-ink/80 sm:text-base">
@@ -103,7 +119,7 @@ export function HomepageHero({
           </p>
 
           {/* Action Buttons: Responsive Stack / Row */}
-          <div className="mt-7 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:mt-8 sm:flex sm:items-center sm:gap-3.5">
+          <div className="mt-7 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:mt-8 sm:flex sm:flex-wrap sm:items-center sm:gap-3.5">
             <PublicCheckinEntryLink className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-coral px-4 text-sm font-black text-white shadow-md transition-colors hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2">
               <QrCode size={20} weight="bold" />
               <span>สแกน QR เช็กอิน</span>
@@ -116,6 +132,32 @@ export function HomepageHero({
               <Compass size={19} weight="bold" className="text-coral" />
               <span>ดูสถานที่ทั้งหมด</span>
             </Link>
+
+            <a
+              href={NA_THAM_BLUEPRINT_PATH}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="เปิดเอกสารคณะทำงานในแท็บใหม่"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-coral/30 bg-orange-50/95 px-4 text-sm font-bold text-coral transition-colors hover:border-coral hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral min-[360px]:col-span-2 sm:col-span-1"
+            >
+              <FilePdf size={20} weight="bold" aria-hidden="true" />
+              <span>คณะทำงาน</span>
+            </a>
+          </div>
+
+          <div className="mt-5 inline-flex max-w-full items-center gap-3 rounded-lg border border-black/10 bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm">
+            <Image
+              src={YRU_LOGO_PATH}
+              alt="ตรามหาวิทยาลัยราชภัฏยะลา"
+              width={160}
+              height={100}
+              className="h-11 w-auto shrink-0 object-contain"
+              sizes="70px"
+            />
+            <div className="min-w-0 border-l border-black/10 pl-3 leading-tight">
+              <p className="text-[11px] font-semibold text-ink/55">ร่วมขับเคลื่อนโดย</p>
+              <p className="mt-1 text-xs font-black text-ink sm:text-sm">มหาวิทยาลัยราชภัฏยะลา</p>
+            </div>
           </div>
         </div>
       </div>

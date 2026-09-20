@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
       {
         pathname: "/certificate-templates/**",
       },
+      {
+        pathname: "/partners/**",
+      },
     ],
     remotePatterns: [
       {

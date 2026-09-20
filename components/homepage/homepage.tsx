@@ -26,7 +26,7 @@ export async function Homepage() {
     settingsService.getSetting("homepage_featured_attractions", { slugs: [] as string[] }),
     settingsService.getSetting<HomepageStoriesSetting>("homepage_stories", { limit: 4 }),
     settingsService.getSetting("homepage_hero", {
-      title: "เที่ยวยะลาให้ลึกกว่าเดิม",
+      title: "คณะทำงานขับเคลื่อนการท่องเที่ยวโดยชุมชน ตำบลหน้าถ้ำ",
       subtitle: "วางแผนการเดินทางในจังหวัดยะลา",
       description: "ค้นพบสถานที่ท่องเที่ยว อาหารท้องถิ่น เส้นทางน่าสนใจ และเรื่องราวจากผู้คนในพื้นที่ เพื่อให้ทุกการเดินทางมีความหมายมากขึ้น",
       images: ["", "", ""],
