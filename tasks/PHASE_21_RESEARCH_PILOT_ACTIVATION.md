@@ -153,6 +153,20 @@ Detailed tasks 21.9a-e and release criteria are in
 - No research approvals, participant data, activation decisions, or database
   schema were changed. This checkpoint does not complete 21.9 or the phase.
 
+#### Visual Fixture Follow-up
+
+- After dependency preparation completed, Chromium fixture QA passed at 360,
+  768, and 1440 px with no horizontal overflow. Screenshots were inspected;
+  labels and actions fit the compact and wide layouts.
+- Expanding the checklist retained all four fixture items. The next-action link
+  navigated to the approval anchor; the read-only fixture exposed no action link.
+  No browser page errors were recorded. These are component-fixture results,
+  not authenticated end-to-end or physical-device research acceptance.
+- A fresh Node 22 production build compiled successfully in 2.5 minutes. Its
+  TypeScript child continued running for several minutes without a final result;
+  the run was explicitly stopped to defer the prolonged gate. The production
+  build is not recorded as passed, and the Research checkpoint remains unpushed.
+
 Final collection begins only after the instrument/version freeze and required ethics/administrative approval are documented. Declining research must never block the normal tourist reward flow.
 
 ## Honest Completion Boundary

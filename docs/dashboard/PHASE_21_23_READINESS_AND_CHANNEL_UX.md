@@ -96,6 +96,17 @@ color, unknown neutral gray. Do not use color alone. No new chart dependency.
 
 ## Release Gates
 
+### 2026-09-21 Filter Follow-up Findings
+
+- The current schema still declares `checkin_codes.campaign_id` as a placeholder;
+  no campaigns master table was found in migrations. Friendly campaign labels
+  require a real authoritative catalog and management workflow. Do not fabricate
+  names from IDs or equate a research study with a campaign without a model.
+- The attraction GET form retains the previous attraction's check-in and campaign
+  selections when changing attraction. Add a regression test and reset dependent
+  selections on a place change while preserving dates, evidence scope, and channel.
+  Verify submitted FormData and browser back/forward behavior, not just text.
+
 Code and data correctness, privacy, accessibility, mobile usability, operational
 readiness, and rollback are separate gates. All are required for a company-grade
 release; passing a full test suite is one piece of evidence, not all of them.
