@@ -136,6 +136,23 @@ Detailed tasks 21.9a-e and release criteria are in
 
 ## Exit Gate
 
+### 2026-09-21: Readiness Navigation Checkpoint (21.9a-b, Partial)
+
+- Replaced the expanded readiness list with a next-blocker summary and an
+  expandable complete checklist. Draft managers can navigate to the existing
+  approval, deployment, protocol, instrument, evidence, and activation sections.
+- A final study's Pilot-decision link points to its source Pilot. Read-only
+  staff and non-draft studies receive no draft-edit navigation. Empty checklists
+  do not offer activation, even if an inconsistent caller permits activation.
+- Completed checklists show status-specific guidance for active, paused,
+  closed, and archived studies, rather than directing every state to activation.
+- Verification: 10 focused component tests passed on Node 22 with one forks
+  worker; scoped ESLint and whitespace checks passed. Two threads-worker starts
+  timed out before tests ran. The isolated visual fixture navigation timed out
+  while Vite prepared dependencies; visual acceptance is still outstanding.
+- No research approvals, participant data, activation decisions, or database
+  schema were changed. This checkpoint does not complete 21.9 or the phase.
+
 Final collection begins only after the instrument/version freeze and required ethics/administrative approval are documented. Declining research must never block the normal tourist reward flow.
 
 ## Honest Completion Boundary

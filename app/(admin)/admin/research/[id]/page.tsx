@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, CheckCircle, LockKey, Pause, Play, Warning, X } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, LockKey, Pause, Play } from "@phosphor-icons/react/dist/ssr";
 
 import {
   activateResearchStudyAction,
@@ -19,6 +19,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { ResearchAnalyticsWorkspace } from "@/components/admin/research/ResearchAnalyticsWorkspace";
 import { ResearchActivationControlCenter } from "@/components/admin/research/ResearchActivationControlCenter";
+import { ResearchReadinessSummary } from "@/components/admin/research/ResearchReadinessSummary";
 import { ResearchOperatorAssessmentQueue } from "@/components/admin/research/ResearchOperatorAssessmentQueue";
 import { requirePermission } from "@/lib/auth/guards";
 import { getAdminResearchStudyWorkspace } from "@/lib/services/admin-research.service";
@@ -115,12 +116,7 @@ export default async function AdminResearchStudyPage({ params, searchParams }: {
 
         {message ? <p role={message.tone === "error" ? "alert" : "status"} className={`border p-4 text-sm font-bold ${message.tone === "success" ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-rose-300 bg-rose-50 text-rose-900"}`}>{message.text}</p> : null}
 
-        <section className="border border-[var(--admin-border)] bg-white" aria-labelledby="readiness-heading">
-          <div className="flex flex-col gap-3 border-b border-[var(--admin-border)] p-5 lg:flex-row lg:items-start lg:justify-between"><div><h2 id="readiness-heading" className="text-lg font-black">ความพร้อมก่อนเก็บข้อมูล</h2><p className="mt-1 text-sm text-slate-600">Activation จะล็อก protocol, notice, consent, instrument และ deployment รุ่นนี้ถาวร</p></div><span className={`inline-flex w-fit items-center gap-2 border px-3 py-2 text-sm font-black ${canActivate ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}>{canActivate ? <CheckCircle aria-hidden="true" weight="fill" /> : <Warning aria-hidden="true" weight="fill" />}{readiness.filter((item) => item.ready).length}/{readiness.length} พร้อม</span></div>
-          <div className="divide-y divide-slate-200">
-            {readiness.map((item) => <div key={item.key} className="flex items-start gap-3 px-5 py-3"><span className={`mt-0.5 flex size-6 shrink-0 items-center justify-center ${item.ready ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-500"}`}>{item.ready ? <Check aria-hidden="true" weight="bold" /> : <X aria-hidden="true" weight="bold" />}</span><div><p className="text-sm font-bold">{item.label}</p>{!item.ready ? <p className="mt-0.5 text-xs text-slate-500">{item.blockingReason}</p> : null}</div></div>)}
-          </div>
-        </section>
+        <ResearchReadinessSummary items={readiness} status={detail.study.status} canManage={canManage} canActivate={canActivate} sourcePilotStudyId={detail.study.sourcePilotStudyId} />
 
         <ResearchActivationControlCenter detail={detail} canManage={canManage} canFreeze={readiness.filter((item) => !["freeze_snapshot", "pilot_decision"].includes(item.key)).every((item) => item.ready)} />
 
@@ -172,7 +168,7 @@ export default async function AdminResearchStudyPage({ params, searchParams }: {
 
         {canManage && isDraft ? (
           <section className="grid gap-6 xl:grid-cols-2">
-            <form action={recordResearchApprovalAction} className="border border-[var(--admin-border)] bg-white p-5 xl:col-span-2">
+            <form id="research-approval" action={recordResearchApprovalAction} className="scroll-mt-24 border border-[var(--admin-border)] bg-white p-5 xl:col-span-2">
               <input type="hidden" name="studyId" value={id} />
               <h2 className="text-lg font-black">บันทึกขอบเขตที่ได้รับอนุมัติ</h2>
               <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-600">คัดลอกจากเอกสารที่อาจารย์อนุมัติจริง ระบบเก็บ snapshot นี้เพื่อป้องกันการเปลี่ยนชื่อ วัตถุประสงค์ หรือคำถามวิจัยระหว่างเก็บข้อมูล</p>
@@ -191,7 +187,7 @@ export default async function AdminResearchStudyPage({ params, searchParams }: {
               <button type="submit" className="mt-4 min-h-11 w-full bg-[#202020] px-4 font-black text-white hover:bg-[#B94727]">บันทึกหลักฐานอนุมัติ</button>
             </form>
 
-            <form action={saveResearchDeploymentAction} className="border border-[var(--admin-border)] bg-white p-5 xl:col-span-2">
+            <form id="research-deployment" action={saveResearchDeploymentAction} className="scroll-mt-24 border border-[var(--admin-border)] bg-white p-5 xl:col-span-2">
               <input type="hidden" name="studyId" value={id} />
               <h2 className="text-lg font-black">ผูกจุด QR สำหรับเก็บข้อมูล</h2><p className="mt-1 text-sm leading-6 text-slate-600">จุด QR หนึ่งจุดเปิดใช้งานได้กับ study เดียว ป้องกันการปน collection mode</p>
               <label className="mt-4 block text-sm font-bold">จุด QR<select name="checkinCodeId" required className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="">เลือกจุด QR</option>{checkinCodes.map((code) => <option key={code.checkinCodeId} value={code.checkinCodeId}>{code.code} · {code.attractionNameTh ?? code.label ?? "ไม่ระบุสถานที่"}</option>)}</select></label>
@@ -232,7 +228,7 @@ export default async function AdminResearchStudyPage({ params, searchParams }: {
         <section className="border border-[var(--admin-border)] bg-white p-5"><h2 className="text-lg font-black">จุดเก็บข้อมูลที่ผูกไว้</h2>{detail.deployments.length === 0 ? <p className="mt-3 text-sm text-slate-600">ยังไม่ได้ผูกจุด QR</p> : <div className="mt-4 divide-y divide-slate-200 border-y border-slate-200">{detail.deployments.map((deployment) => <div key={deployment.checkinCodeId} className="grid gap-2 py-3 text-sm sm:grid-cols-[10rem_minmax(0,1fr)_14rem_6rem]"><span className="font-mono font-bold">{deployment.code}</span><span>{deployment.attractionNameTh ?? deployment.label ?? "ไม่ระบุสถานที่"}</span><span>{MODE_LABELS[deployment.collectionMode]}</span><span className="font-bold">{deployment.isActive ? "เปิด" : "ปิด"}</span></div>)}</div>}</section>
 
         {canManage ? (
-          <section className={`border p-5 ${isDraft ? "border-amber-300 bg-amber-50" : "border-slate-300 bg-white"}`}>
+          <section id="research-study-controls" className={`scroll-mt-24 border p-5 ${isDraft ? "border-amber-300 bg-amber-50" : "border-slate-300 bg-white"}`}>
             <h2 className="text-lg font-black">ควบคุมสถานะโครงการ</h2>
             {isDraft ? <form action={activateResearchStudyAction} className="mt-4"><input type="hidden" name="studyId" value={id} /><label className="flex min-h-11 items-start gap-3 text-sm font-bold"><input type="checkbox" name="confirmFreeze" value="true" required className="mt-1" disabled={!canActivate} /> ฉันยืนยันว่า approval และ configuration ทั้งหมดผ่านการตรวจแล้ว และเข้าใจว่า activation จะล็อกรุ่น</label><button type="submit" disabled={!canActivate} className="mt-4 inline-flex min-h-11 items-center gap-2 bg-[#202020] px-5 font-black text-white enabled:hover:bg-[#B94727] disabled:cursor-not-allowed disabled:bg-slate-300"><Play aria-hidden="true" /> เปิดเก็บข้อมูล</button></form> : null}
             {detail.study.status === "active" ? <div className="mt-4 flex flex-wrap gap-3"><form action={transitionResearchStudyAction}><input type="hidden" name="studyId" value={id} /><input type="hidden" name="fromStatus" value="active" /><input type="hidden" name="toStatus" value="paused" /><button className="inline-flex min-h-11 items-center gap-2 border border-slate-300 bg-white px-4 font-bold"><Pause aria-hidden="true" /> พักการเก็บข้อมูล</button></form><form action={transitionResearchStudyAction}><input type="hidden" name="studyId" value={id} /><input type="hidden" name="fromStatus" value="active" /><input type="hidden" name="toStatus" value="closed" /><button className="min-h-11 bg-rose-800 px-4 font-bold text-white">ปิดการเก็บข้อมูล</button></form></div> : null}
