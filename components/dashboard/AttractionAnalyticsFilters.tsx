@@ -1,4 +1,7 @@
-import { CaretDown, SlidersHorizontal } from "@phosphor-icons/react/dist/ssr";
+"use client";
+
+import { useState } from "react";
+import { CaretDown, SlidersHorizontal } from "@phosphor-icons/react";
 
 import type { AttractionAnalyticsOption, AttractionCheckinOption } from "@/lib/repositories/attraction-analytics.repository";
 import type { AttractionAnalyticsFilters as AttractionAnalyticsFilterValues } from "@/lib/validation/attraction-analytics";
@@ -16,17 +19,29 @@ function campaignOptions(checkinCodes: AttractionCheckinOption[]) {
 
 const inputClassName = "mt-2 min-h-11 w-full rounded-[4px] border border-slate-300 bg-white px-3 font-normal text-slate-900 focus:border-[#D94717] focus:outline-none focus:ring-2 focus:ring-[#FAD6C7]";
 
-export function AttractionAnalyticsFilters({
-  attractions,
-  checkinCodes,
-  defaults,
-  filters,
-}: {
+type FilterProps = {
   attractions: AttractionAnalyticsOption[];
   checkinCodes: AttractionCheckinOption[];
   defaults: DateDefaults;
   filters: AttractionAnalyticsFilterValues | null;
-}) {
+};
+
+export function AttractionAnalyticsFilters(props: FilterProps) {
+  // URL navigation supplies a new scope; discard edits to the previous form.
+  return <AttractionAnalyticsFilterForm key={JSON.stringify([props.filters, props.defaults])} {...props} />;
+}
+
+function AttractionAnalyticsFilterForm({
+  attractions,
+  checkinCodes,
+  defaults,
+  filters,
+}: FilterProps) {
+  const loadedAttractionId = String(filters?.attractionId ?? attractions[0]?.value ?? "");
+  const [attractionId, setAttractionId] = useState(loadedAttractionId);
+  const [campaignId, setCampaignId] = useState(String(filters?.campaignId ?? ""));
+  const [checkinCodeId, setCheckinCodeId] = useState(String(filters?.checkinCodeId ?? ""));
+  const placeChanged = attractionId !== loadedAttractionId;
   const campaigns = campaignOptions(checkinCodes);
   const hasAdvancedFilter = Boolean(filters?.entryChannel || filters?.campaignId || filters?.checkinCodeId);
 
@@ -35,7 +50,11 @@ export function AttractionAnalyticsFilters({
       <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-7">
         <label className="text-sm font-bold sm:col-span-2">
           สถานที่
-          <select className={inputClassName} defaultValue={filters ? String(filters.attractionId) : ""} name="attractionId" required>
+          <select className={inputClassName} value={attractionId} onChange={(event) => {
+            setAttractionId(event.target.value);
+            setCampaignId("");
+            setCheckinCodeId("");
+          }} name="attractionId" required>
             {attractions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>
@@ -83,7 +102,7 @@ export function AttractionAnalyticsFilters({
           </label>
           <label className="text-sm font-bold">
             แคมเปญ
-            <select className={inputClassName} defaultValue={filters?.campaignId ? String(filters.campaignId) : ""} disabled={campaigns.length === 0} name="campaignId">
+            <select className={inputClassName} value={campaignId} onChange={(event) => setCampaignId(event.target.value)} disabled={placeChanged || campaigns.length === 0} name="campaignId">
               <option value="">{campaigns.length === 0 ? "ยังไม่มีแคมเปญที่ผูกกับจุดเช็กอิน" : "ทุกแคมเปญ"}</option>
               {campaigns.map(([campaignId, count]) => (
                 <option key={campaignId} value={campaignId}>แคมเปญ {campaignId} · {count.toLocaleString("th-TH")} จุดเช็กอิน</option>
@@ -92,11 +111,12 @@ export function AttractionAnalyticsFilters({
           </label>
           <label className="text-sm font-bold sm:col-span-2 xl:col-span-1">
             จุดเช็กอิน
-            <select className={inputClassName} defaultValue={filters?.checkinCodeId ? String(filters.checkinCodeId) : ""} disabled={checkinCodes.length === 0} name="checkinCodeId">
+            <select className={inputClassName} value={checkinCodeId} onChange={(event) => setCheckinCodeId(event.target.value)} disabled={placeChanged || checkinCodes.length === 0} name="checkinCodeId">
               <option value="">{checkinCodes.length === 0 ? "ยังไม่มีจุดเช็กอินสำหรับสถานที่นี้" : "ทุกจุดของสถานที่"}</option>
               {checkinCodes.map((code) => <option key={code.checkinCodeId} value={code.checkinCodeId}>{code.label} ({code.code})</option>)}
             </select>
           </label>
+          {placeChanged ? <p role="status" className="text-sm leading-6 text-[#9A3412] sm:col-span-2 xl:col-span-3">เปลี่ยนสถานที่แล้ว กดวิเคราะห์ข้อมูลเพื่อโหลดแคมเปญและจุดเช็กอินของสถานที่ที่เลือก</p> : null}
           <button className="min-h-11 rounded-[4px] bg-[#202020] px-4 font-black text-white transition-colors hover:bg-[#B94727] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D94717] sm:col-span-2 xl:hidden" type="submit">
             ใช้ตัวกรองเพิ่มเติม
           </button>

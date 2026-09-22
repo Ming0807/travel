@@ -77,6 +77,25 @@ Detailed tasks 22.11a-f and metric/visual contracts are in
 do not constitute completed channel-acquisition graphs. Historical channel
 values remain `unknown` unless supported by recorded evidence.
 
+### 2026-09-22: Dependent Filter Scope Fix
+
+- Changing the selected attraction clears campaign/check-in selections and
+  disables the previous place's options until the new GET result loads. Dates,
+  evidence scope, and entry channel remain unchanged.
+- Incoming URL filter snapshots remount the form so navigation restores the
+  server-selected scope. Changing away and back before submission does not
+  silently restore the cleared dependent filters.
+- Four component tests passed, including submitted FormData and incoming-scope
+  restoration. Chromium fixture QA passed actual GET submission and Back/Forward,
+  plus 360/768/1440 px overflow checks. The mobile screenshot was inspected.
+- Scoped ESLint and full-project TypeScript passed. These fixture checks do not
+  replace authenticated data/export parity or physical-device acceptance.
+- The Node 22 production build passed, including TypeScript and 66 static
+  generations. The initial browser QA selector was corrected to use the actual
+  accessible combobox role/name; the complete interaction run then passed.
+- No database changes or metric/denominator changes were introduced. Campaign
+  names still require the authoritative master-data work described in the plan.
+
 ## Analytics Rules
 
 - Every metric states unit, denominator, date field, source table, calculation, and missing-data rule.

@@ -166,6 +166,9 @@ Detailed tasks 21.9a-e and release criteria are in
   TypeScript child continued running for several minutes without a final result;
   the run was explicitly stopped to defer the prolonged gate. The production
   build is not recorded as passed, and the Research checkpoint remains unpushed.
+- Superseded on 2026-09-22: the fresh Node 22 production build passed including
+  TypeScript and all 66 static generations, together with the Phase 22 filter fix.
+  This closes the pending build gate, not authenticated or participant acceptance.
 
 Final collection begins only after the instrument/version freeze and required ethics/administrative approval are documented. Declining research must never block the normal tourist reward flow.
 

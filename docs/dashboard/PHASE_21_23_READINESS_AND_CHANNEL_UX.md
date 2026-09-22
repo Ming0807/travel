@@ -102,10 +102,10 @@ color, unknown neutral gray. Do not use color alone. No new chart dependency.
   no campaigns master table was found in migrations. Friendly campaign labels
   require a real authoritative catalog and management workflow. Do not fabricate
   names from IDs or equate a research study with a campaign without a model.
-- The attraction GET form retains the previous attraction's check-in and campaign
-  selections when changing attraction. Add a regression test and reset dependent
-  selections on a place change while preserving dates, evidence scope, and channel.
-  Verify submitted FormData and browser back/forward behavior, not just text.
+- Fixed on 2026-09-22: the attraction GET form clears the previous attraction's
+  check-in and campaign selections on place change while preserving dates,
+  evidence scope, and channel. Submitted FormData tests and Chromium fixture
+  Back/Forward checks passed; authenticated data/export parity remains separate.
 
 Code and data correctness, privacy, accessibility, mobile usability, operational
 readiness, and rollback are separate gates. All are required for a company-grade
