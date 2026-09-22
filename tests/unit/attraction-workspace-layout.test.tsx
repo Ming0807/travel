@@ -45,6 +45,21 @@ function getDetailGroup(group: string) {
 }
 
 describe("AttractionAnalyticsWorkspace layout", () => {
+  it.each([
+    ["all_records", "ข้อมูลรวมเพื่อ QA อาจมี Pilot และสถานการณ์จำลอง"],
+    ["pilot_only", "กำลังวิเคราะห์ข้อมูล Pilot เท่านั้น"],
+    ["simulated_only", "กำลังวิเคราะห์ข้อมูลสถานการณ์จำลองเท่านั้น"],
+  ] as const)("does not imply field-only evidence in %s scope", (evidenceScope, label) => {
+    render(<AttractionAnalyticsWorkspace data={{ ...data, filters: { ...data.filters, evidenceScope } }} />);
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.queryByText("ขอบเขตข้อมูลผ่านการแยก Pilot/Simulation")).not.toBeInTheDocument();
+  });
+
+  it("prioritizes incomplete-read warnings in every evidence scope", () => {
+    render(<AttractionAnalyticsWorkspace data={{ ...data, filters: { ...data.filters, evidenceScope: "pilot_only" }, quality: { ...data.quality, truncated: true } }} />);
+    expect(screen.getByText("ชุดข้อมูลเกินขีดจำกัดการอ่านสด")).toBeInTheDocument();
+    expect(screen.queryByText("กำลังวิเคราะห์ข้อมูล Pilot เท่านั้น")).not.toBeInTheDocument();
+  });
   it("reads summary, trend, evidence, and action sections in that order", () => {
     render(<AttractionAnalyticsWorkspace data={data} />);
 

@@ -29,6 +29,13 @@ const SCOPE_LABELS = {
   simulated_only: "สถานการณ์จำลองเท่านั้น",
 } as const;
 
+const SCOPE_STATUS_LABELS = {
+  field_claim: "ขอบเขตข้อมูลผ่านการแยก Pilot/Simulation",
+  all_records: "ข้อมูลรวมเพื่อ QA อาจมี Pilot และสถานการณ์จำลอง",
+  pilot_only: "กำลังวิเคราะห์ข้อมูล Pilot เท่านั้น",
+  simulated_only: "กำลังวิเคราะห์ข้อมูลสถานการณ์จำลองเท่านั้น",
+} as const;
+
 const INSIGHT_TONE_LABELS = {
   data_quality: "คุณภาพข้อมูล",
   improvement: "ประเด็นปรับปรุง",
@@ -67,6 +74,7 @@ function CompactMetric({ icon, label, valueText, note }: { icon: React.ReactNode
 }
 
 export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyticsViewModel }) {
+  const requiresScopeCaution = data.quality.truncated || data.filters.evidenceScope !== "field_claim";
   const improvementContext = {
     attractionId: data.attraction.attractionId,
     dateStart: data.filters.dateFrom,
@@ -86,9 +94,9 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
             <Link href={`/admin/attractions/${data.attraction.attractionId}/improvements?dateStart=${data.filters.dateFrom}&dateEnd=${data.filters.dateTo}`} className="inline-flex min-h-11 items-center justify-center gap-2 border border-white/30 bg-white px-4 text-sm font-black text-[#202020] hover:bg-orange-50">เปิดแผนปรับปรุง <ArrowRight aria-hidden="true" /></Link>
           </div>
         </div>
-        <div className={`flex items-start gap-3 border-t p-4 text-sm ${data.quality.truncated ? "border-amber-300 bg-amber-50 text-amber-950" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
-          {data.quality.truncated ? <Warning className="mt-0.5 shrink-0" aria-hidden="true" weight="fill" /> : <CheckCircle className="mt-0.5 shrink-0" aria-hidden="true" weight="fill" />}
-          <div><p className="font-black">{data.quality.truncated ? "ชุดข้อมูลเกินขีดจำกัดการอ่านสด" : "ขอบเขตข้อมูลผ่านการแยก Pilot/Simulation"}</p><p className="mt-1 leading-6">{data.quality.scopeNote}</p></div>
+        <div className={`flex items-start gap-3 border-t p-4 text-sm ${requiresScopeCaution ? "border-amber-300 bg-amber-50 text-amber-950" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
+          {requiresScopeCaution ? <Warning className="mt-0.5 shrink-0" aria-hidden="true" weight="fill" /> : <CheckCircle className="mt-0.5 shrink-0" aria-hidden="true" weight="fill" />}
+          <div><p className="font-black">{data.quality.truncated ? "ชุดข้อมูลเกินขีดจำกัดการอ่านสด" : SCOPE_STATUS_LABELS[data.filters.evidenceScope]}</p><p className="mt-1 leading-6">{data.quality.scopeNote}</p></div>
         </div>
       </section>
 

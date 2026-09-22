@@ -96,6 +96,20 @@ values remain `unknown` unless supported by recorded evidence.
 - No database changes or metric/denominator changes were introduced. Campaign
   names still require the authoritative master-data work described in the plan.
 
+### Evidence Scope Status Follow-up (2026-09-22)
+
+- The workspace previously showed a green Pilot/Simulation exclusion heading
+  for every non-truncated scope, including QA, Pilot-only, and simulated-only.
+  The heading now reflects the selected scope; non-field scopes use a caution
+  treatment. Incomplete reads retain the highest-priority warning.
+- Calculation, filtering, source notes, privacy suppression, and export gates
+  remain unchanged. Regression coverage includes non-field labels, incomplete
+  reads, and the existing layout/export contracts.
+- Verification: all eight workspace tests passed on Node 22 with one forks
+  worker; scoped ESLint and whitespace checks passed. No additional production
+  build was run for this display-only follow-up; the preceding filter checkpoint
+  has its own successful build evidence.
+
 ## Analytics Rules
 
 - Every metric states unit, denominator, date field, source table, calculation, and missing-data rule.
