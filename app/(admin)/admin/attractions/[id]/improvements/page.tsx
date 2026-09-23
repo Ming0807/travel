@@ -7,6 +7,7 @@ import { AttractionImprovementWorkspace } from "@/components/admin/attractions/A
 import { DashboardPrintButton } from "@/components/dashboard/DashboardPrintButton";
 import { hasPermission, requirePermission } from "@/lib/auth/guards";
 import { parseAttractionIssueDraft } from "@/lib/dashboard/attraction-improvement-draft";
+import { parseAttractionImprovementScope } from "@/lib/dashboard/attraction-improvement-scope";
 import { getAdminAttractionById } from "@/lib/repositories/admin-attraction.repository";
 import {
   FEEDBACK_RULES,
@@ -65,20 +66,14 @@ export default async function AttractionImprovementsPage({
   const issueStatus: IssueStatus | undefined = ISSUE_STATUSES.includes(rawStatus as IssueStatus)
     ? rawStatus as IssueStatus
     : undefined;
-  const scopeResult = feedbackScopeSchema.safeParse({
-    attractionId,
-    dateStart: one(query.dateStart) ?? dateDefaults.dateStart,
-    dateEnd: one(query.dateEnd) ?? dateDefaults.dateEnd,
-    comparisonStart: one(query.comparisonStart) ?? dateDefaults.comparisonStart,
-    comparisonEnd: one(query.comparisonEnd) ?? dateDefaults.comparisonEnd,
-  });
-  const scope = scopeResult.success ? scopeResult.data : { attractionId, ...dateDefaults };
-  const draft = parseAttractionIssueDraft(query, scope, dimension);
+  const scopeResult = parseAttractionImprovementScope(query, attractionId, dateDefaults);
+  const scope = scopeResult.success ? scopeResult.data : feedbackScopeSchema.parse({ attractionId, ...dateDefaults });
+  const draft = scopeResult.success ? parseAttractionIssueDraft(query, scope, dimension) : undefined;
 
   let workspace;
   let loadError = false;
   try {
-    workspace = await getAttractionImprovementWorkspace({ scope, dimension, issueStatus });
+    if (scopeResult.success) workspace = await getAttractionImprovementWorkspace({ scope, dimension, issueStatus });
   } catch {
     loadError = true;
   }
@@ -100,8 +95,12 @@ export default async function AttractionImprovementsPage({
           )}
         />
 
-        <form method="get" data-print-hide className="grid gap-3 border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 sm:grid-cols-2 xl:grid-cols-6">
+        <form method="get" data-print-hide className="grid gap-3 border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 sm:grid-cols-2 xl:grid-cols-4">
           <label className="text-xs font-bold text-[var(--admin-muted)]">มิติข้อมูล<select name="dimension" defaultValue={dimension} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] bg-white px-3 text-sm font-normal text-[var(--admin-ink)]">{FEEDBACK_DIMENSIONS.map((value) => <option key={value} value={value}>{({ overall: "ภาพรวม", facility: "สิ่งอำนวยความสะดวก", cleanliness: "ความสะอาด", safety: "ความปลอดภัย", accessibility: "การเข้าถึง", information: "ข้อมูลและป้าย", value: "ความคุ้มค่า" } as const)[value]}</option>)}</select></label>
+          <label className="text-xs font-bold text-[var(--admin-muted)]">ชุดหลักฐาน<select name="evidenceScope" defaultValue={scope.evidenceScope} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] bg-white px-3 text-sm font-normal text-[var(--admin-ink)]"><option value="all_records">ทุกระเบียน (QA)</option><option value="field_claim">ภาคสนาม</option><option value="pilot_only">Pilot</option><option value="simulated_only">จำลอง</option></select></label>
+          <label className="text-xs font-bold text-[var(--admin-muted)]">ช่องทางเข้า<select name="entryChannel" defaultValue={scope.entryChannel ?? ""} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] bg-white px-3 text-sm font-normal text-[var(--admin-ink)]"><option value="">ทุกช่องทาง</option><option value="qr">QR</option><option value="nfc">NFC</option><option value="direct">เข้าตรง</option><option value="admin_import">นำเข้าโดยแอดมิน</option><option value="unknown">ไม่ทราบ</option></select></label>
+          <label className="text-xs font-bold text-[var(--admin-muted)]">รหัสแคมเปญ (ถ้ามี)<input type="number" min={1} step={1} name="campaignId" defaultValue={scope.campaignId ?? ""} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] px-3 text-sm font-normal" /></label>
+          <label className="text-xs font-bold text-[var(--admin-muted)]">รหัสจุดเช็กอิน (ถ้ามี)<input type="number" min={1} step={1} name="checkinCodeId" defaultValue={scope.checkinCodeId ?? ""} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] px-3 text-sm font-normal" /></label>
           <label className="text-xs font-bold text-[var(--admin-muted)]">เริ่มช่วงปัจจุบัน<input type="date" name="dateStart" defaultValue={scope.dateStart} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] px-3 text-sm font-normal" /></label>
           <label className="text-xs font-bold text-[var(--admin-muted)]">สิ้นสุดช่วงปัจจุบัน<input type="date" name="dateEnd" defaultValue={scope.dateEnd} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] px-3 text-sm font-normal" /></label>
           <label className="text-xs font-bold text-[var(--admin-muted)]">เริ่มช่วงเปรียบเทียบ<input type="date" name="comparisonStart" defaultValue={scope.comparisonStart} className="mt-1 min-h-11 w-full border border-[var(--admin-border)] px-3 text-sm font-normal" /></label>
@@ -113,8 +112,10 @@ export default async function AttractionImprovementsPage({
           เกณฑ์รุ่น {FEEDBACK_RULES.ruleVersion}: คำตอบอย่างน้อย {FEEDBACK_RULES.minimumValidResponses} รายการ การเข้าชมอย่างน้อย {FEEDBACK_RULES.minimumVisits} ครั้ง และคะแนนต่ำซ้ำอย่างน้อย {FEEDBACK_RULES.minimumStructuredRecurrence} รายการ ผลเป็นหลักฐานเชิงพรรณนา ไม่ใช่ข้อสรุปเหตุและผล
         </p>
 
-        {loadError || !workspace ? (
-          <div className="border border-rose-300 bg-rose-50 p-5 text-sm font-semibold text-rose-900">ยังโหลดหลักฐานและแผนปรับปรุงไม่ได้ กรุณาตรวจสอบว่ารัน migration ของ Phase 18 แล้ว จากนั้นลองใหม่</div>
+        {!scopeResult.success ? (
+          <div className="border border-rose-300 bg-rose-50 p-5 text-sm font-semibold text-rose-900">ตัวกรองหลักฐานไม่ถูกต้อง กรุณาเลือกขอบเขตและช่วงเวลาใหม่ก่อนพิจารณา</div>
+        ) : loadError || !workspace ? (
+          <div className="border border-rose-300 bg-rose-50 p-5 text-sm font-semibold text-rose-900">ยังโหลดหลักฐานและแผนปรับปรุงไม่ได้ กรุณาลองใหม่หรือตรวจสอบการเชื่อมต่อฐานข้อมูล</div>
         ) : (
           <AttractionImprovementWorkspace
             attractionId={attractionId}

@@ -131,6 +131,30 @@ values remain `unknown` unless supported by recorded evidence.
 - The page-level follow-up passed 22 focused draft/workspace tests, scoped ESLint,
   TypeScript, whitespace checks, and a Node 22 production build (66 static pages).
 
+### Candidate Scope Parity Follow-up (2026-09-23)
+
+- The improvement candidate now re-reads selected Visits and their survey answers
+  with the same evidence-scope predicate and channel/check-in/campaign filters as
+  attraction analytics. Current and comparison periods use the same population.
+- Reads are paginated and bounded at 5,000 source Visits; partial reads cannot
+  qualify a candidate. Unlinked reviews are excluded from filtered drill-down.
+- Reviewed issues store population filters in version-two JSON evidence snapshots;
+  version-one issues remain readable and are labelled as legacy all-record data.
+  Action follow-up links carry the saved population into attraction analytics.
+- The server action no longer defaults an omitted decision to acceptance. The
+  review is recalculated from submitted, validated filters before saving.
+- Remaining in 22.11d: automatically capture comparable follow-up metric values
+  in an immutable action verification snapshot. Manual follow-up notes and the
+  scoped analytics link are not proof of a causal before/after effect.
+- QA: 79 focused tests passed across nine files with four workers, scoped
+  ESLint and a Node 22 production build passed, and a read-only live Supabase
+  nested-query smoke returned successfully. No SQL migration is required; the
+  existing JSONB evidence column stores both snapshot versions.
+- A full-suite run passed 3,175 tests and failed one NFC recovery UI test that
+  clicked a still-disabled button during list loading. That test passed alone;
+  its wait now checks the button is enabled, and the focused nine-file run
+  passed afterward. The entire full suite has not been rerun since that test fix.
+
 ## Analytics Rules
 
 - Every metric states unit, denominator, date field, source table, calculation, and missing-data rule.

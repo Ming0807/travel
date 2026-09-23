@@ -10,6 +10,10 @@ import { describe, expect, it } from "vitest";
 
 const scope: FeedbackScope = {
   attractionId: 7,
+  evidenceScope: "pilot_only",
+  entryChannel: "nfc",
+  campaignId: 3,
+  checkinCodeId: 9,
   dateStart: "2026-01-01",
   dateEnd: "2026-01-31",
   comparisonStart: "2025-12-01",
@@ -34,10 +38,17 @@ describe("attraction feedback evidence privacy", () => {
     const snapshot = buildEvidenceSnapshot(candidateMetrics);
 
     expect(snapshot).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       ruleVersion: "feedback-rules-v1",
       sourceTypes: ["satisfaction_surveys", "visits"],
-      dateScope: scope,
+      dateScope: {
+        attractionId: 7,
+        dateStart: "2026-01-01",
+        dateEnd: "2026-01-31",
+        comparisonStart: "2025-12-01",
+        comparisonEnd: "2025-12-31",
+      },
+      population: { evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 3, checkinCodeId: 9 },
       denominators: {
         validResponses: 30,
         visits: 120,
@@ -52,6 +63,16 @@ describe("attraction feedback evidence privacy", () => {
       },
     });
     expect(JSON.stringify(snapshot)).not.toMatch(/tourist|visit_id|name|photo|storage|comment/i);
+  });
+
+  it("continues to validate saved version-one snapshots as legacy all-record evidence", () => {
+    const current = buildEvidenceSnapshot(candidateMetrics);
+    if (current.schemaVersion !== 2) throw new Error("Expected the current snapshot version.");
+    const { population: _population, ...legacy } = current;
+    expect(sanitizeEvidenceSnapshot({ ...legacy, schemaVersion: 1 })).toMatchObject({
+      schemaVersion: 1,
+      dateScope: { attractionId: 7 },
+    });
   });
 
   it.each(["touristId", "visitId", "displayName", "name", "photoPath", "storagePath", "privatePath", "comment"]) (

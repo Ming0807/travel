@@ -68,7 +68,7 @@ export function parseAttractionIssueDraft(
     `ช่องทาง: ${context.entryChannel ?? "ทุกช่องทางหรือไม่ระบุ"}`,
     ...(context.campaignId ? [`แคมเปญรหัส ${context.campaignId}`] : []),
     ...(context.checkinCodeId ? [`จุดเช็กอินรหัส ${context.checkinCodeId}`] : []),
-    "ค่าจากลิงก์ยังไม่ใช่หลักฐานที่ยืนยันแล้ว และขอบเขตอาจต่างจากข้อมูลที่คำนวณในหน้าแผนปรับปรุง โปรดตรวจสอบก่อนบันทึก",
+    "ค่าจากลิงก์ยังไม่ใช่หลักฐานที่ยืนยันแล้ว ระบบจะคำนวณใหม่ตามตัวกรองที่เลือก โปรดตรวจสอบก่อนบันทึก",
   ].join(" · ");
 
   if (
@@ -82,7 +82,7 @@ export function parseAttractionIssueDraft(
     return {
       source,
       category: config.category,
-      note: `ร่างจากคะแนน${config.label}เฉลี่ย ${numericValue.toLocaleString("th-TH", { maximumFractionDigits: 2 })} / 5 ช่วง ${scope.dateStart} ถึง ${scope.dateEnd} (ข้อมูลรวมเท่านั้น) โปรดตรวจเกณฑ์และบริบทก่อนบันทึก\n${provenanceNote}`,
+      note: `ร่างจากคะแนน${config.label}เฉลี่ย ${numericValue.toLocaleString("th-TH", { maximumFractionDigits: 2 })} / 5 ช่วง ${scope.dateStart} ถึง ${scope.dateEnd} (สถิติรวมของชุดหลักฐานต้นทาง) โปรดตรวจเกณฑ์และบริบทก่อนบันทึก\n${provenanceNote}`,
       sourceContext: provenanceNote,
     };
   }
@@ -98,7 +98,7 @@ export function parseAttractionIssueDraft(
     return {
       source,
       category: "service",
-      note: `ร่างจาก Funnel ขั้น ${FUNNEL_LABELS[metric]} มี Drop-off ${numericValue.toLocaleString("th-TH", { maximumFractionDigits: 1 })}% ช่วง ${scope.dateStart} ถึง ${scope.dateEnd} (ข้อมูลรวมเท่านั้น) โปรดตรวจสอบ Flow บนอุปกรณ์จริงก่อนบันทึก\n${provenanceNote}`,
+      note: `ร่างจาก Funnel ขั้น ${FUNNEL_LABELS[metric]} มี Drop-off ${numericValue.toLocaleString("th-TH", { maximumFractionDigits: 1 })}% ช่วง ${scope.dateStart} ถึง ${scope.dateEnd} (สถิติรวมของชุดหลักฐานต้นทาง) โปรดตรวจสอบ Flow บนอุปกรณ์จริงก่อนบันทึก\n${provenanceNote}`,
       sourceContext: provenanceNote,
     };
   }

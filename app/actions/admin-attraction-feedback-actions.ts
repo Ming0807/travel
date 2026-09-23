@@ -31,9 +31,13 @@ export async function reviewAttractionFeedbackAction(formData: FormData) {
       dateEnd: String(formData.get("dateEnd") ?? ""),
       comparisonStart: String(formData.get("comparisonStart") ?? "") || undefined,
       comparisonEnd: String(formData.get("comparisonEnd") ?? "") || undefined,
+      evidenceScope: String(formData.get("evidenceScope") ?? ""),
+      entryChannel: String(formData.get("entryChannel") ?? "") || undefined,
+      campaignId: formData.get("campaignId") ? Number(formData.get("campaignId")) : undefined,
+      checkinCodeId: formData.get("checkinCodeId") ? Number(formData.get("checkinCodeId")) : undefined,
       issueDimension: String(formData.get("issueDimension") ?? "overall"),
       issueCategory: String(formData.get("issueCategory") ?? "other"),
-      decision: String(formData.get("decision") ?? "accept"),
+      decision: String(formData.get("decision") ?? ""),
       reviewNote: String(formData.get("reviewNote") ?? ""),
     });
     await service.reviewCandidate(input);

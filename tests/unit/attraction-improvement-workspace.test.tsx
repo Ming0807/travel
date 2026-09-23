@@ -21,6 +21,8 @@ vi.mock("@/app/actions/admin-attraction-feedback-actions", () => ({
 import { AttractionImprovementWorkspace } from "@/components/admin/attractions/AttractionImprovementWorkspace";
 
 const scope = {
+  attractionId: 7,
+  evidenceScope: "all_records" as const,
   dateStart: "2026-01-01",
   dateEnd: "2026-01-31",
   comparisonStart: "2025-12-01",
@@ -49,7 +51,7 @@ function metrics(): CandidateMetrics {
   return {
     attractionId: 7,
     issueDimension: "overall",
-    scope: { attractionId: 7, ...scope },
+    scope,
     sourceTypes: ["satisfaction_surveys", "visits"],
     validResponseCount: 30,
     visitCount: 120,
@@ -275,7 +277,7 @@ describe("AttractionImprovementWorkspace regressions", () => {
 
     expect(screen.getByText(/ร่างจากข้อมูลวิเคราะห์รวม/)).toBeInTheDocument();
     expect(screen.getByRole("note")).toHaveTextContent("Pilot เท่านั้น");
-    expect(screen.getByRole("note")).toHaveTextContent("ข้อมูลรวมทุกระเบียน");
+    expect(screen.getByRole("note")).toHaveTextContent("ชุดหลักฐานที่เลือก");
     expect(screen.getByLabelText("จัดหมวดประเด็น")).toHaveValue("safety");
     expect(screen.getByLabelText("ผลการพิจารณา")).toHaveValue("");
     expect(screen.getByLabelText("เหตุผลการพิจารณา")).toHaveValue("ร่างจากคะแนนความปลอดภัยเฉลี่ย 2.80 / 5 (ข้อมูลรวมเท่านั้น)");
@@ -300,6 +302,44 @@ describe("AttractionImprovementWorkspace regressions", () => {
     });
 
     expect(screen.getByRole("note")).toHaveTextContent("ภาคสนาม");
+    expect(screen.queryByRole("button", { name: thai.review })).not.toBeInTheDocument();
+  });
+
+  it("carries reviewed population filters into the issue and follow-up analytics link", () => {
+    const selectedScope = { ...scope, evidenceScope: "pilot_only" as const, entryChannel: "nfc" as const, campaignId: 3, checkinCodeId: 9 };
+    const selectedIssue = {
+      ...issue(),
+      evidenceSnapshot: buildEvidenceSnapshot({ ...metrics(), scope: selectedScope }),
+    };
+    const { container } = renderWorkspace({
+      scope: selectedScope,
+      workspace: {
+        candidate: qualifyFeedbackCandidate({ ...metrics(), scope: selectedScope }),
+        issues: [selectedIssue],
+        actions: [action()],
+        history: [],
+        owners,
+        rules: FEEDBACK_RULES,
+      },
+    });
+
+    expect(container.querySelector('input[name="evidenceScope"]')).toHaveValue("pilot_only");
+    expect(container.querySelector('input[name="entryChannel"]')).toHaveValue("nfc");
+    expect(container.querySelector('input[name="campaignId"]')).toHaveValue("3");
+    expect(screen.getByText(/ประชากรหลักฐาน: Pilot · ช่องทาง nfc · แคมเปญ 3 · จุดเช็กอิน 9/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ดูข้อมูลช่วงติดตาม/ })).toHaveAttribute(
+      "href",
+      expect.stringContaining("evidenceScope=pilot_only&entryChannel=nfc&campaignId=3&checkinCodeId=9"),
+    );
+  });
+
+  it("suppresses partial candidate numbers when the bounded source read is incomplete", () => {
+    renderWorkspace({ workspace: {
+      candidate: qualifyFeedbackCandidate({ ...metrics(), isTruncated: true }),
+      issues: [], actions: [], history: [], owners, rules: FEEDBACK_RULES,
+    } });
+    expect(screen.getByRole("alert")).toHaveTextContent("อ่านข้อมูลช่วงนี้ได้ไม่ครบ");
+    expect(screen.getAllByText("ข้อมูลไม่ครบ")).toHaveLength(5);
     expect(screen.queryByRole("button", { name: thai.review })).not.toBeInTheDocument();
   });
 });

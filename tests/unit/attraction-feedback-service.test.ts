@@ -15,6 +15,7 @@ const OWNER_ID = "00000000-0000-4000-8000-000000000003";
 
 const scope: FeedbackScope = {
   attractionId: 7,
+  evidenceScope: "all_records",
   dateStart: "2026-01-01",
   dateEnd: "2026-01-31",
   comparisonStart: "2025-12-01",
@@ -135,6 +136,31 @@ describe("AttractionFeedbackService permissions and workflow", () => {
 
     expect(requested).toEqual(["attraction_feedback.issue_review"]);
     expect(repo.insertIssue).toHaveBeenCalledWith(expect.objectContaining({ status: "open", reviewedBy: "admin-1" }));
+  });
+
+  it("stores the filtered population in the reviewed snapshot", async () => {
+    const repo = repository();
+    const selected = { ...scope, evidenceScope: "pilot_only" as const, entryChannel: "nfc" as const, campaignId: 3, checkinCodeId: 9 };
+    repo.readCandidateMetrics.mockResolvedValue(metrics({ scope: selected }));
+    const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }));
+
+    await service.reviewCandidate({ ...selected, issueDimension: "overall", issueCategory: "service", decision: "accept", reviewNote: "Pilot cohort only." });
+
+    expect(repo.insertIssue).toHaveBeenCalledWith(expect.objectContaining({
+      evidenceSnapshot: expect.objectContaining({
+        schemaVersion: 2,
+        population: { evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 3, checkinCodeId: 9 },
+      }),
+    }));
+  });
+
+  it("rejects metrics from a different evidence population before saving", async () => {
+    const repo = repository();
+    const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }));
+
+    await expect(service.reviewCandidate({ ...scope, evidenceScope: "field_claim", issueDimension: "overall", issueCategory: "service", decision: "accept", reviewNote: "" }))
+      .rejects.toMatchObject({ code: "FEEDBACK_SCOPE_MISMATCH" });
+    expect(repo.insertIssue).not.toHaveBeenCalled();
   });
 
   it("requires a note when dismissing a candidate", async () => {

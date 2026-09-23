@@ -224,7 +224,7 @@ The attraction workspace requires one `attraction_id` and uses `visits.visit_dat
 Default evidence scope:
 
 ```text
-include = operational visits without a research session
+exclude = unclassified legacy visits without verified field evidence
 include = final_collection + field_observation
 exclude = pilot study records
 exclude = pilot_internal
@@ -246,6 +246,20 @@ An administrator may explicitly select pilot or simulated data for QA, but the i
 | `attraction_funnel_*` | unique visit/session | previous attributable stage | `funnel_events`, operational tables | entry stage is unavailable when it cannot be linked to an included visit | locate workflow friction without inflating event retries |
 
 Campaign filtering uses `checkin_codes.campaign_id`. Entry-channel filtering uses `visits.entry_channel`; records remain `unknown` when evidence does not support QR, NFC, direct, or import attribution. Phase 22 does not trust a client form field for channel attribution; Phase 23 must add a server-verifiable entry contract before QR/NFC labels are populated.
+
+The restricted attraction-improvement candidate re-reads `visits` and their
+`satisfaction_surveys` using the selected date range, evidence scope, entry
+channel, campaign, and check-in code. Current and comparison periods use the
+same population filters. Its denominators are selected Visit records and
+non-null 1-5 survey answers for the chosen dimension; low-score recurrence
+counts answers at or below 2. Qualification requires at least 30 Visits, 30
+valid answers, three low-score answers, and either a current mean at or below
+3 or a comparable decline of at least 0.25. Incomplete reads cannot qualify.
+The issue saves a version-two population snapshot; pre-existing version-one
+snapshots remain readable and are labelled as legacy all-record evidence.
+Reviews without a linked Visit are not evidence for a filtered population.
+Follow-up analytics links retain the issue population, but before/after
+differences alone do not establish that an improvement caused a change.
 
 All segmented distributions suppress categories below `n=10`. Each satisfaction dimension keeps an independent denominator. Peer comparison is unavailable when campaign, check-in point, or entry-channel filters make the peer scope non-comparable.
 

@@ -1456,7 +1456,7 @@ A tourist should never feel lost after scanning a QR code.
 | `/admin/research` | `research.read` | Study list and readiness status |
 | `/admin/research/[id]` | `research.read`; management controls require `research.manage` | Protocol, analytics, deployments, instruments, tasks, assessment queue and export |
 | `/admin/research/[id]/operator/start` | `research.manage` | Clean participant-facing notice used during a facilitated session |
-| `/admin/attractions/[id]/improvements` | Approved attraction/admin permission | Review feedback issue, create action, record completion and follow-up |
+| `/admin/attractions/[id]/improvements` | Approved attraction/admin permission | Filter Visit-linked evidence by population and period; review an issue with a versioned source snapshot, create an action, and inspect follow-up under the same filters |
 
 Public participant routes never accept internal research IDs or secret tokens in the URL. Ownership is carried in an HttpOnly same-site cookie; stakeholder routes do not create tourist profiles.
 

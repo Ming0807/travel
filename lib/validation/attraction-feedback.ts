@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { attractionEntryChannelSchema, attractionEvidenceScopeSchema } from "@/lib/validation/attraction-analytics";
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date.");
+const isoDate = z.iso.date();
 const uuid = z.string().uuid();
 
 export function redactFeedbackOperationalText(value: string): string {
@@ -56,9 +57,16 @@ export const feedbackScopeSchema = z.object({
   dateEnd: isoDate,
   comparisonStart: isoDate.optional(),
   comparisonEnd: isoDate.optional(),
+  evidenceScope: attractionEvidenceScopeSchema.default("all_records"),
+  entryChannel: attractionEntryChannelSchema.optional(),
+  campaignId: z.number().int().positive().optional(),
+  checkinCodeId: z.number().int().positive().optional(),
 }).superRefine((value, context) => {
   if (value.dateEnd < value.dateStart) {
     context.addIssue({ code: "custom", path: ["dateEnd"], message: "End date must not precede start date." });
+  }
+  if ((Date.parse(`${value.dateEnd}T00:00:00Z`) - Date.parse(`${value.dateStart}T00:00:00Z`)) / 86_400_000 > 730) {
+    context.addIssue({ code: "custom", path: ["dateEnd"], message: "Feedback scope must not exceed 730 days." });
   }
   if ((value.comparisonStart && !value.comparisonEnd) || (!value.comparisonStart && value.comparisonEnd)) {
     context.addIssue({ code: "custom", path: ["comparisonEnd"], message: "Comparison dates must be supplied together." });
@@ -101,8 +109,7 @@ export const actionTransitionInputSchema = z.object({
   completionEvidenceNote: z.string().trim().max(4000).optional(),
 });
 
-export const evidenceSnapshotSchema = z.object({
-  schemaVersion: z.literal(1),
+const evidenceSnapshotBaseSchema = z.object({
   ruleVersion: z.literal("feedback-rules-v1"),
   sourceTypes: z.array(z.enum(["satisfaction_surveys", "reviews", "visits"])).min(1),
   dateScope: z.object({
@@ -132,6 +139,19 @@ export const evidenceSnapshotSchema = z.object({
     minimumStructuredRecurrence: z.literal(3),
   }).strict(),
 }).strict();
+
+export const evidenceSnapshotSchema = z.discriminatedUnion("schemaVersion", [
+  evidenceSnapshotBaseSchema.extend({ schemaVersion: z.literal(1) }).strict(),
+  evidenceSnapshotBaseSchema.extend({
+    schemaVersion: z.literal(2),
+    population: z.object({
+      evidenceScope: attractionEvidenceScopeSchema,
+      entryChannel: attractionEntryChannelSchema.nullable(),
+      campaignId: z.number().int().positive().nullable(),
+      checkinCodeId: z.number().int().positive().nullable(),
+    }).strict(),
+  }).strict(),
+]);
 
 export type FeedbackScopeInput = z.infer<typeof feedbackScopeSchema>;
 export type IssueReviewInput = z.infer<typeof issueReviewInputSchema>;

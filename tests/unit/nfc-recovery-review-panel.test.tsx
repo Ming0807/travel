@@ -52,8 +52,10 @@ it("keeps an uncertain retry identity when the user refreshes the list", async (
   mocks.list.mockResolvedValue({ success: true, enabled: true, retryEnabled: true, rows: [{ ...row, status: "waiting", last_outcome: "provider_unavailable" }], page: 1, hasMore: false });
   retryMocks.retry.mockResolvedValue({ success: false, outcome: "uncertain", message: "ผลยังไม่ชัดเจน" });
   render(<NfcRecoveryReview tagId={tagId} />); fireEvent.click(screen.getByRole("button", { name: "โหลดรายการกู้คืน" }));
-  fireEvent.click(await screen.findByRole("button", { name: "จัดคิวตรวจซ้ำ" }));
-  fireEvent.click(screen.getByRole("button", { name: "ยืนยันจัดคิวตรวจซ้ำ" }));
+  const retry = await screen.findByRole("button", { name: "จัดคิวตรวจซ้ำ" });
+  await waitFor(() => expect(retry).toBeEnabled());
+  fireEvent.click(retry);
+  fireEvent.click(await screen.findByRole("button", { name: "ยืนยันจัดคิวตรวจซ้ำ" }));
   await screen.findByRole("button", { name: "ส่งคำขอเดิมอีกครั้ง" });
   mocks.list.mockResolvedValue({ success: true, enabled: true, retryEnabled: false, rows: [], page: 1, hasMore: false });
   fireEvent.click(screen.getByRole("button", { name: "รีเฟรชรายการกู้คืน" }));

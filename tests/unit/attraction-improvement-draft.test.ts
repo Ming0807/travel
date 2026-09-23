@@ -17,7 +17,7 @@ describe("parseAttractionIssueDraft", () => {
     expect(draft?.note).toContain("แคมเปญรหัส 7");
     expect(draft?.note).toContain("จุดเช็กอินรหัส 10");
     expect(draft?.note).toContain("ยังไม่ใช่หลักฐานที่ยืนยันแล้ว");
-    expect(draft?.note).toContain("ขอบเขตอาจต่าง");
+    expect(draft?.note).toContain("คำนวณใหม่ตามตัวกรองที่เลือก");
   });
 
   it("does not infer field evidence for legacy links", () => {

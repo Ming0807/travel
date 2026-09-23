@@ -1,5 +1,8 @@
 import "server-only";
 
+import { getCheckinEntryConfig } from "@/lib/config/checkin-entry";
+import { visitMatchesDashboardEvidenceScope } from "@/lib/dashboard/evidence-scope";
+import { asRecord } from "@/lib/utils/record";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { EvidenceSnapshot } from "@/lib/validation/attraction-feedback";
 import type {
@@ -13,24 +16,13 @@ import type {
   AttractionFeedbackIssue,
 } from "@/lib/services/attraction-feedback.service";
 
-const MAX_AGGREGATE_ROWS = 10_000;
+const MAX_AGGREGATE_ROWS = 5_000;
+const VISIT_PAGE_SIZE = 1_000;
 const MAX_EVIDENCE_ROWS = 100;
 
 type Period = {
   start: string;
   end: string;
-};
-
-type RawSurveyRow = {
-  overall_score: number | null;
-  facility_score: number | null;
-  cleanliness_score: number | null;
-  safety_score: number | null;
-  accessibility_score: number | null;
-  information_score: number | null;
-  value_score: number | null;
-  comments?: string | null;
-  visits?: { visit_date?: string | null } | Array<{ visit_date?: string | null }> | null;
 };
 
 type RawIssueRow = {
@@ -163,58 +155,88 @@ function mapAction(row: RawActionRow): ImprovementAction {
   };
 }
 
-function dimensionColumn(dimension: FeedbackDimension): keyof RawSurveyRow {
-  return `${dimension}_score` as keyof RawSurveyRow;
+function dimensionColumn(dimension: FeedbackDimension) {
+  return `${dimension}_score`;
 }
 
-function firstVisitDate(row: RawSurveyRow): string | null {
-  if (Array.isArray(row.visits)) return row.visits[0]?.visit_date ?? null;
-  return row.visits?.visit_date ?? null;
+function relations(row: Record<string, unknown>, key: string): Record<string, unknown>[] {
+  const value = row[key];
+  if (Array.isArray(value)) return value.map(asRecord);
+  return value && typeof value === "object" ? [asRecord(value)] : [];
 }
 
-async function readSurveyPeriod(attractionId: number, dimension: FeedbackDimension, period: Period) {
+async function allowedCheckinCodeIds(scope: FeedbackScope): Promise<number[] | null> {
+  if (!scope.campaignId && !scope.checkinCodeId) return null;
   const supabase = createSupabaseServiceRoleClient();
-  const { data, error } = await supabase
-    .from("satisfaction_surveys")
-    .select(`
-      overall_score,
-      facility_score,
-      cleanliness_score,
-      safety_score,
-      accessibility_score,
-      information_score,
-      value_score,
-      visits!inner (visit_date)
-    `, { count: "exact" })
-    .eq("attraction_id", attractionId)
-    .gte("visits.visit_date", period.start)
-    .lte("visits.visit_date", period.end)
-    .limit(MAX_AGGREGATE_ROWS);
+  let query = supabase.from("checkin_codes")
+    .select("checkin_code_id, campaign_id", { count: "exact" })
+    .eq("attraction_id", scope.attractionId)
+    .limit(501);
+  if (scope.campaignId) query = query.eq("campaign_id", scope.campaignId);
+  if (scope.checkinCodeId) query = query.eq("checkin_code_id", scope.checkinCodeId);
+  const { data, error, count } = await query;
+  if (error || count === null || count > 500 || count > (data?.length ?? 0)) {
+    throw new Error("ATTRACTION_FEEDBACK_CHECKIN_CODES_READ_FAILED");
+  }
+  return (data ?? []).map((row) => Number(row.checkin_code_id));
+}
 
-  if (error) throw new Error("ATTRACTION_FEEDBACK_METRICS_READ_FAILED");
-
-  const column = dimensionColumn(dimension);
-  const scores = ((data ?? []) as RawSurveyRow[])
-    .map((row) => row[column])
-    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-
-  return {
-    scores,
-    isTruncated: (data ?? []).length >= MAX_AGGREGATE_ROWS,
+async function readEligibleVisits(
+  scope: FeedbackScope,
+  dimension: FeedbackDimension,
+  period: Period,
+  codeIds: number[] | null,
+  includeComments = false,
+) {
+  const supabase = createSupabaseServiceRoleClient();
+  const surveyColumns = `${dimensionColumn(dimension)}${includeComments ? ", comments" : ""}`;
+  const entrySelection = getCheckinEntryConfig().sessionsEnabled
+    ? "checkin_entry_sessions(evidence_scope),"
+    : "";
+  const selection = `visit_id, visit_date, entry_channel, checkin_code_id,
+    ${entrySelection}
+    research_sessions(collection_mode, status, inclusion_status, research_studies(study_kind)),
+    satisfaction_surveys(${surveyColumns})`;
+  const readPage = async (offset: number) => {
+    let query = supabase.from("visits")
+      .select(selection, { count: "exact" })
+      .eq("attraction_id", scope.attractionId)
+      .gte("visit_date", period.start)
+      .lte("visit_date", period.end)
+      .order("visit_id")
+      .range(offset, offset + VISIT_PAGE_SIZE - 1);
+    if (scope.entryChannel) query = query.eq("entry_channel", scope.entryChannel);
+    if (codeIds !== null) {
+      query = codeIds.length === 0
+        ? query.eq("checkin_code_id", -1)
+        : query.in("checkin_code_id", codeIds);
+    }
+    const { data, error, count } = await query;
+    if (error || count === null) throw new Error("ATTRACTION_FEEDBACK_VISITS_READ_FAILED");
+    return { rows: (data ?? []).map(asRecord), count };
   };
+  const firstPage = await readPage(0);
+  const rawRows = [...firstPage.rows];
+  const boundedCount = Math.min(firstPage.count, MAX_AGGREGATE_ROWS);
+  for (let offset = VISIT_PAGE_SIZE; offset < boundedCount; offset += VISIT_PAGE_SIZE) {
+    const page = await readPage(offset);
+    if (page.count !== firstPage.count) throw new Error("ATTRACTION_FEEDBACK_VISITS_CHANGED_DURING_READ");
+    rawRows.push(...page.rows);
+  }
+  const uniqueVisitIds = new Set(rawRows.map((row) => row.visit_id));
+  const isTruncated = firstPage.count > MAX_AGGREGATE_ROWS
+    || rawRows.length !== boundedCount
+    || uniqueVisitIds.size !== rawRows.length;
+  const visits = rawRows
+    .filter((row) => visitMatchesDashboardEvidenceScope(row, scope.evidenceScope));
+  return { visits, isTruncated };
 }
 
-async function readVisitCount(attractionId: number, period: Period): Promise<number> {
-  const supabase = createSupabaseServiceRoleClient();
-  const { count, error } = await supabase
-    .from("visits")
-    .select("visit_id", { count: "exact", head: true })
-    .eq("attraction_id", attractionId)
-    .gte("visit_date", period.start)
-    .lte("visit_date", period.end);
-
-  if (error) throw new Error("ATTRACTION_FEEDBACK_VISIT_COUNT_FAILED");
-  return count ?? 0;
+function surveyScores(visits: Record<string, unknown>[], dimension: FeedbackDimension) {
+  const column = dimensionColumn(dimension);
+  return visits.flatMap((visit) => relations(visit, "satisfaction_surveys"))
+    .map((survey) => survey[column])
+    .filter((score): score is number => typeof score === "number" && Number.isFinite(score) && score >= 1 && score <= 5);
 }
 
 function average(values: number[]): number | null {
@@ -231,22 +253,24 @@ export async function readCandidateMetrics(
     ? { start: scope.comparisonStart, end: scope.comparisonEnd }
     : null;
 
-  const [current, currentVisits, comparison] = await Promise.all([
-    readSurveyPeriod(scope.attractionId, issueDimension, currentPeriod),
-    readVisitCount(scope.attractionId, currentPeriod),
-    comparisonPeriod ? readSurveyPeriod(scope.attractionId, issueDimension, comparisonPeriod) : Promise.resolve(null),
+  const codeIds = await allowedCheckinCodeIds(scope);
+  const [current, comparison] = await Promise.all([
+    readEligibleVisits(scope, issueDimension, currentPeriod, codeIds),
+    comparisonPeriod ? readEligibleVisits(scope, issueDimension, comparisonPeriod, codeIds) : Promise.resolve(null),
   ]);
+  const scores = surveyScores(current.visits, issueDimension);
+  const comparisonScores = comparison ? surveyScores(comparison.visits, issueDimension) : [];
 
   return {
     attractionId: scope.attractionId,
     issueDimension,
     scope,
     sourceTypes: ["satisfaction_surveys", "visits"],
-    validResponseCount: current.scores.length,
-    visitCount: currentVisits,
-    currentScore: average(current.scores),
-    comparisonScore: comparison ? average(comparison.scores) : null,
-    structuredLowScoreRecurrence: current.scores.filter((score) => score <= 2).length,
+    validResponseCount: scores.length,
+    visitCount: current.visits.length,
+    currentScore: average(scores),
+    comparisonScore: comparison ? average(comparisonScores) : null,
+    structuredLowScoreRecurrence: scores.filter((score) => score <= 2).length,
     isTruncated: current.isTruncated || Boolean(comparison?.isTruncated),
   };
 }
@@ -255,23 +279,30 @@ export async function listEvidenceRows(
   scope: FeedbackScope,
   issueDimension: FeedbackDimension,
 ): Promise<RawEvidenceRow[]> {
-  const supabase = createSupabaseServiceRoleClient();
+  const codeIds = await allowedCheckinCodeIds(scope);
+  const selected = await readEligibleVisits(
+    scope,
+    issueDimension,
+    { start: scope.dateStart, end: scope.dateEnd },
+    codeIds,
+    true,
+  );
+  if (selected.isTruncated) throw new Error("ATTRACTION_FEEDBACK_EVIDENCE_INCOMPLETE");
   const column = dimensionColumn(issueDimension);
-  const { data: surveys, error: surveyError } = await supabase
-    .from("satisfaction_surveys")
-    .select(`
-      ${column},
-      comments,
-      visits!inner (visit_date)
-    `)
-    .eq("attraction_id", scope.attractionId)
-    .gte("visits.visit_date", scope.dateStart)
-    .lte("visits.visit_date", scope.dateEnd)
-    .order("submitted_at", { ascending: false })
-    .limit(MAX_EVIDENCE_ROWS);
+  const surveyRows = selected.visits.flatMap((visit) => relations(visit, "satisfaction_surveys").map((survey) => ({
+    sourceType: "satisfaction_survey" as const,
+    score: typeof survey[column] === "number" ? survey[column] as number : null,
+    occurredAt: typeof visit.visit_date === "string" ? visit.visit_date : null,
+    comment: typeof survey.comments === "string" ? survey.comments : null,
+  }))).filter((row) => row.score !== null)
+    .sort((left, right) => (right.occurredAt ?? "").localeCompare(left.occurredAt ?? ""))
+    .slice(0, MAX_EVIDENCE_ROWS);
 
-  if (surveyError) throw new Error("ATTRACTION_FEEDBACK_EVIDENCE_READ_FAILED");
+  if (scope.evidenceScope !== "all_records" || scope.entryChannel || scope.campaignId || scope.checkinCodeId || issueDimension !== "overall") {
+    return surveyRows;
+  }
 
+  const supabase = createSupabaseServiceRoleClient();
   const { data: reviews, error: reviewError } = await supabase
     .from("reviews")
     .select("rating, comment, created_at")
@@ -285,13 +316,6 @@ export async function listEvidenceRows(
     .limit(MAX_EVIDENCE_ROWS);
 
   if (reviewError) throw new Error("ATTRACTION_FEEDBACK_EVIDENCE_READ_FAILED");
-
-  const surveyRows = ((surveys ?? []) as RawSurveyRow[]).map((row) => ({
-    sourceType: "satisfaction_survey" as const,
-    score: typeof row[column] === "number" ? row[column] : null,
-    occurredAt: firstVisitDate(row),
-    comment: row.comments ?? null,
-  }));
 
   const reviewRows = (reviews ?? []).map((row) => ({
     sourceType: "approved_review" as const,

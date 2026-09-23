@@ -12,6 +12,7 @@ import type {
   ActionStatus,
   AttractionFeedbackIssue,
   FeedbackDimension,
+  FeedbackScope,
   ImprovementAction,
   IssueStatus,
   getAttractionImprovementWorkspace,
@@ -20,6 +21,22 @@ import type { AttractionIssueDraft } from "@/lib/dashboard/attraction-improvemen
 import { redactFeedbackOperationalText } from "@/lib/validation/attraction-feedback";
 
 type Workspace = Awaited<ReturnType<typeof getAttractionImprovementWorkspace>>;
+
+const EVIDENCE_SCOPE_LABELS = {
+  all_records: "ทุกระเบียน (QA)",
+  field_claim: "ภาคสนาม",
+  pilot_only: "Pilot",
+  simulated_only: "จำลอง",
+} as const;
+
+function populationLabel(scope: Pick<FeedbackScope, "evidenceScope" | "entryChannel" | "campaignId" | "checkinCodeId">) {
+  return [
+    EVIDENCE_SCOPE_LABELS[scope.evidenceScope],
+    scope.entryChannel ? `ช่องทาง ${scope.entryChannel}` : "ทุกช่องทาง",
+    ...(scope.campaignId ? [`แคมเปญ ${scope.campaignId}`] : []),
+    ...(scope.checkinCodeId ? [`จุดเช็กอิน ${scope.checkinCodeId}`] : []),
+  ].join(" · ");
+}
 
 const DIMENSION_LABELS: Record<FeedbackDimension, string> = {
   overall: "ภาพรวม",
@@ -94,7 +111,8 @@ function formatScore(value: number | null) {
   return value === null ? "ไม่มีข้อมูล" : value.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function candidateStatusClass(qualifies: boolean) {
+function candidateStatusClass(qualifies: boolean, truncated = false) {
+  if (truncated) return "border-amber-300 bg-amber-50 text-amber-900";
   if (qualifies) return "border-rose-300 bg-rose-50 text-rose-800";
   return "border-slate-300 bg-slate-50 text-slate-700";
 }
@@ -207,6 +225,9 @@ function ImprovementIssue({
 }) {
   const activeAction = actions.find((action) => ["planned", "in_progress", "completed"].includes(action.status));
   const hasVerified = actions.some((action) => action.status === "verified");
+  const population = issue.evidenceSnapshot.schemaVersion === 2
+    ? issue.evidenceSnapshot.population
+    : { evidenceScope: "all_records" as const, entryChannel: null, campaignId: null, checkinCodeId: null };
   return (
     <article className="border-t border-slate-300 py-6 first:border-t-0 first:pt-0">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -217,6 +238,12 @@ function ImprovementIssue({
             <span className="text-xs font-semibold text-slate-500">กฎ {issue.ruleVersion}</span>
           </div>
           <p className="mt-2 text-sm text-slate-700">หมวด {CATEGORY_LABELS[issue.issueCategory]} ช่วง {formatDate(issue.baselineStart)} ถึง {formatDate(issue.baselineEnd)}</p>
+          <p className="mt-1 text-xs font-semibold text-slate-600">{issue.evidenceSnapshot.schemaVersion === 1 ? "หลักฐานรุ่นเดิม: " : "ประชากรหลักฐาน: "}{populationLabel({
+            evidenceScope: population.evidenceScope,
+            entryChannel: population.entryChannel ?? undefined,
+            campaignId: population.campaignId ?? undefined,
+            checkinCodeId: population.checkinCodeId ?? undefined,
+          })}</p>
         </div>
         <div className="grid grid-cols-3 gap-4 text-right text-sm">
           <div><p className="text-xs text-slate-500">คะแนน</p><p className="font-black">{formatScore(issue.currentScore)}</p></div>
@@ -242,6 +269,15 @@ function ImprovementIssue({
               <div><dt className="text-xs text-slate-500">กำหนดเสร็จ</dt><dd className="font-bold">{formatDate(action.dueDate)}</dd></div>
               <div><dt className="text-xs text-slate-500">ติดตามผล</dt><dd className="font-bold">{formatDate(action.followUpStart)} ถึง {formatDate(action.followUpEnd)}</dd></div>
             </dl>
+            <Link href={`/admin/dashboard/attractions?${new URLSearchParams({
+              attractionId: String(issue.attractionId),
+              dateFrom: action.followUpStart,
+              dateTo: action.followUpEnd,
+              evidenceScope: population.evidenceScope,
+              ...(population.entryChannel ? { entryChannel: population.entryChannel } : {}),
+              ...(population.campaignId ? { campaignId: String(population.campaignId) } : {}),
+              ...(population.checkinCodeId ? { checkinCodeId: String(population.checkinCodeId) } : {}),
+            }).toString()}`} className="mt-2 inline-flex min-h-11 items-center gap-1 text-sm font-bold text-[#B94727] underline underline-offset-4">ดูข้อมูลช่วงติดตาม <ArrowRight aria-hidden="true" /></Link>
             {action.completionEvidenceNote ? <p className="mt-3 bg-emerald-50 p-3 text-sm leading-6 text-emerald-900">หลักฐาน: {redactFeedbackOperationalText(action.completionEvidenceNote)}</p> : null}
             <ActionTransitionForms attractionId={attractionId} action={action} canManage={canManage} canVerify={canVerify} />
           </section>
@@ -294,7 +330,7 @@ export function AttractionImprovementWorkspace({
 }: {
   attractionId: number;
   workspace: Workspace;
-  scope: { dateStart: string; dateEnd: string; comparisonStart?: string; comparisonEnd?: string };
+  scope: FeedbackScope;
   dimension: FeedbackDimension;
   result?: string;
   canReview: boolean;
@@ -312,7 +348,7 @@ export function AttractionImprovementWorkspace({
         <aside role="note" className="border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
           <strong>บริบทของร่างจากกราฟ</strong>
           <p className="mt-1">{draft.sourceContext}</p>
-          <p className="mt-1">เกณฑ์และตัวเลขด้านล่างคำนวณจากข้อมูลรวมทุกระเบียนในช่วงเวลาที่เลือก ยังไม่ได้ใช้ตัวกรอง Pilot/ภาคสนาม ช่องทาง แคมเปญ หรือจุดเช็กอินจากกราฟ</p>
+          <p className="mt-1">เกณฑ์และตัวเลขด้านล่างคำนวณใหม่ตามชุดหลักฐานที่เลือก: {populationLabel(scope)} โปรดเทียบกับกราฟต้นทางก่อนบันทึก</p>
         </aside>
       ) : null}
 
@@ -322,17 +358,19 @@ export function AttractionImprovementWorkspace({
             <p className="text-xs font-bold text-[var(--admin-accent-strong)]">หลักฐานช่วงเวลาที่เลือก</p>
             <h2 id="candidate-heading" className="mt-1 text-xl font-black text-[var(--admin-ink)]">{DIMENSION_LABELS[dimension]}</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--admin-muted)]">ระบบเสนอประเด็นตามกฎ {workspace.rules.ruleVersion} ผู้ดูแลต้องตรวจและให้เหตุผลก่อนสร้างงานจริง</p>
+            <p className="mt-1 text-xs font-semibold text-[var(--admin-muted)]">ชุดหลักฐาน: {populationLabel(scope)}</p>
           </div>
-          <span className={`inline-flex w-fit items-center gap-2 border px-3 py-2 text-sm font-black ${candidateStatusClass(candidate.qualifies)}`}>
-            {candidate.qualifies ? <Warning aria-hidden="true" weight="fill" /> : <CheckCircle aria-hidden="true" weight="fill" />}
-            {candidate.qualifies ? "ควรพิจารณา" : "ยังไม่ผ่านเกณฑ์"}
+          <span className={`inline-flex w-fit items-center gap-2 border px-3 py-2 text-sm font-black ${candidateStatusClass(candidate.qualifies, candidate.metrics.isTruncated)}`}>
+            {candidate.qualifies || candidate.metrics.isTruncated ? <Warning aria-hidden="true" weight="fill" /> : <CheckCircle aria-hidden="true" weight="fill" />}
+            {candidate.metrics.isTruncated ? "ข้อมูลไม่ครบ" : candidate.qualifies ? "ควรพิจารณา" : "ยังไม่ผ่านเกณฑ์"}
           </span>
         </div>
+        {candidate.metrics.isTruncated ? <p role="alert" className="mt-4 border border-amber-300 bg-amber-50 p-3 text-sm font-semibold text-amber-950">อ่านข้อมูลช่วงนี้ได้ไม่ครบ จึงไม่สามารถใช้ตัวเลขบางส่วนพิจารณาสร้างประเด็นได้ กรุณาเลือกช่วงเวลาที่สั้นลง</p> : null}
         <dl className="mt-5 grid gap-4 border-y border-slate-200 py-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div><dt className="text-xs font-semibold text-slate-500">คะแนนปัจจุบัน</dt><dd className="mt-1 text-2xl font-black">{formatScore(candidate.metrics.currentScore)}</dd></div>
-          <div><dt className="text-xs font-semibold text-slate-500">คำตอบที่ใช้ได้</dt><dd className="mt-1 text-2xl font-black">{candidate.metrics.validResponseCount.toLocaleString("th-TH")}</dd></div>
-          <div><dt className="text-xs font-semibold text-slate-500">การเข้าชม</dt><dd className="mt-1 text-2xl font-black">{candidate.metrics.visitCount.toLocaleString("th-TH")}</dd></div>
-          <div><dt className="text-xs font-semibold text-slate-500">คะแนนต่ำซ้ำ</dt><dd className="mt-1 text-2xl font-black">{candidate.metrics.structuredLowScoreRecurrence.toLocaleString("th-TH")}</dd></div>
+          <div><dt className="text-xs font-semibold text-slate-500">คะแนนปัจจุบัน</dt><dd className="mt-1 text-2xl font-black">{candidate.metrics.isTruncated ? "ข้อมูลไม่ครบ" : formatScore(candidate.metrics.currentScore)}</dd></div>
+          <div><dt className="text-xs font-semibold text-slate-500">คำตอบที่ใช้ได้</dt><dd className="mt-1 text-2xl font-black">{candidate.metrics.isTruncated ? "ข้อมูลไม่ครบ" : candidate.metrics.validResponseCount.toLocaleString("th-TH")}</dd></div>
+          <div><dt className="text-xs font-semibold text-slate-500">การเข้าชม</dt><dd className="mt-1 text-2xl font-black">{candidate.metrics.isTruncated ? "ข้อมูลไม่ครบ" : candidate.metrics.visitCount.toLocaleString("th-TH")}</dd></div>
+          <div><dt className="text-xs font-semibold text-slate-500">คะแนนต่ำซ้ำ</dt><dd className="mt-1 text-2xl font-black">{candidate.metrics.isTruncated ? "ข้อมูลไม่ครบ" : candidate.metrics.structuredLowScoreRecurrence.toLocaleString("th-TH")}</dd></div>
         </dl>
 
         {candidate.qualifies && canReview ? (
@@ -343,6 +381,10 @@ export function AttractionImprovementWorkspace({
             <input type="hidden" name="dateEnd" value={scope.dateEnd} />
             <input type="hidden" name="comparisonStart" value={scope.comparisonStart ?? ""} />
             <input type="hidden" name="comparisonEnd" value={scope.comparisonEnd ?? ""} />
+            <input type="hidden" name="evidenceScope" value={scope.evidenceScope} />
+            <input type="hidden" name="entryChannel" value={scope.entryChannel ?? ""} />
+            <input type="hidden" name="campaignId" value={scope.campaignId ?? ""} />
+            <input type="hidden" name="checkinCodeId" value={scope.checkinCodeId ?? ""} />
             <input type="hidden" name="issueDimension" value={dimension} />
             <label className="block text-sm font-bold">จัดหมวดประเด็น<select name="issueCategory" required defaultValue={draft?.category ?? (dimension === "overall" ? "service" : dimension === "information" ? "information_signage" : dimension)} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{Object.entries(CATEGORY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
             <label className="block text-sm font-bold">ผลการพิจารณา<select name="decision" required defaultValue={draft ? "" : "accept"} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{draft ? <option value="" disabled>เลือกผลการพิจารณา</option> : null}<option value="accept">รับเป็นประเด็นปรับปรุง</option><option value="dismiss">ไม่รับเป็นประเด็น</option></select></label>

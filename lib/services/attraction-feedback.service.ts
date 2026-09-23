@@ -195,9 +195,15 @@ function assertNoForbiddenEvidenceKeys(value: unknown): void {
 
 export function buildEvidenceSnapshot(metrics: CandidateMetrics): EvidenceSnapshot {
   const snapshot = {
-    schemaVersion: 1 as const,
+    schemaVersion: 2 as const,
     ruleVersion: FEEDBACK_RULES.ruleVersion,
     sourceTypes: metrics.sourceTypes,
+    population: {
+      evidenceScope: metrics.scope.evidenceScope,
+      entryChannel: metrics.scope.entryChannel ?? null,
+      campaignId: metrics.scope.campaignId ?? null,
+      checkinCodeId: metrics.scope.checkinCodeId ?? null,
+    },
     dateScope: {
       attractionId: metrics.attractionId,
       dateStart: metrics.scope.dateStart,
@@ -316,6 +322,17 @@ export class AttractionFeedbackService {
     }
     const guard = await this.authorize("attraction_feedback.issue_review");
     const metrics = await this.repository.readCandidateMetrics(parsed.data, parsed.data.issueDimension);
+    if (metrics.attractionId !== parsed.data.attractionId
+      || metrics.scope.dateStart !== parsed.data.dateStart
+      || metrics.scope.dateEnd !== parsed.data.dateEnd
+      || metrics.scope.comparisonStart !== parsed.data.comparisonStart
+      || metrics.scope.comparisonEnd !== parsed.data.comparisonEnd
+      || metrics.scope.evidenceScope !== parsed.data.evidenceScope
+      || metrics.scope.entryChannel !== parsed.data.entryChannel
+      || metrics.scope.campaignId !== parsed.data.campaignId
+      || metrics.scope.checkinCodeId !== parsed.data.checkinCodeId) {
+      fail("FEEDBACK_SCOPE_MISMATCH", "Feedback data does not match the requested population.");
+    }
     const qualification = qualifyFeedbackCandidate(metrics);
     if (!qualification.qualifies) fail("CANDIDATE_NOT_QUALIFIED", "This feedback candidate does not meet the approved qualification rules.");
 
