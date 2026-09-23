@@ -8,12 +8,14 @@ import {
   ISSUE_CATEGORIES,
   ISSUE_STATUSES,
   actionTransitionInputSchema,
+  actionVerificationSnapshotSchema,
   evidenceSnapshotSchema,
   feedbackScopeSchema,
   improvementActionInputSchema,
   issueReviewInputSchema,
   redactFeedbackOperationalText,
   type ActionTransitionInput,
+  type ActionVerificationSnapshot,
   type EvidenceSnapshot,
   type FeedbackScopeInput,
   type ImprovementActionInput,
@@ -112,6 +114,7 @@ export type ImprovementAction = {
   followUpEnd: string;
   completionNote?: string | null;
   completionEvidenceNote?: string | null;
+  verificationSnapshot?: ActionVerificationSnapshot | null;
   completedAt?: string | null;
   verifiedBy?: string | null;
   verifiedAt?: string | null;
@@ -128,7 +131,7 @@ export type AttractionFeedbackRepository = {
   transitionIssue: (issueId: string, from: IssueStatus, to: IssueStatus, changedBy: string, note: string | null) => Promise<AttractionFeedbackIssue>;
   insertAction: (input: Omit<ImprovementAction, "improvementActionId" | "createdAt" | "updatedAt" | "status">) => Promise<ImprovementAction>;
   findAction: (actionId: string) => Promise<ImprovementAction | null>;
-  transitionAction: (actionId: string, from: ActionStatus, to: ActionStatus, changedBy: string, note: string | null, completionEvidenceNote: string | null) => Promise<ImprovementAction>;
+  transitionAction: (actionId: string, from: ActionStatus, to: ActionStatus, changedBy: string, note: string | null, completionEvidenceNote: string | null, verificationSnapshot?: ActionVerificationSnapshot | null) => Promise<ImprovementAction>;
   isActiveAdmin: (adminId: string) => Promise<boolean>;
   hasVerifiedAction: (issueId: string) => Promise<boolean>;
 };
@@ -238,6 +241,76 @@ export function sanitizeEvidenceSnapshot(input: unknown): EvidenceSnapshot {
   assertNoForbiddenEvidenceKeys(input);
   const parsed = evidenceSnapshotSchema.safeParse(input);
   if (!parsed.success) fail("EVIDENCE_SNAPSHOT_INVALID", "Evidence snapshot is invalid.");
+  return parsed.data;
+}
+
+function metricDimension(metric: FollowUpMetric): FeedbackDimension | null {
+  return metric.endsWith("_score") ? metric.slice(0, -6) as FeedbackDimension : null;
+}
+
+function verificationValue(metric: FollowUpMetric, metrics: Pick<CandidateMetrics, "currentScore" | "validResponseCount" | "visitCount" | "structuredLowScoreRecurrence">): number | null {
+  if (metric === "response_coverage") return metrics.visitCount > 0 ? metrics.validResponseCount / metrics.visitCount : null;
+  if (metric === "structured_recurrence_count") return metrics.structuredLowScoreRecurrence;
+  return metrics.currentScore;
+}
+
+export function buildActionVerificationSnapshot(
+  issue: AttractionFeedbackIssue,
+  action: ImprovementAction,
+  followUp: CandidateMetrics,
+  capturedAt: string,
+): ActionVerificationSnapshot {
+  const source = sanitizeEvidenceSnapshot(issue.evidenceSnapshot);
+  const population = source.schemaVersion === 2
+    ? source.population
+    : { evidenceScope: "all_records" as const, entryChannel: null, campaignId: null, checkinCodeId: null };
+  const metricMatchesIssue = metricDimension(action.followUpMetric) === null
+    || metricDimension(action.followUpMetric) === issue.issueDimension;
+  const baselineValue = metricMatchesIssue && source.schemaVersion === 2
+    ? action.followUpMetric === "response_coverage"
+      ? source.metrics.responseCoverage
+      : action.followUpMetric === "structured_recurrence_count"
+        ? source.metrics.structuredLowScoreRecurrence
+        : source.metrics.currentScore
+    : null;
+  const enoughFollowUp = followUp.visitCount >= FEEDBACK_RULES.minimumVisits
+    && (action.followUpMetric === "response_coverage" || followUp.validResponseCount >= FEEDBACK_RULES.minimumValidResponses);
+  const followUpValue = verificationValue(action.followUpMetric, followUp);
+  const comparisonState = !metricMatchesIssue || source.schemaVersion === 1 || action.followUpStart <= issue.baselineEnd
+    ? "legacy_or_mismatch"
+    : !enoughFollowUp
+      ? "low_sample"
+      : followUpValue === null || baselineValue === null
+        ? "no_data"
+        : "comparable";
+  const snapshot = {
+    schemaVersion: 1 as const,
+    capturedAt,
+    sourceIssueId: issue.feedbackIssueId,
+    sourceIssueSnapshotVersion: source.schemaVersion,
+    attractionId: issue.attractionId,
+    issueDimension: issue.issueDimension,
+    metric: action.followUpMetric,
+    population,
+    baseline: {
+      start: issue.baselineStart,
+      end: issue.baselineEnd,
+      visits: source.denominators.visits,
+      validResponses: source.denominators.validResponses,
+      value: baselineValue,
+    },
+    followUp: {
+      start: action.followUpStart,
+      end: action.followUpEnd,
+      visits: followUp.visitCount,
+      validResponses: followUp.validResponseCount,
+      value: enoughFollowUp ? followUpValue : null,
+    },
+    comparisonState,
+  };
+  assertNoForbiddenEvidenceKeys(snapshot);
+  const parsed = actionVerificationSnapshotSchema.safeParse(snapshot);
+  if (!parsed.success) fail("VERIFICATION_SNAPSHOT_INVALID", "Action verification snapshot is invalid.");
   return parsed.data;
 }
 
@@ -367,6 +440,13 @@ export class AttractionFeedbackService {
     const issue = await this.repository.findIssue(parsed.data.issueId);
     if (!issue) fail("ISSUE_NOT_FOUND", "The feedback issue was not found.");
     if (issue.status !== "open") fail("ISSUE_NOT_OPEN", "An action can only be created for an open issue.");
+    if (metricDimension(parsed.data.followUpMetric) !== null
+      && metricDimension(parsed.data.followUpMetric) !== issue.issueDimension) {
+      fail("FOLLOW_UP_METRIC_MISMATCH", "The score metric must match the reviewed issue dimension.");
+    }
+    if (parsed.data.followUpStart <= issue.baselineEnd) {
+      fail("FOLLOW_UP_OVERLAPS_BASELINE", "Follow-up must start after the reviewed baseline period.");
+    }
     if (!await this.repository.isActiveAdmin(parsed.data.ownerAdminId)) {
       fail("ACTION_OWNER_INACTIVE", "The selected action owner is not an active administrator.");
     }
@@ -402,6 +482,40 @@ export class AttractionFeedbackService {
       fail("FOLLOW_UP_NOT_COMPLETE", "The follow-up period has not ended.");
     }
 
+    let verificationSnapshot: ActionVerificationSnapshot | null = null;
+    if (parsed.data.toStatus === "verified") {
+      const issue = await this.repository.findIssue(action.feedbackIssueId);
+      if (!issue) fail("ISSUE_NOT_FOUND", "The feedback issue was not found.");
+      if (issue.feedbackIssueId !== action.feedbackIssueId) fail("FOLLOW_UP_ISSUE_MISMATCH", "The action and reviewed issue do not match.");
+      const source = sanitizeEvidenceSnapshot(issue.evidenceSnapshot);
+      const population = source.schemaVersion === 2
+        ? source.population
+        : { evidenceScope: "all_records" as const, entryChannel: null, campaignId: null, checkinCodeId: null };
+      const followUpScope: FeedbackScope = {
+        attractionId: issue.attractionId,
+        dateStart: action.followUpStart,
+        dateEnd: action.followUpEnd,
+        evidenceScope: population.evidenceScope,
+        entryChannel: population.entryChannel ?? undefined,
+        campaignId: population.campaignId ?? undefined,
+        checkinCodeId: population.checkinCodeId ?? undefined,
+      };
+      const readDimension = metricDimension(action.followUpMetric) ?? issue.issueDimension;
+      const followUp = await this.repository.readCandidateMetrics(followUpScope, readDimension);
+      if (followUp.isTruncated) fail("FOLLOW_UP_READ_INCOMPLETE", "Follow-up data is incomplete; verification was not saved.");
+      if (followUp.attractionId !== followUpScope.attractionId
+        || followUp.issueDimension !== readDimension
+        || followUp.scope.dateStart !== followUpScope.dateStart
+        || followUp.scope.dateEnd !== followUpScope.dateEnd
+        || followUp.scope.evidenceScope !== followUpScope.evidenceScope
+        || (followUp.scope.entryChannel ?? null) !== (followUpScope.entryChannel ?? null)
+        || (followUp.scope.campaignId ?? null) !== (followUpScope.campaignId ?? null)
+        || (followUp.scope.checkinCodeId ?? null) !== (followUpScope.checkinCodeId ?? null)) {
+        fail("FOLLOW_UP_SCOPE_MISMATCH", "Follow-up data does not match the reviewed issue population.");
+      }
+      verificationSnapshot = buildActionVerificationSnapshot(issue, action, followUp, this.now().toISOString());
+    }
+
     return this.repository.transitionAction(
       action.improvementActionId,
       action.status,
@@ -409,6 +523,7 @@ export class AttractionFeedbackService {
       guard.actor.adminId,
       parsed.data.note?.trim() || null,
       evidence,
+      verificationSnapshot,
     );
   }
 

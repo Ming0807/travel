@@ -6,6 +6,10 @@ const migrationPath = resolve(
   process.cwd(),
   "supabase/migrations/20260808002000_add_attraction_improvement_workflow.sql",
 );
+const verificationMigrationPath = resolve(
+  process.cwd(),
+  "supabase/migrations/20260924000000_add_attraction_action_verification_snapshot.sql",
+);
 
 describe("attraction improvement workflow migration", () => {
   const sql = readFileSync(migrationPath, "utf8");
@@ -66,5 +70,26 @@ describe("attraction improvement workflow migration", () => {
     expect(sql).toContain("WHERE role_name IN ('super_admin', 'admin')");
     expect(sql).toContain("WHERE role_name = 'viewer'");
     expect(sql).not.toContain("role_name IN ('province_admin', 'attraction_manager')");
+  });
+});
+
+describe("attraction action verification snapshot migration", () => {
+  const sql = readFileSync(verificationMigrationPath, "utf8");
+
+  it("adds a constrained snapshot and prevents changes after it is written", () => {
+    expect(sql).toContain("ADD COLUMN verification_snapshot jsonb");
+    expect(sql).toContain("VERIFICATION_SNAPSHOT_IMMUTABLE");
+    expect(sql).toContain("CREATE TRIGGER prevent_attraction_improvement_verification_snapshot_mutation");
+    expect(sql).toContain("p_verification_snapshot jsonb DEFAULT NULL");
+    expect(sql).toContain("verification_snapshot = CASE WHEN p_to_status = 'verified'");
+  });
+
+  it("keeps the replacement transition atomic and service-role-only", () => {
+    expect(sql).toContain("FOR UPDATE");
+    expect(sql).toContain("IMPROVEMENT_ACTION_STATUS_CONFLICT");
+    expect(sql).toContain("INSERT INTO public.attraction_improvement_action_history");
+    expect(sql).toContain("REVOKE ALL ON FUNCTION public.transition_attraction_improvement_action");
+    expect(sql).toContain("GRANT EXECUTE ON FUNCTION public.transition_attraction_improvement_action");
+    expect(sql).toContain("TO service_role");
   });
 });

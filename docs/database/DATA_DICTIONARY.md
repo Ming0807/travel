@@ -1805,6 +1805,8 @@ Migrations, in order:
 
 The Phase 21 migration adds no study, participant, evidence, or response seed rows. Approval evidence and pilot decisions must be entered only after the corresponding real activity occurs. A Pilot cannot create `field_observation` sessions, and a final-collection study cannot create simulated or internal-pilot sessions.
 
+Migration `20260924000000_add_attraction_action_verification_snapshot.sql` adds nullable `attraction_improvement_actions.verification_snapshot` (`jsonb`). New verified transitions require a versioned, aggregate-only baseline/follow-up snapshot written in the same database transaction as the status and history row. The trigger rejects later changes to a non-null snapshot. Historical verified actions remain null and must be labelled as lacking immutable numeric evidence. The RPC is executable only by `service_role`; application RBAC checks `attraction_improvement.verify` before invoking it. The migration must be applied before deploying the application code that passes `p_verification_snapshot` to the RPC.
+
 ---
 
 ## 46. Restaurant Category Tables

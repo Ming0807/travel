@@ -5,6 +5,7 @@ import {
   type FeedbackScope,
   AttractionFeedbackService,
   assertActionTransition,
+  buildEvidenceSnapshot,
   qualifyFeedbackCandidate,
 } from "@/lib/services/attraction-feedback.service";
 import { describe, expect, it, vi } from "vitest";
@@ -40,10 +41,18 @@ function metrics(overrides: Partial<CandidateMetrics> = {}): CandidateMetrics {
 
 function repository() {
   return {
-    readCandidateMetrics: vi.fn().mockResolvedValue(metrics()),
+    readCandidateMetrics: vi.fn().mockImplementation(async (requestedScope: FeedbackScope) => metrics({ scope: requestedScope })),
     listEvidenceRows: vi.fn().mockResolvedValue([]),
     insertIssue: vi.fn().mockResolvedValue({ feedbackIssueId: ISSUE_ID, status: "open" }),
-    findIssue: vi.fn().mockResolvedValue({ feedbackIssueId: ISSUE_ID, status: "open" }),
+    findIssue: vi.fn().mockResolvedValue({
+      feedbackIssueId: ISSUE_ID,
+      attractionId: scope.attractionId,
+      issueDimension: "overall",
+      status: "open",
+      baselineStart: scope.dateStart,
+      baselineEnd: scope.dateEnd,
+      evidenceSnapshot: buildEvidenceSnapshot(metrics()),
+    }),
     transitionIssue: vi.fn().mockResolvedValue({ feedbackIssueId: ISSUE_ID, status: "closed" }),
     insertAction: vi.fn().mockResolvedValue({
       improvementActionId: ACTION_ID,
@@ -56,6 +65,8 @@ function repository() {
       improvementActionId: ACTION_ID,
       feedbackIssueId: ISSUE_ID,
       status: "completed",
+      followUpMetric: "overall_score",
+      followUpStart: "2026-03-01",
       followUpEnd: "2026-03-31",
       completionEvidenceNote: "Work completed and photographed by site staff.",
     }),
@@ -156,6 +167,7 @@ describe("AttractionFeedbackService permissions and workflow", () => {
 
   it("rejects metrics from a different evidence population before saving", async () => {
     const repo = repository();
+    repo.readCandidateMetrics.mockResolvedValueOnce(metrics());
     const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }));
 
     await expect(service.reviewCandidate({ ...scope, evidenceScope: "field_claim", issueDimension: "overall", issueCategory: "service", decision: "accept", reviewNote: "" }))
@@ -193,7 +205,7 @@ describe("AttractionFeedbackService permissions and workflow", () => {
       ownerAdminId: OWNER_ID,
       priority: "high",
       dueDate: "2026-02-28",
-      followUpMetric: "information_score",
+      followUpMetric: "overall_score",
       followUpStart: "2026-03-01",
       followUpEnd: "2026-03-31",
     });
@@ -201,6 +213,114 @@ describe("AttractionFeedbackService permissions and workflow", () => {
 
     expect(requested).toEqual(["attraction_improvement.manage", "attraction_improvement.verify"]);
     expect(repo.isActiveAdmin).toHaveBeenCalledWith(OWNER_ID);
+    expect(repo.transitionAction).toHaveBeenCalledWith(
+      ACTION_ID,
+      "completed",
+      "verified",
+      "admin-1",
+      "Follow-up reviewed.",
+      "Work completed and photographed by site staff.",
+      expect.objectContaining({
+        schemaVersion: 1,
+        metric: "overall_score",
+        baseline: expect.objectContaining({ value: 2.9, validResponses: 30, visits: 30 }),
+        followUp: expect.objectContaining({ value: 2.9, validResponses: 30, visits: 30 }),
+        comparisonState: "comparable",
+      }),
+    );
+  });
+
+  it("rejects a new action whose score metric differs from the reviewed issue dimension", async () => {
+    const repo = repository();
+    const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }));
+
+    await expect(service.createAction({
+      issueId: ISSUE_ID,
+      title: "Improve visitor information",
+      proposedAction: "Replace the entrance sign.",
+      ownerAdminId: OWNER_ID,
+      priority: "high",
+      dueDate: "2026-02-28",
+      followUpMetric: "information_score",
+      followUpStart: "2026-03-01",
+      followUpEnd: "2026-03-31",
+    })).rejects.toMatchObject({ code: "FOLLOW_UP_METRIC_MISMATCH" });
+    expect(repo.insertAction).not.toHaveBeenCalled();
+  });
+
+  it("rejects a follow-up period that overlaps its reviewed baseline", async () => {
+    const repo = repository();
+    const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }));
+    await expect(service.createAction({
+      issueId: ISSUE_ID,
+      title: "Improve visitor information",
+      proposedAction: "Replace the entrance sign.",
+      ownerAdminId: OWNER_ID,
+      priority: "high",
+      dueDate: "2026-01-01",
+      followUpMetric: "overall_score",
+      followUpStart: "2026-01-31",
+      followUpEnd: "2026-02-28",
+    })).rejects.toMatchObject({ code: "FOLLOW_UP_OVERLAPS_BASELINE" });
+    expect(repo.insertAction).not.toHaveBeenCalled();
+  });
+
+  it("refuses verification when the follow-up read is incomplete or from another population", async () => {
+    const repo = repository();
+    const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }), () => new Date("2026-04-01T00:00:00.000Z"));
+    repo.readCandidateMetrics.mockResolvedValueOnce(metrics({ isTruncated: true }));
+    await expect(service.transitionAction({ actionId: ACTION_ID, toStatus: "verified", note: "Read incomplete." }))
+      .rejects.toMatchObject({ code: "FOLLOW_UP_READ_INCOMPLETE" });
+    repo.readCandidateMetrics.mockResolvedValueOnce(metrics({ scope: { ...scope, evidenceScope: "field_claim" } }));
+    await expect(service.transitionAction({ actionId: ACTION_ID, toStatus: "verified", note: "Wrong scope." }))
+      .rejects.toMatchObject({ code: "FOLLOW_UP_SCOPE_MISMATCH" });
+    expect(repo.transitionAction).not.toHaveBeenCalled();
+  });
+
+  it("stores low-sample follow-up without a visible score or improvement claim", async () => {
+    const repo = repository();
+    const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }), () => new Date("2026-04-01T00:00:00.000Z"));
+    repo.readCandidateMetrics.mockImplementationOnce(async (requestedScope: FeedbackScope) => metrics({ scope: requestedScope, validResponseCount: 2, visitCount: 8, currentScore: 4.5 }));
+
+    await service.transitionAction({ actionId: ACTION_ID, toStatus: "verified", note: "Insufficient follow-up." });
+
+    expect(repo.transitionAction).toHaveBeenCalledWith(
+      ACTION_ID, "completed", "verified", "admin-1", "Insufficient follow-up.",
+      "Work completed and photographed by site staff.",
+      expect.objectContaining({
+        followUp: expect.objectContaining({ value: null, validResponses: 2, visits: 8 }),
+        comparisonState: "low_sample",
+      }),
+    );
+  });
+
+  it("marks legacy issue evidence as non-comparable instead of fabricating a baseline value", async () => {
+    const repo = repository();
+    const source = buildEvidenceSnapshot(metrics());
+    if (source.schemaVersion !== 2) throw new Error("Expected a version-two test snapshot.");
+    const { population: _population, ...legacy } = source;
+    repo.findIssue.mockResolvedValueOnce({
+      feedbackIssueId: ISSUE_ID,
+      attractionId: scope.attractionId,
+      issueDimension: "overall",
+      status: "open",
+      baselineStart: scope.dateStart,
+      baselineEnd: scope.dateEnd,
+      evidenceSnapshot: { ...legacy, schemaVersion: 1 },
+    });
+    const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }), () => new Date("2026-04-01T00:00:00.000Z"));
+
+    await service.transitionAction({ actionId: ACTION_ID, toStatus: "verified", note: "Legacy review." });
+
+    expect(repo.transitionAction).toHaveBeenCalledWith(
+      ACTION_ID, "completed", "verified", "admin-1", "Legacy review.",
+      "Work completed and photographed by site staff.",
+      expect.objectContaining({
+        sourceIssueSnapshotVersion: 1,
+        baseline: expect.objectContaining({ value: null }),
+        comparisonState: "legacy_or_mismatch",
+      }),
+    );
   });
 
   it("rejects an inactive action owner and refuses to close before verified follow-up", async () => {
@@ -219,7 +339,7 @@ describe("AttractionFeedbackService permissions and workflow", () => {
       ownerAdminId: OWNER_ID,
       priority: "high",
       dueDate: "2026-02-28",
-      followUpMetric: "information_score",
+      followUpMetric: "overall_score",
       followUpStart: "2026-03-01",
       followUpEnd: "2026-03-31",
     })).rejects.toMatchObject({ code: "ACTION_OWNER_INACTIVE" });

@@ -97,6 +97,9 @@ export const improvementActionInputSchema = z.object({
   if (value.followUpEnd < value.followUpStart) {
     context.addIssue({ code: "custom", path: ["followUpEnd"], message: "Follow-up end must not precede start." });
   }
+  if ((Date.parse(`${value.followUpEnd}T00:00:00Z`) - Date.parse(`${value.followUpStart}T00:00:00Z`)) / 86_400_000 > 730) {
+    context.addIssue({ code: "custom", path: ["followUpEnd"], message: "Follow-up must not exceed 730 days." });
+  }
   if (value.followUpStart < value.dueDate) {
     context.addIssue({ code: "custom", path: ["followUpStart"], message: "Follow-up must start on or after the due date." });
   }
@@ -153,8 +156,36 @@ export const evidenceSnapshotSchema = z.discriminatedUnion("schemaVersion", [
   }).strict(),
 ]);
 
+const verificationPeriodSchema = z.object({
+  start: isoDate,
+  end: isoDate,
+  visits: z.number().int().nonnegative(),
+  validResponses: z.number().int().nonnegative(),
+  value: z.number().finite().nonnegative().nullable(),
+}).strict();
+
+export const actionVerificationSnapshotSchema = z.object({
+  schemaVersion: z.literal(1),
+  capturedAt: z.iso.datetime({ offset: true }),
+  sourceIssueId: uuid,
+  sourceIssueSnapshotVersion: z.union([z.literal(1), z.literal(2)]),
+  attractionId: z.number().int().positive(),
+  issueDimension: z.enum(FEEDBACK_DIMENSIONS),
+  metric: z.enum(FOLLOW_UP_METRICS),
+  population: z.object({
+    evidenceScope: attractionEvidenceScopeSchema,
+    entryChannel: attractionEntryChannelSchema.nullable(),
+    campaignId: z.number().int().positive().nullable(),
+    checkinCodeId: z.number().int().positive().nullable(),
+  }).strict(),
+  baseline: verificationPeriodSchema,
+  followUp: verificationPeriodSchema,
+  comparisonState: z.enum(["comparable", "low_sample", "no_data", "legacy_or_mismatch"]),
+}).strict();
+
 export type FeedbackScopeInput = z.infer<typeof feedbackScopeSchema>;
 export type IssueReviewInput = z.infer<typeof issueReviewInputSchema>;
 export type ImprovementActionInput = z.infer<typeof improvementActionInputSchema>;
 export type ActionTransitionInput = z.infer<typeof actionTransitionInputSchema>;
 export type EvidenceSnapshot = z.infer<typeof evidenceSnapshotSchema>;
+export type ActionVerificationSnapshot = z.infer<typeof actionVerificationSnapshotSchema>;

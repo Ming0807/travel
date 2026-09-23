@@ -155,6 +155,20 @@ values remain `unknown` unless supported by recorded evidence.
   its wait now checks the button is enabled, and the focused nine-file run
   passed afterward. The entire full suite has not been rerun since that test fix.
 
+### Immutable Action Verification Follow-up (2026-09-24)
+
+- Added a versioned, aggregate-only verification snapshot to improvement actions.
+  Verification re-reads the saved evidence population over the follow-up window;
+  incomplete source reads cannot be verified. The snapshot and status/history
+  transition are stored atomically. Legacy issue snapshots and previously verified
+  actions remain readable but are not presented as comparable numeric evidence.
+- New actions require score metrics to match the issue dimension and follow-up
+  dates to start after the baseline. Low-sample results retain denominators but
+  suppress the value. The UI states that a before/after difference is not causal.
+- Migration `20260924000000_add_attraction_action_verification_snapshot.sql` must
+  be applied before this application change can be deployed. Production application
+  and database smoke checks remain pending until then.
+
 ## Analytics Rules
 
 - Every metric states unit, denominator, date field, source table, calculation, and missing-data rule.

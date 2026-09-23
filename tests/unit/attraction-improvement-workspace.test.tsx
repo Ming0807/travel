@@ -265,6 +265,45 @@ describe("AttractionImprovementWorkspace regressions", () => {
     expect(within(timeline).getByText(/Follow-up score improved and was reviewed/)).toBeInTheDocument();
   });
 
+  it("shows an immutable follow-up snapshot with denominators and a non-causal interpretation", () => {
+    const verified = {
+      ...action("verified"),
+      verificationSnapshot: {
+        schemaVersion: 1 as const,
+        capturedAt: "2026-04-01T00:00:00.000Z",
+        sourceIssueId: ids.issue,
+        sourceIssueSnapshotVersion: 2 as const,
+        attractionId: 7,
+        issueDimension: "overall" as const,
+        metric: "overall_score" as const,
+        population: { evidenceScope: "all_records" as const, entryChannel: null, campaignId: null, checkinCodeId: null },
+        baseline: { start: "2026-01-01", end: "2026-01-31", visits: 120, validResponses: 30, value: 2.8 },
+        followUp: { start: "2026-03-01", end: "2026-03-31", visits: 95, validResponses: 40, value: 3.6 },
+        comparisonState: "comparable" as const,
+      },
+    };
+    renderWorkspace({ workspace: {
+      candidate: qualifyFeedbackCandidate(metrics()),
+      issues: [issue()], actions: [verified], history: [], owners, rules: FEEDBACK_RULES,
+    } });
+
+    const timeline = screen.getByRole("region", { name: "ไทม์ไลน์การปรับปรุง ภาพรวม" });
+    expect(within(timeline).getByText(/ก่อนดำเนินการ: 2.80/)).toBeInTheDocument();
+    expect(within(timeline).getByText(/ช่วงติดตาม: 3.60/)).toBeInTheDocument();
+    expect(within(timeline).getByText(/คำตอบ 40 \/ Visits 95/)).toBeInTheDocument();
+    expect(within(timeline).getByText(/ไม่ได้พิสูจน์ว่าเกิดจากแผนนี้/)).toBeInTheDocument();
+  });
+
+  it("limits new score metrics to the reviewed dimension", () => {
+    renderWorkspace({ workspace: {
+      candidate: qualifyFeedbackCandidate(metrics()),
+      issues: [issue()], actions: [], history: [], owners, rules: FEEDBACK_RULES,
+    } });
+    const metric = screen.getByLabelText("ตัวชี้วัดติดตาม");
+    expect(within(metric).getAllByRole("option")).toHaveLength(3);
+    expect(metric).toHaveValue("overall_score");
+  });
+
   it("prefills a reviewed issue draft from aggregate analytics context", () => {
     renderWorkspace({
       draft: {

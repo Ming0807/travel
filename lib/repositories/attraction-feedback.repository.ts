@@ -4,7 +4,7 @@ import { getCheckinEntryConfig } from "@/lib/config/checkin-entry";
 import { visitMatchesDashboardEvidenceScope } from "@/lib/dashboard/evidence-scope";
 import { asRecord } from "@/lib/utils/record";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
-import type { EvidenceSnapshot } from "@/lib/validation/attraction-feedback";
+import { actionVerificationSnapshotSchema, type ActionVerificationSnapshot, type EvidenceSnapshot } from "@/lib/validation/attraction-feedback";
 import type {
   ActionStatus,
   CandidateMetrics,
@@ -66,6 +66,7 @@ type RawActionRow = {
   follow_up_end: string;
   completion_note?: string | null;
   completion_evidence_note?: string | null;
+  verification_snapshot?: ActionVerificationSnapshot | null;
   completed_at?: string | null;
   verified_by?: string | null;
   verified_at?: string | null;
@@ -146,6 +147,9 @@ function mapAction(row: RawActionRow): ImprovementAction {
     followUpEnd: row.follow_up_end,
     completionNote: row.completion_note,
     completionEvidenceNote: row.completion_evidence_note,
+    verificationSnapshot: row.verification_snapshot
+      ? actionVerificationSnapshotSchema.parse(row.verification_snapshot)
+      : null,
     completedAt: row.completed_at,
     verifiedBy: row.verified_by,
     verifiedAt: row.verified_at,
@@ -429,6 +433,7 @@ export async function transitionAction(
   changedBy: string,
   note: string | null,
   completionEvidenceNote: string | null,
+  verificationSnapshot: ActionVerificationSnapshot | null = null,
 ) {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase.rpc("transition_attraction_improvement_action", {
@@ -438,6 +443,7 @@ export async function transitionAction(
     p_changed_by: changedBy,
     p_note: note,
     p_completion_evidence_note: completionEvidenceNote,
+    p_verification_snapshot: verificationSnapshot,
   });
   if (error) throw new Error("ATTRACTION_IMPROVEMENT_ACTION_TRANSITION_FAILED");
   return mapAction(data as RawActionRow);

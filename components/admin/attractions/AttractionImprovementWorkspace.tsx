@@ -111,6 +111,13 @@ function formatScore(value: number | null) {
   return value === null ? "ไม่มีข้อมูล" : value.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function formatFollowUpValue(metric: ImprovementAction["followUpMetric"], value: number | null) {
+  if (value === null) return "ไม่แสดงค่า";
+  if (metric === "response_coverage") return `${(value * 100).toLocaleString("th-TH", { maximumFractionDigits: 1 })}%`;
+  if (metric === "structured_recurrence_count") return value.toLocaleString("th-TH");
+  return formatScore(value);
+}
+
 function candidateStatusClass(qualifies: boolean, truncated = false) {
   if (truncated) return "border-amber-300 bg-amber-50 text-amber-900";
   if (qualifies) return "border-rose-300 bg-rose-50 text-rose-800";
@@ -149,6 +156,32 @@ function ImprovementTimeline({ issue, actions, history, owners }: { issue: Attra
               </div>
               <p className="mt-1 leading-6 text-slate-600">ผู้รับผิดชอบ {ownerNames.get(action.ownerAdminId) ?? "ไม่พบผู้ดูแล"} · กำหนดเสร็จ {formatDate(action.dueDate)}</p>
               <p className="leading-6 text-slate-600">ช่วงติดตามผล {formatDate(action.followUpStart)} ถึง {formatDate(action.followUpEnd)} · ตัวชี้วัด {FOLLOW_UP_METRIC_LABELS[action.followUpMetric]}</p>
+              {action.verificationSnapshot ? (
+                <div className="mt-3 border border-slate-200 bg-white p-3">
+                  <p className="font-bold text-slate-900">ผลติดตามที่บันทึก ณ {formatDate(action.verificationSnapshot.capturedAt)}</p>
+                  <p className="mt-1 text-xs text-slate-600">{populationLabel({
+                    evidenceScope: action.verificationSnapshot.population.evidenceScope,
+                    entryChannel: action.verificationSnapshot.population.entryChannel ?? undefined,
+                    campaignId: action.verificationSnapshot.population.campaignId ?? undefined,
+                    checkinCodeId: action.verificationSnapshot.population.checkinCodeId ?? undefined,
+                  })} · {FOLLOW_UP_METRIC_LABELS[action.verificationSnapshot.metric]}</p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {(["baseline", "followUp"] as const).map((period) => {
+                      const evidence = action.verificationSnapshot![period];
+                      return <div key={period} className="border-l-2 border-slate-300 pl-3">
+                        <p className="font-bold text-slate-900">{period === "baseline" ? "ก่อนดำเนินการ" : "ช่วงติดตาม"}: {formatFollowUpValue(action.followUpMetric, evidence.value)}</p>
+                        <p className="text-xs leading-5 text-slate-600">{formatDate(evidence.start)} ถึง {formatDate(evidence.end)} · คำตอบ {evidence.validResponses.toLocaleString("th-TH")} / Visits {evidence.visits.toLocaleString("th-TH")}</p>
+                      </div>;
+                    })}
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-amber-900">
+                    {action.verificationSnapshot.comparisonState === "low_sample" ? "จำนวนข้อมูลช่วงติดตามยังน้อย จึงไม่แสดงค่าตัวชี้วัด" :
+                      action.verificationSnapshot.comparisonState === "legacy_or_mismatch" ? "หลักฐานรุ่นเดิมหรือตัวชี้วัดต่างมิติ ไม่สามารถเปรียบเทียบกับ baseline ได้" :
+                      action.verificationSnapshot.comparisonState === "no_data" ? "ไม่มีค่าที่เปรียบเทียบได้ในช่วงติดตาม" :
+                      "ค่าทั้งสองอยู่ในประชากรเดียวกัน แต่การเปลี่ยนแปลงไม่ได้พิสูจน์ว่าเกิดจากแผนนี้"}
+                  </p>
+                </div>
+              ) : action.status === "verified" ? <p className="mt-2 text-xs text-amber-900">ผลตรวจรุ่นเดิมไม่มี snapshot ตัวเลขที่ตรวจสอบย้อนกลับได้</p> : null}
               {action.completionEvidenceNote ? <p className="mt-2 bg-emerald-50 px-3 py-2 leading-6 text-emerald-950">หลักฐานการดำเนินงาน: {redactFeedbackOperationalText(action.completionEvidenceNote)}</p> : null}
               {verifiedEntry ? <p className="mt-2 bg-slate-100 px-3 py-2 leading-6 text-slate-800">ผลลัพธ์ที่ตรวจแล้ว: {verifiedEntry.note ? redactFeedbackOperationalText(verifiedEntry.note) : "ยืนยันการติดตามแล้ว แต่ยังไม่มีบันทึกสรุปผล"}</p> : null}
               {actionHistory.length > 0 ? <div className="mt-2 space-y-1 text-xs text-slate-500">{actionHistory.map((entry) => <p key={entry.historyId}><time>{new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.createdAt))}</time> · {entry.fromStatus ? `${HISTORY_STATUS_LABELS[entry.fromStatus] ?? entry.fromStatus} → ` : ""}{HISTORY_STATUS_LABELS[entry.toStatus] ?? entry.toStatus} · {ownerNames.get(entry.changedBy) ?? "ผู้ดูแลระบบ"}</p>)}</div> : null}
@@ -295,7 +328,7 @@ function ImprovementIssue({
             <label className="block text-sm font-bold">ผู้รับผิดชอบ<select name="ownerAdminId" required className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="">เลือกผู้รับผิดชอบ</option>{owners.map((owner) => <option key={owner.adminId} value={owner.adminId}>{owner.displayName}</option>)}</select></label>
             <label className="block text-sm font-bold">ความสำคัญ<select name="priority" defaultValue="medium" className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="low">ต่ำ</option><option value="medium">กลาง</option><option value="high">สูง</option></select></label>
             <label className="block text-sm font-bold">กำหนดเสร็จ<input type="date" name="dueDate" required className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
-            <label className="block text-sm font-bold">ตัวชี้วัดติดตาม<select name="followUpMetric" defaultValue={`${issue.issueDimension}_score`} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="overall_score">คะแนนภาพรวม</option><option value="facility_score">สิ่งอำนวยความสะดวก</option><option value="cleanliness_score">ความสะอาด</option><option value="safety_score">ความปลอดภัย</option><option value="accessibility_score">การเข้าถึง</option><option value="information_score">ข้อมูลและป้าย</option><option value="value_score">ความคุ้มค่า</option><option value="response_coverage">อัตราการตอบ</option><option value="structured_recurrence_count">จำนวนคะแนนต่ำซ้ำ</option></select></label>
+            <label className="block text-sm font-bold">ตัวชี้วัดติดตาม<select name="followUpMetric" defaultValue={`${issue.issueDimension}_score`} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value={`${issue.issueDimension}_score`}>{FOLLOW_UP_METRIC_LABELS[`${issue.issueDimension}_score`]}</option><option value="response_coverage">อัตราการตอบ</option><option value="structured_recurrence_count">จำนวนคะแนนต่ำซ้ำ</option></select></label>
             <label className="block text-sm font-bold">เริ่มติดตามผล<input type="date" name="followUpStart" required className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
             <label className="block text-sm font-bold">สิ้นสุดติดตามผล<input type="date" name="followUpEnd" required className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
             <button type="submit" className="min-h-11 bg-[#202020] px-4 font-black text-white hover:bg-[#B94727] sm:col-span-2">บันทึกแผนปรับปรุง</button>

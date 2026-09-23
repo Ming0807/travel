@@ -1458,6 +1458,8 @@ A tourist should never feel lost after scanning a QR code.
 | `/admin/research/[id]/operator/start` | `research.manage` | Clean participant-facing notice used during a facilitated session |
 | `/admin/attractions/[id]/improvements` | Approved attraction/admin permission | Filter Visit-linked evidence by population and period; review an issue with a versioned source snapshot, create an action, and inspect follow-up under the same filters |
 
+Verified actions on the improvement page display an immutable aggregate follow-up snapshot beside the reviewed baseline, with both periods' Visits and response denominators. Low-sample, absent, or legacy data is explicitly non-comparable, and the page never attributes a before/after change to the action without a causal study design.
+
 Public participant routes never accept internal research IDs or secret tokens in the URL. Ownership is carried in an HttpOnly same-site cookie; stakeholder routes do not create tourist profiles.
 
 ---
