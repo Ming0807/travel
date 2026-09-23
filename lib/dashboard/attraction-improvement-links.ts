@@ -8,6 +8,20 @@ export type AttractionImprovementContext = Partial<Pick<AttractionAnalyticsFilte
 
 export type AttractionDraftSource = "low_score" | "funnel_dropoff" | "trend_point";
 
+export function buildAttractionImprovementScopeHref(
+  context: AttractionImprovementContext & { evidenceScope: AttractionAnalyticsFilters["evidenceScope"] },
+) {
+  const params = new URLSearchParams({
+    dateStart: context.dateStart,
+    dateEnd: context.dateEnd,
+    evidenceScope: context.evidenceScope,
+  });
+  if (context.entryChannel) params.set("entryChannel", context.entryChannel);
+  if (context.campaignId) params.set("campaignId", String(context.campaignId));
+  if (context.checkinCodeId) params.set("checkinCodeId", String(context.checkinCodeId));
+  return `/admin/attractions/${context.attractionId}/improvements?${params.toString()}`;
+}
+
 export function buildAttractionImprovementHref(
   context: AttractionImprovementContext,
   draft: {

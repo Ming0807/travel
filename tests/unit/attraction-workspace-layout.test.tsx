@@ -138,5 +138,27 @@ describe("AttractionAnalyticsWorkspace layout", () => {
 
     rerender(<AttractionAnalyticsWorkspace data={{ ...data, quality: { ...data.quality, truncated: true } }} />);
     expect(screen.queryByRole("button", { name: "ส่งออกสรุป" })).not.toBeInTheDocument();
+
+    rerender(<AttractionAnalyticsWorkspace data={{ ...data, kpis: { ...data.kpis, visits: data.quality.smallCellThreshold - 1 } }} />);
+    expect(screen.queryByRole("button", { name: "ส่งออกสรุป" })).not.toBeInTheDocument();
+    expect(screen.getByText(/ส่งออกได้เมื่อมี Visit อย่างน้อย/)).toBeInTheDocument();
+  });
+
+  it("carries the selected evidence population into both improvement links", () => {
+    render(<AttractionAnalyticsWorkspace data={{ ...data, filters: {
+      ...data.filters, evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 7, checkinCodeId: 10,
+    } }} />);
+
+    const links = [
+      screen.getByRole("link", { name: /เปิดแผนปรับปรุง/ }),
+      screen.getByRole("link", { name: /จัดการประเด็นและแผนงาน/ }),
+    ];
+    for (const link of links) {
+      const query = new URL(link.getAttribute("href") ?? "", "https://example.test").searchParams;
+      expect(query.get("evidenceScope")).toBe("pilot_only");
+      expect(query.get("entryChannel")).toBe("nfc");
+      expect(query.get("campaignId")).toBe("7");
+      expect(query.get("checkinCodeId")).toBe("10");
+    }
   });
 });

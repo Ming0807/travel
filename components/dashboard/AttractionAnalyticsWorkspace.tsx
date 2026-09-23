@@ -20,6 +20,7 @@ import { AttractionScoreChart } from "@/components/dashboard/AttractionScoreChar
 import { ResponsiveAnalyticsGroup } from "@/components/dashboard/ResponsiveAnalyticsGroup";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { ExportButton } from "@/components/admin/ExportButton";
+import { buildAttractionImprovementScopeHref } from "@/lib/dashboard/attraction-improvement-links";
 import type { AttractionAnalyticsViewModel } from "@/lib/services/attraction-analytics.service";
 
 const SCOPE_LABELS = {
@@ -84,6 +85,8 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
     campaignId: data.filters.campaignId,
     checkinCodeId: data.filters.checkinCodeId,
   };
+  const improvementHref = buildAttractionImprovementScopeHref(improvementContext);
+  const canExport = data.viewer.permissions.includes("export.summary") && !data.quality.truncated;
 
   return (
     <div className="space-y-6">
@@ -94,8 +97,9 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
             <p className="mt-2 text-sm text-slate-300">{data.attraction.districtNameTh ?? "จังหวัดยะลา"} · {SCOPE_LABELS[data.filters.evidenceScope]} · {new Date(data.generatedAt).toLocaleString("th-TH")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {data.viewer.permissions.includes("export.summary") && !data.quality.truncated ? <ExportButton endpoint="/api/admin/dashboard/attractions/export" label="ส่งออกสรุป" params={{ ...data.filters }} /> : null}
-            <Link href={`/admin/attractions/${data.attraction.attractionId}/improvements?dateStart=${data.filters.dateFrom}&dateEnd=${data.filters.dateTo}`} className="inline-flex min-h-11 items-center justify-center gap-2 border border-white/30 bg-white px-4 text-sm font-black text-[#202020] hover:bg-orange-50">เปิดแผนปรับปรุง <ArrowRight aria-hidden="true" /></Link>
+            {canExport && data.kpis.visits >= data.quality.smallCellThreshold ? <ExportButton endpoint="/api/admin/dashboard/attractions/export" label="ส่งออกสรุป" params={{ ...data.filters }} /> : null}
+            {canExport && data.kpis.visits < data.quality.smallCellThreshold ? <p className="max-w-48 text-xs leading-5 text-slate-300">ส่งออกได้เมื่อมี Visit อย่างน้อย {data.quality.smallCellThreshold.toLocaleString("th-TH")} รายการ</p> : null}
+            <Link href={improvementHref} className="inline-flex min-h-11 items-center justify-center gap-2 border border-white/30 bg-white px-4 text-sm font-black text-[#202020] hover:bg-orange-50">เปิดแผนปรับปรุง <ArrowRight aria-hidden="true" /></Link>
           </div>
         </div>
         <div className={`flex items-start gap-3 border-t p-4 text-sm ${requiresScopeCaution ? "border-amber-300 bg-amber-50 text-amber-950" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
@@ -161,7 +165,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
       </section>
 
       <section className="border border-slate-200 bg-white" aria-labelledby="decision-heading">
-        <div className="grid gap-4 border-b border-slate-200 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"><div><h2 id="decision-heading" className="text-lg font-black">จากหลักฐานไปสู่การปรับปรุง</h2><p className="mt-1 text-sm text-slate-600">ใช้ประเด็นและแผนงาน production เดิม เพื่อให้ผู้รับผิดชอบ กำหนดส่ง Baseline และ Follow-up ตรวจย้อนหลังได้</p></div><Link href={`/admin/attractions/${data.attraction.attractionId}/improvements?dateStart=${data.filters.dateFrom}&dateEnd=${data.filters.dateTo}`} className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#202020] px-4 text-sm font-black text-white hover:bg-[#B94727]">จัดการประเด็นและแผนงาน <ArrowRight aria-hidden="true" /></Link></div>
+        <div className="grid gap-4 border-b border-slate-200 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"><div><h2 id="decision-heading" className="text-lg font-black">จากหลักฐานไปสู่การปรับปรุง</h2><p className="mt-1 text-sm text-slate-600">ใช้ประเด็นและแผนงาน production เดิม เพื่อให้ผู้รับผิดชอบ กำหนดส่ง Baseline และ Follow-up ตรวจย้อนหลังได้</p></div><Link href={improvementHref} className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#202020] px-4 text-sm font-black text-white hover:bg-[#B94727]">จัดการประเด็นและแผนงาน <ArrowRight aria-hidden="true" /></Link></div>
         <dl className="grid gap-x-6 gap-y-4 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-4">
           <CompactMetric icon={<Warning size={20} weight="fill" />} label="ประเด็นทั้งหมด" valueText={String(data.improvements.issueCount)} note="ผ่านการทบทวนตามกฎ" />
           <CompactMetric icon={<Warning size={20} />} label="ประเด็นที่ยังเปิด" valueText={String(data.improvements.openIssueCount)} note="ยังไม่ปิดหรือปฏิเสธ" />

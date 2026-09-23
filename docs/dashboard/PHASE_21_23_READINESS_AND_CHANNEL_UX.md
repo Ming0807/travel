@@ -106,6 +106,12 @@ color, unknown neutral gray. Do not use color alone. No new chart dependency.
   check-in and campaign selections on place change while preserving dates,
   evidence scope, and channel. Submitted FormData tests and Chromium fixture
   Back/Forward checks passed; authenticated data/export parity remains separate.
+- Fixed locally on 2026-09-24: both attraction summary-to-improvement links now
+  preserve evidence scope, channel, campaign, check-in code, and dates. The
+  export control follows the API's minimum Visit threshold as well as its
+  permission and incomplete-read gates. Unit tests cover the link round-trip
+  and export read/metadata parity. Authenticated browser and production role
+  checks remain open; this does not close 22.11f.
 
 Code and data correctness, privacy, accessibility, mobile usability, operational
 readiness, and rollback are separate gates. All are required for a company-grade

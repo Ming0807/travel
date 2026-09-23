@@ -72,6 +72,31 @@ describe("attraction analytics export route", () => {
     expect(audit.metadata.filters).toMatchObject({ attractionId: 4, evidenceScope: "field_claim" });
   });
 
+  it("uses the exact selected population for the export read and report metadata", async () => {
+    mocks.analytics.mockResolvedValue(analyticsData());
+    const response = await GET(new Request(
+      "http://localhost/api/admin/dashboard/attractions/export?attractionId=4&dateFrom=2026-08-01&dateTo=2026-08-31&evidenceScope=pilot_only&entryChannel=nfc&campaignId=7&checkinCodeId=10&format=csv",
+    ));
+
+    expect(response.status).toBe(200);
+    const selected = {
+      attractionId: 4,
+      dateFrom: "2026-08-01",
+      dateTo: "2026-08-31",
+      evidenceScope: "pilot_only",
+      entryChannel: "nfc",
+      campaignId: 7,
+      checkinCodeId: 10,
+    };
+    expect(mocks.analytics).toHaveBeenCalledWith(selected);
+    const rows = mocks.createExportResponse.mock.calls[0]?.[0] as Array<Record<string, unknown>>;
+    const metadata = rows.find((row) => row.Metric === "selected_scope");
+    expect(JSON.parse(String(metadata?.Value))).toEqual(selected);
+    expect(mocks.audit).toHaveBeenCalledWith(expect.objectContaining({
+      result: "success", metadata: expect.objectContaining({ filters: selected }),
+    }));
+  });
+
   it("audits invalid filters without storing raw values", async () => {
     const response = await GET(new Request(
       "http://localhost/api/admin/dashboard/attractions/export?attractionId=not-an-id&dateFrom=bad&dateTo=2026-08-31&email=person@example.com",

@@ -1,11 +1,25 @@
 import { describe, expect, it } from "vitest";
 
 import { parseAttractionIssueDraft } from "@/lib/dashboard/attraction-improvement-draft";
-import { buildAttractionImprovementHref } from "@/lib/dashboard/attraction-improvement-links";
+import { buildAttractionImprovementHref, buildAttractionImprovementScopeHref } from "@/lib/dashboard/attraction-improvement-links";
+import { parseAttractionImprovementScope } from "@/lib/dashboard/attraction-improvement-scope";
 
 const scope = { dateStart: "2026-08-01", dateEnd: "2026-08-31" };
 
 describe("parseAttractionIssueDraft", () => {
+  it("preserves the full selected population in a plain improvement navigation link", () => {
+    const href = buildAttractionImprovementScopeHref({
+      attractionId: 4, ...scope, evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 7, checkinCodeId: 10,
+    });
+    const query = Object.fromEntries(new URL(href, "https://example.test").searchParams);
+    const parsed = parseAttractionImprovementScope(query, 4, {
+      dateStart: "2026-01-01", dateEnd: "2026-03-31", comparisonStart: "2025-10-01", comparisonEnd: "2025-12-31",
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data).toMatchObject({
+      dateStart: "2026-08-01", dateEnd: "2026-08-31", evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 7, checkinCodeId: 10,
+    });
+  });
   it("carries the source scope and channel through a chart link into the reviewed draft", () => {
     const href = buildAttractionImprovementHref({ attractionId: 4, ...scope, evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 7, checkinCodeId: 10 }, { source: "low_score", dimension: "safety", metric: "safety_score", value: 2.8 });
     const query = Object.fromEntries(new URL(href, "https://example.test").searchParams);
