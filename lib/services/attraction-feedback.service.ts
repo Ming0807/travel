@@ -276,15 +276,13 @@ export function buildActionVerificationSnapshot(
   const enoughFollowUp = followUp.visitCount >= FEEDBACK_RULES.minimumVisits
     && (action.followUpMetric === "response_coverage" || followUp.validResponseCount >= FEEDBACK_RULES.minimumValidResponses);
   const followUpValue = verificationValue(action.followUpMetric, followUp);
-  const comparisonState = !metricMatchesIssue || source.schemaVersion === 1 || action.followUpStart <= issue.baselineEnd
-    ? "legacy_or_mismatch"
-    : !enoughFollowUp
-      ? "low_sample"
-      : followUpValue === null || baselineValue === null
-        ? "no_data"
-        : action.followUpMetric === "structured_recurrence_count"
-          ? "descriptive_count"
-          : "comparable";
+  let comparisonState: ActionVerificationSnapshot["comparisonState"];
+  if (!metricMatchesIssue || source.schemaVersion === 1) comparisonState = "legacy_or_mismatch";
+  else if (action.followUpStart <= issue.baselineEnd) comparisonState = "overlapping_period";
+  else if (!enoughFollowUp) comparisonState = "low_sample";
+  else if (followUpValue === null || baselineValue === null) comparisonState = "no_data";
+  else if (action.followUpMetric === "structured_recurrence_count") comparisonState = "descriptive_count";
+  else comparisonState = "comparable";
   const snapshot = {
     schemaVersion: 1 as const,
     capturedAt,

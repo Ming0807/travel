@@ -180,7 +180,7 @@ export const actionVerificationSnapshotSchema = z.object({
   }).strict(),
   baseline: verificationPeriodSchema,
   followUp: verificationPeriodSchema,
-  comparisonState: z.enum(["comparable", "descriptive_count", "low_sample", "no_data", "legacy_or_mismatch"]),
+  comparisonState: z.enum(["comparable", "descriptive_count", "overlapping_period", "low_sample", "no_data", "legacy_or_mismatch"]),
 }).strict();
 
 export type FeedbackScopeInput = z.infer<typeof feedbackScopeSchema>;

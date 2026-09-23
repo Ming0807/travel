@@ -356,6 +356,28 @@ describe("AttractionFeedbackService permissions and workflow", () => {
     );
   });
 
+  it("marks historical actions with overlapping baseline and follow-up windows as non-comparable", async () => {
+    const repo = repository();
+    repo.findAction.mockResolvedValueOnce({
+      improvementActionId: ACTION_ID,
+      feedbackIssueId: ISSUE_ID,
+      status: "completed",
+      followUpMetric: "overall_score",
+      followUpStart: "2026-01-20",
+      followUpEnd: "2026-02-20",
+      completionEvidenceNote: "Work completed and photographed by site staff.",
+    });
+    const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }), () => new Date("2026-04-01T00:00:00.000Z"));
+
+    await service.transitionAction({ actionId: ACTION_ID, toStatus: "verified", note: "Historical overlap." });
+
+    expect(repo.transitionAction).toHaveBeenCalledWith(
+      ACTION_ID, "completed", "verified", "admin-1", "Historical overlap.",
+      "Work completed and photographed by site staff.",
+      expect.objectContaining({ comparisonState: "overlapping_period" }),
+    );
+  });
+
   it("rejects an inactive action owner and refuses to close before verified follow-up", async () => {
     const repo = repository();
     repo.isActiveAdmin.mockResolvedValue(false);

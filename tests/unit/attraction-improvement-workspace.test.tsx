@@ -321,6 +321,32 @@ describe("AttractionImprovementWorkspace regressions", () => {
     expect(screen.getByText(/จำนวนดิบ.*ไม่ควรเปรียบเทียบตรง ๆ/)).toBeInTheDocument();
   });
 
+  it("identifies overlapping historical periods explicitly", () => {
+    renderWorkspace({ workspace: {
+      candidate: qualifyFeedbackCandidate(metrics()),
+      issues: [issue()],
+      actions: [{
+        ...action("verified"),
+        verificationSnapshot: {
+          schemaVersion: 1,
+          capturedAt: "2026-04-01T00:00:00.000Z",
+          sourceIssueId: ids.issue,
+          sourceIssueSnapshotVersion: 2,
+          attractionId: 7,
+          issueDimension: "overall",
+          metric: "overall_score",
+          population: { evidenceScope: "all_records", entryChannel: null, campaignId: null, checkinCodeId: null },
+          baseline: { start: "2026-01-01", end: "2026-01-31", visits: 120, validResponses: 30, value: 2.8 },
+          followUp: { start: "2026-01-20", end: "2026-02-20", visits: 90, validResponses: 40, value: 3.2 },
+          comparisonState: "overlapping_period",
+        },
+      }],
+      history: [], owners, rules: FEEDBACK_RULES,
+    } });
+
+    expect(screen.getByText(/ช่วงติดตามซ้อนกับ baseline/)).toBeInTheDocument();
+  });
+
   it("limits new score metrics to the reviewed dimension", () => {
     renderWorkspace({ workspace: {
       candidate: qualifyFeedbackCandidate(metrics()),
