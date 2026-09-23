@@ -80,14 +80,17 @@ describe("attraction action verification snapshot migration", () => {
     expect(sql).toContain("ADD COLUMN verification_snapshot jsonb");
     expect(sql).toContain("VERIFICATION_SNAPSHOT_IMMUTABLE");
     expect(sql).toContain("CREATE TRIGGER prevent_attraction_improvement_verification_snapshot_mutation");
-    expect(sql).toContain("p_verification_snapshot jsonb DEFAULT NULL");
+    expect(sql).toContain("p_verification_snapshot jsonb\n");
     expect(sql).toContain("verification_snapshot = CASE WHEN p_to_status = 'verified'");
   });
 
-  it("keeps the replacement transition atomic and service-role-only", () => {
+  it("keeps both deployment versions atomic and service-role-only", () => {
     expect(sql).toContain("FOR UPDATE");
     expect(sql).toContain("IMPROVEMENT_ACTION_STATUS_CONFLICT");
     expect(sql).toContain("INSERT INTO public.attraction_improvement_action_history");
+    expect(sql).not.toContain("DROP FUNCTION public.transition_attraction_improvement_action");
+    expect(sql).toContain("p_completion_evidence_note, NULL");
+    expect(sql).toContain("uuid, text, text, uuid, text, text)\n  TO service_role");
     expect(sql).toContain("REVOKE ALL ON FUNCTION public.transition_attraction_improvement_action");
     expect(sql).toContain("GRANT EXECUTE ON FUNCTION public.transition_attraction_improvement_action");
     expect(sql).toContain("TO service_role");

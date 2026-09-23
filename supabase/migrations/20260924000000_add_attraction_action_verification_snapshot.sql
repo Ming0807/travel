@@ -34,16 +34,14 @@ CREATE TRIGGER prevent_attraction_improvement_verification_snapshot_mutation
 BEFORE UPDATE OF verification_snapshot ON public.attraction_improvement_actions
 FOR EACH ROW EXECUTE FUNCTION public.prevent_attraction_improvement_verification_snapshot_mutation();
 
-DROP FUNCTION public.transition_attraction_improvement_action(uuid, text, text, uuid, text, text);
-
 CREATE FUNCTION public.transition_attraction_improvement_action(
   p_action_id uuid,
   p_expected_from_status text,
   p_to_status text,
   p_changed_by uuid,
-  p_note text DEFAULT NULL,
-  p_completion_evidence_note text DEFAULT NULL,
-  p_verification_snapshot jsonb DEFAULT NULL
+  p_note text,
+  p_completion_evidence_note text,
+  p_verification_snapshot jsonb
 )
 RETURNS public.attraction_improvement_actions
 LANGUAGE plpgsql
@@ -122,9 +120,34 @@ BEGIN
 END;
 $$;
 
+-- Keep the pre-deployment RPC signature available while old app instances drain.
+-- Verification via that signature is rejected because it cannot supply a snapshot.
+CREATE OR REPLACE FUNCTION public.transition_attraction_improvement_action(
+  p_action_id uuid,
+  p_expected_from_status text,
+  p_to_status text,
+  p_changed_by uuid,
+  p_note text DEFAULT NULL,
+  p_completion_evidence_note text DEFAULT NULL
+)
+RETURNS public.attraction_improvement_actions
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT public.transition_attraction_improvement_action(
+    p_action_id, p_expected_from_status, p_to_status, p_changed_by,
+    p_note, p_completion_evidence_note, NULL
+  );
+$$;
+
 REVOKE ALL ON FUNCTION public.transition_attraction_improvement_action(uuid, text, text, uuid, text, text, jsonb)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.transition_attraction_improvement_action(uuid, text, text, uuid, text, text, jsonb)
+  TO service_role;
+REVOKE ALL ON FUNCTION public.transition_attraction_improvement_action(uuid, text, text, uuid, text, text)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.transition_attraction_improvement_action(uuid, text, text, uuid, text, text)
   TO service_role;
 REVOKE ALL ON FUNCTION public.prevent_attraction_improvement_verification_snapshot_mutation()
   FROM PUBLIC, anon, authenticated;
