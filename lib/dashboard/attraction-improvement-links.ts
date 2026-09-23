@@ -22,6 +22,16 @@ export function buildAttractionImprovementScopeHref(
   return `/admin/attractions/${context.attractionId}/improvements?${params.toString()}`;
 }
 
+export function buildAttractionSatisfactionHref(context: AttractionImprovementContext & { evidenceScope: AttractionAnalyticsFilters["evidenceScope"] }) {
+  const params = new URLSearchParams({
+    attraction_id: String(context.attractionId),
+    date_from: context.dateStart,
+    date_to: context.dateEnd,
+    evidence_scope: context.evidenceScope,
+  });
+  return `/admin/dashboard/satisfaction?${params.toString()}`;
+}
+
 export function buildAttractionImprovementHref(
   context: AttractionImprovementContext,
   draft: {

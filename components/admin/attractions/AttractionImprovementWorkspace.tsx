@@ -18,6 +18,7 @@ import type {
   getAttractionImprovementWorkspace,
 } from "@/lib/services/attraction-feedback.service";
 import type { AttractionIssueDraft } from "@/lib/dashboard/attraction-improvement-draft";
+import { buildAttractionSatisfactionHref } from "@/lib/dashboard/attraction-improvement-links";
 import { redactFeedbackOperationalText } from "@/lib/validation/attraction-feedback";
 
 type Workspace = Awaited<ReturnType<typeof getAttractionImprovementWorkspace>>;
@@ -431,8 +432,11 @@ export function AttractionImprovementWorkspace({
 
       <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-5" aria-labelledby="issues-heading">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div><h2 id="issues-heading" className="text-xl font-black">ประเด็นและแผนปรับปรุง</h2><p className="mt-1 text-sm text-slate-600">แสดงเจ้าของงาน กำหนดเสร็จ หลักฐาน และช่วงติดตามผลครบในที่เดียว</p></div>
-          <Link href={`/admin/dashboard/satisfaction?attractionId=${attractionId}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#B94727] underline underline-offset-4"><ChartLine aria-hidden="true" /> ดูข้อมูลความพึงพอใจ <ArrowRight aria-hidden="true" /></Link>
+          <div><h2 id="issues-heading" className="text-xl font-black">ประเด็นและแผนปรับปรุง</h2><p className="mt-1 text-sm text-slate-600">ประเด็นที่บันทึกไว้ทั้งหมดของสถานที่นี้ ไม่กรองตามช่วงวันที่หรือชุดหลักฐานที่เลือกด้านบน</p></div>
+          <div className="sm:text-right">
+            <Link href={buildAttractionSatisfactionHref(scope)} className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#B94727] underline underline-offset-4"><ChartLine aria-hidden="true" /> ดูภาพรวมความพึงพอใจ <ArrowRight aria-hidden="true" /></Link>
+            {scope.entryChannel || scope.campaignId || scope.checkinCodeId ? <p className="max-w-sm text-xs leading-5 text-slate-600">ปลายทางไม่รองรับตัวกรองช่องทาง แคมเปญ หรือจุดเช็กอิน จึงแสดงข้อมูลรวมของสถานที่ในช่วงวันและชุดหลักฐานเดียวกัน</p> : null}
+          </div>
         </div>
         <div className="mt-6">
           {workspace.issues.length === 0 ? (

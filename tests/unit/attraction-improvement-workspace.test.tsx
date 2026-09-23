@@ -143,6 +143,16 @@ function renderWorkspace(overrides: Partial<Parameters<typeof AttractionImprovem
 describe("AttractionImprovementWorkspace regressions", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("keeps the supported satisfaction scope and labels saved issues as historical", () => {
+    renderWorkspace({ scope: { ...scope, evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 7, checkinCodeId: 10 } });
+    expect(screen.getByRole("link", { name: /ดูภาพรวมความพึงพอใจ/ })).toHaveAttribute(
+      "href",
+      "/admin/dashboard/satisfaction?attraction_id=7&date_from=2026-01-01&date_to=2026-01-31&evidence_scope=pilot_only",
+    );
+    expect(screen.getByText(/ประเด็นที่บันทึกไว้ทั้งหมดของสถานที่นี้/)).toBeInTheDocument();
+    expect(screen.getByText(/ปลายทางไม่รองรับตัวกรองช่องทาง/)).toBeInTheDocument();
+  });
+
   it("renders Thai-first status labels and never exposes raw workflow codes in visible history/status UI", () => {
     const { container } = renderWorkspace();
     const text = container.textContent ?? "";

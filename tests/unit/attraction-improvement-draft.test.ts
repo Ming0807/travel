@@ -1,12 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { parseAttractionIssueDraft } from "@/lib/dashboard/attraction-improvement-draft";
-import { buildAttractionImprovementHref, buildAttractionImprovementScopeHref } from "@/lib/dashboard/attraction-improvement-links";
+import { buildAttractionImprovementHref, buildAttractionImprovementScopeHref, buildAttractionSatisfactionHref } from "@/lib/dashboard/attraction-improvement-links";
 import { parseAttractionImprovementScope } from "@/lib/dashboard/attraction-improvement-scope";
+import { parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 
 const scope = { dateStart: "2026-08-01", dateEnd: "2026-08-31" };
 
 describe("parseAttractionIssueDraft", () => {
+  it("translates the improvement scope into the shared satisfaction dashboard query", () => {
+    const href = buildAttractionSatisfactionHref({
+      attractionId: 4, ...scope, evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 7, checkinCodeId: 10,
+    });
+    expect(href).toBe("/admin/dashboard/satisfaction?attraction_id=4&date_from=2026-08-01&date_to=2026-08-31&evidence_scope=pilot_only");
+    const parsed = parseDashboardFilters(Object.fromEntries(new URL(href, "https://example.test").searchParams));
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data).toMatchObject({ attractionId: 4, dateFrom: "2026-08-01", dateTo: "2026-08-31", evidenceScope: "pilot_only" });
+  });
   it("preserves the full selected population in a plain improvement navigation link", () => {
     const href = buildAttractionImprovementScopeHref({
       attractionId: 4, ...scope, evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 7, checkinCodeId: 10,

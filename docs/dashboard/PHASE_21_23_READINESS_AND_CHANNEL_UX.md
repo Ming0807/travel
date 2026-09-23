@@ -112,6 +112,12 @@ color, unknown neutral gray. Do not use color alone. No new chart dependency.
   permission and incomplete-read gates. Unit tests cover the link round-trip
   and export read/metadata parity. Authenticated browser and production role
   checks remain open; this does not close 22.11f.
+- Fixed locally on 2026-09-24: improvement-to-satisfaction navigation now
+  retains attraction, dates, and evidence scope in the shared dashboard URL
+  contract. The destination does not support channel/campaign/check-in filters,
+  so the UI discloses that loss of scope. Saved issue/action history remains
+  attraction-wide regardless of the current candidate filters and is labelled
+  as such. Parser and component regression tests cover these boundaries.
 
 Code and data correctness, privacy, accessibility, mobile usability, operational
 readiness, and rollback are separate gates. All are required for a company-grade
