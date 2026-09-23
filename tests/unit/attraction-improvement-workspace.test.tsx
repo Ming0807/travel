@@ -294,6 +294,33 @@ describe("AttractionImprovementWorkspace regressions", () => {
     expect(within(timeline).getByText(/ไม่ได้พิสูจน์ว่าเกิดจากแผนนี้/)).toBeInTheDocument();
   });
 
+  it("warns that recurrence counts with different response bases are descriptive, not directly comparable", () => {
+    renderWorkspace({ workspace: {
+      candidate: qualifyFeedbackCandidate(metrics()),
+      issues: [issue()],
+      actions: [{
+        ...action("verified"),
+        followUpMetric: "structured_recurrence_count",
+        verificationSnapshot: {
+          schemaVersion: 1,
+          capturedAt: "2026-04-01T00:00:00.000Z",
+          sourceIssueId: ids.issue,
+          sourceIssueSnapshotVersion: 2,
+          attractionId: 7,
+          issueDimension: "overall",
+          metric: "structured_recurrence_count",
+          population: { evidenceScope: "all_records", entryChannel: null, campaignId: null, checkinCodeId: null },
+          baseline: { start: "2026-01-01", end: "2026-01-31", visits: 120, validResponses: 30, value: 5 },
+          followUp: { start: "2026-03-01", end: "2026-03-31", visits: 80, validResponses: 50, value: 3 },
+          comparisonState: "descriptive_count",
+        },
+      }],
+      history: [], owners, rules: FEEDBACK_RULES,
+    } });
+
+    expect(screen.getByText(/จำนวนดิบ.*ไม่ควรเปรียบเทียบตรง ๆ/)).toBeInTheDocument();
+  });
+
   it("limits new score metrics to the reviewed dimension", () => {
     renderWorkspace({ workspace: {
       candidate: qualifyFeedbackCandidate(metrics()),

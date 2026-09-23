@@ -323,6 +323,39 @@ describe("AttractionFeedbackService permissions and workflow", () => {
     );
   });
 
+  it("keeps raw low-score recurrence counts descriptive across different time windows", async () => {
+    const repo = repository();
+    repo.findAction.mockResolvedValueOnce({
+      improvementActionId: ACTION_ID,
+      feedbackIssueId: ISSUE_ID,
+      status: "completed",
+      followUpMetric: "structured_recurrence_count",
+      followUpStart: "2026-03-01",
+      followUpEnd: "2026-03-31",
+      completionEvidenceNote: "Work completed and photographed by site staff.",
+    });
+    repo.readCandidateMetrics.mockImplementationOnce(async (requestedScope: FeedbackScope) => metrics({
+      scope: requestedScope,
+      validResponseCount: 50,
+      visitCount: 80,
+      structuredLowScoreRecurrence: 5,
+    }));
+    const service = new AttractionFeedbackService(repo, async () => ({ actor: { adminId: "admin-1" } }), () => new Date("2026-04-01T00:00:00.000Z"));
+
+    await service.transitionAction({ actionId: ACTION_ID, toStatus: "verified", note: "Reviewed raw recurrence." });
+
+    expect(repo.transitionAction).toHaveBeenCalledWith(
+      ACTION_ID, "completed", "verified", "admin-1", "Reviewed raw recurrence.",
+      "Work completed and photographed by site staff.",
+      expect.objectContaining({
+        metric: "structured_recurrence_count",
+        baseline: expect.objectContaining({ value: 3, validResponses: 30 }),
+        followUp: expect.objectContaining({ value: 5, validResponses: 50 }),
+        comparisonState: "descriptive_count",
+      }),
+    );
+  });
+
   it("rejects an inactive action owner and refuses to close before verified follow-up", async () => {
     const repo = repository();
     repo.isActiveAdmin.mockResolvedValue(false);

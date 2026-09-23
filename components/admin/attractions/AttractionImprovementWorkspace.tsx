@@ -178,6 +178,7 @@ function ImprovementTimeline({ issue, actions, history, owners }: { issue: Attra
                     {action.verificationSnapshot.comparisonState === "low_sample" ? "จำนวนข้อมูลช่วงติดตามยังน้อย จึงไม่แสดงค่าตัวชี้วัด" :
                       action.verificationSnapshot.comparisonState === "legacy_or_mismatch" ? "หลักฐานรุ่นเดิมหรือตัวชี้วัดต่างมิติ ไม่สามารถเปรียบเทียบกับ baseline ได้" :
                       action.verificationSnapshot.comparisonState === "no_data" ? "ไม่มีค่าที่เปรียบเทียบได้ในช่วงติดตาม" :
+                      action.verificationSnapshot.comparisonState === "descriptive_count" ? "จำนวนดิบมีฐานคำตอบและช่วงเวลาแตกต่างกัน ไม่ควรเปรียบเทียบตรง ๆ ใช้ดูประกอบการติดตามเท่านั้น" :
                       "ค่าทั้งสองอยู่ในประชากรเดียวกัน แต่การเปลี่ยนแปลงไม่ได้พิสูจน์ว่าเกิดจากแผนนี้"}
                   </p>
                 </div>

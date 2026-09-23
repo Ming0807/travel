@@ -282,7 +282,9 @@ export function buildActionVerificationSnapshot(
       ? "low_sample"
       : followUpValue === null || baselineValue === null
         ? "no_data"
-        : "comparable";
+        : action.followUpMetric === "structured_recurrence_count"
+          ? "descriptive_count"
+          : "comparable";
   const snapshot = {
     schemaVersion: 1 as const,
     capturedAt,
