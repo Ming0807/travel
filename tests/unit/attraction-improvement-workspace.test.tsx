@@ -269,11 +269,37 @@ describe("AttractionImprovementWorkspace regressions", () => {
         source: "low_score",
         category: "safety",
         note: "ร่างจากคะแนนความปลอดภัยเฉลี่ย 2.80 / 5 (ข้อมูลรวมเท่านั้น)",
+        sourceContext: "ขอบเขตต้นทางจากลิงก์: Pilot เท่านั้น · ช่องทาง: nfc",
       },
     });
 
     expect(screen.getByText(/ร่างจากข้อมูลวิเคราะห์รวม/)).toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent("Pilot เท่านั้น");
+    expect(screen.getByRole("note")).toHaveTextContent("ข้อมูลรวมทุกระเบียน");
     expect(screen.getByLabelText("จัดหมวดประเด็น")).toHaveValue("safety");
+    expect(screen.getByLabelText("ผลการพิจารณา")).toHaveValue("");
     expect(screen.getByLabelText("เหตุผลการพิจารณา")).toHaveValue("ร่างจากคะแนนความปลอดภัยเฉลี่ย 2.80 / 5 (ข้อมูลรวมเท่านั้น)");
+  });
+
+  it("keeps draft provenance visible when the local candidate does not qualify", () => {
+    renderWorkspace({
+      draft: {
+        source: "low_score",
+        category: "service",
+        note: "ร่างจากกราฟ",
+        sourceContext: "ขอบเขตต้นทางจากลิงก์: ภาคสนาม",
+      },
+      workspace: {
+        candidate: { ...qualifyFeedbackCandidate(metrics()), qualifies: false },
+        issues: [],
+        actions: [],
+        history: [],
+        owners,
+        rules: FEEDBACK_RULES,
+      },
+    });
+
+    expect(screen.getByRole("note")).toHaveTextContent("ภาคสนาม");
+    expect(screen.queryByRole("button", { name: thai.review })).not.toBeInTheDocument();
   });
 });

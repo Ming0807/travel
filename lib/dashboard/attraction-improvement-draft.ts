@@ -1,9 +1,25 @@
 import type { FeedbackDimension, IssueCategory } from "@/lib/services/attraction-feedback.service";
+import { z } from "zod";
+import { attractionEntryChannelSchema, attractionEvidenceScopeSchema } from "@/lib/validation/attraction-analytics";
+
+const provenanceSchema = z.object({
+  evidenceScope: attractionEvidenceScopeSchema.optional(),
+  entryChannel: attractionEntryChannelSchema.optional(),
+  campaignId: z.coerce.number().int().positive().optional(),
+  checkinCodeId: z.coerce.number().int().positive().optional(),
+});
+const PROVENANCE_SCOPE_LABELS = {
+  field_claim: "ภาคสนาม",
+  all_records: "ทุกระเบียนเพื่อ QA",
+  pilot_only: "Pilot เท่านั้น",
+  simulated_only: "สถานการณ์จำลองเท่านั้น",
+} as const;
 
 export type AttractionIssueDraft = {
   source: "low_score" | "funnel_dropoff" | "trend_point";
   category: IssueCategory;
   note: string;
+  sourceContext: string;
 };
 
 const SCORE_DRAFTS: Record<string, { dimension: FeedbackDimension; category: IssueCategory; label: string }> = {
@@ -39,6 +55,21 @@ export function parseAttractionIssueDraft(
   const metric = one(query.draftMetric);
   const numericValue = Number(one(query.draftValue));
   if (!Number.isFinite(numericValue)) return undefined;
+  const provenance = provenanceSchema.safeParse({
+    evidenceScope: one(query.draftEvidenceScope),
+    entryChannel: one(query.draftEntryChannel),
+    campaignId: one(query.draftCampaignId),
+    checkinCodeId: one(query.draftCheckinCodeId),
+  });
+  if (!provenance.success) return undefined;
+  const context = provenance.data;
+  const provenanceNote = [
+    `ขอบเขตต้นทางจากลิงก์: ${context.evidenceScope ? PROVENANCE_SCOPE_LABELS[context.evidenceScope] : "ไม่ระบุ (ห้ามถือว่าเป็นภาคสนาม)"}`,
+    `ช่องทาง: ${context.entryChannel ?? "ทุกช่องทางหรือไม่ระบุ"}`,
+    ...(context.campaignId ? [`แคมเปญรหัส ${context.campaignId}`] : []),
+    ...(context.checkinCodeId ? [`จุดเช็กอินรหัส ${context.checkinCodeId}`] : []),
+    "ค่าจากลิงก์ยังไม่ใช่หลักฐานที่ยืนยันแล้ว และขอบเขตอาจต่างจากข้อมูลที่คำนวณในหน้าแผนปรับปรุง โปรดตรวจสอบก่อนบันทึก",
+  ].join(" · ");
 
   if (
     source === "low_score"
@@ -51,7 +82,8 @@ export function parseAttractionIssueDraft(
     return {
       source,
       category: config.category,
-      note: `ร่างจากคะแนน${config.label}เฉลี่ย ${numericValue.toLocaleString("th-TH", { maximumFractionDigits: 2 })} / 5 ช่วง ${scope.dateStart} ถึง ${scope.dateEnd} (ข้อมูลรวมเท่านั้น) โปรดตรวจเกณฑ์และบริบทก่อนบันทึก`,
+      note: `ร่างจากคะแนน${config.label}เฉลี่ย ${numericValue.toLocaleString("th-TH", { maximumFractionDigits: 2 })} / 5 ช่วง ${scope.dateStart} ถึง ${scope.dateEnd} (ข้อมูลรวมเท่านั้น) โปรดตรวจเกณฑ์และบริบทก่อนบันทึก\n${provenanceNote}`,
+      sourceContext: provenanceNote,
     };
   }
 
@@ -66,7 +98,8 @@ export function parseAttractionIssueDraft(
     return {
       source,
       category: "service",
-      note: `ร่างจาก Funnel ขั้น ${FUNNEL_LABELS[metric]} มี Drop-off ${numericValue.toLocaleString("th-TH", { maximumFractionDigits: 1 })}% ช่วง ${scope.dateStart} ถึง ${scope.dateEnd} (ข้อมูลรวมเท่านั้น) โปรดตรวจสอบ Flow บนอุปกรณ์จริงก่อนบันทึก`,
+      note: `ร่างจาก Funnel ขั้น ${FUNNEL_LABELS[metric]} มี Drop-off ${numericValue.toLocaleString("th-TH", { maximumFractionDigits: 1 })}% ช่วง ${scope.dateStart} ถึง ${scope.dateEnd} (ข้อมูลรวมเท่านั้น) โปรดตรวจสอบ Flow บนอุปกรณ์จริงก่อนบันทึก\n${provenanceNote}`,
+      sourceContext: provenanceNote,
     };
   }
 
@@ -85,7 +118,8 @@ export function parseAttractionIssueDraft(
     return {
       source,
       category: "service",
-      note: `ร่างจากแนวโน้มวันที่ ${draftDate} มีรายการเข้าชมที่ระบบบันทึก ${numericValue.toLocaleString("th-TH")} Visits (ไม่ใช่ยอดเปิดเว็บหรือจำนวนสแกน) โปรดตรวจบริบทก่อนบันทึก`,
+      note: `ร่างจากแนวโน้มวันที่ ${draftDate} มีรายการเข้าชมที่ระบบบันทึก ${numericValue.toLocaleString("th-TH")} Visits (ไม่ใช่ยอดเปิดเว็บหรือจำนวนสแกน) โปรดตรวจบริบทก่อนบันทึก\n${provenanceNote}`,
+      sourceContext: provenanceNote,
     };
   }
 

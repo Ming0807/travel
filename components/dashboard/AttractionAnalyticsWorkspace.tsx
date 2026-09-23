@@ -79,6 +79,10 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
     attractionId: data.attraction.attractionId,
     dateStart: data.filters.dateFrom,
     dateEnd: data.filters.dateTo,
+    evidenceScope: data.filters.evidenceScope,
+    entryChannel: data.filters.entryChannel,
+    campaignId: data.filters.campaignId,
+    checkinCodeId: data.filters.checkinCodeId,
   };
 
   return (

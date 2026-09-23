@@ -308,6 +308,14 @@ export function AttractionImprovementWorkspace({
     <div className="space-y-6">
       {message ? <p role="status" className={`border p-4 text-sm font-bold ${message.tone === "success" ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-rose-300 bg-rose-50 text-rose-900"}`}>{message.text}</p> : null}
 
+      {draft ? (
+        <aside role="note" className="border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+          <strong>บริบทของร่างจากกราฟ</strong>
+          <p className="mt-1">{draft.sourceContext}</p>
+          <p className="mt-1">เกณฑ์และตัวเลขด้านล่างคำนวณจากข้อมูลรวมทุกระเบียนในช่วงเวลาที่เลือก ยังไม่ได้ใช้ตัวกรอง Pilot/ภาคสนาม ช่องทาง แคมเปญ หรือจุดเช็กอินจากกราฟ</p>
+        </aside>
+      ) : null}
+
       <section className="border border-[var(--admin-border)] bg-[var(--admin-surface)] p-5" aria-labelledby="candidate-heading">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -337,7 +345,7 @@ export function AttractionImprovementWorkspace({
             <input type="hidden" name="comparisonEnd" value={scope.comparisonEnd ?? ""} />
             <input type="hidden" name="issueDimension" value={dimension} />
             <label className="block text-sm font-bold">จัดหมวดประเด็น<select name="issueCategory" required defaultValue={draft?.category ?? (dimension === "overall" ? "service" : dimension === "information" ? "information_signage" : dimension)} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{Object.entries(CATEGORY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-            <label className="block text-sm font-bold">ผลการพิจารณา<select name="decision" required defaultValue="accept" className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="accept">รับเป็นประเด็นปรับปรุง</option><option value="dismiss">ไม่รับเป็นประเด็น</option></select></label>
+            <label className="block text-sm font-bold">ผลการพิจารณา<select name="decision" required defaultValue={draft ? "" : "accept"} className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{draft ? <option value="" disabled>เลือกผลการพิจารณา</option> : null}<option value="accept">รับเป็นประเด็นปรับปรุง</option><option value="dismiss">ไม่รับเป็นประเด็น</option></select></label>
             <label className="block text-sm font-bold sm:col-span-2">เหตุผลการพิจารณา<textarea name="reviewNote" defaultValue={draft?.note} maxLength={2000} rows={3} className="mt-2 w-full border border-slate-300 px-3 py-2 font-normal" placeholder="ระบุบริบทหรือข้อจำกัดของข้อมูล โดยไม่คัดลอกข้อมูลส่วนบุคคล" /></label>
             <button type="submit" className="min-h-11 bg-[#202020] px-4 font-black text-white hover:bg-[#B94727] sm:col-span-2">บันทึกผลการพิจารณา</button>
           </form>

@@ -110,6 +110,27 @@ values remain `unknown` unless supported by recorded evidence.
   build was run for this display-only follow-up; the preceding filter checkpoint
   has its own successful build evidence.
 
+### Draft Provenance Follow-up (2026-09-22)
+
+- Chart draft links now carry source evidence scope, entry channel, campaign,
+  and check-in filters into the editable draft note. The parser validates enums
+  and positive IDs, rejects malformed context, and labels legacy missing scope
+  as unknown rather than assuming field evidence.
+- Draft notes explicitly distinguish URL-provided aggregate values from verified
+  evidence and warn that the destination improvement calculations may use a
+  different scope. The existing candidate read/review/save boundaries remain.
+- The improvement page shows source provenance above the candidate result even
+  when the candidate does not qualify. It states that the destination candidate
+  currently uses all records in the selected date range, without the chart's
+  evidence-scope, channel, campaign, or check-in filters. Chart-linked drafts
+  require an explicit accept/dismiss selection before review submission.
+- Twelve parser/link tests and scoped ESLint passed. This addresses lost source
+  context; it does not implement matching destination filters or immutable source
+  snapshots. Full scope parity in 22.11d remains open and needs repository/schema
+  work before it can be claimed complete.
+- The page-level follow-up passed 22 focused draft/workspace tests, scoped ESLint,
+  TypeScript, whitespace checks, and a Node 22 production build (66 static pages).
+
 ## Analytics Rules
 
 - Every metric states unit, denominator, date field, source table, calculation, and missing-data rule.
