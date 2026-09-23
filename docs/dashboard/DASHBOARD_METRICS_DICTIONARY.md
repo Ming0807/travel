@@ -265,7 +265,9 @@ All segmented distributions suppress categories below `n=10`. Each satisfaction 
 
 ### Attraction peer comparison contract
 
-An eligible peer must be active, belong to the same province and primary attraction type, use the same `visits.visit_date` range and evidence scope, and contain at least `10` eligible Visit records. The selected attraction is compared with at most three displayed peers; `eligiblePeerCount` and the rank denominator describe the full eligible population, not only the displayed columns.
+An eligible peer must be active and published, belong to the same province and primary attraction type, use the same `visits.visit_date` range and evidence scope, and contain at least `10` eligible Visit records. The selected attraction must also have at least `10` eligible Visits; otherwise no peer table, rank, or median is shown. A rank requires at least two eligible peers. The selected attraction is compared with at most three displayed peers; `eligiblePeerCount` and the rank denominator describe the full eligible population, not only the displayed columns.
+
+The peer Visit median uses **all** eligible peers, not only the three displayed, and requires at least three peers. The satisfaction benchmark is the unweighted median of each peer attraction's overall-survey mean, only for peers with at least `10` valid overall-score answers; it requires at least three such peers. These medians are descriptive context, not a pooled respondent mean or an official benchmark. Missing or suppressed scores never become zero. Neither benchmark is shown when the selected attraction is below the Visit threshold, the peer read is truncated, or the scope is not comparable.
 
 The comparison exposes Visits, survey coverage, satisfaction dimensions, revisit/recommend intent, photo/certificate/stamp/survey/research completion, and top self-reported expense signals. Satisfaction, intention, and expense cells keep their own answer counts and are suppressed below `n=10`. Missing cells remain unavailable rather than becoming zero. Peer reads are bounded; truncation disables the comparison instead of returning a partial rank.
 

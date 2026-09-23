@@ -38,6 +38,13 @@ function average(values: number[]) {
   return values.length > 0 ? round(values.reduce((sum, value) => sum + value, 0) / values.length, 2) : null;
 }
 
+function peerMedian(values: number[]) {
+  if (values.length < 3) return null;
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  return round(sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle], 2);
+}
+
 export function buildAttractionDistribution(rows: Row[], label: (row: Row) => string | null): Distribution[] {
   const counts = new Map<string, number>();
   rows.forEach((row) => {
@@ -272,6 +279,7 @@ export function buildAttractionPeerComparison(rows: Row[], scope: PeerComparison
     if (!visitMatchesEvidenceScope(row, scope.evidenceScope)) return false;
     const attraction = relation(row, "attractions");
     return attraction?.is_active !== false
+      && attraction?.is_published !== false
       && Number(attraction?.province_id) === scope.provinceId
       && Number(attraction?.attraction_type_id) === scope.attractionTypeId;
   });
@@ -316,16 +324,19 @@ export function buildAttractionPeerComparison(rows: Row[], scope: PeerComparison
     .filter(([attractionId, visits]) => attractionId !== scope.attractionId && visits.length >= ATTRACTION_SMALL_CELL_THRESHOLD)
     .map(([attractionId, visits]) => summarize(attractionId, visits))
     .sort((left, right) => right.visits - left.visits || left.nameTh.localeCompare(right.nameTh, "th"));
-  const rankPopulation = [
-    ...(selectedRows.length > 0 ? [{ attractionId: scope.attractionId, visits: selectedRows.length }] : []),
+  const selectedEligible = selectedRows.length >= ATTRACTION_SMALL_CELL_THRESHOLD;
+  const comparisonReady = selectedEligible && eligiblePeers.length >= 2;
+  const rankPopulation = comparisonReady ? [
+    { attractionId: scope.attractionId, visits: selectedRows.length },
     ...eligiblePeers.map((peer) => ({ attractionId: peer.attractionId, visits: peer.visits })),
-  ].sort((left, right) => right.visits - left.visits || left.attractionId - right.attractionId);
+  ].sort((left, right) => right.visits - left.visits || left.attractionId - right.attractionId) : [];
   const selectedRank = rankPopulation.findIndex((row) => row.attractionId === scope.attractionId);
+  const scoredPeerValues = selectedEligible ? eligiblePeers.flatMap((peer) => peer.overallSatisfaction.value === null ? [] : [peer.overallSatisfaction.value]) : [];
 
   return {
-    status: eligiblePeers.length >= 2 ? "ready" as const : "insufficient_peers" as const,
+    status: !selectedEligible ? "insufficient_selected" as const : comparisonReady ? "ready" as const : "insufficient_peers" as const,
     unavailableReason: null,
-    eligibilityNote: `จังหวัดเดียวกัน ประเภทหลักเดียวกัน ช่วง ${scope.dateFrom} ถึง ${scope.dateTo} และมีอย่างน้อย ${ATTRACTION_SMALL_CELL_THRESHOLD} Visits`,
+    eligibilityNote: `สถานที่ที่เลือกและเพื่อนเทียบต้องอยู่จังหวัด/ประเภทหลักเดียวกัน ช่วง ${scope.dateFrom} ถึง ${scope.dateTo} และมีอย่างน้อย ${ATTRACTION_SMALL_CELL_THRESHOLD} Visits ต่อแห่ง อันดับต้องมีเพื่อนเทียบอย่างน้อย 2 แห่ง ค่ากลางต้องมีอย่างน้อย 3 แห่ง`,
     dateFrom: scope.dateFrom,
     dateTo: scope.dateTo,
     dateAligned: true,
@@ -333,7 +344,13 @@ export function buildAttractionPeerComparison(rows: Row[], scope: PeerComparison
     rankDenominator: rankPopulation.length,
     selectedRank: selectedRank >= 0 ? selectedRank + 1 : null,
     selected: selectedRows.length > 0 ? summarize(scope.attractionId, selectedRows) : null,
-    peers: eligiblePeers.slice(0, 3),
+    peers: selectedEligible ? eligiblePeers.slice(0, 3) : [],
+    benchmarks: {
+      visitMedian: selectedEligible ? peerMedian(eligiblePeers.map((peer) => peer.visits)) : null,
+      visitPeerCount: selectedEligible ? eligiblePeers.length : 0,
+      satisfactionMedian: peerMedian(scoredPeerValues),
+      satisfactionPeerCount: scoredPeerValues.length,
+    },
   };
 }
 
@@ -406,6 +423,7 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
         selectedRank: null,
         selected: null,
         peers: [],
+        benchmarks: { visitMedian: null, visitPeerCount: 0, satisfactionMedian: null, satisfactionPeerCount: 0 },
       }
     : buildAttractionPeerComparison(rows.peerVisits, {
         attractionId: parsed.data.attractionId,

@@ -89,7 +89,7 @@ color, unknown neutral gray. Do not use color alone. No new chart dependency.
 - [ ] 22.11c: Integrate the channel panels above after entry correlation tests pass.
 - [ ] 22.11d: Carry scope from a finding to the reviewed improvement issue, owner,
   due date and follow-up evidence; never imply causation from before/after alone.
-- [ ] 22.11e: Verify selected-peer eligibility and implement median benchmarks only
+- [x] 22.11e: Verify selected-peer eligibility and implement median benchmarks only
   when the comparison population and minimum sample rules are explicit.
 - [ ] 22.11f: Check current-build filter/history/export parity and role permissions;
   record real query plans before adding indexes or summary tables.

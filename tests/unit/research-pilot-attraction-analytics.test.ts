@@ -302,6 +302,7 @@ describe("Phase 22 attraction evidence scope", () => {
       ...Array.from({ length: 13 }, () => visit(5, "เพื่อน D")),
       ...Array.from({ length: 20 }, () => visit(6, "คนละประเภท", { attractions: { attraction_id: 6, name_th: "คนละประเภท", province_id: 1, attraction_type_id: 8, is_active: true } })),
       ...Array.from({ length: 9 }, () => visit(7, "ฐานต่ำกว่าเกณฑ์")),
+      ...Array.from({ length: 20 }, () => visit(8, "ยังไม่เผยแพร่", { attractions: { attraction_id: 8, name_th: "ยังไม่เผยแพร่", province_id: 1, attraction_type_id: 7, is_active: true, is_published: false } })),
     ];
 
     const result = buildAttractionPeerComparison(rows, {
@@ -317,6 +318,7 @@ describe("Phase 22 attraction evidence scope", () => {
     expect(result.peers.map((peer) => peer.nameTh)).toEqual(["เพื่อน A", "เพื่อน B", "เพื่อน C"]);
     expect(result.eligiblePeerCount).toBe(4);
     expect(result.rankDenominator).toBe(5);
+    expect(result.benchmarks).toEqual({ visitMedian: 15, visitPeerCount: 4, satisfactionMedian: 4, satisfactionPeerCount: 4 });
     expect(result.dateAligned).toBe(true);
     expect(result.peers[0]).toMatchObject({
       visits: 18,
@@ -328,13 +330,55 @@ describe("Phase 22 attraction evidence scope", () => {
     });
   });
 
+  it("does not rank an under-threshold selected attraction against eligible peers", () => {
+    const rows = [
+      ...Array.from({ length: 9 }, () => ({ attraction_id: 1, attractions: { attraction_id: 1, name_th: "หลัก", province_id: 1, attraction_type_id: 7, is_active: true } })),
+      ...[2, 3, 4].flatMap((attractionId) => Array.from({ length: 12 }, () => ({ attraction_id: attractionId, attractions: { attraction_id: attractionId, name_th: `เพื่อน ${attractionId}`, province_id: 1, attraction_type_id: 7, is_active: true } }))),
+    ];
+    const result = buildAttractionPeerComparison(rows, {
+      attractionId: 1, provinceId: 1, attractionTypeId: 7,
+      dateFrom: "2026-08-01", dateTo: "2026-08-31", evidenceScope: "all_records",
+    });
+
+    expect(result.status).toBe("insufficient_selected");
+    expect(result.selected?.visits).toBe(9);
+    expect(result.eligiblePeerCount).toBe(3);
+    expect(result.selectedRank).toBeNull();
+    expect(result.rankDenominator).toBe(0);
+    expect(result.benchmarks).toEqual({ visitMedian: null, visitPeerCount: 0, satisfactionMedian: null, satisfactionPeerCount: 0 });
+  });
+
+  it("uses all eligible peers for median and requires three reportable peer scores", () => {
+    const rows = [
+      ...Array.from({ length: 12 }, () => ({ attraction_id: 1, attractions: { attraction_id: 1, name_th: "หลัก", province_id: 1, attraction_type_id: 7, is_active: true } })),
+      ...[11, 13, 17, 30].flatMap((count, index) => Array.from({ length: count }, (_, visitIndex) => ({
+        attraction_id: index + 2,
+        attractions: { attraction_id: index + 2, name_th: `เพื่อน ${index + 2}`, province_id: 1, attraction_type_id: 7, is_active: true },
+        satisfaction_surveys: visitIndex < (index < 2 ? 10 : 5) ? [{ overall_score: index + 2 }] : [],
+      }))),
+    ];
+    const result = buildAttractionPeerComparison(rows, {
+      attractionId: 1, provinceId: 1, attractionTypeId: 7,
+      dateFrom: "2026-08-01", dateTo: "2026-08-31", evidenceScope: "all_records",
+    });
+
+    expect(result.peers).toHaveLength(3);
+    expect(result.benchmarks).toEqual({ visitMedian: 15, visitPeerCount: 4, satisfactionMedian: null, satisfactionPeerCount: 2 });
+  });
+
   it("withholds peer survey signals below the privacy threshold", () => {
-    const rows = Array.from({ length: 12 }, (_, index) => ({
+    const rows = [
+      ...Array.from({ length: 10 }, () => ({
+        attraction_id: 1,
+        attractions: { attraction_id: 1, name_th: "สถานที่หลัก", province_id: 1, attraction_type_id: 7, is_active: true },
+      })),
+      ...Array.from({ length: 12 }, (_, index) => ({
       attraction_id: 2,
       attractions: { attraction_id: 2, name_th: "เพื่อน A", province_id: 1, attraction_type_id: 7, is_active: true },
       satisfaction_surveys: index < 6 ? [{ overall_score: 4, revisit_intention: "yes" }] : [],
       visit_expenses: index < 5 ? [{ expense_categories: { name_th: "อาหาร" } }] : [],
-    }));
+      })),
+    ];
 
     const result = buildAttractionPeerComparison(rows, {
       attractionId: 1,

@@ -41,6 +41,7 @@ describe("attraction peer comparison", () => {
           selectedRank: 2,
           selected: summary(1, "สถานที่หลัก"),
           peers: [summary(2, "เพื่อน A"), summary(3, "เพื่อน B")],
+          benchmarks: { visitMedian: null, visitPeerCount: 2, satisfactionMedian: null, satisfactionPeerCount: 2 },
         }}
       />,
     );
@@ -49,6 +50,7 @@ describe("attraction peer comparison", () => {
     expect(screen.getByText("อันดับ 2 จาก 3 สถานที่")).toBeInTheDocument();
     expect(screen.getByText("1 ส.ค. 2569 - 31 ส.ค. 2569")).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ข้อมูลเปรียบเทียบสถานที่" })).toBeInTheDocument();
+    expect(screen.getAllByText("ยังไม่พร้อม")).toHaveLength(2);
     expect(screen.getAllByText("ปกปิด (n=6)").length).toBeGreaterThan(0);
     expect(screen.getByText(/ไม่ใช่รายได้ธุรกิจ/)).toBeInTheDocument();
   });
@@ -69,6 +71,7 @@ describe("attraction peer comparison", () => {
           selectedRank: null,
           selected: null,
           peers: [],
+          benchmarks: { visitMedian: null, visitPeerCount: 0, satisfactionMedian: null, satisfactionPeerCount: 0 },
         }}
       />,
     );
@@ -76,5 +79,58 @@ describe("attraction peer comparison", () => {
     expect(screen.getByText("ยังเปรียบเทียบไม่ได้")).toBeInTheDocument();
     expect(screen.getByText(/ยังไม่มีประเภทหลัก/)).toBeInTheDocument();
     expect(screen.queryByText("0%")).not.toBeInTheDocument();
+  });
+
+  it("withholds the table and rank when the selected attraction has too few visits", () => {
+    render(
+      <AttractionPeerComparison
+        attractionTypeName="วัฒนธรรม"
+        comparison={{
+          status: "insufficient_selected",
+          unavailableReason: null,
+          eligibilityNote: "ต้องมีอย่างน้อย 10 Visits ต่อแห่ง",
+          dateFrom: "2026-08-01",
+          dateTo: "2026-08-31",
+          dateAligned: true,
+          eligiblePeerCount: 3,
+          rankDenominator: 0,
+          selectedRank: null,
+          selected: { ...summary(1, "สถานที่หลัก"), visits: 9 },
+          peers: [],
+          benchmarks: { visitMedian: null, visitPeerCount: 0, satisfactionMedian: null, satisfactionPeerCount: 0 },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("สถานที่นี้ยังมีข้อมูลไม่ถึงเกณฑ์")).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "ข้อมูลเปรียบเทียบสถานที่" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^อันดับ \d/)).not.toBeInTheDocument();
+  });
+
+  it("shows peer medians with the contributor counts when thresholds are met", () => {
+    render(
+      <AttractionPeerComparison
+        attractionTypeName="วัฒนธรรม"
+        comparison={{
+          status: "ready",
+          unavailableReason: null,
+          eligibilityNote: "ต้องมีอย่างน้อย 10 Visits ต่อแห่ง",
+          dateFrom: "2026-08-01",
+          dateTo: "2026-08-31",
+          dateAligned: true,
+          eligiblePeerCount: 4,
+          rankDenominator: 5,
+          selectedRank: 3,
+          selected: summary(1, "สถานที่หลัก"),
+          peers: [summary(2, "เพื่อน A"), summary(3, "เพื่อน B"), summary(4, "เพื่อน C")],
+          benchmarks: { visitMedian: 15, visitPeerCount: 4, satisfactionMedian: 4.15, satisfactionPeerCount: 3 },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("ค่ากลาง Visits ของเพื่อนเทียบ")).toBeInTheDocument();
+    expect(screen.getByText("15")).toBeInTheDocument();
+    expect(screen.getByText("4.15 / 5")).toBeInTheDocument();
+    expect(screen.getByText("จาก 4 แห่งที่เข้าเกณฑ์")).toBeInTheDocument();
   });
 });

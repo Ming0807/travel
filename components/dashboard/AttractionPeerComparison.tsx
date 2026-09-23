@@ -166,6 +166,11 @@ export function AttractionPeerComparison({
           <Warning className="mt-0.5 shrink-0 text-amber-700" size={22} weight="fill" aria-hidden="true" />
           <div><h3 className="font-black text-slate-950">ยังเปรียบเทียบไม่ได้</h3><p className="mt-1 leading-6 text-slate-600">{comparison.unavailableReason ?? "ชุดข้อมูลนี้ยังไม่พร้อมสำหรับการเปรียบเทียบ"}</p></div>
         </div>
+      ) : comparison.status === "insufficient_selected" ? (
+        <div className="flex items-start gap-3 px-5 py-6 text-sm">
+          <Warning className="mt-0.5 shrink-0 text-amber-700" size={22} weight="fill" aria-hidden="true" />
+          <div><h3 className="font-black text-slate-950">สถานที่นี้ยังมีข้อมูลไม่ถึงเกณฑ์</h3><p className="mt-1 leading-6 text-slate-600">มี {comparison.selected?.visits.toLocaleString("th-TH") ?? "0"} Visits ต้องมีอย่างน้อย 10 Visits ในขอบเขตที่เลือกจึงจะเทียบและจัดอันดับได้</p></div>
+        </div>
       ) : summaries.length > 0 ? (
         <>
           {comparison.status === "insufficient_peers" ? (
@@ -173,6 +178,20 @@ export function AttractionPeerComparison({
               <Warning className="mt-0.5 shrink-0" weight="fill" aria-hidden="true" />
               <p><strong>ฐานเพื่อนเทียบยังน้อย:</strong> แสดงข้อมูลที่เข้าเกณฑ์ได้ แต่ยังไม่ควรใช้สรุปค่ากลางหรือเปรียบเทียบภาพรวมของกลุ่ม</p>
             </div>
+          ) : null}
+          {comparison.status === "ready" ? (
+            <dl className="grid border-b border-slate-200 bg-[#FCFAF7] text-sm sm:grid-cols-2">
+              <div className="border-b border-slate-200 px-5 py-3 sm:border-b-0 sm:border-r">
+                <dt className="text-xs font-bold text-slate-600">ค่ากลาง Visits ของเพื่อนเทียบ</dt>
+                <dd className="mt-1 font-black tabular-nums text-slate-950">{comparison.benchmarks.visitMedian === null ? "ยังไม่พร้อม" : comparison.benchmarks.visitMedian.toLocaleString("th-TH", { maximumFractionDigits: 1 })}</dd>
+                <p className="mt-1 text-xs text-slate-600">จาก {comparison.benchmarks.visitPeerCount.toLocaleString("th-TH")} แห่งที่เข้าเกณฑ์</p>
+              </div>
+              <div className="px-5 py-3">
+                <dt className="text-xs font-bold text-slate-600">ค่ากลางคะแนนภาพรวมของเพื่อนเทียบ</dt>
+                <dd className="mt-1 font-black tabular-nums text-slate-950">{comparison.benchmarks.satisfactionMedian === null ? "ยังไม่พร้อม" : `${comparison.benchmarks.satisfactionMedian.toLocaleString("th-TH", { minimumFractionDigits: 1, maximumFractionDigits: 2 })} / 5`}</dd>
+                <p className="mt-1 text-xs text-slate-600">จาก {comparison.benchmarks.satisfactionPeerCount.toLocaleString("th-TH")} แห่งที่มีคำตอบอย่างน้อย 10 รายต่อแห่ง; ต้องมีอย่างน้อย 3 แห่ง</p>
+              </div>
+            </dl>
           ) : null}
           <ComparisonTable summaries={summaries} />
         </>

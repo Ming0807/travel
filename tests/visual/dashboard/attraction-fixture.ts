@@ -232,6 +232,7 @@ const normalScenario: Omit<AttractionAnalyticsViewModel, keyof typeof shared> = 
     selectedRank: 2,
     selected: peerSummary(attraction.attractionId, attraction.nameTh, 216, 126, 4.18, 126),
     peers: [peerSummary(702, "แหล่งเรียนรู้สังเคราะห์ B", 252, 148, 4.36, 148), peerSummary(703, "แหล่งเรียนรู้สังเคราะห์ C", 180, 98, 3.88, 98)],
+    benchmarks: { visitMedian: null, visitPeerCount: 2, satisfactionMedian: null, satisfactionPeerCount: 2 },
   },
   improvements: normalImprovements,
   insights: normalInsights,
@@ -246,7 +247,7 @@ const emptyScenario: Omit<AttractionAnalyticsViewModel, keyof typeof shared> = {
   satisfaction: emptySatisfaction,
   intentions: emptyIntentions,
   quality: quality(false, null, null, null, "ยังไม่มีข้อมูลในขอบเขตที่เลือก"),
-  peerComparison: { status: "unavailable", unavailableReason: "ยังไม่มีข้อมูลของสถานที่ที่เลือกในช่วงเวลานี้", eligibilityNote: "เปรียบเทียบเฉพาะสถานที่ที่เข้าเกณฑ์เดียวกัน", dateFrom: filters.dateFrom, dateTo: filters.dateTo, dateAligned: true, eligiblePeerCount: 0, rankDenominator: 0, selectedRank: null, selected: null, peers: [] },
+  peerComparison: { status: "unavailable", unavailableReason: "ยังไม่มีข้อมูลของสถานที่ที่เลือกในช่วงเวลานี้", eligibilityNote: "เปรียบเทียบเฉพาะสถานที่ที่เข้าเกณฑ์เดียวกัน", dateFrom: filters.dateFrom, dateTo: filters.dateTo, dateAligned: true, eligiblePeerCount: 0, rankDenominator: 0, selectedRank: null, selected: null, peers: [], benchmarks: { visitMedian: null, visitPeerCount: 0, satisfactionMedian: null, satisfactionPeerCount: 0 } },
   improvements: emptyImprovements,
   insights: [],
 };
@@ -265,7 +266,7 @@ const lowScenario: Omit<AttractionAnalyticsViewModel, keyof typeof shared> = {
   satisfaction: lowSatisfaction,
   intentions: lowIntentions,
   quality: quality(false, 100, 50, 50, "ฐานข้อมูลสังเคราะห์มีขนาดต่ำ ควรใช้ตรวจสถานะการแสดงผลเท่านั้น"),
-  peerComparison: { status: "insufficient_peers", unavailableReason: null, eligibilityNote: "ยังมีเพื่อนเทียบไม่เพียงพอสำหรับสรุปภาพรวม", dateFrom: filters.dateFrom, dateTo: filters.dateTo, dateAligned: true, eligiblePeerCount: 0, rankDenominator: 1, selectedRank: 1, selected: peerSummary(attraction.attractionId, attraction.nameTh, 2, 1, null, 1, true), peers: [] },
+  peerComparison: { status: "insufficient_selected", unavailableReason: null, eligibilityNote: "สถานที่ที่เลือกต้องมีอย่างน้อย 10 Visits", dateFrom: filters.dateFrom, dateTo: filters.dateTo, dateAligned: true, eligiblePeerCount: 0, rankDenominator: 0, selectedRank: null, selected: peerSummary(attraction.attractionId, attraction.nameTh, 2, 1, null, 1, true), peers: [], benchmarks: { visitMedian: null, visitPeerCount: 0, satisfactionMedian: null, satisfactionPeerCount: 0 } },
   improvements: emptyImprovements,
   insights: lowInsights,
 };
