@@ -118,6 +118,12 @@ color, unknown neutral gray. Do not use color alone. No new chart dependency.
   so the UI discloses that loss of scope. Saved issue/action history remains
   attraction-wide regardless of the current candidate filters and is labelled
   as such. Parser and component regression tests cover these boundaries.
+- Fixed locally on 2026-09-24: attraction dashboard shortcuts to improvement
+  work are visible only with `attraction_feedback.read` or `system.all`; a
+  dashboard-only viewer still sees aggregate counts without a dead-end link.
+  The export control now recognizes `system.all` as the server permission guard
+  does. Component and route tests cover these role boundaries. Live role and
+  query-plan verification are still release gates for 22.11f.
 
 Code and data correctness, privacy, accessibility, mobile usability, operational
 readiness, and rollback are separate gates. All are required for a company-grade

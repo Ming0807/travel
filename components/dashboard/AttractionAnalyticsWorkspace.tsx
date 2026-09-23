@@ -86,7 +86,9 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
     checkinCodeId: data.filters.checkinCodeId,
   };
   const improvementHref = buildAttractionImprovementScopeHref(improvementContext);
-  const canExport = data.viewer.permissions.includes("export.summary") && !data.quality.truncated;
+  const hasAllPermissions = data.viewer.permissions.includes("system.all");
+  const canExport = (hasAllPermissions || data.viewer.permissions.includes("export.summary")) && !data.quality.truncated;
+  const canReadImprovement = hasAllPermissions || data.viewer.permissions.includes("attraction_feedback.read");
 
   return (
     <div className="space-y-6">
@@ -99,7 +101,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
           <div className="flex flex-wrap items-center gap-2">
             {canExport && data.kpis.visits >= data.quality.smallCellThreshold ? <ExportButton endpoint="/api/admin/dashboard/attractions/export" label="ส่งออกสรุป" params={{ ...data.filters }} /> : null}
             {canExport && data.kpis.visits < data.quality.smallCellThreshold ? <p className="max-w-48 text-xs leading-5 text-slate-300">ส่งออกได้เมื่อมี Visit อย่างน้อย {data.quality.smallCellThreshold.toLocaleString("th-TH")} รายการ</p> : null}
-            <Link href={improvementHref} className="inline-flex min-h-11 items-center justify-center gap-2 border border-white/30 bg-white px-4 text-sm font-black text-[#202020] hover:bg-orange-50">เปิดแผนปรับปรุง <ArrowRight aria-hidden="true" /></Link>
+            {canReadImprovement ? <Link href={improvementHref} className="inline-flex min-h-11 items-center justify-center gap-2 border border-white/30 bg-white px-4 text-sm font-black text-[#202020] hover:bg-orange-50">เปิดแผนปรับปรุง <ArrowRight aria-hidden="true" /></Link> : null}
           </div>
         </div>
         <div className={`flex items-start gap-3 border-t p-4 text-sm ${requiresScopeCaution ? "border-amber-300 bg-amber-50 text-amber-950" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
@@ -124,7 +126,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
       </section>
 
       <div data-workspace-section="primary-trend">
-        <TrendChart points={data.trend} improvementContext={improvementContext} />
+        <TrendChart points={data.trend} improvementContext={canReadImprovement ? improvementContext : undefined} />
       </div>
 
       {data.channels ? <AttractionChannelPanel data={data.channels} incomplete={data.quality.truncated} /> : null}
@@ -165,7 +167,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
       </section>
 
       <section className="border border-slate-200 bg-white" aria-labelledby="decision-heading">
-        <div className="grid gap-4 border-b border-slate-200 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"><div><h2 id="decision-heading" className="text-lg font-black">จากหลักฐานไปสู่การปรับปรุง</h2><p className="mt-1 text-sm text-slate-600">ใช้ประเด็นและแผนงาน production เดิม เพื่อให้ผู้รับผิดชอบ กำหนดส่ง Baseline และ Follow-up ตรวจย้อนหลังได้</p></div><Link href={improvementHref} className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#202020] px-4 text-sm font-black text-white hover:bg-[#B94727]">จัดการประเด็นและแผนงาน <ArrowRight aria-hidden="true" /></Link></div>
+        <div className="grid gap-4 border-b border-slate-200 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"><div><h2 id="decision-heading" className="text-lg font-black">จากหลักฐานไปสู่การปรับปรุง</h2><p className="mt-1 text-sm text-slate-600">ใช้ประเด็นและแผนงาน production เดิม เพื่อให้ผู้รับผิดชอบ กำหนดส่ง Baseline และ Follow-up ตรวจย้อนหลังได้</p></div>{canReadImprovement ? <Link href={improvementHref} className="inline-flex min-h-11 items-center justify-center gap-2 bg-[#202020] px-4 text-sm font-black text-white hover:bg-[#B94727]">จัดการประเด็นและแผนงาน <ArrowRight aria-hidden="true" /></Link> : null}</div>
         <dl className="grid gap-x-6 gap-y-4 bg-slate-50 p-4 sm:grid-cols-2 xl:grid-cols-4">
           <CompactMetric icon={<Warning size={20} weight="fill" />} label="ประเด็นทั้งหมด" valueText={String(data.improvements.issueCount)} note="ผ่านการทบทวนตามกฎ" />
           <CompactMetric icon={<Warning size={20} />} label="ประเด็นที่ยังเปิด" valueText={String(data.improvements.openIssueCount)} note="ยังไม่ปิดหรือปฏิเสธ" />
@@ -174,7 +176,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
         </dl>
       </section>
 
-      <AttractionFunnelChart stages={data.funnel} improvementContext={improvementContext} />
+      <AttractionFunnelChart stages={data.funnel} improvementContext={canReadImprovement ? improvementContext : undefined} />
 
       <ResponsiveAnalyticsGroup group="audience" label="ใครมา และเดินทางอย่างไร">
         <section aria-labelledby="audience-heading">
@@ -194,7 +196,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
 
       <ResponsiveAnalyticsGroup group="experience" label="คุณภาพประสบการณ์และความตั้งใจ">
         <section className="grid items-start gap-4 xl:grid-cols-2" aria-label="คุณภาพประสบการณ์และความตั้งใจ">
-          <AttractionScoreChart metrics={data.satisfaction} improvementContext={improvementContext} />
+          <AttractionScoreChart metrics={data.satisfaction} improvementContext={canReadImprovement ? improvementContext : undefined} />
           <div className="grid gap-4 sm:grid-cols-2">
             <AttractionDistributionChart title="ตั้งใจกลับมา" description="ฐาน: คำตอบ revisit intention" rows={data.intentions.revisit} />
             <AttractionDistributionChart title="ตั้งใจแนะนำ" description="ฐาน: คำตอบ recommendation intention" rows={data.intentions.recommend} />

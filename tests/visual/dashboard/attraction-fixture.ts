@@ -55,7 +55,7 @@ const shared: Pick<AttractionAnalyticsViewModel, "channels" | "attraction" | "fi
     { key: "satisfaction", label: "คะแนนความพึงพอใจ", unit: "1-5", denominator: "คำตอบที่ไม่เป็น null ของแต่ละมิติ", dateField: "visits.visit_date", source: "satisfaction_surveys", missingRule: "ปกปิดค่าเมื่อ n < 10", decisionUse: "ระบุมิติที่ควรตรวจสอบและปรับปรุง" },
     { key: "expense", label: "ช่วงค่าใช้จ่ายที่รายงานเอง", unit: "category/range", denominator: "คำตอบค่าใช้จ่าย", dateField: "visits.visit_date", source: "visit_expenses", missingRule: "ไม่นำช่องว่างมาคำนวณ", decisionUse: "ดูรูปแบบการใช้จ่ายโดยไม่อ้างเป็นรายได้" },
   ],
-  viewer: { displayName: "ผู้ดูแลสังเคราะห์", permissions: ["dashboard.read", "export.summary"] },
+  viewer: { displayName: "ผู้ดูแลสังเคราะห์", permissions: ["dashboard.read", "export.summary", "attraction_feedback.read"] },
   interpretation: "ข้อมูลชุดนี้เป็นสถิติสังเคราะห์สำหรับตรวจการแสดงผล ไม่ใช่หลักฐานการท่องเที่ยวจริง",
 };
 

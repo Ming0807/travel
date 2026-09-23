@@ -144,6 +144,21 @@ describe("AttractionAnalyticsWorkspace layout", () => {
     expect(screen.getByText(/ส่งออกได้เมื่อมี Visit อย่างน้อย/)).toBeInTheDocument();
   });
 
+  it("does not offer improvement navigation to a dashboard-only viewer", () => {
+    render(<AttractionAnalyticsWorkspace data={{ ...data, viewer: { ...data.viewer, permissions: ["dashboard.read"] } }} />);
+
+    expect(screen.queryByRole("link", { name: /เปิดแผนปรับปรุง/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /จัดการประเด็นและแผนงาน/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "จากหลักฐานไปสู่การปรับปรุง" })).toBeInTheDocument();
+  });
+
+  it("accepts the system-wide permission for export and improvement navigation", () => {
+    render(<AttractionAnalyticsWorkspace data={{ ...data, viewer: { ...data.viewer, permissions: ["system.all"] } }} />);
+
+    expect(screen.getByRole("button", { name: "ส่งออกสรุป" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /เปิดแผนปรับปรุง/ })).toBeInTheDocument();
+  });
+
   it("carries the selected evidence population into both improvement links", () => {
     render(<AttractionAnalyticsWorkspace data={{ ...data, filters: {
       ...data.filters, evidenceScope: "pilot_only", entryChannel: "nfc", campaignId: 7, checkinCodeId: 10,
