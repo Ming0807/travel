@@ -91,4 +91,76 @@ describe("research activation control", () => {
     expect(decision).toBeRequired();
     expect(decision).toHaveValue("");
   });
+
+  it("previews the study versions and published instrument before freeze without extra inputs", () => {
+    const studyDetail = detail("passed");
+    studyDetail.study.status = "draft";
+    studyDetail.instruments = [{
+      researchInstrumentId: "instrument-1",
+      studyId: "pilot-1",
+      instrumentKey: "tourist_evaluation",
+      versionNumber: 3,
+      audience: "tourist",
+      status: "published",
+      titleTh: "แบบประเมินนักท่องเที่ยว",
+      titleEn: null,
+      descriptionTh: null,
+      descriptionEn: null,
+      estimatedMinutes: 4,
+      publishedAt: "2026-09-01T00:00:00.000Z",
+      frozenAt: "2026-09-01T00:00:00.000Z",
+      createdAt: "2026-09-01T00:00:00.000Z",
+    }];
+    studyDetail.items = [{
+      researchItemId: "item-1",
+      instrumentId: "instrument-1",
+      itemCode: "SQ1",
+      constructKey: "system_quality",
+      promptTh: "ใช้ง่าย",
+      promptEn: null,
+      answerType: "agreement_5",
+      options: null,
+      displayOrder: 1,
+      isRequired: true,
+      reverseScore: false,
+    }];
+
+    render(<ResearchActivationControlCenter detail={studyDetail} canManage canFreeze />);
+
+    expect(screen.getByText("Manifest ที่ระบบจะบันทึก")).toBeInTheDocument();
+    expect(screen.getByText("tourist_evaluation · นักท่องเที่ยว")).toBeInTheDocument();
+    expect(screen.getByText("v3 · 1 ข้อ")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Protocol" })).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /manifest นี้ตรวจแล้ว/ })).toBeRequired();
+  });
+
+  it("shows the persisted manifest and all recorded revision fields after freeze", () => {
+    const studyDetail = detail("passed");
+    studyDetail.freezeSnapshot = {
+      snapshotId: "freeze-1",
+      studyId: "pilot-1",
+      protocolVersion: "protocol-locked",
+      consentVersion: "consent-locked",
+      noticeVersion: "notice-locked",
+      instrumentManifest: [{ instrumentKey: "tourist_evaluation", versionNumber: 2, audience: "tourist", itemCodes: ["SQ1", "SQ2"] }],
+      taskManifest: [{ taskCode: "segment_choice", versionNumber: 1, audience: "operator" }],
+      scoringVersion: "score-1",
+      retentionVersion: "retention-1",
+      withdrawalVersion: "withdrawal-1",
+      languageVersion: "language-1",
+      inclusionVersion: "inclusion-1",
+      applicationRevision: "app-abc123",
+      databaseRevision: "db-20260901",
+      frozenAt: "2026-09-01T00:00:00.000Z",
+    };
+
+    render(<ResearchActivationControlCenter detail={studyDetail} canManage canFreeze={false} />);
+
+    expect(screen.getByText("Manifest ที่บันทึกใน Freeze")).toBeInTheDocument();
+    expect(screen.getByText("vprotocol-locked")).toBeInTheDocument();
+    expect(screen.getByText("v2 · 2 ข้อ")).toBeInTheDocument();
+    expect(screen.getByText("segment_choice · ผู้ประกอบการ")).toBeInTheDocument();
+    expect(screen.getByText("retention-1")).toBeInTheDocument();
+    expect(screen.getByText("withdrawal-1")).toBeInTheDocument();
+  });
 });

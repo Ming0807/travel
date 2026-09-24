@@ -1,7 +1,21 @@
 import "server-only";
 
+import { z } from "zod";
+
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
+
+const freezeInstrumentManifestSchema = z.array(z.object({
+  instrumentKey: z.string(),
+  versionNumber: z.number().int().positive(),
+  audience: z.enum(["tourist", "operator", "attraction_manager"]),
+  itemCodes: z.array(z.string()),
+}));
+const freezeTaskManifestSchema = z.array(z.object({
+  taskCode: z.string(),
+  versionNumber: z.number().int().positive(),
+  audience: z.enum(["operator", "attraction_manager"]),
+}));
 
 export type ResearchStudyStatus = "draft" | "active" | "paused" | "closed" | "archived";
 export type ResearchStudyKind = "pilot" | "final_collection";
@@ -63,6 +77,11 @@ export type AdminResearchActivationEvidence = {
 export type AdminResearchFreezeSnapshot = {
   snapshotId: string;
   studyId: string;
+  protocolVersion: string;
+  consentVersion: string;
+  noticeVersion: string;
+  instrumentManifest: z.infer<typeof freezeInstrumentManifestSchema>;
+  taskManifest: z.infer<typeof freezeTaskManifestSchema>;
   scoringVersion: string;
   retentionVersion: string;
   withdrawalVersion: string;
@@ -349,9 +368,17 @@ function mapActivationEvidence(raw: unknown): AdminResearchActivationEvidence {
 
 function mapFreezeSnapshot(raw: unknown): AdminResearchFreezeSnapshot {
   const row = asRecord(raw);
+  const instruments = freezeInstrumentManifestSchema.safeParse(row.instrument_manifest);
+  const tasks = freezeTaskManifestSchema.safeParse(row.task_manifest);
+  if (!instruments.success || !tasks.success) throw new Error("ADMIN_RESEARCH_FREEZE_MANIFEST_INVALID");
   return {
     snapshotId: stringValue(row.research_freeze_snapshot_id),
     studyId: stringValue(row.study_id),
+    protocolVersion: stringValue(row.protocol_version),
+    consentVersion: stringValue(row.consent_version),
+    noticeVersion: stringValue(row.notice_version),
+    instrumentManifest: instruments.data,
+    taskManifest: tasks.data,
     scoringVersion: stringValue(row.scoring_version),
     retentionVersion: stringValue(row.retention_version),
     withdrawalVersion: stringValue(row.withdrawal_version),

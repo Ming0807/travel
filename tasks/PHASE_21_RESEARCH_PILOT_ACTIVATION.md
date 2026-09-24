@@ -61,6 +61,21 @@ Move the implemented Phase 18 research foundation into a controlled Yala pilot w
 Detailed tasks 21.9a-e and release criteria are in
 `docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md`.
 
+#### 2026-09-24: Freeze Manifest Review (21.9c, Partial)
+
+- The activation panel now previews the existing protocol, consent, notice,
+  published instrument/item and operator-task versions that the service will
+  record automatically. Staff enter only the separate policy and runtime
+  revision fields, then explicitly confirm the immutable freeze.
+- After freeze, the panel reads the stored manifest and all recorded versions
+  from the snapshot. Invalid persisted manifest shapes fail closed instead of
+  appearing as an empty approved list.
+- Eight focused UI/repository tests, scoped ESLint and full-project TypeScript
+  passed; the production build completed with 66 generated static pages. The
+  production read found no existing freeze snapshots to check against legacy
+  data. Authenticated staff acceptance and an actual approved freeze remain
+  outstanding; this UI change does not supply research evidence.
+
 #### 2026-09-24: Pilot Decision and Permission Parity
 
 - Pilot evidence statuses display Thai labels while preserving stored enum values.

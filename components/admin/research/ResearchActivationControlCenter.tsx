@@ -7,6 +7,7 @@ import {
 } from "@/app/actions/admin-research-actions";
 import type { AdminResearchStudyDetail } from "@/lib/repositories/admin-research.repository";
 import { ResearchEvidenceVersionFields } from "@/components/admin/research/ResearchEvidenceVersionFields";
+import { ResearchFreezeManifest } from "@/components/admin/research/ResearchFreezeManifest";
 
 const EVIDENCE_LABELS = {
   expert_review: "ผู้เชี่ยวชาญตรวจเครื่องมือ",
@@ -103,7 +104,17 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
             <span className={`flex size-10 shrink-0 items-center justify-center ${detail.freezeSnapshot ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-600"}`}><LockKey aria-hidden="true" /></span>
             <div><h3 className="font-black">Version freeze snapshot</h3><p className="mt-1 text-sm text-slate-600">ล็อก manifest เครื่องมือและเวอร์ชันระบบที่ใช้จริง</p></div>
           </div>
-          {detail.freezeSnapshot ? <dl className="mt-4 grid gap-2 text-xs sm:grid-cols-2"><div><dt className="text-slate-500">Application</dt><dd className="font-mono font-bold">{detail.freezeSnapshot.applicationRevision}</dd></div><div><dt className="text-slate-500">Database</dt><dd className="font-mono font-bold">{detail.freezeSnapshot.databaseRevision}</dd></div><div><dt className="text-slate-500">Scoring</dt><dd className="font-bold">{detail.freezeSnapshot.scoringVersion}</dd></div><div><dt className="text-slate-500">Frozen</dt><dd className="font-bold">{new Date(detail.freezeSnapshot.frozenAt).toLocaleString("th-TH")}</dd></div></dl> : null}
+          <ResearchFreezeManifest detail={detail} />
+          {detail.freezeSnapshot ? <dl className="mt-4 grid gap-2 text-xs sm:grid-cols-2">{([
+            ["Scoring", detail.freezeSnapshot.scoringVersion],
+            ["Retention", detail.freezeSnapshot.retentionVersion],
+            ["Withdrawal", detail.freezeSnapshot.withdrawalVersion],
+            ["Language", detail.freezeSnapshot.languageVersion],
+            ["Inclusion", detail.freezeSnapshot.inclusionVersion],
+            ["Application", detail.freezeSnapshot.applicationRevision],
+            ["Database", detail.freezeSnapshot.databaseRevision],
+            ["Frozen", new Date(detail.freezeSnapshot.frozenAt).toLocaleString("th-TH")],
+          ] as const).map(([label, value]) => <div key={label}><dt className="text-slate-500">{label}</dt><dd className="break-all font-mono font-bold">{value}</dd></div>)}</dl> : null}
         </div>
         <div className="bg-white p-5">
           <h3 className="font-black">ผลตัดสินจาก Pilot</h3>
@@ -120,6 +131,7 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
           <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2 px-5 font-black"><LockKey aria-hidden="true" /> สร้าง Version freeze snapshot</summary>
           <form action={freezeResearchStudyAction} className="grid gap-4 border-t border-[var(--admin-border)] bg-slate-50 p-5 sm:grid-cols-2 xl:grid-cols-4">
             <input type="hidden" name="studyId" value={detail.study.researchStudyId} />
+            <p className="text-sm leading-6 text-slate-700 sm:col-span-2 xl:col-span-4">Protocol, consent, notice และรุ่นเครื่องมือด้านบนระบบบันทึกให้แล้ว ช่องต่อไปนี้ต้องตรวจจากเอกสารนโยบายและระบบที่ใช้งานจริง</p>
             {[["scoringVersion", "Scoring version"], ["retentionVersion", "Retention version"], ["withdrawalVersion", "Withdrawal version"], ["languageVersion", "Language version"], ["inclusionVersion", "Inclusion version"], ["applicationRevision", "Application revision/commit"], ["databaseRevision", "Database migration revision"]].map(([name, label]) => <label key={name} className="text-sm font-bold">{label}<input name={name} required maxLength={100} className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>)}
             <label className="flex min-h-11 items-center gap-2 border border-amber-300 bg-amber-50 px-3 text-sm font-bold xl:col-span-4"><input type="checkbox" name="confirmImmutable" value="true" required /> ยืนยันว่า manifest นี้ตรวจแล้วและแก้ไขย้อนหลังไม่ได้</label>
             <button type="submit" className="min-h-11 bg-[#202020] px-4 font-black text-white hover:bg-[#B94727] xl:col-span-4">บันทึก Freeze snapshot</button>
