@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 import type { ResearchAnalyticsViewModel } from "@/lib/services/admin-research.service";
+import { disclosableResearchCount, researchCountLabel, researchRateLabel } from "@/lib/research/disclosure";
 
 const INSTRUMENT_STATUS = {
   aligned: { label: "รุ่นเครื่องมือตรงกับ Freeze", tone: "border-emerald-300 bg-emerald-50 text-emerald-950", icon: CheckCircle },
@@ -55,11 +56,21 @@ function ComparisonTable({
   title,
   groups,
   labels,
+  baseVisible,
+  baseCount,
+  threshold,
 }: {
   title: string;
   groups: ResearchAnalyticsViewModel["comparisons"]["collectionModes"];
   labels: Record<string, string>;
+  baseVisible: boolean;
+  baseCount: number;
+  threshold: number;
 }) {
+  const completePopulation = groups.reduce((sum, group) => sum + (group.sampleSize ?? 0), 0) === baseCount;
+  if (!baseVisible || !completePopulation || groups.some((group) => group.suppressed)) {
+    return <div className="min-w-0"><h3 className="text-sm font-black text-slate-900">{title}</h3><p className="mt-3 border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">ปกปิด n&lt;10: ไม่แสดงตารางนี้เพื่อป้องกันการอนุมานขนาดกลุ่มเล็กจากยอดรวม</p></div>;
+  }
   return (
     <div className="min-w-0">
       <h3 className="text-sm font-black text-slate-900">{title}</h3>
@@ -74,7 +85,7 @@ function ComparisonTable({
                 <tr key={group.key}>
                   <th scope="row" className="px-3 py-3 font-bold text-slate-900">{labels[group.key] ?? group.key}</th>
                   {group.suppressed ? <td colSpan={3} className="px-3 py-3 font-bold text-slate-500"><span className="inline-flex items-center gap-1.5"><Prohibit aria-hidden="true" /> ปกปิด n&lt;10</span></td> : (
-                    <><td className="px-3 py-3">n={group.sampleSize}</td><td className="px-3 py-3 font-bold">{group.completionRate === null ? "ไม่มีข้อมูล" : `${group.completionRate}%`}</td><td className="px-3 py-3">{durationLabel(group.medianSeconds)}</td></>
+                    <><td className="px-3 py-3">n={group.sampleSize}</td><td className="px-3 py-3 font-bold">{group.completedCount === null ? "ปกปิด" : researchRateLabel(group.completedCount, group.sampleSize ?? 0, threshold)}</td><td className="px-3 py-3">{group.completedCount === null || disclosableResearchCount(group.completedCount, group.sampleSize ?? 0, threshold) === null || disclosableResearchCount(group.durationSampleSize ?? 0, group.completedCount, threshold) === null ? "ปกปิด" : durationLabel(group.medianSeconds)}</td></>
                   )}
                 </tr>
               ))}
@@ -90,14 +101,29 @@ export function ResearchPilotMonitoring({ analytics }: { analytics: ResearchAnal
   const instrument = INSTRUMENT_STATUS[analytics.instrumentControl.status];
   const InstrumentIcon = instrument.icon;
   const readinessReady = analytics.pilotReadiness.decision === "ready_for_review";
+  const threshold = analytics.scope.smallCellThreshold;
+  const eligible = analytics.researchSequence.eligible;
+  const started = analytics.evaluationFlow.started;
+  const submitted = analytics.evaluationFlow.submitted;
+  const eligibleVisible = disclosableResearchCount(eligible, analytics.researchSequence.consented, threshold) !== null;
+  const startedVisible = eligibleVisible && disclosableResearchCount(started, eligible, threshold) !== null;
+  const submittedVisible = startedVisible && disclosableResearchCount(submitted, started, threshold) !== null;
   const sequence = [
-    { key: "recruitment", label: "รับเชิญ", value: analytics.researchSequence.recruitment.available ? analytics.researchSequence.recruitment.count?.toLocaleString("th-TH") : "ยังวัดไม่ได้", note: "ก่อน consent" },
-    { key: "consented", label: "ยินยอม", value: analytics.researchSequence.consented.toLocaleString("th-TH"), note: "sessions ที่สร้างแล้ว" },
-    { key: "eligible", label: "เข้าเกณฑ์", value: analytics.researchSequence.eligible.toLocaleString("th-TH"), note: "ไม่ถอน/ไม่คัดออก" },
-    { key: "started", label: "เริ่มประเมิน", value: analytics.researchSequence.evaluationStarted.toLocaleString("th-TH"), note: "มี response" },
-    { key: "submitted", label: "ส่งสำเร็จ", value: analytics.researchSequence.evaluationSubmitted.toLocaleString("th-TH"), note: "แบบประเมินระบบ" },
-    { key: "operator", label: "ทำโจทย์ตัดสินใจ", value: analytics.researchSequence.operatorAttemptsCompleted.toLocaleString("th-TH"), note: "attempts ที่เสร็จ" },
+    { key: "recruitment", label: "รับเชิญ", value: analytics.researchSequence.recruitment.available ? researchCountLabel(analytics.researchSequence.recruitment.count ?? 0, analytics.researchSequence.recruitment.count ?? 0, threshold) : "ยังวัดไม่ได้", note: "ก่อน consent" },
+    { key: "consented", label: "ยินยอม", value: researchCountLabel(analytics.researchSequence.consented, analytics.researchSequence.consented, threshold), note: "sessions ที่สร้างแล้ว" },
+    { key: "eligible", label: "เข้าเกณฑ์", value: researchCountLabel(eligible, analytics.researchSequence.consented, threshold), note: "ไม่ถอน/ไม่คัดออก" },
+    { key: "started", label: "เริ่มประเมิน", value: eligibleVisible ? researchCountLabel(started, eligible, threshold) : "ปกปิด", note: "มี response" },
+    { key: "submitted", label: "ส่งสำเร็จ", value: startedVisible ? researchCountLabel(submitted, started, threshold) : "ปกปิด", note: "แบบประเมินระบบ" },
+    { key: "operator", label: "ทำโจทย์ตัดสินใจ", value: !eligibleVisible ? "ปกปิด" : researchCountLabel(analytics.researchSequence.operatorAttemptsCompleted, analytics.researchSequence.operatorAttemptsCompleted, threshold), note: "attempts ที่เสร็จ" },
   ];
+  const evidenceLabel = (item: ResearchAnalyticsViewModel["pilotReadiness"]["items"][number]) => {
+    if (item.key === "sample_size") return researchCountLabel(eligible, analytics.researchSequence.consented, threshold);
+    if (item.key === "evaluation_completion") return startedVisible ? researchRateLabel(submitted, started, threshold) : "ปกปิด";
+    if (item.key === "evaluation_burden") return !submittedVisible || disclosableResearchCount(analytics.evaluationFlow.durationSampleSize, submitted, threshold) === null ? "ปกปิด" : `${durationLabel(analytics.evaluationFlow.medianSeconds)} · n=${researchCountLabel(analytics.evaluationFlow.durationSampleSize, submitted, threshold)}`;
+    if (item.key === "required_item_missingness") return item.ready ? "อยู่ในเกณฑ์ที่กำหนด" : "ตรวจรายละเอียดข้อคำถามก่อนตัดสิน";
+    if (item.key === "operator_outcomes") return !eligibleVisible ? "ปกปิด" : researchCountLabel(analytics.operator.assessedAttempts, analytics.operator.assessedAttempts, threshold);
+    return item.evidenceLabel;
+  };
 
   return (
     <section className="space-y-6" aria-label="การติดตาม Pilot">
@@ -140,7 +166,7 @@ export function ResearchPilotMonitoring({ analytics }: { analytics: ResearchAnal
             <ul className="divide-y divide-slate-200 border-t border-slate-200">
               {analytics.pilotReadiness.items.map((item) => (
                 <li key={item.key} className="p-4">
-                  <div className="flex items-start gap-2">{item.ready ? <CheckCircle className="mt-0.5 shrink-0 text-emerald-700" aria-hidden="true" weight="fill" /> : <Warning className="mt-0.5 shrink-0 text-amber-700" aria-hidden="true" weight="fill" />}<div><p className="text-sm font-bold">{item.label}</p><p className="mt-1 text-xs leading-5 text-slate-600">{item.evidenceLabel}</p><a href={item.evidenceHref} className="mt-2 inline-flex min-h-8 items-center gap-1 text-xs font-black text-[#A63D20] underline underline-offset-4">ตรวจหลักฐาน <ArrowSquareOut aria-hidden="true" /></a></div></div>
+                  <div className="flex items-start gap-2">{item.ready ? <CheckCircle className="mt-0.5 shrink-0 text-emerald-700" aria-hidden="true" weight="fill" /> : <Warning className="mt-0.5 shrink-0 text-amber-700" aria-hidden="true" weight="fill" />}<div><p className="text-sm font-bold">{item.label}</p><p className="mt-1 text-xs leading-5 text-slate-600">{evidenceLabel(item)}</p><a href={item.evidenceHref} className="mt-2 inline-flex min-h-8 items-center gap-1 text-xs font-black text-[#A63D20] underline underline-offset-4">ตรวจหลักฐาน <ArrowSquareOut aria-hidden="true" /></a></div></div>
                 </li>
               ))}
             </ul>
@@ -159,17 +185,17 @@ export function ResearchPilotMonitoring({ analytics }: { analytics: ResearchAnal
             <ol className="divide-y divide-slate-200 border-y border-slate-200">
               {analytics.evaluationFlow.stages.map((stage, index) => (
                 <li key={stage.key} className="py-3">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 text-sm"><span className="font-bold">{index + 1}. {stage.label}</span><span className="font-black">{stage.count.toLocaleString("th-TH")}</span><span className={`min-w-16 text-right text-xs font-bold ${stage.dropoffFromPrevious && stage.dropoffFromPrevious > 0 ? "text-rose-700" : "text-slate-500"}`}>{stage.suppressed ? "ปกปิด" : stage.dropoffFromPrevious === null ? "ฐานเริ่ม" : `${stage.dropoffFromPrevious}%`}</span></div>
-                  <div className="mt-2 h-2 overflow-hidden bg-slate-100" aria-hidden="true"><div className="h-full bg-[#C84B2A]" style={{ width: `${Math.max(0, Math.min(100, stage.rateFromStarted ?? 0))}%` }} /></div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 text-sm"><span className="font-bold">{index + 1}. {stage.label}</span><span className="font-black">{startedVisible ? researchCountLabel(stage.count, started, threshold) : "ปกปิด"}</span><span className={`min-w-16 text-right text-xs font-bold ${stage.dropoffFromPrevious && stage.dropoffFromPrevious > 0 ? "text-rose-700" : "text-slate-500"}`}>{index === 0 ? "ฐานเริ่ม" : startedVisible ? researchRateLabel(Math.max(0, analytics.evaluationFlow.stages[index - 1].count - stage.count), analytics.evaluationFlow.stages[index - 1].count, threshold) : "ปกปิด"}</span></div>
+                  {startedVisible && disclosableResearchCount(stage.count, started, threshold) !== null ? <div className="mt-2 h-2 overflow-hidden bg-slate-100" aria-hidden="true"><div className="h-full bg-[#C84B2A]" style={{ width: `${Math.max(0, Math.min(100, stage.rateFromStarted ?? 0))}%` }} /></div> : null}
                 </li>
               ))}
             </ol>
           </div>
           <div className="grid content-start gap-3">
             {([
-              ["ส่งสำเร็จ", analytics.evaluationFlow.gates.completion, analytics.evaluationFlow.completionRate === null ? "ไม่มีตัวหาร" : `${analytics.evaluationFlow.completionRate}% · เป้าหมาย ≥80%`],
-              ["เวลามัธยฐาน", analytics.evaluationFlow.gates.duration, `${durationLabel(analytics.evaluationFlow.medianSeconds)} · n=${analytics.evaluationFlow.durationSampleSize}`],
-              ["ข้อบังคับที่ขาดมากสุด", analytics.evaluationFlow.gates.requiredItemMissingness, analytics.evaluationFlow.worstRequiredItemMissingness === null ? "ยังไม่มีข้อมูล" : `${analytics.evaluationFlow.worstRequiredItemCode} · ${analytics.evaluationFlow.worstRequiredItemMissingness}% · เป้าหมาย ≤5%`],
+              ["ส่งสำเร็จ", analytics.evaluationFlow.gates.completion, `${startedVisible ? researchRateLabel(submitted, started, threshold) : "ปกปิด"} · เป้าหมาย ≥80%`],
+              ["เวลามัธยฐาน", analytics.evaluationFlow.gates.duration, !submittedVisible || disclosableResearchCount(analytics.evaluationFlow.durationSampleSize, submitted, threshold) === null ? "ปกปิด" : `${durationLabel(analytics.evaluationFlow.medianSeconds)} · n=${researchCountLabel(analytics.evaluationFlow.durationSampleSize, submitted, threshold)}`],
+              ["ข้อบังคับที่ขาดมากสุด", analytics.evaluationFlow.gates.requiredItemMissingness, analytics.evaluationFlow.worstRequiredItemMissingness === null ? "ยังไม่มีข้อมูล" : "ตรวจเกณฑ์ความครบถ้วนก่อนตัดสิน"],
             ] as const).map(([label, gate, value]) => <div key={label} className={`border p-4 ${gateTone(gate)}`}><p className="text-xs font-bold">{label}</p><p className="mt-1 text-lg font-black">{GATE_LABELS[gate]}</p><p className="mt-1 text-xs leading-5">{value}</p></div>)}
           </div>
         </div>
@@ -178,8 +204,8 @@ export function ResearchPilotMonitoring({ analytics }: { analytics: ResearchAnal
       <section className="border border-[var(--admin-border)] bg-white p-5" aria-labelledby="descriptive-comparison-heading">
         <div className="flex items-start gap-3"><UsersThree aria-hidden="true" size={22} className="mt-0.5 shrink-0 text-[#B94727]" /><div><h2 id="descriptive-comparison-heading" className="text-lg font-black">เปรียบเทียบกลุ่มแบบไม่สรุปเหตุและผล</h2><p className="mt-1 text-sm leading-6 text-slate-600">{analytics.comparisons.interpretation}</p></div></div>
         <div className="mt-5 grid gap-6 xl:grid-cols-2">
-          <ComparisonTable title="ตาม Collection mode" groups={analytics.comparisons.collectionModes} labels={MODE_LABELS} />
-          <ComparisonTable title="ตามประเภทผู้เข้าร่วม" groups={analytics.comparisons.participantTypes} labels={PARTICIPANT_LABELS} />
+          <ComparisonTable title="ตาม Collection mode" groups={analytics.comparisons.collectionModes} labels={MODE_LABELS} baseVisible={eligibleVisible} baseCount={eligible} threshold={threshold} />
+          <ComparisonTable title="ตามประเภทผู้เข้าร่วม" groups={analytics.comparisons.participantTypes} labels={PARTICIPANT_LABELS} baseVisible={eligibleVisible} baseCount={eligible} threshold={threshold} />
         </div>
       </section>
     </section>

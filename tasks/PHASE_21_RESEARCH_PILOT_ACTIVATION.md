@@ -61,6 +61,21 @@ Move the implemented Phase 18 research foundation into a controlled Yala pilot w
 Detailed tasks 21.9a-e and release criteria are in
 `docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md`.
 
+#### 2026-09-25: Research Dashboard Small-Cell Disclosure (21.9d, Partial)
+
+- Research summary and Pilot monitoring now hide small and complementary
+  cells across counts, rates, durations, group comparisons, and funnels. A
+  hidden parent denominator also hides dependent values. Recharts receives
+  only disclosed data from the server component.
+- The internal analytics service retains raw counts for Pilot readiness, while
+  the admin dashboard presents only disclosed values. Focused metric/UI tests
+  cover 2-of-12, 10-of-12, incomplete group breakdowns, and small completed
+  cells within an otherwise large group.
+- Thirteen focused metric/UI tests, scoped ESLint, full-project TypeScript, and
+  the Node 22 production build (66 generated static pages) passed. This does
+  not replace institutional privacy review, real Pilot evidence, or
+  current-build authenticated mobile acceptance.
+
 #### 2026-09-24: Tourist Research Return Paths (21.9e, Partial)
 
 - An expired or unavailable research invitation now returns the tourist to the

@@ -1,10 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ResearchPilotMonitoring } from "@/components/admin/research/ResearchPilotMonitoring";
 import type { ResearchAnalyticsViewModel } from "@/lib/services/admin-research.service";
 
 const analytics = {
+  scope: { smallCellThreshold: 10 },
   instrumentControl: {
     freezeStatus: "frozen",
     freezeSnapshotId: "freeze-1",
@@ -49,6 +50,7 @@ const analytics = {
       { key: "information_quality", label: "คุณภาพข้อมูล", count: 10, rateFromStarted: 83.3, dropoffFromPrevious: 16.7, suppressed: false },
     ],
   },
+  operator: { assessedAttempts: 0 },
   comparisons: {
     collectionModes: [{ key: "pilot_internal", suppressed: true, sampleSize: null, completionRate: null, medianSeconds: null, durationSampleSize: null }],
     participantTypes: [{ key: "tourist", suppressed: false, sampleSize: 10, completionRate: 100, medianSeconds: 210, durationSampleSize: 10 }],
@@ -63,8 +65,29 @@ describe("research pilot monitoring UI", () => {
     expect(screen.getByRole("region", { name: "การติดตาม Pilot" })).toBeInTheDocument();
     expect(screen.getByText("เครื่องมือปะปนหลายรุ่น")).toBeInTheDocument();
     expect(screen.getByText("ยังวัดไม่ได้")).toBeInTheDocument();
-    expect(screen.getByText("16.7%")).toBeInTheDocument();
-    expect(screen.getByText("ปกปิด n<10")).toBeInTheDocument();
+    expect(screen.queryByText("16.7%")).not.toBeInTheDocument();
+    expect(screen.queryByText(/3.5 นาที/)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/ปกปิด n<10/).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /ตรวจหลักฐาน/ })).toHaveAttribute("href", "#research-instrument-control");
+  });
+
+  it("masks completion and duration when a group has a small completed cell", () => {
+    const groupAnalytics = {
+      ...analytics,
+      researchSequence: { ...analytics.researchSequence, consented: 30, eligible: 30, evaluationStarted: 30, evaluationSubmitted: 2 },
+      evaluationFlow: { ...analytics.evaluationFlow, started: 30, submitted: 2, durationSampleSize: 2 },
+      comparisons: {
+        ...analytics.comparisons,
+        collectionModes: [{ key: "pilot_internal", suppressed: false, sampleSize: 30, completedCount: 2, completionRate: 6.7, medianSeconds: 210, durationSampleSize: 2 }],
+        participantTypes: [],
+      },
+    } as ResearchAnalyticsViewModel;
+    render(<ResearchPilotMonitoring analytics={groupAnalytics} />);
+
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("n=30")).toBeInTheDocument();
+    expect(within(table).getAllByText("ปกปิด")).toHaveLength(2);
+    expect(within(table).queryByText("6.7%")).not.toBeInTheDocument();
+    expect(within(table).queryByText("3.5 นาที")).not.toBeInTheDocument();
   });
 });

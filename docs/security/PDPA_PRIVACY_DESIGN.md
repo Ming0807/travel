@@ -1161,5 +1161,10 @@ Phase 18 follows data minimization and purpose separation:
 - Research microdata export is rejected when the study is not frozen and approved, when the result is truncated, when fewer than 10 eligible sessions exist, or when any released participant/mode/instrument/item/event/attraction/task subgroup has fewer than 10 distinct sessions.
 - Exports replace internal IDs with study participant codes and exclude display names, identity providers, photos, storage paths, signed URLs, IP/user-agent hashes, rationale, and reviewer coded notes.
 - Dashboard cells below `n = 10` show “ปกปิด”; missing values remain missing, never zero.
+- Research dashboard counts and rates also use complementary suppression: a
+  visible total must not reveal a positive subgroup below 10 by subtraction.
+  Hidden parent bases hide dependent values and charts; incomplete group
+  breakdowns are withheld instead of exposing a residual. Only disclosed chart
+  values cross the Research server-to-client component boundary.
 - Analytics are descriptive/associational. The system must not label the pilot as causal evidence or province-wide population estimates.
 - AI/LLM processing of raw participant or visitor feedback is outside Phase 18.

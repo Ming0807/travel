@@ -2405,6 +2405,17 @@ reduce counts, and completion does not equal satisfaction.
 
 All metrics require an explicit `research_study`, date range, participant type, and collection mode. Default collection mode is `field_observation`. Unit is `research_session` unless stated otherwise.
 
+Research dashboard disclosure uses a minimum cell of 10 for the displayed
+numerator and denominator. It also hides a displayed numerator when subtracting
+it from a visible denominator would reveal a positive remainder below 10.
+Dependent counts, rates, medians, and chart marks remain hidden whenever their
+parent denominator is hidden. A group comparison is withheld as a whole when
+any constituent group is suppressed or the displayed groups do not cover the
+eligible base. Zero with an adequate base is distinct from no data; a base of
+zero is labelled unavailable. Research charts receive only disclosed values
+across the server-to-client boundary. Internal raw aggregates remain available
+for controlled Pilot gates and are not themselves public research findings.
+
 | Metric | Definition | Source | Privacy/interpretation |
 |---|---|---|---|
 | Consented sessions | Count of research sessions in scope | `research_sessions` | Not unique tourists |

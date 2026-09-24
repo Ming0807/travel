@@ -105,6 +105,8 @@ describe("research pilot monitoring", () => {
     expect(summary.evaluationFlow.submitted).toBe(10);
     expect(summary.evaluationFlow.completionRate).toBe(83.3);
     expect(summary.evaluationFlow.medianSeconds).toBe(210);
+    expect(summary.kpis.requiredAnswersExpected).toBe(30);
+    expect(summary.kpis.requiredAnswersPresent).toBe(30);
     expect(summary.evaluationFlow.thresholds).toEqual({
       completionRatePercent: 80,
       medianSeconds: 240,
@@ -130,6 +132,7 @@ describe("research pilot monitoring", () => {
     expect(summary.comparisons.participantTypes.find((group) => group.key === "tourist")).toMatchObject({
       suppressed: false,
       sampleSize: 10,
+      completedCount: 10,
       completionRate: 100,
     });
     expect(summary.comparisons.participantTypes.find((group) => group.key === "operator")).toMatchObject({
