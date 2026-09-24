@@ -6,18 +6,12 @@ import { acceptResearchInvitationAction } from "@/app/actions/research-actions";
 import { getOptionalResearchInvitation } from "@/lib/services/research.service";
 import { ResearchConsentSubmit } from "@/components/research/ResearchConsentSubmit";
 import { researchBrowserProvisioningEnabled } from "@/lib/config/research-browser";
+import { safeResearchReturnPath } from "@/lib/research/return-path";
 
 const errors: Record<string, string> = {
   consent_required: "กรุณาทำเครื่องหมายยืนยันหลังจากอ่านรายละเอียดแล้ว",
   unavailable: "ยังบันทึกการเข้าร่วมไม่ได้ กรุณาลองใหม่ หรือเลือกไม่เข้าร่วมเพื่อดำเนินการต่อ",
 };
-
-function safeReturnPath(value: string | string[] | undefined, fallback: string) {
-  const candidate = Array.isArray(value) ? value[0] : value;
-  return candidate?.startsWith("/") && !candidate.startsWith("//") && !candidate.includes("\\")
-    ? candidate
-    : fallback;
-}
 
 export default async function ResearchInvitationPage({
   params,
@@ -29,6 +23,7 @@ export default async function ResearchInvitationPage({
   const [{ studyCode }, query] = await Promise.all([params, searchParams]);
   const checkinCode = Array.isArray(query.checkinCode) ? query.checkinCode[0] : query.checkinCode;
   if (!checkinCode) notFound();
+  const returnTo = safeResearchReturnPath(query.returnTo, checkinCode);
 
   let invitation;
   try {
@@ -36,9 +31,18 @@ export default async function ResearchInvitationPage({
   } catch {
     invitation = null;
   }
-  if (!invitation) notFound();
+  if (!invitation) return (
+    <main className="min-h-screen bg-slate-50 px-4 py-12 text-ink">
+      <div className="mx-auto max-w-xl border border-slate-200 bg-white p-6 sm:p-8">
+        <h1 className="text-2xl font-black">ยังเข้าร่วมการวิจัยไม่ได้</h1>
+        <p className="mt-3 text-sm leading-7 text-slate-700">คำเชิญอาจสิ้นสุดแล้วหรือระบบวิจัยไม่พร้อมใช้งาน คุณยังเช็กอินและสร้างใบประกาศได้ตามปกติ</p>
+        <Link href={returnTo} className="mt-6 flex min-h-12 items-center justify-center bg-teal px-5 text-center font-bold text-white hover:bg-ink">
+          กลับไปสร้างใบประกาศ
+        </Link>
+      </div>
+    </main>
+  );
 
-  const returnTo = safeReturnPath(query.returnTo, `/checkin/${checkinCode}/start`);
   const returnUrl = new URL(returnTo, "https://research.invalid");
   const prepareBrowser = researchBrowserProvisioningEnabled() && returnUrl.searchParams.has("flow");
   const errorCode = Array.isArray(query.error) ? query.error[0] : query.error;

@@ -61,6 +61,21 @@ Move the implemented Phase 18 research foundation into a controlled Yala pilot w
 Detailed tasks 21.9a-e and release criteria are in
 `docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md`.
 
+#### 2026-09-24: Tourist Research Return Paths (21.9e, Partial)
+
+- An expired or unavailable research invitation now returns the tourist to the
+  original check-in entry instead of showing a 404. Declining remains a link
+  back to the normal certificate flow, without writing a research response.
+- The invitation and acceptance action accept only the same check-in route and
+  an optional valid entry-flow ID as `returnTo`. Other local routes and extra
+  query parameters fall back to the same check-in entry.
+- Withdrawal keeps the validated visit ID through the success redirect, so
+  withdrawal and cancellation can return to that visit's certificate. The
+  certificate page still enforces tourist visit ownership.
+- Seventeen focused tests, scoped ESLint, and full-project TypeScript passed.
+  Authenticated real-device accept/decline/retry/withdraw acceptance remains
+  required before marking 21.9e complete.
+
 #### 2026-09-24: Readiness Navigation and Scope Context (21.9a-b, Partial)
 
 - The first viewport now distinguishes a fully recorded advisor-approved scope

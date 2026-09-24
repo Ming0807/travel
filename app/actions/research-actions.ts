@@ -10,17 +10,12 @@ import {
   withdrawResearchSession,
 } from "@/lib/services/research.service";
 import { researchOperatorAttemptSchema, researchResponseInputSchema } from "@/lib/validation/research";
-
-function safeReturnPath(value: FormDataEntryValue | null, fallback: string) {
-  if (typeof value !== "string") return fallback;
-  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
-  return value;
-}
+import { safeResearchReturnPath } from "@/lib/research/return-path";
 
 export async function acceptResearchInvitationAction(formData: FormData) {
   const studyCode = String(formData.get("studyCode") ?? "");
   const checkinCode = String(formData.get("checkinCode") ?? "");
-  const returnTo = safeReturnPath(formData.get("returnTo"), `/checkin/${encodeURIComponent(checkinCode)}/start`);
+  const returnTo = safeResearchReturnPath(formData.get("returnTo"), checkinCode);
   const invitePath = `/research/${encodeURIComponent(studyCode)}/invite?checkinCode=${encodeURIComponent(checkinCode)}&returnTo=${encodeURIComponent(returnTo)}`;
 
   if (formData.get("hasConsented") !== "true") {
@@ -122,5 +117,5 @@ export async function withdrawResearchSessionAction(formData: FormData) {
   } catch {
     redirect(`/research/withdraw/current?${visitQuery}error=withdrawal_failed`);
   }
-  redirect("/research/withdraw/current?success=1");
+  redirect(`/research/withdraw/current?${visitQuery}success=1`);
 }

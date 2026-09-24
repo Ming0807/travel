@@ -18,6 +18,8 @@ export default async function ResearchWithdrawalPage({
   const rawVisit = Array.isArray(query.visitId) ? query.visitId[0] : query.visitId;
   const parsedVisit = z.uuid().safeParse(rawVisit);
   const visitId = parsedVisit.success ? parsedVisit.data : undefined;
+  const continueHref = visitId ? `/visit/${encodeURIComponent(visitId)}/certificate/success` : "/";
+  const continueLabel = visitId ? "กลับไปดูใบประกาศ" : "กลับหน้าหลัก";
   const active = success || (rawVisit !== undefined && !parsedVisit.success) ? false : await hasCurrentResearchParticipation(visitId);
 
   return (
@@ -29,7 +31,7 @@ export default async function ResearchWithdrawalPage({
         {success ? (
           <>
             <p className="mt-4 text-sm leading-7 text-slate-700">ระบบบันทึกการถอนตัวแล้ว คำตอบของคุณจะไม่ถูกรวมในการวิเคราะห์งานวิจัย</p>
-            <Link href="/" className="mt-6 flex min-h-12 items-center justify-center bg-teal px-5 font-black text-white">กลับหน้าหลัก</Link>
+            <Link href={continueHref} className="mt-6 flex min-h-12 items-center justify-center bg-teal px-5 font-black text-white">{continueLabel}</Link>
           </>
         ) : active ? (
           <>
@@ -45,13 +47,13 @@ export default async function ResearchWithdrawalPage({
                 <textarea name="reason" maxLength={500} rows={4} className="mt-2 w-full border border-slate-300 px-4 py-3 font-normal outline-none focus:border-teal" />
               </label>
               <button type="submit" className="min-h-12 w-full bg-rose-700 px-5 font-black text-white hover:bg-rose-800">ยืนยันถอนตัวจากการวิจัย</button>
-              <Link href="/" className="flex min-h-12 items-center justify-center border border-slate-300 font-bold text-slate-700">ยังไม่ถอนตัว</Link>
+              <Link href={continueHref} className="flex min-h-12 items-center justify-center border border-slate-300 font-bold text-slate-700">ยังไม่ถอนตัว · {continueLabel}</Link>
             </form>
           </>
         ) : (
           <>
             <p className="mt-4 text-sm leading-7 text-slate-700">ไม่พบการเข้าร่วมวิจัยที่ยังใช้งานอยู่ในอุปกรณ์นี้</p>
-            <Link href="/" className="mt-6 flex min-h-12 items-center justify-center bg-teal px-5 font-black text-white">กลับหน้าหลัก</Link>
+            <Link href={continueHref} className="mt-6 flex min-h-12 items-center justify-center bg-teal px-5 font-black text-white">{continueLabel}</Link>
           </>
         )}
       </div>
