@@ -11,10 +11,10 @@ const TARGETS: Record<string, { href: string; label: string }> = {
   deployment: { href: "#research-deployment", label: "ตรวจจุดเก็บข้อมูล" },
   stakeholder: { href: "#operator-task-heading", label: "ตรวจโจทย์ผู้มีส่วนได้ส่วนเสีย" },
   drafts: { href: "#instrument-heading", label: "ตรวจฉบับร่างที่ค้างอยู่" },
-  expert_review: { href: "#research-activation-control", label: "ตรวจหลักฐานผู้เชี่ยวชาญ" },
-  cognitive_pretest: { href: "#research-activation-control", label: "ตรวจหลักฐาน Pretest" },
-  mobile_qa: { href: "#research-activation-control", label: "ตรวจหลักฐานทดสอบมือถือ" },
-  freeze_snapshot: { href: "#research-activation-control", label: "ทบทวนก่อนล็อกรุ่น" },
+  expert_review: { href: "#research-evidence-form", label: "ตรวจหลักฐานผู้เชี่ยวชาญ" },
+  cognitive_pretest: { href: "#research-evidence-form", label: "ตรวจหลักฐาน Pretest" },
+  mobile_qa: { href: "#research-evidence-form", label: "ตรวจหลักฐานทดสอบมือถือ" },
+  freeze_snapshot: { href: "#research-freeze-form", label: "ทบทวนก่อนล็อกรุ่น" },
 };
 
 const STATUS_GUIDANCE: Record<ResearchStudyStatus, string> = {

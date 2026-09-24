@@ -21,6 +21,7 @@ import { ResearchAnalyticsWorkspace } from "@/components/admin/research/Research
 import { ResearchActivationControlCenter } from "@/components/admin/research/ResearchActivationControlCenter";
 import { ResearchReadinessSummary } from "@/components/admin/research/ResearchReadinessSummary";
 import { ResearchOperatorAssessmentQueue } from "@/components/admin/research/ResearchOperatorAssessmentQueue";
+import { ResearchStudyContext } from "@/components/admin/research/ResearchStudyContext";
 import { hasPermission, requirePermission } from "@/lib/auth/guards";
 import { getAdminResearchStudyWorkspace } from "@/lib/services/admin-research.service";
 import { adminResearchAnalyticsFiltersSchema, type AdminResearchAnalyticsFilters } from "@/lib/validation/admin-research";
@@ -110,11 +111,13 @@ export default async function AdminResearchStudyPage({ params, searchParams }: {
         <AdminPageHeader
           eyebrow={`Protocol ${detail.study.protocolVersion}`}
           title={detail.study.titleTh}
-          description={`รหัส ${detail.study.studyCode} · ${STATUS_LABELS[detail.study.status]} · ขอบเขต ${detail.study.scopeCode}`}
+          description={`${STATUS_LABELS[detail.study.status]} · ${detail.study.studyKind === "pilot" ? "Pilot ควบคุม" : "เก็บข้อมูลภาคสนาม"}`}
           actions={<Link href="/admin/research" className="inline-flex min-h-11 items-center gap-2 border border-slate-300 bg-white px-4 text-sm font-bold hover:bg-slate-50"><ArrowLeft aria-hidden="true" /> กลับศูนย์งานวิจัย</Link>}
         />
 
         {message ? <p role={message.tone === "error" ? "alert" : "status"} className={`border p-4 text-sm font-bold ${message.tone === "success" ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-rose-300 bg-rose-50 text-rose-900"}`}>{message.text}</p> : null}
+
+        <ResearchStudyContext study={detail.study} approvalReady={readiness.find((item) => item.key === "advisor")?.ready ?? false} />
 
         <ResearchReadinessSummary items={readiness} status={detail.study.status} canManage={canManage} canActivate={canActivate} sourcePilotStudyId={detail.study.sourcePilotStudyId} />
 

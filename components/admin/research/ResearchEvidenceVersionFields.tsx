@@ -6,11 +6,12 @@ import type { AdminResearchActivationEvidence } from "@/lib/repositories/admin-r
 
 type EvidenceType = AdminResearchActivationEvidence["evidenceType"];
 
-export function ResearchEvidenceVersionFields({ evidence, labels }: {
+export function ResearchEvidenceVersionFields({ evidence, labels, initialType = "expert_review" }: {
   evidence: ReadonlyArray<Pick<AdminResearchActivationEvidence, "evidenceType" | "versionNumber">>;
   labels: Record<EvidenceType, string>;
+  initialType?: EvidenceType;
 }) {
-  const [type, setType] = useState<EvidenceType>("expert_review");
+  const [type, setType] = useState<EvidenceType>(initialType);
   const [overrides, setOverrides] = useState<Partial<Record<EvidenceType, string>>>({});
   const nextVersion = evidence.reduce((latest, item) => item.evidenceType === type
     ? Math.max(latest, item.versionNumber) : latest, 0) + 1;

@@ -92,6 +92,43 @@ describe("research activation control", () => {
     expect(decision).toHaveValue("");
   });
 
+  it("opens the evidence form when a draft Pilot is missing required evidence", () => {
+    const studyDetail = detail("passed");
+    studyDetail.study.status = "draft";
+    const { container } = render(<ResearchActivationControlCenter detail={studyDetail} canManage canFreeze={false} />);
+
+    const form = container.querySelector("#research-evidence-form");
+    expect(form).not.toBeNull();
+    expect(form?.closest("details")).toHaveAttribute("open");
+  });
+
+  it("selects the first unresolved evidence type in the open draft form", () => {
+    const studyDetail = detail("passed");
+    studyDetail.study.status = "draft";
+    studyDetail.activationEvidence.push({
+      ...studyDetail.activationEvidence[0],
+      evidenceId: "evidence-2",
+      evidenceType: "cognitive_pretest",
+      status: "failed",
+      versionNumber: 2,
+    });
+
+    render(<ResearchActivationControlCenter detail={studyDetail} canManage canFreeze={false} />);
+
+    expect(screen.getByLabelText("ประเภทหลักฐาน")).toHaveValue("cognitive_pretest");
+    expect(screen.getByLabelText("รุ่นหลักฐาน")).toHaveValue(3);
+  });
+
+  it("opens the freeze form when a draft passes pre-freeze checks", () => {
+    const studyDetail = detail("passed");
+    studyDetail.study.status = "draft";
+    const { container } = render(<ResearchActivationControlCenter detail={studyDetail} canManage canFreeze />);
+
+    const form = container.querySelector("#research-freeze-form");
+    expect(form).not.toBeNull();
+    expect(form?.closest("details")).toHaveAttribute("open");
+  });
+
   it("previews the study versions and published instrument before freeze without extra inputs", () => {
     const studyDetail = detail("passed");
     studyDetail.study.status = "draft";

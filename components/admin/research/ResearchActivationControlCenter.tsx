@@ -40,6 +40,10 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
     }
   });
   const evidenceVersionKey = Object.keys(EVIDENCE_LABELS).map((type) => latestByType.get(type)?.versionNumber ?? 0).join(":");
+  const missingPilotEvidenceType = (Object.keys(EVIDENCE_LABELS) as Array<keyof typeof EVIDENCE_LABELS>).find((type) => {
+    const status = latestByType.get(type)?.status;
+    return status !== "passed" && status !== "not_required";
+  });
   const canReviewPilot = detail.study.studyKind === "pilot" && ["paused", "closed"].includes(detail.study.status);
 
   return (
@@ -80,11 +84,11 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
       </div> : <div className="flex items-start gap-3 bg-orange-50 p-5 text-sm text-orange-950"><ClipboardText className="mt-0.5 shrink-0" aria-hidden="true" /><div><p className="font-black">Final collection ใช้หลักฐานจาก Pilot ต้นทาง</p><p className="mt-1 leading-6">Expert review, cognitive pretest และ mobile QA ต้องอยู่ใน Pilot ที่เชื่อมไว้ ส่วนหน้านี้แสดงผลตัดสินล่าสุดและ Freeze ของ final protocol โดยไม่คัดลอกหลักฐานซ้ำ</p></div></div>}
 
       {canManage && detail.study.studyKind === "pilot" && detail.study.status === "draft" ? (
-        <details className="border-t border-[var(--admin-border)]">
+        <details open={Boolean(missingPilotEvidenceType)} className="border-t border-[var(--admin-border)]">
           <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2 px-5 font-black"><ClipboardText aria-hidden="true" /> บันทึกหลักฐาน Expert review / Pretest / Mobile QA</summary>
-          <form action={recordResearchActivationEvidenceAction} className="grid gap-4 border-t border-[var(--admin-border)] bg-slate-50 p-5 sm:grid-cols-2 xl:grid-cols-4">
+          <form id="research-evidence-form" action={recordResearchActivationEvidenceAction} className="grid scroll-mt-24 gap-4 border-t border-[var(--admin-border)] bg-slate-50 p-5 sm:grid-cols-2 xl:grid-cols-4">
             <input type="hidden" name="studyId" value={detail.study.researchStudyId} />
-            <ResearchEvidenceVersionFields key={`${detail.study.researchStudyId}:${detail.activationEvidence.length}:${evidenceVersionKey}`} labels={EVIDENCE_LABELS} evidence={detail.activationEvidence.map(({ evidenceType, versionNumber }) => ({ evidenceType, versionNumber }))} />
+            <ResearchEvidenceVersionFields key={`${detail.study.researchStudyId}:${detail.activationEvidence.length}:${evidenceVersionKey}`} labels={EVIDENCE_LABELS} initialType={missingPilotEvidenceType} evidence={detail.activationEvidence.map(({ evidenceType, versionNumber }) => ({ evidenceType, versionNumber }))} />
             <label className="text-sm font-bold">สถานะ<select name="status" defaultValue="" required className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="" disabled>เลือกผลการตรวจ</option><option value="passed">ผ่าน</option><option value="failed">ไม่ผ่าน</option><option value="not_required">ไม่จำเป็น (มีเหตุผลรองรับ)</option></select></label>
             <label className="text-sm font-bold">วันที่หลักฐาน<input type="date" name="evidenceDate" required className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
             <label className="text-sm font-bold xl:col-span-2">เลขอ้างอิง/ตำแหน่งไฟล์<input name="reference" required maxLength={500} className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
@@ -127,9 +131,9 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
       </div>
 
       {canManage && detail.study.status === "draft" && !detail.freezeSnapshot && canFreeze ? (
-        <details className="border-t border-[var(--admin-border)]">
+        <details open className="border-t border-[var(--admin-border)]">
           <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2 px-5 font-black"><LockKey aria-hidden="true" /> สร้าง Version freeze snapshot</summary>
-          <form action={freezeResearchStudyAction} className="grid gap-4 border-t border-[var(--admin-border)] bg-slate-50 p-5 sm:grid-cols-2 xl:grid-cols-4">
+          <form id="research-freeze-form" action={freezeResearchStudyAction} className="grid scroll-mt-24 gap-4 border-t border-[var(--admin-border)] bg-slate-50 p-5 sm:grid-cols-2 xl:grid-cols-4">
             <input type="hidden" name="studyId" value={detail.study.researchStudyId} />
             <p className="text-sm leading-6 text-slate-700 sm:col-span-2 xl:col-span-4">Protocol, consent, notice และรุ่นเครื่องมือด้านบนระบบบันทึกให้แล้ว ช่องต่อไปนี้ต้องตรวจจากเอกสารนโยบายและระบบที่ใช้งานจริง</p>
             {[["scoringVersion", "Scoring version"], ["retentionVersion", "Retention version"], ["withdrawalVersion", "Withdrawal version"], ["languageVersion", "Language version"], ["inclusionVersion", "Inclusion version"], ["applicationRevision", "Application revision/commit"], ["databaseRevision", "Database migration revision"]].map(([name, label]) => <label key={name} className="text-sm font-bold">{label}<input name={name} required maxLength={100} className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>)}

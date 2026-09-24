@@ -16,6 +16,14 @@ describe("research evidence version entry", () => {
     expect(screen.getByLabelText("รุ่นหลักฐาน")).toHaveValue(1);
   });
 
+  it("can suggest the first missing evidence type without locking the choice", () => {
+    render(<ResearchEvidenceVersionFields labels={labels} evidence={evidence} initialType="cognitive_pretest" />);
+    expect(screen.getByLabelText("ประเภทหลักฐาน")).toHaveValue("cognitive_pretest");
+    expect(screen.getByLabelText("รุ่นหลักฐาน")).toHaveValue(3);
+    fireEvent.change(screen.getByLabelText("ประเภทหลักฐาน"), { target: { value: "mobile_flow_qa" } });
+    expect(screen.getByLabelText("ประเภทหลักฐาน")).toHaveValue("mobile_flow_qa");
+  });
+
   it("proposes the next version per type, independent of ledger order", () => {
     render(<ResearchEvidenceVersionFields labels={labels} evidence={evidence} />);
     expect(screen.getByLabelText("รุ่นหลักฐาน")).toHaveValue(5);

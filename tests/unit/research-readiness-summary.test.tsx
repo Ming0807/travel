@@ -21,6 +21,15 @@ describe("research readiness navigation", () => {
     render(<ResearchReadinessSummary {...props} items={[{ ...pending, key: "pilot_decision" }]} sourcePilotStudyId="pilot-1" />);
     expect(screen.getByRole("link", { name: "ตรวจผล Pilot ต้นทาง" })).toHaveAttribute("href", "/admin/research/pilot-1#research-activation-control");
   });
+  it.each([
+    ["expert_review", "ตรวจหลักฐานผู้เชี่ยวชาญ", "#research-evidence-form"],
+    ["cognitive_pretest", "ตรวจหลักฐาน Pretest", "#research-evidence-form"],
+    ["mobile_qa", "ตรวจหลักฐานทดสอบมือถือ", "#research-evidence-form"],
+    ["freeze_snapshot", "ทบทวนก่อนล็อกรุ่น", "#research-freeze-form"],
+  ])("links the %s blocker to its actionable form", (key, label, href) => {
+    render(<ResearchReadinessSummary {...props} items={[{ ...pending, key }]} />);
+    expect(screen.getByRole("link", { name: label })).toHaveAttribute("href", href);
+  });
   it("only offers the existing activation controls when the server permits activation", () => {
     const { rerender } = render(<ResearchReadinessSummary {...props} items={[{ ...pending, ready: true }]} />);
     expect(screen.queryByRole("link")).not.toBeInTheDocument();

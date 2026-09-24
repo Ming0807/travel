@@ -61,6 +61,18 @@ Move the implemented Phase 18 research foundation into a controlled Yala pilot w
 Detailed tasks 21.9a-e and release criteria are in
 `docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md`.
 
+#### 2026-09-24: Readiness Navigation and Scope Context (21.9a-b, Partial)
+
+- The first viewport now distinguishes a fully recorded advisor-approved scope
+  from a partial draft, while keeping study/scope codes and approval reference
+  in expandable details. The status uses the server's advisor readiness result.
+- Missing expert review, pretest and mobile-QA actions link to the evidence form;
+  a ready-to-freeze action links to the freeze form. Draft forms open when they
+  are actionable, and evidence entry proposes the first unresolved type with
+  its next version while allowing staff to change it.
+- These are navigation and presentation changes only. They do not generate
+  approval evidence or complete authenticated staff/device acceptance.
+
 #### 2026-09-24: Freeze Manifest Review (21.9c, Partial)
 
 - The activation panel now previews the existing protocol, consent, notice,
