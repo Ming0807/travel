@@ -14,6 +14,12 @@ const EVIDENCE_LABELS = {
   mobile_flow_qa: "Mobile E2E และการถอนตัว",
 } as const;
 
+const EVIDENCE_STATUS_LABELS = {
+  passed: "ผ่าน",
+  failed: "ไม่ผ่าน",
+  not_required: "ไม่จำเป็นตามหลักฐานอนุมัติ",
+} as const;
+
 const DECISION_LABELS = {
   revise: "แก้เครื่องมือก่อน",
   repeat_pilot: "ทำ Pilot ซ้ำ",
@@ -61,7 +67,7 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
               </div>
               {evidence ? (
                 <dl className="mt-4 space-y-2 text-xs text-slate-600">
-                  <div className="flex justify-between gap-3"><dt>สถานะ</dt><dd className="font-bold text-slate-900">{evidence.status}</dd></div>
+                  <div className="flex justify-between gap-3"><dt>สถานะ</dt><dd className="font-bold text-slate-900">{EVIDENCE_STATUS_LABELS[evidence.status]}</dd></div>
                   <div className="flex justify-between gap-3"><dt>รุ่น</dt><dd className="font-bold text-slate-900">v{evidence.versionNumber}</dd></div>
                   <div className="flex justify-between gap-3"><dt>วันที่</dt><dd className="font-bold text-slate-900">{new Date(evidence.evidenceDate).toLocaleDateString("th-TH")}</dd></div>
                   <div className="flex justify-between gap-3"><dt>ผู้ทดสอบ</dt><dd className="font-bold text-slate-900">{metric(evidence.participantCount, " คน")}</dd></div>
@@ -131,7 +137,7 @@ export function ResearchActivationControlCenter({ detail, canManage, canFreeze }
           <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2 px-5 font-black"><Flask aria-hidden="true" /> สรุปผล Pilot และตัดสินใจก่อน Field collection</summary>
           <form action={recordResearchPilotReviewAction} className="grid gap-4 border-t border-[var(--admin-border)] bg-slate-50 p-5 sm:grid-cols-2 xl:grid-cols-4">
             <input type="hidden" name="studyId" value={detail.study.researchStudyId} />
-            <label className="text-sm font-bold">ผลตัดสิน<select name="decision" className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal">{Object.entries(DECISION_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+            <label className="text-sm font-bold">ผลตัดสิน<select name="decision" defaultValue="" required className="mt-2 min-h-11 w-full border border-slate-300 bg-white px-3 font-normal"><option value="" disabled>เลือกผลหลังทบทวน Pilot</option>{Object.entries(DECISION_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
             <label className="text-sm font-bold">Sessions ที่ทบทวน<input type="number" name="reviewedSessionCount" min="0" max="10000" required className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /></label>
             <label className="text-sm font-bold">เวลามัธยฐาน (วินาที)<input type="number" name="medianCompletionSeconds" min="0" max="86400" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /><span className="mt-1 block text-xs font-normal text-slate-500">จำเป็นเมื่อเลือกพร้อมเก็บภาคสนาม</span></label>
             <label className="text-sm font-bold">Abandonment (%)<input type="number" name="abandonmentRate" min="0" max="100" step="0.01" className="mt-2 min-h-11 w-full border border-slate-300 px-3 font-normal" /><span className="mt-1 block text-xs font-normal text-slate-500">จำเป็นเมื่อเลือกพร้อมเก็บภาคสนาม</span></label>

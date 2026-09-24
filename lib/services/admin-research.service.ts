@@ -1,6 +1,6 @@
 import "server-only";
 
-import { requirePermission } from "@/lib/auth/guards";
+import { hasPermission, requirePermission } from "@/lib/auth/guards";
 import * as repository from "@/lib/repositories/admin-research.repository";
 import type {
   AdminResearchItem,
@@ -195,7 +195,7 @@ export async function getAdminResearchStudyWorkspace(
     }
     : filters;
   const readiness = assessResearchReadiness(detail);
-  const canManage = guard.actor.permissions.includes("research.manage");
+  const canManage = hasPermission(guard.actor, "research.manage");
   const [checkinCodes, operatorAssessments, analytics] = await Promise.all([
     canManage ? repository.listAvailableResearchCheckinCodes() : Promise.resolve([]),
     canManage ? repository.listResearchOperatorAssessments(studyId) : Promise.resolve([]),

@@ -21,7 +21,7 @@ import { ResearchAnalyticsWorkspace } from "@/components/admin/research/Research
 import { ResearchActivationControlCenter } from "@/components/admin/research/ResearchActivationControlCenter";
 import { ResearchReadinessSummary } from "@/components/admin/research/ResearchReadinessSummary";
 import { ResearchOperatorAssessmentQueue } from "@/components/admin/research/ResearchOperatorAssessmentQueue";
-import { requirePermission } from "@/lib/auth/guards";
+import { hasPermission, requirePermission } from "@/lib/auth/guards";
 import { getAdminResearchStudyWorkspace } from "@/lib/services/admin-research.service";
 import { adminResearchAnalyticsFiltersSchema, type AdminResearchAnalyticsFilters } from "@/lib/validation/admin-research";
 
@@ -129,7 +129,7 @@ export default async function AdminResearchStudyPage({ params, searchParams }: {
             <fieldset className="border border-slate-300 px-3 py-2 sm:col-span-2 xl:col-span-1"><legend className="px-1 text-sm font-bold">Collection mode</legend>{Object.entries(MODE_LABELS).map(([value, label]) => <label key={value} className="flex min-h-9 items-center gap-2 text-xs"><input type="checkbox" name="mode" value={value} defaultChecked={filters.collectionModes.includes(value as typeof filters.collectionModes[number])} /> {label}</label>)}</fieldset>
             <button type="submit" className="min-h-11 self-end bg-[#202020] px-4 font-black text-white hover:bg-[#B94727]">วิเคราะห์ขอบเขตนี้</button>
           </form>
-          {guard.actor.permissions.includes("research.export") ? (
+          {hasPermission(guard.actor, "research.export") ? (
             <details className="mt-4 border-t border-slate-200 pt-4">
               <summary className="cursor-pointer text-sm font-black text-[#B94727]">ส่งออกชุดข้อมูลแบบไม่ระบุตัวตน</summary>
               <div className="mt-3 flex flex-wrap gap-2">

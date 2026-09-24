@@ -61,6 +61,18 @@ Move the implemented Phase 18 research foundation into a controlled Yala pilot w
 Detailed tasks 21.9a-e and release criteria are in
 `docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md`.
 
+#### 2026-09-24: Pilot Decision and Permission Parity
+
+- Pilot evidence statuses display Thai labels while preserving stored enum values.
+  The Pilot review form requires staff to choose a decision explicitly instead
+  of silently defaulting to `revise`.
+- Research management/export controls use the same `system.all` permission
+  semantics as the server guard; a dashboard-only role does not gain any action.
+- Four focused activation-control component tests passed after one worker-start
+  timeout; the successful run spent 160 seconds importing modules. Scoped ESLint
+  and full-project TypeScript passed after the test fixture was fully typed.
+  Authenticated staff-role and real-device acceptance remain open.
+
 #### 2026-09-15: Evidence Entry Follow-up (21.9c, Partial)
 
 - The draft-Pilot evidence form proposes the highest recorded version plus one
