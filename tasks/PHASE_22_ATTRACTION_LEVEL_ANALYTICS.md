@@ -77,6 +77,20 @@ Detailed tasks 22.11a-f and metric/visual contracts are in
 do not constitute completed channel-acquisition graphs. Historical channel
 values remain `unknown` unless supported by recorded evidence.
 
+### 2026-09-25: Channel Export Coverage Disclosure
+
+- The attraction channel view model and export no longer emit the Visit-date
+  attribution denominator when coverage is suppressed. The former CSV row
+  could expose a small base even though the percentage was hidden. Small
+  unclassified-entry counts are also null in the view model.
+- A focused regression reproduced the two-Visit leak before the fix and passed
+  afterward. This is export privacy parity only; production query plans,
+  current-build role/mobile QA, and NFC rollout evidence remain open.
+- Direct, Admin import, and Unknown Visit filters now show an unsupported
+  entry-session cohort instead of a false empty result. The panel and export
+  distinguish this from a measured QR/NFC zero; support for those channels in
+  entry-session acquisition remains outside the current data contract.
+
 ### 2026-09-22: Dependent Filter Scope Fix
 
 - Changing the selected attraction clears campaign/check-in selections and

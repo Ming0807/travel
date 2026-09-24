@@ -32,4 +32,11 @@ describe("attraction channel panel quality gates", () => {
     expect(screen.getByText("ข้อมูลช่องทางยังรอระบุขอบเขตการเก็บ")).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
+
+  it("does not describe an unsupported Direct filter as zero entry sessions", () => {
+    render(<AttractionChannelPanel data={buildAttractionChannelAnalytics([], [], "all_records", true, asOf, "direct")} />);
+    expect(screen.getByText("ช่องทางที่เลือกยังไม่มีฐานรอบเริ่มเข้าใช้งาน")).toBeInTheDocument();
+    expect(screen.queryByText("ยังไม่มีรอบเข้าใช้งานในขอบเขตนี้")).not.toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
 });

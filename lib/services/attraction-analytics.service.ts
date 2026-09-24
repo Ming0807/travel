@@ -85,6 +85,7 @@ export function buildAttractionChannelAnalytics(
   scope: AttractionAnalyticsFilters["evidenceScope"],
   trackingEnabled: boolean,
   generatedAt = new Date().toISOString(),
+  selectedChannel?: AttractionAnalyticsFilters["entryChannel"],
 ) {
   const uniqueEntries = [...new Map(entryRows.filter((row) => nullableString(row.entry_session_id)
     && ["qr", "nfc"].includes(stringValue(row.entry_channel))).map((row) => [stringValue(row.entry_session_id), row])).values()];
@@ -144,8 +145,11 @@ export function buildAttractionChannelAnalytics(
   const coverageSmallCell = [linkedEligibleVisitIds.size, visits.length - linkedEligibleVisitIds.size]
     .some((count) => count > 0 && count < ATTRACTION_SMALL_CELL_THRESHOLD);
   const coverageSuppressed = coverageSmallCell || !trackingEnabled;
+  const unsupportedChannel = selectedChannel === "direct" || selectedChannel === "admin_import" || selectedChannel === "unknown";
   const status = !trackingEnabled
     ? "tracking_not_activated" as const
+    : unsupportedChannel
+      ? "unsupported_channel" as const
     : entryRows.length === 0
       ? "no_entries" as const
       : eligible.length === 0 && unclassifiedEntries > 0
@@ -158,7 +162,7 @@ export function buildAttractionChannelAnalytics(
     status,
     asOf: generatedAt,
     entries: hasSmallChannel ? null : eligible.length,
-    unclassifiedEntries,
+    unclassifiedEntries: unclassifiedEntries > 0 && unclassifiedEntries < ATTRACTION_SMALL_CELL_THRESHOLD ? null : unclassifiedEntries,
     channels,
     daily: [...dailyMap.values()].sort((left, right) => left.date.localeCompare(right.date)).map((row) => ({
       date: row.date,
@@ -167,9 +171,11 @@ export function buildAttractionChannelAnalytics(
     })),
     attributionCoverage: coverageSuppressed ? null : percent(linkedEligibleVisitIds.size, visits.length),
     attributionLinkedVisits: coverageSuppressed ? null : linkedEligibleVisitIds.size,
-    attributionVisitBase: visits.length,
+    attributionVisitBase: coverageSuppressed ? null : visits.length,
     coverageSuppressed,
-    note: "นับรอบเริ่มเข้าใช้งานตามวันเริ่ม และติดตามผลถึงเวลาที่ระบุ ไม่ใช่จำนวนคนหรือหลักฐานการแตะทางกายภาพ; ความครอบคลุมนับจาก Visit ในช่วงวันที่เลือก รวมรอบเข้าที่เริ่มก่อนช่วงนั้น",
+    note: unsupportedChannel
+      ? "ตารางรอบเริ่มเข้าใช้งานเก็บเฉพาะ QR และ NFC; ช่องทาง Direct, Admin import และ Unknown ของ Visit ไม่มีฐานรอบเริ่มให้เปรียบเทียบ ไม่ใช่ยอดศูนย์"
+      : "นับรอบเริ่มเข้าใช้งานตามวันเริ่ม และติดตามผลถึงเวลาที่ระบุ ไม่ใช่จำนวนคนหรือหลักฐานการแตะทางกายภาพ; ความครอบคลุมนับจาก Visit ในช่วงวันที่เลือก รวมรอบเข้าที่เริ่มก่อนช่วงนั้น",
   };
 }
 
@@ -402,6 +408,7 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
     parsed.data.evidenceScope,
     rows.channelTrackingEnabled,
     rows.channelAsOf ?? generatedAt,
+    parsed.data.entryChannel,
   );
   const comparisonBlockedReason = parsed.data.campaignId || parsed.data.checkinCodeId || parsed.data.entryChannel
     ? "ตัวกรอง Campaign จุดเช็กอิน หรือช่องทางเข้าไม่สามารถใช้กับ peer ทุกแห่งอย่างเท่าเทียม"

@@ -11,6 +11,7 @@ const stateCopy = {
   no_entries: "ยังไม่มีรอบเข้าใช้งานในช่วงวันที่เลือก",
   unclassified_only: "ข้อมูลช่องทางยังรอระบุขอบเขตการเก็บ",
   no_entries_in_scope: "ยังไม่มีรอบเข้าใช้งานในขอบเขตนี้",
+  unsupported_channel: "ช่องทางที่เลือกยังไม่มีฐานรอบเริ่มเข้าใช้งาน",
 } as const;
 const display = (value: number | null, suffix = "") => value === null ? "ยังไม่แสดง" : `${value.toLocaleString("th-TH")}${suffix}`;
 
@@ -41,7 +42,7 @@ export function AttractionChannelPanel({ data, incomplete = false }: { data: Cha
 
       {!ready ? <div className="mt-5 border-l-2 border-amber-500 bg-amber-50 px-4 py-4">
         <p className="font-bold text-amber-950">{incomplete ? "ข้อมูลยังอ่านไม่ครบ กรุณาลดช่วงวันที่" : data.status !== "ready" ? stateCopy[data.status] : "ยังไม่พร้อมแสดงผล"}</p>
-        <p className="mt-1 text-sm leading-6 text-amber-900">{data.status === "unclassified_only" ? "ต้องระบุภาคสนาม, Pilot หรือสถานการณ์จำลองก่อนนำไปสรุปงานวิจัย" : "เมื่อมีข้อมูลครบตามขอบเขตที่เลือก จะแสดงแนวโน้มและอัตราทำขั้นตอนสำเร็จที่นี่"}</p>
+        <p className="mt-1 text-sm leading-6 text-amber-900">{data.status === "unclassified_only" ? "ต้องระบุภาคสนาม, Pilot หรือสถานการณ์จำลองก่อนนำไปสรุปงานวิจัย" : data.status === "unsupported_channel" ? "กราฟรอบเริ่มเข้าใช้งานเปรียบเทียบได้เฉพาะ QR และ NFC; ตัวกรองนี้ใช้กับ Visit ได้ แต่ไม่มีฐานรอบเริ่มให้คำนวณ" : "เมื่อมีข้อมูลครบตามขอบเขตที่เลือก จะแสดงแนวโน้มและอัตราทำขั้นตอนสำเร็จที่นี่"}</p>
       </div> : <>
         <div className="mt-5 grid grid-cols-2 gap-5 border-y border-slate-100 py-4">
           {data.channels.map((row) => <div key={row.channel}>

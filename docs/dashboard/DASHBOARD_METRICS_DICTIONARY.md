@@ -2727,6 +2727,14 @@ values remain `SUPPRESSED_OR_UNAVAILABLE`, never zero. Conversion denominators
 are same-channel entries, while coverage uses the Visit cohort. Existing access,
 incomplete-data and small-sample export guards remain in force. Both rollout
 flags remain off; deployment-scope acceptance and device QA gate activation.
+When attribution coverage is suppressed, its Visit-cohort denominator is null
+in the view model and suppressed in the export; the hidden percentage must not
+leave a small raw Visit base in the response or CSV row. Unclassified entry
+counts below the same threshold are null in the view model as well.
+The entry-session cohort is limited to QR/NFC. Selecting a Direct, Admin import,
+or Unknown Visit channel returns `unsupported_channel` in the attraction
+channel panel and its export (metadata only), not a measured zero. This does
+not change the Visit-channel filter or imply those channels have no Visits.
 
 2026-09-05: executive live queries, attraction queries and peer queries now share
 the same evidence predicate. If a Visit has an entry snapshot, its scope takes

@@ -30,6 +30,6 @@ export function buildEntryChannelExportRows(data: EntryChannelExportData): Expor
 
 export function buildChannelExportRows(data: ChannelData): ExportRow[] {
   const rows = buildEntryChannelExportRows(data);
-  if (data.status === "ready") rows.push({ Section: "Entry attribution coverage", Metric: "linked_visit_percent", Value: visible(data.attributionCoverage), Denominator: data.attributionVisitBase, Note: "Visit-date base, NOT entry conversion; includes entries started before selected dates" });
+  if (data.status === "ready") rows.push({ Section: "Entry attribution coverage", Metric: "linked_visit_percent", Value: visible(data.attributionCoverage), Denominator: visible(data.attributionVisitBase), Note: "Visit-date base, NOT entry conversion; includes entries started before selected dates" });
   return rows;
 }
