@@ -76,6 +76,29 @@ describe("story structured document contract", () => {
     ).toBe(true);
   });
 
+  it("accepts managed image layout and public content-media references", () => {
+    expect(() => parseStoryDocument({
+      type: "doc",
+      version: 2,
+      content: [{
+        type: "image",
+        attrs: {
+          assetId: "f04a9a4e-4e2a-4f7f-9fb5-000000000042",
+          storagePath: "cloudinary:image:authenticated:v1780298548:jpg:southern-border-tourism/content-media/story/2026/09/42/photo",
+          alt: "ภาพในบทความ",
+          imageSize: "medium",
+          imageAlign: "right",
+        },
+      }],
+    })).not.toThrow();
+    expect(storyDocumentSchema.safeParse({
+      type: "doc", version: 2, content: [{ type: "image", attrs: {
+        assetId: "f04a9a4e-4e2a-4f7f-9fb5-000000000042",
+        storagePath: "stories/photo.webp", alt: "ภาพในบทความ", imageSize: "huge",
+      } }],
+    }).success).toBe(false);
+  });
+
   it("rejects scripts, embeds, and unknown node types", () => {
     for (const type of ["script", "iframe", "html", "video", "unknown"]) {
       expect(

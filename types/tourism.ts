@@ -8,6 +8,8 @@ export type AttractionCard = {
   province: string;
   district?: string | null;
   category: string;
+  typeNameEn?: string;
+  typeNamesEn?: string[];
   description: string;
   imageUrl: string | null;
   imageAlt: string;

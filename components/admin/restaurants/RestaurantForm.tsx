@@ -7,6 +7,7 @@ import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.rep
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminFormSection, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
 import { FormInput, FormTextarea, FormSelect, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
+import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { Image, List } from "@phosphor-icons/react";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import { RestaurantCategoryPicker } from "@/components/admin/restaurants/RestaurantCategoryPicker";
@@ -128,15 +129,10 @@ export function RestaurantForm({
           </AdminFormSection>
 
           <AdminFormSection title="เนื้อหาและรายละเอียด (Content)">
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                <p className="font-bold text-slate-800">เนื้อหาภาษาไทย</p>
-                <FormTextarea label="รายละเอียด" name="descriptionTh" defaultValue={restaurant?.description_th ?? ""} maxLength={5000} />
-              </div>
-              <div className="space-y-4">
-                <p className="font-bold text-slate-800">English Content</p>
-                <FormTextarea label="Description" name="descriptionEn" defaultValue={restaurant?.description_en ?? ""} maxLength={5000} />
-              </div>
+            <div className="space-y-6">
+              <FormRichText label="รายละเอียดภาษาไทย" name="descriptionTh" defaultValue={restaurant?.description_th ?? ""} imageLayoutControls minHeight={320} error={fe("descriptionTh")} />
+              <FormTextarea label="รายละเอียดภาษาอังกฤษ" name="descriptionEn" defaultValue={restaurant?.description_en ?? ""} maxLength={30000} rows={6} error={fe("descriptionEn")} />
+              <p className="text-xs leading-5 text-slate-500">เพิ่มภาพประกอบในเนื้อหาได้หลายรูป ส่วนภาพปกและแกลเลอรีจัดการได้หลังสร้างร้านอาหาร</p>
             </div>
           </AdminFormSection>
         </div>

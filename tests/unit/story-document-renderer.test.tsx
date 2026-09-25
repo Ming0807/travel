@@ -38,6 +38,8 @@ const document: StoryDocument = {
         storagePath: "stories/pattani.webp",
         alt: "อาคารเก่าในย่านปัตตานี",
         caption: "สถาปัตยกรรมในชุมชนเมืองเก่า",
+        imageSize: "medium",
+        imageAlign: "right",
       },
     },
   ],
@@ -64,6 +66,7 @@ describe("public structured story rendering", () => {
       screen.getByRole("img", { name: "อาคารเก่าในย่านปัตตานี" })
     ).toHaveAttribute("src", expect.stringContaining("pattani.webp"));
     expect(screen.getByText("สถาปัตยกรรมในชุมชนเมืองเก่า")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "อาคารเก่าในย่านปัตตานี" }).closest("figure")).toHaveClass("sm:w-[64%]", "sm:ml-auto");
     expect(screen.getByRole("link", { name: "อ่านข้อมูล" })).toHaveAttribute(
       "rel",
       "noopener noreferrer"

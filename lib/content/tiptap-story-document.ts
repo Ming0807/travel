@@ -5,6 +5,7 @@ import {
   type StoryDocumentNode,
 } from "@/lib/content/story-document";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { normalizeRichImageAlign, normalizeRichImageSize } from "@/lib/content/rich-image-layout";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -93,6 +94,8 @@ function normalizeNode(value: unknown): StoryDocumentNode {
           ...(typeof attrs.caption === "string"
             ? { caption: attrs.caption }
             : {}),
+          ...(attrs.imageSize !== undefined ? { imageSize: normalizeRichImageSize(attrs.imageSize) } : {}),
+          ...(attrs.imageAlign !== undefined ? { imageAlign: normalizeRichImageAlign(attrs.imageAlign) } : {}),
         },
       };
     }

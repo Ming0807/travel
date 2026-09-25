@@ -7,11 +7,13 @@ import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { applyStoryEditorialChange, StoryEditorialServiceError } from "@/lib/services/story-editorial.service";
 import {
   adminStoryMutationSchema,
+  storyCoverInputSchema,
   storyEditorialChangeInputSchema,
   storyRecommendationMutationSchema,
   storyRecommendationSearchSchema,
 } from "@/lib/validation/story";
-import { clearCoverMediaForEntity, linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
+import { clearCoverMediaForEntity, setStoryCoverFromLibraryAsset } from "@/lib/repositories/admin-media.repository";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import {
   createAdminStory,
   updateAdminStory,
@@ -125,19 +127,16 @@ export async function createStoryAction(_prevState: ActionResult<{ id: number; s
     if (!parsed.success) {
       return { success: false, error: "กรุณาตรวจข้อมูลเรื่องราวอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
+    if (/<img\b/i.test(parsed.data.content ?? "") && !parsed.data.contentDocument) {
+      return { success: false, error: "รูปในเนื้อหายังไม่พร้อมบันทึก กรุณาใช้รูปจากคลังสื่อและตรวจคำอธิบายรูป", fieldErrors: { contentDocument: ["รูปในเนื้อหาต้องบันทึกเป็นเอกสารที่ตรวจสอบได้"] } };
+    }
 
     const existingSlug = await findStoryBySlug(parsed.data.slug);
     if (existingSlug !== null) {
       return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
-    const created = await createAdminStory(parsed.data);
-
-    // Link cover media if provided
-    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
-    if (coverMediaId && Number.isFinite(coverMediaId)) {
-      await linkMediaToEntity(coverMediaId, "story", created.story_id);
-    }
+    const created = await createAdminStory({ ...parsed.data, status: "draft", isPublished: false });
 
     await logAdminMutation({
       actor: guard.actor,
@@ -176,25 +175,7 @@ export async function updateStoryAction(
     const old = await getAdminStoryById(storyId);
     if (!old) return { success: false, error: "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว" };
 
-    const payload = { ...parsed.data };
-    if (payload.status) {
-      payload.isPublished = payload.status === 'published';
-    }
-
-    const updated = await updateAdminStory(storyId, payload);
-
-    const coverMediaAction = formData.get("coverMediaAction");
-
-    // Link or clear cover media only when the cover editor explicitly asks for it.
-    const coverStoragePath = formData.get("coverStoragePath");
-    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
-    if (coverMediaAction === "clear") {
-      await clearCoverMediaForEntity("story", updated.story_id);
-    } else if (coverMediaAction === "set" && typeof coverStoragePath === "string" && coverStoragePath.trim() !== "") {
-      await linkMediaToEntityByStoragePath(coverStoragePath.trim(), "story", updated.story_id);
-    } else if (coverMediaId && Number.isFinite(coverMediaId)) {
-      await linkMediaToEntity(coverMediaId, "story", updated.story_id);
-    }
+    const updated = await updateAdminStory(storyId, parsed.data);
 
     await logAdminMutation({
       actor: guard.actor,
@@ -219,6 +200,43 @@ export async function updateStoryAction(
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังบันทึกการแก้ไขเรื่องราวไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
+export async function saveStoryCoverAction(input: unknown): Promise<ActionResult<{ mediaId: number | null; imageUrl: string | null; altText: string | null }>> {
+  const parsed = storyCoverInputSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: "กรุณาเลือกรูปและใส่คำอธิบายรูปภาพ" };
+  try {
+    const guard = await requirePermission("story.update");
+    const story = await getAdminStoryById(parsed.data.storyId);
+    if (!story) return { success: false, error: "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว" };
+
+    const cover = parsed.data.assetId
+      ? await setStoryCoverFromLibraryAsset(parsed.data.storyId, parsed.data.assetId, parsed.data.altText!)
+      : null;
+    if (!cover) await clearCoverMediaForEntity("story", parsed.data.storyId);
+
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "story.cover.save",
+      entityType: "travel_story",
+      entityId: parsed.data.storyId,
+      oldValues: { coverMediaId: story.cover_media?.media_id ?? null },
+      newValues: { coverMediaId: cover?.mediaId ?? null },
+    });
+    revalidatePath(`/admin/stories/${parsed.data.storyId}/edit`);
+    revalidatePublicStoryContent(story.slug);
+    return { success: true, data: {
+      mediaId: cover?.mediaId ?? null,
+      imageUrl: cover ? siteMediaImageUrl(cover.storagePath) : null,
+      altText: cover ? parsed.data.altText : null,
+    } };
+  } catch (error) {
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    if (error instanceof Error && error.message === "INVALID_STORY_COVER_ASSET") {
+      return { success: false, error: "รูปนี้ไม่พร้อมใช้งาน กรุณาเลือกจากคลังสื่ออีกครั้ง" };
+    }
+    return { success: false, error: "ยังบันทึกรูปภาพปกไม่ได้ กรุณาลองอีกครั้ง" };
   }
 }
 

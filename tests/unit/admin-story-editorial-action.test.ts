@@ -10,6 +10,8 @@ const {
   revalidatePath,
   listRecommendations,
   replaceRecommendations,
+  setStoryCover,
+  clearStoryCover,
 } = vi.hoisted(() => ({
   requirePermission: vi.fn(),
   getAdminStoryById: vi.fn(),
@@ -19,6 +21,8 @@ const {
   revalidatePath: vi.fn(),
   listRecommendations: vi.fn(),
   replaceRecommendations: vi.fn(),
+  setStoryCover: vi.fn(),
+  clearStoryCover: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath }));
@@ -28,7 +32,8 @@ vi.mock("@/lib/auth/guards", () => ({
 }));
 vi.mock("@/lib/services/audit-log.service", () => ({ logAdminMutation }));
 vi.mock("@/lib/repositories/admin-media.repository", () => ({
-  clearCoverMediaForEntity: vi.fn(),
+  clearCoverMediaForEntity: clearStoryCover,
+  setStoryCoverFromLibraryAsset: setStoryCover,
   linkMediaToEntity: vi.fn(),
   linkMediaToEntityByStoragePath: vi.fn(),
 }));
@@ -51,6 +56,7 @@ vi.mock("@/lib/repositories/story-recommendation.repository", () => ({
 
 import {
   saveStoryEditorialChangeAction,
+  saveStoryCoverAction,
   saveStoryRecommendationsAction,
 } from "@/app/actions/admin-story-actions";
 
@@ -77,6 +83,37 @@ const current: StoryEditorialState = {
   contentQualityScore: null,
   cover: null,
 };
+
+describe("saveStoryCoverAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    requirePermission.mockResolvedValue({ actor: { adminId: "admin-id" } });
+    getAdminStoryById.mockResolvedValue({ story_id: 12, slug: "original-story", cover_media: null });
+    setStoryCover.mockResolvedValue({ mediaId: 44, storagePath: "content-media/stories/cover.webp" });
+  });
+
+  it("links an active library asset to the story without resubmitting its content", async () => {
+    const assetId = "f04a9a4e-4e2a-4f7f-9fb5-000000000042";
+    const result = await saveStoryCoverAction({ storyId: 12, assetId, altText: "ชุมชนหน้าถ้ำ" });
+    expect(result.success).toBe(true);
+    expect(setStoryCover).toHaveBeenCalledWith(12, assetId, "ชุมชนหน้าถ้ำ");
+    expect(result.data?.imageUrl).toContain("/api/media/image");
+    expect(logAdminMutation).toHaveBeenCalledWith(expect.objectContaining({ action: "story.cover.save" }));
+  });
+
+  it("rejects a cover without alt text and preserves the previous cover", async () => {
+    const result = await saveStoryCoverAction({ storyId: 12, assetId: "f04a9a4e-4e2a-4f7f-9fb5-000000000042", altText: "" });
+    expect(result.success).toBe(false);
+    expect(setStoryCover).not.toHaveBeenCalled();
+    expect(clearStoryCover).not.toHaveBeenCalled();
+  });
+
+  it("clears the cover through the dedicated media action", async () => {
+    const result = await saveStoryCoverAction({ storyId: 12, assetId: null, altText: null });
+    expect(result.success).toBe(true);
+    expect(clearStoryCover).toHaveBeenCalledWith("story", 12);
+  });
+});
 
 describe("saveStoryEditorialChangeAction", () => {
   beforeEach(() => {

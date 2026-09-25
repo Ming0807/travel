@@ -2,17 +2,17 @@
 
 /* eslint-disable react/no-unescaped-entities */
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createStoryAction, updateStoryAction } from "@/app/actions/admin-story-actions";
 import type { AdminStoryRow } from "@/lib/repositories/admin-story.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminFormSection, AdminReadinessPanel, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
-import { FormInput, FormTextarea, FormSelect, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
+import { FormInput, FormTextarea, FormSelect, getFieldError } from "@/components/admin/forms/FormField";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
+import { storyDocumentSchema, type StoryDocument } from "@/lib/content/story-document";
 import { ArrowSquareOut, Image, List, Plus, MapPin } from "@phosphor-icons/react";
-import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 
 interface StoryFormProps {
   initialData?: AdminStoryRow | null;
@@ -36,26 +36,19 @@ function hasText(value: string | null | undefined) {
   return !!value?.trim();
 }
 
-function toFiniteMediaId(value: unknown): number | null {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-}
-
 export function StoryForm({ initialData, provinces }: StoryFormProps) {
   const router = useRouter();
   const isEditing = !!initialData;
-  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-  const [coverMediaId, setCoverMediaId] = useState<number | null>(null);
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const action = isEditing ? updateStoryAction.bind(null, initialData.story_id) : createStoryAction;
   const publicHref = isEditing && initialData?.slug ? `/stories/${initialData.slug}` : null;
+  const parsedDocument = storyDocumentSchema.safeParse(initialData?.content_document);
 
   const readinessItems = [
     { label: "ชื่อบทความ", complete: hasText(initialData?.title), help: "แสดงเป็นหัวข้อข่าวบนหน้า public" },
     { label: "Slug (URL)", complete: hasText(initialData?.slug), help: publicHref ? publicHref : "จำเป็นสำหรับ URL หน้า public" },
     { label: "เกริ่นนำ", complete: hasText(initialData?.excerpt), help: "ใช้บนการ์ดบทความและใกล้หัวข้อข่าว" },
     { label: "เนื้อหา", complete: hasText(initialData?.content), help: "เนื้อหาบทความที่บันทึกแล้ว" },
-    { label: "รูปภาพปก", complete: !!initialData?.slug, help: "จัดการรูปภาพปกผ่าน Media Library ในหน้าแก้ไขเรื่องราว" },
+    { label: "รูปภาพปก", complete: !!initialData?.cover_media, help: "จัดการรูปภาพปกผ่าน Media Library ในหน้าแก้ไขเรื่องราว" },
     { label: "จังหวัด", complete: initialData?.province_id != null, help: "ช่วยผู้เยี่ยมชมและผู้ดูแลระบบกรองเนื้อหา" },
     { label: "หมวดหมู่", complete: hasText(initialData?.category), help: "ป้ายกำกับบทความบนหน้า public" },
     { label: "สถานะเผยแพร่", complete: !!initialData?.is_published, help: initialData?.is_published ? "ปัจจุบันแสดงบนหน้า public" : "บันทึกเป็นร่างจนกว่าจะเผยแพร่" },
@@ -125,7 +118,7 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
           <AdminFormSection title="เนื้อหาบทความ (Content)">
             <div className="space-y-6">
               <FormTextarea label="เกริ่นนำ (Excerpt)" name="excerpt" defaultValue={initialData?.excerpt ?? ""} rows={3} />
-              <FormRichText label="เนื้อหาฉบับเต็ม" name="content" defaultValue={initialData?.content ?? ""} minHeight={400} placeholder="เริ่มเขียนเนื้อหาบทความ..." />
+              <FormRichText label="เนื้อหาฉบับเต็ม" name="content" documentName="contentDocument" defaultDocument={parsedDocument.success ? (parsedDocument.data as StoryDocument) : null} defaultValue={initialData?.content ?? ""} error={fe("contentDocument")} imageLayoutControls minHeight={400} placeholder="เริ่มเขียนเนื้อหาบทความ..." />
             </div>
           </AdminFormSection>
         </div>
@@ -146,8 +139,9 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
           ) : null}
 
           {/* Status */}
-          <AdminFormSection title="สถานะ (Status)">
-            <FormCheckbox label="เผยแพร่สู่สาธารณะ" name="isPublished" defaultChecked={initialData?.is_published ?? false} accent="coral" />
+          <AdminFormSection title="สถานะ">
+            <p className="text-sm leading-6 text-slate-700">เรื่องราวใหม่จะบันทึกเป็นฉบับร่าง หลังจากตรวจรูปปกและข้อมูลประกอบแล้วจึงเผยแพร่ในหน้าแก้ไข</p>
+            <input type="hidden" name="isPublished" value="false" />
           </AdminFormSection>
 
           {/* Classification */}
@@ -177,40 +171,7 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
 
           {/* Media */}
           <AdminFormSection title="สื่อ (Media)">
-            <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-              <div className="aspect-video bg-slate-100">
-                {imagePreviewUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={imagePreviewUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
-                    ยังไม่ได้เลือกรูปภาพ
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col gap-2 p-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => setIsPickerOpen(true)}
-                  className="min-h-10 flex-1 rounded-lg bg-[#073F37] px-3 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62]"
-                >
-                  เลือกจาก Media Library
-                </button>
-                {imagePreviewUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImagePreviewUrl("");
-                      setCoverMediaId(null);
-                    }}
-                    className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
-                  >
-                    เอาออก
-                  </button>
-                ) : null}
-              </div>
-            </div>
-            <input type="hidden" name="coverMediaId" value={coverMediaId ? String(coverMediaId) : ""} />
+            <p className="text-sm leading-6 text-slate-700">บันทึกเรื่องราวเป็นฉบับร่างก่อน แล้วเลือกรูปปกพร้อมคำอธิบายในหน้าแก้ไขได้ทันที รูปประกอบในเนื้อหาเพิ่มได้จากตัวแก้ไขด้านซ้าย</p>
           </AdminFormSection>
         </div>
       </div>
@@ -221,17 +182,6 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
         submitLabel={isEditing ? "บันทึกการแก้ไขเรื่องราว" : "สร้างเรื่องราว"}
       />
 
-      <MediaPickerModal
-        isOpen={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
-        onSelectAsset={(asset) => {
-          const id = toFiniteMediaId(asset.id);
-          setCoverMediaId(id);
-          setImagePreviewUrl(asset.url);
-        }}
-        onSelect={(url) => setImagePreviewUrl(url)}
-        title="เลือกรูปภาพปกเรื่องราว"
-      />
     </form>
   );
 }

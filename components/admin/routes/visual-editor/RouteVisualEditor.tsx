@@ -52,12 +52,11 @@ export function RouteVisualEditor({
   const [coverMediaUrl, setCoverMediaUrl] = useState(initialCoverMediaUrl ?? null);
   const coverImage = coverMediaUrl;
   const publicHref = route.slug ? `/routes/${route.slug}` : null;
-  const stopCount = route.stop_count;
-  // Estimate days from stop count (3-4 stops per day is typical)
-  const estimatedDays = stopCount > 0 ? Math.max(1, Math.ceil(stopCount / 3.5)) : 1;
 
   // Duplicate detection
   const stops = stopsProp ?? [];
+  const itineraryDays = Array.from(new Set(stops.map((stop) => stop.day_number))).sort((a, b) => a - b);
+  const stopCount = stopsProp ? stops.length : route.stop_count;
   const duplicatedAttractions = new Map<number, { name: string; occurrences: { dayNumber: number; displayOrder: number }[] }>();
   if (stops.length > 0) {
     const attractionOccurrences = new Map<number, { dayNumber: number; displayOrder: number }[]>();
@@ -130,8 +129,8 @@ export function RouteVisualEditor({
       ) : null}
 
       {/* Editor Toolbar */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/80 px-6 py-4 backdrop-blur-md">
-        <div className="flex items-center gap-4">
+      <div className="sticky top-0 z-30 flex flex-col gap-3 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Link
             href="/admin/routes"
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
@@ -139,17 +138,17 @@ export function RouteVisualEditor({
           >
             <ArrowLeft size={20} weight="bold" />
           </Link>
-          <div>
-            <h1 className="text-lg font-black text-slate-800">Visual Editor: {name}</h1>
+          <div className="min-w-0">
+            <h1 className="break-words text-base font-black text-slate-800 sm:text-lg">แก้ไขเส้นทาง: {name}</h1>
             <p className="text-xs font-bold text-slate-500">คุณกำลังแก้ไขหน้าตาแบบเดียวกับที่แสดงผลจริง</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
           {publicHref ? (
             <Link
               href={publicHref}
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-50"
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-50"
               aria-label="Preview public route page"
             >
               <ArrowSquareOut size={15} weight="bold" />
@@ -161,7 +160,7 @@ export function RouteVisualEditor({
           </div>
           <button
             onClick={() => setActiveSection("settings")}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="min-h-10 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:px-4"
           >
             ตั้งค่า / สถานะ
           </button>
@@ -213,7 +212,7 @@ export function RouteVisualEditor({
                 <div className={`mt-4 flex flex-wrap items-center gap-4 ${coverImage ? "text-white/90" : "text-slate-600"}`}>
                   <div className="flex items-center gap-1.5 text-sm font-medium">
                     <CalendarBlank size={18} />
-                    <span>{estimatedDays} วัน</span>
+                    <span>{itineraryDays.length > 0 ? `${Math.max(...itineraryDays)} วัน` : "ยังไม่จัดวันเดินทาง"}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm font-medium">
                     <MapPin size={18} />
@@ -262,11 +261,11 @@ export function RouteVisualEditor({
             </EditableBlock>
 
             {/* Day-by-day Itinerary (read-only preview) */}
-            {stopCount > 0 ? (
+            {stops.length > 0 ? (
               <section className="pointer-events-none rounded-3xl bg-white p-6 shadow-sm md:p-10">
                 <h2 className="mb-8 text-2xl font-black text-slate-800">แผนการเดินทาง</h2>
                 <div className="space-y-8">
-                  {Array.from({ length: estimatedDays }, (_, i) => i + 1).map((day) => (
+                  {itineraryDays.map((day) => (
                     <div key={day} className="relative">
                       <div className="mb-6 flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-700 text-lg font-black text-white shadow-sm">
@@ -275,32 +274,38 @@ export function RouteVisualEditor({
                         <h3 className="text-xl font-bold text-slate-800">วันที่ {day}</h3>
                       </div>
                       <div className="ml-6 space-y-6 border-l-2 border-slate-200 py-4 pl-8">
-                        {/* Placeholder stops */}
-                        {route.stop_count > 0 && (
-                          <div className="relative">
-                            <div className="absolute -left-[41px] top-4 h-4 w-4 rounded-full border-4 border-white bg-green-600 shadow-sm" />
-                            <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
-                              <MapPin size={24} className="mx-auto text-green-600 mb-2" weight="fill" />
-                              <p className="text-sm font-bold text-slate-600">
-                                {stopCount} จุดแวะพักในบันทึก
-                              </p>
-                              <p className="mt-1 max-w-xs mx-auto text-xs leading-5 text-slate-500">
-                                แผนการเดินทางและลำดับจุดแวะพักจะแสดงตามข้อมูลที่บันทึกใน
-                              </p>
-                              <Link
-                                href={`/admin/routes/${route.route_id}/stops`}
-                                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 pointer-events-auto"
-                              >
-                                <List size={15} />
-                                จัดการจุดแวะพัก
-                              </Link>
+                        {stops
+                          .filter((stop) => stop.day_number === day)
+                          .sort((a, b) => a.display_order - b.display_order)
+                          .map((stop) => (
+                            <div key={stop.stop_id} className="relative min-w-0">
+                              <div className="absolute -left-[41px] top-4 h-4 w-4 rounded-full border-4 border-white bg-green-600 shadow-sm" />
+                              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                                <p className="break-words text-sm font-bold text-slate-800">
+                                  {stop.attraction_name_th || `สถานที่ #${stop.attraction_id}`}
+                                </p>
+                                {stop.stop_note_th ? (
+                                  <p className="mt-1 break-words text-sm leading-6 text-slate-600">{stop.stop_note_th}</p>
+                                ) : null}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          ))}
                       </div>
                     </div>
                   ))}
                 </div>
+              </section>
+            ) : stopCount > 0 ? (
+              <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <h2 className="font-bold text-amber-950">โหลดรายละเอียดจุดแวะไม่สำเร็จ</h2>
+                <p className="mt-1 text-sm leading-6 text-amber-900">มีจุดแวะที่บันทึกไว้ {stopCount} จุด แต่ยังแสดงกำหนดการไม่ได้ ลองเปิดหน้าจัดการจุดแวะเพื่อตรวจข้อมูล</p>
+                <Link
+                  href={`/admin/routes/${route.route_id}/stops`}
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100"
+                >
+                  <List size={16} />
+                  จัดการจุดแวะพัก
+                </Link>
               </section>
             ) : (
               <section className="pointer-events-none rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center">

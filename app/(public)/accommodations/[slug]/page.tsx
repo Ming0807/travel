@@ -10,6 +10,8 @@ import {
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicCtaBand } from "@/components/public/PublicCtaBand";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
+import { HospitalityGallery, HospitalityRichContent } from "@/components/hospitality/HospitalityRichContent";
+import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
 import { getPublicAccommodationDetail } from "@/lib/repositories/public-content.repository";
 
 export const revalidate = 60;
@@ -27,8 +29,8 @@ export async function generateMetadata({
 
   return {
     title: `${accommodation.name} | ที่พักในยะลา`,
-    description: accommodation.description?.slice(0, 160)
-      ?? `ข้อมูลที่พัก ${accommodation.name} ในจังหวัดยะลา`,
+    description: accommodation.description ? plainTextFromLegacyHtml(accommodation.description).slice(0, 160)
+      : `ข้อมูลที่พัก ${accommodation.name} ในจังหวัดยะลา`,
     alternates: { canonical: `/accommodations/${accommodation.slug}` },
   };
 }
@@ -66,13 +68,13 @@ export default async function AccommodationDetailPage({
             <section aria-labelledby="accommodation-about-heading">
               <h2 id="accommodation-about-heading" className="text-2xl font-bold">เกี่ยวกับที่พัก</h2>
               {accommodation.description ? (
-                <p className="mt-4 max-w-[70ch] whitespace-pre-line text-base leading-8 text-black/70">
-                  {accommodation.description}
-                </p>
+                <HospitalityRichContent content={accommodation.description} />
               ) : (
                 <p className="mt-4 text-sm leading-6 text-black/65">ผู้ดูแลยังไม่ได้เพิ่มรายละเอียดที่พัก</p>
               )}
             </section>
+
+            <HospitalityGallery images={accommodation.gallery} />
 
             <HospitalityRelatedAttractions items={accommodation.nearbyAttractions} />
           </div>

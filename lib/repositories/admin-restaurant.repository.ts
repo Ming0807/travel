@@ -2,6 +2,7 @@ import "server-only";
 import { assertLiveDestinationProvinceId } from "@/lib/repositories/destination-scope.repository";
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
+import { sanitizeAdminDescription } from "@/lib/content/admin-rich-html";
 import type { AdminRestaurantFilters, AdminRestaurantMutationInput } from "@/lib/validation/admin-restaurant";
 import { firstJoin } from "@/lib/utils/supabase-joins";
 import { asRecord, booleanValue, nullableNumber, nullableString, numberValue, stringValue } from "@/lib/utils/record";
@@ -101,8 +102,8 @@ function toPayload(input: AdminRestaurantMutationInput) {
     slug: input.slug,
     name_th: input.nameTh,
     name_en: input.nameEn,
-    description_th: input.descriptionTh,
-    description_en: input.descriptionEn,
+    description_th: sanitizeAdminDescription(input.descriptionTh),
+    description_en: sanitizeAdminDescription(input.descriptionEn),
     latitude: input.latitude,
     longitude: input.longitude,
     address_text: input.addressText,

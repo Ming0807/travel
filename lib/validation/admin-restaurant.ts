@@ -6,6 +6,11 @@ const optionalText = z.preprocess(
   z.string().trim().max(5000).nullable()
 ).default(null);
 
+const optionalLongText = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
+  z.string().trim().max(30000).nullable()
+).default(null);
+
 const optionalShortText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? null : value),
   z.string().trim().max(255).nullable()
@@ -78,8 +83,8 @@ export const adminRestaurantMutationSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase, URL-safe, and hyphen-separated."),
   nameTh: z.string().trim().min(1, "Thai restaurant name is required.").max(255),
   nameEn: optionalShortText,
-  descriptionTh: optionalText,
-  descriptionEn: optionalText,
+  descriptionTh: optionalLongText,
+  descriptionEn: optionalLongText,
   foodType: optionalShortText,
   categoryIds,
   nearbyAttractionIds,

@@ -19,7 +19,11 @@ describe("editorial homepage hero", () => {
       }}
       media={{}}
       attractions={[]}
+      discoveryAttractions={[]}
       restaurants={[]}
+      accommodations={[]}
+      cafeRestaurant={null}
+      cafeCategorySlug={null}
       routes={[]}
       stories={[]}
       stats={[]}
@@ -32,5 +36,35 @@ describe("editorial homepage hero", () => {
     expect(screen.getByRole("link", { name: "คณะทำงาน" })).toHaveAttribute("href", "/documents/na-tham-tourism-living-blueprint.pdf");
     expect(screen.getAllByAltText("ตรามหาวิทยาลัยราชภัฏยะลา")).toHaveLength(2);
     expect(screen.getByAltText("ภาพประกอบบรรยากาศภูเขาและหมอกยามเช้า").getAttribute("src")).toContain("custom-hero.webp");
+  });
+
+  it("links real discovery categories to their filters and replaces an unavailable cafe with published lodging", () => {
+    const { container } = render(<HomepageEditorial
+      hero={{ images: [] }}
+      media={{}}
+      attractions={[]}
+      discoveryAttractions={[{
+        slug: "tham-phra-non", name: "ถ้ำพระนอน", province: "ยะลา",
+        category: "ธรรมชาติและเชิงนิเวศ", typeNameEn: "Nature & Ecotourism",
+        description: "", imageUrl: "/site-media/content-media/cave.webp", imageAlt: "ถ้ำพระนอน", tags: [],
+      }]}
+      restaurants={[]}
+      accommodations={[{
+        slug: "local-stay", name: "ที่พักหน้าถ้ำ", province: "ยะลา", accommodationType: "Homestay",
+        description: "", imageUrl: "/site-media/content-media/stay.webp", imageAlt: "ที่พักหน้าถ้ำ",
+      }]}
+      cafeRestaurant={null}
+      cafeCategorySlug={null}
+      routes={[]}
+      stories={[]}
+      stats={[]}
+      routesUnavailable={false}
+    />);
+
+    const categories = container.querySelectorAll(".ed-category");
+    expect(categories).toHaveLength(2);
+    expect(categories[0]).toHaveAttribute("href", "/attractions?type=Nature%20%26%20Ecotourism");
+    expect(categories[1]).toHaveAttribute("href", "/accommodations");
+    expect(screen.queryByText("คาเฟ่")).not.toBeInTheDocument();
   });
 });

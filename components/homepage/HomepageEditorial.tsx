@@ -13,7 +13,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
-import type { PublicRestaurantCard, PublicRouteCard, PublicStoryCard } from "@/lib/repositories/public-content.repository";
+import type { PublicAccommodationCard, PublicRestaurantCard, PublicRouteCard, PublicStoryCard } from "@/lib/repositories/public-content.repository";
 import type { AttractionCard } from "@/types/tourism";
 
 const DEFAULT_HERO = "homepage/yala-hero-default.webp";
@@ -38,7 +38,11 @@ type HomepageEditorialProps = {
   hero: { title?: string; subtitle?: string; description?: string; images?: readonly string[] };
   media: MediaSettings;
   attractions: AttractionCard[];
+  discoveryAttractions: AttractionCard[];
   restaurants: PublicRestaurantCard[];
+  accommodations: PublicAccommodationCard[];
+  cafeRestaurant: PublicRestaurantCard | null;
+  cafeCategorySlug: string | null;
   routes: PublicRouteCard[];
   stories: PublicStoryCard[];
   stats: { label: string; value: string }[];
@@ -102,21 +106,30 @@ function Hero({ hero }: Pick<HomepageEditorialProps, "hero">) {
   </section>;
 }
 
-function Discovery({ media, attractions, restaurants, stories }: Pick<HomepageEditorialProps, "media" | "attractions" | "restaurants" | "stories">) {
-  const firstImage = (pattern: RegExp) => attractions.find((attraction) => pattern.test(`${attraction.category} ${attraction.name}`) && attraction.imageUrl)?.imageUrl;
-  const firstCafe = restaurants.find((restaurant) => /cafe|coffee|คาเฟ่|กาแฟ/i.test(`${restaurant.foodType} ${restaurant.name}`) && restaurant.imageUrl)?.imageUrl;
+function Discovery({ media, discoveryAttractions, restaurants, accommodations, cafeRestaurant, cafeCategorySlug, routes, stories }: Pick<HomepageEditorialProps, "media" | "discoveryAttractions" | "restaurants" | "accommodations" | "cafeRestaurant" | "cafeCategorySlug" | "routes" | "stories">) {
+  const matchingAttractions = (pattern: RegExp, imageOverride?: string) => discoveryAttractions.flatMap((item) => {
+    if (!imageOverride && !item.imageUrl) return [];
+    const typeName = (item.typeNamesEn ?? [item.typeNameEn ?? ""]).find((type) => pattern.test(type));
+    return typeName ? [{ item, typeName }] : [];
+  });
+  const nature = matchingAttractions(/nature|eco|cave|karst|ธรรมชาติ|ถ้ำ/i, media.natureImage)[0];
+  const cultureCandidates = matchingAttractions(/culture|heritage|history|relig|community|วัฒน|ศาสนา|ประวัติ|ชุมชน/i, media.cultureImage);
+  const culture = cultureCandidates.find((candidate) => candidate.item.slug !== nature?.item.slug) ?? cultureCandidates[0];
   const categories = [
-    { title: "ธรรมชาติ", detail: "ป่า ภูเขา สายน้ำ", href: "/attractions", image: media.natureImage || firstImage(/ธรรมชาติ|น้ำตก|เขา|ป่า/) },
-    { title: "อาหาร", detail: "รสชาติที่น่าจดจำ", href: "/restaurants", image: media.foodImage || restaurants.find((item) => item.imageUrl)?.imageUrl },
-    { title: "วัฒนธรรม", detail: "ศรัทธาและวิถีชีวิต", href: "/attractions", image: media.cultureImage || firstImage(/วัฒนธรรม|วัด|พิพิธภัณฑ์|ชุมชน/) },
-    { title: "คาเฟ่", detail: "มุมสงบของวันดี ๆ", href: "/restaurants", image: media.cafeImage || firstCafe },
-    { title: "กิจกรรม", detail: "ประสบการณ์ที่น่าจดจำ", href: "/routes", image: media.activitiesImage || attractions.find((item) => item.imageUrl)?.imageUrl },
-    { title: "ผู้คน", detail: "รอยยิ้มที่ไม่ลืม", href: "/stories", image: media.peopleImage || stories.find((item) => item.imageUrl)?.imageUrl },
-  ];
+    nature && (media.natureImage || nature.item.imageUrl) ? { title: "ธรรมชาติ", detail: "ป่า ภูเขา สายน้ำ", href: `/attractions?type=${encodeURIComponent(nature.typeName)}`, image: media.natureImage || nature.item.imageUrl } : null,
+    restaurants.length && (media.foodImage || restaurants.find((item) => item.imageUrl)?.imageUrl) ? { title: "อาหาร", detail: "รสชาติที่น่าจดจำ", href: "/restaurants", image: media.foodImage || restaurants.find((item) => item.imageUrl)?.imageUrl } : null,
+    culture && (media.cultureImage || culture.item.imageUrl) ? { title: "วัฒนธรรม", detail: "ศรัทธาและวิถีชีวิต", href: `/attractions?type=${encodeURIComponent(culture.typeName)}`, image: media.cultureImage || culture.item.imageUrl } : null,
+    cafeRestaurant && cafeCategorySlug && (media.cafeImage || cafeRestaurant.imageUrl)
+      ? { title: "คาเฟ่", detail: "มุมสงบของวันดี ๆ", href: `/restaurants?category=${encodeURIComponent(cafeCategorySlug)}`, image: media.cafeImage || cafeRestaurant.imageUrl }
+      : accommodations[0]?.imageUrl ? { title: "ที่พัก", detail: "พักผ่อนใกล้จุดหมาย", href: "/accommodations", image: accommodations[0].imageUrl } : null,
+    routes.length && (media.activitiesImage || routes.find((item) => item.imageUrl)?.imageUrl) ? { title: "เส้นทาง", detail: "ออกเดินทางตามรอย", href: "/routes", image: media.activitiesImage || routes.find((item) => item.imageUrl)?.imageUrl } : null,
+    stories.length && (media.peopleImage || stories.find((item) => item.imageUrl)?.imageUrl) ? { title: "ผู้คน", detail: "รอยยิ้มที่ไม่ลืม", href: "/stories", image: media.peopleImage || stories.find((item) => item.imageUrl)?.imageUrl } : null,
+  ].filter((item): item is { title: string; detail: string; href: string; image: string } => !!item && !!item.image);
+  if (!categories.length) return null;
   return <section id="discover" className="ed-discovery ed-section" aria-labelledby="ed-discovery-title">
     <div className="ed-container">
       <EditorialHeading id="ed-discovery-title" eyebrow="DISCOVER YALA" title="ค้นพบยะลา ในมุมที่มากกว่าเดิม" description="เมืองที่ธรรมชาติยังมีชีวิต วัฒนธรรมยังมีลมหายใจ และผู้คนยังอบอุ่นเสมอ" />
-      <div className="ed-category-grid">{categories.map((category) => <Link key={category.title} href={category.href} className="ed-category">
+      <div className="ed-category-grid" data-count={categories.length}>{categories.map((category) => <Link key={category.title} href={category.href} className="ed-category">
         <div className="ed-category-image"><Photo src={category.image} alt={`ภาพประกอบหมวด${category.title}`} sizes="(max-width: 640px) 45vw, 18vw" /></div>
         <h3>{category.title}</h3><p>{category.detail}</p>
       </Link>)}</div>
@@ -196,10 +209,10 @@ function Closing({ hero, stats }: Pick<HomepageEditorialProps, "hero" | "stats">
   </>;
 }
 
-export function HomepageEditorial({ hero, media, attractions, restaurants, routes, stories, stats, routesUnavailable }: HomepageEditorialProps) {
+export function HomepageEditorial({ hero, media, attractions, discoveryAttractions, restaurants, accommodations, cafeRestaurant, cafeCategorySlug, routes, stories, stats, routesUnavailable }: HomepageEditorialProps) {
   return <main className="home-editorial">
     <Hero hero={hero} />
-    <Discovery media={media} attractions={attractions} restaurants={restaurants} stories={stories} />
+    <Discovery media={media} discoveryAttractions={discoveryAttractions} restaurants={restaurants} accommodations={accommodations} cafeRestaurant={cafeRestaurant} cafeCategorySlug={cafeCategorySlug} routes={routes} stories={stories} />
     <Belonging hero={hero} media={media} />
     <Destinations attractions={attractions} />
     <Routes routes={routes} cover={media.routesCover} unavailable={routesUnavailable} />

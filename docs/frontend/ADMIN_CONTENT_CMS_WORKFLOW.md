@@ -13,6 +13,7 @@ The redesigned homepage reuses published CMS records instead of maintaining dupl
 - Published stories provide the editorial section; unpublished or missing records are never replaced with mock stories.
 - Hero and section-level presentation text remain Settings-owned metadata.
 - The homepage's three panorama slots and nine named editorial image placements are selected in `/admin/settings?tab=homepage`. Saved Media Library images take precedence over replaceable local defaults.
+- Editorial discovery categories appear only when matching published records and a usable image exist. Nature/culture cards link to the matching attraction type, and cafes link to the published cafe category. If cafes are unavailable, a published accommodation may occupy that position; an empty category is not filled with unrelated imagery.
 - Statistics retain their existing analytics definitions and are labelled as recorded system data, not website traffic or real-time data.
 - The old newsletter-looking CTA is retired because no subscription backend exists. The final CTA links to the working Digital Passport and leaderboard flows.
 - The previous testimonial highlight section is not rendered on the homepage until it has a dedicated, verifiable content source.
@@ -26,6 +27,8 @@ An admin should know where content comes from, how to change it, how to preview 
 ```
 
 Restaurant create/edit validates the managed cover asset before mutating the record; the edit toolbar links to the real public page only when the restaurant is published, active, and inside the live destination scope. Accommodation create/edit uses one sectioned form with a live draft summary, readiness checklist, and media manager link. Accommodation cover selection is validated before mutation; removing the cover clears its relation without deleting the media asset. Related accommodation curation remains owned by the attraction editor to avoid conflicting updates from two CMS surfaces.
+
+Restaurant and accommodation descriptions support long formatted Thai content with multiple managed inline images. The English description remains a long text field. Add gallery images through the item's Media page after creating the record; active images appear after the cover on the public detail page in display order. The accommodation creation success link opens that Media page directly. Public listing cards and SEO metadata use plain-text excerpts, while public detail HTML is sanitized before rendering.
 
 This workflow supports these core project dimensions:
 
@@ -60,7 +63,7 @@ Traveler story     submitted -> moderation -> approved/rejected -> published -> 
 
 Both workflows share Media Library, taxonomy, search, public rendering, and recommendation infrastructure. They must remain separate queues in admin UX.
 
-The editor uses hybrid structured content: TipTap JSON is the canonical editable document. Public rendering never injects legacy HTML; older HTML records are reduced to inert plain text until an editor explicitly saves them as structured content. Public recommendations begin with curated relationships and deterministic relevance scoring. They must not be labeled AI.
+The editor uses hybrid structured content: TipTap JSON is the canonical editable document. New stories save both structured content and compatible HTML as a draft; cover selection happens in the edit view after creation. Public rendering sanitizes legacy HTML with managed `content-media` images and reduces other legacy content to inert text until an editor explicitly saves it as structured content. Public recommendations begin with curated relationships and deterministic relevance scoring. They must not be labeled AI.
 
 Recommendation behavior is deliberately explainable:
 
@@ -121,6 +124,7 @@ Implemented baseline:
 - Public homepage popular-destination province tabs filter the displayed selected attraction records in place and show an empty state when a province has no featured items.
 - Settings supports direct group links such as `/admin/settings?tab=homepage` so the Content Hub can send admins to the correct surface.
 - Story and route admin forms show public-page readiness panels and preview links after records are saved.
+- Route stops require positive whole-number day and display order values. The admin route preview groups actual saved stops by day, while public route discovery filters only published routes and shows an honest empty state until a route is ready.
 - Story administration now separates team-authored articles at `/admin/stories` from traveler submissions at `/admin/stories/submissions`, while sharing URL-backed filters, pagination, taxonomy, and export behavior.
 - Story list actions open the editor or media workflow and no longer expose a quick-publish control that bypasses the editorial state machine.
 - The editorial story content drawer now writes canonical TipTap JSON and compatible HTML through the atomic editorial action, creates an immutable revision on each successful save, detects optimistic-lock conflicts, and keeps a browser-local recovery draft without presenting it as a server save.
@@ -131,7 +135,7 @@ Implemented baseline:
 - The editor sidebar derives a Thai publish-readiness checklist and document outline from saved structured content, and shows revision history only when the current admin has `story.revision_read`.
 - Inline story images are selected from Media Library, require accessible alt text, and store the media asset UUID plus normalized storage path instead of an external URL. Canonical document version 2 supports this managed reference while version 1 numeric media references remain readable during migration.
 - The public Story Hub uses URL-backed server filters and 12-item pagination for title/excerpt search, province, topic, and author type. Its leading layout is labeled "latest" because the query is publication-date ordered; it is not presented as editorially featured.
-- Story detail prefers canonical structured content, generates desktop and mobile table-of-contents controls only when headings exist, preserves image dimensions and captions, and renders legacy HTML as inert plain text when structured content is unavailable.
+- Story detail prefers canonical structured content, generates desktop and mobile table-of-contents controls only when headings exist, and preserves image dimensions and captions. Legacy HTML may display sanitized managed images; unmanaged images and executable markup are removed.
 - Public traveler stories use a neutral author label instead of exposing `tourists.display_name`; a future explicit public-author consent field is required before a personal display name may appear.
 - Story query failures reach a retryable error boundary instead of being reported as a missing story. Published and updated timestamps remain distinct.
 - Related destinations come from active `attraction_related_stories` records whose attractions are public in the live destination scope. Shared destination keys now contribute to explainable related-story ranking.

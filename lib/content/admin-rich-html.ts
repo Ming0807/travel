@@ -52,7 +52,7 @@ function safeLinkHref(raw: string | undefined): string | null {
   }
 }
 
-export function sanitizeAdminRichHtml(value: string | null | undefined): string {
+export function sanitizeAdminRichHtml(value: string | null | undefined, options?: { publicContentImagesOnly?: boolean }): string {
   const source = value?.trim();
   if (!source) return "";
 
@@ -111,6 +111,11 @@ export function sanitizeAdminRichHtml(value: string | null | undefined): string 
         };
       },
       img: (_tagName, attribs) => {
+        if (options?.publicContentImagesOnly &&
+          !isPublicContentMediaReference(attribs["data-storage-path"]) &&
+          !isPublicContentMediaReference(attribs.src)) {
+          return { tagName: "span", attribs: {} };
+        }
         const src =
           managedImageUrl(attribs["data-storage-path"]) ??
           managedImageUrl(attribs.src);
@@ -144,4 +149,10 @@ export function sanitizeAdminRichHtml(value: string | null | undefined): string 
       },
     },
   });
+}
+
+export function sanitizeAdminDescription(value: string | null | undefined): string | null {
+  const content = value?.trim();
+  if (!content) return null;
+  return /<[a-z][\s\S]*>/i.test(content) ? sanitizeAdminRichHtml(content) : content;
 }

@@ -6,6 +6,8 @@ import type {
 } from "@/lib/content/story-document";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
+import { sanitizeAdminRichHtml } from "@/lib/content/admin-rich-html";
+import { normalizeRichImageAlign, normalizeRichImageSize } from "@/lib/content/rich-image-layout";
 
 export type StoryTableOfContentsItem = {
   id: string;
@@ -116,9 +118,13 @@ function renderNode(
     const alt = typeof node.attrs?.alt === "string" ? node.attrs.alt : "";
     const caption =
       typeof node.attrs?.caption === "string" ? node.attrs.caption : null;
+    const size = normalizeRichImageSize(node.attrs?.imageSize);
+    const align = normalizeRichImageAlign(node.attrs?.imageAlign);
+    const widthClass = { full: "sm:w-full", large: "sm:w-[82%]", medium: "sm:w-[64%]", small: "sm:w-[46%]" }[size];
+    const alignClass = { left: "sm:mr-auto", center: "sm:mx-auto", right: "sm:ml-auto" }[align];
     if (!imageUrl || !alt) return null;
     return (
-      <figure key={key} className="my-10">
+      <figure key={key} className={`my-10 w-full ${widthClass} ${alignClass}`}>
         <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-slate-100">
           <Image
             src={imageUrl}
@@ -169,6 +175,15 @@ export function LegacyStoryContent({
 }) {
   const source = (content?.trim() || fallback.trim())
     .replace(/\\r\\n|\\n|\\r/g, "\n");
+  if (/<img\b/i.test(source)) {
+    const safeHtml = sanitizeAdminRichHtml(source, { publicContentImagesOnly: true });
+    return safeHtml ? (
+      <div
+        className="rich-content-media prose prose-lg mx-auto max-w-[70ch] prose-p:leading-8 prose-p:text-slate-800 prose-img:h-auto prose-img:rounded-lg md:prose-xl"
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
+    ) : null;
+  }
   const withoutExecutableBlocks = source.replace(
     /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
     " ",

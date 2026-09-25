@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -128,7 +129,13 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
   }, []);
 
   const hasInvalidAttraction = stops.some((stop) => !stop.attractionId);
-  const hasInvalidOrder = stops.some((stop) => stop.dayNumber < 1 || stop.displayOrder < 1);
+  const hasInvalidOrder = stops.some(
+    (stop) =>
+      !Number.isInteger(stop.dayNumber) ||
+      stop.dayNumber < 1 ||
+      !Number.isInteger(stop.displayOrder) ||
+      stop.displayOrder < 1
+  );
   // Build duplicate attraction info: which attractions appear more than once, and their day/order occurrences
   const attractionOccurrences = new Map<number, { id: string; dayNumber: number; displayOrder: number; name: string }[]>();
   stops.forEach((stop) => {
@@ -164,7 +171,9 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
     {
       label: "ลำดับและวันเดินทางถูกต้อง",
       complete: stops.length > 0 && !hasInvalidOrder,
-      help: "ระบบจะจัดลำดับใหม่ในแต่ละวันตอนบันทึก เพื่อลดความสับสน",
+      help: hasInvalidOrder
+        ? "วันเดินทางและลำดับต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป"
+        : "ระบบจะจัดลำดับใหม่ในแต่ละวันตอนบันทึก เพื่อลดความสับสน",
     },
     {
       label: "ไม่มีจุดแวะซ้ำ",
@@ -329,6 +338,18 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-8">
+          {attractions.length === 0 ? (
+            <AdminHelpPanel title="ยังไม่มีสถานที่สำหรับเพิ่มในเส้นทาง" tone="warning">
+              <p>ยังไม่มีสถานที่ท่องเที่ยวที่เปิดใช้งานและเผยแพร่ จึงเพิ่มจุดแวะใหม่ไม่ได้</p>
+              <Link
+                href="/admin/attractions"
+                className="mt-3 inline-flex min-h-11 items-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-amber-900 hover:bg-amber-100"
+              >
+                จัดการสถานที่ท่องเที่ยว
+              </Link>
+            </AdminHelpPanel>
+          ) : null}
+
           {stops.length === 0 ? (
             <AdminFormSection
               title="ยังไม่มีจุดแวะ"
@@ -338,7 +359,8 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
               <button
                 type="button"
                 onClick={() => handleAddStop(1)}
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#073F37] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#0A6B62]"
+                disabled={attractions.length === 0}
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#073F37] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus size={18} weight="bold" />
                 เพิ่มจุดแวะแรก
@@ -359,7 +381,8 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
                   <button
                     type="button"
                     onClick={() => handleAddStop(day)}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#0A6B62]/20 bg-white px-3 py-2 text-xs font-black text-[#0A6B62] transition hover:bg-[#E6F4EF]"
+                    disabled={attractions.length === 0}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#0A6B62]/20 bg-white px-3 py-2 text-xs font-black text-[#0A6B62] transition hover:bg-[#E6F4EF] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus size={15} weight="bold" />
                     เพิ่มจุดแวะ
@@ -419,10 +442,16 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
                               <input
                                 type="number"
                                 min={1}
+                                step={1}
+                                inputMode="numeric"
+                                aria-invalid={!Number.isInteger(stop.dayNumber) || stop.dayNumber < 1}
                                 value={stop.dayNumber}
                                 onChange={(event) => handleChange(stop.id, "dayNumber", Number(event.target.value))}
                                 className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
                               />
+                              {!Number.isInteger(stop.dayNumber) || stop.dayNumber < 1 ? (
+                                <span className="mt-1 block text-xs font-semibold text-rose-700">กรอกจำนวนเต็มตั้งแต่ 1 ขึ้นไป</span>
+                              ) : null}
                             </label>
 
                             <label className="block">
@@ -430,10 +459,16 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
                               <input
                                 type="number"
                                 min={1}
+                                step={1}
+                                inputMode="numeric"
+                                aria-invalid={!Number.isInteger(stop.displayOrder) || stop.displayOrder < 1}
                                 value={stop.displayOrder}
                                 onChange={(event) => handleChange(stop.id, "displayOrder", Number(event.target.value))}
                                 className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
                               />
+                              {!Number.isInteger(stop.displayOrder) || stop.displayOrder < 1 ? (
+                                <span className="mt-1 block text-xs font-semibold text-rose-700">กรอกจำนวนเต็มตั้งแต่ 1 ขึ้นไป</span>
+                              ) : null}
                             </label>
                           </div>
 
@@ -607,7 +642,8 @@ export function RouteStopsManager({ routeId, initialStops, attractions }: RouteS
           <button
             type="button"
             onClick={() => handleAddStop(days[days.length - 1] ?? 1)}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+            disabled={attractions.length === 0}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={17} weight="bold" />
             เพิ่มจุดแวะ

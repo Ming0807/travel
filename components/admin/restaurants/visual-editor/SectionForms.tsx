@@ -7,6 +7,7 @@ import { updateRestaurantAction } from "@/app/actions/admin-restaurant-actions";
 import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
+import { FormRichText } from "@/components/admin/forms/FormRichText";
 import type { AdminSelectOption } from "@/components/admin/restaurants/RestaurantForm";
 import { RestaurantCategoryPicker } from "@/components/admin/restaurants/RestaurantCategoryPicker";
 import type { AdminRestaurantCategory } from "@/lib/repositories/admin-restaurant-category.repository";
@@ -229,13 +230,10 @@ export function ContentForm({ restaurant, onClose }: SectionFormProps) {
         <input type="hidden" name="nameEn" value={restaurant.name_en ?? ""} />
 
         <div className="space-y-4">
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">รายละเอียดภาษาไทย</span>
-            <textarea className="mt-2 min-h-[150px] w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.description_th ?? ""} name="descriptionTh" />
-          </label>
+          <FormRichText label="รายละเอียดภาษาไทย" name="descriptionTh" defaultValue={restaurant.description_th ?? ""} imageLayoutControls minHeight={360} />
           <label className="block">
             <span className="text-sm font-bold text-slate-700">รายละเอียดภาษาอังกฤษ</span>
-            <textarea className="mt-2 min-h-[150px] w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.description_en ?? ""} name="descriptionEn" />
+            <textarea className="mt-2 min-h-[150px] w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.description_en ?? ""} name="descriptionEn" maxLength={30000} />
           </label>
         </div>
       </div>

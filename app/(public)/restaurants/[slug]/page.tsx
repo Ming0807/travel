@@ -11,6 +11,8 @@ import {
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PublicCtaBand } from "@/components/public/PublicCtaBand";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
+import { HospitalityGallery, HospitalityRichContent } from "@/components/hospitality/HospitalityRichContent";
+import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
 import { ReviewSubmissionForm } from "@/components/reviews/ReviewSubmissionForm";
 import { getPublicRestaurantDetail } from "@/lib/repositories/public-content.repository";
 import { getPublicRestaurantReviews } from "@/lib/repositories/public-review.repository";
@@ -30,8 +32,8 @@ export async function generateMetadata({
 
   return {
     title: `${restaurant.name} | ร้านอาหารในยะลา`,
-    description: restaurant.description?.slice(0, 160)
-      ?? `ข้อมูลร้านอาหาร ${restaurant.name} ในจังหวัดยะลา`,
+    description: restaurant.description ? plainTextFromLegacyHtml(restaurant.description).slice(0, 160)
+      : `ข้อมูลร้านอาหาร ${restaurant.name} ในจังหวัดยะลา`,
     alternates: { canonical: `/restaurants/${restaurant.slug}` },
   };
 }
@@ -71,13 +73,13 @@ export default async function RestaurantDetailPage({
             <section aria-labelledby="restaurant-about-heading">
               <h2 id="restaurant-about-heading" className="text-2xl font-bold">เกี่ยวกับร้านอาหาร</h2>
               {restaurant.description ? (
-                <p className="mt-4 max-w-[70ch] whitespace-pre-line text-base leading-8 text-black/70">
-                  {restaurant.description}
-                </p>
+                <HospitalityRichContent content={restaurant.description} />
               ) : (
                 <p className="mt-4 text-sm leading-6 text-black/65">ผู้ดูแลยังไม่ได้เพิ่มรายละเอียดร้านอาหาร</p>
               )}
             </section>
+
+            <HospitalityGallery images={restaurant.gallery} />
 
             <HospitalityRelatedAttractions items={restaurant.nearbyAttractions} />
 

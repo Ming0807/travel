@@ -9,6 +9,8 @@ import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminReadinessPanel, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
 import { ArrowSquareOut, CheckCircle, Image as ImageIcon, List, MapPin, WarningCircle } from "@phosphor-icons/react";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
+import { FormRichText } from "@/components/admin/forms/FormRichText";
+import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
 
 export type AdminSelectOption = {
   id: number;
@@ -144,7 +146,7 @@ export function AccommodationForm({
           title="สร้างที่พักสำเร็จ!"
           description="ระบบได้บันทึกข้อมูลที่พักใหม่ของคุณเรียบร้อยแล้ว คุณสามารถจัดการรูปภาพหรือกลับไปยังหน้ารายการได้"
           actions={[
-            { label: "อัปโหลดรูปภาพที่พัก", href: `/admin/accommodations/${newId}`, primary: true, icon: ImageIcon },
+            { label: "อัปโหลดรูปภาพที่พัก", href: `/admin/accommodations/${newId}/media`, primary: true, icon: ImageIcon },
             { label: "กลับไปหน้ารายการ", href: "/admin/accommodations", primary: false, icon: List },
           ]}
         />
@@ -268,17 +270,13 @@ export function AccommodationForm({
                 <h3 id="accommodation-section-content" className="text-lg font-black text-[#073F37]">รายละเอียดที่พัก</h3>
                 <p className="mt-1 text-sm text-slate-600">เขียนข้อมูลที่ช่วยให้นักท่องเที่ยวเข้าใจลักษณะและบรรยากาศของที่พัก</p>
               </div>
-              <div className="grid gap-5 lg:grid-cols-2">
-                <label className="block">
-                  <span className="text-sm font-bold text-slate-700">รายละเอียดภาษาไทย</span>
-                  <textarea className={`${textFieldClass()} min-h-52 resize-y leading-6`} defaultValue={accommodation?.description_th ?? ""} maxLength={5000} name="descriptionTh" />
-                  <span className="mt-1 block text-xs text-slate-500">สูงสุด 5,000 ตัวอักษร</span>
-                </label>
+              <div className="space-y-5">
+                <FormRichText label="รายละเอียดภาษาไทย" name="descriptionTh" defaultValue={accommodation?.description_th ?? ""} imageLayoutControls minHeight={360} error={fieldError("descriptionTh")} onValueChange={({ html }) => setDraft((current) => ({ ...current, descriptionTh: html }))} />
                 <label className="block">
                   <span className="text-sm font-bold text-slate-700">Description in English</span>
-                  <textarea className={`${textFieldClass()} min-h-52 resize-y leading-6`} defaultValue={accommodation?.description_en ?? ""} maxLength={5000} name="descriptionEn" />
-                  <span className="mt-1 block text-xs text-slate-500">Up to 5,000 characters</span>
+                  <textarea className={`${textFieldClass()} min-h-40 resize-y leading-6`} defaultValue={accommodation?.description_en ?? ""} maxLength={30000} name="descriptionEn" />
                 </label>
+                <p className="text-xs leading-5 text-slate-500">เพิ่มรูปประกอบในเนื้อหาได้หลายรูป ส่วนภาพปกและแกลเลอรีจัดการได้หลังสร้างที่พัก</p>
               </div>
             </section>
 
@@ -400,7 +398,7 @@ export function AccommodationForm({
               </div>
               <p className="flex items-start gap-2 text-sm text-slate-600"><MapPin size={17} className="mt-0.5 shrink-0 text-[#0A6B62]" />{provinceLabel}{draft.addressText.trim() ? ` · ${draft.addressText}` : ""}</p>
               {draft.priceRange ? <p className="text-sm font-bold text-slate-700">ช่วงราคา {draft.priceRange}</p> : null}
-              <p className="line-clamp-4 whitespace-pre-line text-sm leading-6 text-slate-600">{draft.descriptionTh.trim() || draft.descriptionEn.trim() || "เพิ่มรายละเอียดเพื่อแสดงข้อมูลที่พักแก่นักท่องเที่ยว"}</p>
+              <p className="line-clamp-4 whitespace-pre-line text-sm leading-6 text-slate-600">{plainTextFromLegacyHtml(draft.descriptionTh.trim() || draft.descriptionEn.trim()) || "เพิ่มรายละเอียดเพื่อแสดงข้อมูลที่พักแก่นักท่องเที่ยว"}</p>
               {draft.slug ? <p className="break-all border-t border-slate-100 pt-3 text-xs text-slate-500">/accommodations/{draft.slug}</p> : null}
             </div>
           </section>

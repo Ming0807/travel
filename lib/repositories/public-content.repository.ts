@@ -2,6 +2,7 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
+import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
 import {
   selectPublicAttractionMedia,
   type PublicAttractionImage,
@@ -279,6 +280,13 @@ function mapAttractionCard(row: DbRecord, thumbnailByStoragePath?: Map<string, s
   const media = publicAttractionMedia(row);
   const name = text(row.name_th, text(row.name_en, "Untitled attraction"));
   const category = text(attractionType?.type_name_th, text(attractionType?.type_name_en, "Uncategorized"));
+  const typeNamesEn = Array.from(new Set([
+    text(attractionType?.type_name_en),
+    ...records(row.category_filter).flatMap((assignment) => {
+      const assignedType = one(assignment.attraction_types);
+      return assignedType?.is_active === false ? [] : [text(assignedType?.type_name_en)];
+    }),
+  ].filter(Boolean)));
   const provinceName = text(province?.province_name_th, text(province?.province_name_en));
 
   return {
@@ -288,6 +296,8 @@ function mapAttractionCard(row: DbRecord, thumbnailByStoragePath?: Map<string, s
     name,
     province: provinceName,
     category,
+    typeNameEn: text(attractionType?.type_name_en),
+    typeNamesEn,
     description: text(row.short_description_th, text(row.short_description_en)),
     imageUrl: publicImage(row, thumbnailByStoragePath),
     imageAlt: text(media?.alt_text_th, text(media?.alt_text_en, `${name} destination image`)),
@@ -304,6 +314,8 @@ function toPublicAttractionCard(card: InternalAttractionCard, summary?: { rating
     province: card.province,
     district: card.district,
     category: card.category,
+    typeNameEn: card.typeNameEn,
+    typeNamesEn: card.typeNamesEn,
     description: card.description,
     imageUrl: card.imageUrl,
     imageAlt: card.imageAlt,
@@ -1602,6 +1614,7 @@ export type PublicRestaurantDetail = {
   longitude: number | null;
   imageUrl: string | null;
   imageAlt: string;
+  gallery: PublicAttractionImage[];
   isPublished: boolean;
   nearbyAttractions: PublicHospitalityRelatedAttraction[];
 };
@@ -1669,7 +1682,7 @@ function mapRestaurantRow(
     name,
     province: text(province?.province_name_th, text(province?.province_name_en, "")),
     foodType: categories[0]?.nameEn ?? categories[0]?.name ?? text(row.food_type, "Local"),
-    description: text(row.description_th, text(row.description_en, "")),
+    description: plainTextFromLegacyHtml(text(row.description_th, text(row.description_en, ""))),
     imageUrl: publicManagedImage(row, thumbnailByStoragePath),
     imageAlt: `ภาพร้าน${name}`,
     categories,
@@ -2134,7 +2147,7 @@ export async function getPublicRestaurantDetail(slug: string): Promise<PublicRes
         is_published,
         is_active,
         provinces (province_name_th, province_name_en, province_id),
-        content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order),
+        content_media (storage_path, media_type, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order),
         restaurant_attractions (
           display_order,
           distance_text,
@@ -2172,6 +2185,7 @@ export async function getPublicRestaurantDetail(slug: string): Promise<PublicRes
       thumbnailByStoragePath,
     );
     const name = text(row.name_th, text(row.name_en, slug));
+    const gallery = selectPublicAttractionMedia((Array.isArray(row.content_media) ? row.content_media : []) as PublicAttractionMediaRow[]).gallery;
 
     return {
       restaurantId: numberValue(row.restaurant_id),
@@ -2186,8 +2200,9 @@ export async function getPublicRestaurantDetail(slug: string): Promise<PublicRes
       contactInfo: text(row.contact_info) || null,
       latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
       longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),
-      imageUrl: publicManagedImage(row),
-      imageAlt: publicImageAlt(row, name),
+      imageUrl: gallery[0]?.url ?? publicManagedImage(row),
+      imageAlt: gallery[0]?.alt || publicImageAlt(row, name),
+      gallery,
       isPublished: Boolean(row.is_published),
       nearbyAttractions,
     };
@@ -2221,7 +2236,7 @@ function mapAccommodationRow(
     name,
     province: text(province?.province_name_th, text(province?.province_name_en, "")),
     accommodationType: text(row.accommodation_type, "Accommodation"),
-    description: text(row.description_th, text(row.description_en, "")),
+    description: plainTextFromLegacyHtml(text(row.description_th, text(row.description_en, ""))),
     imageUrl: publicManagedImage(row),
     thumbnailUrl: publicManagedImage(row, thumbnailByStoragePath),
     imageAlt: `ภาพที่พัก${name}`,
@@ -2371,6 +2386,7 @@ export type PublicAccommodationDetail = {
   longitude: number | null;
   imageUrl: string | null;
   imageAlt: string;
+  gallery: PublicAttractionImage[];
   isPublished: boolean;
   nearbyAttractions: PublicHospitalityRelatedAttraction[];
 };
@@ -2399,7 +2415,7 @@ export async function getPublicAccommodationDetail(slug: string): Promise<Public
         is_published,
         is_active,
         provinces (province_name_th, province_name_en, province_id),
-        content_media (storage_path, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order),
+        content_media (storage_path, media_type, alt_text_th, alt_text_en, is_cover, is_active, lifecycle_status, display_order),
         attraction_related_accommodations (
           display_order,
           attractions (
@@ -2438,6 +2454,7 @@ export async function getPublicAccommodationDetail(slug: string): Promise<Public
       thumbnailByStoragePath,
     );
     const name = text(row.name_th, text(row.name_en, slug));
+    const gallery = selectPublicAttractionMedia((Array.isArray(row.content_media) ? row.content_media : []) as PublicAttractionMediaRow[]).gallery;
 
     return {
       accommodationId: numberValue(row.accommodation_id),
@@ -2452,8 +2469,9 @@ export async function getPublicAccommodationDetail(slug: string): Promise<Public
       priceRange: text(row.price_range) || null,
       latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),
       longitude: row.longitude === null || row.longitude === undefined ? null : numberValue(row.longitude),
-      imageUrl: publicManagedImage(row),
-      imageAlt: publicImageAlt(row, name),
+      imageUrl: gallery[0]?.url ?? publicManagedImage(row),
+      imageAlt: gallery[0]?.alt || publicImageAlt(row, name),
+      gallery,
       isPublished: Boolean(row.is_published),
       nearbyAttractions,
     };

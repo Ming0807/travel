@@ -4,6 +4,8 @@ import { SiteFooter } from "../layout/SiteFooter";
 import { SITE_SETTING_DEFAULTS } from "@/lib/config/site-settings";
 import {
   listPublicAttractionCards,
+  listAvailablePublicRestaurantCategories,
+  listPublicAccommodations,
   listPublicRestaurants,
   listPublicRoutes,
   listPublicStories,
@@ -25,17 +27,24 @@ export async function Homepage() {
   const media = { ...SITE_SETTING_DEFAULTS.homepage_highlights, ...mediaSetting };
   const routeLimit = Math.max(1, Math.min(12, routeSetting.limit ?? 3));
   const storiesLimit = Math.max(1, Math.min(8, storiesSetting.limit ?? 4));
-  const [attractions, restaurants, stories, routeState, analytics] = await Promise.all([
+  const [attractions, discoveryAttractions, restaurants, accommodations, stories, routeState, restaurantCategories, analytics] = await Promise.all([
     listPublicAttractionCards(8, { featuredSlugs: featured.slugs ?? [] }).catch(() => []),
+    listPublicAttractionCards(24).catch(() => []),
     listPublicRestaurants({ limit: 4 }).catch(() => []),
+    listPublicAccommodations({ limit: 1 }).catch(() => []),
     listPublicStories({ limit: storiesLimit }).catch(() => []),
     (routeSetting.slugs?.length
       ? listPublicRoutes(routeLimit, routeSetting.slugs)
       : listPublicRoutes(routeLimit))
       .then((items) => ({ items, unavailable: false }))
       .catch(() => ({ items: [], unavailable: true })),
+    listAvailablePublicRestaurantCategories().catch(() => ({ items: [], state: "unavailable" as const })),
     getPublicDashboardAnalytics({}).catch(() => null),
   ]);
+  const cafeCategory = restaurantCategories.items.find((category) => category.sectionKey === "cafes");
+  const cafeRestaurants = cafeCategory
+    ? await listPublicRestaurants({ categorySlug: cafeCategory.slug, limit: 1 }).catch(() => [])
+    : [];
 
   const kpis = new Map(analytics?.kpis.map((kpi) => [kpi.key, kpi.value]) ?? []);
   const stats = [
@@ -52,7 +61,11 @@ export async function Homepage() {
       hero={hero}
       media={media}
       attractions={attractions}
+      discoveryAttractions={discoveryAttractions}
       restaurants={restaurants}
+      accommodations={accommodations}
+      cafeRestaurant={cafeRestaurants[0] ?? null}
+      cafeCategorySlug={cafeCategory?.slug ?? null}
       routes={routeState.items}
       stories={stories}
       stats={stats}

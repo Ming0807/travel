@@ -43,6 +43,17 @@ const booleanFromForm = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+const storyDocumentFromForm = z.preprocess((value) => {
+  if (value === undefined || value === "") return undefined;
+  if (typeof value !== "string") return value;
+  if (value.length > 500_000) return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}, storyDocumentSchema.nullable().optional());
+
 const storyStatusSchema = z.enum([
   "draft",
   "submitted",
@@ -124,6 +135,7 @@ export const adminStoryMutationSchema = z.object({
     ),
   excerpt: optionalText,
   content: optionalText,
+  contentDocument: storyDocumentFromForm,
   provinceId: optionalId,
   category: optionalShortText,
   isPublished: booleanFromForm,
@@ -146,6 +158,15 @@ export const adminStoryMutationSchema = z.object({
 
 export const adminStoryIdSchema = z.object({
   storyId: requiredId,
+});
+
+export const storyCoverInputSchema = z.object({
+  storyId: requiredId,
+  assetId: z.string().uuid().nullable(),
+  altText: z.string().trim().min(1).max(255).nullable(),
+}).refine((value) => value.assetId === null || value.altText !== null, {
+  path: ["altText"],
+  message: "Cover image requires alt text.",
 });
 
 const editorialChangeSchema = z

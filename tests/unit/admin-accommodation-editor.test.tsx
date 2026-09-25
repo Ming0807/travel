@@ -7,6 +7,11 @@ vi.mock("@/app/actions/admin-accommodation-actions", () => ({
   createAccommodationAction: vi.fn(),
   updateAccommodationAction: vi.fn(),
 }));
+vi.mock("@/components/admin/forms/FormRichText", () => ({
+  FormRichText: ({ label, name, defaultValue }: { label: string; name: string; defaultValue?: string }) => (
+    <label>{label}<textarea name={name} defaultValue={defaultValue} /></label>
+  ),
+}));
 
 import { AccommodationForm } from "@/components/admin/accommodations/AccommodationForm";
 

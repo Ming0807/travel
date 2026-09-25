@@ -7,11 +7,11 @@ import type { AdminStoryRow } from "@/lib/repositories/admin-story.repository";
 // ── Mocks ──────────────────────────────────────────────────────────────────
 
 const mocks = vi.hoisted(() => ({
-  updateStory: vi.fn(),
+  saveCover: vi.fn(),
 }));
 
 vi.mock("@/app/actions/admin-story-actions", () => ({
-  updateStoryAction: mocks.updateStory,
+  saveStoryCoverAction: mocks.saveCover,
   saveStoryEditorialChangeAction: vi.fn(),
 }));
 
@@ -76,12 +76,12 @@ const baseStory: AdminStoryRow = {
 describe("CoverForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.updateStory.mockResolvedValue({
+    mocks.saveCover.mockResolvedValue({
       success: true,
       data: {
-        id: 1,
-        slug: "test-story",
-        updatedAt: "2026-07-18T00:00:00.000Z",
+        mediaId: 42,
+        imageUrl: "/site-media/stories/test-cover.webp",
+        altText: "ภาพสถานที่ในเรื่องราว",
       },
     });
   });
@@ -123,17 +123,7 @@ describe("CoverForm", () => {
     ).toBeInTheDocument();
   });
 
-  it("hidden coverMediaId input is empty string when no media selected", () => {
-    render(<CoverForm story={baseStory} onClose={vi.fn()} />);
-
-        const hiddenInput = document.querySelector(
-      'input[name="coverMediaId"]',
-    ) as HTMLInputElement;
-    expect(hiddenInput).not.toBeNull();
-    expect(hiddenInput.value).toBe("");
-  });
-
-  it("stores selected media asset storage path when media_assets id is a UUID", async () => {
+  it("saves the selected media asset UUID and alt text without resubmitting story content", async () => {
     render(<CoverForm story={baseStory} onClose={vi.fn()} />);
 
     // Open the media picker
@@ -142,20 +132,13 @@ describe("CoverForm", () => {
     // Click the mock "Pick Media Asset" button (uuid id, like media_assets.id)
     await userEvent.click(screen.getByText("Pick Media Asset"));
 
-    // The legacy content_media id stays empty, but the storage path persists the selection.
-        const hiddenInput = document.querySelector(
-      'input[name="coverMediaId"]',
-    ) as HTMLInputElement;
-    const storagePathInput = document.querySelector(
-      'input[name="coverStoragePath"]',
-    ) as HTMLInputElement;
-    expect(hiddenInput).not.toBeNull();
-    expect(hiddenInput.value).toBe("");
-    expect(storagePathInput).not.toBeNull();
-    expect(storagePathInput.value).toBe("stories/test-cover.webp");
-    // Must be a string, not NaN
-    expect(hiddenInput.value).not.toBe("NaN");
-    expect(typeof hiddenInput.value).toBe("string");
+    await userEvent.type(screen.getByLabelText("คำอธิบายรูปภาพปก"), "ภาพสถานที่ในเรื่องราว");
+    await userEvent.click(screen.getByRole("button", { name: "บันทึกรูปภาพ" }));
+    await waitFor(() => expect(mocks.saveCover).toHaveBeenCalledWith({
+      storyId: 1,
+      assetId: "f04a9a4e-4e2a-4f7f-9fb5-000000000042",
+      altText: "ภาพสถานที่ในเรื่องราว",
+    }));
   });
 
   it("shows empty cover placeholder when no image selected", () => {
@@ -191,13 +174,10 @@ describe("CoverForm", () => {
 
     // The public preview should not update until the server save succeeds.
     expect(onCoverChange).not.toHaveBeenCalled();
-    const actionInput = document.querySelector(
-      'input[name="coverMediaAction"]',
-    ) as HTMLInputElement;
-    expect(actionInput).not.toBeNull();
-    expect(actionInput.value).toBe("clear");
     // Preview should show empty state
     expect(screen.getByText("ยังไม่ได้เลือกรูปภาพ")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "บันทึกรูปภาพ" }));
+    await waitFor(() => expect(mocks.saveCover).toHaveBeenCalledWith({ storyId: 1, assetId: null, altText: null }));
   });
 
   it("shows dirty state indicator when image is changed", async () => {
@@ -225,29 +205,23 @@ describe("CoverForm", () => {
     ).toBeInTheDocument();
   });
 
-  it("reports the new server version after a cover save", async () => {
-    const onEditorialSaved = vi.fn();
+  it("updates the cover preview only after a successful save", async () => {
+    const onCoverChange = vi.fn();
     render(
       <CoverForm
         story={baseStory}
         onClose={vi.fn()}
-        onEditorialSaved={onEditorialSaved}
+        onCoverChange={onCoverChange}
       />
     );
 
     await userEvent.click(screen.getByText("เลือกจาก Media Library"));
     await userEvent.click(screen.getByText("Pick Media Asset"));
+    await userEvent.type(screen.getByLabelText("คำอธิบายรูปภาพปก"), "ภาพสถานที่ในเรื่องราว");
     await userEvent.click(screen.getByRole("button", { name: "บันทึกรูปภาพ" }));
 
     await waitFor(() =>
-      expect(onEditorialSaved).toHaveBeenCalledWith(
-        expect.objectContaining({
-          updatedAt: "2026-07-18T00:00:00.000Z",
-          patch: expect.objectContaining({
-            updated_at: "2026-07-18T00:00:00.000Z",
-          }),
-        })
-      )
+      expect(onCoverChange).toHaveBeenCalledWith(42, "/site-media/stories/test-cover.webp", "ภาพสถานที่ในเรื่องราว")
     );
   });
 });

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useActionState,
   useCallback,
   useEffect,
   useRef,
@@ -9,12 +8,11 @@ import {
 } from "react";
 import {
   saveStoryEditorialChangeAction,
-  updateStoryAction,
+  saveStoryCoverAction,
 } from "@/app/actions/admin-story-actions";
 import {
   AdminFormErrorSummary,
   AdminSaveBar,
-  type AdminFormActionState,
 } from "@/components/admin/forms/AdminFormUX";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
@@ -49,7 +47,7 @@ type SectionFormProps = {
   }[];
   coverMediaId?: number | null;
   coverMediaUrl?: string | null;
-  onCoverChange?: (mediaId: number | null, mediaUrl: string | null) => void;
+  onCoverChange?: (mediaId: number | null, mediaUrl: string | null, altText: string | null) => void;
   onContentSaved?: (html: string, document: StoryDocument) => void;
   onEditorialSaved?: (result: {
     updatedAt: string;
@@ -58,11 +56,6 @@ type SectionFormProps = {
   }) => void;
   onDirtyChange?: (isDirty: boolean) => void;
 };
-
-function toFiniteMediaId(value: unknown): number | null {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-}
 
 export function HeaderForm({
   story,
@@ -275,7 +268,10 @@ export function ContentForm({
         editorInitializedRef.current = true;
         setHtml(value.html);
         setDocument(value.document);
-        if (!initialDocument) {
+        if (
+          initialDocument &&
+          JSON.stringify(value.document?.content) === JSON.stringify(initialDocument.content)
+        ) {
           setSavedHtml(value.html);
           setSavedDocument(value.document);
         }
@@ -382,6 +378,11 @@ export function ContentForm({
             มีการแก้ไขที่ยังไม่ได้บันทึก
           </p>
         ) : null}
+        {!initialDocument && initialHtml.trim() ? (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+            เนื้อหาเดิมยังเป็น HTML กดบันทึกเนื้อหาเพื่อแปลงเป็นรูปแบบที่หน้าเผยแพร่แสดงรูปและข้อความได้ครบ
+          </p>
+        ) : null}
         <FormRichText
           key={editorKey}
           label="เนื้อหาฉบับเต็ม"
@@ -389,6 +390,7 @@ export function ContentForm({
           defaultValue={html}
           defaultDocument={document}
           documentName="contentDocument"
+          imageLayoutControls
           minHeight={400}
           placeholder="เริ่มเขียนเนื้อหาบทความ..."
           onValueChange={handleEditorChange}
@@ -851,58 +853,39 @@ export function SettingsForm({
 export function CoverForm({
   story,
   onClose,
-  coverMediaId: cmId,
   coverMediaUrl: cmUrl,
   onCoverChange,
-  onEditorialSaved,
 }: SectionFormProps) {
-  const action = updateStoryAction.bind(null, story.story_id);
-  const [state, formAction, isPending] = useActionState<
-    AdminFormActionState<{ id: number; slug: string; updatedAt?: string }>,
-    FormData
-  >(action, { success: false });
   const [imagePreviewUrl, setImagePreviewUrl] = useState(cmUrl ?? "");
-  const [currentMediaId, setCurrentMediaId] = useState<number | null>(() =>
-    toFiniteMediaId(cmId),
-  );
-  const [coverMediaAction, setCoverMediaAction] = useState<
-    "none" | "set" | "clear"
-  >("none");
-  const [coverStoragePath, setCoverStoragePath] = useState("");
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [altText, setAltText] = useState(story.cover_media?.alt_text_th ?? story.cover_media?.alt_text_en ?? "");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const isDirty =
-    currentMediaId !== toFiniteMediaId(cmId) ||
-    imagePreviewUrl !== (cmUrl ?? "");
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isDirty = selectedAssetId !== null || imagePreviewUrl !== (cmUrl ?? "");
 
-  useEffect(() => {
-    if (state?.success) {
-      if (onCoverChange) onCoverChange(currentMediaId, imagePreviewUrl || null);
-      if (state.data?.updatedAt) {
-        onEditorialSaved?.({
-          updatedAt: state.data.updatedAt,
-          revisionNumber: 0,
-          patch: { updated_at: state.data.updatedAt },
-        });
-      }
-      onClose();
+  const handleSave = async () => {
+    if (!isDirty || (imagePreviewUrl && (!selectedAssetId || !altText.trim()))) return;
+    setIsPending(true);
+    setError(null);
+    const result = await saveStoryCoverAction({
+      storyId: story.story_id,
+      assetId: imagePreviewUrl ? selectedAssetId : null,
+      altText: imagePreviewUrl ? altText.trim() : null,
+    });
+    setIsPending(false);
+    if (!result.success || !result.data) {
+      setError(result.error ?? "ยังบันทึกรูปภาพปกไม่ได้ กรุณาลองอีกครั้ง");
+      return;
     }
-  }, [
-    currentMediaId,
-    imagePreviewUrl,
-    onClose,
-    onCoverChange,
-    onEditorialSaved,
-    state.data?.updatedAt,
-    state?.success,
-  ]);
+    onCoverChange?.(result.data.mediaId, result.data.imageUrl, result.data.altText);
+    onClose();
+  };
 
   return (
-    <form action={formAction} className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
-        <AdminFormErrorSummary
-          error={state?.error}
-          fieldErrors={state?.fieldErrors}
-        />
+        <AdminFormErrorSummary error={error} />
 
         {isDirty ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-800 flex items-center gap-2">
@@ -910,24 +893,6 @@ export function CoverForm({
             มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก
           </div>
         ) : null}
-
-        {/* Hidden fields */}
-        <input type="hidden" name="title" value={story.title ?? ""} />
-        <input type="hidden" name="slug" value={story.slug ?? ""} />
-        <input type="hidden" name="excerpt" value={story.excerpt ?? ""} />
-        <input type="hidden" name="content" value={story.content ?? ""} />
-        <input
-          type="hidden"
-          name="isPublished"
-          value={story.is_published ? "true" : "false"}
-        />
-        <input type="hidden" name="status" value={story.status} />
-        <input type="hidden" name="category" value={story.category ?? ""} />
-        <input
-          type="hidden"
-          name="provinceId"
-          value={story.province_id ?? ""}
-        />
 
         <div className="space-y-4">
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
@@ -958,9 +923,8 @@ export function CoverForm({
                   type="button"
                   onClick={() => {
                     setImagePreviewUrl("");
-                    setCurrentMediaId(null);
-                    setCoverMediaAction("clear");
-                    setCoverStoragePath("");
+                    setSelectedAssetId(null);
+                    setAltText("");
                   }}
                   className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
                 >
@@ -969,6 +933,19 @@ export function CoverForm({
               ) : null}
             </div>
           </div>
+          {imagePreviewUrl ? (
+            <label className="block text-sm font-bold text-slate-700">
+              คำอธิบายรูปภาพปก
+              <input
+                aria-label="คำอธิบายรูปภาพปก"
+                value={altText}
+                onChange={(event) => setAltText(event.target.value)}
+                maxLength={255}
+                className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-normal"
+                placeholder="บรรยายสิ่งที่เห็นในรูป"
+              />
+            </label>
+          ) : null}
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
             ใช้ปุ่ม &ldquo;เลือกจาก Media Library&rdquo;
             ด้านบนเพื่อเลือกรูปภาพที่อัปโหลดไว้แล้ว หรืออัปโหลดรูปใหม่ผ่าน Media
@@ -978,34 +955,25 @@ export function CoverForm({
       </div>
       <div className="shrink-0 border-t border-slate-200 p-4 bg-slate-50">
         <AdminSaveBar
-          cancelHref="#"
           isPending={isPending}
+          disabled={!isDirty || (!!imagePreviewUrl && (!selectedAssetId || !altText.trim()))}
           onCancel={onClose}
+          onSubmit={handleSave}
           submitLabel="บันทึกรูปภาพ"
         />
       </div>
-
-      <input
-        type="hidden"
-        name="coverMediaId"
-        value={currentMediaId ? String(currentMediaId) : ""}
-      />
-      <input type="hidden" name="coverMediaAction" value={coverMediaAction} />
-      <input type="hidden" name="coverStoragePath" value={coverStoragePath} />
 
       <MediaPickerModal
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelectAsset={(asset) => {
-          const mediaId = toFiniteMediaId(asset.id);
-          setCurrentMediaId(mediaId);
+          setSelectedAssetId(String(asset.id));
           setImagePreviewUrl(asset.url);
-          setCoverStoragePath(asset.storage_path);
-          setCoverMediaAction("set");
+          setAltText("");
         }}
         onSelect={() => {}}
         title="เลือกรูปภาพปกเรื่องราว"
       />
-    </form>
+    </div>
   );
 }

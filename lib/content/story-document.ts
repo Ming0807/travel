@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { isPublicContentMediaReference } from "@/lib/media/storage-paths";
+import { RICH_IMAGE_ALIGNS, RICH_IMAGE_SIZES } from "@/lib/content/rich-image-layout";
 
 export const STORY_DOCUMENT_SCHEMA_VERSION = 2 as const;
 export const LEGACY_STORY_DOCUMENT_SCHEMA_VERSION = 1 as const;
@@ -74,14 +76,16 @@ function isSafeStoragePath(value: unknown): value is string {
     typeof value === "string" &&
     value.length > 0 &&
     value.length <= 2_048 &&
-    !value.startsWith("/") &&
-    !value.includes("..") &&
-    !value.includes("\\") &&
-    !value.includes(":") &&
-    !value.includes("?") &&
-    !value.includes("#") &&
-    !/[\x00-\x1f\x7f]/.test(value) &&
-    !/%2[ef]/i.test(value)
+    (isPublicContentMediaReference(value) || (
+      !value.startsWith("/") &&
+      !value.includes("..") &&
+      !value.includes("\\") &&
+      !value.includes(":") &&
+      !value.includes("?") &&
+      !value.includes("#") &&
+      !/[\x00-\x1f\x7f]/.test(value) &&
+      !/%2[ef]/i.test(value)
+    ))
   );
 }
 
@@ -253,9 +257,11 @@ function validateNode(
       Number.isInteger(attrs.mediaId) &&
       Number(attrs.mediaId) > 0;
     const managedReference =
-      hasOnlyKeys(attrs, ["assetId", "storagePath", "alt", "caption"]) &&
+      hasOnlyKeys(attrs, ["assetId", "storagePath", "alt", "caption", "imageSize", "imageAlign"]) &&
       isUuid(attrs.assetId) &&
-      isSafeStoragePath(attrs.storagePath);
+      isSafeStoragePath(attrs.storagePath) &&
+      (attrs.imageSize === undefined || RICH_IMAGE_SIZES.includes(attrs.imageSize as typeof RICH_IMAGE_SIZES[number])) &&
+      (attrs.imageAlign === undefined || RICH_IMAGE_ALIGNS.includes(attrs.imageAlign as typeof RICH_IMAGE_ALIGNS[number]));
     const validReference =
       schemaVersion === LEGACY_STORY_DOCUMENT_SCHEMA_VERSION
         ? legacyReference

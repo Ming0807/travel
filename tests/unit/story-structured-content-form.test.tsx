@@ -173,4 +173,11 @@ describe("structured story content form", () => {
 
     expect(event.defaultPrevented).toBe(true);
   });
+
+  it("lets an editor save legacy HTML as a structured document", async () => {
+    const legacyStory = { ...story, content_document: null, content: "<p>เนื้อหาเดิม</p>" };
+    render(<ContentForm story={legacyStory} onClose={vi.fn()} onDirtyChange={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: "จำลองการแก้ไขเนื้อหา" }));
+    expect(screen.getByRole("button", { name: "บันทึกเนื้อหา" })).toBeEnabled();
+  });
 });

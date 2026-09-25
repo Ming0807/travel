@@ -371,6 +371,13 @@ describe("adminStoryMutationSchema", () => {
     expect(result.slug).toBe("yala-beach-trip");
   });
 
+  it("parses canonical story content from the rich-text form", () => {
+    const contentDocument = { type: "doc", version: 2, content: [{ type: "paragraph", content: [{ type: "text", text: "เนื้อหา" }] }] };
+    const result = adminStoryMutationSchema.parse({ ...validPayload, contentDocument: JSON.stringify(contentDocument) });
+    expect(result.contentDocument).toEqual(contentDocument);
+    expect(adminStoryMutationSchema.safeParse({ ...validPayload, contentDocument: "not json" }).success).toBe(false);
+  });
+
   it("rejects empty title", () => {
     expect(() => adminStoryMutationSchema.parse({ ...validPayload, title: "" })).toThrow();
   });

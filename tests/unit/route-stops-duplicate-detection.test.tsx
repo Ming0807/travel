@@ -551,7 +551,7 @@ describe("RouteStopsManager — edge cases", () => {
     expect(screen.getByText("แต่ละสถานที่ปรากฏในเส้นทางได้เพียงครั้งเดียว")).toBeInTheDocument();
   });
 
-  it("add stop does not crash when attractions array is empty", () => {
+  it("prevents adding a blank stop when attractions array is empty", () => {
     render(
       <RouteStopsManager
         routeId={1}
@@ -560,15 +560,8 @@ describe("RouteStopsManager — edge cases", () => {
       />
     );
 
-    // Click the 'เพิ่มจุดแวะแรก' button (shown when stops are empty)
-    const addFirstButton = screen.getByText("เพิ่มจุดแวะแรก");
-    act(() => {
-      fireEvent.click(addFirstButton);
-    });
-
-    // Stop should be added with default attractionId=0 (no attraction selected)
-    // The select should show the placeholder "เลือกสถานที่"
-    expect(screen.getByText("เลือกสถานที่")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "เพิ่มจุดแวะแรก" })).toBeDisabled();
+    expect(screen.queryByText("เลือกสถานที่")).not.toBeInTheDocument();
   });
 
   it("does not show duplicate toast when adding stop with empty attractions", () => {
@@ -643,6 +636,31 @@ describe("RouteStopsManager — edge cases", () => {
     expect(submitButton).not.toBeDisabled();
   });
 
+  it("blocks saving when day or order is not a positive integer", () => {
+    render(
+      <RouteStopsManager
+        routeId={1}
+        initialStops={stopsNoDuplicates}
+        attractions={mockAttractions}
+      />
+    );
+
+    fireEvent.change(screen.getAllByLabelText("วันเดินทาง")[0], { target: { value: "1.5" } });
+    expect(screen.getByRole("button", { name: /บันทึกจุดแวะของเส้นทาง/ })).toBeDisabled();
+
+    fireEvent.change(screen.getAllByLabelText("วันเดินทาง")[0], { target: { value: "1" } });
+    fireEvent.change(screen.getAllByLabelText("ลำดับในวัน")[0], { target: { value: "0.5" } });
+    expect(screen.getByRole("button", { name: /บันทึกจุดแวะของเส้นทาง/ })).toBeDisabled();
+  });
+
+  it("explains when no active published attractions are available for new stops", () => {
+    render(<RouteStopsManager routeId={1} initialStops={[]} attractions={[]} />);
+
+    expect(screen.getByText(/ยังไม่มีสถานที่ท่องเที่ยวที่เปิดใช้งานและเผยแพร่/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /จัดการสถานที่ท่องเที่ยว/ })).toHaveAttribute("href", "/admin/attractions");
+    expect(screen.getByRole("button", { name: /บันทึกจุดแวะของเส้นทาง/ })).toBeDisabled();
+  });
+
   it("does not crash when single stop has attraction_id=0 (unselected attraction)", () => {
     const singleStopUnselected: AdminRouteStopRow[] = [
       { stop_id: 1, route_id: 1, attraction_id: 0, day_number: 1, display_order: 1, stop_note_th: "", stop_note_en: "", attraction_name_th: "" },
@@ -713,6 +731,32 @@ describe("RouteVisualEditor — duplicate detection", () => {
 
     // No duplicate warning
     expect(screen.queryByText("พบจุดแวะซ้ำ")).not.toBeInTheDocument();
+  });
+
+  it("previews actual stop names grouped by their saved day", () => {
+    render(
+      <RouteVisualEditor
+        route={mockRouteRow}
+        stops={stopsNoDuplicates}
+        attractions={mockAttractions}
+      />
+    );
+
+    expect(screen.getByText("หาดทรายขาว")).toBeInTheDocument();
+    expect(screen.getByText("น้ำตกศรีพังงา")).toBeInTheDocument();
+    expect(screen.getByText("เขาหลง")).toBeInTheDocument();
+    expect(screen.queryByText(/จุดแวะพักในบันทึก/)).not.toBeInTheDocument();
+  });
+
+  it("shows a recovery state if saved stop details are unavailable", () => {
+    render(<RouteVisualEditor route={mockRouteRow} />);
+
+    expect(screen.getByText("โหลดรายละเอียดจุดแวะไม่สำเร็จ")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /จัดการจุดแวะพัก/ })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /จัดการจุดแวะพัก/ })[0]).toHaveAttribute(
+      "href",
+      "/admin/routes/1/stops"
+    );
   });
 
   it("shows duplicate toast on mount when duplicates exist", async () => {

@@ -183,7 +183,7 @@ export function StoryVisualEditor({
     legacyContent: contentHtml,
     cover: coverMediaUrl
       ? {
-          mediaId: editorStory.cover_media?.media_id ?? 1,
+          mediaId: coverMediaId ?? editorStory.cover_media?.media_id ?? 1,
           isActive: editorStory.cover_media?.is_active ?? true,
           altText:
             editorStory.cover_media?.alt_text_th ??
@@ -440,10 +440,18 @@ export function StoryVisualEditor({
           onClose={() => setActiveSection(null)}
           coverMediaId={coverMediaId}
           coverMediaUrl={coverMediaUrl}
-          onEditorialSaved={handleEditorialSaved}
-          onCoverChange={(id, url) => {
+          onCoverChange={(id, url, altText) => {
             setCoverMediaId(id);
             setCoverMediaUrl(url);
+            setEditorStory((current) => ({
+              ...current,
+              cover_media: id ? {
+                media_id: id,
+                is_active: true,
+                alt_text_th: altText,
+                alt_text_en: null,
+              } : null,
+            }));
           }}
         />
       </Drawer>

@@ -254,6 +254,64 @@ export async function getCoverMediaForEntity(
   };
 }
 
+export async function setStoryCoverFromLibraryAsset(
+  storyId: number,
+  assetId: string,
+  altText: string,
+): Promise<{ mediaId: number; storagePath: string }> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data: asset, error: assetError } = await supabase
+    .from("media_assets")
+    .select("storage_path, mime_type, lifecycle_status")
+    .eq("id", assetId)
+    .maybeSingle();
+  if (assetError || !asset || asset.lifecycle_status !== "active" || !asset.mime_type?.startsWith("image/")) {
+    throw new Error("INVALID_STORY_COVER_ASSET");
+  }
+
+  const { data: existing, error: lookupError } = await supabase
+    .from("content_media")
+    .select("media_id")
+    .eq("story_id", storyId)
+    .eq("storage_path", asset.storage_path)
+    .limit(1)
+    .maybeSingle();
+  if (lookupError) throw new Error("STORY_COVER_LOOKUP_FAILED");
+
+  let mediaId: number;
+  if (existing) {
+    mediaId = Number(existing.media_id);
+    const { error } = await supabase.from("content_media").update({
+      alt_text_th: altText,
+      is_active: true,
+      lifecycle_status: "active",
+      is_cover: true,
+    }).eq("media_id", mediaId).eq("story_id", storyId);
+    if (error) throw new Error("STORY_COVER_SAVE_FAILED");
+  } else {
+    const { data: inserted, error } = await supabase.from("content_media").insert({
+      story_id: storyId,
+      media_type: "image",
+      storage_path: asset.storage_path,
+      alt_text_th: altText,
+      is_active: true,
+      lifecycle_status: "active",
+      is_cover: true,
+    }).select("media_id").single();
+    if (error || !inserted) throw new Error("STORY_COVER_SAVE_FAILED");
+    mediaId = Number(inserted.media_id);
+  }
+
+  const { error: clearError } = await supabase.from("content_media")
+    .update({ is_cover: false })
+    .eq("story_id", storyId)
+    .eq("is_cover", true)
+    .neq("media_id", mediaId);
+  if (clearError) throw new Error("STORY_COVER_SAVE_FAILED");
+
+  return { mediaId, storagePath: asset.storage_path };
+}
+
 /**
  * Link an existing content_media record to an entity and mark it as cover.
  * Unsets any previous cover for the same entity first.

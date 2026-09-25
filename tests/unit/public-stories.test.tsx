@@ -180,6 +180,20 @@ describe("public story presentation", () => {
     expect(container.innerHTML).not.toContain("onerror");
   });
 
+  it("renders managed images from legacy story HTML without unsafe attributes", () => {
+    const { container } = render(
+      <LegacyStoryContent
+        content={'<p>บรรยากาศชุมชน</p><img src="/site-media/content-media/stories/community.webp" alt="ชุมชนหน้าถ้ำ" onerror="alert(1)"><script>alert(2)</script>'}
+        fallback=""
+      />,
+    );
+
+    expect(screen.getByText("บรรยากาศชุมชน")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "ชุมชนหน้าถ้ำ" })).toBeInTheDocument();
+    expect(container.querySelector("script")).toBeNull();
+    expect(container.innerHTML).not.toContain("onerror");
+  });
+
   it("turns escaped legacy newlines into readable paragraphs", () => {
     const { container } = render(
       <LegacyStoryContent

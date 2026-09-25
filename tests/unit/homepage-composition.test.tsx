@@ -15,6 +15,8 @@ vi.mock("@/components/layout/SiteFooter", () => ({ SiteFooter: () => <footer dat
 vi.mock("@/lib/repositories/public-content.repository", () => ({
   listPublicAttractionCards: vi.fn().mockResolvedValue([]),
   listPublicRestaurants: vi.fn().mockResolvedValue([]),
+  listPublicAccommodations: vi.fn().mockResolvedValue([]),
+  listAvailablePublicRestaurantCategories: vi.fn().mockResolvedValue({ items: [], state: "ready" }),
   listPublicStories: vi.fn().mockResolvedValue([]),
   listPublicRoutes: vi.fn().mockResolvedValue([]),
 }));

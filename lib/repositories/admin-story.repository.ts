@@ -170,7 +170,7 @@ export function toStoryEditorialState(row: AdminStoryRow): StoryEditorialState {
   };
 }
 
-function toPayload(input: AdminStoryMutationInput) {
+function toPayload(input: AdminStoryMutationInput, create = false) {
   return {
     slug: input.slug,
     title: input.title,
@@ -178,9 +178,11 @@ function toPayload(input: AdminStoryMutationInput) {
     content: input.content,
     province_id: input.provinceId,
     category: input.category,
-    is_published: input.isPublished,
-    published_at: input.isPublished ? new Date().toISOString() : null,
-    ...(input.status && { status: input.status })
+    ...(input.contentDocument !== undefined && {
+      content_document: input.contentDocument,
+      content_schema_version: input.contentDocument?.version ?? 1,
+    }),
+    ...(create && { status: "draft", is_published: false, published_at: null }),
   };
 }
 
@@ -312,7 +314,7 @@ export async function createAdminStory(input: AdminStoryMutationInput): Promise<
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("travel_stories")
-    .insert(toPayload(input))
+    .insert(toPayload(input, true))
     .select("*")
     .single();
 
