@@ -83,14 +83,15 @@ describe("public navigation", () => {
         </PublicChrome>,
       );
 
-      expect(screen.getAllByRole("banner")).toHaveLength(2);
-      expect(screen.getByRole("navigation", { name: "เมนูหลัก" })).toBeInTheDocument();
+      expect(screen.getAllByRole("banner")).toHaveLength(pathname === "/" ? 1 : 2);
+      expect(screen.getByRole("navigation", { name: pathname === "/" ? "เมนูหลักหน้าแรก" : "เมนูหลัก" })).toBeInTheDocument();
       expect(screen.getByLabelText(mobileNavigationLabel)).toBeInTheDocument();
       expect(screen.getByRole("main")).toHaveClass("phone-safe-bottom");
     },
   );
 
   it("supports click, ArrowDown, Escape, outside pointer, and route selection for desktop menus", async () => {
+    mockPathname.mockReturnValue("/attractions");
     const user = userEvent.setup();
     render(<SiteHeader appName="ท่องเที่ยวยะลา" />);
 
@@ -137,6 +138,7 @@ describe("public navigation", () => {
   });
 
   it("uses approved ink text for both coral check-in actions", async () => {
+    mockPathname.mockReturnValue("/attractions");
     const user = userEvent.setup();
     render(<SiteHeader appName="ท่องเที่ยวยะลา" />);
     await user.click(document.querySelector<HTMLButtonElement>("#public-mobile-menu-trigger")!);
@@ -150,6 +152,7 @@ describe("public navigation", () => {
   });
 
   it("opens the mobile menu, focuses its first link, and restores focus after Escape", async () => {
+    mockPathname.mockReturnValue("/attractions");
     const user = userEvent.setup();
     render(<SiteHeader appName="ท่องเที่ยวยะลา" />);
 

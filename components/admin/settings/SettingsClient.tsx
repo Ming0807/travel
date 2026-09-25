@@ -68,7 +68,7 @@ const GROUPS: {
   {
     id: "homepage",
     label: "หน้าแรก",
-    description: "ภาพ Hero, สถานที่ยอดนิยม, highlight blocks",
+    description: "ภาพและข้อความหน้าแรก, สถานที่, เส้นทาง, เรื่องราว",
     icon: GlobeHemisphereWest,
   },
   {
@@ -104,7 +104,7 @@ const GROUPS: {
 ];
 
 const GROUP_KEYS: Record<SettingsGroupId, SiteSettingKey[]> = {
-  homepage: ["homepage_hero", "homepage_featured_attractions", "homepage_stories", "homepage_featured_routes", "homepage_how_it_works", "homepage_highlights", "homepage_cta"],
+  homepage: ["homepage_hero", "homepage_featured_attractions", "homepage_stories", "homepage_featured_routes", "homepage_highlights"],
   publicPages: ["attractions_page_hero", "attractions_page_banner", "stories_page_hero", "stories_page_cta", "routes_page_hero", "restaurants_page_hero", "restaurants_page_feature", "restaurants_page_cta", "accommodations_page_hero", "accommodations_page_cta"],
   contact: ["general_info", "social_media", "footer_info"],
   seo: ["seo_settings"],
@@ -135,6 +135,15 @@ function createInitialSettings(rows: SiteSettingRow[]) {
 
   const heroImages = settings.homepage_hero.images ?? [];
   settings.homepage_hero.images = [heroImages[0] || "", heroImages[1] || "", heroImages[2] || ""];
+  if (settings.homepage_hero.title === "ยะลา" || settings.homepage_hero.title?.includes("คณะทำงาน")) {
+    settings.homepage_hero.title = SITE_SETTING_DEFAULTS.homepage_hero.title;
+  }
+  if (settings.homepage_hero.subtitle === "เมืองเล็ก ที่เต็มไปด้วยเรื่องราวใหญ่") {
+    settings.homepage_hero.subtitle = SITE_SETTING_DEFAULTS.homepage_hero.subtitle;
+  }
+  if (settings.homepage_hero.description?.includes("ตามหาช่วงเวลาสุดพิเศษ")) {
+    settings.homepage_hero.description = SITE_SETTING_DEFAULTS.homepage_hero.description;
+  }
 
   return settings;
 }
@@ -566,7 +575,7 @@ function HomepageSettings({
 }) {
   return (
     <>
-      <SettingsSection title="ภาพหลักหน้าแรก (Hero)" description="ข้อความและภาพชุดแรกของหน้าแรก">
+      <SettingsSection title="ภาพหลักหน้าแรก" description="ภาพพาโนรามา 3 ตำแหน่ง เปลี่ยนได้จาก Media Library โดยไม่ต้องแก้โค้ด">
         <TextInput label="หัวข้อหลัก" value={settings.homepage_hero.title} onChange={(value) => updateSettingObject("homepage_hero", { title: value })} />
         <TextInput label="หัวข้อย่อย" value={settings.homepage_hero.subtitle} onChange={(value) => updateSettingObject("homepage_hero", { subtitle: value })} />
         <TextArea label="คำอธิบาย" value={settings.homepage_hero.description} onChange={(value) => updateSettingObject("homepage_hero", { description: value })} rows={3} />
@@ -574,7 +583,7 @@ function HomepageSettings({
           {[0, 1, 2].map((index) => (
             <ImageField
               key={index}
-              label={`Hero image ${index + 1}`}
+              label={["ภาพเปิดหน้า · แนวนอน 16:9 (แนะนำ 1920 × 1080)", "ภาพบรรยากาศกลางหน้า · แนวนอน 16:9", "ภาพชวนออกเดินทางท้ายหน้า · แนวนอน 16:9"][index]}
               value={settings.homepage_hero.images?.[index] ?? ""}
               onRemove={() => updateHeroImage(index, "")}
               onPick={() => openPicker({ key: "homepage_hero", field: "images", index })}
@@ -599,10 +608,7 @@ function HomepageSettings({
         </div>
       </SettingsSection>
 
-      <SettingsSection title="เรื่องราวนักเดินทาง" description="ข้อความและจำนวนบทความที่แสดงในส่วน Stories ของหน้าแรก">
-        <TextInput label="หัวข้อ" value={settings.homepage_stories.title} onChange={(value) => updateSettingObject("homepage_stories", { title: value })} />
-        <TextInput label="หัวข้อย่อย" value={settings.homepage_stories.subtitle} onChange={(value) => updateSettingObject("homepage_stories", { subtitle: value })} />
-        <TextInput label="ข้อความปุ่ม" value={settings.homepage_stories.buttonText} onChange={(value) => updateSettingObject("homepage_stories", { buttonText: value })} />
+      <SettingsSection title="เรื่องราวนักเดินทาง" description="จำนวนบทความที่เผยแพร่และแสดงในส่วนเรื่องราวหน้าแรก">
         <TextInput label="จำนวนที่แสดงสูงสุด" type="number" min="1" max="8" value={String(settings.homepage_stories.limit ?? 4)} onChange={(value) => updateSettingObject("homepage_stories", { limit: Math.max(1, Math.min(8, parseInt(value, 10) || 4)) })} />
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
           บทความจะดึงจากตาราง travel_stories โดยอัตโนมัติ ใช้ฟิลเตอร์ status=published
@@ -610,8 +616,6 @@ function HomepageSettings({
       </SettingsSection>
 
       <SettingsSection title="เส้นทางแนะนำ" description="เลือกเส้นทางที่ต้องการแสดงบนหน้าแรก (เรียงลำดับด้วยลูกศรขึ้นลง)">
-        <TextInput label="หัวข้อ" value={settings.homepage_featured_routes.title} onChange={(value) => updateSettingObject("homepage_featured_routes", { title: value })} />
-        <TextInput label="หัวข้อย่อย" value={settings.homepage_featured_routes.subtitle} onChange={(value) => updateSettingObject("homepage_featured_routes", { subtitle: value })} />
         <HomepageRoutePicker
           slugs={settings.homepage_featured_routes.slugs ?? []}
           onChange={(slugs) => updateSettingObject("homepage_featured_routes", { slugs })}
@@ -626,35 +630,36 @@ function HomepageSettings({
         <TextInput label="จำนวนที่แสดงสูงสุด" type="number" min="1" max="12" value={String(settings.homepage_featured_routes.limit ?? 3)} onChange={(value) => updateSettingObject("homepage_featured_routes", { limit: Math.max(1, Math.min(12, parseInt(value, 10) || 3)) })} />
       </SettingsSection>
 
-      <SettingsSection title="วิธีการทำงาน" description="บล็อกอธิบาย QR, certificate, stamp แบบสั้น">
-        <TextInput label="หัวข้อ" value={settings.homepage_how_it_works.title} onChange={(value) => updateSettingObject("homepage_how_it_works", { title: value })} />
-        <TextInput label="หัวข้อย่อย" value={settings.homepage_how_it_works.subtitle} onChange={(value) => updateSettingObject("homepage_how_it_works", { subtitle: value })} />
-        <TextArea label="คำอธิบาย" value={settings.homepage_how_it_works.description} onChange={(value) => updateSettingObject("homepage_how_it_works", { description: value })} rows={3} />
+      <SettingsSection title="ภาพเล่าเรื่องหน้าแรก" description="เลือกภาพหมวดและแบนเนอร์; การ์ดสถานที่ ร้านอาหาร เส้นทาง และบทความใช้รูปจากเนื้อหาที่เผยแพร่จริง">
+        <TextInput label="หัวข้อแบนเนอร์กลางหน้า" value={settings.homepage_highlights.title} onChange={(value) => updateSettingObject("homepage_highlights", { title: value })} />
+        <TextArea label="ข้อความประกอบ" value={settings.homepage_highlights.quote} onChange={(value) => updateSettingObject("homepage_highlights", { quote: value })} rows={3} />
+        <p className="text-sm font-black text-slate-700">ภาพหมวดสำรวจ · แนะนำแนวตั้ง 4:5</p>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {([
+            ["natureImage", "ธรรมชาติ"], ["foodImage", "อาหาร"], ["cultureImage", "วัฒนธรรม"],
+            ["cafeImage", "คาเฟ่"], ["activitiesImage", "กิจกรรม"], ["peopleImage", "ผู้คน"],
+          ] as const).map(([field, label]) => <ImageField
+            key={field}
+            label={label}
+            value={settings.homepage_highlights[field]}
+            onRemove={() => updateSettingObject("homepage_highlights", { [field]: "" })}
+            onPick={() => openPicker({ key: "homepage_highlights", field })}
+          />)}
+        </div>
+        <p className="pt-2 text-sm font-black text-slate-700">ภาพประกอบส่วนอื่น · แนะนำแนวนอน 16:9</p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {([
+            ["routesCover", "เส้นทางท่องเที่ยว"], ["foodCover", "อาหารและรสชาติ"], ["plannerCover", "วางแผนการเดินทาง"],
+          ] as const).map(([field, label]) => <ImageField
+            key={field}
+            label={label}
+            value={settings.homepage_highlights[field]}
+            onRemove={() => updateSettingObject("homepage_highlights", { [field]: "" })}
+            onPick={() => openPicker({ key: "homepage_highlights", field })}
+          />)}
+        </div>
       </SettingsSection>
 
-      <SettingsSection title="ไฮไลต์" description="เรื่องเล่าและภาพประกอบช่วงกลางหน้าแรก (ข้อความและภาพประกอบนี้จัดการโดยตรงจาก Settings — ไม่ได้เชื่อมกับ CMS)">
-        <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-          ข้อความคำคม ชื่อผู้เขียน และภาพประกอบในส่วนนี้ เป็นข้อความตั้งค่าที่แก้ไขโดยตรง ไม่ได้ดึงจากบทความหรือ CMS หากต้องการเปลี่ยนเนื้อหาหลักของไฮไลต์ กรุณาแก้ไขที่นี่
-        </div>
-        <TextInput label="หัวข้อ" value={settings.homepage_highlights.title} onChange={(value) => updateSettingObject("homepage_highlights", { title: value })} />
-        <div className="grid gap-4 md:grid-cols-2">
-          <TextInput label="ชื่อผู้เขียน" value={settings.homepage_highlights.authorName} onChange={(value) => updateSettingObject("homepage_highlights", { authorName: value })} />
-          <TextInput label="สถานที่" value={settings.homepage_highlights.location} onChange={(value) => updateSettingObject("homepage_highlights", { location: value })} />
-        </div>
-        <TextArea label="คำคม" value={settings.homepage_highlights.quote} onChange={(value) => updateSettingObject("homepage_highlights", { quote: value })} rows={4} />
-        <div className="grid gap-4 md:grid-cols-2">
-          <ImageField label="ภาพปกวิดีโอ" value={settings.homepage_highlights.videoCover} onRemove={() => updateSettingObject("homepage_highlights", { videoCover: "" })} onPick={() => openPicker({ key: "homepage_highlights", field: "videoCover" })} />
-          <ImageField label="ภาพปก" value={settings.homepage_highlights.imageCover} onRemove={() => updateSettingObject("homepage_highlights", { imageCover: "" })} onPick={() => openPicker({ key: "homepage_highlights", field: "imageCover" })} />
-        </div>
-        <TextInput label="ชื่อภาพ" value={settings.homepage_highlights.imageTitle} onChange={(value) => updateSettingObject("homepage_highlights", { imageTitle: value })} />
-      </SettingsSection>
-
-      <SettingsSection title="CTA หน้าแรก" description="บล็อก call-to-action ท้ายหน้าแรก">
-        <TextInput label="หัวข้อ" value={settings.homepage_cta.title} onChange={(value) => updateSettingObject("homepage_cta", { title: value })} />
-        <TextInput label="หัวข้อย่อย" value={settings.homepage_cta.subtitle} onChange={(value) => updateSettingObject("homepage_cta", { subtitle: value })} />
-        <TextArea label="คำอธิบาย" value={settings.homepage_cta.description} onChange={(value) => updateSettingObject("homepage_cta", { description: value })} rows={3} />
-        <ImageField label="ภาพพื้นหลัง" value={settings.homepage_cta.bgImage} onRemove={() => updateSettingObject("homepage_cta", { bgImage: "" })} onPick={() => openPicker({ key: "homepage_cta", field: "bgImage" })} />
-      </SettingsSection>
     </>
   );
 }

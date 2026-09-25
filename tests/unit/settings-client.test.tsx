@@ -128,7 +128,7 @@ describe("SettingsClient", () => {
 
   it("shows active group content", () => {
     render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
-    expect(screen.getByText("ภาพหลักหน้าแรก (Hero)")).toBeInTheDocument();
+    expect(screen.getByText("ภาพหลักหน้าแรก")).toBeInTheDocument();
     expect(screen.getByText("สถานที่ยอดนิยม")).toBeInTheDocument();
   });
 
@@ -178,6 +178,20 @@ describe("SettingsClient", () => {
     expect(screen.getByText(/บันทึก 1 รายการ/)).toBeInTheDocument();
   });
 
+  it("saves an editorial category image in the homepage settings object", async () => {
+    render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
+    const natureField = screen.getByText("ธรรมชาติ").parentElement;
+    await userEvent.click(natureField!.querySelector("button")!);
+    await userEvent.click(screen.getByRole("button", { name: "Pick" }));
+    await userEvent.click(screen.getByText(/บันทึก 1 รายการ/));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith("/api/admin/settings", expect.objectContaining({
+        body: expect.stringContaining('"natureImage":"general/test.webp"'),
+      }));
+    });
+  });
+
   it("restores a cached saved hero image after refresh", async () => {
     const originalComplete = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "complete");
     Object.defineProperty(HTMLImageElement.prototype, "complete", { configurable: true, get: () => true });
@@ -199,7 +213,7 @@ describe("SettingsClient", () => {
 
       render(<SettingsClient initialSettings={persistedSettings} />);
 
-      const preview = screen.getByRole("img", { name: "Hero image 1 preview" });
+      const preview = screen.getByRole("img", { name: /ภาพเปิดหน้า .* preview/ });
       expect(preview).toHaveAttribute("src", "/site-media/general/saved-hero.webp");
       await waitFor(() => expect(preview).toHaveClass("opacity-100"));
     } finally {

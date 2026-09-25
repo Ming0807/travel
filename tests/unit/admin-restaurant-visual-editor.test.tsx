@@ -46,10 +46,10 @@ const restaurant: AdminRestaurantRow = {
   attraction_count: 0,
 };
 
-function renderEditor() {
+function renderEditor(restaurantOverrides: Partial<AdminRestaurantRow> = {}) {
   render(
     <RestaurantVisualEditor
-      restaurant={restaurant}
+      restaurant={{ ...restaurant, ...restaurantOverrides }}
       provinces={[{ id: 1, label: "ยะลา" }]}
       categories={[]}
       coverMediaId={7}
@@ -59,6 +59,61 @@ function renderEditor() {
 }
 
 describe("RestaurantVisualEditor", () => {
+  it("offers public preview and media management from the editor header", () => {
+    renderEditor();
+
+    expect(screen.getByRole("link", { name: "ดูหน้าสาธารณะ" })).toHaveAttribute(
+      "href",
+      "/restaurants/lae-pha-ban-na-tham",
+    );
+    expect(screen.getByRole("link", { name: "จัดการสื่อ" })).toHaveAttribute(
+      "href",
+      "/admin/restaurants/45/media",
+    );
+    expect(screen.getByRole("link", { name: "จัดการสื่อ" })).toHaveClass("min-h-11");
+  });
+
+  it("does not offer a broken public route for a draft or inactive restaurant", () => {
+    const { rerender } = render(
+      <RestaurantVisualEditor
+        restaurant={{ ...restaurant, is_published: false }}
+        provinces={[{ id: 1, label: "ยะลา" }]}
+        categories={[]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "ดูหน้าสาธารณะ" })).toBeDisabled();
+    expect(screen.queryByRole("link", { name: "ดูหน้าสาธารณะ" })).not.toBeInTheDocument();
+
+    rerender(
+      <RestaurantVisualEditor
+        restaurant={restaurant}
+        provinces={[{ id: 1, label: "ยะลา" }]}
+        categories={[]}
+        isPubliclyAvailable={false}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "ดูหน้าสาธารณะ" })).toBeDisabled();
+  });
+
+  it("opens the nearby-attraction picker from its matching preview section", () => {
+    render(
+      <RestaurantVisualEditor
+        restaurant={restaurant}
+        provinces={[{ id: 1, label: "ยะลา" }]}
+        categories={[]}
+        nearbyAttractions={[{ id: 7, label: "วัดคูหาภิมุข", isPublished: true }]}
+        selectedAttractionIds={[7]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "แก้ไขสถานที่ท่องเที่ยวใกล้เคียง" }));
+
+    expect(screen.getByRole("checkbox", { name: /วัดคูหาภิมุข/ })).toBeChecked();
+    expect(screen.getByRole("button", { name: "บันทึกการตั้งค่า" })).toBeInTheDocument();
+  });
+
   it("keeps cover selection in the header editor and renders cancel as a real button", () => {
     renderEditor();
 

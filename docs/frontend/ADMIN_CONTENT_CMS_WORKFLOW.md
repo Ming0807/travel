@@ -12,6 +12,7 @@ The redesigned homepage reuses published CMS records instead of maintaining dupl
 - Featured routes provide the recommended route list and retain the order selected in Settings.
 - Published stories provide the editorial section; unpublished or missing records are never replaced with mock stories.
 - Hero and section-level presentation text remain Settings-owned metadata.
+- The homepage's three panorama slots and nine named editorial image placements are selected in `/admin/settings?tab=homepage`. Saved Media Library images take precedence over replaceable local defaults.
 - Statistics retain their existing analytics definitions and are labelled as recorded system data, not website traffic or real-time data.
 - The old newsletter-looking CTA is retired because no subscription backend exists. The final CTA links to the working Digital Passport and leaderboard flows.
 - The previous testimonial highlight section is not rendered on the homepage until it has a dedicated, verifiable content source.
@@ -23,6 +24,8 @@ The goal is simple:
 ```text
 An admin should know where content comes from, how to change it, how to preview it, and how to publish it safely.
 ```
+
+Restaurant create/edit validates the managed cover asset before mutating the record; the edit toolbar links to the real public page only when the restaurant is published, active, and inside the live destination scope. Accommodation create/edit uses one sectioned form with a live draft summary, readiness checklist, and media manager link. Accommodation cover selection is validated before mutation; removing the cover clears its relation without deleting the media asset. Related accommodation curation remains owned by the attraction editor to avoid conflicting updates from two CMS surfaces.
 
 This workflow supports these core project dimensions:
 
@@ -580,6 +583,10 @@ Frontend visibility is only convenience. Server actions and route handlers must 
 Restaurant categories are managed at `/admin/restaurants/categories`; they are not hardcoded UI options. An administrator can create Thai/English labels, choose the editorial section, control ordering, mark featured navigation categories, and archive a category.
 
 One restaurant can select multiple categories from the create form or Visual Editor settings drawer. Drafts may be saved without a category. A restaurant cannot be published until at least one active category is selected. A category with linked restaurants cannot be deleted; archive it so historical assignments remain understandable.
+
+Restaurant cover images are selected from Media Library by asset ID. The restaurant server action verifies that the asset still exists, is active, is an image, and matches the submitted storage path before linking it. A stale or altered picker submission must be reselected rather than creating an unverified media record from a client-supplied path.
+
+The restaurant visual editor header links directly to the public detail page and restaurant media manager. Public preview is enabled only when the restaurant is active, published, and in a live destination province, matching the public detail query scope; drafts and out-of-scope records remain in the editor. The nearby-attractions section links directly to its existing relationship picker in Settings.
 
 Public `/restaurants` navigation is data-driven: featured non-empty categories appear in the top navigation, every active non-empty category appears in the desktop sidebar and mobile filter, and category URLs use stable slugs. New categories therefore require no frontend code change.
 

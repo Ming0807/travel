@@ -45,6 +45,38 @@ const navGroups = [
   }
 ];
 
+const homeLinks = [
+  { href: "/attractions", label: "สำรวจ" },
+  { href: "/routes", label: "เส้นทางท่องเที่ยว" },
+  { href: "/restaurants", label: "ประสบการณ์" },
+  { href: "/stories", label: "เรื่องเล่า" },
+  { href: "/about", label: "เกี่ยวกับยะลา" },
+];
+
+function HomeSiteHeader({ appName }: SiteHeaderProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  return <header className="ed-site-header">
+    <div className="ed-site-header-inner">
+      <Link href="/" className="ed-site-brand" aria-label={`${appName} หน้าหลัก`} onClick={() => setMenuOpen(false)}>
+        <Compass aria-hidden="true" size={28} weight="duotone" />
+        <span><strong>YALA</strong><small>SOUTHERN THAILAND</small></span>
+      </Link>
+      <nav className="ed-site-nav" aria-label="เมนูหลักหน้าแรก">{homeLinks.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}</nav>
+      <div className="ed-site-actions">
+        <PublicGlobalSearch onOpen={() => setMenuOpen(false)} />
+        <UserNavMenu />
+        <PublicCheckinEntryLink className="ed-site-checkin">เช็กอิน</PublicCheckinEntryLink>
+        <button type="button" className="ed-site-menu-button" aria-label={menuOpen ? "ปิดเมนู" : "เปิดเมนู"} aria-expanded={menuOpen} aria-controls="ed-site-mobile-nav" onClick={() => setMenuOpen((value) => !value)}>{menuOpen ? <X size={23} /> : <List size={23} />}</button>
+      </div>
+    </div>
+    {menuOpen ? <nav id="ed-site-mobile-nav" className="ed-site-mobile-nav" aria-label="เมนูมือถือหน้าแรก">
+      {homeLinks.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</Link>)}
+      <Link href="/passport" onClick={() => setMenuOpen(false)}>Digital Passport</Link>
+      <PublicCheckinEntryLink onClick={() => setMenuOpen(false)}>สแกน QR เช็กอิน</PublicCheckinEntryLink>
+    </nav> : null}
+  </header>;
+}
+
 export function SiteHeader({ appName }: SiteHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -124,6 +156,10 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
   // Keep all hooks above this route guard so navigation can change safely.
   if (shouldHidePublicChrome(pathname)) {
     return null;
+  }
+
+  if (pathname === "/") {
+    return <HomeSiteHeader appName={appName} />;
   }
 
   return (

@@ -11,6 +11,7 @@ import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repositor
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 import { listAdminRestaurantCategories } from "@/lib/repositories/admin-restaurant-category.repository";
 import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
+import { listLiveDestinationProvinceIds } from "@/lib/repositories/destination-scope.repository";
 
 export const metadata: Metadata = {
   title: "Edit Restaurant | Admin",
@@ -30,13 +31,14 @@ export default async function EditAdminRestaurantPage({
     notFound();
   }
 
-  const [restaurant, provinces, coverMedia, categories, attractions, selectedAttractionIds] = await Promise.all([
+  const [restaurant, provinces, coverMedia, categories, attractions, selectedAttractionIds, liveProvinceIds] = await Promise.all([
     getAdminRestaurantById(restaurantId),
     getAdminProvinces(),
     getCoverMediaForEntity("restaurant", restaurantId),
     listAdminRestaurantCategories({ activeOnly: true }),
     getAdminAttractionsList(),
     listAdminRestaurantAttractionIds(restaurantId),
+    listLiveDestinationProvinceIds(),
   ]);
 
   if (!restaurant) {
@@ -56,6 +58,11 @@ export default async function EditAdminRestaurantPage({
       selectedAttractionIds={selectedAttractionIds}
       coverMediaId={coverMedia?.media_id ?? null}
       coverMediaUrl={adminMediaPreviewUrl(coverMedia?.storage_path)}
+      isPubliclyAvailable={
+        restaurant.is_active
+        && restaurant.is_published
+        && liveProvinceIds.includes(restaurant.province_id)
+      }
     />
   );
 }

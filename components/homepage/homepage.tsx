@@ -1,94 +1,63 @@
-import { HomepageQuickActions } from "./HomepageQuickActions";
-import { HomepageCertificateCta } from "./sections/HomepageCertificateCta";
-import { HomepageDashboardPreview } from "./sections/HomepageDashboardPreview";
-import { HomepageDiscoveryWorkspace } from "./sections/HomepageDiscoveryWorkspace";
-import { HomepageHero } from "./sections/HomepageHero";
-import { HomepageHowItWorks } from "./sections/HomepageHowItWorks";
-import { HomepageStories } from "./sections/HomepageStories";
-import { SiteFooter as HomepageFooter } from "../layout/SiteFooter";
+import { HomepageEditorial } from "./HomepageEditorial";
+import "./homepage-editorial.css";
+import { SiteFooter } from "../layout/SiteFooter";
+import { SITE_SETTING_DEFAULTS } from "@/lib/config/site-settings";
 import {
   listPublicAttractionCards,
+  listPublicRestaurants,
   listPublicRoutes,
   listPublicStories,
 } from "@/lib/repositories/public-content.repository";
+import { getPublicDashboardAnalytics } from "@/lib/services/dashboard.service";
 import { SettingsService } from "@/lib/services/settings.service";
-
-type HomepageStoriesSetting = {
-  title?: string;
-  subtitle?: string;
-  buttonText?: string;
-  limit?: number;
-};
 
 export async function Homepage() {
   const settingsService = new SettingsService();
-  const [featuredAttractionsSetting, storiesSettings, heroSettings, routesSettings, howItWorksSettings, ctaSettings] = await Promise.all([
-    settingsService.getSetting("homepage_featured_attractions", { slugs: [] as string[] }),
-    settingsService.getSetting<HomepageStoriesSetting>("homepage_stories", { limit: 4 }),
-    settingsService.getSetting("homepage_hero", {
-      title: "คณะทำงานขับเคลื่อนการท่องเที่ยวโดยชุมชน ตำบลหน้าถ้ำ",
-      subtitle: "วางแผนการเดินทางในจังหวัดยะลา",
-      description: "ค้นพบสถานที่ท่องเที่ยว อาหารท้องถิ่น เส้นทางน่าสนใจ และเรื่องราวจากผู้คนในพื้นที่ เพื่อให้ทุกการเดินทางมีความหมายมากขึ้น",
-      images: ["", "", ""],
-    }),
-    settingsService.getSetting("homepage_featured_routes", {
-      slugs: [] as string[],
-      title: "เส้นทางแนะนำ",
-      subtitle: "ออกเดินทางในยะลาตามจังหวะที่คุณเลือก",
-      limit: 3,
-    }),
-    settingsService.getSetting("homepage_how_it_works", {
-      title: "เริ่มบันทึกการเดินทางได้ใน 3 ขั้นตอน",
-      subtitle: "ไม่ต้องติดตั้งแอป",
-      description: "รับคุณค่าก่อน แล้วค่อยเลือกแบ่งปันข้อมูลเพื่อช่วยพัฒนาการท่องเที่ยวยะลา",
-    }),
-    settingsService.getSetting("homepage_cta", {
-      title: "ทุกการเดินทางมีเรื่องให้สะสม",
-      subtitle: "Digital Passport",
-      description: "เก็บตราประจำสถานที่ไว้ใน Digital Passport ดูคะแนนของคุณ และกลับมาค้นพบยะลาในมุมใหม่ได้ทุกครั้ง",
-      bgImage: "",
-    }),
+  const [featured, storiesSetting, heroSetting, routeSetting, mediaSetting] = await Promise.all([
+    settingsService.getSetting("homepage_featured_attractions", SITE_SETTING_DEFAULTS.homepage_featured_attractions),
+    settingsService.getSetting("homepage_stories", SITE_SETTING_DEFAULTS.homepage_stories),
+    settingsService.getSetting("homepage_hero", SITE_SETTING_DEFAULTS.homepage_hero),
+    settingsService.getSetting("homepage_featured_routes", SITE_SETTING_DEFAULTS.homepage_featured_routes),
+    settingsService.getSetting("homepage_highlights", SITE_SETTING_DEFAULTS.homepage_highlights),
   ]);
 
-  const storiesLimit = Math.max(1, Math.min(8, storiesSettings.limit ?? 4));
-  const routeLimit = Math.max(1, Math.min(12, routesSettings.limit ?? 3));
-  const featuredSlugs = featuredAttractionsSetting.slugs ?? [];
-  const featuredRouteSlugs = routesSettings.slugs ?? [];
-
-  const routePromise = featuredRouteSlugs.length > 0
-    ? listPublicRoutes(routeLimit, featuredRouteSlugs)
-    : listPublicRoutes(routeLimit);
-  const [attractions, stories, routeState] = await Promise.all([
-    listPublicAttractionCards(8, { featuredSlugs }),
-    listPublicStories({ limit: storiesLimit }),
-    routePromise
+  const hero = { ...SITE_SETTING_DEFAULTS.homepage_hero, ...heroSetting };
+  const media = { ...SITE_SETTING_DEFAULTS.homepage_highlights, ...mediaSetting };
+  const routeLimit = Math.max(1, Math.min(12, routeSetting.limit ?? 3));
+  const storiesLimit = Math.max(1, Math.min(8, storiesSetting.limit ?? 4));
+  const [attractions, restaurants, stories, routeState, analytics] = await Promise.all([
+    listPublicAttractionCards(8, { featuredSlugs: featured.slugs ?? [] }).catch(() => []),
+    listPublicRestaurants({ limit: 4 }).catch(() => []),
+    listPublicStories({ limit: storiesLimit }).catch(() => []),
+    (routeSetting.slugs?.length
+      ? listPublicRoutes(routeLimit, routeSetting.slugs)
+      : listPublicRoutes(routeLimit))
       .then((items) => ({ items, unavailable: false }))
       .catch(() => ({ items: [], unavailable: true })),
+    getPublicDashboardAnalytics({}).catch(() => null),
   ]);
-  const dashboardPreviewImage = heroSettings.images?.[1]
-    || attractions.find((attraction) => attraction.imageUrl)?.imageUrl
-    || heroSettings.images?.[0]
-    || "";
 
-  return (
-    <>
-      <HomepageHero {...heroSettings} />
-      <HomepageQuickActions />
-      <HomepageDashboardPreview previewImage={dashboardPreviewImage} />
-      <HomepageHowItWorks {...howItWorksSettings} />
-      <HomepageDiscoveryWorkspace
-        attractions={attractions}
-        routes={routeState.items}
-        routesUnavailable={routeState.unavailable}
-      />
-      <HomepageStories
-        stories={stories}
-        title={storiesSettings.title}
-        subtitle={storiesSettings.subtitle}
-        buttonText={storiesSettings.buttonText}
-      />
-      <HomepageCertificateCta {...ctaSettings} />
-      <HomepageFooter />
-    </>
-  );
+  const kpis = new Map(analytics?.kpis.map((kpi) => [kpi.key, kpi.value]) ?? []);
+  const stats = [
+    { key: "tourist_profiles", label: "นักเดินทางในระบบ" },
+    { key: "total_visits", label: "บันทึกการเดินทาง" },
+    { key: "certificates_generated", label: "ใบประกาศดิจิทัล" },
+  ].flatMap(({ key, label }) => {
+    const value = kpis.get(key);
+    return value === undefined || value === null ? [] : [{ label, value: String(value) }];
+  });
+
+  return <>
+    <HomepageEditorial
+      hero={hero}
+      media={media}
+      attractions={attractions}
+      restaurants={restaurants}
+      routes={routeState.items}
+      stories={stories}
+      stats={stats}
+      routesUnavailable={routeState.unavailable}
+    />
+    <SiteFooter />
+  </>;
 }

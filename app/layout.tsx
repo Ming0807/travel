@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Kanit, Noto_Sans_Thai, Playfair_Display } from "next/font/google";
+import { Kanit, Noto_Sans_Thai, Noto_Serif_Thai, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { APP_NAME } from "@/constants/product";
 import { PublicChrome } from "@/components/layout/public-chrome";
@@ -26,6 +26,14 @@ const playfair = Playfair_Display({
   variable: "--font-serif",
   display: "swap",
   preload: false
+});
+
+const notoSerifThai = Noto_Serif_Thai({
+  subsets: ["thai", "latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-editorial",
+  display: "swap",
+  preload: false,
 });
 
 import { SettingsService } from "@/lib/services/settings.service";
@@ -82,7 +90,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const appName = seoSettings.metaTitle?.split('|')[0]?.trim() || APP_NAME;
 
   return (
-    <html lang="th" className={`${playfair.variable}`} data-scroll-behavior="smooth">
+    <html lang="th" className={`${playfair.variable} ${notoSerifThai.variable}`} data-scroll-behavior="smooth">
       <body className={`${notoSansThai.variable} ${kanit.variable} bg-[var(--background)] text-ink antialiased`}>
         <PublicChrome appName={appName}>{children}</PublicChrome>
       </body>

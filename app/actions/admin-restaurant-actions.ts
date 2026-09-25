@@ -7,7 +7,7 @@ import {
   adminRestaurantMutationSchema,
   restaurantMutationFormValues,
 } from "@/lib/validation/admin-restaurant";
-import { clearCoverMediaForEntity, linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
+import { clearCoverMediaForEntity, getAdminMediaById, linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminRestaurant,
   updateAdminRestaurant,
@@ -54,7 +54,37 @@ function restaurantMutationError<TData = unknown>(error: unknown, fallback: stri
       fieldErrors: { nearbyAttractionIds: ["กรุณาเลือกเฉพาะสถานที่ที่กำลังใช้งาน"] },
     };
   }
+  if (code === "RESTAURANT_COVER_MEDIA_INVALID") {
+    return {
+      success: false,
+      error: "กรุณาเลือกรูปภาพปกจากคลังสื่ออีกครั้ง",
+      fieldErrors: { coverMediaId: ["รูปภาพไม่พร้อมใช้งานหรือข้อมูลไฟล์ไม่ตรงกัน"] },
+    };
+  }
   return { success: false, error: fallback };
+}
+
+async function validateRestaurantCoverMedia(formData: FormData, mediaId: number | null) {
+  const storagePath = formData.get("coverStoragePath");
+  const hasStoragePath = typeof storagePath === "string" && storagePath.trim() !== "";
+
+  if (mediaId === null) {
+    if (hasStoragePath) throw new Error("RESTAURANT_COVER_MEDIA_INVALID");
+    return null;
+  }
+
+  const media = await getAdminMediaById(mediaId);
+  if (
+    !media ||
+    media.media_type !== "image" ||
+    !media.is_active ||
+    media.lifecycle_status === "archived" ||
+    (hasStoragePath && media.storage_path !== storagePath.trim())
+  ) {
+    throw new Error("RESTAURANT_COVER_MEDIA_INVALID");
+  }
+
+  return media.media_id;
 }
 
 function revalidateRestaurantPaths(restaurantId?: number) {
@@ -76,15 +106,15 @@ export async function createRestaurantAction(_prevState: ActionResult<{ id: numb
       return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
+    const coverMediaId = await validateRestaurantCoverMedia(
+      formData,
+      parsed.data.coverMediaId,
+    );
+
     const syncNearbyAttractions = formData.get("syncNearbyAttractions") === "true";
     const created = await createAdminRestaurant(parsed.data, { syncNearbyAttractions });
 
-    // Link cover media if provided
-    const coverStoragePath = formData.get("coverStoragePath");
-    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
-    if (typeof coverStoragePath === "string" && coverStoragePath.trim() !== "") {
-      await linkMediaToEntityByStoragePath(coverStoragePath.trim(), "restaurant", created.restaurant_id);
-    } else if (coverMediaId && Number.isFinite(coverMediaId)) {
+    if (coverMediaId !== null) {
       await linkMediaToEntity(coverMediaId, "restaurant", created.restaurant_id);
     }
 
@@ -119,19 +149,23 @@ export async function updateRestaurantAction(restaurantId: number, _prevState: A
     const old = await getAdminRestaurantById(restaurantId);
     if (!old) return { success: false, error: "ไม่พบร้านอาหารนี้ อาจถูกลบหรือย้ายแล้ว" };
 
+    const coverMediaAction = formData.get("coverMediaAction");
+    const shouldSetCover = coverMediaAction === "set" || coverMediaAction === null || coverMediaAction === "";
+    const coverMediaId = shouldSetCover && parsed.data.coverMediaId !== null
+      ? await validateRestaurantCoverMedia(formData, parsed.data.coverMediaId)
+      : null;
+    if (coverMediaAction === "set" && coverMediaId === null) {
+      throw new Error("RESTAURANT_COVER_MEDIA_INVALID");
+    }
+
     const syncNearbyAttractions = formData.get("syncNearbyAttractions") === "true";
     const updated = await updateAdminRestaurant(restaurantId, parsed.data, { syncNearbyAttractions });
 
-    const coverMediaAction = formData.get("coverMediaAction");
-
-    // Link or clear cover media only when the cover editor explicitly asks for it.
-    const coverStoragePath = formData.get("coverStoragePath");
-    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
     if (coverMediaAction === "clear") {
       await clearCoverMediaForEntity("restaurant", updated.restaurant_id);
-    } else if (coverMediaAction === "set" && typeof coverStoragePath === "string" && coverStoragePath.trim() !== "") {
-      await linkMediaToEntityByStoragePath(coverStoragePath.trim(), "restaurant", updated.restaurant_id);
-    } else if ((coverMediaAction === null || coverMediaAction === "") && coverMediaId && Number.isFinite(coverMediaId)) {
+    } else if (coverMediaAction === "set" && coverMediaId !== null) {
+      await linkMediaToEntity(coverMediaId, "restaurant", updated.restaurant_id);
+    } else if ((coverMediaAction === null || coverMediaAction === "") && coverMediaId !== null) {
       await linkMediaToEntity(coverMediaId, "restaurant", updated.restaurant_id);
     }
 

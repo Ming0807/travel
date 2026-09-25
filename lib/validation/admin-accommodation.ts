@@ -70,8 +70,17 @@ export const adminAccommodationMutationSchema = z.object({
   priceRange: optionalShortText,
   isPublished: booleanFromForm,
   isActive: booleanFromForm,
-  coverMediaId: z.preprocess((val) => (val === "" || val === null || val === undefined ? null : val), z.union([z.coerce.number().int().positive(), z.string()]).nullable()).default(null),
+  coverMediaId: optionalId,
   coverMediaUrl: optionalText
+}).superRefine((value, context) => {
+  if ((value.latitude === null) !== (value.longitude === null)) {
+    const missingCoordinate = value.latitude === null ? "latitude" : "longitude";
+    context.addIssue({
+      code: "custom",
+      path: [missingCoordinate],
+      message: "Enter both latitude and longitude, or leave both blank.",
+    });
+  }
 });
 
 export type AdminAccommodationFilters = z.infer<typeof adminAccommodationFiltersSchema>;

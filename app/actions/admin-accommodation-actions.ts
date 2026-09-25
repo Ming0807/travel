@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { adminAccommodationMutationSchema } from "@/lib/validation/admin-accommodation";
-import { linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
+import { clearCoverMediaForEntity, getAdminMediaById, linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
 import {
   createAdminAccommodation,
   updateAdminAccommodation,
@@ -20,6 +20,26 @@ type ActionResult<TData = unknown> = {
   data?: TData;
 };
 
+async function validateAccommodationCoverMedia(mediaId: number | null, previewUrl: string | null) {
+  if (mediaId === null) {
+    if (previewUrl) throw new Error("ACCOMMODATION_COVER_MEDIA_INVALID");
+    return null;
+  }
+  const media = await getAdminMediaById(mediaId);
+  if (!media || media.media_type !== "image" || !media.is_active || media.lifecycle_status === "archived") {
+    throw new Error("ACCOMMODATION_COVER_MEDIA_INVALID");
+  }
+  return media.media_id;
+}
+
+function accommodationActionError<TData = unknown>(error: unknown, fallback: string): ActionResult<TData> {
+  if (error instanceof AdminAuthError) return { success: false, error: error.message };
+  if (error instanceof Error && error.message === "ACCOMMODATION_COVER_MEDIA_INVALID") {
+    return { success: false, error: "กรุณาเลือกรูปภาพปกจากคลังสื่ออีกครั้ง", fieldErrors: { coverMediaId: ["รูปภาพไม่พร้อมใช้งาน"] } };
+  }
+  return { success: false, error: fallback };
+}
+
 export async function createAccommodationAction(_prevState: ActionResult<{ id: number }>, formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
     const guard = await requirePermission("attraction.create"); // Uses attraction.create permission for accommodations by default
@@ -33,22 +53,12 @@ export async function createAccommodationAction(_prevState: ActionResult<{ id: n
       return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
+    const coverMediaId = await validateAccommodationCoverMedia(parsed.data.coverMediaId, parsed.data.coverMediaUrl);
     const created = await createAdminAccommodation(parsed.data);
 
     // Link cover media if provided
-    const coverMediaUrl = parsed.data.coverMediaUrl;
-    if (coverMediaUrl) {
-      const urlPattern = /\/site-media\/(.+)$/;
-      const match = coverMediaUrl.match(urlPattern);
-      const storagePath = match ? match[1] : null;
-      if (storagePath) {
-        await linkMediaToEntityByStoragePath(storagePath, "accommodation", created.accommodation_id);
-      }
-    } else if (parsed.data.coverMediaId) {
-      const coverMediaId = Number(parsed.data.coverMediaId);
-      if (Number.isFinite(coverMediaId)) {
-        await linkMediaToEntity(coverMediaId, "accommodation", created.accommodation_id);
-      }
+    if (coverMediaId !== null) {
+      await linkMediaToEntity(coverMediaId, "accommodation", created.accommodation_id);
     }
 
     await logAdminMutation({
@@ -63,8 +73,7 @@ export async function createAccommodationAction(_prevState: ActionResult<{ id: n
     return { success: true, data: { id: created.accommodation_id } };
   } catch (error) {
     console.error("Failed to create accommodation:", error);
-    if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "ยังสร้างที่พักไม่ได้ กรุณาลองอีกครั้ง" };
+    return accommodationActionError(error, "ยังสร้างที่พักไม่ได้ กรุณาลองอีกครั้ง");
   }
 }
 
@@ -81,23 +90,15 @@ export async function updateAccommodationAction(accommodationId: number, _prevSt
       return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
+    const coverMediaId = await validateAccommodationCoverMedia(parsed.data.coverMediaId, parsed.data.coverMediaUrl);
     const old = await getAdminAccommodationById(accommodationId);
     const updated = await updateAdminAccommodation(accommodationId, parsed.data);
 
     // Link cover media if provided
-    const coverMediaUrl = parsed.data.coverMediaUrl;
-    if (coverMediaUrl) {
-      const urlPattern = /\/site-media\/(.+)$/;
-      const match = coverMediaUrl.match(urlPattern);
-      const storagePath = match ? match[1] : null;
-      if (storagePath) {
-        await linkMediaToEntityByStoragePath(storagePath, "accommodation", updated.accommodation_id);
-      }
-    } else if (parsed.data.coverMediaId) {
-      const coverMediaId = Number(parsed.data.coverMediaId);
-      if (Number.isFinite(coverMediaId)) {
-        await linkMediaToEntity(coverMediaId, "accommodation", updated.accommodation_id);
-      }
+    if (coverMediaId !== null) {
+      await linkMediaToEntity(coverMediaId, "accommodation", updated.accommodation_id);
+    } else {
+      await clearCoverMediaForEntity("accommodation", updated.accommodation_id);
     }
 
     await logAdminMutation({
@@ -112,8 +113,7 @@ export async function updateAccommodationAction(accommodationId: number, _prevSt
     revalidatePath('/', 'layout');
     return { success: true, data: { id: updated.accommodation_id } };
   } catch (error) {
-    if (error instanceof AdminAuthError) return { success: false, error: error.message };
-    return { success: false, error: "ยังบันทึกการแก้ไขที่พักไม่ได้ กรุณาลองอีกครั้ง" };
+    return accommodationActionError(error, "ยังบันทึกการแก้ไขที่พักไม่ได้ กรุณาลองอีกครั้ง");
   }
 }
 

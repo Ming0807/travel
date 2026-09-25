@@ -7,6 +7,7 @@ import { getAdminProvinces, getAdminAccommodationById } from "@/lib/repositories
 import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
 import { requirePermission } from "@/lib/auth/guards";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
+import { listLiveDestinationProvinceIds } from "@/lib/repositories/destination-scope.repository";
 import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 
@@ -18,10 +19,11 @@ export default async function EditAccommodationPage({ params }: { params: Promis
   await requirePermission("attraction.update");
   const { id } = await params;
   
-  const [provincesData, accommodation, coverMedia] = await Promise.all([
+  const [provincesData, accommodation, coverMedia, liveProvinceIds] = await Promise.all([
     getAdminProvinces(),
     getAdminAccommodationById(Number(id)),
     getCoverMediaForEntity("accommodation", Number(id)),
+    listLiveDestinationProvinceIds(),
   ]);
 
   if (!accommodation) notFound();
@@ -51,6 +53,7 @@ export default async function EditAccommodationPage({ params }: { params: Promis
           submitLabel="บันทึกการแก้ไข"
           coverMediaId={coverMedia?.media_id ?? null}
           coverPreviewUrl={adminMediaPreviewUrl(coverMedia?.storage_path)}
+          isPubliclyAvailable={accommodation.is_active && accommodation.is_published && liveProvinceIds.includes(accommodation.province_id)}
         />
       </div>
     </AdminShell>

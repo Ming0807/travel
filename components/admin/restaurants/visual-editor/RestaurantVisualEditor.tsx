@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, MapPin, ForkKnife, Clock, Phone, Compass, Image as ImageIcon } from "@phosphor-icons/react";
+import { ArrowLeft, MapPin, ForkKnife, Clock, Phone, Compass, Eye, Image as ImageIcon, Images } from "@phosphor-icons/react";
 import { EditableBlock } from "@/components/admin/forms/EditableBlock";
 import { Drawer } from "@/components/admin/Drawer";
 import { HeaderForm, ContentForm, LocationForm, SettingsForm } from "./SectionForms";
@@ -22,6 +22,7 @@ interface RestaurantVisualEditorProps {
   selectedAttractionIds?: number[];
   coverMediaId?: number | null;
   coverMediaUrl?: string | null;
+  isPubliclyAvailable?: boolean;
 }
 
 function MissingImageState({ title, description }: { title: string; description: string }) {
@@ -44,6 +45,7 @@ export function RestaurantVisualEditor({
   selectedAttractionIds = [],
   coverMediaId: initialCoverMediaId,
   coverMediaUrl: initialCoverMediaUrl,
+  isPubliclyAvailable,
 }: RestaurantVisualEditorProps) {
   const [activeSection, setActiveSection] = useState<EditorSection>(null);
   const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId ?? null);
@@ -52,11 +54,13 @@ export function RestaurantVisualEditor({
   const provinceName = provinces.find((p) => p.id === restaurant.province_id)?.label ?? "ไม่ระบุจังหวัด";
   const name = restaurant.name_th || "ยังไม่มีชื่อ";
   const coverImage = coverMediaUrl;
+  const canPreviewPublicPage = isPubliclyAvailable
+    ?? (restaurant.is_active && restaurant.is_published);
 
   return (
     <div className="relative min-h-screen bg-background pb-20">
       {/* Editor Toolbar */}
-      <div className="sticky top-0 z-30 flex min-w-0 items-center justify-between gap-2 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-md sm:gap-4 sm:px-6 sm:py-4">
+      <div className="sticky top-0 z-30 flex min-w-0 flex-col gap-3 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-md sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Link aria-label="กลับไปหน้ารายการร้านอาหาร" href="/admin/restaurants" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--admin-radius-control)] bg-slate-100 text-slate-600 transition hover:bg-slate-200">
             <ArrowLeft size={20} weight="bold" />
@@ -66,15 +70,40 @@ export function RestaurantVisualEditor({
             <p className="hidden text-xs font-bold text-slate-500 sm:block">แก้ไขแต่ละส่วนจากตำแหน่งเดียวกับหน้าสาธารณะ</p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <div className="hidden rounded-[var(--admin-radius-control)] bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700 md:block">
-            สถานะ: {restaurant.is_published ? "เผยแพร่แล้ว" : "ยังไม่เผยแพร่"}
-          </div>
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex lg:w-auto lg:shrink-0">
+          {canPreviewPublicPage ? (
+            <Link
+              href={`/restaurants/${restaurant.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)] sm:min-w-40"
+            >
+              <Eye aria-hidden="true" size={17} weight="bold" />
+              <span>ดูหน้าสาธารณะ</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              title="ร้านต้องเปิดใช้งาน เผยแพร่ และอยู่ในจังหวัดที่เปิดให้บริการก่อนจึงจะดูหน้าสาธารณะได้"
+              className="inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500 sm:min-w-40"
+            >
+              <Eye aria-hidden="true" size={17} weight="bold" />
+              <span>ดูหน้าสาธารณะ</span>
+            </button>
+          )}
+          <Link
+            href={`/admin/restaurants/${restaurant.restaurant_id}/media`}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)] sm:min-w-32"
+          >
+            <Images aria-hidden="true" size={17} weight="bold" />
+            <span>จัดการสื่อ</span>
+          </Link>
           <button 
             type="button"
             aria-label="ตั้งค่า / สถานะ"
             onClick={() => setActiveSection("settings")}
-            className="min-h-10 rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)] sm:px-4"
+            className="col-span-2 min-h-11 rounded-[var(--admin-radius-control)] bg-[var(--admin-accent)] px-3 py-2 text-sm font-black text-white transition hover:bg-[var(--admin-accent-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)] sm:col-span-1 sm:px-4"
           >
             ตั้งค่า<span className="hidden sm:inline"> / สถานะ</span>
           </button>
@@ -149,6 +178,13 @@ export function RestaurantVisualEditor({
                   ? `${restaurant.attraction_count} saved attraction relationship(s) exist. This preview does not generate automatic nearby cards or sample images.`
                   : "No saved attraction relationships are available for this restaurant preview. Link real attraction records before showing this public section."}
               </p>
+              <button
+                type="button"
+                onClick={() => setActiveSection("settings")}
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-[var(--admin-radius-control)] border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)]"
+              >
+                แก้ไขสถานที่ท่องเที่ยวใกล้เคียง
+              </button>
             </div>
 
           </div>

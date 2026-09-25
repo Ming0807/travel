@@ -36,19 +36,20 @@ This document should be used before implementing pages, layouts, navigation, pro
 
 ### Public Homepage Discovery Flow
 
-The public homepage is a working discovery surface, not a marketing-only landing page. Its stable order is:
+The public homepage is a Yala-first editorial discovery surface, not a marketing-only landing page. Its stable order is:
 
 ```text
-Hero and search
-Quick category actions
-Attraction discovery with real CMS records
-Three-step QR / certificate journey
-Published stories
-Recorded tourism statistics
-Digital Passport and leaderboard call-to-action
+Community tourism hero with QR entry, attraction directory, working-group PDF and YRU partner mark
+Visual discovery categories
+Yala landscape and published attraction highlights
+Published routes and stories
+Published restaurant highlights and trip-planning links
+Digital Passport / QR entry and a compact recorded-data link
 ```
 
-Homepage search routes to the matching public directory and preserves the query parameter. Map content is shown only when a published attraction has valid coordinates. The current pilot scope is Yala; public navigation must not advertise Pattani or Narathiwat until those destinations are activated again.
+The global header search routes to the matching public directory and preserves the query parameter. Missing published records show honest empty states, not mock listings. The current pilot scope is Yala; public navigation must not advertise Pattani or Narathiwat until those destinations are activated again.
+
+Homepage imagery is Settings-owned: three hero/banner slots and nine named editorial placements can be changed through the Media Library at `/admin/settings?tab=homepage`. Two optimized local panorama images are replaceable defaults, not permanent backgrounds. Attraction, restaurant, route, and story cards use their own published CMS media. The homepage never invents visit counts or testimonials to fill gaps.
 
 The global header search uses the same routing contract on every public page. It opens an accessible search dialog, lets the visitor choose attractions, restaurants, accommodations, or stories, and sends the query to the matching real directory. It is not a decorative icon or a homepage anchor.
 
