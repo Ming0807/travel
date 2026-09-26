@@ -675,6 +675,7 @@ function PublicPageSettings({
 }) {
   return (
     <>
+      <p className="text-sm leading-6 text-slate-600">ภาพ Hero ที่เลือกจะแทนภาพปกอัตโนมัติของหน้านั้น กดเอาออกแล้วบันทึกเพื่อกลับไปใช้ภาพสำรอง โดยไม่ลบไฟล์ออกจากคลังสื่อ</p>
       <SettingsSection title="หน้าสถานที่ท่องเที่ยว" description="ข้อความหัวหน้าและส่วนวางแผนต่อท้ายรายการ">
         <TextInput label="หัวข้อหน้า" value={settings.attractions_page_hero.title} onChange={(value) => updateSettingObject("attractions_page_hero", { title: value })} />
         <TextArea label="คำอธิบายหน้า" value={settings.attractions_page_hero.description} onChange={(value) => updateSettingObject("attractions_page_hero", { description: value })} rows={3} />

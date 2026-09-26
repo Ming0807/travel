@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { SettingsService } from "@/lib/services/settings.service";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { isSiteSettingKey } from "@/lib/config/site-settings";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
+
+const HERO_PUBLIC_PATHS: Record<string, string> = {
+  homepage_hero: "/",
+  attractions_page_hero: "/attractions",
+  restaurants_page_hero: "/restaurants",
+  accommodations_page_hero: "/accommodations",
+  stories_page_hero: "/stories",
+  routes_page_hero: "/routes",
+};
 
 export async function GET(request: Request) {
   try {
@@ -50,6 +60,14 @@ export async function PUT(request: Request) {
     const success = await service.updateSetting(key, value);
 
     if (success) {
+      const publicPath = HERO_PUBLIC_PATHS[key];
+      if (publicPath) {
+        try {
+          revalidatePath(publicPath);
+        } catch (error) {
+          console.error(`[PUT /api/admin/settings] Revalidation failed for ${publicPath}:`, error);
+        }
+      }
       await logAdminMutation({
         actor: guard.actor,
         action: "settings.update",

@@ -563,6 +563,8 @@ Rules:
 - Audit setting changes.
 - Avoid arbitrary setting keys from the client.
 
+Hero imagery: `/admin/settings?tab=homepage` manages the Home Hero. `/admin/settings?tab=publicPages` manages the Hero images for attractions, restaurants, accommodations, stories, and routes separately. "เลือกภาพ" selects or replaces a managed asset; "เอาออก" clears only that page's Hero setting and leaves the Media Library asset untouched. Save the pending change to publish it. The corresponding public page is revalidated on its next visit, and a page without a selected Hero image falls back to its published content image where available.
+
 ## Permissions
 
 Recommended permission split:

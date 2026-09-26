@@ -257,6 +257,8 @@ labelled as an external system. When the CMS has no published 360 media, the
 page may offer the configured external provider with a clear privacy notice,
 but it must not invent supported places or render a CSS mock panorama.
 
+The public navbar and homepage 360 action link directly to the external Yala Rajabhat University site (`https://yala360.yru.ac.th/Natham/`) in a new tab, with an external-site label. `/360-vista` remains available for existing internal links and CMS-managed panorama records, but is not the primary 360 navigation entry and must not imply our platform owns the external work.
+
 The 360 directory uses the same compact discovery intro and result summary as
 the other public directories. Its cards retain the real media behavior and
 must distinguish managed panorama media from an external provider before the

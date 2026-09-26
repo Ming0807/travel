@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { AdminAccommodationRow } from "@/lib/repositories/admin-accommodation.repository";
+import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock("@/app/actions/admin-accommodation-actions", () => ({
@@ -8,8 +9,13 @@ vi.mock("@/app/actions/admin-accommodation-actions", () => ({
   updateAccommodationAction: vi.fn(),
 }));
 vi.mock("@/components/admin/forms/FormRichText", () => ({
-  FormRichText: ({ label, name, defaultValue }: { label: string; name: string; defaultValue?: string }) => (
-    <label>{label}<textarea name={name} defaultValue={defaultValue} /></label>
+  FormRichText: ({ label, name, defaultValue, onValueChange }: {
+    label: string;
+    name: string;
+    defaultValue?: string;
+    onValueChange?: (value: { html: string; document: null }) => void;
+  }) => (
+    <label>{label}<textarea name={name} defaultValue={defaultValue} onChange={(event) => onValueChange?.({ html: event.currentTarget.value, document: null })} /></label>
   ),
 }));
 
@@ -101,5 +107,68 @@ describe("AccommodationForm editor workspace", () => {
   it("does not link to an unpublished accommodation", () => {
     render(<AccommodationForm accommodation={accommodation} provinces={[{ id: 1, label: "ยะลา" }]} />);
     expect(screen.queryByRole("link", { name: "ดูหน้าสาธารณะ" })).not.toBeInTheDocument();
+  });
+
+  it("preserves existing accommodation type and price values outside the suggested options", () => {
+    const legacyAccommodation = {
+      ...accommodation,
+      accommodation_type: "Boutique lodge",
+      price_range: "1,000 - 2,000 THB",
+    };
+    render(<AccommodationForm accommodation={legacyAccommodation} provinces={[{ id: 1, label: "ยะลา" }]} />);
+
+    const type = screen.getByLabelText("ประเภทที่พัก") as HTMLSelectElement;
+    const price = screen.getByLabelText("ช่วงราคา (Price Range)") as HTMLSelectElement;
+    expect(type.value).toBe("Boutique lodge");
+    expect(price.value).toBe("1,000 - 2,000 THB");
+
+    const form = screen.getByRole("link", { name: "ยกเลิก" }).closest("form")!;
+    expect(new FormData(form).get("accommodationType")).toBe("Boutique lodge");
+    expect(new FormData(form).get("priceRange")).toBe("1,000 - 2,000 THB");
+  });
+
+  it("submits formatted Thai description HTML from the rich-text field", () => {
+    renderEditor();
+    fireEvent.click(screen.getByRole("button", { name: /2\. รายละเอียด/ }));
+
+    const description = screen.getByLabelText("รายละเอียดภาษาไทย") as HTMLTextAreaElement;
+    fireEvent.change(description, { target: { value: "<p><strong>ที่พักริมน้ำ</strong></p>" } });
+
+    const form = screen.getByRole("link", { name: "ยกเลิก" }).closest("form")!;
+    expect(new FormData(form).get("descriptionTh")).toBe("<p><strong>ที่พักริมน้ำ</strong></p>");
+  });
+
+  it("submits formatted English description HTML from the rich-text field", () => {
+    renderEditor();
+    fireEvent.click(screen.getByRole("button", { name: /2\. รายละเอียด/ }));
+
+    const description = screen.getByLabelText("รายละเอียดภาษาอังกฤษ") as HTMLTextAreaElement;
+    fireEvent.change(description, { target: { value: "<p><em>A quiet riverside stay.</em></p>" } });
+
+    const form = screen.getByRole("link", { name: "ยกเลิก" }).closest("form")!;
+    expect(new FormData(form).get("descriptionEn")).toBe("<p><em>A quiet riverside stay.</em></p>");
+  });
+
+  it("previews active gallery images and links to gallery management", () => {
+    const galleryMedia = [
+      { media_id: 91, media_type: "image", storage_path: "site-media/stays/room.webp", alt_text_th: "ห้องพัก", alt_text_en: null, is_active: true, lifecycle_status: "active", is_cover: false, display_order: 1 },
+      { media_id: 92, media_type: "image", storage_path: "site-media/stays/archived.webp", alt_text_th: "รูปเก่า", alt_text_en: null, is_active: false, lifecycle_status: "archived", is_cover: false, display_order: 2 },
+    ] as AdminMediaRow[];
+    render(
+      <AccommodationForm
+        accommodation={accommodation}
+        provinces={[{ id: 1, label: "ยะลา" }]}
+        galleryMedia={galleryMedia}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /4\. การแสดงผล/ }));
+
+    expect(screen.getByText("เชื่อมโยงรูปภาพแล้ว 1 รูป")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "ห้องพัก" })).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "รูปเก่า" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /จัดการแกลเลอรี/ })).toHaveAttribute(
+      "href",
+      "/admin/accommodations/41/media",
+    );
   });
 });

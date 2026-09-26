@@ -6,7 +6,7 @@ import { createRestaurantAction, updateRestaurantAction } from "@/app/actions/ad
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminFormSection, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
-import { FormInput, FormTextarea, FormSelect, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
+import { FormInput, FormSelect, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { Image, List } from "@phosphor-icons/react";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
@@ -131,7 +131,7 @@ export function RestaurantForm({
           <AdminFormSection title="เนื้อหาและรายละเอียด (Content)">
             <div className="space-y-6">
               <FormRichText label="รายละเอียดภาษาไทย" name="descriptionTh" defaultValue={restaurant?.description_th ?? ""} imageLayoutControls minHeight={320} error={fe("descriptionTh")} />
-              <FormTextarea label="รายละเอียดภาษาอังกฤษ" name="descriptionEn" defaultValue={restaurant?.description_en ?? ""} maxLength={30000} rows={6} error={fe("descriptionEn")} />
+              <FormRichText label="รายละเอียดภาษาอังกฤษ" name="descriptionEn" defaultValue={restaurant?.description_en ?? ""} imageLayoutControls minHeight={320} error={fe("descriptionEn")} />
               <p className="text-xs leading-5 text-slate-500">เพิ่มภาพประกอบในเนื้อหาได้หลายรูป ส่วนภาพปกและแกลเลอรีจัดการได้หลังสร้างร้านอาหาร</p>
             </div>
           </AdminFormSection>

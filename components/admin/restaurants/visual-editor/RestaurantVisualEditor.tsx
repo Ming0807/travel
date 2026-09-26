@@ -5,17 +5,21 @@ import Link from "next/link";
 import { ArrowLeft, MapPin, ForkKnife, Clock, Phone, Compass, Eye, Image as ImageIcon, Images } from "@phosphor-icons/react";
 import { EditableBlock } from "@/components/admin/forms/EditableBlock";
 import { Drawer } from "@/components/admin/Drawer";
+import { MediaManager } from "@/components/admin/attractions/MediaManager";
 import { HeaderForm, ContentForm, LocationForm, SettingsForm } from "./SectionForms";
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
 import type { AdminSelectOption } from "@/components/admin/restaurants/RestaurantForm";
 import Image from "next/image";
 import type { AdminRestaurantCategory } from "@/lib/repositories/admin-restaurant-category.repository";
 import type { NearbyAttractionOption } from "@/components/admin/restaurants/NearbyAttractionPicker";
+import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
+import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 
-type EditorSection = "header" | "content" | "location" | "settings" | "cover" | null;
+type EditorSection = "header" | "content" | "location" | "settings" | "gallery" | null;
 
 interface RestaurantVisualEditorProps {
   restaurant: AdminRestaurantRow;
+  media?: AdminMediaRow[];
   provinces: AdminSelectOption[];
   categories: AdminRestaurantCategory[];
   nearbyAttractions?: NearbyAttractionOption[];
@@ -39,6 +43,7 @@ function MissingImageState({ title, description }: { title: string; description:
 
 export function RestaurantVisualEditor({
   restaurant,
+  media = [],
   provinces,
   categories,
   nearbyAttractions = [],
@@ -54,6 +59,17 @@ export function RestaurantVisualEditor({
   const provinceName = provinces.find((p) => p.id === restaurant.province_id)?.label ?? "ไม่ระบุจังหวัด";
   const name = restaurant.name_th || "ยังไม่มีชื่อ";
   const coverImage = coverMediaUrl;
+  const galleryImages = media
+    .filter((item) => item.is_active && item.lifecycle_status === "active")
+    .filter((item) => item.media_type === "image")
+    .sort((a, b) => {
+      if (a.is_cover !== b.is_cover) return a.is_cover ? -1 : 1;
+      return (a.display_order ?? 0) - (b.display_order ?? 0);
+    })
+    .flatMap((item) => {
+      const url = adminMediaPreviewUrl(item.storage_path);
+      return url ? [{ id: item.media_id, url, alt: item.alt_text_th || item.alt_text_en || name }] : [];
+    });
   const canPreviewPublicPage = isPubliclyAvailable
     ?? (restaurant.is_active && restaurant.is_published);
 
@@ -164,6 +180,47 @@ export function RestaurantVisualEditor({
                 <p className="text-base leading-relaxed text-slate-600 whitespace-pre-line">
                   {restaurant.description_th || "คลิกเพื่อเพิ่มรายละเอียดเกี่ยวกับร้านอาหาร"}
                 </p>
+              </section>
+            </EditableBlock>
+
+            <EditableBlock id="gallery" label="ภาพร้านอาหาร" isActive={activeSection === "gallery"} onEdit={() => setActiveSection("gallery")}>
+              <section aria-labelledby="restaurant-gallery-heading" className="pointer-events-none">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 id="restaurant-gallery-heading" className="text-2xl font-black text-slate-800">ภาพร้านอาหาร</h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {galleryImages.length > 0
+                        ? `เชื่อมโยงรูปภาพแล้ว ${galleryImages.length} รูป`
+                        : "ยังไม่มีรูปภาพสำหรับแกลเลอรีร้านอาหาร"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("gallery")}
+                    className="pointer-events-auto inline-flex min-h-11 items-center justify-center gap-2 border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)]"
+                  >
+                    <Images aria-hidden="true" size={18} weight="bold" />
+                    {galleryImages.length > 0 ? "จัดการแกลเลอรี" : "เพิ่มรูปภาพ"}
+                  </button>
+                </div>
+                {galleryImages.length > 0 ? (
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {galleryImages.slice(0, 6).map((image) => (
+                      <div key={image.id} className="relative aspect-[4/3] overflow-hidden border border-slate-200 bg-slate-100">
+                        <Image src={image.url} alt={image.alt} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover" unoptimized />
+                      </div>
+                    ))}
+                    {galleryImages.length > 6 ? (
+                      <div className="flex aspect-[4/3] items-center justify-center border border-slate-200 bg-slate-50 text-sm font-bold text-slate-600">
+                        +{galleryImages.length - 6} รูป
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="mt-4 flex min-h-36 items-center justify-center border border-dashed border-slate-300 bg-slate-50 px-5 text-center text-sm text-slate-500">
+                    เพิ่มภาพที่ผ่านการตรวจสอบเพื่อแสดงแกลเลอรีในหน้าสาธารณะ
+                  </div>
+                )}
               </section>
             </EditableBlock>
 
@@ -299,6 +356,18 @@ export function RestaurantVisualEditor({
         size="lg"
       >
         <ContentForm restaurant={restaurant} onClose={() => setActiveSection(null)} />
+      </Drawer>
+
+      <Drawer
+        isOpen={activeSection === "gallery"}
+        onClose={() => setActiveSection(null)}
+        title="จัดการรูปภาพ (Media Gallery)"
+        size="xl"
+        bodyClassName="p-0"
+      >
+        <div className="pb-10">
+          <MediaManager entityId={restaurant.restaurant_id} entityType="restaurant" initialMedia={media} />
+        </div>
       </Drawer>
 
       <Drawer

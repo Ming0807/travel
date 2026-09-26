@@ -12,6 +12,7 @@ import {
   Stamp,
 } from "@phosphor-icons/react/dist/ssr";
 import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
+import { VISTA_360_EXTERNAL_URL } from "@/constants/product";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import type { PublicAccommodationCard, PublicRestaurantCard, PublicRouteCard, PublicStoryCard } from "@/lib/repositories/public-content.repository";
 import type { AttractionCard } from "@/types/tourism";
@@ -101,7 +102,7 @@ function Hero({ hero }: Pick<HomepageEditorialProps, "hero">) {
         </div>
         <div className="ed-hero-partner"><Image src="/partners/yala-rajabhat-university.png" alt="ตรามหาวิทยาลัยราชภัฏยะลา" width={72} height={60} /><span>ร่วมขับเคลื่อนโดย<strong>มหาวิทยาลัยราชภัฏยะลา</strong></span></div>
       </div>
-      <Link className="ed-hero-more" href="/360-vista" aria-label="เปิดทัวร์เสมือนจริง 360 องศา"><span aria-hidden="true">↗</span> สำรวจ 360°</Link>
+      <a className="ed-hero-more" href={VISTA_360_EXTERNAL_URL} target="_blank" rel="noopener noreferrer" aria-label="ชม 360° บนเว็บไซต์ภายนอก เปิดแท็บใหม่"><span aria-hidden="true">↗</span> ชม 360°</a>
     </div>
   </section>;
 }

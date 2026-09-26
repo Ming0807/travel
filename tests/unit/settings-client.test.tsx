@@ -266,6 +266,23 @@ describe("SettingsClient", () => {
     expect(preview).toHaveAttribute("src", "/site-media/general/restaurant-hero.webp");
   });
 
+  it("removes a saved public-page hero image and persists the empty selection", async () => {
+    const persistedSettings = EMPTY_SETTINGS.map((setting) => setting.setting_key === "restaurants_page_hero"
+      ? { ...setting, setting_value: { title: "ร้านอาหาร", description: "ท้องถิ่น", image: "general/restaurant-hero.webp" } }
+      : setting);
+    render(<SettingsClient initialSettings={persistedSettings} initialGroup="publicPages" />);
+
+    const field = (await screen.findByText("ภาพ Hero ร้านอาหาร")).parentElement;
+    expect(field).not.toBeNull();
+    await userEvent.click(within(field!).getByRole("button", { name: "เอาออก" }));
+    expect(within(field!).getByText("ยังไม่ได้เลือกภาพ")).toBeInTheDocument();
+    await userEvent.click(screen.getByText(/บันทึก 1 รายการ/));
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    const request = mockFetch.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(String(request.body))).toMatchObject({ key: "restaurants_page_hero", value: { image: "" } });
+  });
+
   it("saves the stable storage path instead of a rendered media URL", async () => {
     render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
 

@@ -1,9 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { AdminRestaurantRow } from "@/lib/repositories/admin-restaurant.repository";
+import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 
 const mocks = vi.hoisted(() => ({
   refresh: vi.fn(),
+  createRestaurantAction: vi.fn().mockResolvedValue({ success: true }),
   updateRestaurantAction: vi.fn().mockResolvedValue({ success: true, data: { id: 45 } }),
 }));
 
@@ -11,10 +13,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
 }));
 vi.mock("@/app/actions/admin-restaurant-actions", () => ({
+  createRestaurantAction: mocks.createRestaurantAction,
   updateRestaurantAction: mocks.updateRestaurantAction,
 }));
 
 import { RestaurantVisualEditor } from "@/components/admin/restaurants/visual-editor/RestaurantVisualEditor";
+import { RestaurantForm } from "@/components/admin/restaurants/RestaurantForm";
 
 const restaurant: AdminRestaurantRow = {
   restaurant_id: 45,
@@ -58,6 +62,59 @@ function renderEditor(restaurantOverrides: Partial<AdminRestaurantRow> = {}) {
   );
 }
 
+const restaurantMedia: AdminMediaRow[] = [
+  {
+    media_id: 71,
+    attraction_id: null,
+    restaurant_id: 45,
+    accommodation_id: null,
+    story_id: null,
+    route_id: null,
+    media_type: "image",
+    storage_path: "restaurants/lae-pha-cover.webp",
+    alt_text_th: "หน้าร้าน",
+    alt_text_en: null,
+    caption_th: null,
+    caption_en: null,
+    credit_text: null,
+    source_url: null,
+    license_type: null,
+    usage_notes: null,
+    lifecycle_status: "active",
+    archived_at: null,
+    display_order: 0,
+    is_cover: true,
+    is_active: true,
+    created_at: "2026-08-14T00:00:00.000Z",
+    updated_at: null,
+  },
+  {
+    media_id: 72,
+    attraction_id: null,
+    restaurant_id: 45,
+    accommodation_id: null,
+    story_id: null,
+    route_id: null,
+    media_type: "image",
+    storage_path: "restaurants/lae-pha-food.webp",
+    alt_text_th: "อาหารของร้าน",
+    alt_text_en: null,
+    caption_th: null,
+    caption_en: null,
+    credit_text: null,
+    source_url: null,
+    license_type: null,
+    usage_notes: null,
+    lifecycle_status: "active",
+    archived_at: null,
+    display_order: 1,
+    is_cover: false,
+    is_active: true,
+    created_at: "2026-08-14T00:00:00.000Z",
+    updated_at: null,
+  },
+];
+
 describe("RestaurantVisualEditor", () => {
   it("offers public preview and media management from the editor header", () => {
     renderEditor();
@@ -71,6 +128,69 @@ describe("RestaurantVisualEditor", () => {
       "/admin/restaurants/45/media",
     );
     expect(screen.getByRole("link", { name: "จัดการสื่อ" })).toHaveClass("min-h-11");
+  });
+
+  it("previews active restaurant gallery media and opens its manager in context", () => {
+    render(
+      <RestaurantVisualEditor
+        restaurant={restaurant}
+        provinces={[{ id: 1, label: "ยะลา" }]}
+        categories={[]}
+        media={restaurantMedia}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "ภาพร้านอาหาร" })).toBeInTheDocument();
+    expect(screen.getByText("เชื่อมโยงรูปภาพแล้ว 2 รูป")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "หน้าร้าน" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "อาหารของร้าน" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "จัดการแกลเลอรี" }));
+
+    expect(screen.getByRole("heading", { name: "จัดการรูปภาพ (Media Gallery)" })).toBeInTheDocument();
+  });
+
+  it("shows a gallery readiness action when no restaurant images are linked", () => {
+    render(
+      <RestaurantVisualEditor
+        restaurant={restaurant}
+        provinces={[{ id: 1, label: "ยะลา" }]}
+        categories={[]}
+        media={[]}
+      />,
+    );
+
+    expect(screen.getByText("ยังไม่มีรูปภาพสำหรับแกลเลอรีร้านอาหาร")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "เพิ่มรูปภาพ" }));
+    expect(screen.getByRole("heading", { name: "จัดการรูปภาพ (Media Gallery)" })).toBeInTheDocument();
+  });
+
+  it("gives both restaurant description languages rich image and layout controls", async () => {
+    Object.defineProperty(document, "elementFromPoint", {
+      configurable: true,
+      value: () => document.body,
+    });
+    renderEditor();
+
+    fireEvent.click(screen.getByRole("button", { name: "แก้ไข รายละเอียด" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "แทรกรูปจากคลังสื่อ" })).toHaveLength(2);
+      expect(screen.getAllByText("คลิกรูปในเนื้อหาเพื่อปรับขนาดและตำแหน่ง")).toHaveLength(2);
+    });
+  });
+
+  it("keeps rich image controls for both languages in the new restaurant form", async () => {
+    Object.defineProperty(document, "elementFromPoint", {
+      configurable: true,
+      value: () => document.body,
+    });
+    render(<RestaurantForm provinces={[]} categories={[]} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "แทรกรูปจากคลังสื่อ" })).toHaveLength(2);
+      expect(screen.getAllByText("คลิกรูปในเนื้อหาเพื่อปรับขนาดและตำแหน่ง")).toHaveLength(2);
+    });
   });
 
   it("does not offer a broken public route for a draft or inactive restaurant", () => {

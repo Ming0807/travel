@@ -7,7 +7,7 @@ import {
   getAdminProvinces,
   listAdminRestaurantAttractionIds,
 } from "@/lib/repositories/admin-restaurant.repository";
-import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
+import { getCoverMediaForEntity, listAdminMedia } from "@/lib/repositories/admin-media.repository";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 import { listAdminRestaurantCategories } from "@/lib/repositories/admin-restaurant-category.repository";
 import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
@@ -31,10 +31,11 @@ export default async function EditAdminRestaurantPage({
     notFound();
   }
 
-  const [restaurant, provinces, coverMedia, categories, attractions, selectedAttractionIds, liveProvinceIds] = await Promise.all([
+  const [restaurant, provinces, coverMedia, media, categories, attractions, selectedAttractionIds, liveProvinceIds] = await Promise.all([
     getAdminRestaurantById(restaurantId),
     getAdminProvinces(),
     getCoverMediaForEntity("restaurant", restaurantId),
+    listAdminMedia({ entityType: "restaurant", entityId: restaurantId, page: 1, pageSize: 100 }),
     listAdminRestaurantCategories({ activeOnly: true }),
     getAdminAttractionsList(),
     listAdminRestaurantAttractionIds(restaurantId),
@@ -48,6 +49,7 @@ export default async function EditAdminRestaurantPage({
   return (
     <RestaurantVisualEditor 
       restaurant={restaurant}
+      media={media.items}
       provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}
       categories={categories}
       nearbyAttractions={attractions.map((attraction) => ({

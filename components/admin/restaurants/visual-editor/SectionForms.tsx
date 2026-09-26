@@ -231,10 +231,7 @@ export function ContentForm({ restaurant, onClose }: SectionFormProps) {
 
         <div className="space-y-4">
           <FormRichText label="รายละเอียดภาษาไทย" name="descriptionTh" defaultValue={restaurant.description_th ?? ""} imageLayoutControls minHeight={360} />
-          <label className="block">
-            <span className="text-sm font-bold text-slate-700">รายละเอียดภาษาอังกฤษ</span>
-            <textarea className="mt-2 min-h-[150px] w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" defaultValue={restaurant.description_en ?? ""} name="descriptionEn" maxLength={30000} />
-          </label>
+          <FormRichText label="รายละเอียดภาษาอังกฤษ" name="descriptionEn" defaultValue={restaurant.description_en ?? ""} imageLayoutControls minHeight={360} />
         </div>
       </div>
       <SectionFooter isPending={isPending} onClose={onClose} submitLabel="บันทึกเนื้อหา" />

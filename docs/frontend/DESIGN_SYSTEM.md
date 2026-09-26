@@ -122,6 +122,12 @@ React Hook Form + Zod for forms
 
 ## 5. Visual Identity Direction
 
+### Current Public Editorial Contract (2026 Yala Pilot)
+
+The approved homepage establishes the visual baseline for all public directory pages and the shared navbar. Use a warm white/cream canvas (`#fffdfa`), dark neutral ink (`#263036`), restrained copper/coral (`#9b4e38` / `#bb5436`) for navigation and calls to action, and genuine destination photography. Teal remains a secondary functional color, not the dominant background. The admin dashboard keeps its separate operational palette. This current contract supersedes the older dark-emerald recommendation below for new public-facing layouts.
+
+The navbar is one component across Home and all public pages: YALA brand, destination navigation, search, account, and QR check-in. The `ชม 360°` item is an explicitly labeled external link to the Yala Rajabhat University project; it opens a new tab and is not presented as a native platform feature. On narrow screens it appears in the same menu as the core journeys. Use the shared public directory Hero for newly redesigned listings and keep mobile photography visible above copy.
+
 The platform should combine:
 
 ```text

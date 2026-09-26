@@ -3,14 +3,17 @@
 import { useActionState, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { createAccommodationAction, updateAccommodationAction } from "@/app/actions/admin-accommodation-actions";
 import type { AdminAccommodationRow } from "@/lib/repositories/admin-accommodation.repository";
+import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminReadinessPanel, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
-import { ArrowSquareOut, CheckCircle, Image as ImageIcon, List, MapPin, WarningCircle } from "@phosphor-icons/react";
+import { ArrowSquareOut, CheckCircle, Image as ImageIcon, Images, List, MapPin, WarningCircle } from "@phosphor-icons/react";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import { FormRichText } from "@/components/admin/forms/FormRichText";
 import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
+import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 
 export type AdminSelectOption = {
   id: number;
@@ -24,6 +27,7 @@ type AccommodationFormProps = {
   coverMediaId?: number | null;
   coverPreviewUrl?: string | null;
   isPubliclyAvailable?: boolean;
+  galleryMedia?: AdminMediaRow[];
 };
 
 type AdminFormState = {
@@ -69,6 +73,9 @@ const FIELD_LABELS: Record<string, string> = {
   accommodationType: "ประเภทที่พัก",
 };
 
+const ACCOMMODATION_TYPES = ["Hotel", "Resort", "Homestay", "Hostel", "Guesthouse", "Villa"];
+const PRICE_RANGES = ["฿", "฿฿", "฿฿฿", "฿฿฿฿"];
+
 function initialDraft(accommodation?: AdminAccommodationRow | null): AccommodationDraft {
   return {
     nameTh: accommodation?.name_th ?? "",
@@ -103,6 +110,7 @@ export function AccommodationForm({
   coverMediaId: initialMediaId,
   coverPreviewUrl: initialPreviewUrl,
   isPubliclyAvailable = false,
+  galleryMedia = [],
 }: AccommodationFormProps) {
   const router = useRouter();
   const isEditing = !!accommodation;
@@ -179,6 +187,13 @@ export function AccommodationForm({
 
   const provinceLabel = provinces.find((province) => String(province.id) === draft.provinceId)?.label || "จังหวัดยังไม่ระบุ";
   const previewName = draft.nameTh.trim() || draft.nameEn.trim() || "ชื่อที่พัก";
+  const galleryImages = galleryMedia
+    .filter((media) => media.is_active && media.lifecycle_status === "active" && media.media_type === "image")
+    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+    .flatMap((media) => {
+      const url = adminMediaPreviewUrl(media.storage_path);
+      return url ? [{ id: media.media_id, url, alt: media.alt_text_th || media.alt_text_en || previewName }] : [];
+    });
   const readiness = [
     { label: "เพิ่มชื่อภาษาไทย", complete: !!draft.nameTh.trim() },
     { label: "กำหนด URL ที่ถูกต้อง", complete: /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(draft.slug) },
@@ -272,11 +287,8 @@ export function AccommodationForm({
               </div>
               <div className="space-y-5">
                 <FormRichText label="รายละเอียดภาษาไทย" name="descriptionTh" defaultValue={accommodation?.description_th ?? ""} imageLayoutControls minHeight={360} error={fieldError("descriptionTh")} onValueChange={({ html }) => setDraft((current) => ({ ...current, descriptionTh: html }))} />
-                <label className="block">
-                  <span className="text-sm font-bold text-slate-700">Description in English</span>
-                  <textarea className={`${textFieldClass()} min-h-40 resize-y leading-6`} defaultValue={accommodation?.description_en ?? ""} maxLength={30000} name="descriptionEn" />
-                </label>
-                <p className="text-xs leading-5 text-slate-500">เพิ่มรูปประกอบในเนื้อหาได้หลายรูป ส่วนภาพปกและแกลเลอรีจัดการได้หลังสร้างที่พัก</p>
+                <FormRichText label="รายละเอียดภาษาอังกฤษ" name="descriptionEn" defaultValue={accommodation?.description_en ?? ""} imageLayoutControls minHeight={360} error={fieldError("descriptionEn")} onValueChange={({ html }) => setDraft((current) => ({ ...current, descriptionEn: html }))} />
+                <p className="text-xs leading-5 text-slate-500">เพิ่มภาพประกอบที่จัดการจากคลังสื่อได้หลายรูปในเนื้อหาทั้งสองภาษา ส่วนภาพปกและแกลเลอรีจัดการแยกกัน</p>
               </div>
             </section>
 
@@ -298,6 +310,7 @@ export function AccommodationForm({
                   <span className="text-sm font-bold text-slate-700">ประเภทที่พัก</span>
                   <select className={textFieldClass()} defaultValue={accommodation?.accommodation_type ?? ""} name="accommodationType">
                     <option value="">ไม่ระบุ</option>
+                    {accommodation?.accommodation_type && !ACCOMMODATION_TYPES.includes(accommodation.accommodation_type) ? <option value={accommodation.accommodation_type}>ค่าปัจจุบัน: {accommodation.accommodation_type}</option> : null}
                     <option value="Hotel">Hotel / โรงแรม</option>
                     <option value="Resort">Resort / รีสอร์ท</option>
                     <option value="Homestay">Homestay / โฮมสเตย์</option>
@@ -310,6 +323,7 @@ export function AccommodationForm({
                   <span className="text-sm font-bold text-slate-700">ช่วงราคา (Price Range)</span>
                   <select className={textFieldClass()} defaultValue={accommodation?.price_range ?? ""} name="priceRange">
                     <option value="">ไม่ระบุ</option>
+                    {accommodation?.price_range && !PRICE_RANGES.includes(accommodation.price_range) ? <option value={accommodation.price_range}>ค่าปัจจุบัน: {accommodation.price_range}</option> : null}
                     <option value="฿">฿ (ราคาประหยัด)</option>
                     <option value="฿฿">฿฿ (ราคาปานกลาง)</option>
                     <option value="฿฿฿">฿฿฿ (ราคาสูง)</option>
@@ -374,6 +388,41 @@ export function AccommodationForm({
                   <p className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">รายการตรวจความพร้อมเป็นคำแนะนำสำหรับผู้ดูแล ไม่ได้เปลี่ยนกฎการเผยแพร่หรือการบันทึกฝั่งเซิร์ฟเวอร์</p>
                 </div>
               </div>
+              <section aria-label="ตัวอย่างแกลเลอรีที่พัก" className="mt-6 border-t border-slate-200 pt-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900">แกลเลอรีที่พัก</h4>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {galleryImages.length > 0
+                        ? `เชื่อมโยงรูปภาพแล้ว ${galleryImages.length} รูป`
+                        : isEditing ? "ยังไม่มีรูปภาพที่พร้อมแสดงในแกลเลอรี" : "สร้างที่พักก่อน แล้วจึงเพิ่มรูปภาพในแกลเลอรีได้"}
+                    </p>
+                  </div>
+                  {isEditing ? (
+                    <Link
+                      href={`/admin/accommodations/${accommodation.accommodation_id}/media`}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:border-[#0A6B62] hover:text-[#073F37]"
+                    >
+                      <Images size={18} aria-hidden="true" />
+                      จัดการแกลเลอรี
+                    </Link>
+                  ) : null}
+                </div>
+                {galleryImages.length > 0 ? (
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {galleryImages.slice(0, 6).map((image) => (
+                      <div key={image.id} className="relative aspect-[4/3] overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                        <Image src={image.url} alt={image.alt} fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover" unoptimized />
+                      </div>
+                    ))}
+                    {galleryImages.length > 6 ? (
+                      <div className="flex aspect-[4/3] items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm font-bold text-slate-600">
+                        +{galleryImages.length - 6} รูป
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </section>
             </section>
           </div>
         </div>

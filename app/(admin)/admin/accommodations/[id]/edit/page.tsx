@@ -4,7 +4,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AccommodationForm } from "@/components/admin/accommodations/AccommodationForm";
 import { getAdminProvinces, getAdminAccommodationById } from "@/lib/repositories/admin-accommodation.repository";
-import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
+import { getCoverMediaForEntity, listAdminMedia } from "@/lib/repositories/admin-media.repository";
 import { requirePermission } from "@/lib/auth/guards";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 import { listLiveDestinationProvinceIds } from "@/lib/repositories/destination-scope.repository";
@@ -19,11 +19,12 @@ export default async function EditAccommodationPage({ params }: { params: Promis
   await requirePermission("attraction.update");
   const { id } = await params;
   
-  const [provincesData, accommodation, coverMedia, liveProvinceIds] = await Promise.all([
+  const [provincesData, accommodation, coverMedia, liveProvinceIds, galleryMedia] = await Promise.all([
     getAdminProvinces(),
     getAdminAccommodationById(Number(id)),
     getCoverMediaForEntity("accommodation", Number(id)),
     listLiveDestinationProvinceIds(),
+    listAdminMedia({ entityType: "accommodation", entityId: Number(id), page: 1, pageSize: 100 }),
   ]);
 
   if (!accommodation) notFound();
@@ -54,6 +55,7 @@ export default async function EditAccommodationPage({ params }: { params: Promis
           coverMediaId={coverMedia?.media_id ?? null}
           coverPreviewUrl={adminMediaPreviewUrl(coverMedia?.storage_path)}
           isPubliclyAvailable={accommodation.is_active && accommodation.is_published && liveProvinceIds.includes(accommodation.province_id)}
+          galleryMedia={galleryMedia.items}
         />
       </div>
     </AdminShell>
