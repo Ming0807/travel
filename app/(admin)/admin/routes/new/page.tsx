@@ -17,7 +17,7 @@ export default async function NewAdminRoutePage() {
         <AdminPageHeader
           eyebrow="Content Management"
           title="สร้างเส้นทางแนะนำใหม่"
-          description="เพิ่มเส้นทางท่องเที่ยวแนะนำสำหรับนักท่องเที่ยว"
+          description="สร้างฉบับร่างก่อน แล้วเพิ่มจุดแวะและรูปภาพปกในตัวแก้ไขเส้นทาง"
         />
 
         <div className="mt-8">

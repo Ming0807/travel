@@ -3,18 +3,7 @@
 import Link from "next/link";
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowDown,
-  ArrowUp,
-  DotsSixVertical,
-  MapPin,
-  Plus,
-  Trash,
-  CaretDown,
-  WarningCircle,
-  Eraser,
-  XCircle,
-} from "@phosphor-icons/react";
+import { ArrowDown, ArrowUp, MapPin, Plus, Trash, WarningCircle, XCircle } from "@phosphor-icons/react";
 import { updateRouteStopsAction } from "@/app/actions/admin-route-actions";
 import type { AdminRouteStopRow } from "@/lib/repositories/admin-route.repository";
 import type { AdminAttractionRow } from "@/lib/repositories/admin-attraction.repository";
@@ -27,628 +16,494 @@ import {
   AdminSaveBar,
 } from "@/components/admin/forms/AdminFormUX";
 
-interface RouteStopsManagerProps {
-  routeId: number;
-  initialStops: AdminRouteStopRow[];
-  attractions: AdminAttractionRow[];
-}
+export type RouteAttractionOption = Pick<
+  AdminAttractionRow,
+  "attraction_id" | "name_th" | "name_en" | "province_name_th" | "is_active" | "is_published"
+> & { coverImageUrl?: string | null };
 
-interface StopState {
-  id: string;
+export type NormalizedStop = {
   attractionId: number;
   dayNumber: number;
   displayOrder: number;
   stopNoteTh: string;
   stopNoteEn: string;
+};
+
+interface RouteStopsManagerProps {
+  routeId: number;
+  initialStops: AdminRouteStopRow[];
+  attractions: RouteAttractionOption[];
+  onStopsChange?: (stops: NormalizedStop[]) => void;
 }
 
-const FIELD_LABELS = {
-  stops: "จุดแวะ",
-  routeId: "เส้นทาง",
-};
+interface StopState extends NormalizedStop {
+  id: string;
+  attractionName: string;
+}
+
+const FIELD_LABELS = { stops: "จุดแวะ", routeId: "เส้นทาง" };
 
 function sortStops(stops: StopState[]) {
   return [...stops].sort((a, b) => a.dayNumber - b.dayNumber || a.displayOrder - b.displayOrder);
 }
 
-function normalizeStops(stops: StopState[]) {
-  const ordered = sortStops(stops);
+function compactStopDays(stops: StopState[]) {
+  const days = Array.from(new Set(stops.map((stop) => (
+    Number.isInteger(stop.dayNumber) && stop.dayNumber > 0 ? stop.dayNumber : 1
+  )))).sort((a, b) => a - b);
+  const dayByPosition = new Map(days.map((day, index) => [day, index + 1]));
+
+  return stops.map((stop) => ({
+    ...stop,
+    dayNumber: dayByPosition.get(stop.dayNumber) ?? 1,
+  }));
+}
+
+function normalizeStops(stops: StopState[]): NormalizedStop[] {
   const orderByDay = new Map<number, number>();
 
-  return ordered.map((stop) => {
-    const nextOrder = (orderByDay.get(stop.dayNumber) ?? 0) + 1;
-    orderByDay.set(stop.dayNumber, nextOrder);
+  return sortStops(compactStopDays(stops)).map((stop) => {
+    const dayNumber = Math.max(1, Number(stop.dayNumber) || 1);
+    const displayOrder = (orderByDay.get(dayNumber) ?? 0) + 1;
+    orderByDay.set(dayNumber, displayOrder);
 
     return {
       attractionId: stop.attractionId,
-      dayNumber: Math.max(1, Number(stop.dayNumber) || 1),
-      displayOrder: nextOrder,
+      dayNumber,
+      displayOrder,
       stopNoteTh: stop.stopNoteTh,
       stopNoteEn: stop.stopNoteEn,
     };
   });
 }
 
-export function RouteStopsManager({ routeId, initialStops, attractions }: RouteStopsManagerProps) {
+export function RouteStopsManager({ routeId, initialStops, attractions, onStopsChange }: RouteStopsManagerProps) {
   const router = useRouter();
-  const [stops, setStops] = useState<StopState[]>(
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [stops, setStops] = useState<StopState[]>(() => compactStopDays(
     initialStops.map((stop, index) => ({
       id: `stop-${index}-${stop.stop_id}`,
       attractionId: stop.attraction_id,
+      attractionName: stop.attraction_name_th ?? "",
       dayNumber: stop.day_number,
       displayOrder: stop.display_order,
       stopNoteTh: stop.stop_note_th ?? "",
       stopNoteEn: stop.stop_note_en ?? "",
     }))
+  ));
+  const [search, setSearch] = useState("");
+  const [addDay, setAddDay] = useState(1);
+  const [toast, setToast] = useState("");
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const eligibleAttractions = useMemo(
+    () => attractions.filter((attraction) => attraction.is_active && attraction.is_published),
+    [attractions]
   );
-
   const action = updateRouteStopsAction.bind(null, routeId);
-  const [state, formAction, isPending] = useActionState<AdminFormActionState, FormData>(action, {
-    success: false,
-    error: undefined,
-    fieldErrors: undefined,
-  });
-
-  useEffect(() => {
-    if (state?.success) {
-      router.push("/admin/routes");
-      router.refresh();
-    }
-  }, [state?.success, router]);
-
+  const [state, formAction, isPending] = useActionState<AdminFormActionState, FormData>(action, { success: false });
+  const orderedStops = useMemo(() => sortStops(stops), [stops]);
   const normalizedStops = useMemo(() => normalizeStops(stops), [stops]);
   const serializedStops = useMemo(() => JSON.stringify(normalizedStops), [normalizedStops]);
-  const sortedStops = useMemo(() => sortStops(stops), [stops]);
-  const days = useMemo(() => {
-    const uniqueDays = Array.from(new Set(sortedStops.map((stop) => stop.dayNumber))).sort((a, b) => a - b);
-    return uniqueDays.length ? uniqueDays : [1];
-  }, [sortedStops]);
+  const usedAttractionIds = useMemo(() => new Set(stops.map((stop) => stop.attractionId).filter(Boolean)), [stops]);
+  const dayNumbers = useMemo(
+    () => Array.from(new Set(orderedStops.map((stop) => stop.dayNumber))).filter((day) => day > 0).sort((a, b) => a - b),
+    [orderedStops]
+  );
+  const daysForControls = useMemo(() => {
+    const maxDay = Math.max(1, ...dayNumbers);
+    return Array.from({ length: maxDay + 1 }, (_, index) => index + 1);
+  }, [dayNumbers]);
 
-  // ─── Toast state ────────────────────────────────────────
-  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commitStops = useCallback((next: StopState[]) => {
+    const compacted = compactStopDays(next);
+    const availableDays = Array.from(new Set(compacted.map((stop) => stop.dayNumber))).sort((a, b) => a - b);
+    const selectedDayPosition = availableDays.indexOf(addDay);
+    setAddDay(selectedDayPosition >= 0 ? selectedDayPosition + 1 : Math.min(addDay, availableDays.length + 1));
+    setStops(compacted);
+    onStopsChange?.(normalizeStops(compacted));
+  }, [addDay, onStopsChange]);
 
   const showToast = useCallback((message: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ message, visible: true });
-    toastTimer.current = setTimeout(() => {
-      setToast({ message: "", visible: false });
-    }, 4000);
+    setToast(message);
+    toastTimer.current = setTimeout(() => setToast(""), 4000);
   }, []);
 
-  const dismissToast = useCallback(() => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ message: "", visible: false });
-  }, []);
-
-  // Cleanup timer on unmount
   useEffect(() => {
-    return () => {
-      if (toastTimer.current) clearTimeout(toastTimer.current);
-    };
+    if (state?.success) router.refresh();
+  }, [state?.success, router]);
+
+  useEffect(() => () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
   }, []);
 
-  const hasInvalidAttraction = stops.some((stop) => !stop.attractionId);
-  const hasInvalidOrder = stops.some(
-    (stop) =>
-      !Number.isInteger(stop.dayNumber) ||
-      stop.dayNumber < 1 ||
-      !Number.isInteger(stop.displayOrder) ||
-      stop.displayOrder < 1
+  const attractionById = useMemo(
+    () => new Map(attractions.map((attraction) => [attraction.attraction_id, attraction])),
+    [attractions]
   );
-  // Build duplicate attraction info: which attractions appear more than once, and their day/order occurrences
-  const attractionOccurrences = new Map<number, { id: string; dayNumber: number; displayOrder: number; name: string }[]>();
-  stops.forEach((stop) => {
-    if (!stop.attractionId) return;
-    const attraction = attractions.find((a) => a.attraction_id === stop.attractionId);
-    const occs = attractionOccurrences.get(stop.attractionId) ?? [];
-    occs.push({ id: stop.id, dayNumber: stop.dayNumber, displayOrder: stop.displayOrder, name: attraction?.name_th ?? '' });
-    attractionOccurrences.set(stop.attractionId, occs);
-  });
-  const duplicatedAttractions = new Map<number, { occurrences: { id: string; dayNumber: number; displayOrder: number }[]; name: string }>();
-  attractionOccurrences.forEach((occs, attractionId) => {
-    if (occs.length > 1) {
-      duplicatedAttractions.set(attractionId, { occurrences: occs.map((o) => ({ id: o.id, dayNumber: o.dayNumber, displayOrder: o.displayOrder })), name: occs[0].name });
-    }
-  });
-  const isStopDuplicate = (attractionId: number) => {
-    return duplicatedAttractions.has(attractionId);
-  };
-
+  const attractionOccurrences = useMemo(() => {
+    const occurrences = new Map<number, StopState[]>();
+    orderedStops.forEach((stop) => {
+      if (!stop.attractionId) return;
+      occurrences.set(stop.attractionId, [...(occurrences.get(stop.attractionId) ?? []), stop]);
+    });
+    return occurrences;
+  }, [orderedStops]);
+  const duplicatedAttractions = useMemo(() => new Map(
+    Array.from(attractionOccurrences.entries())
+      .filter(([, occurrences]) => occurrences.length > 1)
+      .map(([attractionId, occurrences]) => [attractionId, {
+        name: attractionById.get(attractionId)?.name_th ?? occurrences[0]?.attractionName ?? "สถานที่",
+        occurrences,
+      }])
+  ), [attractionById, attractionOccurrences]);
   const hasDuplicateAttractions = duplicatedAttractions.size > 0;
+  const hasInvalidAttraction = stops.some((stop) => !stop.attractionId);
+  const hasInvalidDay = stops.some((stop) => !Number.isInteger(stop.dayNumber) || stop.dayNumber < 1);
+  const distinctEligibleStopCount = new Set(
+    stops
+      .filter((stop) => eligibleAttractions.some((attraction) => attraction.attraction_id === stop.attractionId))
+      .map((stop) => stop.attractionId)
+  ).size;
+  const contiguousDays = dayNumbers.every((day, index) => day === index + 1);
+  const expectedOrderByDay = new Map<number, number>();
+  const contiguousOrder = normalizedStops.every((stop) => {
+    const expectedOrder = (expectedOrderByDay.get(stop.dayNumber) ?? 0) + 1;
+    expectedOrderByDay.set(stop.dayNumber, expectedOrder);
+    return stop.displayOrder === expectedOrder;
+  });
+  const hasContiguousSchedule = stops.length > 0 && contiguousDays && contiguousOrder && !hasInvalidDay;
+  const selectedIds = usedAttractionIds;
+  const filteredAttractions = eligibleAttractions.filter((attraction) => {
+    if (selectedIds.has(attraction.attraction_id)) return false;
+    const term = search.trim().toLocaleLowerCase();
+    if (!term) return true;
+    return [attraction.name_th, attraction.name_en, attraction.province_name_th]
+      .some((value) => value?.toLocaleLowerCase().includes(term));
+  });
 
   const readiness = [
     {
-      label: "มีจุดแวะอย่างน้อย 1 จุด",
-      complete: stops.length > 0,
-      help: "เส้นทางที่ไม่มีจุดแวะจะทำให้นักท่องเที่ยวไม่เห็น itinerary จริง",
+      label: "มีจุดแวะที่เข้าเกณฑ์อย่างน้อย 2 แห่ง",
+      complete: distinctEligibleStopCount >= 2,
+      help: `พบ ${distinctEligibleStopCount}/2 แห่งจากสถานที่ที่เปิดใช้งานและเผยแพร่; เซิร์ฟเวอร์ตรวจเงื่อนไขก่อนเผยแพร่`,
     },
+    { label: "ทุกจุดเลือกสถานที่แล้ว", complete: stops.length > 0 && !hasInvalidAttraction, help: "แต่ละจุดต้องเชื่อมกับสถานที่ท่องเที่ยว" },
     {
-      label: "ทุกจุดเลือกสถานที่แล้ว",
-      complete: stops.length > 0 && !hasInvalidAttraction,
-      help: "แต่ละ stop ต้องเชื่อมกับ attraction เพื่อให้ข้อมูลหน้าบ้านและ dashboard ใช้ต่อได้",
-    },
-    {
-      label: "ลำดับและวันเดินทางถูกต้อง",
-      complete: stops.length > 0 && !hasInvalidOrder,
-      help: hasInvalidOrder
-        ? "วันเดินทางและลำดับต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป"
-        : "ระบบจะจัดลำดับใหม่ในแต่ละวันตอนบันทึก เพื่อลดความสับสน",
+      label: "วันและลำดับต่อเนื่อง",
+      complete: hasContiguousSchedule,
+      help: "ใช้ปุ่มขึ้น/ลงจัดลำดับ; วันว่างจะถูกยุบและจัดหมายเลขวันใหม่ให้ต่อเนื่อง",
     },
     {
       label: "ไม่มีจุดแวะซ้ำ",
       complete: !hasDuplicateAttractions,
-      help: hasDuplicateAttractions
-        ? `สถานที่ ${duplicatedAttractions.size} แห่งถูกเพิ่มซ้ำ — ควรลบจุดแวะซ้ำหรือเปลี่ยนเป็นสถานที่อื่น`
-        : "แต่ละสถานที่ปรากฏในเส้นทางได้เพียงครั้งเดียว",
+      help: hasDuplicateAttractions ? `สถานที่ ${duplicatedAttractions.size} แห่งถูกเพิ่มซ้ำ` : "แต่ละสถานที่ปรากฏในเส้นทางได้เพียงครั้งเดียว",
     },
   ];
 
-  const handleAddStop = (dayNumber = 1) => {
-    const defaultAttractionId = attractions[0]?.attraction_id;
-    const defaultName = attractions[0]?.name_th;
-
-    // Check if the default attraction is already used in another stop
-    const existingStop = defaultAttractionId
-      ? stops.find((stop) => stop.attractionId === defaultAttractionId)
-      : undefined;
-    if (existingStop) {
-      showToast(
-        `"${defaultName ?? "สถานที่"}" ถูกใช้ในวันที่ ${existingStop.dayNumber} (ลำดับ ${existingStop.displayOrder}) อยู่แล้ว — เกิดจุดแวะซ้ำ`
-      );
+  const handleQuickAdd = (dayNumber: number) => {
+    setAddDay(dayNumber);
+    searchRef.current?.focus();
+    const firstAttraction = eligibleAttractions[0];
+    const existingStop = firstAttraction && stops.find((stop) => stop.attractionId === firstAttraction.attraction_id);
+    if (firstAttraction && existingStop) {
+      showToast(`"${firstAttraction.name_th}" ถูกใช้ในวันที่ ${existingStop.dayNumber} (ลำดับ ${existingStop.displayOrder}) อยู่แล้ว — เลือกสถานที่อื่นเพื่อไม่ให้ซ้ำ`);
     }
-
-    const dayStops = stops.filter((stop) => stop.dayNumber === dayNumber);
-
-    setStops((current) => [
-      ...current,
-      {
-        id: `stop-new-${Date.now()}`,
-        attractionId: defaultAttractionId ?? 0,
-        dayNumber,
-        displayOrder: dayStops.length + 1,
-        stopNoteTh: "",
-        stopNoteEn: "",
-      },
-    ]);
   };
 
-  const handleRemoveStop = (id: string) => {
-    setStops((current) => current.filter((stop) => stop.id !== id));
+  const handleAddStop = (attraction: RouteAttractionOption) => {
+    if (usedAttractionIds.has(attraction.attraction_id)) return;
+    const nextDayStops = stops.filter((stop) => stop.dayNumber === addDay);
+    commitStops([...stops, {
+      id: `stop-new-${attraction.attraction_id}`,
+      attractionId: attraction.attraction_id,
+      attractionName: attraction.name_th,
+      dayNumber: addDay,
+      displayOrder: Math.max(0, ...nextDayStops.map((stop) => stop.displayOrder)) + 1,
+      stopNoteTh: "",
+      stopNoteEn: "",
+    }]);
   };
 
-  const handleChange = (id: string, field: keyof StopState, value: string | number) => {
-    setStops((current) =>
-      current.map((stop) => (stop.id === id ? { ...stop, [field]: value } : stop))
-    );
+  const handleRemoveStop = (id: string) => commitStops(stops.filter((stop) => stop.id !== id));
+
+  const handleMove = (id: string, direction: "up" | "down") => {
+    const dayStops = orderedStops.filter((stop) => stop.dayNumber === orderedStops.find((item) => item.id === id)?.dayNumber);
+    const index = dayStops.findIndex((stop) => stop.id === id);
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (index < 0 || targetIndex < 0 || targetIndex >= dayStops.length) return;
+    const current = dayStops[index];
+    const target = dayStops[targetIndex];
+    commitStops(stops.map((stop) => {
+      if (stop.id === current.id) return { ...stop, displayOrder: target.displayOrder };
+      if (stop.id === target.id) return { ...stop, displayOrder: current.displayOrder };
+      return stop;
+    }));
   };
 
-  const handleAttractionChange = (id: string, newAttractionId: number) => {
-    // Check if this attraction is already used by another stop
-    const existingStop = stops.find((stop) => stop.id !== id && stop.attractionId === newAttractionId);
+  const handleMoveToDay = (id: string, dayNumber: number) => {
+    const nextDayStops = stops.filter((stop) => stop.dayNumber === dayNumber && stop.id !== id);
+    const nextOrder = Math.max(0, ...nextDayStops.map((stop) => stop.displayOrder)) + 1;
+    commitStops(stops.map((stop) => stop.id === id ? { ...stop, dayNumber, displayOrder: nextOrder } : stop));
+  };
+
+  const handleAttractionChange = (stop: StopState, newAttractionId: number) => {
+    const existingStop = stops.find((candidate) => candidate.id !== stop.id && candidate.attractionId === newAttractionId);
     if (existingStop) {
-      const attraction = attractions.find((a) => a.attraction_id === newAttractionId);
-      showToast(
-        `"${attraction?.name_th ?? "สถานที่"}" ถูกใช้ในวันที่ ${existingStop.dayNumber} (ลำดับ ${existingStop.displayOrder}) อยู่แล้ว — เกิดจุดแวะซ้ำ`
-      );
+      const name = attractionById.get(newAttractionId)?.name_th ?? existingStop.attractionName ?? "สถานที่";
+      showToast(`"${name}" ถูกใช้ในวันที่ ${existingStop.dayNumber} (ลำดับ ${existingStop.displayOrder}) อยู่แล้ว — เกิดจุดแวะซ้ำ`);
+      return;
     }
-    handleChange(id, "attractionId", newAttractionId);
-  };
-
-  const handleMoveToDay = (id: string, fromDay: number, toDay: number) => {
-    setStops((current) => {
-      const dayStops = current.filter((s) => s.dayNumber === toDay);
-      const nextOrder = dayStops.length + 1;
-      return current.map((stop) =>
-        stop.id === id ? { ...stop, dayNumber: toDay, displayOrder: nextOrder } : stop
-      );
-    });
-  };
-
-  const handleRenumberDays = () => {
-    setStops((current) => {
-      const ordered = sortStops(current);
-      const uniqueDays = Array.from(new Set(ordered.map((s) => s.dayNumber))).sort((a, b) => a - b);
-      const dayMap = new Map(uniqueDays.map((day, index) => [day, index + 1]));
-      return current.map((stop) => ({
-        ...stop,
-        dayNumber: dayMap.get(stop.dayNumber) ?? stop.dayNumber
-      }));
-    });
-  };
-
-  const handleRenumberOrderWithinDays = () => {
-    setStops((current) => {
-      const orderByDay = new Map<number, number>();
-      const ordered = sortStops(current);
-      return ordered.map((stop) => {
-        const nextOrder = (orderByDay.get(stop.dayNumber) ?? 0) + 1;
-        orderByDay.set(stop.dayNumber, nextOrder);
-        return { ...stop, displayOrder: nextOrder };
-      });
-    });
+    const attraction = attractionById.get(newAttractionId);
+    commitStops(stops.map((item) => item.id === stop.id ? {
+      ...item,
+      attractionId: newAttractionId,
+      attractionName: attraction?.name_th ?? item.attractionName,
+    } : item));
   };
 
   const handleRemoveAllDuplicates = () => {
-    setStops((current) => {
-      // Recompute duplicates from current state to ensure accuracy
-      const occMap = new Map<number, { id: string; dayNumber: number; displayOrder: number }[]>();
-      current.forEach((s) => {
-        if (!s.attractionId) return;
-        const occs = occMap.get(s.attractionId) ?? [];
-        occs.push({ id: s.id, dayNumber: s.dayNumber, displayOrder: s.displayOrder });
-        occMap.set(s.attractionId, occs);
-      });
-
-      const idsToRemove = new Set<string>();
-      occMap.forEach((occs) => {
-        if (occs.length > 1) {
-          // Keep first occurrence (sorted by day then order), remove the rest
-          occs.sort((a, b) => a.dayNumber - b.dayNumber || a.displayOrder - b.displayOrder);
-          occs.slice(1).forEach((occ) => idsToRemove.add(occ.id));
-        }
-      });
-
-      return current.filter((stop) => !idsToRemove.has(stop.id));
-    });
+    const seen = new Set<number>();
+    commitStops(orderedStops.filter((stop) => {
+      if (seen.has(stop.attractionId)) return false;
+      seen.add(stop.attractionId);
+      return true;
+    }));
   };
 
-  const handleMove = (id: string, direction: "up" | "down") => {
-    setStops((current) => {
-      const ordered = sortStops(current);
-      const index = ordered.findIndex((stop) => stop.id === id);
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
-
-      if (index < 0 || targetIndex < 0 || targetIndex >= ordered.length) return current;
-      const stop = ordered[index];
-      const target = ordered[targetIndex];
-      if (stop.dayNumber !== target.dayNumber) return current;
-
-      return current.map((item) => {
-        if (item.id === stop.id) return { ...item, displayOrder: target.displayOrder };
-        if (item.id === target.id) return { ...item, displayOrder: stop.displayOrder };
-        return item;
-      });
-    });
+  const dismissToast = () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast("");
   };
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="space-y-5">
       <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} fieldLabels={FIELD_LABELS} />
+      {state?.success ? <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">บันทึกจุดแวะแล้ว</p> : null}
 
-      {/* Duplicate toast notification */}
-      {toast.visible ? (
-        <div className="fixed left-1/2 top-4 z-50 w-full max-w-lg -translate-x-1/2 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-lg backdrop-blur-md">
-            <WarningCircle size={20} className="mt-0.5 shrink-0 text-amber-600" weight="fill" />
-            <p className="flex-1 text-sm font-bold leading-relaxed text-amber-900">{toast.message}</p>
-            <button
-              type="button"
-              onClick={dismissToast}
-              className="shrink-0 rounded-lg p-1 text-amber-500 transition hover:bg-amber-100 hover:text-amber-700"
-              aria-label="ปิดการแจ้งเตือน"
-            >
-              <XCircle size={18} weight="bold" />
-            </button>
-          </div>
+      {toast ? (
+        <div role="status" className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950" aria-live="polite">
+          <WarningCircle size={18} className="mt-0.5 shrink-0 text-amber-700" weight="fill" />
+          <p className="min-w-0 flex-1 leading-6">{toast}</p>
+          <button type="button" onClick={dismissToast} className="rounded p-1 text-amber-700 hover:bg-amber-100" aria-label="ปิดการแจ้งเตือน">
+            <XCircle size={18} weight="bold" />
+          </button>
         </div>
       ) : null}
 
       <input type="hidden" name="stops" value={serializedStops} />
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-8">
-          {attractions.length === 0 ? (
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(260px,0.65fr)]">
+        <div className="min-w-0 space-y-5">
+          {eligibleAttractions.length === 0 ? (
             <AdminHelpPanel title="ยังไม่มีสถานที่สำหรับเพิ่มในเส้นทาง" tone="warning">
               <p>ยังไม่มีสถานที่ท่องเที่ยวที่เปิดใช้งานและเผยแพร่ จึงเพิ่มจุดแวะใหม่ไม่ได้</p>
-              <Link
-                href="/admin/attractions"
-                className="mt-3 inline-flex min-h-11 items-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-amber-900 hover:bg-amber-100"
-              >
+              <Link href="/admin/attractions" className="mt-3 inline-flex min-h-11 items-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100">
                 จัดการสถานที่ท่องเที่ยว
               </Link>
             </AdminHelpPanel>
           ) : null}
 
+          <AdminFormSection title="เพิ่มสถานที่" description="ค้นหาจากสถานที่ที่เปิดใช้งานและเผยแพร่ แล้วเพิ่มเข้าวันเดินทางที่เลือก">
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_150px]">
+              <label className="block min-w-0">
+                <span className="text-sm font-bold text-slate-700">ค้นหาสถานที่ท่องเที่ยว</span>
+                <input
+                  ref={searchRef}
+                  aria-label="ค้นหาสถานที่ท่องเที่ยว"
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="ชื่อสถานที่หรือจังหวัด"
+                  className="mt-2 min-h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
+                />
+              </label>
+            </div>
+            <div role="group" aria-label="เพิ่มจุดแวะในวัน" className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-600">เพิ่มในวัน</span>
+              {daysForControls.map((day) => (
+                <button key={day} type="button" aria-pressed={addDay === day} onClick={() => setAddDay(day)} className={`min-h-9 rounded-md border px-3 py-1.5 text-xs font-bold ${addDay === day ? "border-[#0A6B62] bg-emerald-50 text-[#073F37]" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                  วันที่ {day}
+                </button>
+              ))}
+            </div>
+            {filteredAttractions.length ? (
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2" aria-label="สถานที่ที่เลือกเพิ่มได้">
+                {filteredAttractions.map((attraction) => (
+                  <li key={attraction.attraction_id} className="min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => handleAddStop(attraction)}
+                      className="flex min-h-12 w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm font-bold text-slate-800 transition hover:border-[#0A6B62] hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62]"
+                      aria-label={`เพิ่ม ${attraction.name_th} วันที่ ${addDay}`}
+                    >
+                      <span className="min-w-0">
+                        <span className="block break-words">{attraction.name_th}</span>
+                        {attraction.province_name_th ? <span className="mt-0.5 block text-xs font-medium text-slate-500">{attraction.province_name_th}</span> : null}
+                      </span>
+                      <Plus size={18} className="shrink-0 text-[#0A6B62]" weight="bold" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 rounded-lg bg-slate-50 px-3 py-3 text-sm text-slate-500" aria-live="polite">
+                {eligibleAttractions.length === 0 ? "ไม่มีสถานที่ที่เข้าเงื่อนไข" : search.trim() ? "ไม่พบสถานที่ที่ยังไม่ได้เลือก" : "เลือกสถานที่ครบแล้ว"}
+              </p>
+            )}
+          </AdminFormSection>
+
           {stops.length === 0 ? (
-            <AdminFormSection
-              title="ยังไม่มีจุดแวะ"
-              description="เริ่มจากเพิ่มสถานที่แรกของเส้นทางก่อน จากนั้นค่อยจัดวันและลำดับ"
-              icon={MapPin}
-            >
-              <button
-                type="button"
-                onClick={() => handleAddStop(1)}
-                disabled={attractions.length === 0}
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#073F37] px-4 py-2.5 text-sm font-black text-white transition hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Plus size={18} weight="bold" />
-                เพิ่มจุดแวะแรก
+            <AdminFormSection title="ยังไม่มีจุดแวะ" description="เพิ่มสถานที่แรกจากรายการด้านบน หรือบันทึกรายการว่างสำหรับฉบับร่าง">
+              <button type="button" onClick={() => handleQuickAdd(1)} disabled={eligibleAttractions.length === 0} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#073F37] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#0A6B62] disabled:cursor-not-allowed disabled:opacity-50">
+                <Plus size={18} weight="bold" /> เพิ่มจุดแวะแรก
               </button>
             </AdminFormSection>
           ) : null}
 
-          {days.map((day) => {
-            const dayStops = sortedStops.filter((stop) => stop.dayNumber === day);
+          {dayNumbers.map((day) => {
+            const dayStops = orderedStops.filter((stop) => stop.dayNumber === day);
 
             return (
               <AdminFormSection
                 key={`day-${day}`}
                 title={`วันที่ ${day}`}
-                description={`${dayStops.length} จุดแวะในวันนี้ — เส้นทางมีทั้งหมด ${stops.length} จุดแวะ (${days.length} วัน)`}
+                description={`${dayStops.length} จุดแวะ`}
                 icon={MapPin}
-                aside={
-                  <button
-                    type="button"
-                    onClick={() => handleAddStop(day)}
-                    disabled={attractions.length === 0}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#0A6B62]/20 bg-white px-3 py-2 text-xs font-black text-[#0A6B62] transition hover:bg-[#E6F4EF] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Plus size={15} weight="bold" />
-                    เพิ่มจุดแวะ
-                  </button>
-                }
+                aside={<button type="button" onClick={() => handleQuickAdd(day)} disabled={eligibleAttractions.length === 0} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-[#0A6B62] hover:bg-emerald-50 disabled:opacity-50"><Plus size={16} weight="bold" />เพิ่มจุดแวะ</button>}
               >
-                <div className="space-y-4">
+                <ol className="space-y-3">
                   {dayStops.map((stop, index) => {
-                    const isDuplicate = isStopDuplicate(stop.attractionId);
-                    const dupInfo = duplicatedAttractions.get(stop.attractionId);
-                    const otherOccurrences = dupInfo?.occurrences.filter((o) => o.id !== stop.id) ?? [];
+                    const attraction = attractionById.get(stop.attractionId);
+                    const name = attraction?.name_th || stop.attractionName || `สถานที่ #${stop.attractionId}`;
+                    const occurrences = attractionOccurrences.get(stop.attractionId) ?? [];
+                    const isDuplicate = occurrences.length > 1;
+                    const canMoveUp = index > 0;
+                    const canMoveDown = index < dayStops.length - 1;
 
                     return (
-                      <div key={stop.id} className="grid gap-4 border-t border-slate-100 pt-4 first:border-t-0 first:pt-0 lg:grid-cols-[40px,1fr,160px]">
-                        <div className="flex items-start justify-between gap-2 lg:block">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-xs font-black text-slate-600">
-                            {index + 1}
-                          </span>
-                          <DotsSixVertical className="hidden text-slate-300 lg:mt-3 lg:block" size={18} />
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <label className="block sm:col-span-2">
-                              <span className="text-sm font-black text-slate-700">
-                                สถานที่ *
-                                {isDuplicate ? (
-                                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-black uppercase tracking-wide text-amber-800">
-                                    <WarningCircle size={11} weight="bold" />
-                                    ซ้ำ
-                                  </span>
-                                ) : null}
-                              </span>
-                              <select
-                                value={stop.attractionId}
-                                onChange={(event) => handleAttractionChange(stop.id, Number(event.target.value))}
-                                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                              >
-                                <option value={0} disabled>
-                                  เลือกสถานที่
-                                </option>
-                                {attractions.map((attraction) => (
-                                  <option key={attraction.attraction_id} value={attraction.attraction_id}>
-                                    {attraction.name_th}
-                                  </option>
-                                ))}
-                              </select>
-                              {otherOccurrences.length > 0 ? (
-                                <span className="mt-1 block text-xs text-amber-700">
-                                  ปรากฏซ้ำใน: {otherOccurrences.map((o) => `วันที่ ${o.dayNumber} (ลำดับ ${o.displayOrder})`).join(', ')}
-                                </span>
-                              ) : null}
-                            </label>
-
-                            <label className="block">
-                              <span className="text-sm font-black text-slate-700">วันเดินทาง</span>
-                              <input
-                                type="number"
-                                min={1}
-                                step={1}
-                                inputMode="numeric"
-                                aria-invalid={!Number.isInteger(stop.dayNumber) || stop.dayNumber < 1}
-                                value={stop.dayNumber}
-                                onChange={(event) => handleChange(stop.id, "dayNumber", Number(event.target.value))}
-                                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                              />
-                              {!Number.isInteger(stop.dayNumber) || stop.dayNumber < 1 ? (
-                                <span className="mt-1 block text-xs font-semibold text-rose-700">กรอกจำนวนเต็มตั้งแต่ 1 ขึ้นไป</span>
-                              ) : null}
-                            </label>
-
-                            <label className="block">
-                              <span className="text-sm font-black text-slate-700">ลำดับในวัน</span>
-                              <input
-                                type="number"
-                                min={1}
-                                step={1}
-                                inputMode="numeric"
-                                aria-invalid={!Number.isInteger(stop.displayOrder) || stop.displayOrder < 1}
-                                value={stop.displayOrder}
-                                onChange={(event) => handleChange(stop.id, "displayOrder", Number(event.target.value))}
-                                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                              />
-                              {!Number.isInteger(stop.displayOrder) || stop.displayOrder < 1 ? (
-                                <span className="mt-1 block text-xs font-semibold text-rose-700">กรอกจำนวนเต็มตั้งแต่ 1 ขึ้นไป</span>
-                              ) : null}
-                            </label>
+                      <li key={stop.id}>
+                        <article aria-label={`จุดแวะ ${name} วันที่ ${day} ลำดับ ${index + 1}`} className="grid min-w-0 gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-[64px_minmax(0,1fr)] sm:p-4">
+                          <div className="flex items-start gap-3 sm:block">
+                            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-slate-100 sm:h-16 sm:w-16">
+                              {attraction?.coverImageUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={attraction.coverImageUrl} alt={name} className="h-full w-full object-cover" />
+                              ) : <MapPin size={22} className="absolute inset-0 m-auto text-slate-400" weight="duotone" />}
+                            </div>
+                            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-50 text-sm font-black text-[#073F37] sm:mt-2">{index + 1}</span>
                           </div>
 
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <label className="block">
-                              <span className="text-sm font-black text-slate-700">คำแนะนำภาษาไทย</span>
-                              <input
-                                type="text"
-                                value={stop.stopNoteTh}
-                                onChange={(event) => handleChange(stop.id, "stopNoteTh", event.target.value)}
-                                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                                placeholder="เช่น แวะถ่ายรูป 30 นาที"
-                              />
-                            </label>
+                          <div className="min-w-0 space-y-3">
+                            <div className="flex min-w-0 items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <h3 aria-label={name} className="break-words text-sm font-black text-slate-900">
+                                  <span>{name} · {attraction?.province_name_th ?? "จังหวัดไม่ระบุ"}</span>
+                                </h3>
+                                {isDuplicate ? <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-black text-amber-900">ซ้ำ</span> : null}
+                              </div>
+                              <button type="button" onClick={() => handleRemoveStop(stop.id)} aria-label={`ลบ ${name} ออกจากเส้นทาง`} title="ลบจุดแวะ" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-rose-200 text-rose-700 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600">
+                                <Trash size={17} weight="bold" />
+                              </button>
+                            </div>
 
-                            <label className="block">
-                              <span className="text-sm font-black text-slate-700">English note</span>
-                              <input
-                                type="text"
-                                value={stop.stopNoteEn}
-                                onChange={(event) => handleChange(stop.id, "stopNoteEn", event.target.value)}
-                                className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15"
-                                placeholder="e.g. Photo stop for 30 minutes"
-                              />
-                            </label>
-                          </div>
-                        </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button type="button" onClick={() => handleMove(stop.id, "up")} disabled={!canMoveUp} aria-label={`เลื่อน${name}ขึ้น`} title="เลื่อนขึ้น" className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+                                <ArrowUp size={17} weight="bold" />
+                              </button>
+                              <button type="button" onClick={() => handleMove(stop.id, "down")} disabled={!canMoveDown} aria-label={`เลื่อน${name}ลง`} title="เลื่อนลง" className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+                                <ArrowDown size={17} weight="bold" />
+                              </button>
+                            </div>
 
-                        <div className="flex items-center justify-end gap-1 lg:flex-col lg:items-stretch lg:justify-start">
-                          <div className="flex items-center gap-1 lg:flex-row">
-                            <button
-                              type="button"
-                              onClick={() => handleMove(stop.id, "up")}
-                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:opacity-30"
-                              title="เลื่อนขึ้น"
-                            >
-                              <ArrowUp size={16} weight="bold" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMove(stop.id, "down")}
-                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:opacity-30"
-                              title="เลื่อนลง"
-                            >
-                              <ArrowDown size={16} weight="bold" />
-                            </button>
+                            {isDuplicate ? (
+                              <p className="text-xs leading-5 text-amber-800">
+                                ปรากฏซ้ำใน: {occurrences.filter((occurrence) => occurrence.id !== stop.id).map((occurrence) => `วันที่ ${occurrence.dayNumber} (ลำดับ ${occurrence.displayOrder})`).join(", ")}
+                              </p>
+                            ) : null}
+
+                            <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                              <label className="block min-w-0">
+                                <span className="sr-only">เลือกสถานที่แทน {name}</span>
+                                <select aria-label={`เลือกสถานที่แทน ${name}`} value={stop.attractionId} onChange={(event) => handleAttractionChange(stop, Number(event.target.value))} className="min-h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15">
+                                  <option value="0" disabled>เลือกสถานที่</option>
+                                  {!eligibleAttractions.some((option) => option.attraction_id === stop.attractionId) ? <option value={stop.attractionId}>{name} (สถานที่ปัจจุบัน)</option> : null}
+                                  {eligibleAttractions.map((option) => {
+                                    const usedByOtherStop = stops.some((candidate) => candidate.id !== stop.id && candidate.attractionId === option.attraction_id);
+                                    const isCurrentStop = option.attraction_id === stop.attractionId;
+                                    return <option key={option.attraction_id} value={option.attraction_id} disabled={usedByOtherStop || isCurrentStop}>{option.name_th}{isCurrentStop ? " (สถานที่ปัจจุบัน)" : usedByOtherStop ? " (เลือกแล้ว)" : ""}</option>;
+                                  })}
+                                </select>
+                              </label>
+                              <label className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                                วันเดินทาง
+                                <select aria-label="วันเดินทาง" value={stop.dayNumber} onChange={(event) => handleMoveToDay(stop.id, Number(event.target.value))} className="min-h-11 min-w-24 rounded-lg border border-slate-300 bg-white px-2 text-sm font-normal outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15">
+                                  {daysForControls.map((dayNumber) => <option key={dayNumber} value={dayNumber}>วันที่ {dayNumber}</option>)}
+                                </select>
+                              </label>
+                            </div>
+
+                            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                              <label className="block min-w-0">
+                                <span className="text-xs font-bold text-slate-600">คำแนะนำภาษาไทย</span>
+                                <input type="text" value={stop.stopNoteTh} onChange={(event) => commitStops(stops.map((item) => item.id === stop.id ? { ...item, stopNoteTh: event.target.value } : item))} className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" placeholder="เช่น จุดนัดพบหรือข้อมูลที่ควรรู้" />
+                              </label>
+                              <label className="block min-w-0">
+                                <span className="text-xs font-bold text-slate-600">คำแนะนำภาษาอังกฤษ</span>
+                                <input type="text" value={stop.stopNoteEn} onChange={(event) => commitStops(stops.map((item) => item.id === stop.id ? { ...item, stopNoteEn: event.target.value } : item))} className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#0A6B62] focus:ring-2 focus:ring-[#0A6B62]/15" placeholder="e.g. meeting point or helpful visitor information" />
+                              </label>
+                            </div>
                           </div>
-                          <label className="flex h-9 flex-1 items-center gap-1 rounded-lg border border-slate-200 px-2 text-xs font-bold text-slate-500 transition hover:border-[#0A6B62] lg:justify-center">
-                            <CaretDown size={13} weight="bold" />
-                            <select
-                              value={stop.dayNumber}
-                              onChange={(event) => {
-                                const newDay = Number(event.target.value);
-                                if (newDay === stop.dayNumber) return;
-                                handleMoveToDay(stop.id, stop.dayNumber, newDay);
-                              }}
-                              className="w-full bg-transparent text-xs font-bold text-slate-700 outline-none"
-                              title="ย้ายไปวันอื่น"
-                            >
-                              {days.map((d) => (
-                                <option key={d} value={d}>
-                                  วัน {d}
-                                </option>
-                              ))}
-                              <option value={Math.max(...days) + 1}>+ วันใหม่</option>
-                            </select>
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveStop(stop.id)}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-rose-100 text-rose-600 transition hover:bg-rose-50"
-                            title="ลบจุดแวะนี้"
-                          >
-                            <Trash size={16} weight="bold" />
-                          </button>
-                        </div>
-                      </div>
+                        </article>
+                      </li>
                     );
                   })}
-                </div>
+                </ol>
               </AdminFormSection>
             );
           })}
         </div>
 
-        <div className="space-y-5 lg:sticky lg:top-6 lg:col-span-4">
-          <AdminReadinessPanel title="Route readiness" items={readiness} />
-
+        <aside className="min-w-0 space-y-4 xl:sticky xl:top-24">
+          <AdminReadinessPanel title="ความพร้อมของจุดแวะ" items={readiness} />
           {hasDuplicateAttractions ? (
             <AdminHelpPanel title="พบจุดแวะซ้ำ" tone="warning">
-              <p className="mb-2 text-sm font-bold">
-                มี {duplicatedAttractions.size} สถานที่ที่ถูกเพิ่มซ้ำในเส้นทางนี้:
-              </p>
+              <p className="mb-2 text-sm font-bold">มี {duplicatedAttractions.size} สถานที่ที่ถูกเพิ่มซ้ำในเส้นทางนี้:</p>
               <ul className="space-y-2">
-                {Array.from(duplicatedAttractions.entries()).map(([attractionId, info]) => {
-                  return (
-                    <li key={attractionId} className="text-xs leading-5">
-                      <span className="font-bold text-amber-900">{info.name}</span>
-                      <ul className="ml-3 mt-1 list-disc pl-4">
-                        {info.occurrences.map((occ, i) => (
-                          <li key={i}>
-                            วันที่ {occ.dayNumber} (ลำดับ {occ.displayOrder})
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  );
-                })}
+                {Array.from(duplicatedAttractions.entries()).map(([attractionId, info]) => (
+                  <li key={attractionId} className="text-xs leading-5">
+                    <span className="font-bold text-amber-950">{info.name}</span>
+                    <ul className="ml-3 mt-1 list-disc pl-4">
+                      {info.occurrences.map((occurrence) => <li key={occurrence.id}>วันที่ {occurrence.dayNumber} (ลำดับ {occurrence.displayOrder})</li>)}
+                    </ul>
+                  </li>
+                ))}
               </ul>
-              <button
-                type="button"
-                onClick={handleRemoveAllDuplicates}
-                className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-black text-amber-900 transition hover:bg-amber-100"
-              >
-                <Eraser size={14} weight="bold" />
+              <button type="button" onClick={handleRemoveAllDuplicates} className="mt-3 min-h-10 w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-black text-amber-950 hover:bg-amber-100">
                 ลบจุดแวะซ้ำทั้งหมด (เหลือเพียงรายการแรก)
               </button>
             </AdminHelpPanel>
           ) : null}
-
-          <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={handleRenumberDays}
-                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
-                >
-                  เรียงลำดับวันใหม่
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRenumberOrderWithinDays}
-                  className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
-                >
-                  เรียงลำดับลำดับใหม่
-                </button>
-              </div>
-
-              <AdminHelpPanel title="ลำดับที่ระบบจะบันทึก" tone="success">
-            <ol className="space-y-2">
-              {normalizedStops.length ? (
-                normalizedStops.map((stop, index) => {
-                  const attraction = attractions.find((item) => item.attraction_id === stop.attractionId);
-                  return (
-                    <li key={`${stop.dayNumber}-${stop.displayOrder}-${stop.attractionId}-${index}`} className="text-sm">
-                      <span className="font-black text-[#073F37]">
-                        Day {stop.dayNumber}.{stop.displayOrder}
-                      </span>{" "}
-                      {attraction?.name_th ?? "ยังไม่เลือกสถานที่"}
-                    </li>
-                  );
-                })
-              ) : (
-                <li className="text-sm text-slate-500">ยังไม่มีจุดแวะในเส้นทางนี้</li>
-              )}
-            </ol>
+          <AdminHelpPanel title="ลำดับที่จะบันทึก" tone="info">
+            {normalizedStops.length ? (
+              <ol className="space-y-1">
+                {normalizedStops.map((stop, index) => (
+                  <li key={`${stop.dayNumber}-${stop.displayOrder}-${stop.attractionId}-${index}`}>
+                    <span className="break-words text-sm font-medium text-slate-700">วันที่ {stop.dayNumber}.{stop.displayOrder} · {attractionById.get(stop.attractionId)?.name_th ?? stops.find((item) => item.attractionId === stop.attractionId)?.attractionName ?? `สถานที่ #${stop.attractionId}`}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : <p>ยังไม่มีจุดแวะ</p>}
           </AdminHelpPanel>
-
-          <AdminHelpPanel title="หลักการจัดเส้นทาง" tone="info">
-            ใช้ stop เพื่อกำหนดเรื่องเล่าหน้าบ้านและเชื่อมข้อมูลเข้ากับ attraction analytics.
-            ถ้าต้องเปลี่ยนภาพของสถานที่ ให้ไปที่ Media ของสถานที่นั้น ไม่ต้องสร้าง stop ใหม่
-          </AdminHelpPanel>
-        </div>
+        </aside>
       </div>
 
       <AdminSaveBar
-        cancelHref="/admin/routes"
+        cancelHref={`/admin/routes/${routeId}/edit#review`}
         isPending={isPending}
         submitLabel="บันทึกจุดแวะของเส้นทาง"
-        disabled={stops.length === 0 || hasInvalidAttraction || hasInvalidOrder || hasDuplicateAttractions}
-        secondary={
-          <button
-            type="button"
-            onClick={() => handleAddStop(days[days.length - 1] ?? 1)}
-            disabled={attractions.length === 0}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Plus size={17} weight="bold" />
-            เพิ่มจุดแวะ
-          </button>
-        }
+        disabled={hasInvalidAttraction || hasInvalidDay || hasDuplicateAttractions}
+        secondary={<button type="button" onClick={() => handleQuickAdd(dayNumbers[dayNumbers.length - 1] ?? 1)} disabled={eligibleAttractions.length === 0} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50"><Plus size={17} weight="bold" />เพิ่มจุดแวะ</button>}
       />
     </form>
   );

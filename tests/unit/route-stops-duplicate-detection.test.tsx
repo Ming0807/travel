@@ -145,7 +145,7 @@ describe("RouteStopsManager — duplicate detection", () => {
       />
     );
 
-    expect(screen.getByText("Route readiness")).toBeInTheDocument();
+    expect(screen.getByText("ความพร้อมของจุดแวะ")).toBeInTheDocument();
     expect(screen.getByText("ไม่มีจุดแวะซ้ำ")).toBeInTheDocument();
     expect(screen.getByText("แต่ละสถานที่ปรากฏในเส้นทางได้เพียงครั้งเดียว")).toBeInTheDocument();
   });
@@ -516,7 +516,7 @@ describe("RouteStopsManager — edge cases", () => {
     );
 
     // Component should render without error
-    expect(screen.getByText("Route readiness")).toBeInTheDocument();
+    expect(screen.getByText("ความพร้อมของจุดแวะ")).toBeInTheDocument();
 
     // Selects should still render with only the disabled placeholder option
     const selects = screen.getAllByRole("combobox");
@@ -594,7 +594,7 @@ describe("RouteStopsManager — edge cases", () => {
       />
     );
 
-    expect(screen.getByText("Route readiness")).toBeInTheDocument();
+    expect(screen.getByText("ความพร้อมของจุดแวะ")).toBeInTheDocument();
     expect(screen.getByText("ไม่มีจุดแวะซ้ำ")).toBeInTheDocument();
     expect(screen.getByText("แต่ละสถานที่ปรากฏในเส้นทางได้เพียงครั้งเดียว")).toBeInTheDocument();
   });
@@ -636,7 +636,7 @@ describe("RouteStopsManager — edge cases", () => {
     expect(submitButton).not.toBeDisabled();
   });
 
-  it("blocks saving when day or order is not a positive integer", () => {
+  it("compacts days after removing a whole day and allows saving an empty stop list", () => {
     render(
       <RouteStopsManager
         routeId={1}
@@ -645,12 +645,23 @@ describe("RouteStopsManager — edge cases", () => {
       />
     );
 
-    fireEvent.change(screen.getAllByLabelText("วันเดินทาง")[0], { target: { value: "1.5" } });
-    expect(screen.getByRole("button", { name: /บันทึกจุดแวะของเส้นทาง/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "ลบ หาดทรายขาว ออกจากเส้นทาง" }));
+    fireEvent.click(screen.getByRole("button", { name: "ลบ น้ำตกศรีพังงา ออกจากเส้นทาง" }));
 
-    fireEvent.change(screen.getAllByLabelText("วันเดินทาง")[0], { target: { value: "1" } });
-    fireEvent.change(screen.getAllByLabelText("ลำดับในวัน")[0], { target: { value: "0.5" } });
-    expect(screen.getByRole("button", { name: /บันทึกจุดแวะของเส้นทาง/ })).toBeDisabled();
+    const afterDayRemoval = JSON.parse(
+      document.querySelector<HTMLInputElement>('input[name="stops"]')?.value ?? "[]"
+    ) as Array<{ attractionId: number; dayNumber: number; displayOrder: number }>;
+    expect(afterDayRemoval).toEqual([{
+      attractionId: 3,
+      dayNumber: 1,
+      displayOrder: 1,
+      stopNoteTh: "",
+      stopNoteEn: "",
+    }]);
+
+    fireEvent.click(screen.getByRole("button", { name: "ลบ เขาหลง ออกจากเส้นทาง" }));
+    expect(document.querySelector<HTMLInputElement>('input[name="stops"]')?.value).toBe("[]");
+    expect(screen.getByRole("button", { name: /บันทึกจุดแวะของเส้นทาง/ })).not.toBeDisabled();
   });
 
   it("explains when no active published attractions are available for new stops", () => {
@@ -658,7 +669,7 @@ describe("RouteStopsManager — edge cases", () => {
 
     expect(screen.getByText(/ยังไม่มีสถานที่ท่องเที่ยวที่เปิดใช้งานและเผยแพร่/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /จัดการสถานที่ท่องเที่ยว/ })).toHaveAttribute("href", "/admin/attractions");
-    expect(screen.getByRole("button", { name: /บันทึกจุดแวะของเส้นทาง/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /บันทึกจุดแวะของเส้นทาง/ })).not.toBeDisabled();
   });
 
   it("does not crash when single stop has attraction_id=0 (unselected attraction)", () => {
@@ -752,7 +763,7 @@ describe("RouteVisualEditor — duplicate detection", () => {
     render(<RouteVisualEditor route={mockRouteRow} />);
 
     expect(screen.getByText("โหลดรายละเอียดจุดแวะไม่สำเร็จ")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /จัดการจุดแวะพัก/ })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /จัดการจุดแวะพัก/ })).toHaveLength(1);
     expect(screen.getAllByRole("link", { name: /จัดการจุดแวะพัก/ })[0]).toHaveAttribute(
       "href",
       "/admin/routes/1/stops"

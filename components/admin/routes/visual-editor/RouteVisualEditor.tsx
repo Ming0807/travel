@@ -1,459 +1,269 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowLeft, MapPin, CalendarBlank, Image as ImageIcon, ArrowSquareOut, List, WarningCircle, XCircle } from "@phosphor-icons/react";
-import { EditableBlock } from "@/components/admin/forms/EditableBlock";
+import { ArrowLeft, ArrowSquareOut, Image as ImageIcon, MapPin } from "@phosphor-icons/react";
 import { Drawer } from "@/components/admin/Drawer";
-import { HeaderForm, ContentForm, SettingsForm, CoverForm } from "./SectionForms";
+import { AdminFormSection, AdminHelpPanel, AdminReadinessPanel } from "@/components/admin/forms/AdminFormUX";
+import { RouteForm } from "@/components/admin/routes/RouteForm";
+import { RouteStopsManager, type RouteAttractionOption } from "@/components/admin/routes/RouteStopsManager";
+import { CoverForm } from "./SectionForms";
 import type { AdminRouteRow, AdminRouteStopRow } from "@/lib/repositories/admin-route.repository";
-
-interface AttractionOption {
-  attraction_id: number;
-  name_th: string;
-  is_active: boolean;
-  is_published: boolean;
-}
-
-type EditorSection = "header" | "content" | "settings" | "cover" | null;
 
 interface RouteVisualEditorProps {
   route: AdminRouteRow;
   coverMediaId?: number | null;
   coverMediaUrl?: string | null;
   stops?: AdminRouteStopRow[];
-  attractions?: AttractionOption[];
+  attractions?: RouteAttractionOption[];
 }
 
-function MissingImageState({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="flex h-full min-h-[360px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50 px-6 py-12 text-center">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm">
-        <ImageIcon size={28} weight="duotone" />
-      </div>
-      <h3 className="text-lg font-black text-slate-800">{title}</h3>
-      <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">{description}</p>
-    </div>
-  );
-}
+const sections = [
+  { id: "basics", label: "ข้อมูลหลัก" },
+  { id: "stops", label: "จุดแวะ" },
+  { id: "cover", label: "รูปปก" },
+  { id: "review", label: "ตรวจสอบ" },
+] as const;
 
 export function RouteVisualEditor({
   route,
   coverMediaId: initialCoverMediaId,
   coverMediaUrl: initialCoverMediaUrl,
   stops: stopsProp,
-  attractions,
+  attractions = [],
 }: RouteVisualEditorProps) {
-  const [activeSection, setActiveSection] = useState<EditorSection>(null);
-
-  const name = route.name_th || "ยังไม่มีชื่อ";
   const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId ?? null);
   const [coverMediaUrl, setCoverMediaUrl] = useState(initialCoverMediaUrl ?? null);
-  const coverImage = coverMediaUrl;
+  const [isBasicsEditorOpen, setIsBasicsEditorOpen] = useState(false);
+  const [isCoverEditorOpen, setIsCoverEditorOpen] = useState(false);
+  const [workingStops, setWorkingStops] = useState(stopsProp ?? []);
+  const [toastDismissed, setToastDismissed] = useState(false);
+
+  const name = route.name_th || "ยังไม่มีชื่อ";
   const publicHref = route.slug ? `/routes/${route.slug}` : null;
+  const savedStopsAvailable = stopsProp !== undefined;
+  const routeStops = workingStops;
+  const itineraryDays = useMemo(
+    () => Array.from(new Set(routeStops.map((stop) => stop.day_number))).sort((a, b) => a - b),
+    [routeStops]
+  );
+  const stopCount = routeStops.length;
+  const attractionById = useMemo(
+    () => new Map(attractions.map((attraction) => [attraction.attraction_id, attraction])),
+    [attractions]
+  );
+  const duplicateMap = useMemo(() => {
+    const occurrences = new Map<number, AdminRouteStopRow[]>();
+    routeStops.forEach((stop) => occurrences.set(stop.attraction_id, [...(occurrences.get(stop.attraction_id) ?? []), stop]));
+    return new Map(Array.from(occurrences.entries())
+      .filter(([, items]) => items.length > 1)
+      .map(([id, items]) => [id, {
+        name: attractionById.get(id)?.name_th ?? items[0]?.attraction_name_th ?? "สถานที่",
+        occurrences: items,
+      }]));
+  }, [attractionById, routeStops]);
 
-  // Duplicate detection
-  const stops = stopsProp ?? [];
-  const itineraryDays = Array.from(new Set(stops.map((stop) => stop.day_number))).sort((a, b) => a - b);
-  const stopCount = stopsProp ? stops.length : route.stop_count;
-  const duplicatedAttractions = new Map<number, { name: string; occurrences: { dayNumber: number; displayOrder: number }[] }>();
-  if (stops.length > 0) {
-    const attractionOccurrences = new Map<number, { dayNumber: number; displayOrder: number }[]>();
-    stops.forEach((s) => {
-      const occs = attractionOccurrences.get(s.attraction_id) ?? [];
-      occs.push({ dayNumber: s.day_number, displayOrder: s.display_order });
-      attractionOccurrences.set(s.attraction_id, occs);
-    });
-    attractionOccurrences.forEach((occs, attractionId) => {
-      if (occs.length > 1) {
-        const attraction = attractions?.find((a) => a.attraction_id === attractionId);
-        duplicatedAttractions.set(attractionId, { name: attraction?.name_th ?? "สถานที่", occurrences: occs });
-      }
-    });
-  }
-  const hasDuplicateStops = duplicatedAttractions.size > 0;
+  const showDuplicateToast = duplicateMap.size > 0 && !toastDismissed;
 
-  // ─── Toast state ────────────────────────────────────────
-  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const readiness = [
+    { label: "ชื่อเส้นทาง", complete: !!route.name_th.trim(), help: route.name_th.trim() ? route.name_th : "ยังไม่มีชื่อภาษาไทย" },
+    { label: "Slug (URL)", complete: !!route.slug.trim(), help: route.slug ? `/routes/${route.slug}` : "ยังไม่ได้กำหนด URL" },
+    { label: "รูปภาพปก", complete: !!coverMediaUrl, help: coverMediaUrl ? "มีรูปภาพปกที่บันทึกไว้" : "ยังไม่มีรูปภาพปกที่เชื่อมโยงกับเส้นทางนี้" },
+    { label: "จุดแวะ", complete: stopCount > 0, help: `${stopCount} จุดแวะที่บันทึกไว้` },
+  ];
 
-  const showToast = useCallback((message: string) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ message, visible: true });
-    toastTimer.current = setTimeout(() => {
-      setToast({ message: "", visible: false });
-    }, 5000);
-  }, []);
-
-  const dismissToast = useCallback(() => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ message: "", visible: false });
-  }, []);
-
-  useEffect(() => {
-    if (hasDuplicateStops) {
-      const names = Array.from(duplicatedAttractions.values()).map((info) => info.name);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      showToast(`พบจุดแวะซ้ำ ${duplicatedAttractions.size} แห่ง (${names.join(", ")}) \u2014 ไปที่จัดการจุดแวะพักเพื่อแก้ไข`);
-    }
-    // Only run on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (toastTimer.current) clearTimeout(toastTimer.current);
-    };
-  }, []);
+  const handleStopsChange = (normalized: Array<{
+    attractionId: number;
+    dayNumber: number;
+    displayOrder: number;
+    stopNoteTh: string;
+    stopNoteEn: string;
+  }>) => {
+    setWorkingStops(normalized.map((stop, index) => ({
+      stop_id: -(index + 1),
+      route_id: route.route_id,
+      attraction_id: stop.attractionId,
+      day_number: stop.dayNumber,
+      display_order: stop.displayOrder,
+      stop_note_th: stop.stopNoteTh,
+      stop_note_en: stop.stopNoteEn,
+      attraction_name_th: attractionById.get(stop.attractionId)?.name_th
+        ?? routeStops.find((item) => item.attraction_id === stop.attractionId)?.attraction_name_th
+        ?? null,
+    })));
+  };
 
   return (
-    <div className="relative min-h-screen bg-background pb-20 text-slate-800">
-      {/* Duplicate toast notification */}
-      {toast.visible ? (
-        <div className="fixed left-1/2 top-4 z-50 w-full max-w-lg -translate-x-1/2 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-lg backdrop-blur-md">
-            <WarningCircle size={20} className="mt-0.5 shrink-0 text-amber-600" weight="fill" />
-            <p className="flex-1 text-sm font-bold leading-relaxed text-amber-900">{toast.message}</p>
-            <button
-              type="button"
-              onClick={dismissToast}
-              className="shrink-0 rounded-lg p-1 text-amber-500 transition hover:bg-amber-100 hover:text-amber-700"
-              aria-label="ปิดการแจ้งเตือน"
-            >
-              <XCircle size={18} weight="bold" />
-            </button>
+    <div className="min-h-screen bg-slate-50 pb-20 text-slate-800">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <Link href="/admin/routes" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200" aria-label="กลับไปรายการเส้นทาง">
+              <ArrowLeft size={19} weight="bold" />
+            </Link>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-500">ตัวแก้ไขเส้นทางแนะนำ</p>
+              <h1 className="break-words text-base font-black text-slate-900 sm:text-lg">{name}</h1>
+            </div>
           </div>
+          <span className={`rounded-md px-3 py-2 text-xs font-black ${route.is_published ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}>
+            {route.is_published ? "เผยแพร่แล้ว" : "ฉบับร่าง"}
+          </span>
+        </div>
+        <nav aria-label="ส่วนต่าง ๆ ของตัวแก้ไขเส้นทาง" className="mx-auto mt-3 grid max-w-6xl grid-cols-4 gap-1 rounded-lg bg-slate-100 p-1">
+          {sections.map((section) => (
+            <a key={section.id} href={`#${section.id}`} className="flex min-h-10 items-center justify-center rounded-md px-1 text-center text-xs font-bold text-slate-700 transition hover:bg-white hover:text-[#073F37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0A6B62] sm:text-sm">
+              {section.label}
+            </a>
+          ))}
+        </nav>
+      </header>
+
+      {showDuplicateToast && duplicateMap.size > 0 ? (
+        <div role="status" className="mx-auto mt-4 flex max-w-6xl items-start justify-between gap-3 px-3 sm:px-6">
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-950">
+            พบจุดแวะซ้ำ {duplicateMap.size} แห่ง ({Array.from(duplicateMap.values()).map((item) => item.name).join(", ")}) — แก้ไขในส่วนจุดแวะ
+          </p>
+          <button type="button" onClick={() => setToastDismissed(true)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-amber-200 bg-white text-amber-800" aria-label="ปิดการแจ้งเตือน" title="ปิดการแจ้งเตือน">
+            <span aria-hidden="true">×</span>
+          </button>
         </div>
       ) : null}
 
-      {/* Editor Toolbar */}
-      <div className="sticky top-0 z-30 flex flex-col gap-3 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
-        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-          <Link
-            href="/admin/routes"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
-            aria-label="Back to routes list"
-          >
-            <ArrowLeft size={20} weight="bold" />
-          </Link>
-          <div className="min-w-0">
-            <h1 className="break-words text-base font-black text-slate-800 sm:text-lg">แก้ไขเส้นทาง: {name}</h1>
-            <p className="text-xs font-bold text-slate-500">คุณกำลังแก้ไขหน้าตาแบบเดียวกับที่แสดงผลจริง</p>
+      <main className="mx-auto max-w-6xl space-y-6 px-3 py-6 sm:px-6 sm:py-8">
+        <section id="basics" aria-labelledby="basics-heading" className="scroll-mt-36 space-y-3">
+          <div>
+            <h2 id="basics-heading" className="text-lg font-black text-slate-900">ข้อมูลหลัก</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">ชื่อ เส้นทาง URL และคำอธิบายที่บันทึกในระบบ</p>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
-          {publicHref ? (
-            <Link
-              href={publicHref}
-              target="_blank"
-              className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-50"
-              aria-label="Preview public route page"
-            >
-              <ArrowSquareOut size={15} weight="bold" />
-              Preview
-            </Link>
-          ) : null}
-          <div className="rounded-lg bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700">
-            สถานะ: {route.is_published ? "เผยแพร่แล้ว" : "ยังไม่เผยแพร่"}
+          <AdminFormSection title="ข้อมูลหลักของเส้นทาง">
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="break-words text-sm font-bold text-slate-900">{route.name_th || "ยังไม่มีชื่อภาษาไทย"}</p>
+                <p className="mt-1 break-all font-mono text-xs text-slate-500">{route.slug ? `/routes/${route.slug}` : "ยังไม่มี URL"}</p>
+              </div>
+              <button type="button" onClick={() => setIsBasicsEditorOpen((open) => !open)} aria-expanded={isBasicsEditorOpen} className="min-h-11 shrink-0 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50">
+                {isBasicsEditorOpen ? "ปิดข้อมูลหลัก" : "แก้ไขข้อมูลหลัก"}
+              </button>
+            </div>
+          </AdminFormSection>
+          {isBasicsEditorOpen ? <RouteForm initialData={route} coverMediaUrl={coverMediaUrl} /> : null}
+        </section>
+
+        <section id="stops" aria-labelledby="stops-heading" className="scroll-mt-36 space-y-3">
+          <div>
+            <h2 id="stops-heading" className="text-lg font-black text-slate-900">จุดแวะ</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">เลือกสถานที่ที่เปิดใช้งานและเผยแพร่ จัดวันและลำดับ พร้อมเก็บคำแนะนำสองภาษา; วันว่างจะถูกยุบให้ต่อเนื่อง</p>
           </div>
-          <button
-            onClick={() => setActiveSection("settings")}
-            className="min-h-10 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:px-4"
-          >
-            ตั้งค่า / สถานะ
-          </button>
-        </div>
-      </div>
+          {savedStopsAvailable ? (
+            <RouteStopsManager routeId={route.route_id} initialStops={stopsProp ?? []} attractions={attractions} onStopsChange={handleStopsChange} />
+          ) : route.stop_count > 0 ? (
+            <AdminHelpPanel title="โหลดรายละเอียดจุดแวะไม่สำเร็จ" tone="warning">
+              <p>มีจุดแวะที่บันทึกไว้ {route.stop_count} จุด แต่ยังแสดงกำหนดการไม่ได้ ลองโหลดตัวแก้ไขอีกครั้ง</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link href={`/admin/routes/${route.route_id}/stops`} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100"><MapPin size={16} />จัดการจุดแวะพัก</Link>
+              </div>
+            </AdminHelpPanel>
+          ) : (
+            <RouteStopsManager routeId={route.route_id} initialStops={[]} attractions={attractions} onStopsChange={handleStopsChange} />
+          )}
+        </section>
 
-      {/* Editor Canvas (matches public layout) */}
-      <div className="mx-auto max-w-4xl px-4 pt-12 sm:px-6 lg:px-8 md:pt-20">
-        {/* Breadcrumb */}
-        <div className="pointer-events-none mb-6 flex gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-          <span>หน้าแรก</span> <span>/</span> <span>เส้นทางแนะนำ</span> <span>/</span> <span className="text-slate-800">{name}</span>
-        </div>
-
-        {/* Hero Section */}
-        <EditableBlock
-          id="hero"
-          label="รูปภาพปกและข้อมูลหลัก"
-          isActive={activeSection === "cover" || activeSection === "header"}
-          onEdit={() => setActiveSection("header")}
-        >
-          <div className="relative mb-12 h-[40vh] min-h-[300px] w-full overflow-hidden rounded-2xl shadow-lg border border-slate-200 pointer-events-none">
-            {coverImage ? (
-              <>
-                <Image
-                  src={coverImage}
-                  alt={name}
-                  fill
-                  className="object-cover opacity-70"
-                  unoptimized
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent" />
-              </>
-            ) : (
-              <MissingImageState
-                title="Missing route cover image"
-                description="No saved cover image URL is set for this route. Add approved media before treating this preview as publish-ready."
-              />
-            )}
-
-            {/* Hero text overlay */}
-            <div className={`absolute inset-0 flex items-end ${coverImage ? "text-white" : "text-slate-800"}`}>
-              <div className="w-full px-6 pb-8 sm:px-10">
-                <span className="mb-4 inline-block rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white">
-                  เส้นทางแนะนำ
-                </span>
-                <h1 className={`text-3xl font-black md:text-5xl ${coverImage ? "text-white" : "text-slate-800"}`}>
-                  {name}
-                </h1>
-                <div className={`mt-4 flex flex-wrap items-center gap-4 ${coverImage ? "text-white/90" : "text-slate-600"}`}>
-                  <div className="flex items-center gap-1.5 text-sm font-medium">
-                    <CalendarBlank size={18} />
-                    <span>{itineraryDays.length > 0 ? `${Math.max(...itineraryDays)} วัน` : "ยังไม่จัดวันเดินทาง"}</span>
+        <section id="cover" aria-labelledby="cover-heading" className="scroll-mt-36 space-y-3">
+          <div>
+            <h2 id="cover-heading" className="text-lg font-black text-slate-900">รูปปก</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">เลือกภาพจากคลังสื่อ; สถานะนี้อ้างอิงภาพที่บันทึกและเชื่อมกับเส้นทางจริง</p>
+          </div>
+          <AdminFormSection title="รูปภาพปกเส้นทาง">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(220px,0.65fr)] sm:items-center">
+              <div className="aspect-video overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                {coverMediaUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={coverMediaUrl} alt={`ภาพปก ${name}`} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-sm font-bold text-slate-500">
+                    <ImageIcon size={25} weight="duotone" />ยังไม่มีภาพปกที่บันทึกไว้
                   </div>
-                  <div className="flex items-center gap-1.5 text-sm font-medium">
-                    <MapPin size={18} />
-                    <span>{stopCount} สถานที่</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); setActiveSection("cover"); }}
-                    className={`ml-auto rounded-lg border px-3 py-1 text-xs font-bold pointer-events-auto ${
-                      coverImage
-                        ? "border-white/30 bg-white/20 text-white backdrop-blur-md hover:bg-white/30"
-                        : "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200"
-                    }`}
-                  >
-                    {coverImage ? "Change cover" : "Add cover image"}
-                  </button>
-                </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-800">{coverMediaUrl ? "มีภาพปกเชื่อมโยงกับเส้นทางแล้ว" : "ยังไม่มีภาพปกเชื่อมโยงกับเส้นทาง"}</p>
+                <button type="button" onClick={() => setIsCoverEditorOpen(true)} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#073F37] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#0A6B62] sm:w-auto">
+                  <ImageIcon size={17} weight="bold" />{coverMediaUrl ? "เปลี่ยนภาพปก" : "เลือกรูปภาพปก"}
+                </button>
               </div>
             </div>
+          </AdminFormSection>
+        </section>
+
+        <section id="review" aria-labelledby="review-heading" className="scroll-mt-36 space-y-3">
+          <div>
+            <h2 id="review-heading" className="text-lg font-black text-slate-900">ตรวจสอบ</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">ตรวจข้อมูลที่บันทึกไว้ก่อนกลับไปจัดการสถานะเส้นทาง</p>
           </div>
-        </EditableBlock>
-
-        {/* Content grid */}
-        <div className="mb-20 grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
-          {/* LEFT: Overview + Stops */}
-          <div className="lg:col-span-8 space-y-10">
-            {/* Overview Section */}
-            <EditableBlock
-              id="content"
-              label="ภาพรวมเส้นทาง"
-              isActive={activeSection === "content"}
-              onEdit={() => setActiveSection("content")}
-            >
-              <section className="pointer-events-none">
-                <div className="rounded-3xl bg-white p-6 shadow-sm md:p-10">
-                  <h2 className="mb-4 text-xl font-bold text-slate-800">ภาพรวมเส้นทาง</h2>
-                  <div className="prose prose-slate max-w-none prose-p:leading-relaxed prose-p:text-slate-600 whitespace-pre-line">
-                    {route.description_th || (
-                      <p className="text-slate-400 italic">
-                        ยังไม่มีรายละเอียดเส้นทาง คลิก &quot;แก้ไข&quot; เพื่อเพิ่มคำอธิบายเส้นทาง
-                      </p>
-                    )}
+          <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.65fr)]">
+            <AdminFormSection title="ตัวอย่างข้อมูลที่บันทึก">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-500">เส้นทางแนะนำ</p>
+                    <h3 className="mt-1 break-words text-xl font-black text-slate-900">{name}</h3>
+                    <p className="mt-2 break-words text-sm leading-6 text-slate-600">{route.description_th || "ยังไม่มีคำอธิบายภาษาไทย"}</p>
                   </div>
+                  <div className="shrink-0 rounded-md bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700">{itineraryDays.length || 0} วัน · {stopCount} จุด</div>
                 </div>
-              </section>
-            </EditableBlock>
-
-            {/* Day-by-day Itinerary (read-only preview) */}
-            {stops.length > 0 ? (
-              <section className="pointer-events-none rounded-3xl bg-white p-6 shadow-sm md:p-10">
-                <h2 className="mb-8 text-2xl font-black text-slate-800">แผนการเดินทาง</h2>
-                <div className="space-y-8">
-                  {itineraryDays.map((day) => (
-                    <div key={day} className="relative">
-                      <div className="mb-6 flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-700 text-lg font-black text-white shadow-sm">
-                          {day}
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-800">วันที่ {day}</h3>
-                      </div>
-                      <div className="ml-6 space-y-6 border-l-2 border-slate-200 py-4 pl-8">
-                        {stops
-                          .filter((stop) => stop.day_number === day)
-                          .sort((a, b) => a.display_order - b.display_order)
-                          .map((stop) => (
-                            <div key={stop.stop_id} className="relative min-w-0">
-                              <div className="absolute -left-[41px] top-4 h-4 w-4 rounded-full border-4 border-white bg-green-600 shadow-sm" />
-                              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
-                                <p className="break-words text-sm font-bold text-slate-800">
-                                  {stop.attraction_name_th || `สถานที่ #${stop.attraction_id}`}
-                                </p>
-                                {stop.stop_note_th ? (
-                                  <p className="mt-1 break-words text-sm leading-6 text-slate-600">{stop.stop_note_th}</p>
-                                ) : null}
-                              </div>
-                            </div>
+                {stopCount > 0 ? (
+                  <div className="space-y-4 border-t border-slate-200 pt-4">
+                    {itineraryDays.map((day) => (
+                      <div key={day}>
+                        <h4 className="text-sm font-black text-[#073F37]">วันที่ {day}</h4>
+                        <ol className="mt-2 space-y-2">
+                          {routeStops.filter((stop) => stop.day_number === day).sort((a, b) => a.display_order - b.display_order).map((stop) => (
+                            <li key={stop.stop_id} className="min-w-0 rounded-md border border-slate-200 bg-slate-50 p-3">
+                              <p className="break-words text-sm font-bold text-slate-800"><span>{attractionById.get(stop.attraction_id)?.name_th ?? stop.attraction_name_th ?? `สถานที่ #${stop.attraction_id}`}</span></p>
+                              {stop.stop_note_th ? <p className="mt-1 break-words text-sm leading-6 text-slate-600">{stop.stop_note_th}</p> : null}
+                            </li>
                           ))}
+                        </ol>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : stopCount > 0 ? (
-              <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                <h2 className="font-bold text-amber-950">โหลดรายละเอียดจุดแวะไม่สำเร็จ</h2>
-                <p className="mt-1 text-sm leading-6 text-amber-900">มีจุดแวะที่บันทึกไว้ {stopCount} จุด แต่ยังแสดงกำหนดการไม่ได้ ลองเปิดหน้าจัดการจุดแวะเพื่อตรวจข้อมูล</p>
-                <Link
-                  href={`/admin/routes/${route.route_id}/stops`}
-                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100"
-                >
-                  <List size={16} />
-                  จัดการจุดแวะพัก
-                </Link>
-              </section>
-            ) : (
-              <section className="pointer-events-none rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-                <MapPin size={32} className="mx-auto text-green-600 mb-3" weight="fill" />
-                <h3 className="text-lg font-bold text-slate-800 mb-2">ยังไม่มีจุดแวะพัก</h3>
-                <p className="max-w-md mx-auto text-sm leading-6 text-slate-500">
-                  เพิ่มจุดแวะพัก (stops) ในเส้นทางหลังจากบันทึกข้อมูลหลักแล้ว
-                </p>
-                <Link
-                  href={`/admin/routes/${route.route_id}/stops`}
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-green-700 shadow-sm transition hover:bg-slate-50 pointer-events-auto"
-                >
-                  <List size={16} />
-                  จัดการจุดแวะพัก
-                </Link>
-              </section>
-            )}
-          </div>
-
-          {/* RIGHT: Sidebar Info */}
-          <div className="lg:col-span-4 space-y-8">
-            <div className="sticky top-24 space-y-8">
-              {/* Route Info Card */}
-              <EditableBlock
-                id="header"
-                label="ข้อมูลเส้นทาง"
-                isActive={activeSection === "header"}
-                onEdit={() => setActiveSection("header")}
-              >
-                <div className="pointer-events-none rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <h3 className="mb-6 text-lg font-black text-slate-800">ข้อมูลเส้นทาง</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">ชื่อภาษาไทย</p>
-                      <p className="mt-1 text-sm font-bold text-slate-800">{route.name_th || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">ชื่อภาษาอังกฤษ</p>
-                      <p className="mt-1 text-sm font-bold text-slate-800">{route.name_en || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Slug</p>
-                      <p className="mt-1 font-mono text-sm font-bold text-slate-800">{route.slug || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">จุดแวะพัก</p>
-                      <p className="mt-1 text-sm font-bold text-slate-800">{stopCount} จุด</p>
-                    </div>
+                    ))}
                   </div>
-                </div>
-              </EditableBlock>
-
-              {/* Related Stops Management */}
-              <div className="relative rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
-                <div className="absolute right-4 top-4 rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-500">
-                  Management
-                </div>
-                <MapPin size={28} className="mx-auto text-green-600 mb-2" weight="fill" />
-                <h3 className="font-bold text-slate-800 mb-1">จัดการจุดแวะพัก</h3>
-                <p className="text-xs leading-5 text-slate-500 mb-3">
-                  เพิ่ม จัดลำดับ และแก้ไขจุดแวะพักตามวัน
-                </p>
-                {hasDuplicateStops ? (
-                  <div className="mb-3 rounded-xl border border-amber-300 bg-amber-100 p-3 text-left">
-                    <div className="flex items-center gap-1.5 text-xs font-black text-amber-900">
-                      <WarningCircle size={14} weight="fill" />
-                      พบจุดแวะซ้ำ {duplicatedAttractions.size} แห่ง
-                    </div>
-                    <ul className="mt-1.5 space-y-1">
-                      {Array.from(duplicatedAttractions.entries()).map(([attractionId, info]) => (
-                        <li key={attractionId} className="text-[11px] leading-tight text-amber-800">
-                          <span className="font-bold">{info.name}</span>
-                          <span className="ml-1">
-                            ({info.occurrences.map((o) => `วัน ${o.dayNumber} (ลำดับ ${o.displayOrder})`).join(', ')})
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="mt-2 text-xs font-bold text-amber-800">
-                      ไปที่จัดการจุดแวะพักเพื่อลบรายการซ้ำ
-                    </p>
-                  </div>
-                ) : null}
-                <Link
-                  href={`/admin/routes/${route.route_id}/stops`}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 pointer-events-auto"
-                >
-                  <List size={15} />
-                  ไปที่จัดการจุดแวะพัก
-                </Link>
+                ) : <p className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-500">ยังไม่มีจุดแวะที่บันทึกไว้</p>}
+                {publicHref && route.is_published && route.is_active ? (
+                  <Link href={publicHref} target="_blank" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:border-[#0A6B62] hover:text-[#0A6B62]"><ArrowSquareOut size={16} />ดูหน้าเส้นทางสาธารณะ</Link>
+                ) : <p className="text-xs leading-5 text-slate-500">หน้าเส้นทางสาธารณะจะแสดงเมื่อเส้นทางเปิดใช้งานและเผยแพร่แล้ว</p>}
               </div>
+            </AdminFormSection>
 
-              {/* English description readiness */}
-              {!route.name_en && !route.description_en ? (
-                <div className="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50 p-6 text-center">
-                  <p className="text-xs font-bold uppercase tracking-wider text-amber-600 mb-2">Optional</p>
-                  <p className="text-sm font-bold text-slate-700 mb-1">Add English content</p>
-                  <p className="max-w-xs mx-auto text-xs leading-5 text-slate-500">
-                    Route will display only in Thai until English descriptions are added.
-                  </p>
-                </div>
+            <div className="space-y-4">
+              <AdminReadinessPanel title="ตรวจข้อมูลเส้นทาง" items={readiness} />
+              {duplicateMap.size > 0 ? (
+                <AdminHelpPanel title={`พบจุดแวะซ้ำ ${duplicateMap.size} แห่ง`} tone="warning">
+                  <p>ไปที่จัดการจุดแวะพักเพื่อลบรายการซ้ำ</p>
+                  <ul className="mt-2 list-disc pl-5">{Array.from(duplicateMap.values()).map((duplicate, index) => <li key={`${duplicate.name}-${index}`} className="break-words">{duplicate.name}</li>)}</ul>
+                </AdminHelpPanel>
               ) : null}
+              <AdminHelpPanel title="สถานะการเผยแพร่" tone="info">
+                <p>สถานะปัจจุบัน: {route.is_published ? "เผยแพร่แล้ว" : "ฉบับร่าง"} · {route.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}</p>
+                <p className="mt-2">รายการตรวจนี้เป็นข้อมูลประกอบเท่านั้น การอนุญาตเผยแพร่ตรวจโดยเซิร์ฟเวอร์เมื่อสั่งจากหน้ารายการเส้นทาง</p>
+                <Link href="/admin/routes" className="mt-3 inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">ไปหน้ารายการเส้นทาง</Link>
+              </AdminHelpPanel>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
 
-      {/* Drawers */}
-      <Drawer
-        isOpen={activeSection === "header"}
-        onClose={() => setActiveSection(null)}
-        title="แก้ไขข้อมูลเส้นทาง (Route Info)" bodyClassName="p-0"
-      >
-        <HeaderForm route={route} onClose={() => setActiveSection(null)} />
-      </Drawer>
-
-      <Drawer
-        isOpen={activeSection === "cover"}
-        onClose={() => setActiveSection(null)}
-        title="รูปภาพปก (Cover Image)" bodyClassName="p-0"
-      >
+      <Drawer isOpen={isCoverEditorOpen} onClose={() => setIsCoverEditorOpen(false)} title="รูปภาพปกเส้นทาง" bodyClassName="p-0">
         <CoverForm
           route={route}
-          onClose={() => setActiveSection(null)}
+          onClose={() => setIsCoverEditorOpen(false)}
           coverMediaId={coverMediaId}
           coverMediaUrl={coverMediaUrl}
-          onCoverChange={(id, url) => {
-            setCoverMediaId(id);
-            setCoverMediaUrl(url);
+          onCoverChange={(mediaId, mediaUrl) => {
+            setCoverMediaId(mediaId);
+            setCoverMediaUrl(mediaUrl);
           }}
         />
-      </Drawer>
-
-      <Drawer
-        isOpen={activeSection === "content"}
-        onClose={() => setActiveSection(null)}
-        title="รายละเอียดเส้นทาง (Content)"
-        size="lg"
-      >
-        <ContentForm route={route} onClose={() => setActiveSection(null)} />
-      </Drawer>
-
-      <Drawer
-        isOpen={activeSection === "settings"}
-        onClose={() => setActiveSection(null)}
-        title="ตั้งค่าและการเผยแพร่" bodyClassName="p-0"
-      >
-        <SettingsForm route={route} onClose={() => setActiveSection(null)} />
       </Drawer>
     </div>
   );

@@ -1,18 +1,17 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createRouteAction, updateRouteAction } from "@/app/actions/admin-route-actions";
 import type { AdminRouteRow } from "@/lib/repositories/admin-route.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminFormSection, AdminReadinessPanel, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
-import { FormInput, FormTextarea, FormCheckbox, getFieldError } from "@/components/admin/forms/FormField";
-import { ArrowSquareOut, MapPin, List, Plus } from "@phosphor-icons/react";
-import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
+import { FormInput, FormTextarea, getFieldError } from "@/components/admin/forms/FormField";
+import { List, PencilSimple, Plus } from "@phosphor-icons/react";
 
 interface RouteFormProps {
   initialData?: AdminRouteRow | null;
+  coverMediaUrl?: string | null;
 }
 
 type RouteFormState = {
@@ -26,195 +25,116 @@ const FIELD_LABELS = {
   nameTh: "ชื่อเส้นทางภาษาไทย",
   slug: "Slug",
   nameEn: "ชื่อเส้นทางภาษาอังกฤษ",
+  descriptionTh: "รายละเอียดภาษาไทย",
+  descriptionEn: "รายละเอียดภาษาอังกฤษ",
 };
 
 function hasText(value: string | null | undefined) {
   return !!value?.trim();
 }
 
-export function RouteForm({ initialData }: RouteFormProps) {
+export function RouteForm({ initialData, coverMediaUrl }: RouteFormProps) {
   const router = useRouter();
   const isEditing = !!initialData;
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
-  const [coverMediaId, setCoverMediaId] = useState<number | null>(null);
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const action = isEditing ? updateRouteAction.bind(null, initialData.route_id) : createRouteAction;
-  const routeSlug = initialData?.slug ?? null;
-  const publicHref = isEditing && routeSlug ? `/routes/${routeSlug}` : null;
-
-  const readinessItems = [
-    { label: "ชื่อเส้นทาง", complete: hasText(initialData?.name_th), help: "แสดงเป็นหัวข้อเส้นทางบนหน้า public" },
-    { label: "Slug (URL)", complete: !!routeSlug, help: publicHref ? publicHref : "จำเป็นสำหรับ URL หน้าเส้นทาง" },
-    { label: "รูปภาพปก", complete: !!initialData?.slug, help: "จัดการรูปภาพปกผ่าน Media Library ในหน้าแก้ไขเส้นทาง" },
-    { label: "สถานะเผยแพร่", complete: !!initialData?.is_published, help: initialData?.is_published ? "แสดงบนหน้า public แล้ว" : "บันทึกเป็นร่างจนกว่าจะเผยแพร่" },
-    { label: "สถานะเปิดใช้งาน", complete: !!initialData?.is_active, help: initialData?.is_active ? "เปิดใช้งานในระบบหลังบ้าน" : "เส้นทางที่ปิดใช้งานไม่ควรโปรโมท" },
-    { label: "จุดแวะพัก", complete: (initialData?.stop_count ?? 0) > 0, help: `${initialData?.stop_count ?? 0} จุดแวะพักที่เชื่อมโยงกับสถานที่ท่องเที่ยว` },
-  ];
-
   const [state, formAction, isPending] = useActionState<RouteFormState, FormData>(action, {
     success: false,
-    error: undefined,
-    fieldErrors: undefined,
   });
+
+  const readinessItems = [
+    { label: "ชื่อเส้นทาง", complete: hasText(initialData?.name_th), help: "ชื่อภาษาไทยที่แสดงบนหน้าเส้นทาง" },
+    { label: "Slug (URL)", complete: hasText(initialData?.slug), help: initialData?.slug ? `/routes/${initialData.slug}` : "จำเป็นสำหรับ URL หน้าเส้นทาง" },
+    {
+      label: "รูปภาพปก",
+      complete: !!coverMediaUrl,
+      help: coverMediaUrl ? "มีรูปภาพปกที่เชื่อมโยงกับเส้นทางนี้" : "ยังไม่มีรูปภาพปกที่เชื่อมโยงกับเส้นทางนี้",
+    },
+  ];
 
   const fe = (name: string) => getFieldError(state?.fieldErrors, name);
 
   useEffect(() => {
-    if (state?.success && isEditing) {
-      router.push("/admin/routes");
-      router.refresh();
-    }
+    if (state?.success && isEditing) router.refresh();
   }, [state?.success, isEditing, router]);
 
-  if (state?.success && !isEditing) {
-    const newId = state.data?.id;
-    if (newId) {
-      return (
-        <SuccessNextSteps
-          title="สร้างเส้นทางท่องเที่ยวสำเร็จ!"
-          description="ระบบได้บันทึกข้อมูลเส้นทางท่องเที่ยวใหม่ของคุณเรียบร้อยแล้ว ขั้นตอนต่อไปคือการเพิ่มจุดแวะพักเข้าสู่เส้นทาง"
-          actions={[
-            { label: "เพิ่มจุดแวะพัก (Stops) ลงในเส้นทาง", href: `/admin/routes/${newId}/stops`, primary: true, icon: MapPin },
-            { label: "สร้างเส้นทางใหม่", href: "/admin/routes/new", primary: false, icon: Plus },
-            { label: "กลับไปหน้ารายการ", href: "/admin/routes", primary: false, icon: List }
-          ]}
-        />
-      );
-    }
+  if (state?.success && !isEditing && state.data?.id) {
+    return (
+      <SuccessNextSteps
+        title="สร้างฉบับร่างเส้นทางสำเร็จ"
+        description="เส้นทางนี้ยังไม่เผยแพร่ ต่อไปเพิ่มจุดแวะ เลือกรูปภาพปก และตรวจเนื้อหาในหน้าแก้ไข"
+        actions={[
+          { label: "ไปต่อที่ตัวแก้ไขเส้นทาง", href: `/admin/routes/${state.data.id}/edit`, primary: true, icon: PencilSimple },
+          { label: "สร้างเส้นทางใหม่", href: "/admin/routes/new", primary: false, icon: Plus },
+          { label: "กลับไปหน้ารายการ", href: "/admin/routes", primary: false, icon: List },
+        ]}
+      />
+    );
   }
 
   return (
-    <form action={formAction} className="space-y-8">
+    <form action={formAction} className="space-y-5">
       <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} fieldLabels={FIELD_LABELS} />
 
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-        {/* Left Column (Main Content) */}
-        <div className="space-y-8 lg:col-span-8">
-          <AdminFormSection title="ข้อมูลหลัก (Basic Info)">
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormInput label="ชื่อเส้นทาง (TH)" name="nameTh" defaultValue={initialData?.name_th} required error={fe("nameTh")} className="md:col-span-2" />
+      {state?.success && isEditing ? (
+        <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+          บันทึกข้อมูลพื้นฐานแล้ว
+        </p>
+      ) : null}
+
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(260px,0.65fr)]">
+        <div className="space-y-5">
+          <AdminFormSection title="ข้อมูลหลัก" description="ตั้งชื่อและ URL สำหรับเส้นทางแนะนำ">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormInput label="ชื่อเส้นทาง (TH)" name="nameTh" defaultValue={initialData?.name_th} required error={fe("nameTh")} className="sm:col-span-2" />
               <FormInput
                 label="Slug (สำหรับ URL)"
                 name="slug"
                 defaultValue={initialData?.slug ?? ""}
                 required
                 pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
-                placeholder="e.g. betong-mist-wellness-route"
-                onChange={(e) => {
-                  e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
+                placeholder="e.g. betong-day-trip"
+                onChange={(event) => {
+                  event.target.value = event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
                 }}
-                help="ใช้เป็น public URL เช่น /routes/betong-mist-wellness-route"
+                help="ใช้ใน URL เช่น /routes/betong-day-trip"
                 error={fe("slug")}
-                className="md:col-span-2"
+                className="sm:col-span-2"
               />
-              <FormInput label="ชื่อเส้นทาง (EN)" name="nameEn" defaultValue={initialData?.name_en ?? ""} error={fe("nameEn")} className="md:col-span-2" />
+              <FormInput label="ชื่อเส้นทาง (EN)" name="nameEn" defaultValue={initialData?.name_en ?? ""} error={fe("nameEn")} className="sm:col-span-2" />
             </div>
           </AdminFormSection>
-
-          <AdminFormSection title="รายละเอียดเส้นทาง (Description)">
-            <div className="space-y-6">
-              <FormTextarea label="รายละเอียดเส้นทาง (TH)" name="descriptionTh" defaultValue={initialData?.description_th ?? ""} rows={4} />
-              <FormTextarea label="รายละเอียดเส้นทาง (EN)" name="descriptionEn" defaultValue={initialData?.description_en ?? ""} rows={4} />
-            </div>
-          </AdminFormSection>
-        </div>
-
-        {/* Right Column (Settings & Metadata) */}
-        <div className="space-y-8 lg:sticky lg:top-8 lg:col-span-4 lg:self-start">
-          {/* Readiness */}
-          {initialData ? (
-            <AdminReadinessPanel title="ความพร้อมหน้าเส้นทาง" items={readinessItems} />
-          ) : (
-            <AdminFormSection title="ความพร้อมหน้าเส้นทาง">
-              <p className="text-xs leading-5 text-slate-500">บันทึกเส้นทางก่อน การตรวจสอบความพร้อมและการจัดการจุดแวะพักจะแสดงที่นี่</p>
-            </AdminFormSection>
-          )}
 
           {isEditing ? (
-            <Link
-              href={`/admin/routes/${initialData.route_id}/stops`}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-600 transition hover:border-[#0A6B62] hover:text-[#0A6B62]"
-            >
-              <MapPin size={15} weight="bold" />
-              Manage route stops
-            </Link>
-          ) : null}
-
-          {/* Status */}
-          <AdminFormSection title="สถานะ (Status)">
-            <div className="flex flex-col gap-3">
-              <FormCheckbox label="เปิดใช้งาน (Active)" name="isActive" defaultChecked={initialData?.is_active ?? true} accent="teal" />
-              <FormCheckbox label="เผยแพร่ (Published)" name="isPublished" defaultChecked={initialData?.is_published ?? false} accent="coral" />
-            </div>
-          </AdminFormSection>
-
-          {/* Media */}
-          <AdminFormSection title="สื่อ (Media)" aside={
-            publicHref ? (
-              <Link
-                href={publicHref}
-                target="_blank"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-[#0A6B62] hover:text-[#0A6B62]"
-                title="Preview public route"
-              >
-                <ArrowSquareOut size={17} weight="bold" />
-              </Link>
-            ) : null
-          }>
-            <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-              <div className="aspect-video bg-slate-100">
-                {coverPreviewUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={coverPreviewUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm font-bold text-slate-400">
-                    ยังไม่ได้เลือกรูปภาพ
-                  </div>
-                )}
+            <AdminFormSection title="รายละเอียดเส้นทาง" description="คำอธิบายที่ช่วยให้นักท่องเที่ยวเข้าใจเส้นทาง">
+              <div className="space-y-4">
+                <FormTextarea label="รายละเอียดเส้นทาง (TH)" name="descriptionTh" defaultValue={initialData.description_th ?? ""} rows={4} error={fe("descriptionTh")} />
+                <FormTextarea label="รายละเอียดเส้นทาง (EN)" name="descriptionEn" defaultValue={initialData.description_en ?? ""} rows={4} error={fe("descriptionEn")} />
               </div>
-              <div className="flex flex-col gap-2 p-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => setIsPickerOpen(true)}
-                  className="min-h-10 flex-1 rounded-lg bg-[#073F37] px-3 py-2 text-sm font-black text-white transition hover:bg-[#0A6B62]"
-                >
-                  เลือกจาก Media Library
-                </button>
-                {coverPreviewUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCoverPreviewUrl("");
-                      setCoverMediaId(null);
-                    }}
-                    className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
-                  >
-                    เอาออก
-                  </button>
-                ) : null}
-              </div>
-            </div>
-            <input type="hidden" name="coverMediaId" value={coverMediaId ?? ""} />
-          </AdminFormSection>
+            </AdminFormSection>
+          ) : (
+            <input type="hidden" name="descriptionTh" value="" />
+          )}
         </div>
+
+        {isEditing ? (
+          <div className="xl:sticky xl:top-24">
+            <AdminReadinessPanel title="ข้อมูลที่บันทึกแล้ว" items={readinessItems} />
+          </div>
+        ) : (
+          <AdminFormSection title="ฉบับร่าง">
+            <p className="text-sm leading-6 text-slate-600">บันทึกชื่อเส้นทางก่อน แล้วค่อยเพิ่มจุดแวะและรูปภาพปกในตัวแก้ไข</p>
+          </AdminFormSection>
+        )}
       </div>
 
-      <AdminSaveBar
-        cancelHref="/admin/routes"
-        isPending={isPending}
-        submitLabel={isEditing ? "บันทึกการแก้ไขเส้นทาง" : "สร้างเส้นทาง"}
-      />
+      <input type="hidden" name="isPublished" value={initialData?.is_published ? "true" : "false"} />
+      <input type="hidden" name="isActive" value={initialData?.is_active ? "true" : "false"} />
+      <input type="hidden" name="coverMediaId" value="" />
 
-      <MediaPickerModal
-        isOpen={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
-        onSelectAsset={(asset) => {
-          const id = Number(asset.id);
-          setCoverMediaId(id);
-          setCoverPreviewUrl(asset.url);
-        }}
-        onSelect={(url) => setCoverPreviewUrl(url)}
-        title="เลือกรูปภาพเส้นทาง"
+      <AdminSaveBar
+        cancelHref={isEditing ? `/admin/routes/${initialData.route_id}/edit` : "/admin/routes"}
+        isPending={isPending}
+        submitLabel={isEditing ? "บันทึกข้อมูลพื้นฐาน" : "สร้างฉบับร่าง"}
       />
     </form>
   );
