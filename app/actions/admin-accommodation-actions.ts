@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
+import { assertLiveDestinationProvinceId } from "@/lib/repositories/destination-scope.repository";
 import { adminAccommodationMutationSchema } from "@/lib/validation/admin-accommodation";
 import { clearCoverMediaForEntity, getAdminMediaById, linkMediaToEntity } from "@/lib/repositories/admin-media.repository";
 import {
@@ -36,6 +37,9 @@ function accommodationActionError<TData = unknown>(error: unknown, fallback: str
   if (error instanceof AdminAuthError) return { success: false, error: error.message };
   if (error instanceof Error && error.message === "ACCOMMODATION_COVER_MEDIA_INVALID") {
     return { success: false, error: "กรุณาเลือกรูปภาพปกจากคลังสื่ออีกครั้ง", fieldErrors: { coverMediaId: ["รูปภาพไม่พร้อมใช้งาน"] } };
+  }
+  if (error instanceof Error && error.message === "DESTINATION_PROVINCE_NOT_AVAILABLE") {
+    return { success: false, error: "จังหวัดที่เลือกยังไม่เปิดให้ใช้งาน", fieldErrors: { provinceId: ["เลือกจังหวัดที่เปิดให้บริการ"] } };
   }
   return { success: false, error: fallback };
 }
@@ -90,8 +94,13 @@ export async function updateAccommodationAction(accommodationId: number, _prevSt
       return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
-    const coverMediaId = await validateAccommodationCoverMedia(parsed.data.coverMediaId, parsed.data.coverMediaUrl);
     const old = await getAdminAccommodationById(accommodationId);
+    if (!old) return { success: false, error: "ไม่พบที่พักนี้ อาจถูกลบหรือย้ายแล้ว" };
+    if (old.province_id !== parsed.data.provinceId) {
+      await assertLiveDestinationProvinceId(parsed.data.provinceId);
+    }
+
+    const coverMediaId = await validateAccommodationCoverMedia(parsed.data.coverMediaId, parsed.data.coverMediaUrl);
     const updated = await updateAdminAccommodation(accommodationId, parsed.data);
 
     // Link cover media if provided

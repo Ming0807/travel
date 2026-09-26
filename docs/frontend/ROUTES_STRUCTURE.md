@@ -53,6 +53,8 @@ Homepage imagery is Settings-owned: three hero/banner slots and nine named edito
 
 The global header search uses the same routing contract on every public page. It opens an accessible search dialog, lets the visitor choose attractions, restaurants, accommodations, or stories, and sends the query to the matching real directory. It is not a decorative icon or a homepage anchor.
 
+Restaurant and accommodation detail pages share the homepage's editorial copper, deep green, photography, and restrained white surfaces. Their cover, formatted description, image gallery, contact/coordinate actions, and curated nearby attractions come from the published CMS record. A missing cover uses a plain branded surface; missing contact details do not produce fake booking links. On mobile, the cover title remains readable and the information panel follows the content rather than obstructing it.
+
 ### Public Frontend Redesign Contract
 
 The route-family UX/UI contract and executable migration order are maintained in:

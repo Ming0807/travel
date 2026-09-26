@@ -13,9 +13,13 @@ const mocks = vi.hoisted(() => ({
   getAdminMediaById: vi.fn().mockResolvedValue({ media_id: 73, media_type: "image", is_active: true, lifecycle_status: "active" }),
   linkMediaToEntityByStoragePath: vi.fn().mockResolvedValue(undefined),
   clearCoverMediaForEntity: vi.fn().mockResolvedValue(undefined),
+  assertLiveDestinationProvinceId: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
+vi.mock("@/lib/repositories/destination-scope.repository", () => ({
+  assertLiveDestinationProvinceId: mocks.assertLiveDestinationProvinceId,
+}));
 vi.mock("@/lib/auth/guards", () => ({
   AdminAuthError: class AdminAuthError extends Error {},
   requirePermission: mocks.requirePermission,
@@ -85,5 +89,37 @@ describe("updateAccommodationAction cover media", () => {
     expect(result.success).toBe(false);
     expect(result.fieldErrors?.coverMediaId).toBeDefined();
     expect(mocks.updateAdminAccommodation).not.toHaveBeenCalled();
+  });
+
+  it("checks destination scope when changing an accommodation province", async () => {
+    const result = await updateAccommodationAction(
+      41,
+      { success: false },
+      validForm({ provinceId: "2" }),
+    );
+
+    expect(result.success).toBe(true);
+    expect(mocks.assertLiveDestinationProvinceId).toHaveBeenCalledWith(2);
+  });
+
+  it("returns a field error when a province change is outside the live destination scope", async () => {
+    mocks.assertLiveDestinationProvinceId.mockRejectedValueOnce(new Error("DESTINATION_PROVINCE_NOT_AVAILABLE"));
+    const result = await updateAccommodationAction(
+      41,
+      { success: false },
+      validForm({ provinceId: "2" }),
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.fieldErrors?.provinceId).toBeDefined();
+    expect(mocks.updateAdminAccommodation).not.toHaveBeenCalled();
+  });
+
+  it("does not block an unchanged legacy province outside the live scope", async () => {
+    mocks.getAdminAccommodationById.mockResolvedValueOnce({ accommodation_id: 41, province_id: 9 });
+    const result = await updateAccommodationAction(41, { success: false }, validForm({ provinceId: "9" }));
+
+    expect(result.success).toBe(true);
+    expect(mocks.assertLiveDestinationProvinceId).not.toHaveBeenCalled();
   });
 });

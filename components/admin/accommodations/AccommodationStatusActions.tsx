@@ -49,7 +49,7 @@ export function AccommodationStatusActions({ accommodationId, accommodationName,
       </Link>
       <Link
         href={`/admin/accommodations/${accommodationId}/edit`}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="flex h-10 w-10 items-center justify-center rounded-lg text-[#07574F] transition hover:bg-[#E8F4F1] hover:text-[#073F37] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62]"
         title="แก้ไขที่พัก"
         aria-label="แก้ไขที่พัก"
       >

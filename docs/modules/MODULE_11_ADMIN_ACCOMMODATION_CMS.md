@@ -10,14 +10,16 @@ The accommodation CMS creates, edits, publishes, archives, and manages media for
 - Cover media selection persists the chosen managed media record. The selected ID must resolve to an active image before the accommodation record is changed; a preview URL without a managed ID is rejected.
 - Removing the cover clears the `is_cover` relation for that accommodation without deleting the media asset.
 - Edit mode previews up to six active gallery images and links directly to the accommodation media manager for gallery and asset management. Multiple gallery assets remain managed there; creation offers a direct next step after the accommodation receives its database ID.
+- Edit mode lists attractions currently linked to the accommodation, in curated display order, and links to each attraction's editor. Adding, removing, and ordering relationships remain owned by the attraction editor's `Where to Stay` workspace; the accommodation editor provides a clear route to the attraction list when no links exist.
 - Select controls retain an existing type or price-range value that is not among the suggested options, preventing an unrelated save from silently clearing legacy/imported values. Choosing another option remains explicit.
 - Latitude and longitude are optional, but must be supplied together. Each coordinate is range-checked by the mutation schema.
+- Changing an accommodation's province is allowed only into a live destination province. An unchanged legacy province does not prevent unrelated edits.
 - Server validation switches to the relevant editor section for field errors so hidden fields cannot block saving. Errors are summarized with field labels and inline on key fields.
 - List and status actions retain the existing permission checks, audit logging, and reversible archive behavior.
 
 ## Current parity gaps
 
-- Related attraction curation is currently managed from the attraction editor's accommodation relationship, not from the accommodation editor.
+- Related attraction curation remains managed from the attraction editor's accommodation relationship; the accommodation editor surfaces current links and shortcuts but does not duplicate curation controls.
 - The accommodation preview is a compact draft summary, not the attraction editor's full public-page visual preview. This is intentional in the current workflow and does not affect persisted fields.
 
 ## Focused acceptance checks
@@ -27,5 +29,8 @@ The accommodation CMS creates, edits, publishes, archives, and manages media for
 - Saving an existing record preserves an unlisted imported accommodation type and price range unless the admin chooses a replacement.
 - Form submission includes formatted Thai and English description HTML from their rich-text editors.
 - Edit gallery preview includes active images only and links to the accommodation media manager.
+- Edit mode displays related attraction names in the stored order and links to the owning attraction editor; an empty relationship list links to the attraction list.
+- The row edit icon uses a clearly contrasted color and at least a 40px target.
+- A province change to an unavailable destination returns a field-level error without updating the record; an unchanged existing province can still be saved.
 - Coordinate pairs pass; a one-sided coordinate fails with a field-level validation error.
 - Invalid slug, province, name, or coordinate values fail server-side validation.

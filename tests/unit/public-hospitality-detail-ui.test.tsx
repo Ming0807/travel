@@ -118,6 +118,7 @@ describe("public hospitality detail", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1, name: "Yala Kitchen" })).toBeVisible();
+    expect(screen.getByRole("banner")).toHaveClass("hospitality-hero");
     expect(screen.getByRole("img", { name: "Restaurant storefront" })).toHaveAttribute(
       "sizes",
       "(max-width: 1023px) calc(100vw - 2rem), 1152px",
@@ -127,5 +128,21 @@ describe("public hospitality detail", () => {
     fireEvent.error(screen.getByRole("img", { name: "Old town" }));
     expect(screen.getByText("ยังไม่มีรูปสถานที่")).toBeVisible();
     expect(screen.getByRole("link", { name: /Yala Old Town/ })).toHaveAttribute("href", "/attractions/yala-old-town");
+  });
+
+  it("keeps the name and area readable when no cover was published", () => {
+    render(
+      <HospitalityDetailHero
+        name="บ้านพักหน้าถ้ำ"
+        province="ยะลา"
+        category={null}
+        imageUrl={null}
+        imageAlt=""
+      />,
+    );
+
+    expect(screen.getByRole("heading", { level: 1, name: "บ้านพักหน้าถ้ำ" })).toBeVisible();
+    expect(screen.getByText("ยะลา")).toBeVisible();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 });

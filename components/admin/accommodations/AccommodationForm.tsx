@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createAccommodationAction, updateAccommodationAction } from "@/app/actions/admin-accommodation-actions";
-import type { AdminAccommodationRow } from "@/lib/repositories/admin-accommodation.repository";
+import type {
+  AdminAccommodationRelatedAttraction,
+  AdminAccommodationRow,
+} from "@/lib/repositories/admin-accommodation.repository";
 import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 import { SuccessNextSteps } from "@/components/admin/SuccessNextSteps";
 import { AdminFormErrorSummary, AdminReadinessPanel, AdminSaveBar } from "@/components/admin/forms/AdminFormUX";
@@ -28,6 +31,7 @@ type AccommodationFormProps = {
   coverPreviewUrl?: string | null;
   isPubliclyAvailable?: boolean;
   galleryMedia?: AdminMediaRow[];
+  relatedAttractions?: AdminAccommodationRelatedAttraction[];
 };
 
 type AdminFormState = {
@@ -53,13 +57,14 @@ type AccommodationDraft = {
   isPublished: boolean;
 };
 
-type EditorSection = "basics" | "content" | "location" | "publishing";
+type EditorSection = "basics" | "content" | "location" | "publishing" | "nearby";
 
 const SECTIONS: { id: EditorSection; label: string; detail: string }[] = [
   { id: "basics", label: "ข้อมูลหลัก", detail: "ชื่อและ URL" },
   { id: "content", label: "รายละเอียด", detail: "เนื้อหาไทยและอังกฤษ" },
   { id: "location", label: "ที่ตั้ง", detail: "จังหวัด พิกัด และการติดต่อ" },
   { id: "publishing", label: "การแสดงผล", detail: "ภาพปก สถานะ และคลังรูป" },
+  { id: "nearby", label: "สถานที่ใกล้เคียง", detail: "การเชื่อมโยงกับสถานที่ท่องเที่ยว" },
 ];
 
 const FIELD_LABELS: Record<string, string> = {
@@ -111,6 +116,7 @@ export function AccommodationForm({
   coverPreviewUrl: initialPreviewUrl,
   isPubliclyAvailable = false,
   galleryMedia = [],
+  relatedAttractions = [],
 }: AccommodationFormProps) {
   const router = useRouter();
   const isEditing = !!accommodation;
@@ -155,6 +161,7 @@ export function AccommodationForm({
           description="ระบบได้บันทึกข้อมูลที่พักใหม่ของคุณเรียบร้อยแล้ว คุณสามารถจัดการรูปภาพหรือกลับไปยังหน้ารายการได้"
           actions={[
             { label: "อัปโหลดรูปภาพที่พัก", href: `/admin/accommodations/${newId}/media`, primary: true, icon: ImageIcon },
+            { label: "ตั้งค่าสถานที่ใกล้เคียง", href: `/admin/accommodations/${newId}/edit`, primary: false, icon: MapPin },
             { label: "กลับไปหน้ารายการ", href: "/admin/accommodations", primary: false, icon: List },
           ]}
         />
@@ -230,7 +237,7 @@ export function AccommodationForm({
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
           <nav aria-label="ส่วนข้อมูลที่พัก" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-            {SECTIONS.map((section, index) => (
+            {(isEditing ? SECTIONS : SECTIONS.slice(0, 4)).map((section, index) => (
               <button
                 key={section.id}
                 type="button"
@@ -424,6 +431,50 @@ export function AccommodationForm({
                 ) : null}
               </section>
             </section>
+
+            {isEditing ? (
+              <section aria-labelledby="accommodation-section-nearby" hidden={activeSection !== "nearby"}>
+                <div className="mb-5">
+                  <h3 id="accommodation-section-nearby" className="text-lg font-black text-[#073F37]">สถานที่ท่องเที่ยวใกล้เคียง</h3>
+                  <p className="mt-1 text-sm text-slate-600">รายการเหล่านี้แสดงบนหน้าสถานที่ท่องเที่ยวที่เชื่อมโยงกับที่พักนี้</p>
+                </div>
+                {relatedAttractions.length > 0 ? (
+                  <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200">
+                    {relatedAttractions.map((attraction) => (
+                      <li key={attraction.attractionId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="break-words text-sm font-bold text-slate-800">{attraction.nameTh}</p>
+                          <p className="mt-0.5 break-all text-xs text-slate-500">/attractions/{attraction.slug}</p>
+                        </div>
+                        <Link
+                          href={`/admin/attractions/${attraction.attractionId}/edit`}
+                          className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg border border-[#0A6B62] bg-white px-3 py-2 text-sm font-bold text-[#07574F] hover:bg-[#E8F4F1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62]"
+                        >
+                          แก้ไขความสัมพันธ์
+                          <ArrowSquareOut size={15} aria-hidden="true" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                    ยังไม่มีสถานที่ท่องเที่ยวที่เชื่อมโยงกับที่พักนี้
+                  </p>
+                )}
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-4">
+                  <p className="max-w-xl text-sm leading-6 text-slate-600">
+                    เพิ่ม ลบ หรือเรียงลำดับที่พักจากส่วน “Where to Stay” ในตัวแก้ไขสถานที่ท่องเที่ยว
+                  </p>
+                  <Link
+                    href="/admin/attractions"
+                    className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#0A6B62] bg-white px-3 py-2 text-sm font-bold text-[#07574F] hover:bg-[#E8F4F1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A6B62]"
+                  >
+                    ไปยังสถานที่ท่องเที่ยว
+                    <ArrowSquareOut size={15} aria-hidden="true" />
+                  </Link>
+                </div>
+              </section>
+            ) : null}
           </div>
         </div>
 

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, MapPin, ForkKnife, Clock, Phone, Compass, Eye, Image as ImageIcon, Images } from "@phosphor-icons/react";
-import { EditableBlock } from "@/components/admin/forms/EditableBlock";
+import { ArrowLeft, MapPin, ForkKnife, Clock, Phone, Compass, Eye, Image as ImageIcon, Images, PencilSimple } from "@phosphor-icons/react";
 import { Drawer } from "@/components/admin/Drawer";
 import { MediaManager } from "@/components/admin/attractions/MediaManager";
 import { HeaderForm, ContentForm, LocationForm, SettingsForm } from "./SectionForms";
@@ -14,11 +14,51 @@ import type { AdminRestaurantCategory } from "@/lib/repositories/admin-restauran
 import type { NearbyAttractionOption } from "@/components/admin/restaurants/NearbyAttractionPicker";
 import type { AdminMediaRow } from "@/lib/repositories/admin-media.repository";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
+import { plainTextFromLegacyHtml } from "@/lib/content/plain-text";
 
 type EditorSection = "header" | "content" | "location" | "settings" | "gallery" | null;
 
+function RestaurantEditableBlock({
+  id,
+  label,
+  children,
+  onEdit,
+  isActive = false,
+}: {
+  id: string;
+  label: string;
+  children: ReactNode;
+  onEdit: () => void;
+  isActive?: boolean;
+}) {
+  return (
+    <div
+      className={`group relative rounded-[var(--admin-radius-panel)] transition-all duration-200 ${
+        isActive ? "ring-2 ring-[var(--admin-accent)] ring-offset-2" : "hover:ring-2 hover:ring-[var(--admin-accent)]/35 hover:ring-offset-2"
+      }`}
+      id={`editable-block-${id}`}
+    >
+      <div className="relative z-20 flex border-b border-slate-200 bg-slate-50 p-2 sm:absolute sm:left-4 sm:top-4 sm:block sm:border-0 sm:bg-transparent sm:p-0">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--admin-radius-control)] border border-white/70 bg-[#073F37] px-4 py-2 text-sm font-black text-white shadow-md transition-colors hover:bg-[#0A6B62] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#073F37]"
+        >
+          <PencilSimple aria-hidden="true" size={18} weight="bold" />
+          แก้ไข {label}
+        </button>
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 z-10 rounded-[var(--admin-radius-panel)] border-2 border-transparent transition-colors group-hover:border-[var(--admin-accent)]/20" />
+
+      <div className={isActive ? "opacity-50" : ""}>{children}</div>
+    </div>
+  );
+}
+
 interface RestaurantVisualEditorProps {
   restaurant: AdminRestaurantRow;
+  descriptionPreviewHtml?: string | null;
   media?: AdminMediaRow[];
   provinces: AdminSelectOption[];
   categories: AdminRestaurantCategory[];
@@ -43,6 +83,7 @@ function MissingImageState({ title, description }: { title: string; description:
 
 export function RestaurantVisualEditor({
   restaurant,
+  descriptionPreviewHtml,
   media = [],
   provinces,
   categories,
@@ -58,6 +99,9 @@ export function RestaurantVisualEditor({
 
   const provinceName = provinces.find((p) => p.id === restaurant.province_id)?.label ?? "ไม่ระบุจังหวัด";
   const name = restaurant.name_th || "ยังไม่มีชื่อ";
+  const descriptionPreview = restaurant.description_th
+    ? plainTextFromLegacyHtml(restaurant.description_th)
+    : "";
   const coverImage = coverMediaUrl;
   const galleryImages = media
     .filter((item) => item.is_active && item.lifecycle_status === "active")
@@ -135,7 +179,7 @@ export function RestaurantVisualEditor({
         </div>
 
         {/* Hero Section */}
-        <EditableBlock id="header" label="ข้อมูลหลักและรูปภาพ" isActive={activeSection === "header"} onEdit={() => setActiveSection("header")}>
+        <RestaurantEditableBlock id="header" label="ข้อมูลหลักและรูปภาพ" isActive={activeSection === "header"} onEdit={() => setActiveSection("header")}>
           <div className="relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-lg border border-slate-200 mb-10 pointer-events-none">
             {coverImage ? (
               <>
@@ -167,23 +211,30 @@ export function RestaurantVisualEditor({
               </p>
             </div>
           </div>
-        </EditableBlock>
+        </RestaurantEditableBlock>
 
         <div className="grid gap-12 lg:grid-cols-[1fr_340px]">
           {/* Left Column */}
           <div className="min-w-0 space-y-10">
 
             {/* Description */}
-            <EditableBlock id="content" label="รายละเอียด" isActive={activeSection === "content"} onEdit={() => setActiveSection("content")}>
+            <RestaurantEditableBlock id="content" label="รายละเอียด" isActive={activeSection === "content"} onEdit={() => setActiveSection("content")}>
               <section className="pointer-events-none">
                 <h2 className="text-2xl font-black text-slate-800 mb-4">เกี่ยวกับ</h2>
-                <p className="text-base leading-relaxed text-slate-600 whitespace-pre-line">
-                  {restaurant.description_th || "คลิกเพื่อเพิ่มรายละเอียดเกี่ยวกับร้านอาหาร"}
-                </p>
+                {descriptionPreviewHtml ? (
+                  <div
+                    className="rich-content-media prose prose-lg max-w-[72ch] prose-headings:text-slate-800 prose-p:leading-8 prose-p:text-slate-700"
+                    dangerouslySetInnerHTML={{ __html: descriptionPreviewHtml }}
+                  />
+                ) : (
+                  <p className="text-base leading-relaxed text-slate-600 whitespace-pre-line">
+                    {descriptionPreview || "คลิกเพื่อเพิ่มรายละเอียดเกี่ยวกับร้านอาหาร"}
+                  </p>
+                )}
               </section>
-            </EditableBlock>
+            </RestaurantEditableBlock>
 
-            <EditableBlock id="gallery" label="ภาพร้านอาหาร" isActive={activeSection === "gallery"} onEdit={() => setActiveSection("gallery")}>
+            <RestaurantEditableBlock id="gallery" label="ภาพร้านอาหาร" isActive={activeSection === "gallery"} onEdit={() => setActiveSection("gallery")}>
               <section aria-labelledby="restaurant-gallery-heading" className="pointer-events-none">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -222,7 +273,7 @@ export function RestaurantVisualEditor({
                   </div>
                 )}
               </section>
-            </EditableBlock>
+            </RestaurantEditableBlock>
 
             {/* Nearby Attractions readiness */}
             <div className="relative rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center mt-12">
@@ -251,7 +302,7 @@ export function RestaurantVisualEditor({
             <div className="sticky top-24 space-y-6">
 
               {/* Quick Info Card */}
-              <EditableBlock id="location" label="ข้อมูลร้านอาหาร & พิกัด" isActive={activeSection === "location"} onEdit={() => setActiveSection("location")}>
+              <RestaurantEditableBlock id="location" label="ข้อมูลร้านอาหาร & พิกัด" isActive={activeSection === "location"} onEdit={() => setActiveSection("location")}>
                 <div className="pointer-events-none">
                   <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-6">
                     <h3 className="font-black text-slate-800 text-lg mb-6">ข้อมูลร้านอาหาร</h3>
@@ -311,7 +362,7 @@ export function RestaurantVisualEditor({
                     </div>
                   </div>
                 </div>
-              </EditableBlock>
+              </RestaurantEditableBlock>
 
               {/* Reviews readiness */}
               <div className="relative rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center mt-6">

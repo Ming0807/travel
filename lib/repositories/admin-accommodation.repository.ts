@@ -29,6 +29,12 @@ export type AdminAccommodationRow = {
   attraction_count: number;
 };
 
+export type AdminAccommodationRelatedAttraction = {
+  attractionId: number;
+  nameTh: string;
+  slug: string;
+};
+
 export type PaginatedResult<T> = {
   items: T[];
   total: number;
@@ -163,6 +169,36 @@ export async function getAdminAccommodationById(accommodationId: number): Promis
   if (!data) return null;
 
   return mapAccommodation(data);
+}
+
+export async function getAdminAccommodationRelatedAttractions(
+  accommodationId: number,
+): Promise<AdminAccommodationRelatedAttraction[]> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data: relations, error: relationError } = await supabase
+    .from("attraction_related_accommodations")
+    .select("attraction_id, display_order")
+    .eq("accommodation_id", accommodationId)
+    .order("display_order", { ascending: true });
+
+  if (relationError) throw new Error("ADMIN_ACCOMMODATION_RELATED_ATTRACTIONS_READ_FAILED");
+  const orderedIds = (relations ?? []).map((relation) => Number(relation.attraction_id));
+  if (orderedIds.length === 0) return [];
+
+  const { data: attractions, error: attractionError } = await supabase
+    .from("attractions")
+    .select("attraction_id, name_th, slug")
+    .in("attraction_id", orderedIds);
+
+  if (attractionError) throw new Error("ADMIN_ACCOMMODATION_RELATED_ATTRACTIONS_READ_FAILED");
+  const byId = new Map((attractions ?? []).map((attraction) => [Number(attraction.attraction_id), attraction]));
+
+  return orderedIds.flatMap((attractionId) => {
+    const attraction = byId.get(attractionId);
+    return attraction
+      ? [{ attractionId, nameTh: attraction.name_th, slug: attraction.slug }]
+      : [];
+  });
 }
 
 export async function findAccommodationBySlug(slug: string, excludeAccommodationId?: number) {

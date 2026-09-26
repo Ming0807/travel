@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
 import { buildHospitalityActions, type HospitalityAction } from "@/lib/hospitality/public-detail";
+import "./hospitality-detail.css";
 
 type HospitalityKind = "restaurant" | "accommodation";
 
@@ -28,31 +29,27 @@ export function HospitalityDetailHero({
   imageAlt: string;
 }) {
   return (
-    <header className="mt-7">
-      <div className="grid gap-4 border-b border-black/10 pb-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-        <div>
-          {category ? (
-            <p className="text-sm font-semibold text-[var(--public-coral-strong)]">{category}</p>
-          ) : null}
-          <h1 className="mt-2 max-w-4xl text-3xl font-bold leading-tight text-balance sm:text-4xl lg:text-5xl">
-            {name}
-          </h1>
+    <header className="hospitality-hero mt-5">
+      {imageUrl ? (
+        <div className="hospitality-hero-media">
+          <PublicMediaFrame
+            src={imageUrl}
+            alt={imageAlt}
+            aspect="detail"
+            sizes="(max-width: 1023px) calc(100vw - 2rem), 1152px"
+            priority
+            fallbackLabel="ยังไม่มีรูปภาพ"
+          />
         </div>
-        <p className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[var(--public-teal)]">
-          <MapPin size={20} weight="fill" aria-hidden="true" />
+      ) : null}
+      <div className="hospitality-hero-shade" aria-hidden="true" />
+      <div className="hospitality-hero-copy">
+        {category ? <p className="hospitality-hero-category">{category}</p> : null}
+        <h1>{name}</h1>
+        <p className="hospitality-hero-place">
+          <MapPin size={18} weight="fill" aria-hidden="true" />
           {province}
         </p>
-      </div>
-
-      <div className="mt-6">
-        <PublicMediaFrame
-          src={imageUrl}
-          alt={imageAlt}
-          aspect="detail"
-          sizes="(max-width: 1023px) calc(100vw - 2rem), 1152px"
-          priority
-          fallbackLabel="ยังไม่มีรูปภาพ"
-        />
       </div>
     </header>
   );
@@ -128,19 +125,19 @@ export function HospitalityInfoPanel({
   ].filter((fact): fact is NonNullable<typeof fact> => Boolean(fact));
 
   return (
-    <section aria-labelledby="hospitality-info-heading" className="border-y border-black/10 py-6 lg:border lg:bg-white lg:p-6">
-      <h2 id="hospitality-info-heading" className="text-xl font-bold">
+    <section aria-labelledby="hospitality-info-heading" className="hospitality-info">
+      <h2 id="hospitality-info-heading" className="hospitality-section-title text-xl font-bold">
         {kind === "restaurant" ? "ข้อมูลร้านอาหาร" : "ข้อมูลที่พัก"}
       </h2>
 
       {facts.length > 0 ? (
-        <dl className="mt-5 space-y-5">
+        <dl className="mt-5 space-y-4">
           {facts.map((fact) => (
-            <div key={fact.label} className="grid grid-cols-[24px_minmax(0,1fr)] gap-3">
-              <span className="mt-0.5 text-[var(--public-coral-strong)]">{fact.icon}</span>
+            <div key={fact.label} className="hospitality-fact grid grid-cols-[24px_minmax(0,1fr)] gap-3">
+              <span className="mt-0.5 text-[#9b4e38]">{fact.icon}</span>
               <div>
-                <dt className="text-sm font-semibold text-black/65">{fact.label}</dt>
-                <dd className="mt-1 break-words text-sm font-semibold leading-6">{fact.value}</dd>
+                <dt className="text-xs font-semibold text-[#5f6668]">{fact.label}</dt>
+                <dd className="mt-1 break-words text-sm font-semibold leading-6 text-[#263036]">{fact.value}</dd>
               </div>
             </div>
           ))}
@@ -160,7 +157,7 @@ export function HospitalityInfoPanel({
                 href={action.href}
                 target={external ? "_blank" : undefined}
                 rel={external ? "noopener noreferrer" : undefined}
-                className="inline-flex min-h-11 items-center justify-center gap-2 border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-[var(--public-ink)] transition-colors hover:border-[var(--public-teal)] hover:text-[var(--public-teal)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]"
+                className="hospitality-action inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38]"
               >
                 {content.icon}
                 {content.label}
@@ -186,16 +183,16 @@ export function HospitalityRelatedAttractions({ items }: { items: HospitalityRel
 
   return (
     <section aria-labelledby="nearby-attractions-heading">
-      <div className="border-b border-black/10 pb-4">
-        <h2 id="nearby-attractions-heading" className="text-2xl font-bold">สถานที่ท่องเที่ยวใกล้เคียง</h2>
-        <p className="mt-1 text-sm leading-6 text-black/65">รายการที่ผู้ดูแลเชื่อมโยงกับสถานที่นี้</p>
+      <div className="hospitality-section-heading">
+        <h2 id="nearby-attractions-heading" className="hospitality-section-title text-2xl font-bold">สถานที่ท่องเที่ยวใกล้เคียง</h2>
+        <p className="mt-1 text-sm leading-6 text-[#5f6668]">สถานที่ที่เชื่อมโยงกับร้านหรือที่พักแห่งนี้</p>
       </div>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         {items.map((item) => (
           <Link
             key={item.slug}
             href={`/attractions/${item.slug}`}
-            className="group grid grid-cols-[96px_minmax(0,1fr)] gap-4 border border-black/10 bg-white p-3 transition-colors hover:border-[var(--public-coral)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]"
+            className="hospitality-related group grid grid-cols-[96px_minmax(0,1fr)] gap-4 p-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38]"
             aria-label={`ดูสถานที่ ${item.name}`}
           >
             <PublicMediaFrame
@@ -206,7 +203,7 @@ export function HospitalityRelatedAttractions({ items }: { items: HospitalityRel
               fallbackLabel="ยังไม่มีรูปสถานที่"
             />
             <div className="min-w-0 self-center">
-              <h3 className="text-base font-bold leading-6 group-hover:text-[var(--public-coral-strong)]">{item.name}</h3>
+              <h3 className="text-base font-bold leading-6 group-hover:text-[#9b4e38]">{item.name}</h3>
               {item.distanceText ? (
                 <p className="mt-1 inline-flex items-center gap-1 text-sm text-black/65">
                   <NavigationArrow size={14} weight="fill" aria-hidden="true" />

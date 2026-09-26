@@ -116,6 +116,37 @@ const restaurantMedia: AdminMediaRow[] = [
 ];
 
 describe("RestaurantVisualEditor", () => {
+  it("keeps section edit actions visible without hover and reachable on mobile", () => {
+    renderEditor();
+
+    const editButton = screen.getByRole("button", { name: "แก้ไข ข้อมูลหลักและรูปภาพ" });
+    const actionSurface = editButton.parentElement;
+
+    expect(actionSurface?.className).not.toMatch(/(?:^|\s)sm:opacity-0(?:\s|$)/);
+    expect(editButton).toHaveClass("min-h-11", "focus-visible:outline-2");
+  });
+
+  it("previews rich restaurant descriptions as readable text instead of literal markup", () => {
+    renderEditor({ description_th: "<p>เมนู <strong>อาหารท้องถิ่น</strong></p>" });
+
+    expect(screen.getByText("เมนู อาหารท้องถิ่น")).toBeInTheDocument();
+    expect(screen.queryByText(/<strong>/)).not.toBeInTheDocument();
+  });
+
+  it("shows server-sanitized inline media in the content preview", () => {
+    render(
+      <RestaurantVisualEditor
+        restaurant={restaurant}
+        provinces={[{ id: 1, label: "ยะลา" }]}
+        categories={[]}
+        descriptionPreviewHtml={'<p>อาหารพื้นถิ่น</p><img src="/site-media/content-media/food.webp" alt="จานอาหาร" data-image-size="medium" data-image-align="center">'}
+      />,
+    );
+
+    expect(screen.getByText("อาหารพื้นถิ่น")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "จานอาหาร" })).toHaveAttribute("data-image-size", "medium");
+  });
+
   it("offers public preview and media management from the editor header", () => {
     renderEditor();
 

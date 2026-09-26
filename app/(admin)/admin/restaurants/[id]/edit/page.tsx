@@ -12,6 +12,7 @@ import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
 import { listAdminRestaurantCategories } from "@/lib/repositories/admin-restaurant-category.repository";
 import { getAdminAttractionsList } from "@/lib/repositories/admin-attraction.repository";
 import { listLiveDestinationProvinceIds } from "@/lib/repositories/destination-scope.repository";
+import { sanitizeAdminRichHtml } from "@/lib/content/admin-rich-html";
 
 export const metadata: Metadata = {
   title: "Edit Restaurant | Admin",
@@ -27,7 +28,7 @@ export default async function EditAdminRestaurantPage({
   const { id } = await params;
   const restaurantId = Number(id);
 
-  if (!Number.isFinite(restaurantId)) {
+  if (!Number.isSafeInteger(restaurantId) || restaurantId <= 0) {
     notFound();
   }
 
@@ -49,6 +50,9 @@ export default async function EditAdminRestaurantPage({
   return (
     <RestaurantVisualEditor 
       restaurant={restaurant}
+      descriptionPreviewHtml={restaurant.description_th && /<[a-z][\s\S]*>/i.test(restaurant.description_th)
+        ? sanitizeAdminRichHtml(restaurant.description_th)
+        : null}
       media={media.items}
       provinces={provinces.map(p => ({ id: p.province_id, label: p.province_name_th }))}
       categories={categories}

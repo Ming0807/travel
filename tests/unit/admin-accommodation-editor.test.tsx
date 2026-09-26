@@ -171,4 +171,23 @@ describe("AccommodationForm editor workspace", () => {
       "/admin/accommodations/41/media",
     );
   });
+
+  it("shows existing nearby attractions and links to their curation workflow", () => {
+    render(
+      <AccommodationForm
+        accommodation={accommodation}
+        provinces={[{ id: 1, label: "ยะลา" }]}
+        relatedAttractions={[
+          { attractionId: 12, nameTh: "ทะเลหมอกอัยเยอร์เวง", slug: "ayerweng-sea-of-mist" },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /5\. สถานที่ใกล้เคียง/ }));
+    expect(screen.getByText("ทะเลหมอกอัยเยอร์เวง")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /แก้ไขความสัมพันธ์/ })).toHaveAttribute(
+      "href",
+      "/admin/attractions/12/edit",
+    );
+  });
 });

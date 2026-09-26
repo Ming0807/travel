@@ -50,14 +50,14 @@ export default async function RestaurantDetailPage({
   const reviews = await getPublicRestaurantReviews(restaurant.restaurantId);
 
   return (
-    <main className="min-h-screen bg-[var(--public-canvas)] text-[var(--public-ink)]">
-      <PublicPageFrame variant="detail" className="pb-16 pt-8 sm:pt-10">
-        <nav aria-label="เส้นทางนำทาง" className="flex flex-wrap items-center gap-2 text-sm text-black/65">
-          <Link href="/" className="hover:text-[var(--public-teal)]">หน้าแรก</Link>
+    <main className="hospitality-detail min-h-screen">
+      <PublicPageFrame variant="detail" className="pb-16 pt-5 sm:pt-8">
+        <nav aria-label="เส้นทางนำทาง" className="flex flex-wrap items-center gap-2 text-sm text-[#5f6668]">
+          <Link href="/" className="hover:text-[#9b4e38]">หน้าแรก</Link>
           <span aria-hidden="true">/</span>
-          <Link href="/restaurants" className="hover:text-[var(--public-teal)]">ร้านอาหาร</Link>
+          <Link href="/restaurants" className="hover:text-[#9b4e38]">ร้านอาหาร</Link>
           <span aria-hidden="true">/</span>
-          <span aria-current="page" className="font-semibold text-[var(--public-ink)]">{restaurant.name}</span>
+          <span aria-current="page" className="font-semibold text-[#263036]">{restaurant.name}</span>
         </nav>
 
         <HospitalityDetailHero
@@ -68,14 +68,14 @@ export default async function RestaurantDetailPage({
           imageAlt={restaurant.imageAlt}
         />
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-          <div className="min-w-0 space-y-12">
+        <div className="mt-8 grid gap-8 lg:mt-12 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-12">
+          <div className="min-w-0 space-y-12 lg:space-y-16">
             <section aria-labelledby="restaurant-about-heading">
-              <h2 id="restaurant-about-heading" className="text-2xl font-bold">เกี่ยวกับร้านอาหาร</h2>
+              <h2 id="restaurant-about-heading" className="hospitality-section-title text-2xl font-bold">เกี่ยวกับร้านอาหาร</h2>
               {restaurant.description ? (
                 <HospitalityRichContent content={restaurant.description} />
               ) : (
-                <p className="mt-4 text-sm leading-6 text-black/65">ผู้ดูแลยังไม่ได้เพิ่มรายละเอียดร้านอาหาร</p>
+                <p className="mt-4 text-sm leading-6 text-[#5f6668]">ผู้ดูแลยังไม่ได้เพิ่มรายละเอียดร้านอาหาร</p>
               )}
             </section>
 
