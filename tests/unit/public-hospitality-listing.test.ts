@@ -148,6 +148,7 @@ describe("public hospitality listings", () => {
     expect(result.items[0]).toMatchObject({
       slug: "local-kitchen",
       imageUrl: "/site-media/restaurants/cover_thumb.webp",
+      heroImageUrl: "/site-media/restaurants/cover.webp",
       categories: [{ slug: "thai", name: "อาหารไทย", sectionKey: "local" }],
     });
   });

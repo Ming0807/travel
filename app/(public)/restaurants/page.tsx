@@ -9,6 +9,7 @@ import { RestaurantDirectoryClient } from "@/components/restaurants/RestaurantDi
 import { RestaurantDiscoveryFilters } from "@/components/restaurants/RestaurantDiscoveryFilters";
 import { RestaurantHero } from "@/components/restaurants/RestaurantHero";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import {
   listAvailablePublicRestaurantCategories,
   listPublicRestaurantPage,
@@ -101,6 +102,7 @@ export default async function RestaurantsPage({
     settingsService.getSetting("restaurants_page_hero", {
       title: "ร้านอาหารในจังหวัดยะลา",
       description: "ค้นหาร้านอร่อยท้องถิ่นและเมนูขึ้นชื่อ เลือกมื้อที่ใช่สำหรับการเดินทางของคุณ",
+      image: "",
     }),
     settingsService.getSetting("restaurants_page_cta", {
       title: "วางแผนมื้ออร่อยของคุณ",
@@ -168,7 +170,7 @@ export default async function RestaurantsPage({
       <RestaurantHero
         title={title}
         description={description}
-        image={restaurantPage.items.find((item) => item.imageUrl)?.imageUrl ?? undefined}
+        imageUrl={siteMediaImageUrl(heroSettings.image) ?? restaurantPage.items.find((item) => item.heroImageUrl)?.heroImageUrl}
       />
 
       {/* 2. Floating Search and Filter Bar */}

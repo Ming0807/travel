@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // ── Mocks ──────────────────────────────────────────────────────────────────
@@ -115,6 +115,29 @@ describe("SettingsClient", () => {
     mockFetch.mockResolvedValue(mockSettingsApiResponse);
   });
 
+  it.each([
+    ["ภาพ Hero สถานที่ท่องเที่ยว", "attractions_page_hero"],
+    ["ภาพ Hero เรื่องราว", "stories_page_hero"],
+    ["ภาพ Hero เส้นทาง", "routes_page_hero"],
+    ["ภาพ Hero ร้านอาหาร", "restaurants_page_hero"],
+  ])("saves %s under its own setting key", async (label, key) => {
+    render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
+    await userEvent.click(screen.getByText("หน้าสาธารณะ"));
+
+    const field = (await screen.findByText(label)).parentElement;
+    expect(field).not.toBeNull();
+    await userEvent.click(within(field!).getByRole("button", { name: "เลือกภาพ" }));
+    await userEvent.click(screen.getByRole("button", { name: "Pick" }));
+    await userEvent.click(screen.getByText(/บันทึก 1 รายการ/));
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+    const request = mockFetch.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(String(request.body))).toMatchObject({
+      key,
+      value: { image: "general/test.webp" },
+    });
+  });
+
   it("renders with navigation groups", () => {
     render(<SettingsClient initialSettings={EMPTY_SETTINGS} />);
     // Navigation labels appear in both nav buttons and section headers
@@ -221,6 +244,26 @@ describe("SettingsClient", () => {
         Object.defineProperty(HTMLImageElement.prototype, "complete", originalComplete);
       }
     }
+  });
+
+  it("restores a saved public-page hero image after refresh", async () => {
+    const persistedSettings = EMPTY_SETTINGS.map((setting) =>
+      setting.setting_key === "restaurants_page_hero"
+        ? {
+            ...setting,
+            setting_value: {
+              title: "ร้านอาหารในจังหวัดยะลา",
+              description: "ร้านอาหารท้องถิ่น",
+              image: "general/restaurant-hero.webp",
+            },
+          }
+        : setting,
+    );
+
+    render(<SettingsClient initialSettings={persistedSettings} initialGroup="publicPages" />);
+
+    const preview = await screen.findByRole("img", { name: "ภาพ Hero ร้านอาหาร preview" });
+    expect(preview).toHaveAttribute("src", "/site-media/general/restaurant-hero.webp");
   });
 
   it("saves the stable storage path instead of a rendered media URL", async () => {

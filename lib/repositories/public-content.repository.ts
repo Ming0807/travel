@@ -1556,6 +1556,7 @@ export type PublicRestaurantCard = {
   foodType: string;
   description: string;
   imageUrl: string | null;
+  heroImageUrl?: string | null;
   imageAlt: string;
   categories?: PublicRestaurantCategory[];
   latitude?: number | null;
@@ -1684,6 +1685,7 @@ function mapRestaurantRow(
     foodType: categories[0]?.nameEn ?? categories[0]?.name ?? text(row.food_type, "Local"),
     description: plainTextFromLegacyHtml(text(row.description_th, text(row.description_en, ""))),
     imageUrl: publicManagedImage(row, thumbnailByStoragePath),
+    heroImageUrl: publicManagedImage(row),
     imageAlt: `ภาพร้าน${name}`,
     categories,
     latitude: row.latitude === null || row.latitude === undefined ? null : numberValue(row.latitude),

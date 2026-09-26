@@ -52,6 +52,7 @@ export const SITE_SETTING_DEFAULTS = {
   attractions_page_hero: {
     title: "สถานที่ท่องเที่ยวในจังหวัดยะลา",
     description: "ค้นหาสถานที่ตามประเภทและเรื่องราวที่เหมาะกับแผนการเดินทางของคุณ",
+    image: "",
   },
   attractions_page_banner: {
     title: "วางแผนต่อจากสถานที่ที่เลือก",
@@ -63,6 +64,7 @@ export const SITE_SETTING_DEFAULTS = {
   stories_page_hero: {
     title: "เรื่องราวและแรงบันดาลใจ",
     description: "บทความ เส้นทาง วัฒนธรรม และประสบการณ์ท่องเที่ยวจากพื้นที่ชายแดนใต้",
+    image: "",
   },
   stories_page_cta: {
     title: "อ่านเรื่องราวเพิ่มเติม",
@@ -74,10 +76,12 @@ export const SITE_SETTING_DEFAULTS = {
   routes_page_hero: {
     title: "เส้นทางท่องเที่ยวที่แนะนำ",
     description: "รวมเส้นทางที่เชื่อมสถานที่จริงในระบบ เพื่อช่วยวางแผนทริปและส่งเสริมการกระจายนักท่องเที่ยว",
+    image: "",
   },
   restaurants_page_hero: {
     title: "ค้นพบรสชาติท้องถิ่น",
     description: "สำรวจร้านอาหาร คาเฟ่ และอาหารพื้นถิ่นที่ช่วยเติมเต็มประสบการณ์ท่องเที่ยว",
+    image: "",
   },
   restaurants_page_feature: {
     title: "Taste the Culture",

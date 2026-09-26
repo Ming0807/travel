@@ -11,6 +11,7 @@ import { PublicPagination } from "@/components/public/PublicPagination";
 import { PublicEmptyState } from "@/components/public/PublicStates";
 import { PublicResultSummary } from "@/components/public/directory/PublicResultSummary";
 import { launchSafeAttractionsCopy } from "@/lib/attractions/discovery-copy";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import { resolveAttractionTypeOptions } from "@/lib/attractions/discovery-query";
 import { listPublicAttractionDistrictOptions, listPublicAttractionPage, PUBLIC_ATTRACTION_MAX_PAGE } from "@/lib/repositories/public-content.repository";
 import { SettingsService } from "@/lib/services/settings.service";
@@ -74,6 +75,7 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
     settingsService.getSetting("attractions_page_hero", {
       title: "สถานที่ท่องเที่ยวในจังหวัดยะลา",
       description: "ค้นพบสถานที่ท่องเที่ยวที่น่าประทับใจในจังหวัดยะลา วัฒนธรรม ธรรมชาติ และวิถีชีวิตที่มีเอกลักษณ์",
+      image: "",
     }),
     settingsService.getSetting("attractions_page_banner", {
       title: "วางแผนต่อจากสถานที่ที่เลือก",
@@ -114,7 +116,8 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
   const hasFilters = Boolean(query || selectedType || selectedDistrict);
   const selectedTypeLabel = typeOptions.find((option) => option.value === selectedType)?.label;
   const selectedDistrictLabel = districtOptions.find((option) => option.value === selectedDistrict)?.label;
-  const heroImage = attractionPage.items.find((item) => item.imageUrl)?.imageUrl ?? undefined;
+  const heroImage = siteMediaImageUrl(heroSettings.image)
+    ?? attractionPage.items.find((item) => item.imageUrl)?.imageUrl;
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-ink">
@@ -122,7 +125,7 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
       <AttractionHero
         title={title}
         description={description}
-        image={heroImage}
+        imageUrl={heroImage}
         scope="ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา"
       />
 

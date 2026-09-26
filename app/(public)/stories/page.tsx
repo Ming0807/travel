@@ -65,6 +65,7 @@ export default async function StoriesPage({
       title: "เรื่องราวและแรงบันดาลใจ สำหรับทุกการเดินทาง",
       description:
         "อ่านพื้นที่ผ่านผู้คน อาหาร วัฒนธรรม และประสบการณ์จากนักเดินทางในยะลา",
+      image: "",
     }),
     settingsService.getSetting("stories_page_cta", {
       title: "อ่านเรื่องราวเพิ่มเติม",
@@ -122,6 +123,7 @@ export default async function StoriesPage({
       <StoryHero
         title={heroTitle}
         description={heroDescription}
+        image={heroSettings.image}
         imageUrl={heroStory?.imageUrl ?? heroStory?.thumbnailUrl ?? null}
         imageAlt={heroStory?.imageAlt}
       />

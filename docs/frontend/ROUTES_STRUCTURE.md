@@ -205,14 +205,13 @@ Mobile filters use a single disclosure control and preserve the same GET query
 contract as desktop.
 
 The accommodation result area uses an image-forward discovery layout with orange, white, and ink design tokens:
-a panoramic photographic hero with 4 factual data capsules, an elevated floating search and type filter toolbar,
+a light photographic hero shared with the other public directories, an elevated floating search and type filter toolbar,
 a responsive 3-column accommodation grid, a functional sticky sidebar with route exploration, verified QR check-in entry
 (`/checkin/try`), and travel stories (`/stories`), and a bottom travel planning CTA band. The page does not expose district,
 proximity, booking, availability, review, newsletter, reward, or itinerary-generation controls until those production data
 contracts exist. Symbol-only price values such as `฿฿` are labelled as a price level; textual or numeric values are labelled
 as a stored price range. The hero and bottom CTA remain independently managed directory surfaces from Admin Settings CMS.
-When no CMS hero image is configured, the hero may use the first real managed image from the current published result set;
-it must not rely on a hardcoded storage file that may not exist.
+Attractions, restaurants, accommodations, stories, and routes share the homepage's bright editorial hero treatment. Each directory Hero image is independently selectable under `Settings -> Public pages`; the stored managed media path takes precedence over published content imagery. Without a selected Hero image, each page uses its own real published media or an existing local route image where applicable. Directory cards keep managed thumbnails for loading speed; the restaurant Hero uses the full managed cover instead of stretching its thumbnail. On narrow viewports the photograph sits above the copy so it remains visible and the title remains readable.
 
 Admin category management lives at `/admin/restaurants/categories`. One restaurant may have multiple ordered categories. Draft records may be uncategorized, but publishing requires at least one active category. Categories referenced by restaurants are archived rather than hard-deleted.
 
@@ -269,7 +268,7 @@ visitor opens it.
 cream `#FAF7F2`, and dark ink tones.
 
 The page structure comprises:
-- **Panoramic Editorial Hero**: Uses the first published story cover available in the current result, breadcrumbs (`หน้าแรก > เรื่องราว`), title and subtitle from CMS settings, and factual capsules describing published content, review status, content sources, and the Yala pilot scope. It does not fall back to an unrelated stock path.
+- **Editorial Hero**: Uses the `stories_page_hero` managed image when selected, otherwise the first published story cover available in the current result. Breadcrumbs (`หน้าแรก > เรื่องราว`), title, and description remain CMS-owned. It does not fall back to an unrelated stock path.
 - **Elevated Floating Filter Toolbar**: Responsive toolbar (`-mt-8`) with server search (`q`), topic dropdown, segmented author source tabs (`ทั้งหมด`, `จากกองบรรณาธิการ`, `จากนักเดินทาง`), and quick topic filter chips.
 - **Latest Story Spotlight Cover**: Highlights the newest published story on unfiltered page 1 with its full managed cover, or an explicit no-image topic placeholder. Reading time appears only when the record contains a valid estimate, and the lead story is not duplicated in the grid.
 - **2-Column Discovery Workspace**: Responsive story grid alongside a desktop sticky sidebar with traveler submission (`/stories/share`), the shared public QR entry flow, and independently published route discovery (`/routes`). The UI does not claim that a story is linked to a check-in point or route unless that relationship exists in data.

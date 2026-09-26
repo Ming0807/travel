@@ -678,6 +678,7 @@ function PublicPageSettings({
       <SettingsSection title="หน้าสถานที่ท่องเที่ยว" description="ข้อความหัวหน้าและส่วนวางแผนต่อท้ายรายการ">
         <TextInput label="หัวข้อหน้า" value={settings.attractions_page_hero.title} onChange={(value) => updateSettingObject("attractions_page_hero", { title: value })} />
         <TextArea label="คำอธิบายหน้า" value={settings.attractions_page_hero.description} onChange={(value) => updateSettingObject("attractions_page_hero", { description: value })} rows={3} />
+        <ImageField label="ภาพ Hero สถานที่ท่องเที่ยว" value={settings.attractions_page_hero.image} onRemove={() => updateSettingObject("attractions_page_hero", { image: "" })} onPick={() => openPicker({ key: "attractions_page_hero", field: "image" })} />
         <div className="grid gap-4 md:grid-cols-2">
           <TextInput label="หัวข้อส่วนวางแผนต่อ" value={settings.attractions_page_banner.title} onChange={(value) => updateSettingObject("attractions_page_banner", { title: value })} />
           <TextInput label="คำอธิบายส่วนวางแผนต่อ" value={settings.attractions_page_banner.subtitle} onChange={(value) => updateSettingObject("attractions_page_banner", { subtitle: value })} />
@@ -690,6 +691,7 @@ function PublicPageSettings({
       <SettingsSection title="หน้าบทความ" description="ข้อความหัวและ CTA ของหน้าบทความ">
         <TextInput label="หัวข้อ Hero" value={settings.stories_page_hero.title} onChange={(value) => updateSettingObject("stories_page_hero", { title: value })} />
         <TextArea label="คำอธิบาย Hero" value={settings.stories_page_hero.description} onChange={(value) => updateSettingObject("stories_page_hero", { description: value })} rows={3} />
+        <ImageField label="ภาพ Hero เรื่องราว" value={settings.stories_page_hero.image} onRemove={() => updateSettingObject("stories_page_hero", { image: "" })} onPick={() => openPicker({ key: "stories_page_hero", field: "image" })} />
         <TextInput label="หัวข้อ CTA" value={settings.stories_page_cta.title} onChange={(value) => updateSettingObject("stories_page_cta", { title: value })} />
         <TextInput label="หัวข้อย่อย CTA" value={settings.stories_page_cta.subtitle} onChange={(value) => updateSettingObject("stories_page_cta", { subtitle: value })} />
         <div className="grid gap-4 md:grid-cols-2">
@@ -702,11 +704,13 @@ function PublicPageSettings({
       <SettingsSection title="หน้าเส้นทาง" description="ข้อความหัวหน้าเส้นทางท่องเที่ยว">
         <TextInput label="หัวข้อ Hero" value={settings.routes_page_hero.title} onChange={(value) => updateSettingObject("routes_page_hero", { title: value })} />
         <TextArea label="คำอธิบาย Hero" value={settings.routes_page_hero.description} onChange={(value) => updateSettingObject("routes_page_hero", { description: value })} rows={3} />
+        <ImageField label="ภาพ Hero เส้นทาง" value={settings.routes_page_hero.image} onRemove={() => updateSettingObject("routes_page_hero", { image: "" })} onPick={() => openPicker({ key: "routes_page_hero", field: "image" })} />
       </SettingsSection>
 
       <SettingsSection title="หน้าร้านอาหาร" description="ข้อความและภาพของหน้าร้านอาหาร">
         <TextInput label="หัวข้อ Hero" value={settings.restaurants_page_hero.title} onChange={(value) => updateSettingObject("restaurants_page_hero", { title: value })} />
         <TextArea label="คำอธิบาย Hero" value={settings.restaurants_page_hero.description} onChange={(value) => updateSettingObject("restaurants_page_hero", { description: value })} rows={3} />
+        <ImageField label="ภาพ Hero ร้านอาหาร" value={settings.restaurants_page_hero.image} onRemove={() => updateSettingObject("restaurants_page_hero", { image: "" })} onPick={() => openPicker({ key: "restaurants_page_hero", field: "image" })} />
         <TextInput label="หัวข้อ Feature" value={settings.restaurants_page_feature.title} onChange={(value) => updateSettingObject("restaurants_page_feature", { title: value })} />
         <TextInput label="หัวข้อย่อย Feature" value={settings.restaurants_page_feature.subtitle} onChange={(value) => updateSettingObject("restaurants_page_feature", { subtitle: value })} />
         <ImageField label="ภาพ Feature" value={settings.restaurants_page_feature.image} onRemove={() => updateSettingObject("restaurants_page_feature", { image: "" })} onPick={() => openPicker({ key: "restaurants_page_feature", field: "image" })} />
