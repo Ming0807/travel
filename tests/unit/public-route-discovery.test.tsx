@@ -9,6 +9,7 @@ const routes: PublicRouteCard[] = [
   { slug: "town-day", name: "เที่ยวเมืองยะลา", description: "ตลาดและย่านเก่า", days: 1, stopCount: 3, imageUrl: null, imageAlt: "เที่ยวเมืองยะลา" },
   { slug: "forest-weekend", name: "ธรรมชาติยะลา", description: "เดินทางผ่านป่าและน้ำตก", days: 2, stopCount: 5, imageUrl: null, imageAlt: "ธรรมชาติยะลา" },
   { slug: "long-trip", name: "ทริปหลายวัน", description: "เส้นทางชุมชน", days: 4, stopCount: 8, imageUrl: null, imageAlt: "ทริปหลายวัน" },
+  { slug: "heritage-day", name: "ย่านวัฒนธรรม", description: "เดินชมเมืองและชุมชน", days: 1, stopCount: 4, imageUrl: null, imageAlt: "ย่านวัฒนธรรม" },
 ];
 
 describe("route discovery", () => {
@@ -29,7 +30,7 @@ describe("route discovery", () => {
     expect(screen.getAllByRole("link", { name: /ดูแผนการเดินทาง/ })).toHaveLength(1);
 
     fireEvent.click(screen.getByRole("button", { name: "ทุกระยะเวลา" }));
-    expect(screen.getAllByRole("link", { name: /ดูแผนการเดินทาง/ })).toHaveLength(3);
+    expect(screen.getAllByRole("link", { name: /ดูแผนการเดินทาง/ })).toHaveLength(4);
   });
 
   it("shows a recoverable no-match state", () => {
@@ -39,7 +40,23 @@ describe("route discovery", () => {
 
     expect(screen.getByText("ไม่พบเส้นทางที่ตรงกับการค้นหา")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "ล้างตัวกรอง" }));
+    expect(screen.getAllByRole("link", { name: /ดูแผนการเดินทาง/ })).toHaveLength(4);
+  });
+
+  it("shows every route and keeps the interface uncluttered for three or fewer routes", () => {
+    render(<RouteDiscovery routes={routes.slice(0, 3)} />);
+
     expect(screen.getAllByRole("link", { name: /ดูแผนการเดินทาง/ })).toHaveLength(3);
+    expect(screen.queryByRole("searchbox", { name: "ค้นหาเส้นทาง" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "ระยะเวลาเดินทาง" })).not.toBeInTheDocument();
+  });
+
+  it("shows all published routes with search and duration controls when there are more than three", () => {
+    render(<RouteDiscovery routes={routes} />);
+
+    expect(screen.getAllByRole("link", { name: /ดูแผนการเดินทาง/ })).toHaveLength(4);
+    expect(screen.getByRole("searchbox", { name: "ค้นหาเส้นทาง" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "ระยะเวลาเดินทาง" })).toBeVisible();
   });
 
   it("keeps the published-content empty state when there are no routes", () => {

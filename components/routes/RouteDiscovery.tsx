@@ -8,6 +8,8 @@ import { PublicEmptyState } from "@/components/public/PublicStates";
 import { PublicRouteCard } from "@/components/routes/PublicRouteCard";
 import type { PublicRouteCard as PublicRouteCardData } from "@/lib/repositories/public-content.repository";
 
+import "./routes-directory.css";
+
 type DurationFilter = "all" | "one" | "two" | "threePlus";
 
 const durationOptions: { value: DurationFilter; label: string }[] = [
@@ -27,6 +29,7 @@ function matchesDuration(days: number, filter: DurationFilter) {
 export function RouteDiscovery({ routes }: { routes: PublicRouteCardData[] }) {
   const [query, setQuery] = useState("");
   const [duration, setDuration] = useState<DurationFilter>("all");
+  const showFilters = routes.length > 3;
   const filteredRoutes = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("th-TH");
     return routes.filter((route) => {
@@ -48,82 +51,78 @@ export function RouteDiscovery({ routes }: { routes: PublicRouteCardData[] }) {
 
   return (
     <div>
-      <div className="grid gap-4 border-y border-black/10 bg-[#fffdfa] px-4 py-4 sm:grid-cols-[minmax(16rem,1fr)_auto] sm:items-end sm:px-5">
-        <label className="block min-w-0">
-          <span className="mb-2 block text-sm font-bold text-[var(--public-ink)]">ค้นหาเส้นทาง</span>
-          <span className="flex min-h-12 items-center gap-3 border border-black/15 bg-white px-3 focus-within:border-[var(--public-coral)] focus-within:outline focus-within:outline-2 focus-within:outline-[var(--public-coral)]">
-            <MagnifyingGlass size={20} aria-hidden="true" className="shrink-0 text-[var(--public-teal)]" />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="ชื่อเส้นทางหรือรายละเอียด"
-              className="min-w-0 flex-1 bg-transparent text-base text-[var(--public-ink)] outline-none placeholder:text-black/55"
-            />
-            {query ? (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="grid size-10 shrink-0 place-items-center text-[var(--public-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--public-teal)]"
-                aria-label="ล้างคำค้นหา"
-              >
-                <X size={18} aria-hidden="true" />
-              </button>
-            ) : null}
-          </span>
-        </label>
+      {showFilters ? (
+        <>
+          <div className="route-directory__filters">
+            <label className="route-directory__search">
+              <span>ค้นหาเส้นทาง</span>
+              <span className="route-directory__search-field">
+                <MagnifyingGlass size={19} aria-hidden="true" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="ชื่อเส้นทางหรือรายละเอียด"
+                />
+                {query ? (
+                  <button type="button" onClick={() => setQuery("")} aria-label="ล้างคำค้นหา">
+                    <X size={18} aria-hidden="true" />
+                  </button>
+                ) : null}
+              </span>
+            </label>
 
-        <fieldset className="min-w-0">
-          <legend className="mb-2 text-sm font-bold text-[var(--public-ink)]">ระยะเวลาเดินทาง</legend>
-          <div className="flex flex-wrap gap-2">
-            {durationOptions.map((option) => {
-              const selected = duration === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => setDuration(option.value)}
-                  className={`min-h-11 border px-3 text-sm font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] ${selected
-                    ? "border-[var(--public-teal)] bg-[var(--public-teal)] text-white"
-                    : "border-black/15 bg-white text-[var(--public-ink)] hover:border-[var(--public-coral)]"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
+            <fieldset className="route-directory__duration">
+              <legend>ระยะเวลาเดินทาง</legend>
+              <div>
+                {durationOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={duration === option.value}
+                    onClick={() => setDuration(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
           </div>
-        </fieldset>
-      </div>
 
-      <p role="status" aria-live="polite" className="mt-4 text-sm font-semibold text-black/65">
-        พบ {filteredRoutes.length.toLocaleString("th-TH")} เส้นทาง
-      </p>
+          <p role="status" aria-live="polite" className="route-directory__result-count">
+            พบ {filteredRoutes.length.toLocaleString("th-TH")} เส้นทาง
+          </p>
+        </>
+      ) : null}
 
       {filteredRoutes.length > 0 ? (
-        <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredRoutes.map((route, index) => <PublicRouteCard key={route.slug} route={route} priority={index === 0} />)}
-        </div>
+        <ol className="route-directory__list" aria-label="เส้นทางท่องเที่ยวที่เผยแพร่">
+          {filteredRoutes.map((route) => {
+            const index = routes.indexOf(route);
+            return (
+              <li className="route-directory__item" key={route.slug}>
+                <PublicRouteCard route={route} priority={index === 0} index={index + 1} />
+              </li>
+            );
+          })}
+        </ol>
       ) : (
-        <div className="mt-5">
-          <PublicEmptyState
-            title="ไม่พบเส้นทางที่ตรงกับการค้นหา"
-            description="ลองใช้คำค้นอื่น หรือเลือกดูเส้นทางทุกระยะเวลา"
-            action={hasActiveFilter ? (
-              <PublicButton
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setQuery("");
-                  setDuration("all");
-                }}
-              >
-                ล้างตัวกรอง
-              </PublicButton>
-            ) : undefined}
-          />
-        </div>
+        <PublicEmptyState
+          title="ไม่พบเส้นทางที่ตรงกับการค้นหา"
+          description="ลองใช้คำค้นอื่น หรือเลือกดูเส้นทางทุกระยะเวลา"
+          action={hasActiveFilter ? (
+            <PublicButton
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setQuery("");
+                setDuration("all");
+              }}
+            >
+              ล้างตัวกรอง
+            </PublicButton>
+          ) : undefined}
+        />
       )}
     </div>
   );
