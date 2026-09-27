@@ -55,7 +55,7 @@ describe("accommodation directory UI", () => {
     expect(screen.queryByText(/จองเลย|ห้องว่าง/)).not.toBeInTheDocument();
   });
 
-  it("renders the new AccommodationHero with breadcrumb and feature pills without fake booking claims", () => {
+  it("renders the accommodation hero with breadcrumb and pilot scope without fake booking claims", () => {
     render(
       <AccommodationHero
         title="ที่พักในจังหวัดยะลา"
@@ -65,8 +65,7 @@ describe("accommodation directory UI", () => {
 
     expect(screen.getByRole("heading", { name: /ที่พัก.*ในจังหวัดยะลา/ })).toBeInTheDocument();
     expect(screen.getByText("หน้าแรก")).toBeInTheDocument();
-    expect(screen.getByText("ข้อมูลที่เผยแพร่")).toBeInTheDocument();
-    expect(screen.getByText(/โดยผู้ดูแลระบบ/)).toBeInTheDocument();
+    expect(screen.getByText("ขอบเขตข้อมูลปัจจุบัน: จังหวัดยะลา")).toBeInTheDocument();
     expect(screen.queryByText(/จองทันที|ว่างพร้อมจอง|ดาวน์โหลดแอป/)).not.toBeInTheDocument();
   });
 

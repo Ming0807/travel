@@ -29,9 +29,11 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
+    mobileMenuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMenuOpen(false);
@@ -83,7 +85,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
       </div>
 
       {menuOpen ? (
-        <nav id="ed-site-mobile-nav" className="ed-site-mobile-nav" aria-label="เมนูมือถือ">
+        <nav ref={mobileMenuRef} id="ed-site-mobile-nav" className="ed-site-mobile-nav" aria-label="เมนูมือถือ">
           {links.map((item) => item.external ? (
             <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)} aria-label={`${item.label} (เว็บไซต์ภายนอก เปิดแท็บใหม่)`}>
               {item.label}<span>เว็บไซต์ภายนอก <ArrowSquareOut aria-hidden="true" size={15} /></span>

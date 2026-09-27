@@ -99,8 +99,7 @@ describe("public story presentation", () => {
 
     expect(screen.getByRole("heading", { name: "เรื่องราวจากยะลา" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "หน้าแรก" })).toHaveAttribute("href", "/");
-    expect(screen.getByText("เนื้อหาที่เผยแพร่")).toBeInTheDocument();
-    expect(screen.getByText("จังหวัดยะลา")).toBeInTheDocument();
+    expect(screen.getByText("PEOPLE & STORIES")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /แบ่งปันเรื่องราวของคุณ/ })).toHaveAttribute(
       "href",
       "/stories/share",
