@@ -179,7 +179,7 @@ Research participant mutations use server actions backed by service-role-only Po
 | Method | Path | Contract |
 |---|---|---|
 | `GET` | `/api/admin/dashboard/export` | Requires `dashboard.read` plus the existing export-type permission. Supports explicit `format=csv` or `format=xlsx`; other explicit formats return 400. Validated scope and quality gates are enforced server-side. |
-| `GET` | `/api/admin/dashboard/attractions/export` | Requires `dashboard.read` and `export.summary`. Uses the attraction/date/evidence/campaign/check-in/channel filter contract. Truncated reads return 409; fewer than the configured minimum visit sample return 422. |
+| `GET` | `/api/admin/dashboard/attractions/export` | Requires `dashboard.read` and `export.summary`. Uses the attraction/date/evidence/campaign/check-in/channel filter contract. A check-in code or campaign outside the selected attraction (or an incompatible pair) returns 400. Truncated reads or a check-in reference beyond the complete live-read limit return 409; fewer than the configured minimum visit sample return 422. |
 
 Reports embed title, selected scope, generation time, denominator, exclusions,
 suppression note, and metric version. Suppressed satisfaction denominators are

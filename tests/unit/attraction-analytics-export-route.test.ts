@@ -35,6 +35,7 @@ function analyticsData(overrides: Record<string, unknown> = {}) {
     funnel: [],
     expenses: { ranges: [], categories: [], note: "Self-reported, not revenue" },
     quality: { truncated: false, smallCellThreshold: 10, scopeNote: "field scope" },
+    referenceOptions: { checkinCodes: [{ checkinCodeId: 10, code: "local-code", label: "ทางเข้าหลัก", campaignId: 7 }] },
     metricContract: [{ key: "visits", source: "visits", denominator: "ไม่มี" }],
     ...overrides,
   };
@@ -122,6 +123,34 @@ describe("attraction analytics export route", () => {
     expect(mocks.audit).toHaveBeenCalledWith(expect.objectContaining({
       result: "failed",
       metadata: expect.objectContaining({ reason: "quality_gate" }),
+    }));
+  });
+
+  it.each([
+    { suffix: "checkinCodeId=99", reason: "foreign code" },
+    { suffix: "campaignId=99", reason: "unavailable campaign" },
+    { suffix: "campaignId=8&checkinCodeId=10", reason: "incompatible code and campaign" },
+  ])("blocks an out-of-scope $reason before rendering an export", async ({ suffix }) => {
+    mocks.analytics.mockResolvedValue(analyticsData());
+    const response = await GET(new Request(
+      `http://localhost/api/admin/dashboard/attractions/export?attractionId=4&dateFrom=2026-08-01&dateTo=2026-08-31&${suffix}`,
+    ));
+    expect(response.status).toBe(400);
+    expect(mocks.createExportResponse).not.toHaveBeenCalled();
+    expect(mocks.audit).toHaveBeenCalledWith(expect.objectContaining({
+      result: "failed", metadata: expect.objectContaining({ reason: "scope_mismatch" }),
+    }));
+  });
+
+  it("reports an oversized check-in reference as a quality limit, not an internal failure", async () => {
+    mocks.analytics.mockRejectedValue(new Error("ATTRACTION_ANALYTICS_CHECKIN_SCOPE_LIMIT"));
+    const response = await GET(new Request(
+      "http://localhost/api/admin/dashboard/attractions/export?attractionId=4&dateFrom=2026-08-01&dateTo=2026-08-31",
+    ));
+    expect(response.status).toBe(409);
+    expect(mocks.createExportResponse).not.toHaveBeenCalled();
+    expect(mocks.audit).toHaveBeenCalledWith(expect.objectContaining({
+      result: "failed", metadata: expect.objectContaining({ reason: "quality_gate", qualityReason: "checkin_scope_limit" }),
     }));
   });
 

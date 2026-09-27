@@ -5,6 +5,7 @@ import { AdminAuthError, requirePermission, type GuardResult } from "@/lib/auth/
 import { getAttractionAnalytics } from "@/lib/services/attraction-analytics.service";
 import { logAuditAction } from "@/lib/services/audit-log.service";
 import { DASHBOARD_METRIC_VERSION } from "@/lib/dashboard/dashboard-quality";
+import { hasAttractionFilterScopeMismatch } from "@/lib/dashboard/attraction-filter-scope";
 import { createExportResponse, parseRequestedExportFormat, type ExportFormat } from "@/lib/utils/export-response";
 import { attractionAnalyticsFiltersSchema } from "@/lib/validation/attraction-analytics";
 
@@ -66,6 +67,10 @@ export async function GET(request: Request) {
       await logAuditAction({ actor: guard.actor, action: `export.dashboard.attraction_analytics.${format}`, entityType: "dashboard_export", entityId: String(parsed.data.attractionId), result: "failed", metadata: { filters: parsed.data, reason: "not_found" } });
       return new NextResponse("Attraction not found", { status: 404 });
     }
+    if (hasAttractionFilterScopeMismatch(parsed.data, data.referenceOptions.checkinCodes)) {
+      await logAuditAction({ actor: guard.actor, action: `export.dashboard.attraction_analytics.${format}`, entityType: "dashboard_export", entityId: String(parsed.data.attractionId), result: "failed", metadata: { filters: parsed.data, reason: "scope_mismatch" } });
+      return new NextResponse("Check-in code or campaign does not belong to the selected attraction", { status: 400 });
+    }
     if (data.quality.truncated) {
       await logAuditAction({ actor: guard.actor, action: `export.dashboard.attraction_analytics.${format}`, entityType: "dashboard_export", entityId: String(parsed.data.attractionId), result: "failed", metadata: { filters: parsed.data, reason: "quality_gate", qualityReason: "truncated_read" } });
       return new NextResponse("Date scope is too large for a complete export", { status: 409 });
@@ -119,7 +124,11 @@ export async function GET(request: Request) {
       result: "success",
     });
     return response;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "ATTRACTION_ANALYTICS_CHECKIN_SCOPE_LIMIT") {
+      await logAuditAction({ actor: guard.actor, action: `export.dashboard.attraction_analytics.${format}`, entityType: "dashboard_export", entityId: String(parsed.data.attractionId), result: "failed", metadata: { filters: parsed.data, reason: "quality_gate", qualityReason: "checkin_scope_limit" } });
+      return new NextResponse("Check-in reference exceeds the complete live-read limit", { status: 409 });
+    }
     await logAuditAction({ actor: guard.actor, action: `export.dashboard.attraction_analytics.${format}`, entityType: "dashboard_export", entityId: String(parsed.data.attractionId), result: "failed", metadata: { filters: parsed.data } });
     return new NextResponse("Failed to export attraction analytics", { status: 500 });
   }

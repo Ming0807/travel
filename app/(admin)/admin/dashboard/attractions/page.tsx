@@ -8,6 +8,7 @@ import { AttractionAnalyticsFilters } from "@/components/dashboard/AttractionAna
 import { AttractionAnalyticsWorkspace } from "@/components/dashboard/AttractionAnalyticsWorkspace";
 import { AttractionAnalyticsNotice, type AttractionAnalyticsNoticeCode } from "@/components/dashboard/AttractionAnalyticsNotice";
 import { requirePermission } from "@/lib/auth/guards";
+import { hasAttractionFilterScopeMismatch } from "@/lib/dashboard/attraction-filter-scope";
 import { getAttractionAnalytics, getAttractionAnalyticsOptions } from "@/lib/services/attraction-analytics.service";
 import { attractionAnalyticsFiltersSchema, type AttractionAnalyticsFilters as AnalyticsFilters } from "@/lib/validation/attraction-analytics";
 import { isoToBangkokDateTimeInput } from "@/lib/utils/bangkok-datetime";
@@ -77,17 +78,7 @@ export default async function AttractionAnalyticsPage({ searchParams }: { search
     try {
       data = await getAttractionAnalytics(parsed.data);
       if (!data) state = "attraction_unavailable";
-      else {
-        const codes = data.referenceOptions.checkinCodes;
-        const selectedCode = parsed.data.checkinCodeId
-          ? codes.find((code) => code.checkinCodeId === parsed.data.checkinCodeId)
-          : null;
-        if ((parsed.data.checkinCodeId && !selectedCode)
-          || (parsed.data.campaignId && !codes.some((code) => code.campaignId === parsed.data.campaignId))
-          || (selectedCode && parsed.data.campaignId && selectedCode.campaignId !== parsed.data.campaignId)) {
-          state = "scope_mismatch";
-        }
-      }
+      else if (hasAttractionFilterScopeMismatch(parsed.data, data.referenceOptions.checkinCodes)) state = "scope_mismatch";
     } catch (error) {
       rethrowNavigationAndAccess(error);
       state = error instanceof Error && error.message === "ATTRACTION_ANALYTICS_CHECKIN_SCOPE_LIMIT"

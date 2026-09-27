@@ -99,3 +99,14 @@ route or production asset assertion. A mobile screenshot review found date
 text wrapping mid-value at 390 px; the date and check-in point now span the
 mobile row while desktop retains four columns. The matrix was rerun after
 that adjustment and passed. The fixture remains synthetic and unauthenticated.
+
+### Export Parity Follow-up (2026-09-28)
+
+The attraction page and aggregate export now share one check-in/campaign
+ownership rule. An out-of-scope or incompatible pair produces the page's
+recovery notice and an audited HTTP 400 from the export API; neither result
+is presented as zero activity. An over-limit check-in reference produces an
+audited HTTP 409 rather than a generic HTTP 500. Valid selected population,
+small-cell suppression, and existing format/permission gates remain intact.
+Three focused test files passed 33 tests after this change. No participant
+record or authenticated production export was accessed for this check.
