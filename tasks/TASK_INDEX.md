@@ -29,13 +29,15 @@
 | `PHASE_20_PUBLIC_HOMEPAGE_VISUAL_FIDELITY.md` | Implemented / route-by-route visual QA continues | Reference-led public homepage visual redesign with production logic preserved |
 | `PHASE_21_RESEARCH_PILOT_ACTIVATION.md` | Advisor direction approved / activation gated | Instrument freeze, ethics confirmation, pilot QA, and controlled field activation |
 | `PHASE_22_ATTRACTION_LEVEL_ANALYTICS.md` | Implemented / production query-plan evidence pending | Per-attraction operational, funnel, tourism, satisfaction, and improvement analytics |
-| `PHASE_23_NFC_CHECKIN_CHANNEL.md` | Planned | NFC entry through the canonical QR/check-in flow with channel analytics and tag governance |
-| `PHASE_24_ANALYTICS_DECISION_INTELLIGENCE.md` | Planned / next engineering phase | Role-aware decision workspace, comparison, data quality, insight-to-action, research monitoring, and production analytics QA |
+| `PHASE_23_NFC_CHECKIN_CHANNEL.md` | Local implementation / rollout gated | Canonical NFC/session flow, tag governance and channel analytics; remaining UX, staging, physical-device and human approval gates |
+| `PHASE_24_ANALYTICS_DECISION_INTELLIGENCE.md` | In progress / release acceptance pending | Core decision workspace implemented; responsive, scope, comparison, quality and authenticated production QA hardening continues |
 | `PHASE_25_CURATED_NA_THAM_ROUTES.md` | Implemented / production-data sign-off pending | Curated public routes, real-coordinate map, isolated cover saving, admin route composer, and publication integrity for the Na Tham pilot |
 
 ## Immediate Priority
 
-Start Phase 24 Tasks 24.1-24.3: reconcile the analytics backlog, lock the decision-question information architecture, and standardize filters, comparisons, URL scope, and page states before changing individual dashboard pages.
+Continue Phase 24 release hardening rather than rebuilding the implemented workspace: reconcile stale checklist claims, verify applied filter/export/history scope, recoverable page states, keyboard access and five-width responsive layouts. The 2026-09-27 attraction checkpoint is tracked in `docs/testing/PHASE_24_ATTRACTION_UX_QA_2026-09-27.md`.
+
+Keep Phase 25 authenticated CMS/public-route acceptance open; do not publish synthetic route data merely to close the checklist. Phase 23's local delivery and remaining rollout gates are mapped in `docs/testing/PHASE_23_STATUS_AUDIT_2026-09-27.md`.
 
 In parallel, continue the human-governed Phase 21 approval, ethics, instrument-freeze, and pilot-preparation evidence. Close the final Phase 22 production query-plan task as soon as the exact Supabase Session Pooler URL is available.
 
@@ -60,7 +62,7 @@ The advisor has approved the research direction. Phase 18's generic technical fo
 
 ## Public Experience and Entry Channels
 
-Phase 20 public presentation is implemented and continues through route-by-route visual QA. Phase 22 provides the attraction-level analytics foundation. Phase 24 now hardens the complete analytics product before Phase 23 adds NFC as a second physical entry channel into the same canonical check-in flow.
+Phase 20 public presentation is implemented and continues through route-by-route visual QA. Phase 22 provides the attraction-level analytics foundation. Phase 24 hardens the analytics product. Phase 23 already has a default-off local NFC implementation as a second physical entry channel; this does not authorize field activation or prove the deployed schema/device acceptance.
 
 - `tasks/PHASE_20_PUBLIC_HOMEPAGE_VISUAL_FIDELITY.md`
 - `tasks/PHASE_22_ATTRACTION_LEVEL_ANALYTICS.md`

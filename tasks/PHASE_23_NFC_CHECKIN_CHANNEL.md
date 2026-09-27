@@ -1,6 +1,6 @@
 # Phase 23: NFC Check-in Entry Channel
 
-Status: In progress; registry and read-only resolution foundation implemented locally. Public flow, channel graphs, staff provisioning, and device rollout remain gated.
+Status: In progress; registry, default-off canonical NFC/session flow, admin lifecycle tools, field-check reporting, and parts of channel analytics are implemented locally. Production schema/flag state, remaining public/installation UX, some analytics parity, and physical rollout remain gated. See [Phase 23 status audit](../docs/testing/PHASE_23_STATUS_AUDIT_2026-09-27.md).
 
 Priority: P1 field accessibility and channel resilience
 
@@ -22,48 +22,48 @@ NFC tags open the same canonical `/c/[code]` route used by QR. The resolved chec
 
 - [x] Define immutable tag assignments, verification, lifecycle, replacement, revocation, and atomic audit.
 - [x] Add an additive registry migration and a read-only typed repository with isolated PostgreSQL tests.
-- [ ] Apply and verify migration in staging before any public NFC activation.
-- [ ] Implement the entry-session/visit correlation contract and migration for channel analytics; preserve existing `visits.entry_channel` values.
+- [ ] Apply and independently verify the required migration chain in staging before any public NFC activation; current deployed schema is not established by local evidence or user-reported SQL application.
+- [x] Implement the entry-session/visit correlation contract and additive migration for channel analytics; preserve existing `visits.entry_channel` values. Local disposable-PostgreSQL evidence exists; deployment remains pending.
 
 ### Task 23.3: Canonical Resolution
 
 - [x] Implement read-only NFC resolution using current QR availability checks; reject revoked, inactive, invalid, and reassigned tags without QR fallback.
-- [ ] Integrate `/c/[code]?nfc=<token>` behind a default-off rollout flag; do not emit `qr_scanned` for NFC.
-- [ ] Bind channel context to the entry session/code and revalidate on landing and submission.
-- [ ] Correlate entry, visit, and rewards with duplicate/retry protection and multi-tab tests.
+- [x] Integrate `/c/[code]?nfc=<token>` behind default-off rollout flags; the NFC route does not emit `qr_scanned`.
+- [x] Bind channel context to the browser-bound entry session/code and revalidate assignment/tag lifecycle on read and Visit creation.
+- [ ] Correlate entry, Visit, and rewards with duplicate/retry protection; local SQL tests cover atomic retry, but explicit multi-tab/research-correlation acceptance remains pending.
 
 ### Task 23.4: Admin Provisioning UX
 
-- [ ] Add provision, encode payload, verify, activate, deactivate, replace, audit, and installation-record workflows.
+- [x] Add guarded tag provision/payload, read-back verification, activate/deactivate/revoke, replace, and audit workflows. Encoding is performed with an external NFC writer; installation records/photos are tracked separately and remain incomplete.
 
 ### Task 23.5: Public Verification UX
 
-- [ ] Show official domain, attraction, location context, and revoked/unknown recovery before collecting personal data.
+- [ ] Complete NFC-specific public verification/recovery UX for official domain, attraction/location context, and revoked/unknown tags before collecting personal data. Successful check-in pages show attraction context, but failed NFC entry currently resolves to the generic unavailable state.
 
 ### Task 23.6: Physical Deployment Guide
 
-- [ ] Define visible NFC labels, QR fallback, tamper evidence, tag ID, installation photos, field checks, and replacement procedure.
+- [ ] Complete the physical installation-record workflow. The operational guide covers visible official-domain labels, QR fallback, tamper checks, tag identity, field checks, and replacement; installation photos/records and full field acceptance are not complete.
 
 ### Task 23.7: Channel Analytics
 
-- [ ] 23.7a: Add versioned server-recorded entry sessions, channel attribution, visit linkage, and retry deduplication before adding claims to graphs.
-- [ ] 23.7b: Calculate channel distribution and daily trends from distinct entry sessions; keep direct and unknown visible and admin imports separate.
-- [ ] 23.7c: Calculate session-to-visit/certificate/survey conversion on the same entry cohort and common as-of cutoff; display numerator, denominator, pending follow-ups, and missing linkage.
-- [ ] 23.7d: Add a compact channel comparison to executive overview and an expanded channel panel to attraction analytics, with shared Recharts tokens and accessible data tables.
-- [ ] 23.7e: Carry applied place/date/campaign/evidence filters through charts, drill-down, and CSV/XLSX; disable unavailable comparisons rather than inventing zeros.
-- [ ] 23.7f: Test unknown historical data, forged hints, repeated taps, low samples, suppression, and unequal cohort coverage; do not infer old channels retrospectively.
+- [x] 23.7a: Add versioned server-recorded entry sessions, channel attribution, Visit linkage, and retry deduplication before adding entry-cohort claims to graphs.
+- [ ] 23.7b: Complete channel distribution/trend scope with direct and unknown visible and admin imports separate. QR/NFC entry-session and Visit-channel views exist locally, but the entry cohort does not provide a complete common session denominator for every Visit channel.
+- [x] 23.7c: Calculate session-to-Visit/certificate/survey conversion on the same entry cohort and common as-of cutoff; show numerator/base and quality states. Local analytics tests/docs evidence this implementation; authenticated staging remains pending.
+- [x] 23.7d: Add compact channel comparison to executive overview and expanded attraction channel panel with shared Recharts presentation and accessible data tables.
+- [ ] 23.7e: Carry applied place/date/campaign/evidence filters through charts, drill-down, and CSV/XLSX; disable unavailable comparisons rather than inventing zeros. Local code/tests exist, but filter/peer-comparison parity is under separate review and is not signed off here.
+- [x] 23.7f: Add regression coverage for unknown history, forged hints, repeated taps/retry, low samples, suppression, and cohort coverage; never infer old channels retrospectively. Evidence is automated/local, not production-data validation.
 
 ### Task 23.8: Security and Permission Tests
 
-- [ ] Test unsafe redirects, revoked/reassigned tags, duplicate taps, authorization, audit, and historical-record preservation.
+- [x] Add and execute local automated regressions for unsafe payload origins, revoked/reassigned tags, duplicate/retry behavior, authorization boundaries, audit/lifecycle, and immutable historical records. Authenticated full-schema/staging permission acceptance remains pending.
 
 ### Task 23.9: Real-Device QA
 
-- [ ] Test supported iPhone and Android devices, Safari/Chrome, weak network, browser fallback, and QR fallback.
+- [ ] Test supported physical iPhone and Android devices, Safari/Chrome, weak network, browser fallback, and QR fallback. No physical-device evidence found.
 
 ### Task 23.10: Controlled Rollout
 
-- [ ] Pilot a small tag set, monitor conversion/errors/incidents, and document go/no-go evidence before wider deployment.
+- [ ] Run an approved small-tag pilot, monitor conversion/errors/incidents, and record human go/no-go evidence before wider deployment. No pilot or human approval evidence found.
 
 ## Security Rules
 
@@ -80,16 +80,21 @@ NFC tags open the same canonical `/c/[code]` route used by QR. The resolved chec
 
 ## Current Delivery and Next Order
 
-Foundation: `20260904000000_add_nfc_tag_registry.sql`, `lib/nfc/contract.ts`,
-`lib/repositories/nfc-tag.repository.ts`, and `lib/services/nfc-checkin.service.ts`.
-No production route imports these new services yet. Do not encode or install
-tags until canonical-route integration and real-device QA pass. No SQL has been
-run against production by this batch.
+Local delivery includes the NFC registry/resolver; the `/c/[code]` route and
+browser-bound entry sessions; session-to-Visit/reward idempotency; guarded admin
+tag lifecycle and audit; field-check forms/history; and executive/attraction
+channel analytics. These are locally implemented and have focused test evidence,
+not proof of current production schema, current deployed flags, authenticated
+staging behavior, physical tag acceptance, or pilot approval. Both NFC and entry
+session rollout flags must remain default-off until the documented release gates
+are evidenced. No schema or environment state was queried or changed for this audit.
 
-Next order: session/visit contract -> canonical integration and retry safety ->
-staff provisioning/public verification UX -> channel graphs -> device QA ->
-small controlled rollout. Phase 21 operational evidence continues in parallel;
-Phase 22/24 release gaps remain visible in the cross-phase readiness plan.
+Remaining order: verify deployment schema/migration state read-only in staging;
+finish NFC-specific public recovery and installation records; close analytics
+scope/filter/export parity review; complete authenticated and multi-tab acceptance;
+run physical-device QA; then obtain an explicit human pilot/go-no-go decision.
+See `docs/testing/PHASE_23_STATUS_AUDIT_2026-09-27.md` for evidence and residual
+gates. Phase 21/22/24 readiness remains separately tracked.
 
 See `docs/dashboard/PHASE_21_23_READINESS_AND_CHANNEL_UX.md` for the chart design,
 metric definitions, UX priorities, and phase completion boundaries.
