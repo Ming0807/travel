@@ -10,6 +10,7 @@ export default defineConfig({
       "@": root,
       "next/navigation": fileURLToPath(new URL("./navigation.ts", import.meta.url)),
       "next/link": fileURLToPath(new URL("./link.tsx", import.meta.url)),
+      "next/image": fileURLToPath(new URL("../routes/image.tsx", import.meta.url)),
     },
   },
   css: { postcss: root },

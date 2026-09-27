@@ -70,6 +70,13 @@ const countries = [
 const provinces = [{ id: 1, labelTh: "ยะลา", labelEn: "Yala" }];
 
 describe("check-in funnel UX contract", () => {
+  it("shows configured NFC location verification and preserves the bound flow link", () => {
+    render(<CheckinLanding details={details} entrySessionId="bound-session" nfcOfficialHost="tourism.example" />);
+    const verification = screen.getByRole("region", { name: "ตรวจสอบจุดเช็กอิน NFC" });
+    expect(within(verification).getByText("tourism.example")).toBeInTheDocument();
+    expect(within(verification).getByText(details.attraction!.name_th)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "สร้างใบประกาศของฉัน" })).toHaveAttribute("href", "/checkin/YALA-DEMO-01/start?flow=bound-session");
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });

@@ -4,6 +4,7 @@ import { CHECKIN_BROWSER_COOKIE } from "@/lib/auth/checkin-entry";
 import { resolveCheckinFlow } from "@/lib/services/checkin-entry.service";
 import { trackCheckinFunnelEvent } from "@/lib/services/checkin.service";
 import { cookies } from "next/headers";
+import { getNfcOfficialOrigin } from "@/lib/nfc/contract";
 
 export default async function CheckinLandingPage({
   params,
@@ -23,6 +24,15 @@ export default async function CheckinLandingPage({
     return <CheckinUnavailable status={context.status} />;
   }
 
+  let nfcOfficialHost: string | null = null;
+  if (context.mode === "session" && context.session.channel === "nfc") {
+    try {
+      nfcOfficialHost = new URL(getNfcOfficialOrigin(process.env.NEXT_PUBLIC_APP_URL ?? "")).host;
+    } catch {
+      return <CheckinUnavailable status="nfc_unavailable" />;
+    }
+  }
+
   try {
     if (context.mode === "session") {
       await trackCheckinFunnelEvent("landing_viewed", context.details, { sessionId: context.session.sessionId });
@@ -35,6 +45,7 @@ export default async function CheckinLandingPage({
 
   return <CheckinLanding
     details={context.details}
+    nfcOfficialHost={nfcOfficialHost}
     entrySessionId={context.mode === "session" ? context.session.sessionId : null}
   />;
 }

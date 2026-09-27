@@ -10,12 +10,16 @@ export type NfcAssignment = {
   campaignId: number | null;
 };
 
-export function buildNfcPayload(origin: string, code: string, token: string): string {
+export function getNfcOfficialOrigin(origin: string): string {
   const base = new URL(origin);
   if (base.protocol !== "https:" || base.username || base.password || base.pathname !== "/" || base.search || base.hash) {
     throw new Error("NFC_OFFICIAL_HTTPS_ORIGIN_REQUIRED");
   }
-  const url = new URL(`/c/${nfcCheckinCodeSchema.parse(code)}`, base.origin);
+  return base.origin;
+}
+
+export function buildNfcPayload(origin: string, code: string, token: string): string {
+  const url = new URL(`/c/${nfcCheckinCodeSchema.parse(code)}`, getNfcOfficialOrigin(origin));
   url.searchParams.set("nfc", nfcTokenSchema.parse(token));
   return url.toString();
 }
