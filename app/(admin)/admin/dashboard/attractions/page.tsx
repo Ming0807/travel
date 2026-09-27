@@ -77,9 +77,22 @@ export default async function AttractionAnalyticsPage({ searchParams }: { search
     try {
       data = await getAttractionAnalytics(parsed.data);
       if (!data) state = "attraction_unavailable";
+      else {
+        const codes = data.referenceOptions.checkinCodes;
+        const selectedCode = parsed.data.checkinCodeId
+          ? codes.find((code) => code.checkinCodeId === parsed.data.checkinCodeId)
+          : null;
+        if ((parsed.data.checkinCodeId && !selectedCode)
+          || (parsed.data.campaignId && !codes.some((code) => code.campaignId === parsed.data.campaignId))
+          || (selectedCode && parsed.data.campaignId && selectedCode.campaignId !== parsed.data.campaignId)) {
+          state = "scope_mismatch";
+        }
+      }
     } catch (error) {
       rethrowNavigationAndAccess(error);
-      state = "analytics_unavailable";
+      state = error instanceof Error && error.message === "ATTRACTION_ANALYTICS_CHECKIN_SCOPE_LIMIT"
+        ? "scope_limit"
+        : "analytics_unavailable";
     }
   }
 
@@ -105,7 +118,13 @@ export default async function AttractionAnalyticsPage({ searchParams }: { search
           />
         </section> : null}
 
-        {state ? <AttractionAnalyticsNotice code={state} href={state === "invalid_filters" || state === "attraction_unavailable" ? PAGE_PATH : retryHref(state === "analytics_unavailable" && parsed.success ? parsed.data : query)} /> : data ? <AttractionAnalyticsWorkspace data={data} /> : null}
+        {state ? <AttractionAnalyticsNotice code={state} href={state === "scope_limit"
+          ? "/admin/dashboard"
+          : state === "invalid_filters" || state === "attraction_unavailable"
+          ? PAGE_PATH
+          : state === "scope_mismatch" && parsed.success
+            ? retryHref({ ...parsed.data, campaignId: undefined, checkinCodeId: undefined })
+            : retryHref(state === "analytics_unavailable" && parsed.success ? parsed.data : query)} /> : data ? <AttractionAnalyticsWorkspace data={data} /> : null}
       </div>
     </AdminShell>
   );

@@ -44,6 +44,14 @@ const INSIGHT_TONE_LABELS = {
   funnel: "ประสิทธิภาพ Flow",
 } as const;
 
+const CHANNEL_LABELS = {
+  qr: "QR",
+  nfc: "NFC",
+  direct: "เข้าตรง",
+  admin_import: "นำเข้าโดยผู้ดูแล",
+  unknown: "ไม่ทราบ",
+} as const;
+
 function value(value: number | null, suffix = "") {
   return value === null ? "ยังไม่มีข้อมูล" : `${value.toLocaleString("th-TH")}${suffix}`;
 }
@@ -77,6 +85,7 @@ function CompactMetric({ icon, label, valueText, note }: { icon: React.ReactNode
 
 export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyticsViewModel }) {
   const requiresScopeCaution = data.quality.truncated || data.filters.evidenceScope !== "field_claim";
+  const selectedCode = data.referenceOptions.checkinCodes.find((code) => code.checkinCodeId === data.filters.checkinCodeId);
   const improvementContext = {
     attractionId: data.attraction.attractionId,
     dateStart: data.filters.dateFrom,
@@ -105,6 +114,12 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
             {canReadImprovement ? <Link href={improvementHref} className="inline-flex min-h-11 items-center justify-center gap-2 border border-white/30 bg-white px-4 text-sm font-black text-[#202020] hover:bg-orange-50">เปิดแผนปรับปรุง <ArrowRight aria-hidden="true" /></Link> : null}
           </div>
         </div>
+        <dl role="group" aria-label="ตัวกรองที่ใช้กับผลวิเคราะห์" className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-slate-200 bg-slate-50 px-4 py-3 text-sm sm:grid-cols-4 sm:px-5">
+          <div className="col-span-2 min-w-0 sm:col-span-1"><dt className="text-xs font-semibold text-slate-500">ช่วงวันที่</dt><dd className="mt-0.5 font-bold tabular-nums text-slate-900">{data.filters.dateFrom} – {data.filters.dateTo}</dd></div>
+          <div className="min-w-0"><dt className="text-xs font-semibold text-slate-500">ช่องทางเข้า</dt><dd className="mt-0.5 font-bold text-slate-900">{data.filters.entryChannel ? CHANNEL_LABELS[data.filters.entryChannel] : "ทุกช่องทาง"}</dd></div>
+          <div className="min-w-0"><dt className="text-xs font-semibold text-slate-500">แคมเปญ</dt><dd className="mt-0.5 font-bold text-slate-900">{data.filters.campaignId ? `แคมเปญ ${data.filters.campaignId}` : "ทุกแคมเปญ"}</dd></div>
+          <div className="col-span-2 min-w-0 sm:col-span-1"><dt className="text-xs font-semibold text-slate-500">จุดเช็กอิน</dt><dd className="mt-0.5 font-bold text-slate-900 [overflow-wrap:anywhere]">{selectedCode ? `${selectedCode.label} (${selectedCode.code})` : "ทุกจุดเช็กอิน"}</dd></div>
+        </dl>
         <div className={`flex items-start gap-3 border-t p-4 text-sm ${requiresScopeCaution ? "border-amber-300 bg-amber-50 text-amber-950" : "border-emerald-200 bg-emerald-50 text-emerald-950"}`}>
           {requiresScopeCaution ? <Warning className="mt-0.5 shrink-0" aria-hidden="true" weight="fill" /> : <CheckCircle className="mt-0.5 shrink-0" aria-hidden="true" weight="fill" />}
           <div><p className="font-black">{data.quality.truncated ? "ชุดข้อมูลเกินขีดจำกัดการอ่านสด" : SCOPE_STATUS_LABELS[data.filters.evidenceScope]}</p><p className="mt-1 leading-6">{data.quality.scopeNote}</p></div>

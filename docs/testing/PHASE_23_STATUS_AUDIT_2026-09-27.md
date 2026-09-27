@@ -43,3 +43,28 @@ not deployed or human/device acceptance.
 5. Run physical-device/mobile/network acceptance and obtain documented human pilot/go-no-go approval before any tag installation/activation or widened rollout.
 
 No concrete new runtime bug was established during this source-only audit. The generic NFC failure state and incomplete installation evidence are tracked as scope gaps above, not classified as defects without stronger acceptance evidence.
+
+## Read-Only Deployed-Schema Follow-up (2026-09-27)
+
+This follow-up is separate from the source-only audit above. The configured
+`SUPABASE_DATABASE_URL` targets the same project as the public Supabase REST
+endpoint. `node scripts/verify-nfc-release-schema.mjs` attempted its `BEGIN READ
+ONLY` catalog check but could not resolve the direct PostgreSQL hostname
+(`ENOTFOUND`); it applied no SQL.
+
+Using the configured service-role credential, the project's REST OpenAPI schema
+responded HTTP 200 and exposed `nfc_tags`, `nfc_tag_events`,
+`checkin_entry_sessions`, and the four expected RPC paths:
+`begin_checkin_entry`, `read_checkin_entry`, `create_checkin_entry_visit`, and
+`accept_entry_research_invitation`. Its `checkin_entry_sessions` definition
+included `research_study_id_snapshot`, `research_frozen_at_snapshot`,
+`evidence_scope_reason`, `entry_channel`, and `nfc_tag_id`. A HEAD request to
+the entry-session table selecting only those five columns with `limit=0`
+returned HTTP 200; no participant rows were requested or returned.
+
+These checks establish object/column discovery through the deployed REST
+schema. They do not prove trigger enablement, grants, live function bodies,
+current rollout flags, or authenticated user journeys. The direct catalog
+verifier still needs a reachable approved PostgreSQL connection before the
+schema/permission gate can be signed off. No migration or configuration was
+changed in this follow-up.

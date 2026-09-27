@@ -68,3 +68,34 @@ rerun for this bounded checkpoint.
 
 Git push and a later release smoke establish only code delivery/liveness, not
 authenticated dashboard acceptance or database readiness.
+
+## Follow-up: Filter Ownership and Result Context (2026-09-28)
+
+- A manually supplied check-in code from another attraction previously caused
+  the repository to fetch that code's funnel events. The service's Visit-ID
+  filter discarded them from displayed metrics, so no cross-attraction chart
+  contamination was demonstrated. The repository now limits event reads to
+  codes belonging to the selected attraction.
+- An unavailable campaign, foreign check-in code, or code/campaign mismatch now
+  produces a dedicated warning instead of a zero-activity workspace. The
+  recovery link clears only campaign and check-in code, preserving attraction,
+  date range, evidence scope, and entry channel.
+- The result header now repeats the applied date range, entry channel, campaign,
+  and check-in point in a compact two-/four-column strip. This is presentation
+  context, not a change to metric formulas or the privacy threshold.
+- A 501st check-in code for one attraction now fails the bounded live read
+  explicitly; the dashboard does not present a partial funnel as a complete
+  result. Scaling beyond this threshold requires a summary/read model.
+- Repository, page-state, and workspace-layout regressions cover the boundary.
+  This does not replace authenticated production or device acceptance.
+
+Executed follow-up checks: six focused Vitest files (71 tests), scoped ESLint,
+TypeScript typecheck, and the Node 22 production build passed. The updated
+real-component Playwright fixture passed 60 checks at 360, 390, 768, 1024,
+and 1440 px, including the new notices and applied-scope strip, with zero
+page errors and 15 keyboard-scroll checks. A missing Vite-only favicon was
+excluded from the fixture's console-error gate; it is not an application
+route or production asset assertion. A mobile screenshot review found date
+text wrapping mid-value at 390 px; the date and check-in point now span the
+mobile row while desktop retains four columns. The matrix was rerun after
+that adjustment and passed. The fixture remains synthetic and unauthenticated.

@@ -33,6 +33,7 @@ export type AttractionAnalyticsRows = {
 export const ATTRACTION_ANALYTICS_VISIT_LIMIT = 5000;
 export const ATTRACTION_ANALYTICS_FUNNEL_LIMIT = 10000;
 export const ATTRACTION_ANALYTICS_ENTRY_LIMIT = 10000;
+export const ATTRACTION_ANALYTICS_CHECKIN_CODE_LIMIT = 500;
 
 export async function listAttractionAnalyticsOptions(): Promise<AttractionAnalyticsOption[]> {
   const liveProvinceIds = await listLiveDestinationProvinceIds();
@@ -55,10 +56,11 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
   const [{ data: attractionData, error: attractionError }, { data: attractionOptions, error: optionsError }, { data: codeData, error: codeError }] = await Promise.all([
     supabase.from("attractions").select("attraction_id, name_th, province_id, attraction_type_id, districts(district_name_th), attraction_types!attractions_attraction_type_id_fkey(type_name_th)").eq("attraction_id", filters.attractionId).eq("is_active", true).eq("is_published", true).in("province_id", liveProvinceIds).maybeSingle(),
     supabase.from("attractions").select("attraction_id, name_th").eq("is_active", true).eq("is_published", true).in("province_id", liveProvinceIds).order("name_th").limit(500),
-    supabase.from("checkin_codes").select("checkin_code_id, code, label, campaign_id").eq("attraction_id", filters.attractionId).order("code").limit(500),
+    supabase.from("checkin_codes").select("checkin_code_id, code, label, campaign_id").eq("attraction_id", filters.attractionId).order("code").limit(ATTRACTION_ANALYTICS_CHECKIN_CODE_LIMIT + 1),
   ]);
   if (attractionError || optionsError || codeError) throw new Error("ATTRACTION_ANALYTICS_REFERENCE_FAILED");
   if (!attractionData) return null;
+  if ((codeData?.length ?? 0) > ATTRACTION_ANALYTICS_CHECKIN_CODE_LIMIT) throw new Error("ATTRACTION_ANALYTICS_CHECKIN_SCOPE_LIMIT");
   const attractionReference = asRecord(attractionData);
   const selectedProvinceId = numberValue(attractionReference.province_id);
   const selectedAttractionTypeId = nullableNumber(attractionReference.attraction_type_id);
@@ -76,7 +78,7 @@ export async function getAttractionAnalyticsRows(filters: AttractionAnalyticsFil
   if (filters.campaignId) allowedCodeIds = checkinCodes.filter((code) => code.campaignId === filters.campaignId).map((code) => code.checkinCodeId);
   if (filters.checkinCodeId) {
     allowedCodeIds = allowedCodeIds === null
-      ? [filters.checkinCodeId]
+      ? checkinCodes.filter((code) => code.checkinCodeId === filters.checkinCodeId).map((code) => code.checkinCodeId)
       : allowedCodeIds.filter((checkinCodeId) => checkinCodeId === filters.checkinCodeId);
   }
 

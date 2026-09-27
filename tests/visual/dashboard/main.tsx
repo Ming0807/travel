@@ -35,7 +35,7 @@ const surface = new URLSearchParams(window.location.search).get("page");
 const executiveData = executiveFixture(state);
 const displayedFilters = surface === "executive" ? executiveData.filters : filters;
 const focusedSurface = surface === "executive" || surface === "attraction" || surface === "attraction-filter" || surface === "entry" || surface === "attraction-notice";
-const noticeCode = (["options_unavailable", "no_attractions", "invalid_filters", "attraction_unavailable", "analytics_unavailable"] as const).find((code) => code === state) ?? "analytics_unavailable";
+const noticeCode = (["options_unavailable", "no_attractions", "invalid_filters", "scope_mismatch", "scope_limit", "attraction_unavailable", "analytics_unavailable"] as const).find((code) => code === state) ?? "analytics_unavailable";
 const attractionData = attractionFixture(state);
 const attractionWorkspaceData = state === "large" ? {
   ...attractionData,

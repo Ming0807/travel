@@ -3,12 +3,13 @@ async page => {
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   page.on("console", message => {
+    if (message.location().url.endsWith("/favicon.ico")) return;
     if (message.type() === "error" || (message.type() === "warning" && /width\(|height\(/.test(message.text()))) errors.push(message.text());
   });
   await page.emulateMedia({ reducedMotion: "reduce" });
   const base = "http://127.0.0.1:4183";
   const widths = [360, 390, 768, 1024, 1440];
-  const notices = ["options_unavailable", "no_attractions", "invalid_filters", "attraction_unavailable", "analytics_unavailable"];
+  const notices = ["options_unavailable", "no_attractions", "invalid_filters", "scope_mismatch", "scope_limit", "attraction_unavailable", "analytics_unavailable"];
   let checks = 0;
   let keyboardRegions = 0;
 
@@ -36,6 +37,9 @@ async page => {
       await page.goto(`${base}/?page=attraction&state=${state}`);
       await page.locator("[data-kpi-level]").first().waitFor();
       await noOverflow(`${state}/${width}`);
+      const appliedScope = page.getByRole("group", { name: "ตัวกรองที่ใช้กับผลวิเคราะห์" });
+      if (await appliedScope.count() !== 1) throw new Error(`Missing applied scope: ${state}/${width}`);
+      if (await appliedScope.evaluate(el => el.scrollWidth > el.clientWidth + 1)) throw new Error(`Clipped applied scope: ${state}/${width}`);
       const clippedValues = await page.locator("[data-kpi-value]").evaluateAll(els => els.filter(el => el.scrollWidth > el.clientWidth + 1).length);
       if (clippedValues) throw new Error(`Clipped KPI: ${state}/${width}`);
       if (state === "normal" || state === "large") {

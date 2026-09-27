@@ -45,6 +45,19 @@ function getDetailGroup(group: string) {
 }
 
 describe("AttractionAnalyticsWorkspace layout", () => {
+  it("shows the applied date, channel, campaign and check-in scope next to the results", () => {
+    render(<AttractionAnalyticsWorkspace data={{ ...data, filters: {
+      ...data.filters, entryChannel: "nfc", campaignId: 7, checkinCodeId: 70101,
+    }, referenceOptions: { ...data.referenceOptions, checkinCodes: [
+      { ...data.referenceOptions.checkinCodes[0], campaignId: 7 },
+    ] } }} />);
+    const scope = screen.getByRole("group", { name: "ตัวกรองที่ใช้กับผลวิเคราะห์" });
+    expect(within(scope).getByText("2026-08-01 – 2026-08-31")).toBeInTheDocument();
+    expect(within(scope).getByText("NFC")).toBeInTheDocument();
+    expect(within(scope).getByText("แคมเปญ 7")).toBeInTheDocument();
+    expect(within(scope).getByText("จุดถ่ายภาพสังเคราะห์ (SYNTH-A-01)")).toBeInTheDocument();
+  });
+
   it("shows the generated timestamp in Bangkok independently of the server timezone", () => {
     const format = vi.spyOn(Date.prototype, "toLocaleString");
     const generatedAt = "2026-09-26T18:30:00Z";

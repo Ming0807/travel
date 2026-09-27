@@ -22,7 +22,7 @@ NFC tags open the same canonical `/c/[code]` route used by QR. The resolved chec
 
 - [x] Define immutable tag assignments, verification, lifecycle, replacement, revocation, and atomic audit.
 - [x] Add an additive registry migration and a read-only typed repository with isolated PostgreSQL tests.
-- [ ] Apply and independently verify the required migration chain in staging before any public NFC activation; current deployed schema is not established by local evidence or user-reported SQL application.
+- [ ] Apply and independently verify the required migration chain in staging before any public NFC activation. Deployed REST metadata now confirms the entry/NFC tables, four RPC paths, and key columns; the direct read-only catalog check returned `ENOTFOUND`, so trigger, grant, and function-body verification is still pending. See the Phase 23 status audit follow-up.
 - [x] Implement the entry-session/visit correlation contract and additive migration for channel analytics; preserve existing `visits.entry_channel` values. Local disposable-PostgreSQL evidence exists; deployment remains pending.
 
 ### Task 23.3: Canonical Resolution
@@ -38,7 +38,7 @@ NFC tags open the same canonical `/c/[code]` route used by QR. The resolved chec
 
 ### Task 23.5: Public Verification UX
 
-- [ ] Complete NFC-specific public verification/recovery UX for official domain, attraction/location context, and revoked/unknown tags before collecting personal data. Local success and failure UI now preserve NFC context, display configured official host and location, and provide physical-sign recovery guidance. Five viewport sizes passed component QA; deployed and physical-device acceptance remain pending.
+- [ ] Complete NFC-specific public verification/recovery UX for official domain, attraction/location context, and revoked/unknown tags before collecting personal data. Success/failure UI preserves NFC context, displays configured official host and location, and provides physical-sign recovery guidance. Five viewport sizes passed component QA; deployed rejection pages were smoke-checked at release `2792303`. Authenticated success and physical-device acceptance remain pending.
 
 Recovery checkpoint (2026-09-27): NFC failures no longer claim that the attraction
 itself is closed. The landing page retains `nfc_unavailable`, does not record a

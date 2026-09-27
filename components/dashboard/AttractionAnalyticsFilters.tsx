@@ -102,8 +102,8 @@ function AttractionAnalyticsFilterForm({
               <option value="">ทุกช่องทาง</option>
               <option value="qr">QR</option>
               <option value="nfc">NFC</option>
-              <option value="direct">Direct</option>
-              <option value="admin_import">Admin import</option>
+              <option value="direct">เข้าตรง</option>
+              <option value="admin_import">นำเข้าโดยผู้ดูแล</option>
               <option value="unknown">ไม่ทราบ</option>
             </select>
           </label>

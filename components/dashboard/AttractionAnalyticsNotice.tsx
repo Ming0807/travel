@@ -4,6 +4,8 @@ export type AttractionAnalyticsNoticeCode =
   | "options_unavailable"
   | "no_attractions"
   | "invalid_filters"
+  | "scope_mismatch"
+  | "scope_limit"
   | "attraction_unavailable"
   | "analytics_unavailable";
 
@@ -26,6 +28,18 @@ const COPY = {
     action: "เริ่มเลือกตัวกรองใหม่",
     failure: true,
   },
+  scope_mismatch: {
+    title: "จุดเช็กอินหรือแคมเปญไม่ตรงกับสถานที่",
+    description: "ตัวกรองนี้ไม่ได้อยู่ในสถานที่ที่เลือก หรือจุดเช็กอินไม่อยู่ในแคมเปญที่เลือก จึงยังไม่แสดงกราฟเพื่อไม่ให้ตีความว่าไม่มีผู้เข้าชม เลือกใหม่ในตัวกรองหรือล้างเฉพาะสองค่านี้",
+    action: "ล้างตัวกรองเฉพาะจุด",
+    failure: true,
+  },
+  scope_limit: {
+    title: "จุดเช็กอินมากเกินขอบเขตการอ่านสด",
+    description: "สถานที่นี้มีจุดเช็กอินมากกว่าที่หน้าวิเคราะห์อ่านได้ครบ ระบบจึงไม่แสดงกราฟหรือสรุปบางส่วนเป็นข้อมูลทั้งหมด กรุณาแจ้งผู้ดูแลระบบให้จัดเตรียมข้อมูลสรุปก่อนใช้ผลรายสถานที่",
+    action: "กลับภาพรวม",
+    failure: false,
+  },
   attraction_unavailable: {
     title: "สถานที่ที่เลือกไม่พร้อมวิเคราะห์",
     description: "สถานที่นี้อาจถูกปิดใช้งาน เลิกเผยแพร่ หรือไม่อยู่ในขอบเขตปัจจุบัน กรุณาเลือกสถานที่ใหม่ โดยระบบไม่ได้สลับข้อมูลให้อัตโนมัติ",
@@ -47,8 +61,8 @@ const COPY = {
 
 export function AttractionAnalyticsNotice({ code, href }: { code: AttractionAnalyticsNoticeCode; href: string }) {
   const copy = COPY[code];
-  const reset = code === "invalid_filters" || code === "attraction_unavailable";
-  const Icon = code === "invalid_filters" ? SlidersHorizontal : copy.failure ? WarningCircle : Buildings;
+  const reset = code === "invalid_filters" || code === "attraction_unavailable" || code === "scope_mismatch" || code === "scope_limit";
+  const Icon = code === "invalid_filters" || code === "scope_mismatch" ? SlidersHorizontal : copy.failure ? WarningCircle : Buildings;
   const ActionIcon = reset ? ArrowRight : ArrowClockwise;
 
   return (

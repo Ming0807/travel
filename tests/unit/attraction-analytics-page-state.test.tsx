@@ -96,6 +96,21 @@ describe("attraction analytics page states", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it.each([
+    { filter: { checkinCodeId: "999" }, label: "จุดเช็กอิน" },
+    { filter: { campaignId: "999" }, label: "แคมเปญ" },
+    { filter: { campaignId: "7", checkinCodeId: "70101" }, label: "แคมเปญ" },
+  ])("does not present an out-of-scope $label filter as zero activity", async ({ filter }) => {
+    render(await AttractionAnalyticsPage({ searchParams: Promise.resolve({
+      attractionId: "4", dateFrom: "2026-08-01", dateTo: "2026-08-31", evidenceScope: "pilot_only", entryChannel: "nfc", ...filter,
+    }) }));
+    expect(screen.getByRole("alert", { name: "จุดเช็กอินหรือแคมเปญไม่ตรงกับสถานที่" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "ผลวิเคราะห์สถานที่" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ล้างตัวกรองเฉพาะจุด" })).toHaveAttribute(
+      "href", "/admin/dashboard/attractions?attractionId=4&dateFrom=2026-08-01&dateTo=2026-08-31&evidenceScope=pilot_only&entryChannel=nfc",
+    );
+  });
+
   it("does not silently switch an unavailable explicit attraction to the first option", async () => {
     render(await AttractionAnalyticsPage({ searchParams: Promise.resolve({ attractionId: "99" }) }));
     expect(screen.getByRole("status", { name: "สถานที่ที่เลือกไม่พร้อมวิเคราะห์" })).toBeInTheDocument();
@@ -126,6 +141,14 @@ describe("attraction analytics page states", () => {
       checkinCodeId: "10", evidenceScope: "pilot_only", entryChannel: "nfc",
     });
     expect(screen.queryByText(/private-database-error/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "ผลวิเคราะห์สถานที่" })).not.toBeInTheDocument();
+  });
+
+  it("does not display partial funnel results when the check-in catalog exceeds its read limit", async () => {
+    mocks.getAnalytics.mockRejectedValue(new Error("ATTRACTION_ANALYTICS_CHECKIN_SCOPE_LIMIT"));
+    render(await AttractionAnalyticsPage({ searchParams: Promise.resolve({ attractionId: "4" }) }));
+    expect(screen.getByRole("status", { name: "จุดเช็กอินมากเกินขอบเขตการอ่านสด" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "กลับภาพรวม" })).toHaveAttribute("href", "/admin/dashboard");
     expect(screen.queryByRole("region", { name: "ผลวิเคราะห์สถานที่" })).not.toBeInTheDocument();
   });
 

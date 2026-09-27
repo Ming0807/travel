@@ -247,6 +247,15 @@ An administrator may explicitly select pilot or simulated data for QA, but the i
 
 Campaign filtering uses `checkin_codes.campaign_id`. Entry-channel filtering uses `visits.entry_channel`; records remain `unknown` when evidence does not support QR, NFC, direct, or import attribution. Phase 22 does not trust a client form field for channel attribution; Phase 23 must add a server-verifiable entry contract before QR/NFC labels are populated.
 
+The selected check-in code must belong to the selected attraction and, when a
+campaign is selected, to that campaign. A URL-supplied foreign or incompatible
+code is an invalid filter scope, not evidence of zero activity. The result
+header repeats the applied date, entry channel, campaign, and check-in point
+so screenshots and exported interpretations retain their population context.
+The live check-in reference read is bounded at 500 codes per attraction; a
+501st code blocks the workspace with an explicit limit notice rather than
+silently omitting funnel events from the result.
+
 The restricted attraction-improvement candidate re-reads `visits` and their
 `satisfaction_surveys` using the selected date range, evidence scope, entry
 channel, campaign, and check-in code. Current and comparison periods use the
