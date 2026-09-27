@@ -54,6 +54,7 @@ type InternalAttractionCard = AttractionCard & {
 };
 
 type PublicAttractionListOptions = {
+  failOnError?: boolean;
   search?: string;
   province?: string;
   type?: string;
@@ -608,6 +609,7 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
 
     if (options?.featuredSlugs && options.featuredSlugs.length > 0) {
       const { data, error } = await buildBaseQuery().in('slug', options.featuredSlugs).limit(limit);
+      if (error && options.failOnError) throw new Error("PUBLIC_ATTRACTION_LIST_UNAVAILABLE");
 
       if (!error && data && data.length > 0) {
         finalRows = (data as DbRecord[])
@@ -622,6 +624,7 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
       const { data, error } = await buildBaseQuery()
         .order("created_at", { ascending: false })
         .limit(remaining + usedSlugs.size); // Fetch extra in case of overlap
+      if (error && options?.failOnError) throw new Error("PUBLIC_ATTRACTION_LIST_UNAVAILABLE");
 
       if (!error && data && data.length > 0) {
         const fallbackRows = (data as DbRecord[])
@@ -644,6 +647,7 @@ export async function listPublicAttractionCards(limit = 16, options?: PublicAttr
       ? finalResults.map((card) => toPublicAttractionCard(card))
       : withReviewSummaries(supabase, finalResults);
   } catch {
+    if (options?.failOnError) throw new Error("PUBLIC_ATTRACTION_LIST_UNAVAILABLE");
     return [];
   }
 }
@@ -2062,7 +2066,7 @@ export async function listAvailablePublicRestaurantFoodTypes(options?: {
   }
 }
 
-export async function listPublicRestaurants(options?: { search?: string; foodType?: string; categorySlug?: string; province?: string; featuredSlugs?: string[]; limit?: number }): Promise<PublicRestaurantCard[]> {
+export async function listPublicRestaurants(options?: { search?: string; foodType?: string; categorySlug?: string; province?: string; featuredSlugs?: string[]; limit?: number; failOnError?: boolean }): Promise<PublicRestaurantCard[]> {
   try {
     const supabase = await createSupabaseServerClient();
     const liveProvinces = await listLiveDestinationProvinces();
@@ -2115,6 +2119,7 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
       .order("name_th", { ascending: true })
       .limit(options?.featuredSlugs ? options.featuredSlugs.length : Math.min(50, Math.max(1, options?.limit ?? 50)));
 
+    if (error && options?.failOnError) throw new Error("PUBLIC_RESTAURANT_LIST_UNAVAILABLE");
     if (error || !data || data.length === 0) return [];
     const results = (data as DbRecord[]).map((row) => mapRestaurantRow(row));
 
@@ -2123,6 +2128,7 @@ export async function listPublicRestaurants(options?: { search?: string; foodTyp
     }
     return results;
   } catch {
+    if (options?.failOnError) throw new Error("PUBLIC_RESTAURANT_LIST_UNAVAILABLE");
     return [];
   }
 }

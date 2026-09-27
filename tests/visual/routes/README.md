@@ -15,7 +15,8 @@ the itinerary readable.
 Open `http://127.0.0.1:4188/?admin` for the production admin composer with
 stubbed actions. Check long names, day/order changes, stop notes, repeated save,
 unsaved-publication guard, rejection messages, and the cover drawer at the same
-viewport widths. Do not open the media library in this isolated fixture; media
+viewport widths. Cover checks include cancellation, explicit clearing, and
+reopening after server acknowledgement. Do not open the media library in this isolated fixture; media
 selection/upload and persisted publication require the authenticated app.
 
 Run the automated component-browser checks with

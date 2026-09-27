@@ -259,24 +259,43 @@ export async function setStoryCoverFromLibraryAsset(
   assetId: string,
   altText: string,
 ): Promise<{ mediaId: number; storagePath: string }> {
+  return setCoverFromLibraryAsset("story", storyId, assetId, altText);
+}
+
+export async function setRouteCoverFromLibraryAsset(
+  routeId: number,
+  assetId: string,
+  altText: string,
+): Promise<{ mediaId: number; storagePath: string }> {
+  return setCoverFromLibraryAsset("route", routeId, assetId, altText);
+}
+
+async function setCoverFromLibraryAsset(
+  entityType: "story" | "route",
+  entityId: number,
+  assetId: string,
+  altText: string,
+): Promise<{ mediaId: number; storagePath: string }> {
   const supabase = createSupabaseServiceRoleClient();
+  const column = entityIdColumnByType[entityType];
+  const errorPrefix = entityType.toUpperCase();
   const { data: asset, error: assetError } = await supabase
     .from("media_assets")
     .select("storage_path, mime_type, lifecycle_status")
     .eq("id", assetId)
     .maybeSingle();
   if (assetError || !asset || asset.lifecycle_status !== "active" || !asset.mime_type?.startsWith("image/")) {
-    throw new Error("INVALID_STORY_COVER_ASSET");
+    throw new Error(`INVALID_${errorPrefix}_COVER_ASSET`);
   }
 
   const { data: existing, error: lookupError } = await supabase
     .from("content_media")
-    .select("media_id")
-    .eq("story_id", storyId)
+    .select("media_id, alt_text_th, is_active, lifecycle_status, is_cover")
+    .eq(column, entityId)
     .eq("storage_path", asset.storage_path)
     .limit(1)
     .maybeSingle();
-  if (lookupError) throw new Error("STORY_COVER_LOOKUP_FAILED");
+  if (lookupError) throw new Error(`${errorPrefix}_COVER_LOOKUP_FAILED`);
 
   let mediaId: number;
   if (existing) {
@@ -286,11 +305,11 @@ export async function setStoryCoverFromLibraryAsset(
       is_active: true,
       lifecycle_status: "active",
       is_cover: true,
-    }).eq("media_id", mediaId).eq("story_id", storyId);
-    if (error) throw new Error("STORY_COVER_SAVE_FAILED");
+    }).eq("media_id", mediaId).eq(column, entityId);
+    if (error) throw new Error(`${errorPrefix}_COVER_SAVE_FAILED`);
   } else {
     const { data: inserted, error } = await supabase.from("content_media").insert({
-      story_id: storyId,
+      [column]: entityId,
       media_type: "image",
       storage_path: asset.storage_path,
       alt_text_th: altText,
@@ -298,16 +317,30 @@ export async function setStoryCoverFromLibraryAsset(
       lifecycle_status: "active",
       is_cover: true,
     }).select("media_id").single();
-    if (error || !inserted) throw new Error("STORY_COVER_SAVE_FAILED");
+    if (error || !inserted) throw new Error(`${errorPrefix}_COVER_SAVE_FAILED`);
     mediaId = Number(inserted.media_id);
   }
 
   const { error: clearError } = await supabase.from("content_media")
     .update({ is_cover: false })
-    .eq("story_id", storyId)
+    .eq(column, entityId)
     .eq("is_cover", true)
     .neq("media_id", mediaId);
-  if (clearError) throw new Error("STORY_COVER_SAVE_FAILED");
+  if (clearError) {
+    // A rejected cleanup must not leave the newly selected cover flag behind.
+    const association = supabase.from("content_media");
+    const rollback = existing
+      ? association.update({
+        alt_text_th: existing.alt_text_th,
+        is_active: existing.is_active,
+        lifecycle_status: existing.lifecycle_status,
+        is_cover: existing.is_cover,
+      })
+      : association.delete();
+    const { error: rollbackError } = await rollback.eq("media_id", mediaId).eq(column, entityId);
+    if (rollbackError) throw new Error(`${errorPrefix}_COVER_ROLLBACK_FAILED`);
+    throw new Error(`${errorPrefix}_COVER_SAVE_FAILED`);
+  }
 
   return { mediaId, storagePath: asset.storage_path };
 }

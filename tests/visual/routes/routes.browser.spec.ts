@@ -51,6 +51,16 @@ test("admin edits can be saved repeatedly and drawers can be cancelled", async (
   await expect(drawer).toBeVisible();
   await drawer.getByRole("button", { name: "ยกเลิก", exact: true }).click();
   await expect(drawer).toHaveCount(0);
+  await page.getByRole("button", { name: "เปลี่ยนภาพปก", exact: true }).click();
+  await drawer.getByRole("button", { name: "เอาออก", exact: true }).click();
+  await expect(drawer.getByRole("status")).toContainText("ยังไม่ได้บันทึก");
+  await drawer.getByRole("button", { name: "บันทึกรูปภาพ", exact: true }).click();
+  await expect(drawer).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "เลือกรูปภาพปก", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "เลือกรูปภาพปก", exact: true }).click();
+  await expect(drawer.getByText("ยังไม่ได้เลือกรูปภาพ", { exact: true })).toBeVisible();
+  await expect(drawer.getByRole("button", { name: "บันทึกรูปภาพ", exact: true })).toBeDisabled();
+  await drawer.getByRole("button", { name: "ยกเลิก", exact: true }).click();
   await page.getByRole("button", { name: "แก้ไขข้อมูลหลัก", exact: true }).click();
   await expect(page.getByRole("textbox", { name: /ชื่อเส้นทาง \(TH\)/ })).toBeVisible();
   await checkLayout(page);

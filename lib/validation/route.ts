@@ -64,6 +64,10 @@ export const adminRouteStopsBatchSchema = z.object({
   stops: z.array(adminRouteStopMutationSchema)
 });
 
+export const adminRouteCoverSchema = z.object({
+  assetId: z.string().uuid().nullable(),
+}).strict();
+
 export type AdminRouteFilters = z.infer<typeof adminRouteFiltersSchema>;
 export type AdminRouteMutationInput = z.infer<typeof adminRouteMutationSchema>;
 export type AdminRouteStopMutationInput = z.infer<typeof adminRouteStopMutationSchema>;

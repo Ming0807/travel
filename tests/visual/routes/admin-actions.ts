@@ -9,6 +9,13 @@ export async function updateRouteAction(_id: number, _state: State, _form: FormD
   return { success: true };
 }
 
+export async function saveRouteCoverAction(_id: number, input: { assetId: string | null }) {
+  return { success: true, data: {
+    mediaId: input.assetId ? 42 : null,
+    imageUrl: input.assetId ? "/homepage-editorial/forest.webp" : null,
+  } };
+}
+
 export async function updateRouteStopsAction(_id: number, _state: State, _form: FormData) {
   return { success: true };
 }

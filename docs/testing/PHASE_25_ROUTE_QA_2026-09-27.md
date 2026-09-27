@@ -53,6 +53,45 @@ Regenerable screenshots are local, ignored artifacts under `output/playwright/`:
 Reproduction: `pnpm exec playwright test --config tests/visual/routes/playwright.config.ts`.
 Fixture notes: `tests/visual/routes/README.md`.
 
+## Cover And Selection Hardening Checkpoint
+
+The follow-up fixes replace unchecked numeric/storage-path cover writes with a
+strict library UUID action, keep metadata/status persistence separate, ignore
+filters when their controls disappear, and distinguish selected-content load
+failure from successful empty results. Selection retry keeps both sanitized
+attraction and restaurant query values. No production records were changed.
+
+| Gate | Result | Qualification |
+| --- | --- | --- |
+| Full Vitest sweep | 443 files and 3,396 tests passed; 2 files and 41 tests skipped | Before the final cover-compensation refinement |
+| Final focused sweep | 17 files and 117 tests passed | After compensation; includes route actions/forms, selection failure, and shared story-cover regressions |
+| Targeted cover-compensation tests | 9 tests passed | New association removal, existing-field restoration, and rollback failure |
+| Route component browser suite | 9 checks passed at 360/768/1440 | Includes clear-save-reopen of the cover drawer, repeated stop saves, and map-tile failure; mutations remain stubbed |
+| Production build | Exit 0; 66/66 generated pages | TypeScript phase passed after the final code changes; local Node 26 differs from deployment Node 22 |
+| Targeted ESLint | Exit 0 with `--max-warnings=0` | All changed production modules, new tests, and browser fixture |
+| Whole-repository lint | Exit 0; no errors | Existing warning in `tests/visual/dashboard/research-browser-qa.js` remains unrelated |
+| Real-app routes/360 smoke | 2 tests passed | Against the local app at port 3001; still an empty-route/public-360 check, not authenticated CMS acceptance |
+
+The fixture's working directory is explicitly repository-root relative so the
+same browser command works from the root. A real-app smoke initially timed out
+because its configured port 3001 had no running server while the generic test
+command started port 3000. After explicitly starting the local app on 3001,
+the same smoke passed; no product code or assertions were weakened.
+
+The shared cover helper restores the selected association or deletes its new
+entity-owned link if clearing competing flags returns an error. This is
+best-effort compensation, not an atomic database transaction. Ambiguous network
+outcomes, failure of the compensation itself, and concurrent editors remain
+limitations; a transactional cover-swap RPC would require a separate reviewed
+migration. Tests do not certify those concurrency guarantees.
+
+A read-only route metadata check found four stored routes, fourteen stop rows,
+and no active published routes. It inspected counts only, not private tourist
+data. A production HTTP smoke confirmed the preceding release `76e5f6cc06f7`;
+dependency readiness was skipped because the readiness secret was not provided.
+That smoke does not confirm deployment of this follow-up batch or authenticated
+CMS persistence.
+
 ## Remaining Acceptance
 
 1. Publish one approved route with real Na Tham stops; verify cover, daily order,
@@ -62,7 +101,8 @@ Fixture notes: `tests/visual/routes/README.md`.
    public directory and homepage to verify persistence and cache invalidation.
 3. Verify the external Maps handoff on physical iPhone/Android devices. The
    responsive Chromium checks do not certify Safari or installed map apps.
-4. Confirm the Vercel deployment succeeds. A local build or successful Git push
-   is not evidence that the remote deployment passed.
+4. Confirm the Vercel deployment for the cover/selection follow-up succeeds.
+   The preceding release was confirmed by its health response; a local build
+   or successful Git push alone is not evidence for the new remote deployment.
 
 These acceptance gates intentionally remain unchecked in the phase task file.

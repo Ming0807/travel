@@ -31,12 +31,13 @@ export function RouteDiscovery({ routes }: { routes: PublicRouteCardData[] }) {
   const [duration, setDuration] = useState<DurationFilter>("all");
   const showFilters = routes.length > 3;
   const filteredRoutes = useMemo(() => {
+    if (!showFilters) return routes;
     const normalizedQuery = query.trim().toLocaleLowerCase("th-TH");
     return routes.filter((route) => {
       const searchableText = `${route.name} ${route.description}`.toLocaleLowerCase("th-TH");
       return searchableText.includes(normalizedQuery) && matchesDuration(route.days, duration);
     });
-  }, [duration, query, routes]);
+  }, [duration, query, routes, showFilters]);
   const hasActiveFilter = query.trim().length > 0 || duration !== "all";
 
   if (routes.length === 0) {

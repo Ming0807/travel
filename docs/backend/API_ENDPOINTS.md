@@ -208,6 +208,19 @@ permissions and verify route readiness before a route becomes public. These
 are authenticated Server Actions, not anonymous REST endpoints. All mutations
 retain audit logging and invalidate affected public route pages.
 
+`saveRouteCoverAction(routeId, { assetId })` requires `route.update` and accepts
+only a Media Library UUID, or `null` to clear the cover. It resolves an active
+image asset on the server and returns the saved association's `mediaId` and
+canonical `imageUrl`. It does not accept a storage path or change route metadata
+or status. Metadata/create actions reject embedded cover mutations.
+
+Reusing a library file creates or updates an association owned by the destination
+route; it never moves another entity's media record or adds a second entity FK.
+A rejected competing-cover cleanup compensates by restoring the selected
+association or removing the new association. Compensation is best-effort, not
+an atomic multi-editor transaction; rollback failure is not acknowledged as
+a successful save. No SQL migration is required for this action.
+
 ## NFC Management Server Actions
 
 `saveAdminNfcAction` creates a draft or applies a version-checked verification/status

@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
 import { evaluateRouteReadiness, type RouteReadinessIssue, type RouteStopForReadiness } from "@/lib/routes/route-readiness";
-import { adminRouteMutationSchema, adminRouteStopsBatchSchema } from "@/lib/validation/route";
-import { clearCoverMediaForEntity, linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
+import { adminRouteCoverSchema, adminRouteMutationSchema, adminRouteStopsBatchSchema } from "@/lib/validation/route";
+import { clearCoverMediaForEntity, setRouteCoverFromLibraryAsset } from "@/lib/repositories/admin-media.repository";
+import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import {
   createAdminRoute,
   updateAdminRoute,
@@ -51,6 +52,53 @@ function readinessError(issues: RouteReadinessIssue[]): ActionResult | null {
   return firstIssue ? { success: false, error: readinessMessages[firstIssue] } : null;
 }
 
+function hasCoverMutation(formData: FormData) {
+  return ["coverMediaId", "coverStoragePath"].some((key) => String(formData.get(key) ?? "").trim() !== "")
+    || ["set", "clear"].includes(String(formData.get("coverMediaAction")));
+}
+
+export async function saveRouteCoverAction(routeId: number, input: unknown): Promise<ActionResult<{ mediaId: number | null; imageUrl: string | null }>> {
+  try {
+    const guard = await requirePermission("route.update");
+    const parsed = adminRouteCoverSchema.safeParse(input);
+    if (!Number.isSafeInteger(routeId) || routeId <= 0 || !parsed.success) {
+      return { success: false, error: "กรุณาเลือกรูปภาพปกจากคลังสื่ออีกครั้ง" };
+    }
+    const route = await getAdminRouteById(routeId);
+    if (!route) return { success: false, error: "ไม่พบเส้นทางนี้ อาจถูกลบหรือย้ายแล้ว" };
+
+    const cover = parsed.data.assetId
+      ? await setRouteCoverFromLibraryAsset(routeId, parsed.data.assetId, route.name_th)
+      : null;
+    if (!cover) await clearCoverMediaForEntity("route", routeId);
+
+    await logAdminMutation({
+      actor: guard.actor,
+      action: "route.cover.save",
+      entityType: "suggested_route",
+      entityId: routeId,
+      newValues: { coverMediaId: cover?.mediaId ?? null },
+    });
+    revalidatePath(`/admin/routes/${routeId}/edit`);
+    revalidatePath("/admin/routes");
+    if (route.is_active && route.is_published) {
+      revalidatePath("/routes", "layout");
+      revalidatePath(`/routes/${route.slug}`);
+      revalidatePath("/");
+    }
+    return { success: true, data: {
+      mediaId: cover?.mediaId ?? null,
+      imageUrl: cover ? siteMediaImageUrl(cover.storagePath) : null,
+    } };
+  } catch (error) {
+    if (error instanceof AdminAuthError) return { success: false, error: error.message };
+    if (error instanceof Error && error.message === "INVALID_ROUTE_COVER_ASSET") {
+      return { success: false, error: "รูปนี้ไม่พร้อมใช้งาน กรุณาเลือกจากคลังสื่ออีกครั้ง" };
+    }
+    return { success: false, error: "ยังบันทึกรูปภาพปกไม่ได้ กรุณาลองอีกครั้ง" };
+  }
+}
+
 export async function createRouteAction(_prevState: ActionResult<{ id: number; slug: string }>, formData: FormData): Promise<ActionResult<{ id: number; slug: string }>> {
   try {
     const guard = await requirePermission("route.create");
@@ -58,6 +106,7 @@ export async function createRouteAction(_prevState: ActionResult<{ id: number; s
     if (!parsed.success) {
       return { success: false, error: "กรุณาตรวจข้อมูลเส้นทางอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
+    if (hasCoverMutation(formData)) return { success: false, error: "เลือกรูปภาพปกในตัวแก้ไขเส้นทางหลังสร้างฉบับร่าง" };
 
     const existingSlug = await findRouteBySlug(parsed.data.slug);
     if (existingSlug !== null) {
@@ -66,12 +115,6 @@ export async function createRouteAction(_prevState: ActionResult<{ id: number; s
 
     const draftInput = { ...parsed.data, isPublished: false, isActive: true };
     const created = await createAdminRoute(draftInput);
-
-    // Link cover media if provided
-    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
-    if (coverMediaId && Number.isFinite(coverMediaId)) {
-      await linkMediaToEntity(coverMediaId, "route", created.route_id);
-    }
 
     await logAdminMutation({
       actor: guard.actor,
@@ -96,6 +139,7 @@ export async function updateRouteAction(routeId: number, _prevState: ActionResul
     if (!parsed.success) {
       return { success: false, error: "กรุณาตรวจข้อมูลเส้นทางอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
+    if (hasCoverMutation(formData)) return { success: false, error: "กรุณาบันทึกรูปภาพผ่านส่วนรูปปกของตัวแก้ไขเส้นทาง" };
 
     const existingSlug = await findRouteBySlug(parsed.data.slug, routeId);
     if (existingSlug !== null) {
@@ -111,19 +155,6 @@ export async function updateRouteAction(routeId: number, _prevState: ActionResul
 
     const updated = await updateAdminRoute(routeId, parsed.data);
 
-    const coverMediaAction = formData.get("coverMediaAction");
-
-    // Link or clear cover media only when the cover editor explicitly asks for it.
-    const coverStoragePath = formData.get("coverStoragePath");
-    const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
-    if (coverMediaAction === "clear") {
-      await clearCoverMediaForEntity("route", updated.route_id);
-    } else if (coverMediaAction === "set" && typeof coverStoragePath === "string" && coverStoragePath.trim() !== "") {
-      await linkMediaToEntityByStoragePath(coverStoragePath.trim(), "route", updated.route_id);
-    } else if (coverMediaId && Number.isFinite(coverMediaId)) {
-      await linkMediaToEntity(coverMediaId, "route", updated.route_id);
-    }
-
     await logAdminMutation({
       actor: guard.actor,
       action: "route.update",
@@ -134,6 +165,7 @@ export async function updateRouteAction(routeId: number, _prevState: ActionResul
     });
 
     revalidatePath("/admin/routes");
+    revalidatePath(`/admin/routes/${routeId}/edit`);
     if (old.is_published && old.is_active) {
       revalidatePath("/routes", "layout");
       revalidatePath(`/routes/${old.slug}`);

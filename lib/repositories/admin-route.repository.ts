@@ -55,15 +55,14 @@ function mapRoute(rawRow: unknown, stopCounts = new Map<number, number>()): Admi
   };
 }
 
-function toPayload(input: AdminRouteMutationInput) {
+function toPayload(input: AdminRouteMutationInput, includeStatus = true) {
   return {
     name_th: input.nameTh,
     slug: input.slug,
     name_en: input.nameEn,
     description_th: input.descriptionTh,
     description_en: input.descriptionEn,
-    is_published: input.isPublished,
-    is_active: input.isActive
+    ...(includeStatus ? { is_published: input.isPublished, is_active: input.isActive } : {})
   };
 }
 
@@ -165,7 +164,7 @@ export async function updateAdminRoute(routeId: number, input: AdminRouteMutatio
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("suggested_routes")
-    .update(toPayload(input))
+    .update(toPayload(input, false))
     .eq("route_id", routeId)
     .select("*")
     .single();

@@ -34,6 +34,10 @@ export default async function RoutesPage({ searchParams }: { searchParams: Promi
   const restaurantParam = typeof resolvedParams.restaurants === "string" ? resolvedParams.restaurants : undefined;
   const selectedRestaurantSlugs = parseTripPlanSelection(restaurantParam);
   const settingsService = new SettingsService();
+  const retryParams = new URLSearchParams();
+  if (selectedSlugs.length > 0) retryParams.set("selected", selectedSlugs.join(","));
+  if (selectedRestaurantSlugs.length > 0) retryParams.set("restaurants", selectedRestaurantSlugs.join(","));
+  const selectionRetryHref = retryParams.size > 0 ? `/routes?${retryParams.toString()}` : "/routes";
   const [routeState, heroSettings, selectedAttractions, selectedRestaurants, homepageMedia] = await Promise.all([
     listPublicRoutes(24)
       .then((items) => ({ items, loadError: false }))
@@ -49,11 +53,13 @@ export default async function RoutesPage({ searchParams }: { searchParams: Promi
           exactFeaturedOnly: true,
           includeReviewSummaries: false,
           preferThumbnails: true,
-        })
-      : Promise.resolve([]),
+          failOnError: true,
+        }).then((items) => ({ items, loadError: false })).catch(() => ({ items: [], loadError: true }))
+      : Promise.resolve({ items: [], loadError: false }),
     selectedRestaurantSlugs.length > 0
-      ? listPublicRestaurants({ featuredSlugs: selectedRestaurantSlugs })
-      : Promise.resolve([]),
+      ? listPublicRestaurants({ featuredSlugs: selectedRestaurantSlugs, failOnError: true })
+        .then((items) => ({ items, loadError: false })).catch(() => ({ items: [], loadError: true }))
+      : Promise.resolve({ items: [], loadError: false }),
     settingsService.getSetting("homepage_highlights", { routesCover: "" }).catch(() => ({ routesCover: "" })),
   ]);
   const routes = routeState.items;
@@ -82,8 +88,18 @@ export default async function RoutesPage({ searchParams }: { searchParams: Promi
       <PublicPageFrame variant="directory" className="pt-9 sm:pt-11">
         <p className="border-l-2 border-[var(--public-coral)] pl-3 text-sm text-black/65">รายการที่เลือกเชื่อมกับเนื้อหาที่เผยแพร่จริง</p>
 
-        {selectedSlugs.length > 0 ? <SelectedTripPlan attractions={selectedAttractions} /> : null}
-        {selectedRestaurantSlugs.length > 0 ? <SelectedRestaurantPlan restaurants={selectedRestaurants} /> : null}
+        {selectedSlugs.length > 0 ? selectedAttractions.loadError ? (
+          <section className="mt-8" aria-label="สถานที่ที่เลือก">
+            <PublicErrorState title="โหลดสถานที่ที่เลือกไม่สำเร็จ" description="ยังตรวจสอบสถานที่ในทริปไม่ได้ รายการที่เลือกยังอยู่ กรุณาลองโหลดอีกครั้ง"
+              action={<PublicButton href={selectionRetryHref}>ลองโหลดรายการที่เลือกอีกครั้ง</PublicButton>} />
+          </section>
+        ) : <SelectedTripPlan attractions={selectedAttractions.items} /> : null}
+        {selectedRestaurantSlugs.length > 0 ? selectedRestaurants.loadError ? (
+          <section className="mt-8" aria-label="ร้านอาหารที่เลือก">
+            <PublicErrorState title="โหลดร้านอาหารที่เลือกไม่สำเร็จ" description="ยังตรวจสอบร้านอาหารในทริปไม่ได้ รายการที่เลือกยังอยู่ กรุณาลองโหลดอีกครั้ง"
+              action={<PublicButton href={selectionRetryHref}>ลองโหลดรายการที่เลือกอีกครั้ง</PublicButton>} />
+          </section>
+        ) : <SelectedRestaurantPlan restaurants={selectedRestaurants.items} /> : null}
 
         <section aria-labelledby="routes-result-heading" className="mt-9">
           <div className="border-b border-black/10 pb-4">
@@ -96,7 +112,7 @@ export default async function RoutesPage({ searchParams }: { searchParams: Promi
               <PublicErrorState
                 title="โหลดเส้นทางท่องเที่ยวไม่สำเร็จ"
                 description="ระบบยังตรวจสอบเส้นทางที่เผยแพร่ไม่ได้ในขณะนี้ กรุณาลองโหลดอีกครั้ง"
-                action={<PublicButton href="/routes">ลองโหลดอีกครั้ง</PublicButton>}
+                action={<PublicButton href={selectionRetryHref}>ลองโหลดอีกครั้ง</PublicButton>}
               />
             </div>
           ) : (

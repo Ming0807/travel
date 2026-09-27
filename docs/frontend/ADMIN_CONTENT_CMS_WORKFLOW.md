@@ -367,6 +367,12 @@ Recommended workflow:
 
 Routes should not create duplicate attraction records. Every route stop should reference an existing attraction.
 
+The route cover picker uses the shared Media Library. Select an image, then save
+the cover separately from basic information or publication status. Clearing a
+cover removes its cover assignment, not the library file or another content
+record's image. Cancel does not save. Failed saves retain the drawer and an
+error message; the editor updates its saved preview only after server success.
+
 ## Scenario: Manage QR And Photo Spot Content
 
 QR content should be operational and reliable.

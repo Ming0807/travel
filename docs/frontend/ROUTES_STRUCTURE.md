@@ -253,6 +253,10 @@ the route error boundary instead of appearing as an empty list.
 `/routes` uses an editorial list for the small pilot catalog. Search and day
 filters appear only above three published routes. Selected attraction and
 restaurant handoffs remain separate from the curated-route list.
+When the directory shrinks to three or fewer routes, hidden search/day filters
+stop excluding results. Selected attraction and restaurant lookups distinguish
+a successful empty result from a load failure. Each failure can be retried
+without losing either sanitized selection; the unaffected plan remains usable.
 
 `/routes/[slug]` groups stops by stored day and display order, includes any
 route-specific stop note, and links each stop to its attraction record. An
@@ -276,6 +280,11 @@ show their rejection reason instead of silently failing.
 The embedded route forms use inline save bars rather than a global floating
 toolbar. Cover-drawer cancellation closes the drawer without navigation;
 repeated successful stop saves clear the local publication guard each time.
+The cover drawer saves independently from route metadata using a library asset
+UUID. A failed request leaves the drawer open for retry; only a server-confirmed
+image or explicit clear updates the editor's saved preview. Refreshing the edit
+page reads the saved entity-owned cover association. Metadata persistence does
+not write publication/activation columns; dedicated status actions own those.
 
 `/360-vista` reads published panorama and external 360 references from active
 Yala attractions. External links must use HTTPS, open in a new tab, and be

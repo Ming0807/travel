@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { updateRouteAction } from "@/app/actions/admin-route-actions";
+import { saveRouteCoverAction, updateRouteAction } from "@/app/actions/admin-route-actions";
 import { AdminFormErrorSummary, AdminSaveBar, type AdminFormActionState } from "@/components/admin/forms/AdminFormUX";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import type { AdminRouteRow } from "@/lib/repositories/admin-route.repository";
@@ -13,11 +13,6 @@ type SectionFormProps = {
   coverMediaUrl?: string | null;
   onCoverChange?: (mediaId: number | null, mediaUrl: string | null) => void;
 };
-
-function toFiniteMediaId(value: unknown): number | null {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-}
 
 export function HeaderForm({ route, onClose }: SectionFormProps) {
   const action = updateRouteAction.bind(null, route.route_id);
@@ -219,46 +214,47 @@ export function SettingsForm({ route, onClose }: SectionFormProps) {
   );
 }
 
-export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: cmUrl, onCoverChange }: SectionFormProps) {
-  const action = updateRouteAction.bind(null, route.route_id);
-  const [state, formAction, isPending] = useActionState<AdminFormActionState<{ id: number; slug: string }>, FormData>(action, {
-    success: false,
-  });
+export function CoverForm({ route, onClose, coverMediaUrl: cmUrl, onCoverChange }: SectionFormProps) {
   const [imagePreviewUrl, setImagePreviewUrl] = useState(cmUrl ?? "");
-  const [currentMediaId, setCurrentMediaId] = useState<number | null>(() => toFiniteMediaId(cmId));
-  const [coverMediaAction, setCoverMediaAction] = useState<"none" | "set" | "clear">("none");
-  const [coverStoragePath, setCoverStoragePath] = useState("");
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isDirty = selectedAssetId !== null || imagePreviewUrl !== (cmUrl ?? "");
 
-  useEffect(() => {
-    if (state?.success) {
-      if (onCoverChange) onCoverChange(currentMediaId, imagePreviewUrl || null);
+  const handleSave = async () => {
+    if (isPending || !isDirty || (imagePreviewUrl && !selectedAssetId)) return;
+    setIsPending(true);
+    setError(null);
+    try {
+      const result = await saveRouteCoverAction(route.route_id, { assetId: imagePreviewUrl ? selectedAssetId : null });
+      if (!result.success || !result.data) {
+        setError(result.error ?? "ยังบันทึกรูปภาพปกไม่ได้ กรุณาลองอีกครั้ง");
+        return;
+      }
+      onCoverChange?.(result.data.mediaId, result.data.imageUrl);
       onClose();
+    } catch {
+      setError("เชื่อมต่อไม่สำเร็จ กรุณาลองอีกครั้ง");
+    } finally {
+      setIsPending(false);
     }
-  }, [currentMediaId, imagePreviewUrl, onClose, onCoverChange, state?.success]);
+  };
 
   return (
-    <form action={formAction} className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
-        <AdminFormErrorSummary error={state?.error} fieldErrors={state?.fieldErrors} />
+        {error ? <div role="alert"><AdminFormErrorSummary error={error} /></div> : null}
+        {isDirty ? <p role="status" className="text-sm font-bold text-amber-800">มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก</p> : null}
 
-        {/* Hidden fields */}
-        <input type="hidden" name="nameTh" value={route.name_th} />
-        <input type="hidden" name="slug" value={route.slug} />
-        <input type="hidden" name="nameEn" value={route.name_en ?? ""} />
-        <input type="hidden" name="descriptionTh" value={route.description_th ?? ""} />
-        <input type="hidden" name="descriptionEn" value={route.description_en ?? ""} />
-        <input type="hidden" name="isPublished" value={route.is_published ? "true" : "false"} />
-        <input type="hidden" name="isActive" value={route.is_active ? "true" : "false"} />
-
-        <div className="space-y-4">
+        <fieldset disabled={isPending} className="space-y-4">
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
             <div className="aspect-video bg-slate-100">
               {imagePreviewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={imagePreviewUrl}
-                  alt="Cover preview"
+                  alt={`ภาพปก ${route.name_th}`}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -280,9 +276,7 @@ export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: c
                   type="button"
                   onClick={() => {
                      setImagePreviewUrl("");
-                     setCurrentMediaId(null);
-                     setCoverMediaAction("clear");
-                     setCoverStoragePath("");
+                     setSelectedAssetId(null);
                    }}
                   className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
                 >
@@ -294,33 +288,29 @@ export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: c
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-500">
             ใช้ปุ่ม &ldquo;เลือกจาก Media Library&rdquo; ด้านบนเพื่อเลือกรูปภาพ การวาง URL ด้วยตนเองไม่รองรับในระบบปัจจุบัน
           </div>
-        </div>
+        </fieldset>
       </div>
       <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-4">
         <AdminSaveBar
           isPending={isPending}
+          disabled={!isDirty || (!!imagePreviewUrl && !selectedAssetId)}
           onCancel={onClose}
+          onSubmit={handleSave}
           submitLabel="บันทึกรูปภาพ"
         />
       </div>
-
-      <input type="hidden" name="coverMediaId" value={currentMediaId ? String(currentMediaId) : ""} />
-      <input type="hidden" name="coverMediaAction" value={coverMediaAction} />
-      <input type="hidden" name="coverStoragePath" value={coverStoragePath} />
 
       <MediaPickerModal
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelectAsset={(asset) => {
-          const mediaId = toFiniteMediaId(asset.id);
-          setCurrentMediaId(mediaId);
+          setSelectedAssetId(asset.id);
           setImagePreviewUrl(asset.url);
-          setCoverStoragePath(asset.storage_path);
-          setCoverMediaAction("set");
+          setError(null);
         }}
         onSelect={() => {}}
         title="เลือกภาพปกเส้นทาง"
       />
-    </form>
+    </div>
   );
 }

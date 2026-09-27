@@ -22,6 +22,7 @@ Help visitors choose a small number of useful, truthful itineraries through the 
 - [x] Show real cover, day count, and stop count; handle zero routes and load failure honestly.
 - [x] Preserve selection handoff from attraction and restaurant lists.
 - [x] Split selected attraction/restaurant navigation into overlapping mobile-safe segments; never silently truncate the full selection.
+- [x] Ignore hidden filters when the directory shrinks; distinguish selection load failure from unpublished content and preserve both selections on retry.
 
 ### 25.2 Route detail and navigation
 
@@ -36,6 +37,7 @@ Help visitors choose a small number of useful, truthful itineraries through the 
 - [x] Exclude attractions outside the current public launch scope from add choices.
 - [x] Prevent publishing while local stop edits are unsaved and show server rejection reasons in both review and list views.
 - [x] Keep embedded save bars inline without mobile overflow; cover cancellation closes the drawer and repeated saves clear the publication guard.
+- [x] Save library UUID covers independently from metadata/status; acknowledge only the server-confirmed preview or explicit clear.
 
 ### 25.4 Publication and data integrity
 
@@ -43,6 +45,7 @@ Help visitors choose a small number of useful, truthful itineraries through the 
 - [x] Keep publication and activation behind their dedicated permissions and audit trail.
 - [x] Validate changed stops on published routes and reactivation of published routes.
 - [x] Revalidate public route pages after metadata, stop, or status changes.
+- [x] Keep reused cover associations entity-owned, compensate rejected cover cleanup, and exclude status columns from metadata persistence.
 
 ### 25.5 Verification and release
 
