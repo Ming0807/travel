@@ -50,6 +50,7 @@ Help visitors choose a small number of useful, truthful itineraries through the 
 ### 25.5 Verification and release
 
 - [x] Run relevant unit tests, typecheck, lint, production build, and responsive browser checks after integration.
+- [x] Confirm the deployed cover/selection code release by production health and public/security HTTP smoke; dependency readiness remains unverified.
 - [ ] Check one real published Na Tham route in staging/production, including map coordinates and mobile directions. This requires an approved route with real stops and is not satisfied by mock data.
 - [ ] Confirm an administrator can create, edit, preview, publish, unpublish, and restore a route with the deployed database.
 

@@ -71,6 +71,8 @@ attraction and restaurant query values. No production records were changed.
 | Targeted ESLint | Exit 0 with `--max-warnings=0` | All changed production modules, new tests, and browser fixture |
 | Whole-repository lint | Exit 0; no errors | Existing warning in `tests/visual/dashboard/research-browser-qa.js` remains unrelated |
 | Real-app routes/360 smoke | 2 tests passed | Against the local app at port 3001; still an empty-route/public-360 check, not authenticated CMS acceptance |
+| Node test suite | 6 tests passed | Bangkok date bounds and entry-cohort filter support |
+| Post-push production HTTP smoke | Exit 0; code release `acbc81177c3b` confirmed | Six executed checks passed; dependency readiness skipped without `HEALTH_CHECK_SECRET` |
 
 The fixture's working directory is explicitly repository-root relative so the
 same browser command works from the root. A real-app smoke initially timed out
@@ -87,10 +89,13 @@ migration. Tests do not certify those concurrency guarantees.
 
 A read-only route metadata check found four stored routes, fourteen stop rows,
 and no active published routes. It inspected counts only, not private tourist
-data. A production HTTP smoke confirmed the preceding release `76e5f6cc06f7`;
-dependency readiness was skipped because the readiness secret was not provided.
-That smoke does not confirm deployment of this follow-up batch or authenticated
-CMS persistence.
+data. After push, the production health endpoint returned code release
+`acbc81177c3b`. The release smoke also confirmed public homepage/attractions,
+admin login, five required security headers, and the anonymous admin redirect.
+The script labels seven checks passed, but one was skipped: dependency readiness
+was not executed because the readiness secret was not provided. This confirms
+deployment of the code batch, not authenticated CMS persistence or dependency
+readiness. Later documentation-only commits do not change the verified code.
 
 ## Remaining Acceptance
 
@@ -101,8 +106,8 @@ CMS persistence.
    public directory and homepage to verify persistence and cache invalidation.
 3. Verify the external Maps handoff on physical iPhone/Android devices. The
    responsive Chromium checks do not certify Safari or installed map apps.
-4. Confirm the Vercel deployment for the cover/selection follow-up succeeds.
-   The preceding release was confirmed by its health response; a local build
-   or successful Git push alone is not evidence for the new remote deployment.
+4. Run protected dependency-readiness checks with the authorized smoke secret.
+   The new code release is live, but liveness/public HTTP checks alone do not
+   certify this separate readiness gate.
 
 These acceptance gates intentionally remain unchecked in the phase task file.
