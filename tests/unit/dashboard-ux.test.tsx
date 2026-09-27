@@ -458,6 +458,23 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
   });
 
+  it("ไม่แสดงเส้นแนวโน้มจากข้อมูลที่อ่านไม่ครบ", () => {
+    const { container } = render(<TrendChart points={[{ label: "2026-07-01", value: 4 }]} incomplete />);
+    expect(screen.getByRole("status")).toHaveTextContent("ข้อมูลยังอ่านไม่ครบ");
+    expect(container.querySelector('[data-chart-engine="recharts"]')).not.toBeInTheDocument();
+    expect(screen.queryByText("รวมในช่วงที่เลือก")).not.toBeInTheDocument();
+  });
+
+  it("อธิบายวันศูนย์เมื่อกราฟมีวันที่ไม่มี Visit จริง", () => {
+    render(<TrendChart points={[
+      { label: "2026-07-01", value: 4 },
+      { label: "2026-07-02", value: 0 },
+      { label: "2026-07-03", value: 2 },
+    ]} />);
+    expect(screen.getByText(/วันที่ไม่มีรายการเข้าชม.*แสดงเป็น 0/)).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "ข้อมูลแนวโน้มรายการเข้าชม" })).toHaveTextContent("0");
+  });
+
   it("ยุบการแจ้งเตือนเป็นค่าเริ่มต้นและจำกัดข้อความบนหน้าหลัก", () => {
     render(
       <DashboardAlertBar

@@ -451,9 +451,10 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     expect(result.kpis.find((k) => k.key === "top_attraction")?.note).toContain("1 visits");
 
     // Executive: 1 visit on 2026-05-01
-    expect(result.executive.visitTrend).toHaveLength(1);
+    expect(result.executive.visitTrend).toHaveLength(31);
     expect(result.executive.visitTrend[0].label).toBe("2026-05-01");
     expect(result.executive.visitTrend[0].value).toBe(1);
+    expect(result.executive.visitTrend[1]).toEqual({ label: "2026-05-02", value: 0 });
 
     // Top attractions
     expect(result.executive.topAttractions).toHaveLength(1);
@@ -492,8 +493,9 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     // Average satisfaction: (4 + 5) / 2 = 4.5
     expect(result.executive.topAttractions[0].averageSatisfaction).toBe(4.5);
 
-    // Visit trend: 3 dates
-    expect(result.executive.visitTrend).toHaveLength(3);
+    // The complete May range includes zero-Visit dates after May 3.
+    expect(result.executive.visitTrend).toHaveLength(31);
+    expect(result.executive.visitTrend[3]).toEqual({ label: "2026-05-04", value: 0 });
   });
 
   // ── 6d. Multiple attractions ─────────────────
@@ -1116,6 +1118,7 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
 
     const truncationWarning = result.dataQualityWarnings.find((w) => w.includes("ขีดจำกัด"));
     expect(truncationWarning).toBeDefined();
+    expect(result.executive.visitTrend).toEqual([]);
   });
 
   it("sets dataSource to live_database when summary has no refresh timestamp", async () => {
@@ -1172,7 +1175,8 @@ describe("getDashboardAnalytics — KPI aggregation", () => {
     const result = await getDashboardAnalytics({});
 
     expect(result.kpis.find((k) => k.key === "total_visits")?.rawValue).toBe(1);
-    expect(result.executive.visitTrend).toEqual([{ label: "2026-05-01", value: 1 }]);
+    expect(result.executive.visitTrend).toHaveLength(31);
+    expect(result.executive.visitTrend[0]).toEqual({ label: "2026-05-01", value: 1 });
     expect(result.dataSource).toBe("live_database");
     expect(result.summaryRefreshTimestamp).toBeNull();
     expect(result.dataQualityWarnings.some((warning) => warning.includes("Pre-aggregated"))).toBe(false);

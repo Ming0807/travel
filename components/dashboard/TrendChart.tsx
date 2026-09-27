@@ -40,7 +40,7 @@ function formatDateActionLabel(raw: string): string {
   return `${formatDateLabel(raw)} ${date.getUTCFullYear() + 543}`;
 }
 
-export function TrendChart({ points, improvementContext }: { points: TrendPoint[]; improvementContext?: AttractionImprovementContext }) {
+export function TrendChart({ points, improvementContext, incomplete = false }: { points: TrendPoint[]; improvementContext?: AttractionImprovementContext; incomplete?: boolean }) {
   const gradientId = useId();
   const total = useMemo(() => points.reduce((sum, point) => sum + point.value, 0), [points]);
   const peak = useMemo(() => points.reduce<TrendPoint | null>((best, point) => (
@@ -51,6 +51,15 @@ export function TrendChart({ points, improvementContext }: { points: TrendPoint[
     dateLabel: formatDateLabel(point.label),
     fullDate: formatDateFull(point.label),
   })), [points]);
+
+  if (incomplete) {
+    return (
+      <section className="h-full rounded-md border border-amber-200 bg-white p-4 sm:p-5">
+        <h2 className="text-base font-bold text-slate-950">แนวโน้มรายการเข้าชม</h2>
+        <div className="mt-4" role="status"><NoDataState title="ข้อมูลยังอ่านไม่ครบ" description="ช่วงที่เลือกเกินขีดจำกัดการอ่านสด จึงยังไม่แสดงกราฟหรือเติมวันที่ไม่มีรายการเป็นศูนย์ กรุณาลดช่วงวันที่หรือตัวกรองก่อนสรุปแนวโน้ม" /></div>
+      </section>
+    );
+  }
 
   if (points.length === 0) {
     return (
@@ -128,6 +137,7 @@ export function TrendChart({ points, improvementContext }: { points: TrendPoint[
       </div>
 
       {points.length === 1 ? <p className="mt-2 text-xs leading-5 text-slate-600">มีข้อมูลเพียงวันเดียว ยังสรุปแนวโน้มการเปลี่ยนแปลงไม่ได้</p> : null}
+      {points.some((point) => point.value === 0) ? <p className="mt-2 text-xs leading-5 text-slate-600">วันที่ไม่มีรายการเข้าชมในช่วงข้อมูลที่อ่านครบแสดงเป็น 0 ไม่ใช่ข้อมูลขาดหาย</p> : null}
 
       <details className="mt-3 border-t border-slate-100 pt-3">
         <summary className="min-h-11 cursor-pointer py-2 text-xs font-semibold text-[#B94727]">ดูตารางแนวโน้ม</summary>

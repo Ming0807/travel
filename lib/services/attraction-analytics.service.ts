@@ -1,5 +1,6 @@
 import "server-only";
 import { entryMatchesDashboardEvidenceScope, visitMatchesDashboardEvidenceScope } from "@/lib/dashboard/evidence-scope";
+import { buildDailyVisitTrend } from "@/lib/dashboard/visit-trend";
 
 import { requirePermission } from "@/lib/auth/guards";
 import * as feedbackRepository from "@/lib/repositories/attraction-feedback.repository";
@@ -378,8 +379,6 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
   const certificateVisits = visits.filter((visit) => hasChild(visit, "certificates")).length;
   const stampVisits = visits.filter((visit) => relations(visit, "tourist_stamps").some((stamp) => stamp.status === "earned")).length;
   const repeatVisits = Math.max(0, visits.length - uniqueTourists.size);
-  const trendMap = new Map<string, number>();
-  visits.forEach((visit) => trendMap.set(stringValue(visit.visit_date), (trendMap.get(stringValue(visit.visit_date)) ?? 0) + 1));
   const satisfaction = [
     scoreMetric(visits, "overall_score", "ภาพรวม"),
     scoreMetric(visits, "safety_score", "ความปลอดภัย"),
@@ -468,7 +467,7 @@ export async function getAttractionAnalytics(input: AttractionAnalyticsFilters) 
       surveyRate,
       researchEvaluations: visits.filter(hasSubmittedResearch).length,
     },
-    trend: [...trendMap.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([label, value]) => ({ label, value })),
+    trend: rows.truncated ? [] : buildDailyVisitTrend(visits.map((visit) => stringValue(visit.visit_date)), parsed.data.dateFrom, parsed.data.dateTo),
     funnel,
     channels,
     audience: {

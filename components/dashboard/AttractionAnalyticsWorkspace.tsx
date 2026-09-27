@@ -142,7 +142,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
       </section>
 
       <div data-workspace-section="primary-trend">
-        <TrendChart points={data.trend} improvementContext={canReadImprovement ? improvementContext : undefined} />
+        <TrendChart points={data.trend} incomplete={data.quality.truncated} improvementContext={canReadImprovement ? improvementContext : undefined} />
       </div>
 
       {data.channels ? <AttractionChannelPanel data={data.channels} incomplete={data.quality.truncated} /> : null}

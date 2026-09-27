@@ -45,7 +45,7 @@ export function ExecutiveOverview({ data }: { data: DashboardViewModel }) {
 
       <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]" data-print-grid="trend-decision">
         <div className="min-w-0">
-          <TrendChart points={data.executive.visitTrend} />
+          <TrendChart points={data.executive.visitTrend} incomplete={data.quality?.truncated} />
         </div>
         <div className="min-w-0">
           <ExecutiveDecisionSummary comparison={comparison} insights={data.insights} kpis={data.kpis} />

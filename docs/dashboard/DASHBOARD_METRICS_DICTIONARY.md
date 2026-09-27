@@ -221,6 +221,14 @@ Do not show misleading 0.
 
 The attraction workspace requires one `attraction_id` and uses `visits.visit_date` for its reporting period.
 
+The executive and single-attraction Visit trend uses one point per selected
+calendar day. A zero means the complete bounded Visit read contained no
+record for that day; zero days are never inferred from a truncated read.
+When the selected read has no Visits, the chart shows a no-activity state.
+When any required live read is incomplete, the chart shows an incomplete-data
+state instead of a partial line. Trend totals remain Visit counts, not public
+page views or QR/NFC scan attempts.
+
 Default evidence scope:
 
 ```text

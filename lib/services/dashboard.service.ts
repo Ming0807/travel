@@ -1,6 +1,7 @@
 import "server-only";
 import { getCheckinEntryConfig } from "@/lib/config/checkin-entry";
 import { buildDashboardVisitChannels } from "@/lib/dashboard/visit-channels";
+import { buildDailyVisitTrend } from "@/lib/dashboard/visit-trend";
 
 import {
   DASHBOARD_METRIC_DEFINITIONS,
@@ -35,8 +36,7 @@ import type {
   DistributionItem,
   InsightCardData,
   RankedAttraction,
-  DashboardQualityPage,
-  TrendPoint
+  DashboardQualityPage
 } from "@/types/dashboard";
 
 type RawSearchParams = Record<string, string | string[] | undefined>;
@@ -146,22 +146,8 @@ function visitAttractionKey(row: Row) {
   return String(numberValue(attractionRow?.attraction_id ?? row.attraction_id) ?? attractionName(row));
 }
 
-function dateLabel(value: unknown) {
-  const date = stringValue(value);
-  return date ? date.slice(0, 10) : "No date";
-}
-
 function getVisitRows(payload: DashboardRepositoryPayload) {
   return payload.visits;
-}
-
-function buildVisitTrend(visits: Row[]): TrendPoint[] {
-  const byDate = new Map<string, number>();
-  visits.forEach((visit) => increment(byDate, dateLabel(visit.visit_date)));
-
-  return Array.from(byDate.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([label, value]) => ({ label, value }));
 }
 
 function buildVisitsByProvince(visits: Row[]): DistributionItem[] {
@@ -770,7 +756,9 @@ async function buildDashboardResponse(filters: DashboardFilters, activeTab: stri
     topAttraction: topAttractions[0] ?? null
   });
 
-  const visitTrend = buildVisitTrend(visits);
+  const visitTrend = payload.isTruncated
+    ? []
+    : buildDailyVisitTrend(visits.map((visit) => stringValue(visit.visit_date)).filter((date): date is string => date !== null), filters.dateFrom, filters.dateTo);
 
   const comparison = comparisonPeriod ? (() => {
     const comparisonIsTruncated = payload.isTruncated || Boolean(comparisonPayload?.isTruncated);

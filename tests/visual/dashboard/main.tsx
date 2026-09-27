@@ -63,7 +63,10 @@ createRoot(document.getElementById("root")!).render(
           />
         </section>
       ) : surface === "entry" ? null : <>
-      <TrendChart points={state === "empty" ? [] : [{ label: "2026-08-01", value: 14 }, { label: "2026-08-02", value: 23 }, { label: "2026-08-03", value: 18 }]} />
+      <TrendChart
+        points={state === "empty" ? [] : [{ label: "2026-08-01", value: 14 }, { label: "2026-08-02", value: state === "trend-gaps" ? 0 : 23 }, { label: "2026-08-03", value: 18 }]}
+        incomplete={state === "trend-incomplete"}
+      />
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <BarChartCard title="วัตถุประสงค์การเดินทาง" definition="จำนวนคำตอบแยกตามวัตถุประสงค์" data={data} emptyDescription="ไม่มีคำตอบในขอบเขตนี้" sampleCount={state === "low" ? 2 : 2000} />
         <DonutChartCard title="สัดส่วนวัตถุประสงค์" definition="สัดส่วนจากคำตอบที่ระบุวัตถุประสงค์" data={data} emptyDescription="ไม่มีคำตอบในขอบเขตนี้" />
