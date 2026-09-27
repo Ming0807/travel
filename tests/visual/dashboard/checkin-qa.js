@@ -1,3 +1,5 @@
+// Playwright CLI evaluates this file as a callback expression.
+// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 async (page) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
