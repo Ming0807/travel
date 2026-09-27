@@ -4,6 +4,15 @@ import { describe, expect, it } from "vitest";
 import { CheckinUnavailable } from "@/components/checkin/CheckinUnavailable";
 
 describe("CheckinUnavailable", () => {
+  it("guides NFC visitors back to the physical tag without creating a QR bypass", () => {
+    const { container } = render(<CheckinUnavailable status="nfc_unavailable" />);
+    expect(screen.getByRole("heading", { name: "ยังเช็กอินผ่าน NFC ไม่สำเร็จ" })).toBeInTheDocument();
+    expect(screen.getByText("NFC CHECK-IN")).toBeInTheDocument();
+    expect(screen.getByText(/สแกน QR จากป้ายประจำจุดเช็กอิน/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "แจ้งปัญหา NFC" })).toHaveAttribute("href", "/contact");
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(container.querySelector('a[href^="/c/"], a[href^="/checkin/"]')).toBeNull();
+  });
   it("offers a clear recovery path for an unknown QR code", () => {
     const { container } = render(<CheckinUnavailable status="not_found" />);
 

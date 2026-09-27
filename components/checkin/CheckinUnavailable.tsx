@@ -9,12 +9,17 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 
-export type CheckinUnavailableStatus = "not_found" | "inactive" | "expired" | "unavailable";
+export type CheckinUnavailableStatus = "not_found" | "inactive" | "expired" | "unavailable" | "nfc_unavailable";
 
 const STATUS_COPY: Record<
   CheckinUnavailableStatus,
   { title: string; message: string; guidance: string }
 > = {
+  nfc_unavailable: {
+    title: "ยังเช็กอินผ่าน NFC ไม่สำเร็จ",
+    message: "ระบบยังไม่สามารถยืนยันแท็กที่คุณแตะได้ จึงยังดำเนินการเช็กอินต่อไม่ได้",
+    guidance: "ลองแตะแท็กที่ป้ายอีกครั้ง หรือสแกน QR จากป้ายประจำจุดเช็กอิน ตรวจสอบชื่อสถานที่และที่อยู่เว็บไซต์ให้ตรงกับป้ายก่อนกรอกข้อมูล หากยังเข้าไม่ได้ ให้สอบถามเจ้าหน้าที่",
+  },
   not_found: {
     title: "ไม่พบ QR Code นี้",
     message: "รหัสเช็กอินไม่ถูกต้อง หรือไม่มีอยู่ในระบบ",
@@ -40,6 +45,7 @@ const STATUS_COPY: Record<
 export function CheckinUnavailable({ status }: { status: CheckinUnavailableStatus }) {
   const copy = STATUS_COPY[status];
   const isNotFound = status === "not_found";
+  const isNfc = status === "nfc_unavailable";
 
   return (
     <main className="min-h-[100dvh] bg-[var(--public-canvas)] text-[var(--public-ink)]">
@@ -68,7 +74,7 @@ export function CheckinUnavailable({ status }: { status: CheckinUnavailableStatu
               </span>
 
               <div>
-                <p className="text-sm font-black text-[var(--public-coral)]">QR CHECK-IN</p>
+                <p className="text-sm font-black text-[var(--public-coral)]">{isNfc ? "NFC CHECK-IN" : "QR CHECK-IN"}</p>
                 <h1
                   id="checkin-unavailable-title"
                   className="mt-2 text-3xl font-black leading-tight text-balance sm:text-4xl"
@@ -103,7 +109,7 @@ export function CheckinUnavailable({ status }: { status: CheckinUnavailableStatu
                   className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-black/65 underline decoration-black/25 underline-offset-4 hover:text-[var(--public-coral)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--public-teal)] focus-visible:ring-offset-2"
                 >
                   <ChatCircleText size={18} weight="bold" aria-hidden="true" />
-                  แจ้งปัญหา QR
+                  {isNfc ? "แจ้งปัญหา NFC" : "แจ้งปัญหา QR"}
                 </Link>
               </div>
             </div>

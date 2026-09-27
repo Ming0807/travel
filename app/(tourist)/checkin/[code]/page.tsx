@@ -14,13 +14,13 @@ export default async function CheckinLandingPage({
 }) {
   const { code } = await params;
   const query = await searchParams;
-  if (query.entryError) return <CheckinUnavailable status="unavailable" />;
+  if (query.entryError) return <CheckinUnavailable status={query.entryError === "nfc_unavailable" ? "nfc_unavailable" : "unavailable"} />;
   const flowId = typeof query.flow === "string" ? query.flow : null;
   const browserId = flowId ? (await cookies()).get(CHECKIN_BROWSER_COOKIE)?.value ?? null : null;
   const context = await resolveCheckinFlow({ code, flowId, browserId });
 
   if (context.mode === "blocked") {
-    return <CheckinUnavailable status="unavailable" />;
+    return <CheckinUnavailable status={context.status} />;
   }
 
   try {

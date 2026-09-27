@@ -88,7 +88,8 @@ describe("canonical check-in entry orchestration", () => {
     vi.mocked(resolveNfcCheckin).mockResolvedValue({ status: "valid", tagId: token, entryChannel: "nfc", details });
     vi.mocked(beginCheckinEntrySession).mockRejectedValue(new Error("private"));
     await expect(beginCanonicalCheckinEntry({ code: "yala-001", nfcToken: token, browserId }))
-      .resolves.toEqual({ mode: "blocked", status: "unavailable" });
+      .resolves.toEqual({ mode: "blocked", status: "nfc_unavailable" });
+    expect(resolveAndValidateCheckinCode).not.toHaveBeenCalled();
   });
 
   it("validates URL flow against browser, code, live context and snapshots", async () => {

@@ -66,7 +66,7 @@ export async function beginCanonicalCheckinEntry(input: {
     }
 
     if (!config.hashSecret || !isCheckinBrowserId(input.browserId)) {
-      return { mode: "blocked", status: "unavailable" };
+      return { mode: "blocked", status: input.nfcToken !== null ? "nfc_unavailable" : "unavailable" };
     }
 
     const browserHash = hashCheckinBrowserId(input.browserId, config.hashSecret);
@@ -108,7 +108,7 @@ export async function beginCanonicalCheckinEntry(input: {
       channel,
     };
   } catch {
-    return { mode: "blocked", status: "unavailable" };
+    return { mode: "blocked", status: input.nfcToken !== null ? "nfc_unavailable" : "unavailable" };
   }
 }
 

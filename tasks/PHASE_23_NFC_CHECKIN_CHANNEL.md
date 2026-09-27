@@ -38,7 +38,15 @@ NFC tags open the same canonical `/c/[code]` route used by QR. The resolved chec
 
 ### Task 23.5: Public Verification UX
 
-- [ ] Complete NFC-specific public verification/recovery UX for official domain, attraction/location context, and revoked/unknown tags before collecting personal data. Successful check-in pages show attraction context, but failed NFC entry currently resolves to the generic unavailable state.
+- [ ] Complete NFC-specific public verification/recovery UX for official domain, attraction/location context, and revoked/unknown tags before collecting personal data. Failed canonical NFC entry now preserves its channel and shows physical-tag/QR-sign recovery guidance, including configuration and session-creation failures. Successful-entry verification and physical-device acceptance remain pending.
+
+Recovery checkpoint (2026-09-27): NFC failures no longer claim that the attraction
+itself is closed. The landing page retains `nfc_unavailable`, does not record a
+landing event for rejection, and offers contact/home links with instructions to
+retry the physical tag or scan the QR on the sign. It does not construct a QR
+bypass URL or reveal registry lifecycle details. Four focused test files passed
+38 tests; targeted ESLint passed. No schema or rollout flags changed. Responsive
+visual acceptance of this copy and real-device acceptance remain outstanding.
 
 ### Task 23.6: Physical Deployment Guide
 
