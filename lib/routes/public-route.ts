@@ -11,7 +11,20 @@ export type PublicRouteStop = PublicRouteCoordinate & {
   attractionSlug: string;
   attractionImage: string | null;
   attractionImageAlt: string;
+  stopNote?: string | null;
 };
+
+export type RouteDirectionsSegment = {
+  startIndex: number;
+  endIndex: number;
+  url: string;
+};
+
+const MAX_STOPS_PER_MAPS_URL = 5;
+
+export function orderPublicRouteStops(stops: PublicRouteStop[]): PublicRouteStop[] {
+  return stops.slice().sort((left, right) => left.dayNumber - right.dayNumber || left.sequence - right.sequence);
+}
 
 function isValidCoordinate(stop: PublicRouteCoordinate) {
   return typeof stop.latitude === "number"
@@ -29,7 +42,7 @@ function coordinateText(stop: PublicRouteCoordinate) {
 }
 
 export function buildRouteDirectionsUrl(stops: PublicRouteCoordinate[]): string | null {
-  if (stops.length < 2 || !stops.every(isValidCoordinate)) return null;
+  if (stops.length < 2 || stops.length > MAX_STOPS_PER_MAPS_URL || !stops.every(isValidCoordinate)) return null;
 
   const params = new URLSearchParams({
     api: "1",
@@ -43,6 +56,19 @@ export function buildRouteDirectionsUrl(stops: PublicRouteCoordinate[]): string 
   }
 
   return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
+export function buildRouteDirectionsSegments(stops: PublicRouteCoordinate[]): RouteDirectionsSegment[] {
+  if (stops.length < 2 || !stops.every(isValidCoordinate)) return [];
+
+  const segments: RouteDirectionsSegment[] = [];
+  for (let startIndex = 0; startIndex < stops.length - 1; startIndex += MAX_STOPS_PER_MAPS_URL - 1) {
+    const endIndex = Math.min(startIndex + MAX_STOPS_PER_MAPS_URL - 1, stops.length - 1);
+    const url = buildRouteDirectionsUrl(stops.slice(startIndex, endIndex + 1));
+    if (!url) return [];
+    segments.push({ startIndex, endIndex, url });
+  }
+  return segments;
 }
 
 export function safeExternalTourUrl(value: string | null | undefined): string | null {

@@ -34,6 +34,8 @@ import {
 } from "@/lib/destinations/launch-scope";
 import {
   buildRouteDirectionsUrl,
+  buildRouteDirectionsSegments,
+  type RouteDirectionsSegment,
   safeExternalTourUrl,
   type PublicRouteStop,
 } from "@/lib/routes/public-route";
@@ -2604,6 +2606,7 @@ export async function listPublicRoutes(limit = 10, featuredSlugs?: string[]): Pr
 export type PublicRouteDetail = PublicRouteCard & {
   fullDescription: string;
   mapUrl: string | null;
+  mapSegments: RouteDirectionsSegment[];
   stops: PublicRouteStop[];
 };
 
@@ -2635,6 +2638,8 @@ export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDet
         suggested_route_stops (
           day_number,
           display_order,
+          stop_note_th,
+          stop_note_en,
           attractions (
             attraction_id,
             is_active,
@@ -2696,6 +2701,7 @@ export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDet
         attractionSlug,
         attractionImage: publicManagedImage(attraction, thumbnailByStoragePath),
         attractionImageAlt: publicImageAlt(attraction, attractionName),
+        stopNote: text(stop.stop_note_th, text(stop.stop_note_en)) || null,
         latitude: nullableNumber(attraction.latitude),
         longitude: nullableNumber(attraction.longitude),
       }];
@@ -2707,6 +2713,7 @@ export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDet
     if (mappedStops.length !== stopsArray.length) return null;
     const routeName = text(row.name_th, text(row.name_en));
 
+    const mapSegments = buildRouteDirectionsSegments(mappedStops);
     return {
       slug: text(row.slug),
       name: routeName,
@@ -2716,7 +2723,8 @@ export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDet
       stopCount: mappedStops.length,
       imageUrl: publicManagedImage(row, thumbnailByStoragePath),
       imageAlt: publicImageAlt(row, routeName),
-      mapUrl: buildRouteDirectionsUrl(mappedStops),
+      mapUrl: mapSegments.length === 1 ? buildRouteDirectionsUrl(mappedStops) : null,
+      mapSegments,
       stops: mappedStops,
     };
   } catch {

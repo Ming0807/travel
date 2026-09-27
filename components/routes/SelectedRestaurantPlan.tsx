@@ -3,10 +3,10 @@ import Link from "next/link";
 
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
 import type { PublicRestaurantCard } from "@/lib/repositories/public-content.repository";
-import { createGoogleMapsTripHref } from "@/lib/trip-shortlist/navigation";
+import { createGoogleMapsTripSegments } from "@/lib/trip-shortlist/navigation";
 
 export function SelectedRestaurantPlan({ restaurants }: { restaurants: PublicRestaurantCard[] }) {
-  const mapsHref = createGoogleMapsTripHref(restaurants);
+  const mapSegments = createGoogleMapsTripSegments(restaurants);
 
   return (
     <section aria-labelledby="selected-meal-heading" className="mt-8 border-y border-orange-200 bg-[#fffaf3] py-6 sm:px-6">
@@ -58,20 +58,22 @@ export function SelectedRestaurantPlan({ restaurants }: { restaurants: PublicRes
             ))}
           </ol>
 
-          {mapsHref ? (
-            <a
-              href={mapsHref}
+          <div className="mt-5 flex flex-wrap gap-3">
+            {mapSegments.map((segment) => <a
+              key={`${segment.startIndex}-${segment.endIndex}`}
+              href={segment.href}
               target="_blank"
               rel="noreferrer"
-              className="mt-5 inline-flex min-h-11 items-center gap-2 bg-coral px-5 text-sm font-black text-white hover:bg-[#d9472b]"
+              className="inline-flex min-h-11 items-center gap-2 bg-coral px-5 text-sm font-black text-white hover:bg-[#d9472b]"
             >
-              เปิดเส้นทางร้านอาหารใน Google Maps
+              {mapSegments.length === 1 ? "เปิดเส้นทางร้านอาหารใน Google Maps" : `Google Maps: ร้าน ${segment.startIndex + 1}-${segment.endIndex + 1}`}
               <ArrowSquareOut aria-hidden="true" size={18} />
-            </a>
+            </a>)}
+          </div>
+          {mapSegments.length > 1 ? (
+            <p className="mt-2 text-xs text-muted">แบ่งการนำทางเป็นช่วงที่มีร้านเชื่อมต่อร่วมกัน เพื่อเปิดครบทุกร้านบนมือถือ</p>
           ) : null}
-          {restaurants.length > 10 ? (
-            <p className="mt-2 text-xs text-muted">Google Maps เปิดได้ครั้งละ 10 ร้านแรก ส่วนรายการทั้งหมดจะยังแสดงอยู่ในหน้านี้</p>
-          ) : null}
+          {restaurants.some((restaurant) => restaurant.latitude == null || restaurant.longitude == null) ? <p className="mt-2 text-xs text-muted">ร้านที่ไม่มีพิกัดจะค้นหาด้วยชื่อใน Google Maps กรุณาตรวจตำแหน่งก่อนเดินทาง</p> : null}
         </>
       ) : (
         <div className="mt-5 border border-dashed border-orange-200 bg-white p-5 text-sm text-muted">

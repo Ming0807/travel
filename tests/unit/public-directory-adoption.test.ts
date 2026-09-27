@@ -2,13 +2,17 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const directoryPages = [
-  "app/(public)/routes/page.tsx",
-  "app/(public)/360-vista/page.tsx",
-];
-
 describe("public directory adoption", () => {
-  it.each(directoryPages)("uses the shared compact directory frame in %s", (file) => {
+  it("uses the editorial hero and directory frame for curated routes", () => {
+    const source = readFileSync(resolve(process.cwd(), "app/(public)/routes/page.tsx"), "utf8");
+
+    expect(source).toContain("PublicDirectoryHero");
+    expect(source).toContain("RouteDiscovery");
+    expect(source).toContain('variant="directory"');
+  });
+
+  it("uses the shared compact directory frame for 360 media", () => {
+    const file = "app/(public)/360-vista/page.tsx";
     const source = readFileSync(resolve(process.cwd(), file), "utf8");
 
     expect(source).toContain("PublicDirectoryIntro");

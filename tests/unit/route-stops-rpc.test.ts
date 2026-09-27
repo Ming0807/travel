@@ -283,6 +283,25 @@ describe("updateRouteStopsAction (server action)", () => {
     authState.shouldThrow = false;
     rpcError = null;
     rpcResult = { success: true, inserted: 2, deleted_before_insert: true };
+    mockSupabaseClient.maybeSingle.mockResolvedValue({
+      data: { route_id: 5, is_published: false, is_active: true },
+      error: null,
+    });
+    mockSupabaseClient.from.mockImplementation((table: string) => table === "attractions"
+      ? {
+          select: () => ({
+            in: async () => ({
+              data: [1, 2].map((id) => ({
+                attraction_id: id,
+                is_active: true,
+                is_published: true,
+                provinces: { province_id: 1, is_active: true, destination_status: "live" },
+              })),
+              error: null,
+            }),
+          }),
+        } as never
+      : mockSupabaseClient);
   });
 
   it("returns success when stops are saved correctly", async () => {

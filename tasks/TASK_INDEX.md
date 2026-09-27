@@ -31,6 +31,7 @@
 | `PHASE_22_ATTRACTION_LEVEL_ANALYTICS.md` | Implemented / production query-plan evidence pending | Per-attraction operational, funnel, tourism, satisfaction, and improvement analytics |
 | `PHASE_23_NFC_CHECKIN_CHANNEL.md` | Planned | NFC entry through the canonical QR/check-in flow with channel analytics and tag governance |
 | `PHASE_24_ANALYTICS_DECISION_INTELLIGENCE.md` | Planned / next engineering phase | Role-aware decision workspace, comparison, data quality, insight-to-action, research monitoring, and production analytics QA |
+| `PHASE_25_CURATED_NA_THAM_ROUTES.md` | In progress / production-data sign-off pending | Curated public routes, real-coordinate map, admin route composer, and publication integrity for the Na Tham pilot |
 
 ## Immediate Priority
 

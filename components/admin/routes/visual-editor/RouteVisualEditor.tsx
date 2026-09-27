@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowSquareOut, Image as ImageIcon, MapPin } from "@phosphor-icons/react";
+import { toggleRoutePublishAction } from "@/app/actions/admin-route-actions";
 import { Drawer } from "@/components/admin/Drawer";
 import { AdminFormSection, AdminHelpPanel, AdminReadinessPanel } from "@/components/admin/forms/AdminFormUX";
 import { RouteForm } from "@/components/admin/routes/RouteForm";
@@ -32,11 +34,16 @@ export function RouteVisualEditor({
   stops: stopsProp,
   attractions = [],
 }: RouteVisualEditorProps) {
+  const router = useRouter();
+  const [isPublishing, startPublishTransition] = useTransition();
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishSuccess, setPublishSuccess] = useState(false);
   const [coverMediaId, setCoverMediaId] = useState(initialCoverMediaId ?? null);
   const [coverMediaUrl, setCoverMediaUrl] = useState(initialCoverMediaUrl ?? null);
   const [isBasicsEditorOpen, setIsBasicsEditorOpen] = useState(false);
   const [isCoverEditorOpen, setIsCoverEditorOpen] = useState(false);
   const [workingStops, setWorkingStops] = useState(stopsProp ?? []);
+  const [hasUnsavedStops, setHasUnsavedStops] = useState(false);
   const [toastDismissed, setToastDismissed] = useState(false);
 
   const name = route.name_th || "ยังไม่มีชื่อ";
@@ -69,8 +76,27 @@ export function RouteVisualEditor({
     { label: "ชื่อเส้นทาง", complete: !!route.name_th.trim(), help: route.name_th.trim() ? route.name_th : "ยังไม่มีชื่อภาษาไทย" },
     { label: "Slug (URL)", complete: !!route.slug.trim(), help: route.slug ? `/routes/${route.slug}` : "ยังไม่ได้กำหนด URL" },
     { label: "รูปภาพปก", complete: !!coverMediaUrl, help: coverMediaUrl ? "มีรูปภาพปกที่บันทึกไว้" : "ยังไม่มีรูปภาพปกที่เชื่อมโยงกับเส้นทางนี้" },
-    { label: "จุดแวะ", complete: stopCount > 0, help: `${stopCount} จุดแวะที่บันทึกไว้` },
+    { label: "จุดแวะอย่างน้อย 2 แห่ง", complete: new Set(routeStops.map((stop) => stop.attraction_id)).size >= 2, help: `${stopCount} จุดแวะที่บันทึกไว้` },
   ];
+
+  const handlePublish = () => {
+    if (hasUnsavedStops) return;
+    setPublishError(null);
+    setPublishSuccess(false);
+    startPublishTransition(async () => {
+      try {
+        const result = await toggleRoutePublishAction(route.route_id);
+        if (!result.success) {
+          setPublishError(result.error ?? "ยังเปลี่ยนสถานะเผยแพร่ไม่ได้ กรุณาลองอีกครั้ง");
+          return;
+        }
+        setPublishSuccess(true);
+        router.refresh();
+      } catch {
+        setPublishError("เชื่อมต่อไม่สำเร็จ กรุณาลองอีกครั้ง");
+      }
+    });
+  };
 
   const handleStopsChange = (normalized: Array<{
     attractionId: number;
@@ -79,6 +105,7 @@ export function RouteVisualEditor({
     stopNoteTh: string;
     stopNoteEn: string;
   }>) => {
+    setHasUnsavedStops(true);
     setWorkingStops(normalized.map((stop, index) => ({
       stop_id: -(index + 1),
       route_id: route.route_id,
@@ -92,6 +119,8 @@ export function RouteVisualEditor({
         ?? null,
     })));
   };
+
+  const handleStopsSaved = useCallback(() => setHasUnsavedStops(false), []);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 text-slate-800">
@@ -156,7 +185,7 @@ export function RouteVisualEditor({
             <p className="mt-1 text-sm leading-6 text-slate-600">เลือกสถานที่ที่เปิดใช้งานและเผยแพร่ จัดวันและลำดับ พร้อมเก็บคำแนะนำสองภาษา; วันว่างจะถูกยุบให้ต่อเนื่อง</p>
           </div>
           {savedStopsAvailable ? (
-            <RouteStopsManager routeId={route.route_id} initialStops={stopsProp ?? []} attractions={attractions} onStopsChange={handleStopsChange} />
+            <RouteStopsManager routeId={route.route_id} initialStops={stopsProp ?? []} attractions={attractions} onStopsChange={handleStopsChange} onStopsSaved={handleStopsSaved} />
           ) : route.stop_count > 0 ? (
             <AdminHelpPanel title="โหลดรายละเอียดจุดแวะไม่สำเร็จ" tone="warning">
               <p>มีจุดแวะที่บันทึกไว้ {route.stop_count} จุด แต่ยังแสดงกำหนดการไม่ได้ ลองโหลดตัวแก้ไขอีกครั้ง</p>
@@ -165,7 +194,7 @@ export function RouteVisualEditor({
               </div>
             </AdminHelpPanel>
           ) : (
-            <RouteStopsManager routeId={route.route_id} initialStops={[]} attractions={attractions} onStopsChange={handleStopsChange} />
+            <RouteStopsManager routeId={route.route_id} initialStops={[]} attractions={attractions} onStopsChange={handleStopsChange} onStopsSaved={handleStopsSaved} />
           )}
         </section>
 
@@ -199,10 +228,10 @@ export function RouteVisualEditor({
         <section id="review" aria-labelledby="review-heading" className="scroll-mt-36 space-y-3">
           <div>
             <h2 id="review-heading" className="text-lg font-black text-slate-900">ตรวจสอบ</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">ตรวจข้อมูลที่บันทึกไว้ก่อนกลับไปจัดการสถานะเส้นทาง</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">ตรวจชื่อ ภาพ และจุดแวะก่อนเผยแพร่เส้นทาง</p>
           </div>
           <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.65fr)]">
-            <AdminFormSection title="ตัวอย่างข้อมูลที่บันทึก">
+            <AdminFormSection title="ตัวอย่างเส้นทาง">
               <div className="space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -245,8 +274,18 @@ export function RouteVisualEditor({
               ) : null}
               <AdminHelpPanel title="สถานะการเผยแพร่" tone="info">
                 <p>สถานะปัจจุบัน: {route.is_published ? "เผยแพร่แล้ว" : "ฉบับร่าง"} · {route.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}</p>
-                <p className="mt-2">รายการตรวจนี้เป็นข้อมูลประกอบเท่านั้น การอนุญาตเผยแพร่ตรวจโดยเซิร์ฟเวอร์เมื่อสั่งจากหน้ารายการเส้นทาง</p>
-                <Link href="/admin/routes" className="mt-3 inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">ไปหน้ารายการเส้นทาง</Link>
+                <p className="mt-2">รายการตรวจนี้เป็นข้อมูลประกอบ เซิร์ฟเวอร์จะตรวจสถานที่และลำดับอีกครั้งก่อนเผยแพร่</p>
+                {hasUnsavedStops ? <p role="status" className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-900">บันทึกจุดแวะที่แก้ไขก่อนเผยแพร่เส้นทาง</p> : null}
+                {publishError ? <p role="alert" className="mt-3 rounded-md border border-rose-300 bg-rose-50 p-3 text-sm font-bold text-rose-800">{publishError}</p> : null}
+                {publishSuccess ? <p role="status" className="mt-3 text-sm font-bold text-emerald-800">เปลี่ยนสถานะเผยแพร่แล้ว</p> : null}
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={isPublishing || hasUnsavedStops}
+                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-[#073F37] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#0A6B62] disabled:opacity-50"
+                >
+                  {isPublishing ? "กำลังบันทึก..." : route.is_published ? "ยกเลิกเผยแพร่" : "เผยแพร่เส้นทาง"}
+                </button>
               </AdminHelpPanel>
             </div>
           </div>

@@ -38,8 +38,10 @@ function mapQuery(stop: TripMapStop) {
   if (
     typeof stop.latitude === "number"
     && Number.isFinite(stop.latitude)
+    && stop.latitude >= -90 && stop.latitude <= 90
     && typeof stop.longitude === "number"
     && Number.isFinite(stop.longitude)
+    && stop.longitude >= -180 && stop.longitude <= 180
   ) {
     return `${stop.latitude},${stop.longitude}`;
   }
@@ -48,8 +50,8 @@ function mapQuery(stop: TripMapStop) {
 }
 
 export function createGoogleMapsTripHref(stops: readonly TripMapStop[]) {
-  const usableStops = stops.filter((stop) => stop.name.trim()).slice(0, 10);
-  if (usableStops.length === 0) return null;
+  if (stops.length === 0 || stops.length > 5 || stops.some((stop) => !stop.name.trim())) return null;
+  const usableStops = stops;
 
   if (usableStops.length === 1) {
     const params = new URLSearchParams({ api: "1", query: mapQuery(usableStops[0]) });
@@ -66,4 +68,18 @@ export function createGoogleMapsTripHref(stops: readonly TripMapStop[]) {
   if (waypoints.length > 0) params.set("waypoints", waypoints.join("|"));
 
   return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
+export function createGoogleMapsTripSegments(stops: readonly TripMapStop[]) {
+  if (stops.length === 0 || stops.some((stop) => !stop.name.trim())) return [];
+  if (stops.length === 1) return [{ startIndex: 0, endIndex: 0, href: createGoogleMapsTripHref(stops)! }];
+
+  const segments: Array<{ startIndex: number; endIndex: number; href: string }> = [];
+  for (let startIndex = 0; startIndex < stops.length - 1; startIndex += 4) {
+    const endIndex = Math.min(startIndex + 4, stops.length - 1);
+    const href = createGoogleMapsTripHref(stops.slice(startIndex, endIndex + 1));
+    if (!href) return [];
+    segments.push({ startIndex, endIndex, href });
+  }
+  return segments;
 }

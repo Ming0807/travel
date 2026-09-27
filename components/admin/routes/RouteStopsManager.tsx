@@ -34,6 +34,7 @@ interface RouteStopsManagerProps {
   initialStops: AdminRouteStopRow[];
   attractions: RouteAttractionOption[];
   onStopsChange?: (stops: NormalizedStop[]) => void;
+  onStopsSaved?: () => void;
 }
 
 interface StopState extends NormalizedStop {
@@ -77,7 +78,7 @@ function normalizeStops(stops: StopState[]): NormalizedStop[] {
   });
 }
 
-export function RouteStopsManager({ routeId, initialStops, attractions, onStopsChange }: RouteStopsManagerProps) {
+export function RouteStopsManager({ routeId, initialStops, attractions, onStopsChange, onStopsSaved }: RouteStopsManagerProps) {
   const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
   const [stops, setStops] = useState<StopState[]>(() => compactStopDays(
@@ -101,6 +102,7 @@ export function RouteStopsManager({ routeId, initialStops, attractions, onStopsC
   );
   const action = updateRouteStopsAction.bind(null, routeId);
   const [state, formAction, isPending] = useActionState<AdminFormActionState, FormData>(action, { success: false });
+  const handledSaveState = useRef<AdminFormActionState | null>(null);
   const orderedStops = useMemo(() => sortStops(stops), [stops]);
   const normalizedStops = useMemo(() => normalizeStops(stops), [stops]);
   const serializedStops = useMemo(() => JSON.stringify(normalizedStops), [normalizedStops]);
@@ -130,8 +132,12 @@ export function RouteStopsManager({ routeId, initialStops, attractions, onStopsC
   }, []);
 
   useEffect(() => {
-    if (state?.success) router.refresh();
-  }, [state?.success, router]);
+    if (state?.success && handledSaveState.current !== state) {
+      handledSaveState.current = state;
+      onStopsSaved?.();
+      router.refresh();
+    }
+  }, [state, onStopsSaved, router]);
 
   useEffect(() => () => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -204,11 +210,6 @@ export function RouteStopsManager({ routeId, initialStops, attractions, onStopsC
   const handleQuickAdd = (dayNumber: number) => {
     setAddDay(dayNumber);
     searchRef.current?.focus();
-    const firstAttraction = eligibleAttractions[0];
-    const existingStop = firstAttraction && stops.find((stop) => stop.attractionId === firstAttraction.attraction_id);
-    if (firstAttraction && existingStop) {
-      showToast(`"${firstAttraction.name_th}" ถูกใช้ในวันที่ ${existingStop.dayNumber} (ลำดับ ${existingStop.displayOrder}) อยู่แล้ว — เลือกสถานที่อื่นเพื่อไม่ให้ซ้ำ`);
-    }
   };
 
   const handleAddStop = (attraction: RouteAttractionOption) => {
@@ -293,6 +294,7 @@ export function RouteStopsManager({ routeId, initialStops, attractions, onStopsC
 
       <input type="hidden" name="stops" value={serializedStops} />
 
+      <fieldset disabled={isPending} className="min-w-0 space-y-5">
       <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(260px,0.65fr)]">
         <div className="min-w-0 space-y-5">
           {eligibleAttractions.length === 0 ? (
@@ -499,12 +501,13 @@ export function RouteStopsManager({ routeId, initialStops, attractions, onStopsC
       </div>
 
       <AdminSaveBar
+        position="inline"
         cancelHref={`/admin/routes/${routeId}/edit#review`}
         isPending={isPending}
         submitLabel="บันทึกจุดแวะของเส้นทาง"
         disabled={hasInvalidAttraction || hasInvalidDay || hasDuplicateAttractions}
-        secondary={<button type="button" onClick={() => handleQuickAdd(dayNumbers[dayNumbers.length - 1] ?? 1)} disabled={eligibleAttractions.length === 0} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50"><Plus size={17} weight="bold" />เพิ่มจุดแวะ</button>}
       />
+      </fieldset>
     </form>
   );
 }

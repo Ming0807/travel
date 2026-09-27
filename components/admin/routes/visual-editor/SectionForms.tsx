@@ -298,7 +298,6 @@ export function CoverForm({ route, onClose, coverMediaId: cmId, coverMediaUrl: c
       </div>
       <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-4">
         <AdminSaveBar
-          cancelHref="#"
           isPending={isPending}
           onCancel={onClose}
           submitLabel="บันทึกรูปภาพ"

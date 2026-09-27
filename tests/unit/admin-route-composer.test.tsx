@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { RouteForm } from "@/components/admin/routes/RouteForm";
 import { RouteStopsManager } from "@/components/admin/routes/RouteStopsManager";
 import { RouteVisualEditor } from "@/components/admin/routes/visual-editor/RouteVisualEditor";
@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   createRouteAction: vi.fn(),
   updateRouteAction: vi.fn(),
   updateRouteStopsAction: vi.fn(),
+  toggleRoutePublishAction: vi.fn(),
   push: vi.fn(),
   refresh: vi.fn(),
 }));
@@ -24,6 +25,7 @@ vi.mock("@/app/actions/admin-route-actions", () => ({
   createRouteAction: mocks.createRouteAction,
   updateRouteAction: mocks.updateRouteAction,
   updateRouteStopsAction: mocks.updateRouteStopsAction,
+  toggleRoutePublishAction: mocks.toggleRoutePublishAction,
 }));
 
 const route: AdminRouteRow = {
@@ -92,6 +94,7 @@ describe("admin route composer", () => {
     mocks.createRouteAction.mockResolvedValue({ success: false });
     mocks.updateRouteAction.mockResolvedValue({ success: false });
     mocks.updateRouteStopsAction.mockResolvedValue({ success: false });
+    mocks.toggleRoutePublishAction.mockResolvedValue({ success: false, error: "เพิ่มจุดแวะอย่างน้อย 2 แห่งก่อนเผยแพร่เส้นทาง" });
   });
 
   it("creates a draft without exposing a publish switch", () => {
@@ -100,6 +103,8 @@ describe("admin route composer", () => {
     expect(screen.getByRole("button", { name: "สร้างฉบับร่าง" })).toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /เผยแพร่|published/i })).not.toBeInTheDocument();
     expect(document.querySelector<HTMLInputElement>('input[name="isPublished"]')?.value).toBe("false");
+    expect(document.querySelector<HTMLInputElement>('input[name="isActive"]')?.value).toBe("true");
+    expect(screen.getByRole("textbox", { name: "รายละเอียดเส้นทาง (TH)" })).toBeInTheDocument();
   });
 
   it("keeps current status values unchanged in the metadata form", () => {
@@ -114,6 +119,31 @@ describe("admin route composer", () => {
     render(<RouteForm initialData={route} coverMediaUrl={null} />);
 
     expect(screen.getByText("ยังไม่มีรูปภาพปกที่เชื่อมโยงกับเส้นทางนี้")).toBeInTheDocument();
+  });
+
+  it("shows the server's reason when publication is blocked in review", async () => {
+    render(<RouteVisualEditor route={route} stops={stops} attractions={attractions} />);
+    fireEvent.click(screen.getByRole("button", { name: "เผยแพร่เส้นทาง" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("เพิ่มจุดแวะอย่างน้อย 2 แห่งก่อนเผยแพร่เส้นทาง"));
+    expect(mocks.toggleRoutePublishAction).toHaveBeenCalledWith(12);
+  });
+
+  it("requires saving changed stops before publishing from review", () => {
+    render(<RouteVisualEditor route={route} stops={stops} attractions={attractions} />);
+    fireEvent.click(screen.getByRole("button", { name: "ลบ น้ำตกศรีพังงา ออกจากเส้นทาง" }));
+    expect(screen.getByRole("button", { name: "เผยแพร่เส้นทาง" })).toBeDisabled();
+    expect(screen.getByText("บันทึกจุดแวะที่แก้ไขก่อนเผยแพร่เส้นทาง")).toBeInTheDocument();
+  });
+
+  it("reports every successful save, including consecutive edits", async () => {
+    const onStopsSaved = vi.fn();
+    mocks.updateRouteStopsAction.mockImplementation(async () => ({ success: true }));
+    render(<RouteStopsManager routeId={12} initialStops={stops} attractions={attractions} onStopsSaved={onStopsSaved} />);
+    fireEvent.click(screen.getByRole("button", { name: "บันทึกจุดแวะของเส้นทาง" }));
+    await waitFor(() => expect(onStopsSaved).toHaveBeenCalledTimes(1));
+    fireEvent.change(screen.getAllByRole("textbox", { name: "คำแนะนำภาษาไทย" })[0], { target: { value: "คำแนะนำใหม่" } });
+    fireEvent.click(screen.getByRole("button", { name: "บันทึกจุดแวะของเส้นทาง" }));
+    await waitFor(() => expect(onStopsSaved).toHaveBeenCalledTimes(2));
   });
 
   it("offers searchable eligible attractions and removes a selected one from add options", () => {
@@ -177,5 +207,23 @@ describe("admin route composer", () => {
       expect(screen.getByRole("link", { name: section.label })).toHaveAttribute("href", `#${section.id}`);
       expect(document.getElementById(section.id)).toBeInTheDocument();
     }
+  });
+
+  it("keeps embedded save bars inline instead of overlapping the editor", () => {
+    render(<RouteVisualEditor route={route} stops={stops} attractions={attractions} />);
+    fireEvent.click(screen.getByRole("button", { name: "แก้ไขข้อมูลหลัก" }));
+    for (const label of ["บันทึกข้อมูลพื้นฐาน", "บันทึกจุดแวะของเส้นทาง"]) {
+      const toolbar = screen.getByRole("button", { name: label }).parentElement;
+      expect(toolbar).toHaveClass("static");
+      expect(toolbar).not.toHaveClass("-mx-4");
+    }
+  });
+
+  it("closes the cover drawer using Cancel without navigating away", () => {
+    render(<RouteVisualEditor route={route} stops={stops} attractions={attractions} />);
+    fireEvent.click(screen.getByRole("button", { name: "เลือกรูปภาพปก" }));
+    expect(screen.getByRole("dialog", { name: "รูปภาพปกเส้นทาง" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "ยกเลิก" }));
+    expect(screen.queryByRole("dialog", { name: "รูปภาพปกเส้นทาง" })).not.toBeInTheDocument();
   });
 });

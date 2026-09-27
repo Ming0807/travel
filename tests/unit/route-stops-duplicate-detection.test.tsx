@@ -306,7 +306,7 @@ describe("RouteStopsManager — duplicate detection", () => {
 
   // ── Toast notification on add stop ───────────────────────────────────────
 
-  it("shows duplicate toast when adding a stop with default attraction that already exists", () => {
+  it("focuses the attraction search without a false duplicate warning", () => {
     render(
       <RouteStopsManager
         routeId={1}
@@ -321,8 +321,8 @@ describe("RouteStopsManager — duplicate detection", () => {
       fireEvent.click(addButtons[0]);
     });
 
-    // Toast should appear with warning about duplicate
-    expect(screen.getByText(/"หาดทรายขาว" ถูกใช้ในวันที่/)).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "ค้นหาสถานที่ท่องเที่ยว" })).toHaveFocus();
+    expect(screen.queryByText(/"หาดทรายขาว" ถูกใช้ในวันที่/)).not.toBeInTheDocument();
   });
 
   it("does NOT show duplicate toast when adding a stop with unique default attraction", () => {
@@ -375,15 +375,13 @@ describe("RouteStopsManager — duplicate detection", () => {
     render(
       <RouteStopsManager
         routeId={1}
-        initialStops={stopsWithDuplicates}
+        initialStops={stopsNoDuplicates}
         attractions={mockAttractions}
       />
     );
 
-    // Trigger a toast via add button
-    const addButtons = screen.getAllByText("เพิ่มจุดแวะ");
     act(() => {
-      fireEvent.click(addButtons[0]);
+      fireEvent.change(screen.getAllByRole("combobox")[2], { target: { value: "1" } });
     });
 
     // Toast should appear

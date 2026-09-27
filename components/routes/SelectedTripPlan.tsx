@@ -2,11 +2,11 @@ import { ArrowSquareOut, MapPin, PencilSimpleLine } from "@phosphor-icons/react/
 import Link from "next/link";
 
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
-import { createGoogleMapsTripHref } from "@/lib/trip-shortlist/navigation";
+import { createGoogleMapsTripSegments } from "@/lib/trip-shortlist/navigation";
 import type { AttractionCard } from "@/types/tourism";
 
 export function SelectedTripPlan({ attractions }: { attractions: AttractionCard[] }) {
-  const mapsHref = createGoogleMapsTripHref(attractions);
+  const mapSegments = createGoogleMapsTripSegments(attractions);
 
   return (
     <section aria-labelledby="selected-trip-heading" className="mt-8 border-y border-orange-200 bg-[#fffaf3] py-6 sm:px-6">
@@ -55,20 +55,22 @@ export function SelectedTripPlan({ attractions }: { attractions: AttractionCard[
             ))}
           </ol>
 
-          {mapsHref ? (
-            <a
-              href={mapsHref}
+          <div className="mt-5 flex flex-wrap gap-3">
+            {mapSegments.map((segment) => <a
+              key={`${segment.startIndex}-${segment.endIndex}`}
+              href={segment.href}
               target="_blank"
               rel="noreferrer"
-              className="mt-5 inline-flex min-h-11 items-center gap-2 bg-coral px-5 text-sm font-black text-white hover:bg-[#d9472b]"
+              className="inline-flex min-h-11 items-center gap-2 bg-coral px-5 text-sm font-black text-white hover:bg-[#d9472b]"
             >
-              เปิดเส้นทางใน Google Maps
+              {mapSegments.length === 1 ? "เปิดเส้นทางใน Google Maps" : `Google Maps: จุด ${segment.startIndex + 1}-${segment.endIndex + 1}`}
               <ArrowSquareOut aria-hidden="true" size={18} />
-            </a>
+            </a>)}
+          </div>
+          {mapSegments.length > 1 ? (
+            <p className="mt-2 text-xs text-muted">แบ่งการนำทางเป็นช่วงที่มีจุดเชื่อมต่อร่วมกัน เพื่อเปิดครบทุกจุดบนมือถือ</p>
           ) : null}
-          {attractions.length > 10 ? (
-            <p className="mt-2 text-xs text-muted">Google Maps เปิดได้ครั้งละ 10 จุดแรก ส่วนรายการทั้งหมดจะยังแสดงอยู่ในหน้านี้</p>
-          ) : null}
+          {attractions.some((attraction) => attraction.latitude == null || attraction.longitude == null) ? <p className="mt-2 text-xs text-muted">จุดที่ไม่มีพิกัดจะค้นหาด้วยชื่อใน Google Maps กรุณาตรวจตำแหน่งก่อนเดินทาง</p> : null}
         </>
       ) : (
         <div className="mt-5 border border-dashed border-orange-200 bg-white p-5 text-sm text-muted">

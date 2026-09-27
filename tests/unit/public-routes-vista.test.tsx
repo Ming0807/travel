@@ -126,8 +126,8 @@ const routeRow = {
     display_order: 0,
   }],
   suggested_route_stops: [
-    { day_number: 1, display_order: 2, attractions: publicAttraction({ attraction_id: 13, slug: "yala-park", name_th: "สวนขวัญเมือง", latitude: 6.542, longitude: 101.282 }) },
-    { day_number: 1, display_order: 1, attractions: publicAttraction({ latitude: "6.541", longitude: "101.281" }) },
+    { day_number: 1, display_order: 2, stop_note_th: null, attractions: publicAttraction({ attraction_id: 13, slug: "yala-park", name_th: "สวนขวัญเมือง", latitude: 6.542, longitude: 101.282 }) },
+    { day_number: 1, display_order: 1, stop_note_th: "เริ่มเดินชมพื้นที่", attractions: publicAttraction({ latitude: "6.541", longitude: "101.281" }) },
   ],
 };
 
@@ -162,7 +162,10 @@ describe("public routes repository", () => {
       imageAlt: "เส้นทางหนึ่งวันในยะลา",
     });
     expect(detail?.stops.map((stop) => stop.attractionSlug)).toEqual(["yala-old-town", "yala-park"]);
+    expect(detail?.stops[0].stopNote).toBe("เริ่มเดินชมพื้นที่");
     expect(detail?.mapUrl).toContain("google.com/maps/dir");
+    expect(detail?.mapSegments).toHaveLength(1);
+    expect(state.routeSelects.some((selection) => selection.includes("stop_note_th"))).toBe(true);
   });
 
   it("does not expose an incomplete route map and does not turn query errors into missing content", async () => {
@@ -207,6 +210,7 @@ describe("public route presentation", () => {
     expect(screen.getByRole("heading", { name: "วันที่ 2" })).toBeVisible();
     expect(screen.getByRole("link", { name: /จุดแรก/ })).toHaveAttribute("href", "/attractions/first");
     expect(screen.getByRole("link", { name: /จุดสอง/ })).toHaveAttribute("href", "/attractions/second");
+    expect(screen.getByText("จุดที่ 2")).toBeVisible();
   });
 });
 

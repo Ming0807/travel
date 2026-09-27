@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createGoogleMapsTripHref,
+  createGoogleMapsTripSegments,
   createRestaurantPlanHref,
   createTripPlanHref,
   parseTripPlanSelection,
@@ -38,5 +39,22 @@ describe("trip planning navigation", () => {
     expect(route).toContain("origin=6.5%2C101.2");
     expect(route).toContain("waypoints=");
     expect(route).toContain("destination=6.6%2C101.3");
+  });
+
+  it("splits twelve selected stops into mobile-safe segments without omissions", () => {
+    const stops = Array.from({ length: 12 }, (_, index) => ({ name: `Stop ${index + 1}`, latitude: 6.5 + index / 1000, longitude: 101.2 }));
+    expect(createGoogleMapsTripHref(stops)).toBeNull();
+    const segments = createGoogleMapsTripSegments(stops);
+    expect(segments.map(({ startIndex, endIndex }) => [startIndex, endIndex])).toEqual([[0, 4], [4, 8], [8, 11]]);
+    for (const segment of segments) {
+      const url = new URL(segment.href);
+      expect((url.searchParams.get("waypoints")?.split("|") ?? []).length).toBeLessThanOrEqual(3);
+      expect(url.searchParams.get("origin")).toBe(`${stops[segment.startIndex].latitude},101.2`);
+      expect(url.searchParams.get("destination")).toBe(`${stops[segment.endIndex].latitude},101.2`);
+    }
+  });
+
+  it("does not silently skip a blank stop when generating a selected trip", () => {
+    expect(createGoogleMapsTripSegments([{ name: "First" }, { name: "" }, { name: "Last" }])).toEqual([]);
   });
 });

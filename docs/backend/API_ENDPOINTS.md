@@ -197,6 +197,17 @@ parsing. Summary files contain KPI, Visit Trend and Attraction Ranking sections
 with uniform columns, retaining existing ranking columns. Export buttons submit
 server-resolved screen filters rather than unrelated browser query parameters.
 
+## Curated Route Server Actions
+
+`createRouteAction` always creates an active, unpublished draft.
+`updateRouteAction` changes metadata but cannot change publication or active
+status. `updateRouteStopsAction` validates stop eligibility and duplicates in
+drafts, then checks the full itinerary for published routes.
+`toggleRoutePublishAction` and `toggleRouteActiveAction` require their own
+permissions and verify route readiness before a route becomes public. These
+are authenticated Server Actions, not anonymous REST endpoints. All mutations
+retain audit logging and invalidate affected public route pages.
+
 ## NFC Management Server Actions
 
 `saveAdminNfcAction` creates a draft or applies a version-checked verification/status

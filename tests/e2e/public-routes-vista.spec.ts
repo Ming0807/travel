@@ -26,8 +26,10 @@ test.describe("Public routes and 360", () => {
       const mapLink = page.getByRole("link", { name: /เปิดเส้นทางใน Google Maps/ });
       if (await mapLink.count()) {
         await expect(mapLink).toHaveAttribute("href", /^https:\/\/www\.google\.com\/maps\/dir\//);
+      } else if (await page.getByRole("link", { name: /ช่วงที่ 1/ }).count()) {
+        await expect(page.getByRole("link", { name: /ช่วงที่ 1/ })).toHaveAttribute("href", /^https:\/\/www\.google\.com\/maps\/dir\//);
       } else {
-        await expect(page.getByText(/ยังไม่มีพิกัดครบทุกจุด/)).toBeVisible();
+        await expect(page.getByText(/พิกัดยังไม่ครบทุกจุด/)).toBeVisible();
       }
     } else {
       await expect(page.getByText("กำลังเตรียมเส้นทางแนะนำ")).toBeVisible();

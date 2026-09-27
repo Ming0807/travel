@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { AdminAuthError, requirePermission } from "@/lib/auth/guards";
 import { logAdminMutation } from "@/lib/services/audit-log.service";
+import { evaluateRouteReadiness, type RouteReadinessIssue, type RouteStopForReadiness } from "@/lib/routes/route-readiness";
 import { adminRouteMutationSchema, adminRouteStopsBatchSchema } from "@/lib/validation/route";
 import { clearCoverMediaForEntity, linkMediaToEntity, linkMediaToEntityByStoragePath } from "@/lib/repositories/admin-media.repository";
 import {
@@ -10,6 +11,8 @@ import {
   updateAdminRoute,
   updateAdminRouteStatus,
   getAdminRouteById,
+  getRouteStops,
+  listEligibleRouteAttractionIds,
   updateRouteStopsBatch,
   findRouteBySlug,
 } from "@/lib/repositories/admin-route.repository";
@@ -20,6 +23,33 @@ type ActionResult<TData = unknown> = {
   fieldErrors?: Record<string, string[] | undefined>;
   data?: TData;
 };
+
+const readinessMessages: Record<RouteReadinessIssue, string> = {
+  too_few_stops: "เพิ่มจุดแวะอย่างน้อย 2 แห่งก่อนเผยแพร่เส้นทาง",
+  duplicate_attraction: "สถานที่ในเส้นทางซ้ำกัน กรุณาเลือกแต่ละแห่งเพียงครั้งเดียว",
+  ineligible_attraction: "จุดแวะบางแห่งยังไม่เปิดเผยแพร่หรืออยู่นอกพื้นที่นำร่อง",
+  day_gap: "หมายเลขวันต้องเรียงต่อกันโดยเริ่มจากวันที่ 1",
+  order_gap: "ลำดับจุดแวะในแต่ละวันต้องเริ่มจาก 1 และเรียงต่อกัน",
+};
+
+async function routeReadinessIssues(stops: RouteStopForReadiness[]) {
+  const eligibleIds = await listEligibleRouteAttractionIds(stops.map((stop) => stop.attractionId));
+  return evaluateRouteReadiness(stops, eligibleIds);
+}
+
+async function savedRouteReadinessIssues(routeId: number) {
+  const stops = await getRouteStops(routeId);
+  return routeReadinessIssues(stops.map((stop) => ({
+    attractionId: stop.attraction_id,
+    dayNumber: stop.day_number,
+    displayOrder: stop.display_order,
+  })));
+}
+
+function readinessError(issues: RouteReadinessIssue[]): ActionResult | null {
+  const firstIssue = issues[0];
+  return firstIssue ? { success: false, error: readinessMessages[firstIssue] } : null;
+}
 
 export async function createRouteAction(_prevState: ActionResult<{ id: number; slug: string }>, formData: FormData): Promise<ActionResult<{ id: number; slug: string }>> {
   try {
@@ -34,7 +64,8 @@ export async function createRouteAction(_prevState: ActionResult<{ id: number; s
       return { success: false, error: "Slug นี้ถูกใช้งานแล้ว", fieldErrors: { slug: ["กรุณาใช้ slug อื่นที่ยังไม่ซ้ำ"] } };
     }
 
-    const created = await createAdminRoute(parsed.data);
+    const draftInput = { ...parsed.data, isPublished: false, isActive: true };
+    const created = await createAdminRoute(draftInput);
 
     // Link cover media if provided
     const coverMediaId = parsed.data.coverMediaId ? Number(parsed.data.coverMediaId) : null;
@@ -47,7 +78,7 @@ export async function createRouteAction(_prevState: ActionResult<{ id: number; s
       action: "route.create",
       entityType: "suggested_route",
       entityId: created.route_id,
-      newValues: { ...parsed.data, coverMediaId: undefined } as unknown as Record<string, unknown>,
+      newValues: { ...draftInput, coverMediaId: undefined } as unknown as Record<string, unknown>,
     });
 
     revalidatePath("/admin/routes");
@@ -74,6 +105,10 @@ export async function updateRouteAction(routeId: number, _prevState: ActionResul
     const old = await getAdminRouteById(routeId);
     if (!old) return { success: false, error: "ไม่พบเส้นทางนี้ อาจถูกลบหรือย้ายแล้ว" };
 
+    if (parsed.data.isPublished !== old.is_published || parsed.data.isActive !== old.is_active) {
+      return { success: false, error: "กรุณาเปลี่ยนสถานะเส้นทางผ่านปุ่มเผยแพร่หรือปุ่มเปิดใช้งาน" };
+    }
+
     const updated = await updateAdminRoute(routeId, parsed.data);
 
     const coverMediaAction = formData.get("coverMediaAction");
@@ -99,6 +134,12 @@ export async function updateRouteAction(routeId: number, _prevState: ActionResul
     });
 
     revalidatePath("/admin/routes");
+    if (old.is_published && old.is_active) {
+      revalidatePath("/routes", "layout");
+      revalidatePath(`/routes/${old.slug}`);
+      revalidatePath(`/routes/${updated.slug}`);
+      revalidatePath("/");
+    }
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
@@ -113,6 +154,12 @@ export async function toggleRoutePublishAction(routeId: number): Promise<ActionR
 
     const guard = await requirePermission(current.is_published ? "route.unpublish" : "route.publish");
 
+    if (!current.is_published) {
+      if (!current.is_active) return { success: false, error: "เปิดใช้งานเส้นทางก่อนเผยแพร่" };
+      const issue = readinessError(await savedRouteReadinessIssues(routeId));
+      if (issue) return issue;
+    }
+
     const updated = await updateAdminRouteStatus(routeId, { is_published: !current.is_published });
     await logAdminMutation({
       actor: guard.actor,
@@ -124,6 +171,9 @@ export async function toggleRoutePublishAction(routeId: number): Promise<ActionR
     });
 
     revalidatePath("/admin/routes");
+    revalidatePath("/routes", "layout");
+    revalidatePath(`/routes/${current.slug}`);
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
@@ -138,6 +188,11 @@ export async function toggleRouteActiveAction(routeId: number): Promise<ActionRe
 
     const guard = await requirePermission(current.is_active ? "route.deactivate" : "route.activate");
 
+    if (!current.is_active && current.is_published) {
+      const issue = readinessError(await savedRouteReadinessIssues(routeId));
+      if (issue) return issue;
+    }
+
     const updated = await updateAdminRouteStatus(routeId, { is_active: !current.is_active });
     await logAdminMutation({
       actor: guard.actor,
@@ -149,6 +204,9 @@ export async function toggleRouteActiveAction(routeId: number): Promise<ActionRe
     });
 
     revalidatePath("/admin/routes");
+    revalidatePath("/routes", "layout");
+    revalidatePath(`/routes/${current.slug}`);
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
@@ -180,6 +238,8 @@ export async function archiveRouteAction(routeId: number): Promise<ActionResult>
 
     revalidatePath("/admin/routes");
     revalidatePath("/routes", "layout");
+    revalidatePath(`/routes/${current.slug}`);
+    revalidatePath("/");
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
@@ -200,6 +260,15 @@ export async function updateRouteStopsAction(routeId: number, _prevState: Action
       return { success: false, error: "กรุณาตรวจจุดแวะของเส้นทางอีกครั้ง", fieldErrors: parsed.error.flatten().fieldErrors };
     }
 
+    const current = await getAdminRouteById(routeId);
+    if (!current) return { success: false, error: "ไม่พบเส้นทางนี้ อาจถูกลบหรือย้ายแล้ว" };
+    const issues = await routeReadinessIssues(parsed.data.stops);
+    const blockingIssues = current.is_published
+      ? issues
+      : issues.filter((issue) => issue === "duplicate_attraction" || issue === "ineligible_attraction");
+    const issue = readinessError(blockingIssues);
+    if (issue) return issue;
+
     await updateRouteStopsBatch(routeId, parsed.data.stops);
     
     await logAdminMutation({
@@ -211,7 +280,13 @@ export async function updateRouteStopsAction(routeId: number, _prevState: Action
     });
 
     revalidatePath(`/admin/routes/${routeId}/stops`);
+    revalidatePath(`/admin/routes/${routeId}/edit`);
     revalidatePath("/admin/routes");
+    if (current.is_published && current.is_active) {
+      revalidatePath("/routes", "layout");
+      revalidatePath(`/routes/${current.slug}`);
+      revalidatePath("/");
+    }
     return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };

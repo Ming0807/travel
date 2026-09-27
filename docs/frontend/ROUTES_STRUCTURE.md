@@ -88,14 +88,17 @@ supports a guest-only "ทริปของฉัน" shortlist. It stores at m
 slugs in versioned browser local storage and does not create a tourist or
 research record. The next step sends the selected slugs to `/routes`, resolves
 only attractions that are still active and published, preserves the selected
-order, and can open up to ten stops in Google Maps. This is a planning handoff,
-not a claim that the platform optimizes or generates an itinerary.
+order, and opens Google Maps in overlapping segments of at most five stops,
+without dropping selections above the mobile waypoint limit. A stop without
+coordinates uses a name search with an explicit location-verification notice.
+This is a planning handoff, not a claim that the platform optimizes or generates
+an itinerary.
 
 `/restaurants` keeps an independent guest shortlist under a separate browser
 storage key so restaurant choices cannot replace attraction choices. The meal
 planning handoff uses `/routes?restaurants=<slug,...>`, resolves only active,
 published restaurant records in the launch scope, preserves the selected order,
-and exposes restaurant details plus real Google Maps links. It does not claim to
+and exposes restaurant details plus the same segmented Google Maps handoff. It does not claim to
 optimize a food route, make a reservation, or persist an account itinerary.
 
 ---
@@ -247,11 +250,32 @@ published attractions in a live destination province. Route cards show the
 stored cover, computed day count, and real stop count. Database failures reach
 the route error boundary instead of appearing as an empty list.
 
-`/routes/[slug]` groups stops by stored day and display order. A Google Maps
-directions action is available only when every stop has valid coordinates;
-otherwise the page directs visitors to each attraction's own location details.
-Route and stop media prefer managed thumbnails and always provide an honest
-fallback instead of a generated or CSS-simulated scene.
+`/routes` uses an editorial list for the small pilot catalog. Search and day
+filters appear only above three published routes. Selected attraction and
+restaurant handoffs remain separate from the curated-route list.
+
+`/routes/[slug]` groups stops by stored day and display order, includes any
+route-specific stop note, and links each stop to its attraction record. An
+on-demand Leaflet map shows numbered markers from stored coordinates only;
+it does not draw or claim a road itinerary. OpenStreetMap tiles are attributed,
+and tile/load failures leave the stop list and external handoff available.
+Google Maps directions are available only when every stop has valid
+coordinates. Above five stops they are offered as overlapping segments to
+avoid mobile-browser waypoint truncation. With incomplete coordinates the
+page directs visitors to each attraction's own location details. Route and
+stop media prefer managed thumbnails and always provide an honest fallback.
+
+The admin route flow is draft -> basic information -> eligible stops and daily
+order -> cover -> review -> publish. The editor only offers active, published
+attractions within a live destination province. The server independently
+requires two distinct eligible stops, contiguous day/order numbering, and an
+active route before publication. Local unsaved edits block the Review publish
+button. Status changes use dedicated permission-checked Server Actions and
+show their rejection reason instead of silently failing.
+
+The embedded route forms use inline save bars rather than a global floating
+toolbar. Cover-drawer cancellation closes the drawer without navigation;
+repeated successful stop saves clear the local publication guard each time.
 
 `/360-vista` reads published panorama and external 360 references from active
 Yala attractions. External links must use HTTPS, open in a new tab, and be

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { RouteVisualEditor } from "@/components/admin/routes/visual-editor/RouteVisualEditor";
 import { requirePermission } from "@/lib/auth/guards";
-import { getAdminRouteById, getRouteStops } from "@/lib/repositories/admin-route.repository";
+import { getAdminRouteById, getRouteStops, listEligibleRouteAttractionIds } from "@/lib/repositories/admin-route.repository";
 import { listAdminAttractions } from "@/lib/repositories/admin-attraction.repository";
 import { getCoverMediaForEntity } from "@/lib/repositories/admin-media.repository";
 import { adminMediaPreviewUrl } from "@/lib/media/storage-paths";
@@ -20,8 +20,8 @@ export default async function EditAdminRoutePage({
   await requirePermission("route.update");
 
   const resolvedParams = await params;
-  const routeId = parseInt(resolvedParams.id, 10);
-  if (isNaN(routeId)) {
+  const routeId = Number(resolvedParams.id);
+  if (!Number.isSafeInteger(routeId) || routeId < 1) {
     notFound();
   }
 
@@ -35,8 +35,12 @@ export default async function EditAdminRoutePage({
     notFound();
   }
 
-  const stopAttractionIds = Array.from(new Set(stops.map((stop) => stop.attraction_id)));
-  const stopCoverEntries = await Promise.all(stopAttractionIds.map(async (attractionId) => {
+  const eligibleAttractionIds = await listEligibleRouteAttractionIds(attractions.items.map((attraction) => attraction.attraction_id));
+  const coverAttractionIds = Array.from(new Set([
+    ...stops.map((stop) => stop.attraction_id),
+    ...eligibleAttractionIds,
+  ]));
+  const stopCoverEntries = await Promise.all(coverAttractionIds.map(async (attractionId) => {
     const media = await getCoverMediaForEntity("attraction", attractionId);
     return [attractionId, adminMediaPreviewUrl(media?.storage_path)] as const;
   }));
@@ -46,8 +50,8 @@ export default async function EditAdminRoutePage({
     name_th: attraction.name_th,
     name_en: attraction.name_en,
     province_name_th: attraction.province_name_th,
-    is_active: attraction.is_active,
-    is_published: attraction.is_published,
+    is_active: attraction.is_active && eligibleAttractionIds.has(attraction.attraction_id),
+    is_published: attraction.is_published && eligibleAttractionIds.has(attraction.attraction_id),
     coverImageUrl: stopCovers.get(attraction.attraction_id) ?? null,
   }));
   const includedAttractionIds = new Set(attractionOptions.map((attraction) => attraction.attraction_id));

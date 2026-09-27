@@ -34,6 +34,7 @@ type AdminSaveBarProps = {
   disabled?: boolean;
   secondary?: ReactNode;
   onSubmit?: () => void;
+  position?: "sticky" | "inline";
 };
 
 type ReadinessItem = {
@@ -160,9 +161,13 @@ export function AdminSaveBar({
   disabled = false,
   secondary,
   onSubmit,
+  position = "sticky",
 }: AdminSaveBarProps) {
+  const layoutClass = position === "inline"
+    ? "static flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-white py-4"
+    : "sticky bottom-0 z-20 -mx-4 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:-mx-6 sm:flex-row sm:items-center sm:justify-end sm:px-6 sm:pb-4";
   return (
-    <div className="sticky bottom-0 z-20 -mx-4 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:-mx-6 sm:flex-row sm:items-center sm:justify-end sm:px-6 sm:pb-4">
+    <div className={layoutClass}>
       {secondary ? <div className="sm:mr-auto">{secondary}</div> : null}
       {cancelHref ? (
         <Link

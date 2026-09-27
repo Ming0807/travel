@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createRouteAction, updateRouteAction } from "@/app/actions/admin-route-actions";
 import type { AdminRouteRow } from "@/lib/repositories/admin-route.repository";
@@ -40,6 +40,7 @@ export function RouteForm({ initialData, coverMediaUrl }: RouteFormProps) {
   const [state, formAction, isPending] = useActionState<RouteFormState, FormData>(action, {
     success: false,
   });
+  const handledSaveState = useRef<RouteFormState | null>(null);
 
   const readinessItems = [
     { label: "ชื่อเส้นทาง", complete: hasText(initialData?.name_th), help: "ชื่อภาษาไทยที่แสดงบนหน้าเส้นทาง" },
@@ -54,8 +55,11 @@ export function RouteForm({ initialData, coverMediaUrl }: RouteFormProps) {
   const fe = (name: string) => getFieldError(state?.fieldErrors, name);
 
   useEffect(() => {
-    if (state?.success && isEditing) router.refresh();
-  }, [state?.success, isEditing, router]);
+    if (!state?.success || handledSaveState.current === state) return;
+    handledSaveState.current = state;
+    if (isEditing) router.refresh();
+    else if (state.data?.id) router.push(`/admin/routes/${state.data.id}/edit#stops`);
+  }, [state, isEditing, router]);
 
   if (state?.success && !isEditing && state.data?.id) {
     return (
@@ -92,11 +96,11 @@ export function RouteForm({ initialData, coverMediaUrl }: RouteFormProps) {
                 defaultValue={initialData?.slug ?? ""}
                 required
                 pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
-                placeholder="e.g. betong-day-trip"
+                placeholder="เช่น na-tham-cultural-route"
                 onChange={(event) => {
                   event.target.value = event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
                 }}
-                help="ใช้ใน URL เช่น /routes/betong-day-trip"
+                help="ใช้ใน URL เช่น /routes/na-tham-cultural-route"
                 error={fe("slug")}
                 className="sm:col-span-2"
               />
@@ -104,16 +108,12 @@ export function RouteForm({ initialData, coverMediaUrl }: RouteFormProps) {
             </div>
           </AdminFormSection>
 
-          {isEditing ? (
-            <AdminFormSection title="รายละเอียดเส้นทาง" description="คำอธิบายที่ช่วยให้นักท่องเที่ยวเข้าใจเส้นทาง">
-              <div className="space-y-4">
-                <FormTextarea label="รายละเอียดเส้นทาง (TH)" name="descriptionTh" defaultValue={initialData.description_th ?? ""} rows={4} error={fe("descriptionTh")} />
-                <FormTextarea label="รายละเอียดเส้นทาง (EN)" name="descriptionEn" defaultValue={initialData.description_en ?? ""} rows={4} error={fe("descriptionEn")} />
-              </div>
-            </AdminFormSection>
-          ) : (
-            <input type="hidden" name="descriptionTh" value="" />
-          )}
+          <AdminFormSection title="รายละเอียดเส้นทาง" description="คำอธิบายที่ช่วยให้นักท่องเที่ยวเข้าใจเส้นทาง">
+            <div className="space-y-4">
+              <FormTextarea label="รายละเอียดเส้นทาง (TH)" name="descriptionTh" defaultValue={initialData?.description_th ?? ""} rows={4} error={fe("descriptionTh")} />
+              <FormTextarea label="รายละเอียดเส้นทาง (EN)" name="descriptionEn" defaultValue={initialData?.description_en ?? ""} rows={4} error={fe("descriptionEn")} />
+            </div>
+          </AdminFormSection>
         </div>
 
         {isEditing ? (
@@ -128,10 +128,11 @@ export function RouteForm({ initialData, coverMediaUrl }: RouteFormProps) {
       </div>
 
       <input type="hidden" name="isPublished" value={initialData?.is_published ? "true" : "false"} />
-      <input type="hidden" name="isActive" value={initialData?.is_active ? "true" : "false"} />
+      <input type="hidden" name="isActive" value={initialData ? String(initialData.is_active) : "true"} />
       <input type="hidden" name="coverMediaId" value="" />
 
       <AdminSaveBar
+        position="inline"
         cancelHref={isEditing ? `/admin/routes/${initialData.route_id}/edit` : "/admin/routes"}
         isPending={isPending}
         submitLabel={isEditing ? "บันทึกข้อมูลพื้นฐาน" : "สร้างฉบับร่าง"}

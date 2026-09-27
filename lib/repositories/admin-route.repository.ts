@@ -1,5 +1,6 @@
 import "server-only";
 
+import { routeStopsArePublicForLaunch } from "@/lib/destinations/launch-scope";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role";
 import type { AdminRouteFilters, AdminRouteMutationInput, AdminRouteStopMutationInput } from "@/lib/validation/route";
 import { asRecord, booleanValue, nullableString, numberValue, stringValue } from "@/lib/utils/record";
@@ -223,6 +224,23 @@ export async function getRouteStops(routeId: number): Promise<AdminRouteStopRow[
       attraction_name_th: nullableString(attraction.name_th)
     };
   });
+}
+
+export async function listEligibleRouteAttractionIds(attractionIds: number[]): Promise<Set<number>> {
+  const ids = [...new Set(attractionIds)];
+  if (ids.length === 0) return new Set();
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("attractions")
+    .select("attraction_id,is_active,is_published,provinces(province_id,is_active,destination_status)")
+    .in("attraction_id", ids);
+
+  if (error) throw new Error("ADMIN_ROUTE_ATTRACTIONS_READ_FAILED");
+
+  return new Set((data ?? [])
+    .filter((attraction) => routeStopsArePublicForLaunch([{ attractions: attraction }]))
+    .map((attraction) => Number(attraction.attraction_id)));
 }
 
 export async function updateRouteStopsBatch(routeId: number, stops: AdminRouteStopMutationInput[]): Promise<void> {
