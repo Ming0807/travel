@@ -1358,3 +1358,21 @@ PDF is a presentation format only. It must not be enabled until the executive
 brief and attraction-improvement print layouts pass authenticated browser
 rendering checks against the same visible metrics. Screenshots are not research
 datasets or analytical exports.
+
+### 35.8 Attraction Scope and Recovery
+
+- Start page option loading only after the page permission gate succeeds; the
+  services retain their own permission checks. Sign-in redirects and later access
+  failures must not become a database-unavailable state.
+- Separate a failed catalog read, empty catalog, invalid filters, unavailable
+  attraction and failed analytics read. A failed read is not a zero-result chart,
+  and a removed attraction must not silently select a different dataset.
+- Use a 90-day inclusive Bangkok calendar default. A retry of a failed analytics
+  read includes those resolved dates and all applied supported filters instead
+  of recalculating defaults or forwarding arbitrary query parameters.
+- Campaign options are existing check-in campaign IDs, not a fabricated campaign
+  catalog. Selecting a campaign limits compatible check-in choices; unavailable
+  URL selections remain explicit with a warning until staff choose a replacement.
+- Keep headline metrics compact on mobile, complete numeric values visible, and
+  wide comparison/definition tables in named focusable scroll regions. Preserve
+  all formulas, sample thresholds, permission boundaries and export restrictions.

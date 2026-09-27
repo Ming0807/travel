@@ -1498,6 +1498,14 @@ A tourist should never feel lost after scanning a QR code.
 Verified actions on the improvement page display an immutable aggregate follow-up snapshot beside the reviewed baseline, with both periods' Visits and response denominators. Low-sample, absent, or legacy data is explicitly non-comparable, and the page never attributes a before/after change to the action without a causal study design.
 Both navigation commands from `/admin/dashboard/attractions` to the improvement page carry the current evidence scope, entry channel, campaign, check-in code, and dates. The export command is available only when the selected scope meets the same minimum Visit count, permission, and complete-read gates enforced by its API.
 
+The attraction analytics page now distinguishes an empty attraction catalog,
+unavailable selected attraction, invalid filters, catalog load failure and
+analytics load failure. These states never substitute another dataset or show a
+failed read as zero metrics. Analytics retry reloads the server-resolved scope,
+including Bangkok default dates; unrelated query strings are omitted. Auth/sign-in
+control flow still propagates. Mobile headline metrics use two columns, while
+peer and metric-definition tables expose named keyboard-scrollable regions.
+
 Public participant routes never accept internal research IDs or secret tokens in the URL. Ownership is carried in an HttpOnly same-site cookie; stakeholder routes do not create tourist profiles.
 
 ---

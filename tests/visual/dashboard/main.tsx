@@ -3,6 +3,7 @@ import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { ExecutiveEntryPanel } from "@/components/dashboard/ExecutiveEntryPanel";
 import { AttractionAnalyticsWorkspace } from "@/components/dashboard/AttractionAnalyticsWorkspace";
 import { AttractionAnalyticsFilters } from "@/components/dashboard/AttractionAnalyticsFilters";
+import { AttractionAnalyticsNotice } from "@/components/dashboard/AttractionAnalyticsNotice";
 import { executiveFixture } from "./executive-fixture";
 import { attractionFixture } from "./attraction-fixture";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
@@ -16,6 +17,7 @@ import { AttractionScoreChart } from "@/components/dashboard/AttractionScoreChar
 import { AttractionDistributionChart } from "@/components/dashboard/AttractionDistributionChart";
 import type { DashboardFilters as Filters, DashboardReferenceOptions } from "@/types/dashboard";
 import "@/app/globals.css";
+import "./fixture-fonts.css";
 
 const filters: Filters = { dateFrom: "2026-08-01", dateTo: "2026-08-31", evidenceScope: "pilot_only", districtId: 1, satisfactionMin: 3.2 };
 const options: DashboardReferenceOptions = {
@@ -32,7 +34,13 @@ const state = new URLSearchParams(window.location.search).get("state");
 const surface = new URLSearchParams(window.location.search).get("page");
 const executiveData = executiveFixture(state);
 const displayedFilters = surface === "executive" ? executiveData.filters : filters;
-const focusedSurface = surface === "executive" || surface === "attraction" || surface === "attraction-filter" || surface === "entry";
+const focusedSurface = surface === "executive" || surface === "attraction" || surface === "attraction-filter" || surface === "entry" || surface === "attraction-notice";
+const noticeCode = (["options_unavailable", "no_attractions", "invalid_filters", "attraction_unavailable", "analytics_unavailable"] as const).find((code) => code === state) ?? "analytics_unavailable";
+const attractionData = attractionFixture(state);
+const attractionWorkspaceData = state === "large" ? {
+  ...attractionData,
+  kpis: { ...attractionData.kpis, visits: 1234567890123, uniqueTourists: 1234567890123, certificateVisits: 1234567890123, stampVisits: 1234567890123 },
+} : attractionData;
 const data = state === "empty" ? [] : state === "low" ? rows.slice(0, 2).map((row) => ({ ...row, value: 1, percent: 0.5 })) : rows;
 
 createRoot(document.getElementById("root")!).render(
@@ -44,7 +52,7 @@ createRoot(document.getElementById("root")!).render(
       </header>
       {!focusedSurface ? <><DashboardFilters filters={displayedFilters} options={options} /><DashboardSavedViews filters={displayedFilters} /></> : null}
       {surface === "entry" ? <ExecutiveEntryPanel filters={filters} result={state === "unsupported" ? { status: "unsupported_filters", asOf: null, data: null, unsupportedFilters: ["satisfactionMin"] } : { status: "ready", asOf: "2026-09-10T00:00:00Z", data: attractionFixture(state).channels, unsupportedFilters: [] }} /> : null}
-      {surface === "executive" ? <div className="space-y-4" data-print-report="executive"><div data-print-hide><DashboardFilters filters={displayedFilters} options={options} /><DashboardSavedViews filters={displayedFilters} /></div><DashboardContentState data={executiveData} page="overview" /><ExecutiveOverview data={executiveData} /></div> : surface === "attraction" ? <AttractionAnalyticsWorkspace data={attractionFixture(state)} /> : surface === "attraction-filter" ? (
+      {surface === "executive" ? <div className="space-y-4" data-print-report="executive"><div data-print-hide><DashboardFilters filters={displayedFilters} options={options} /><DashboardSavedViews filters={displayedFilters} /></div><DashboardContentState data={executiveData} page="overview" /><ExecutiveOverview data={executiveData} /></div> : surface === "attraction-notice" ? <AttractionAnalyticsNotice code={noticeCode} href="/fixture-retry-disabled" /> : surface === "attraction" ? <AttractionAnalyticsWorkspace data={attractionWorkspaceData} /> : surface === "attraction-filter" ? (
         <section className="border border-slate-200 bg-white">
           <div className="border-b border-slate-200 p-5"><h2 className="text-lg font-black">ขอบเขตหลักฐานรายสถานที่</h2><p className="mt-1 text-sm text-slate-600">ข้อมูลจำลองสำหรับตรวจ responsive ของแบบฟอร์มเท่านั้น</p></div>
           <AttractionAnalyticsFilters

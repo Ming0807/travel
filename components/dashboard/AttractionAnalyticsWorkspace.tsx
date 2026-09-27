@@ -49,13 +49,14 @@ function value(value: number | null, suffix = "") {
 }
 
 function Kpi({ icon, label, valueText, note }: { icon: React.ReactNode; label: string; valueText: string; note: string }) {
+  const valueSize = valueText.length > 12 ? "text-sm" : valueText.length > 9 ? "text-base" : "text-2xl";
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-bold leading-5 text-slate-600">{label}</p>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-orange-50 text-[#B94727]">{icon}</span>
+    <div className="h-full min-w-0 rounded-md border border-slate-200 bg-white p-3 sm:p-5">
+      <div className="flex min-h-10 items-start justify-between gap-2">
+        <p className="min-w-0 text-xs font-bold leading-5 text-slate-600">{label}</p>
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-orange-50 text-[#B94727]">{icon}</span>
       </div>
-      <p className="mt-2 text-3xl font-black tabular-nums text-slate-950">{valueText}</p>
+      <p className={`mt-2 flex min-h-8 items-center font-black tabular-nums text-slate-950 [overflow-wrap:anywhere] ${valueSize}`} data-kpi-value>{valueText}</p>
       <p className="mt-1 min-h-10 text-xs leading-5 text-slate-500">{note}</p>
     </div>
   );
@@ -96,7 +97,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
         <div className="grid gap-5 bg-[#202020] p-5 text-white lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div>
             <h2 id="attraction-intelligence-heading" className="text-2xl font-black">{data.attraction.nameTh}</h2>
-            <p className="mt-2 text-sm text-slate-300">{data.attraction.districtNameTh ?? "จังหวัดยะลา"} · {SCOPE_LABELS[data.filters.evidenceScope]} · {new Date(data.generatedAt).toLocaleString("th-TH")}</p>
+            <p className="mt-2 text-sm text-slate-300">{data.attraction.districtNameTh ?? "จังหวัดยะลา"} · {SCOPE_LABELS[data.filters.evidenceScope]} · {new Date(data.generatedAt).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {canExport && data.kpis.visits >= data.quality.smallCellThreshold ? <ExportButton endpoint="/api/admin/dashboard/attractions/export" label="ส่งออกสรุป" params={{ ...data.filters }} /> : null}
@@ -117,7 +118,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
           </div>
           <p className="text-xs font-semibold text-slate-500">ตัวชี้วัดหลักในช่วงวันที่เลือก</p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <div data-kpi-level="headline"><Kpi icon={<UsersThree size={22} weight="fill" />} label="โปรไฟล์นักท่องเที่ยวไม่ซ้ำ" valueText={value(data.kpis.uniqueTourists)} note="โปรไฟล์ในระบบ ไม่ใช่การยืนยันบุคคลจริง" /></div>
           <div data-kpi-level="headline"><Kpi icon={<PersonSimpleWalk size={22} weight="fill" />} label="รายการเข้าชม" valueText={value(data.kpis.visits)} note={`ซ้ำ ${data.kpis.repeatVisits.toLocaleString("th-TH")} รายการในช่วงที่เลือก`} /></div>
           <div data-kpi-level="headline"><Kpi icon={<Certificate size={22} weight="fill" />} label="Visit ที่สร้างใบประกาศ" valueText={value(data.kpis.certificateVisits)} note="นับ Visit ไม่ซ้ำ ไม่ใช่จำนวนดาวน์โหลด" /></div>
@@ -214,7 +215,7 @@ export function AttractionAnalyticsWorkspace({ data }: { data: AttractionAnalyti
 
       <details className="border border-slate-200 bg-white">
         <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2 px-5 font-black"><ChartBar aria-hidden="true" /> นิยามตัวชี้วัดและข้อจำกัด</summary>
-        <div className="overflow-x-auto border-t border-slate-200"><table className="w-full min-w-[960px] text-sm"><thead className="bg-slate-50 text-left text-xs text-slate-600"><tr><th className="px-4 py-3">ตัวชี้วัด</th><th className="px-4 py-3">หน่วย/ตัวหาร</th><th className="px-4 py-3">แหล่งข้อมูล</th><th className="px-4 py-3">Missing rule</th><th className="px-4 py-3">ใช้ตัดสินใจ</th></tr></thead><tbody className="divide-y divide-slate-100">{data.metricContract.map((metric) => <tr key={metric.key}><td className="px-4 py-3 font-bold">{metric.label}</td><td className="px-4 py-3">{metric.unit}<br /><span className="text-xs text-slate-500">{metric.denominator}</span></td><td className="px-4 py-3 font-mono text-xs">{metric.source}<br />{metric.dateField}</td><td className="px-4 py-3">{metric.missingRule}</td><td className="px-4 py-3">{metric.decisionUse}</td></tr>)}</tbody></table></div>
+        <div className="overflow-x-auto border-t border-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500" role="region" aria-label="นิยามตัวชี้วัดและข้อจำกัด" tabIndex={0}><table className="w-full min-w-[960px] text-sm"><thead className="bg-slate-50 text-left text-xs text-slate-600"><tr><th className="px-4 py-3">ตัวชี้วัด</th><th className="px-4 py-3">หน่วย/ตัวหาร</th><th className="px-4 py-3">แหล่งข้อมูล</th><th className="px-4 py-3">Missing rule</th><th className="px-4 py-3">ใช้ตัดสินใจ</th></tr></thead><tbody className="divide-y divide-slate-100">{data.metricContract.map((metric) => <tr key={metric.key}><td className="px-4 py-3 font-bold">{metric.label}</td><td className="px-4 py-3">{metric.unit}<br /><span className="text-xs text-slate-500">{metric.denominator}</span></td><td className="px-4 py-3 font-mono text-xs">{metric.source}<br />{metric.dateField}</td><td className="px-4 py-3">{metric.missingRule}</td><td className="px-4 py-3">{metric.decisionUse}</td></tr>)}</tbody></table></div>
       </details>
 
       <p className="border-l-2 border-slate-400 pl-3 text-xs leading-6 text-slate-600">{data.interpretation}</p>

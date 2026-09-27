@@ -43,6 +43,13 @@ function AttractionAnalyticsFilterForm({
   const [checkinCodeId, setCheckinCodeId] = useState(String(filters?.checkinCodeId ?? ""));
   const placeChanged = attractionId !== loadedAttractionId;
   const campaigns = campaignOptions(checkinCodes);
+  const hasInvalidCampaignSelection = Boolean(campaignId && !campaigns.some(([id]) => String(id) === campaignId));
+  const selectedCheckinCode = checkinCodes.find((code) => String(code.checkinCodeId) === checkinCodeId);
+  const hasInvalidCheckinSelection = Boolean(
+    checkinCodeId && (!selectedCheckinCode || (campaignId && selectedCheckinCode.campaignId !== Number(campaignId))),
+  );
+  const visibleCheckinCodes = checkinCodes.filter((code) => !campaignId || code.campaignId === Number(campaignId));
+  const selectedCodeIsOutsideCampaign = Boolean(checkinCodeId && (!selectedCheckinCode || !visibleCheckinCodes.includes(selectedCheckinCode)));
   const hasAdvancedFilter = Boolean(filters?.entryChannel || filters?.campaignId || filters?.checkinCodeId);
 
   return (
@@ -102,8 +109,17 @@ function AttractionAnalyticsFilterForm({
           </label>
           <label className="text-sm font-bold">
             แคมเปญ
-            <select className={inputClassName} value={campaignId} onChange={(event) => setCampaignId(event.target.value)} disabled={placeChanged || campaigns.length === 0} name="campaignId">
+            <select className={inputClassName} value={campaignId} onChange={(event) => {
+              const nextCampaignId = event.target.value;
+              setCampaignId(nextCampaignId);
+              setCheckinCodeId((currentCheckinCodeId) => {
+                if (!currentCheckinCodeId || !nextCampaignId) return currentCheckinCodeId;
+                const currentCode = checkinCodes.find((code) => String(code.checkinCodeId) === currentCheckinCodeId);
+                return currentCode?.campaignId === Number(nextCampaignId) ? currentCheckinCodeId : "";
+              });
+            }} disabled={placeChanged || (campaigns.length === 0 && !campaignId)} name="campaignId">
               <option value="">{campaigns.length === 0 ? "ยังไม่มีแคมเปญที่ผูกกับจุดเช็กอิน" : "ทุกแคมเปญ"}</option>
+              {hasInvalidCampaignSelection ? <option value={campaignId}>แคมเปญ {campaignId} · ไม่พร้อมใช้งาน</option> : null}
               {campaigns.map(([campaignId, count]) => (
                 <option key={campaignId} value={campaignId}>แคมเปญ {campaignId} · {count.toLocaleString("th-TH")} จุดเช็กอิน</option>
               ))}
@@ -111,11 +127,18 @@ function AttractionAnalyticsFilterForm({
           </label>
           <label className="text-sm font-bold sm:col-span-2 xl:col-span-1">
             จุดเช็กอิน
-            <select className={inputClassName} value={checkinCodeId} onChange={(event) => setCheckinCodeId(event.target.value)} disabled={placeChanged || checkinCodes.length === 0} name="checkinCodeId">
-              <option value="">{checkinCodes.length === 0 ? "ยังไม่มีจุดเช็กอินสำหรับสถานที่นี้" : "ทุกจุดของสถานที่"}</option>
-              {checkinCodes.map((code) => <option key={code.checkinCodeId} value={code.checkinCodeId}>{code.label} ({code.code})</option>)}
+            <select className={inputClassName} value={checkinCodeId} onChange={(event) => setCheckinCodeId(event.target.value)} disabled={placeChanged || (checkinCodes.length === 0 && !checkinCodeId)} name="checkinCodeId">
+              <option value="">{checkinCodes.length === 0 ? "ยังไม่มีจุดเช็กอินสำหรับสถานที่นี้" : campaignId ? "ทุกจุดในแคมเปญที่เลือก" : "ทุกจุดของสถานที่"}</option>
+              {selectedCodeIsOutsideCampaign ? (
+                <option value={checkinCodeId}>
+                  {selectedCheckinCode ? `${selectedCheckinCode.label} (${selectedCheckinCode.code}) · ไม่อยู่ในแคมเปญที่เลือก` : "รหัสจุดเช็กอินที่เลือกไม่พร้อมใช้งาน"}
+                </option>
+              ) : null}
+              {visibleCheckinCodes.map((code) => <option key={code.checkinCodeId} value={code.checkinCodeId}>{code.label} ({code.code})</option>)}
             </select>
           </label>
+          {hasInvalidCampaignSelection ? <p role="alert" className="text-sm leading-6 text-[#9A3412] sm:col-span-2 xl:col-span-3">แคมเปญที่เลือกไม่พร้อมใช้งาน โปรดเลือกแคมเปญใหม่หรือล้างตัวกรองก่อนวิเคราะห์ข้อมูล</p> : null}
+          {hasInvalidCheckinSelection ? <p role="alert" className="text-sm leading-6 text-[#9A3412] sm:col-span-2 xl:col-span-3">{selectedCheckinCode ? "จุดเช็กอินที่เลือกไม่อยู่ในแคมเปญที่เลือก" : "จุดเช็กอินที่เลือกไม่พร้อมใช้งาน"} โปรดเลือกแคมเปญหรือจุดเช็กอินใหม่ก่อนวิเคราะห์ข้อมูล</p> : null}
           {placeChanged ? <p role="status" className="text-sm leading-6 text-[#9A3412] sm:col-span-2 xl:col-span-3">เปลี่ยนสถานที่แล้ว กดวิเคราะห์ข้อมูลเพื่อโหลดแคมเปญและจุดเช็กอินของสถานที่ที่เลือก</p> : null}
           <button className="min-h-11 rounded-[4px] bg-[#202020] px-4 font-black text-white transition-colors hover:bg-[#B94727] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D94717] sm:col-span-2 xl:hidden" type="submit">
             ใช้ตัวกรองเพิ่มเติม

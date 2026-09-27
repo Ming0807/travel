@@ -84,4 +84,62 @@ describe("AttractionAnalyticsFilters", () => {
     expect(screen.getByLabelText("ช่องทางเข้า")).toHaveValue("nfc");
     expect(screen.getByRole("button", { name: "ใช้ตัวกรองเพิ่มเติม" })).toBeInTheDocument();
   });
+
+  it("keeps check-in choices coherent with campaign changes", () => {
+    render(
+      <AttractionAnalyticsFilters
+        attractions={attractions}
+        checkinCodes={checkinCodes}
+        defaults={{ dateFrom: "2026-08-01", dateTo: "2026-08-31" }}
+        filters={{ attractionId: 4, dateFrom: "2026-08-01", dateTo: "2026-08-31", evidenceScope: "pilot_only", campaignId: 7, checkinCodeId: 10, entryChannel: "nfc" }}
+      />,
+    );
+
+    const campaign = screen.getByLabelText("แคมเปญ") as HTMLSelectElement;
+    const checkinCode = screen.getByLabelText("จุดเช็กอิน") as HTMLSelectElement;
+    expect(within(checkinCode).getAllByRole("option").map((option) => (option as HTMLOptionElement).value)).toEqual(["", "10", "11"]);
+
+    fireEvent.change(campaign, { target: { value: "9" } });
+    expect(checkinCode).toHaveValue("");
+    expect(within(checkinCode).getAllByRole("option").map((option) => (option as HTMLOptionElement).value)).toEqual(["", "12"]);
+
+    fireEvent.change(checkinCode, { target: { value: "12" } });
+    fireEvent.change(campaign, { target: { value: "" } });
+    expect(checkinCode).toHaveValue("12");
+    expect(within(checkinCode).getAllByRole("option").map((option) => (option as HTMLOptionElement).value)).toEqual(["", "10", "11", "12", "13"]);
+  });
+
+  it("keeps an invalid URL campaign and check-in pair explicit with a warning", () => {
+    render(
+      <AttractionAnalyticsFilters
+        attractions={attractions}
+        checkinCodes={checkinCodes}
+        defaults={{ dateFrom: "2026-08-01", dateTo: "2026-08-31" }}
+        filters={{ attractionId: 4, dateFrom: "2026-08-01", dateTo: "2026-08-31", evidenceScope: "field_claim", campaignId: 7, checkinCodeId: 12 }}
+      />,
+    );
+
+    expect(screen.getByLabelText("แคมเปญ")).toHaveValue("7");
+    expect(screen.getByLabelText("จุดเช็กอิน")).toHaveValue("12");
+    expect(new FormData(screen.getByRole("button", { name: "วิเคราะห์ข้อมูล" }).closest("form")!).get("checkinCodeId")).toBe("12");
+    expect(screen.getByRole("alert")).toHaveTextContent("ไม่อยู่ในแคมเปญที่เลือก");
+
+    fireEvent.change(screen.getByLabelText("แคมเปญ"), { target: { value: "9" } });
+    expect(screen.getByLabelText("จุดเช็กอิน")).toHaveValue("12");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("keeps an unavailable URL campaign explicit and lets the user clear it", () => {
+    render(
+      <AttractionAnalyticsFilters attractions={attractions} checkinCodes={[]}
+        defaults={{ dateFrom: "2026-08-01", dateTo: "2026-08-31" }}
+        filters={{ attractionId: 4, dateFrom: "2026-08-01", dateTo: "2026-08-31", evidenceScope: "field_claim", campaignId: 99 }} />,
+    );
+    expect(screen.getByLabelText("แคมเปญ")).toHaveValue("99");
+    expect(screen.getByLabelText("แคมเปญ")).not.toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("แคมเปญที่เลือกไม่พร้อมใช้งาน");
+    fireEvent.change(screen.getByLabelText("แคมเปญ"), { target: { value: "" } });
+    expect(screen.getByLabelText("แคมเปญ")).toHaveValue("");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
 });

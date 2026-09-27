@@ -4,6 +4,23 @@ Status: Implementation, migration application, authenticated responsive QA, prod
 
 Priority: P1 decision support
 
+## 2026-09-27 UX and Recovery Checkpoint
+
+Attraction analytics now distinguishes temporary loader failures from a real empty
+catalog, invalid filters and an unavailable selected attraction. A failed read
+does not display zero metrics or silently substitute another attraction. Default
+dates and displayed generation time use Bangkok time; analytics retry keeps the
+resolved date/evidence/channel/campaign/code scope.
+
+Campaign changes clear incompatible check-in codes while preserving compatible
+ones and independent filters. Unavailable URL selections remain explicit rather
+than appearing as an all-record scope. Mobile KPI summaries use a 2x2 layout;
+comparison and definition tables have named keyboard-focusable scroll regions.
+See `docs/testing/PHASE_24_ATTRACTION_UX_QA_2026-09-27.md` for bounded local QA;
+authenticated current-build and production query-plan acceptance remain open.
+No schema, metric formula, real record or rollout flag changes accompany this
+checkpoint.
+
 ## Goal
 
 Allow authorized staff to analyze each attraction independently and translate visitor evidence into traceable improvement work.

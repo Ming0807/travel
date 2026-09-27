@@ -50,6 +50,8 @@ describe("attraction peer comparison", () => {
     expect(screen.getByText("อันดับ 2 จาก 3 สถานที่")).toBeInTheDocument();
     expect(screen.getByText("1 ส.ค. 2569 - 31 ส.ค. 2569")).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ข้อมูลเปรียบเทียบสถานที่" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางเปรียบเทียบสถานที่" })).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("region", { name: "รายละเอียดการเปรียบเทียบสถานที่", hidden: true })).toHaveAttribute("tabindex", "0");
     expect(screen.getAllByText("ยังไม่พร้อม")).toHaveLength(2);
     expect(screen.getAllByText("ปกปิด (n=6)").length).toBeGreaterThan(0);
     expect(screen.getByText(/ไม่ใช่รายได้ธุรกิจ/)).toBeInTheDocument();

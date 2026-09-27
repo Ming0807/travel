@@ -29,3 +29,19 @@ open. Use `?page=executive&state=no-records` for the base empty state and
 Use `?page=attraction-filter` and `?page=attraction-filter&state=active` to
 inspect the compact and expanded single-attraction filter. The active fixture
 selects NFC, a real fixture campaign option, and a controlled check-in point.
+
+Use `?page=attraction-notice&state=analytics_unavailable` for the recoverable
+notice. Other supported states are `options_unavailable`, `no_attractions`,
+`invalid_filters` and `attraction_unavailable`. `?page=attraction&state=large`
+uses deliberately large synthetic KPI counts for overflow checks, not a coherent
+analytical dataset or research result.
+
+The fixture supplies Tahoma/Arial font-variable fallbacks because it does not run
+the Next.js root layout or its generated Kanit/Noto font classes. Screenshots
+test responsive composition, not exact production font fidelity.
+
+For the 2026-09-27 matrix, run Vite on port 4183 and use the Playwright CLI
+`run-code --filename tests/visual/dashboard/attraction-workspace-qa.js`. It checks
+five widths, five notice states, four workspace states, keyboard table scrolling,
+dependent filters and browser history using the real components. The standalone
+`attraction-filter.html` harness uses synthetic codes and has no database adapter.

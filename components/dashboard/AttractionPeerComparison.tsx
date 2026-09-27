@@ -44,7 +44,7 @@ function ComparisonTable({ summaries }: { summaries: PeerSummary[] }) {
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500" role="region" aria-label="ตารางเปรียบเทียบสถานที่" tabIndex={0}>
         <table className="w-full min-w-[760px] border-collapse text-sm" aria-label="ข้อมูลเปรียบเทียบสถานที่">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-600">
@@ -83,7 +83,7 @@ function ComparisonTable({ summaries }: { summaries: PeerSummary[] }) {
           ดูมิติประสบการณ์ Flow และค่าใช้จ่ายเพิ่มเติม
           <CaretDown className="shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
         </summary>
-        <div className="overflow-x-auto border-t border-slate-200">
+        <div className="overflow-x-auto border-t border-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500" role="region" aria-label="รายละเอียดการเปรียบเทียบสถานที่" tabIndex={0}>
           <table className="w-full min-w-[760px] border-collapse text-sm" aria-label="รายละเอียดข้อมูลเปรียบเทียบสถานที่">
             <thead className="sr-only">
               <tr><th>ตัวชี้วัด</th>{summaries.map((summary) => <th key={summary.attractionId}>{summary.nameTh}</th>)}</tr>

@@ -45,6 +45,20 @@ function getDetailGroup(group: string) {
 }
 
 describe("AttractionAnalyticsWorkspace layout", () => {
+  it("shows the generated timestamp in Bangkok independently of the server timezone", () => {
+    const format = vi.spyOn(Date.prototype, "toLocaleString");
+    const generatedAt = "2026-09-26T18:30:00Z";
+    render(<AttractionAnalyticsWorkspace data={{ ...data, generatedAt }} />);
+    const call = format.mock.contexts.findIndex((date) => date instanceof Date && date.getTime() === Date.parse(generatedAt));
+    expect(format.mock.calls[call]).toEqual(["th-TH", expect.objectContaining({ timeZone: "Asia/Bangkok" })]);
+    format.mockRestore();
+  });
+
+  it("makes the metric-contract table a named keyboard-scrollable region", () => {
+    render(<AttractionAnalyticsWorkspace data={data} />);
+    expect(screen.getByRole("region", { name: "นิยามตัวชี้วัดและข้อจำกัด", hidden: true })).toHaveAttribute("tabindex", "0");
+  });
+
   it.each([
     ["all_records", "ข้อมูลรวมเพื่อ QA อาจมี Pilot และสถานการณ์จำลอง"],
     ["pilot_only", "กำลังวิเคราะห์ข้อมูล Pilot เท่านั้น"],
@@ -121,6 +135,7 @@ describe("AttractionAnalyticsWorkspace layout", () => {
     const actions = screen.getByRole("region", { name: "จากหลักฐานไปสู่การปรับปรุง" });
 
     expect(summary.querySelectorAll('[data-kpi-level="headline"]')).toHaveLength(4);
+    expect(summary.querySelector('[data-kpi-level="headline"]')?.parentElement).toHaveClass("grid-cols-2");
     expect(within(evidence).getByText("แบบสำรวจท่องเที่ยว")).toBeInTheDocument();
     expect(within(evidence).getByText("แบบประเมินงานวิจัย")).toBeInTheDocument();
     expect(within(evidence).getByText("การเข้าชมซ้ำ")).toBeInTheDocument();

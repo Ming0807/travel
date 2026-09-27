@@ -98,7 +98,17 @@ remains open; this checkpoint does not mark the entire contract complete.
 - [x] Add active-filter chips with clear-one and clear-all behavior.
 - [x] Add named presets for field evidence and pilot QA.
 - [x] Add an opt-in current-vs-previous-period contract with equal inclusive date ranges and safe zero/null handling.
-- [ ] Add attraction comparison against the eligible peer median.
+- [x] Add attraction comparison against the eligible peer median. Local service/UI contracts and focused regression evidence are present; authenticated release acceptance remains separate.
+
+2026-09-27 attraction checkpoint: dependent campaign/check-in options retain
+explicit unavailable URL selections, clear incompatible codes on campaign changes,
+and preserve independent filters. The page now separates catalog/analytics load
+failures, invalid filters, unavailable attractions and an empty attraction catalog.
+Analytics retry carries the server-resolved scope, including default Bangkok
+dates; framework/authentication errors still propagate. Mobile headline metrics
+use two columns, and peer/metric tables have named keyboard-focusable scroll
+regions. Evidence and remaining acceptance gates are in
+`docs/testing/PHASE_24_ATTRACTION_UX_QA_2026-09-27.md`.
 
 **Acceptance:** the same URL reproduces the same scope, exports match the visible scope, and invalid or unauthorized filters fail safely.
 
