@@ -11,11 +11,12 @@ export default async function CheckinLandingPage({
   searchParams = Promise.resolve({}),
 }: {
   params: Promise<{ code: string }>;
-  searchParams?: Promise<{ flow?: string; entryError?: string }>;
+  searchParams?: Promise<{ flow?: string | string[]; entryError?: string | string[] }>;
 }) {
   const { code } = await params;
   const query = await searchParams;
   if (query.entryError) return <CheckinUnavailable status={query.entryError === "nfc_unavailable" ? "nfc_unavailable" : "unavailable"} />;
+  if (query.flow !== undefined && typeof query.flow !== "string") return <CheckinUnavailable status="unavailable" />;
   const flowId = typeof query.flow === "string" ? query.flow : null;
   const browserId = flowId ? (await cookies()).get(CHECKIN_BROWSER_COOKIE)?.value ?? null : null;
   const context = await resolveCheckinFlow({ code, flowId, browserId });

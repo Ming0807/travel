@@ -2,15 +2,21 @@
 
 ## NFC Public Location Verification
 
-`/checkin/[code]` displays NFC-specific verification only for a resolved,
-browser-bound NFC entry session. It shows the attraction, optional photo spot,
+`/checkin/[code]` and `/checkin/[code]/start` display NFC-specific verification
+only for a resolved, browser-bound NFC entry session. It shows the attraction, optional photo spot,
 and official host from validated `NEXT_PUBLIC_APP_URL`, using the same HTTPS
 origin validator as staff tag provisioning. Visitors compare this information
 with the physical sign and browser address before proceeding. This is guidance,
 not proof of physical presence or protection against a copied external website.
-An invalid configured origin returns NFC recovery before landing tracking.
+An invalid configured origin returns NFC recovery before landing or data-entry
+tracking and before displaying the personal form, including on a direct start URL.
 Rejected NFC entry retains its channel-specific message; recovery does not
 construct a QR bypass link. The continuation link retains the bound flow ID.
+Both the landing and data-entry pages reject duplicate `flow` query values
+before resolving a session; they cannot be interpreted as a legacy check-in.
+The data-entry page also retains the NFC-specific recovery state when a bound
+session becomes unavailable. No personal form or landing/start event is shown
+for these rejected requests.
 
 Local QA 2026-09-27: five focused unit files passed 42 tests, including four
 additional origin/session cases; ESLint and TypeScript passed; Node 22 production

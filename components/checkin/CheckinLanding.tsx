@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 import { CheckinProgress } from "@/components/checkin/CheckinProgress";
+import { NfcEntryVerification } from "@/components/checkin/NfcEntryVerification";
 import type { CheckinCodeDetails } from "@/lib/repositories/checkin.repository";
 
 export function CheckinLanding({
@@ -66,18 +67,11 @@ export function CheckinLanding({
 
       <div className="mx-auto max-w-lg px-5 py-7">
         {nfcOfficialHost ? (
-          <section aria-label="ตรวจสอบจุดเช็กอิน NFC" className="mb-6 border-y border-teal/20 py-4">
-            <p className="text-sm font-bold text-teal">เช็กอินผ่าน NFC</p>
-            <p className="mt-2 text-sm leading-6 text-ink">
-              ตรวจสอบว่าคุณอยู่ที่ <strong>{attraction?.name_th}</strong>
-              {details.photo_spot ? <> · {details.photo_spot.spot_name_th}</> : null}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-slate-600">
-              ที่อยู่เว็บไซต์บนป้ายและในแถบที่อยู่ควรตรงกับ
-              <span className="block break-all font-bold text-ink">{nfcOfficialHost}</span>
-            </p>
-            <p className="mt-2 text-xs leading-5 text-slate-600">หากสถานที่หรือเว็บไซต์ไม่ตรงกับป้าย ให้หยุดและสอบถามเจ้าหน้าที่ก่อนกรอกข้อมูล</p>
-          </section>
+          <NfcEntryVerification
+            officialHost={nfcOfficialHost}
+            attractionName={attraction?.name_th ?? placeName}
+            photoSpotName={details.photo_spot?.spot_name_th}
+          />
         ) : null}
         <div className="flex items-start justify-between gap-5 pb-6">
           <div>

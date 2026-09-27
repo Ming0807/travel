@@ -50,6 +50,15 @@ host/location verification and passed 42 focused tests, 10 responsive browser
 cases, TypeScript, and Node 22 production build. No schema or rollout flags
 changed. Real-device and deployed acceptance remain outstanding.
 
+Follow-up: `/checkin/[code]` and `/checkin/[code]/start` now reject duplicate
+`flow` values before session resolution, so a malformed bound entry cannot
+fall back to a legacy visit. The start page preserves NFC recovery when a
+session is blocked and repeats the official host/location check before the
+personal form; an invalid host blocks the form and start event. Focused page
+tests observed both direct-entry cases failing before this addition, then
+passed after the fix. This is application-level hardening; live device
+and authenticated end-to-end acceptance remain open.
+
 ### Task 23.6: Physical Deployment Guide
 
 - [ ] Complete the physical installation-record workflow. The operational guide covers visible official-domain labels, QR fallback, tamper checks, tag identity, field checks, and replacement; installation photos/records and full field acceptance are not complete.

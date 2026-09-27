@@ -13,23 +13,35 @@ import { cookies, headers } from "next/headers";
 import { getOptionalResearchInvitationForCheckin } from "@/lib/services/research.service";
 import { ResearchInvitePrompt } from "@/components/research/ResearchInvitePrompt";
 import { CheckinProgress } from "@/components/checkin/CheckinProgress";
+import { NfcEntryVerification } from "@/components/checkin/NfcEntryVerification";
+import { getNfcOfficialOrigin } from "@/lib/nfc/contract";
 
 export default async function StartCheckinPage({
   params,
   searchParams = Promise.resolve({}),
 }: {
   params: Promise<{ code: string }>;
-  searchParams?: Promise<{ flow?: string; entryError?: string }>;
+  searchParams?: Promise<{ flow?: string | string[]; entryError?: string | string[] }>;
 }) {
   const { code } = await params;
   const query = await searchParams;
-  if (query.entryError) return <CheckinUnavailable status="unavailable" />;
+  if (query.entryError) return <CheckinUnavailable status={query.entryError === "nfc_unavailable" ? "nfc_unavailable" : "unavailable"} />;
+  if (query.flow !== undefined && typeof query.flow !== "string") return <CheckinUnavailable status="unavailable" />;
   const flowId = typeof query.flow === "string" ? query.flow : null;
   const browserId = flowId ? (await cookies()).get(CHECKIN_BROWSER_COOKIE)?.value ?? null : null;
   const context = await resolveCheckinFlow({ code, flowId, browserId });
 
   if (context.mode === "blocked") {
-    return <CheckinUnavailable status="unavailable" />;
+    return <CheckinUnavailable status={context.status} />;
+  }
+
+  let nfcOfficialHost: string | null = null;
+  if (context.mode === "session" && context.session.channel === "nfc") {
+    try {
+      nfcOfficialHost = new URL(getNfcOfficialOrigin(process.env.NEXT_PUBLIC_APP_URL ?? "")).host;
+    } catch {
+      return <CheckinUnavailable status="nfc_unavailable" />;
+    }
   }
 
   try {
@@ -93,6 +105,14 @@ export default async function StartCheckinPage({
             ใช้เวลาประมาณ 1 นาที รูปภาพเป็นขั้นตอนถัดไปและเลือกข้ามได้
           </p>
         </div>
+
+        {nfcOfficialHost ? (
+          <NfcEntryVerification
+            officialHost={nfcOfficialHost}
+            attractionName={attraction?.name_th ?? "สถานที่ท่องเที่ยว"}
+            photoSpotName={photo_spot?.spot_name_th}
+          />
+        ) : null}
 
         <div className="mb-6 bg-white px-4 py-1">
           <CheckinProgress currentStep={0} />
