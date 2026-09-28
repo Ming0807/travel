@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { getPreviousDashboardPeriod, parseDashboardFilters } from "@/lib/validation/dashboard-filters";
+import { getDefaultDashboardDateRange, getPreviousDashboardPeriod, parseDashboardFilters } from "@/lib/validation/dashboard-filters";
 
 describe("dashboard filter validation", () => {
+  it("defaults the 30 inclusive days to Bangkok civil dates across the UTC boundary", () => {
+    const beforeThaiMidnight = new Date("2026-09-28T16:59:59.000Z");
+    const afterThaiMidnight = new Date("2026-09-28T17:00:00.000Z");
+
+    expect(getDefaultDashboardDateRange(beforeThaiMidnight)).toEqual({ dateFrom: "2026-08-30", dateTo: "2026-09-28" });
+    expect(getDefaultDashboardDateRange(afterThaiMidnight)).toEqual({ dateFrom: "2026-08-31", dateTo: "2026-09-29" });
+    const parsed = parseDashboardFilters({}, afterThaiMidnight);
+    expect(parsed.success && parsed.data).toMatchObject({ dateFrom: "2026-08-31", dateTo: "2026-09-29" });
+  });
+
   it.each(["2026-02-30", "2025-02-29", "2026-04-31"])("rejects nonexistent calendar date %s", (date) => {
     expect(parseDashboardFilters({ date_from: date, date_to: date }).success).toBe(false);
   });
@@ -58,6 +68,10 @@ describe("dashboard filter validation", () => {
       dateFrom: "2026-01-29",
       dateTo: "2026-02-28"
     });
+  });
+
+  it("rejects an impossible previous-period date instead of normalizing it into March", () => {
+    expect(getPreviousDashboardPeriod("2026-02-30", "2026-03-31")).toBeNull();
   });
 
   it("rejects inverted date ranges", () => {

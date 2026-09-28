@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { DASHBOARD_DATE_RANGE_MAX_DAYS } from "@/constants/dashboard-metrics";
 import { attractionEvidenceScopeSchema } from "@/lib/validation/attraction-analytics";
+import { isoToBangkokDateTimeInput } from "@/lib/utils/bangkok-datetime";
 export { getPreviousDashboardPeriod } from "@/lib/services/dashboard-comparison";
 
 type RawSearchParams = Record<string, string | string[] | undefined>;
@@ -19,13 +20,13 @@ function parseDateInput(value: string) {
 }
 
 export function getDefaultDashboardDateRange(now = new Date()) {
-  const dateTo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const dateFrom = new Date(dateTo);
-  dateFrom.setUTCDate(dateTo.getUTCDate() - 29);
+  const dateTo = isoToBangkokDateTimeInput(now.toISOString()).slice(0, 10);
+  const dateFrom = new Date(`${dateTo}T00:00:00.000Z`);
+  dateFrom.setUTCDate(dateFrom.getUTCDate() - 29);
 
   return {
     dateFrom: dateToInputValue(dateFrom),
-    dateTo: dateToInputValue(dateTo)
+    dateTo
   };
 }
 

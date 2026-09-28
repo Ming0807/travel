@@ -3,8 +3,9 @@ import type { DashboardMetricComparison, DashboardKpi } from "@/types/dashboard"
 const DAY_MS = 86_400_000;
 
 function parseUtcDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const date = new Date(`${value}T00:00:00.000Z`);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? null : date;
 }
 
 function toDateInput(date: Date) {

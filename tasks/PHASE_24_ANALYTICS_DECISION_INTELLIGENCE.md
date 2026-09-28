@@ -89,6 +89,12 @@ dates are rejected. Summary export now includes KPI and daily Visit-trend rows
 alongside the existing ranking. Full authenticated drill-down/history parity
 remains open; this checkpoint does not mark the entire contract complete.
 
+2026-09-29 date-scope checkpoint: general dashboard defaults now use 30
+inclusive Bangkok civil dates at the UTC/Thai midnight boundary. Previous-period
+calculation rejects nonexistent calendar dates instead of normalizing them.
+Regression tests cover the boundary and invalid-date cases; authenticated
+export/history parity remains open.
+
 - [x] Keep date range and primary geography/attraction in a compact sticky filter bar on desktop and a collapsible bar on mobile.
 - [x] Move audience, travel behavior, district, attraction type, and satisfaction range into a responsive advanced filter panel.
 - [x] Move campaign, collection mode, and entry channel into the corresponding specialized advanced filter panels.

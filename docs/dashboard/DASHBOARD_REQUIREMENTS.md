@@ -408,6 +408,10 @@ last 30 days
 ```
 
 The selected range must be visible.
+The general admin dashboard defaults to the latest 30 inclusive Bangkok civil
+dates. Resolve the Thai calendar date before subtracting 29 days so a page load
+around midnight in Thailand does not silently use yesterday's scope. The
+single-attraction dashboard has its separate 90-day default documented below.
 
 ## 8.4 URL State
 
