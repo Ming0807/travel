@@ -194,8 +194,8 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
         </button>
 
         <div className={`${isOpen ? "block" : "hidden"} w-full min-w-0 lg:block lg:flex-1`} id="dashboard-filter-form">
-          <form action={pathname} className="flex flex-wrap items-end gap-3 2xl:flex-nowrap 2xl:gap-2" key={JSON.stringify(filters)}>
-            <div className="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:min-w-0 2xl:flex-1">
+          <form action={pathname} className="flex flex-wrap items-end gap-3 min-[1400px]:flex-nowrap min-[1400px]:gap-2" key={JSON.stringify(filters)}>
+            <div className="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-4 min-[1400px]:min-w-0 min-[1400px]:flex-1">
               <label className="block min-w-0">
                 <span className="text-xs font-semibold text-slate-600">ตั้งแต่วันที่</span>
                 <input className="mt-1 min-h-10 w-full rounded-[5px] border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15" defaultValue={filters.dateFrom} name="date_from" type="date" />
@@ -242,13 +242,13 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
                 <div
                   aria-hidden={!isAdvancedOpen}
                   aria-label="ตัวกรองขั้นสูง"
-                  className={`${isAdvancedOpen ? "block lg:grid" : "hidden"} fixed inset-x-3 bottom-3 z-50 max-h-[min(80dvh,42rem)] overflow-y-auto rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.18)] lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-0 lg:top-full lg:z-30 lg:mt-2 lg:w-[min(54rem,calc(100vw-18rem))] lg:gap-3 lg:shadow-[0_4px_8px_rgba(23,23,23,0.10)]`}
+                  className={`${isAdvancedOpen ? "block lg:grid" : "hidden"} fixed inset-x-3 bottom-3 z-50 max-h-[min(90dvh,48rem)] overflow-y-auto rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.18)] lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-0 lg:top-full lg:z-30 lg:mt-2 lg:w-[min(54rem,calc(100vw-18rem))] lg:gap-3 lg:shadow-[0_4px_8px_rgba(23,23,23,0.10)]`}
                   id="dashboard-advanced-filters"
                   ref={advancedPanelRef}
                   role="region"
                   tabIndex={-1}
                 >
-                  <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-3 sm:col-span-2 lg:mb-0">
+                  <div className="sticky top-0 z-10 mb-4 flex items-start justify-between gap-3 border-b border-slate-200 bg-white pb-3 sm:col-span-2 lg:static lg:mb-0">
                     <div><p className="text-sm font-black text-slate-900">ตัวกรองขั้นสูง</p><p className="mt-1 text-xs leading-5 text-slate-500">ใช้เพื่อเปรียบเทียบกลุ่มข้อมูลเฉพาะ ค่าที่ไม่ตอบจะไม่ถูกแทนด้วยศูนย์</p></div>
                     <button aria-label="ปิดแผงตัวกรองขั้นสูง" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-slate-500 hover:bg-slate-100" onClick={() => { setIsAdvancedOpen(false); advancedToggleRef.current?.focus(); }} type="button"><X aria-hidden="true" size={18} weight="bold" /></button>
                   </div>

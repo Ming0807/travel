@@ -180,6 +180,14 @@ regions. Evidence and remaining acceptance gates are in
 
 ### Task 24.10: Responsive and Accessible Visual System
 
+2026-09-29 filter-layout checkpoint: the shared admin filter keeps its four
+primary fields and actions on one row when a desktop viewport is at least
+1400 px wide, including an approximately 1100 px content area after the admin
+sidebar. Smaller layouts retain wrapping. The mobile advanced-filter sheet
+shows more fields and keeps its title, close control, and apply action visible
+while scrolling. Synthetic component screenshots at 390, 1024, and 1440 px and
+focused tests cover this change; authenticated cross-page QA remains open.
+
 2026-09-29 checkpoint: horizontally scrollable evidence tables across the
 admin charts/detail modules and public evidence dashboard have named,
 keyboard-focusable regions with a visible focus indicator. Component tests
