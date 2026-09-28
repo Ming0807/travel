@@ -138,17 +138,56 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   useEffect(() => {
     if (!isAdvancedOpen) return;
 
-    advancedPanelRef.current?.focus();
+    const currentPanel = advancedPanelRef.current;
+    if (!currentPanel) return;
+    const panel = currentPanel;
+    panel.focus();
+    const narrowViewport = window.matchMedia?.("(max-width: 1023px)");
+    const isMobile = () => narrowViewport?.matches ?? window.innerWidth < 1024;
+    const previousBodyOverflow = document.body.style.overflow;
 
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsAdvancedOpen(false);
-        advancedToggleRef.current?.focus();
+    function syncMobileDialog() {
+      if (isMobile()) {
+        panel.setAttribute("aria-modal", "true");
+        document.body.style.overflow = "hidden";
+      } else {
+        panel.removeAttribute("aria-modal");
+        document.body.style.overflow = previousBodyOverflow;
       }
     }
 
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    syncMobileDialog();
+    narrowViewport?.addEventListener("change", syncMobileDialog);
+
+    function handlePanelKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsAdvancedOpen(false);
+        advancedToggleRef.current?.focus();
+      } else if (event.key === "Tab" && isMobile()) {
+        const focusable = Array.from(panel.querySelectorAll<HTMLElement>(
+          "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]",
+        ));
+        const first = focusable[0];
+        const last = focusable.at(-1);
+        if (!first || !last) return;
+
+        if (event.shiftKey && (document.activeElement === panel || document.activeElement === first || !panel.contains(document.activeElement))) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handlePanelKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handlePanelKeyDown);
+      narrowViewport?.removeEventListener("change", syncMobileDialog);
+      panel.removeAttribute("aria-modal");
+      document.body.style.overflow = previousBodyOverflow;
+    };
   }, [isAdvancedOpen]);
 
   function removeHref(key: string): string {
@@ -245,7 +284,7 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
                   className={`${isAdvancedOpen ? "block lg:grid" : "hidden"} fixed inset-x-3 bottom-3 z-50 max-h-[min(90dvh,48rem)] overflow-y-auto rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.18)] lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-0 lg:top-full lg:z-30 lg:mt-2 lg:w-[min(54rem,calc(100vw-18rem))] lg:gap-3 lg:shadow-[0_4px_8px_rgba(23,23,23,0.10)]`}
                   id="dashboard-advanced-filters"
                   ref={advancedPanelRef}
-                  role="region"
+                  role="dialog"
                   tabIndex={-1}
                 >
                   <div className="sticky top-0 z-10 mb-4 flex items-start justify-between gap-3 border-b border-slate-200 bg-white pb-3 sm:col-span-2 lg:static lg:mb-0">

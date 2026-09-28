@@ -180,6 +180,13 @@ regions. Evidence and remaining acceptance gates are in
 
 ### Task 24.10: Responsive and Accessible Visual System
 
+2026-09-29 mobile-filter accessibility checkpoint: the advanced-filter sheet
+now announces a modal dialog below 1024 px, contains Tab and Shift+Tab focus,
+locks background scrolling, and restores focus and scrolling on dismissal.
+At desktop width it stays a nonmodal popover. Focused tests and synthetic
+390/1440 px browser interactions verify this behavior; authenticated
+cross-page accessibility acceptance remains open.
+
 2026-09-29 filter-layout checkpoint: the shared admin filter keeps its four
 primary fields and actions on one row when a desktop viewport is at least
 1400 px wide, including an approximately 1100 px content area after the admin

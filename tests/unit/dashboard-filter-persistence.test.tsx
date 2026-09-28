@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import type { DashboardFilters as DashboardFiltersValue, DashboardReferenceOptions } from "@/types/dashboard";
 
@@ -10,6 +10,8 @@ vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname.current,
   useSearchParams: () => mockSearchParams.current,
 }));
+
+afterEach(() => vi.unstubAllGlobals());
 
 const options: DashboardReferenceOptions = {
   provinces: [{ value: "1", label: "ยะลา" }],
@@ -90,6 +92,46 @@ describe("DashboardFilters advanced filter persistence", () => {
     const submit = screen.getByRole("button", { name: "ใช้ตัวกรองขั้นสูง" });
     expect(submit).toHaveAttribute("type", "submit");
     expect(submit.closest("#dashboard-advanced-filters")).not.toHaveClass("hidden");
+  });
+
+  it("contains mobile keyboard focus and restores scrolling when dismissed", () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    renderFilters();
+
+    const toggle = screen.getByRole("button", { name: /ตัวกรองขั้นสูง/ });
+    fireEvent.click(toggle);
+
+    const panel = screen.getByRole("dialog", { name: "ตัวกรองขั้นสูง" });
+    const close = screen.getByRole("button", { name: "ปิดแผงตัวกรองขั้นสูง" });
+    const apply = screen.getByRole("button", { name: "ใช้ตัวกรองขั้นสูง" });
+    expect(panel).toHaveAttribute("aria-modal", "true");
+    expect(document.body.style.overflow).toBe("hidden");
+
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(apply).toHaveFocus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(close).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(toggle).toHaveFocus();
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("keeps the desktop advanced popover nonmodal", () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    renderFilters();
+    fireEvent.click(screen.getByRole("button", { name: /ตัวกรองขั้นสูง/ }));
+
+    expect(screen.getByRole("dialog", { name: "ตัวกรองขั้นสูง" })).not.toHaveAttribute("aria-modal");
+    expect(document.body.style.overflow).toBe("");
   });
 
   it("keeps the existing noninteger satisfaction score option", () => {

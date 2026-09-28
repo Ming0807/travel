@@ -20,6 +20,11 @@ saved-view controls, keyboard focus, export dialog scrolling, chart labels,
 nonblank rendered SVGs and no horizontal page overflow. Live role-based testing
 still requires the separate `admin-live-smoke.spec.ts` credentials and data.
 
+For the advanced filter, at mobile widths open the primary filter first, then
+the advanced sheet. Verify that Tab and Shift+Tab stay inside, Escape returns
+focus to the opener, and the background cannot scroll. At desktop widths the
+advanced panel is nonmodal and must not lock page scrolling.
+
 Use `?page=executive` to render the actual ExecutiveOverview with the same three
 states. Its typed synthetic fixture also supports focused composition tests.
 Count `.recharts-surface` for plotted charts; icon SVGs are not charts. Check
