@@ -8,7 +8,7 @@ import { DashboardSavedViews } from "@/components/dashboard/DashboardSavedViews"
 import { DonutChartCard } from "@/components/dashboard/DonutChartCard";
 import { ExportCsvButton } from "@/components/dashboard/ExportCsvButton";
 import { KpiCard } from "@/components/dashboard/KpiCard";
-import { TrendChart } from "@/components/dashboard/TrendChart";
+import { TrendChart, formatTrendAxisDate } from "@/components/dashboard/TrendChart";
 import { localizeDashboardKpi } from "@/components/dashboard/dashboard-localization";
 import { SmallSampleWarning } from "@/components/dashboard/SmallSampleWarning";
 
@@ -499,6 +499,12 @@ describe("Dashboard UX ภาษาไทย", () => {
     ]} />);
     expect(screen.getByText(/วันที่ไม่มีรายการเข้าชม.*แสดงเป็น 0/)).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ข้อมูลแนวโน้มรายการเข้าชม" })).toHaveTextContent("0");
+  });
+
+  it("ระบุปีบนแกนวันที่เมื่อแนวโน้มข้ามปี", () => {
+    expect(formatTrendAxisDate("2025-12-31", true)).toContain("68");
+    expect(formatTrendAxisDate("2026-01-01", true)).toContain("69");
+    expect(formatTrendAxisDate("2026-01-01", false)).not.toContain("69");
   });
 
   it("ยุบการแจ้งเตือนเป็นค่าเริ่มต้นและจำกัดข้อความบนหน้าหลัก", () => {

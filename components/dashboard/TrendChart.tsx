@@ -17,10 +17,12 @@ import { DASHBOARD_CHART_AXIS_TICK, DASHBOARD_CHART_TOKENS, DASHBOARD_CHART_TOOL
 import { buildAttractionImprovementHref, type AttractionImprovementContext } from "@/lib/dashboard/attraction-improvement-links";
 import type { TrendPoint } from "@/types/dashboard";
 
-function formatDateLabel(raw: string): string {
+export function formatTrendAxisDate(raw: string, showYear: boolean): string {
   const date = new Date(`${raw}T00:00:00.000Z`);
   if (Number.isNaN(date.getTime())) return raw;
-  return date.toLocaleDateString("th-TH", { month: "short", day: "numeric" });
+  return date.toLocaleDateString("th-TH", showYear
+    ? { month: "short", day: "numeric", year: "2-digit" }
+    : { month: "short", day: "numeric" });
 }
 
 function formatDateFull(raw: string): string {
@@ -37,7 +39,7 @@ function formatDateFull(raw: string): string {
 function formatDateActionLabel(raw: string): string {
   const date = new Date(`${raw}T00:00:00.000Z`);
   if (Number.isNaN(date.getTime())) return raw;
-  return `${formatDateLabel(raw)} ${date.getUTCFullYear() + 543}`;
+  return `${formatTrendAxisDate(raw, false)} ${date.getUTCFullYear() + 543}`;
 }
 
 export function TrendChart({ points, improvementContext, incomplete = false }: { points: TrendPoint[]; improvementContext?: AttractionImprovementContext; incomplete?: boolean }) {
@@ -46,11 +48,14 @@ export function TrendChart({ points, improvementContext, incomplete = false }: {
   const peak = useMemo(() => points.reduce<TrendPoint | null>((best, point) => (
     best === null || point.value > best.value ? point : best
   ), null), [points]);
-  const chartData = useMemo(() => points.map((point) => ({
-    ...point,
-    dateLabel: formatDateLabel(point.label),
-    fullDate: formatDateFull(point.label),
-  })), [points]);
+  const chartData = useMemo(() => {
+    const showYear = new Set(points.map((point) => point.label.slice(0, 4))).size > 1;
+    return points.map((point) => ({
+      ...point,
+      dateLabel: formatTrendAxisDate(point.label, showYear),
+      fullDate: formatDateFull(point.label),
+    }));
+  }, [points]);
 
   if (incomplete) {
     return (

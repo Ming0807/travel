@@ -8,6 +8,7 @@ included in production routing. It has no database or authentication adapter.
 The dataset is synthetic. `?state=empty` and `?state=low` exercise display states.
 Use `?state=trend-gaps` to inspect a complete three-day Visit trend with a
 zero-Visit day, and `?state=trend-incomplete` to inspect the withheld-chart state.
+Use `?state=trend-year` to inspect the year labels on a cross-year trend.
 Navigation is stubbed for this component harness; downloading is intentionally
 unavailable. Never count these screenshots as authenticated integration evidence.
 

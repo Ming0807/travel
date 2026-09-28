@@ -64,7 +64,7 @@ createRoot(document.getElementById("root")!).render(
         </section>
       ) : surface === "entry" ? null : <>
       <TrendChart
-        points={state === "empty" ? [] : [{ label: "2026-08-01", value: 14 }, { label: "2026-08-02", value: state === "trend-gaps" ? 0 : 23 }, { label: "2026-08-03", value: 18 }]}
+        points={state === "empty" ? [] : state === "trend-year" ? [{ label: "2025-12-31", value: 14 }, { label: "2026-01-01", value: 23 }] : [{ label: "2026-08-01", value: 14 }, { label: "2026-08-02", value: state === "trend-gaps" ? 0 : 23 }, { label: "2026-08-03", value: 18 }]}
         incomplete={state === "trend-incomplete"}
       />
       <div className="grid items-start gap-4 lg:grid-cols-2">
