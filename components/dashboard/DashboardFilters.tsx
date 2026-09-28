@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CaretDown, FunnelSimple, X } from "@phosphor-icons/react/dist/ssr";
@@ -106,6 +106,8 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const advancedToggleRef = useRef<HTMLButtonElement>(null);
+  const advancedPanelRef = useRef<HTMLDivElement>(null);
   const supportsComparison = pathname === "/admin/dashboard";
   const previousPeriod = getPreviousDashboardPeriod(filters.dateFrom, filters.dateTo);
   const satisfactionLabel = filters.satisfactionMin !== undefined || filters.satisfactionMax !== undefined
@@ -129,8 +131,13 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
   useEffect(() => {
     if (!isAdvancedOpen) return;
 
+    advancedPanelRef.current?.focus();
+
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsAdvancedOpen(false);
+      if (event.key === "Escape") {
+        setIsAdvancedOpen(false);
+        advancedToggleRef.current?.focus();
+      }
     }
 
     document.addEventListener("keydown", handleEscape);
@@ -213,6 +220,7 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
               <button
                 aria-controls="dashboard-advanced-filters"
                 aria-expanded={isAdvancedOpen}
+                ref={advancedToggleRef}
                 className="inline-flex min-h-10 items-center gap-2 rounded-[5px] border border-slate-300 px-3 text-xs font-bold text-slate-700 transition-colors hover:border-slate-500 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727] focus-visible:ring-offset-2"
                 onClick={() => setIsAdvancedOpen((current) => !current)}
                 type="button"
@@ -222,18 +230,20 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
               </button>
               <>
                 {isAdvancedOpen ? (
-                  <button aria-label="ปิดตัวกรองขั้นสูง" className="fixed inset-0 z-40 bg-slate-950/35 lg:hidden" onClick={() => setIsAdvancedOpen(false)} type="button" />
+                  <button aria-label="ปิดตัวกรองขั้นสูง" className="fixed inset-0 z-40 bg-slate-950/35 lg:hidden" onClick={() => { setIsAdvancedOpen(false); advancedToggleRef.current?.focus(); }} type="button" />
                 ) : null}
                 <div
                   aria-hidden={!isAdvancedOpen}
                   aria-label="ตัวกรองขั้นสูง"
                   className={`${isAdvancedOpen ? "block lg:grid" : "hidden"} fixed inset-x-3 bottom-3 z-50 max-h-[min(80dvh,42rem)] overflow-y-auto rounded-md border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.18)] lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-0 lg:top-full lg:z-30 lg:mt-2 lg:w-[min(54rem,calc(100vw-18rem))] lg:gap-3 lg:shadow-[0_4px_8px_rgba(23,23,23,0.10)]`}
                   id="dashboard-advanced-filters"
+                  ref={advancedPanelRef}
                   role="region"
+                  tabIndex={-1}
                 >
                   <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-3 sm:col-span-2 lg:mb-0">
                     <div><p className="text-sm font-black text-slate-900">ตัวกรองขั้นสูง</p><p className="mt-1 text-xs leading-5 text-slate-500">ใช้เพื่อเปรียบเทียบกลุ่มข้อมูลเฉพาะ ค่าที่ไม่ตอบจะไม่ถูกแทนด้วยศูนย์</p></div>
-                    <button aria-label="ปิดแผงตัวกรองขั้นสูง" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-slate-500 hover:bg-slate-100" onClick={() => setIsAdvancedOpen(false)} type="button"><X aria-hidden="true" size={18} weight="bold" /></button>
+                    <button aria-label="ปิดแผงตัวกรองขั้นสูง" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-slate-500 hover:bg-slate-100" onClick={() => { setIsAdvancedOpen(false); advancedToggleRef.current?.focus(); }} type="button"><X aria-hidden="true" size={18} weight="bold" /></button>
                   </div>
                   <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2 lg:grid-cols-4">
                     <FilterSelect label="อำเภอปลายทาง" name="district_id" options={options.districts} value={filters.districtId} />

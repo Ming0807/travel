@@ -318,6 +318,32 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(screen.getByText("คะแนน: 3-5")).toBeInTheDocument();
   });
 
+  it("ปิดตัวกรองขั้นสูงโดยไม่ส่งฟอร์มและคืนโฟกัสให้ปุ่มเปิด", () => {
+    render(
+      <DashboardFilters
+        filters={{ dateFrom: "2026-07-01", dateTo: "2026-07-31" }}
+        options={{
+          provinces: [], districts: [], attractions: [], attractionTypes: [],
+          originCountries: [], originProvinces: [], ageGroups: [], transportModes: [], travelPurposes: [],
+        }}
+      />,
+    );
+
+    const toggle = screen.getByRole("button", { name: /ตัวกรองขั้นสูง/ });
+    fireEvent.click(toggle);
+    expect(document.activeElement).toBe(screen.getByRole("region", { name: "ตัวกรองขั้นสูง" }));
+    const close = screen.getByRole("button", { name: "ปิดแผงตัวกรองขั้นสูง" });
+    expect(close).toHaveAttribute("type", "button");
+    fireEvent.click(close);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(document.activeElement).toBe(toggle);
+
+    fireEvent.click(toggle);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(document.activeElement).toBe(toggle);
+  });
+
   it("เปิดเปรียบเทียบช่วงก่อนหน้าได้โดยไม่เพิ่มภาระ query เป็นค่าเริ่มต้น", () => {
     mockPathname.current = "/admin/dashboard";
     const { unmount } = render(
