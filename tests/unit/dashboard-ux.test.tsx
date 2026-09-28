@@ -318,6 +318,39 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(screen.getByText("คะแนน: 3-5")).toBeInTheDocument();
   });
 
+  it("รักษาตัวกรองสถานที่เดิมเมื่อสถานที่ไม่อยู่ในตัวเลือกปัจจุบัน", () => {
+    const { container } = render(<DashboardFilters
+      filters={{ dateFrom: "2026-07-01", dateTo: "2026-07-31", attractionId: 99 }}
+      options={{
+        provinces: [], districts: [], attractions: [{ value: "4", label: "วัดหน้าถ้ำ" }], attractionTypes: [],
+        originCountries: [], originProvinces: [], ageGroups: [], transportModes: [], travelPurposes: [],
+      }}
+    />);
+
+    expect(screen.getByLabelText("สถานที่ท่องเที่ยว")).toHaveValue("99");
+    expect(screen.getByRole("option", { name: /99.*ไม่อยู่ในรายการ/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ลบตัวกรอง สถานที่/ })).toHaveTextContent("ไม่อยู่ในรายการ");
+    expect(new FormData(container.querySelector("form")!).get("attraction_id")).toBe("99");
+  });
+
+  it("ใช้ค่าขอบเขตใหม่หลังนำทางโดยไม่ค้างค่าฟอร์มที่ยังไม่ส่ง", () => {
+    const options = {
+      provinces: [], districts: [], attractions: [], attractionTypes: [],
+      originCountries: [], originProvinces: [], ageGroups: [], transportModes: [], travelPurposes: [],
+    };
+    const { rerender } = render(<DashboardFilters
+      filters={{ dateFrom: "2026-07-01", dateTo: "2026-07-31" }}
+      options={options}
+    />);
+    fireEvent.change(screen.getByLabelText("ตั้งแต่วันที่"), { target: { value: "2026-06-01" } });
+
+    rerender(<DashboardFilters
+      filters={{ dateFrom: "2026-08-01", dateTo: "2026-08-31" }}
+      options={options}
+    />);
+    expect(screen.getByLabelText("ตั้งแต่วันที่")).toHaveValue("2026-08-01");
+  });
+
   it("ปิดตัวกรองขั้นสูงโดยไม่ส่งฟอร์มและคืนโฟกัสให้ปุ่มเปิด", () => {
     render(
       <DashboardFilters

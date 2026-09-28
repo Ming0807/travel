@@ -412,6 +412,10 @@ The selected range must be visible.
 ## 8.4 URL State
 
 Dashboard filters should be reflected in URL query parameters.
+If an applied reference value is no longer in the current option catalog, the
+filter control and active chip must disclose that unavailable value and retain
+its ID on form submission. Only an explicit clear or replacement may remove it.
+When URL scope changes, unsent form edits must reset to the newly applied scope.
 
 Example:
 

@@ -30,6 +30,8 @@ function FilterSelect({
   value?: number | string;
   options: DashboardReferenceOption[];
 }) {
+  const selectedValue = value === undefined ? "" : String(value);
+  const unavailableValue = selectedValue !== "" && !options.some((option) => option.value === selectedValue);
   const currentAgeOptions = name === "age_group"
     ? options.filter((option) => !option.label.endsWith("(ข้อมูลเดิม)"))
     : [];
@@ -42,10 +44,11 @@ function FilterSelect({
       <span className="text-xs font-semibold text-slate-600">{label}</span>
       <select
         className="mt-1 min-h-10 w-full rounded-[5px] border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none transition-colors focus:border-[#B94727] focus:ring-2 focus:ring-[#B94727]/15"
-        defaultValue={value === undefined ? "" : String(value)}
+        defaultValue={selectedValue}
         name={name}
       >
         <option value="">ทั้งหมด</option>
+        {unavailableValue ? <option value={selectedValue}>{unavailableOptionLabel(selectedValue)}</option> : null}
         {name === "age_group" ? (
           <>
             <optgroup label="ช่วงอายุมาตรฐานปัจจุบัน">
@@ -89,7 +92,11 @@ function ScoreSelect({ label, name, value }: { label: string; name: string; valu
 
 function optionLabel(options: DashboardReferenceOption[], value: number | string | undefined): string | null {
   if (value === undefined) return null;
-  return options.find((option) => option.value === String(value))?.label ?? String(value);
+  return options.find((option) => option.value === String(value))?.label ?? unavailableOptionLabel(String(value));
+}
+
+function unavailableOptionLabel(value: string): string {
+  return `รหัส ${value} ไม่อยู่ในรายการปัจจุบัน`;
 }
 
 function formatThaiDate(value: string) {
@@ -187,7 +194,7 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
         </button>
 
         <div className={`${isOpen ? "block" : "hidden"} w-full min-w-0 lg:block lg:flex-1`} id="dashboard-filter-form">
-          <form action={pathname} className="flex flex-wrap items-end gap-3 2xl:flex-nowrap 2xl:gap-2">
+          <form action={pathname} className="flex flex-wrap items-end gap-3 2xl:flex-nowrap 2xl:gap-2" key={JSON.stringify(filters)}>
             <div className="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:min-w-0 2xl:flex-1">
               <label className="block min-w-0">
                 <span className="text-xs font-semibold text-slate-600">ตั้งแต่วันที่</span>
@@ -277,9 +284,9 @@ export function DashboardFilters({ filters, options }: DashboardFiltersProps) {
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 px-3 py-2 sm:px-4" aria-label="ตัวกรองที่ใช้อยู่">
           <span className="mr-1 text-xs font-semibold text-slate-500">กำลังใช้</span>
           {activeFilters.map(([key, label, value]) => (
-            <Link key={key} href={removeHref(key)} className="inline-flex min-h-8 items-center gap-1.5 rounded-[5px] border border-[#E8B8A8] bg-[#FFF7F3] px-3 text-xs font-semibold text-[#8F351F] hover:border-[#B94727] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727]" aria-label={`ลบตัวกรอง ${label} ${value}`}>
-              {label}: {value}
-              <X aria-hidden="true" size={12} weight="bold" />
+            <Link key={key} href={removeHref(key)} className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-[5px] border border-[#E8B8A8] bg-[#FFF7F3] px-3 py-1 text-left text-xs font-semibold leading-4 text-[#8F351F] hover:border-[#B94727] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727]" aria-label={`ลบตัวกรอง ${label} ${value}`}>
+              <span className="min-w-0 break-words">{label}: {value}</span>
+              <X aria-hidden="true" className="shrink-0" size={12} weight="bold" />
             </Link>
           ))}
           <Link className="ml-auto min-h-8 px-2 text-xs font-semibold text-[#B94727] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B94727]" href={pathname}>ล้างทั้งหมด</Link>

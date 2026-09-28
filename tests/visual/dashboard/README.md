@@ -9,6 +9,9 @@ The dataset is synthetic. `?state=empty` and `?state=low` exercise display state
 Use `?state=trend-gaps` to inspect a complete three-day Visit trend with a
 zero-Visit day, and `?state=trend-incomplete` to inspect the withheld-chart state.
 Use `?state=trend-year` to inspect the year labels on a cross-year trend.
+Use `?state=stale-filter` to inspect an applied attraction that is no longer in
+the current reference options. The select and active chip must disclose the
+unavailable option, and submitting the form must retain its ID until cleared.
 Navigation is stubbed for this component harness; downloading is intentionally
 unavailable. Never count these screenshots as authenticated integration evidence.
 
