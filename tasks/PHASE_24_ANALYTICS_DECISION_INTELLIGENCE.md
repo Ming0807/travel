@@ -225,6 +225,14 @@ Executive and single-attraction continuation (2026-09-04):
 
 ### Task 24.12: Production QA and Controlled Release
 
+2026-09-29 regression checkpoint: `pnpm test -- --reporter=dot` completed with
+448 test files passed, 2 skipped, 3,458 tests passed, and 41 skipped on the
+local Node 26 runtime. The production build and TypeScript gate passed on
+Node 22 after the Bangkok default-date correction. Expected error-path logs
+and existing React `act(...)` warnings appeared; no test assertion failed.
+This is a local suite result, not authenticated role smoke, live Supabase
+query-plan evidence, or a Lighthouse/visual-regression release sign-off.
+
 - [ ] Add calculation regression tests for period comparison, peer eligibility, suppression, missingness, and evidence grades.
 - [ ] Add component tests for filter persistence, drill-down, error recovery, action creation, and export parity.
 - [ ] Add Playwright visual regression for 360, 390, 768, 1024, and 1440 px across normal, no-data, low-sample, loading, and error states.
