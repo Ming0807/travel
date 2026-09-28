@@ -23,7 +23,7 @@ export function FunnelDetailTable({ stages, selectedStageKey, onSelectStage }: {
       </div>
       <div className="min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white">
         {selectedStage ? <div className="flex flex-wrap items-center justify-between gap-2 border-b border-orange-200 bg-orange-50 px-4 py-2 text-xs text-orange-950"><strong>กำลังดูเฉพาะ {funnelStageLabel(selectedStage)}</strong><button className="min-h-8 px-2 font-bold underline underline-offset-2" onClick={() => onSelectStage?.(null)} type="button">แสดงทั้งหมด</button></div> : null}
-        <div className="overflow-x-auto">
+        <div aria-label="ตารางรายละเอียดเหตุการณ์แต่ละขั้น" className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}>
           <table aria-label="รายละเอียดเหตุการณ์แต่ละขั้น" className="w-full min-w-[760px] text-sm">
             <thead><tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600"><th className="px-4 py-3">ขั้นตอน</th><th className="px-4 py-3 text-right">เหตุการณ์</th><th className="px-4 py-3 text-right">เทียบขั้นสูงสุด</th><th className="px-4 py-3 text-right">อัตราผ่าน</th><th className="px-4 py-3 text-right">อัตราออก</th><th className="px-4 py-3">นิยาม</th></tr></thead>
             <tbody>

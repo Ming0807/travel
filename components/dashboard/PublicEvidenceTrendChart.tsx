@@ -42,7 +42,7 @@ export function PublicEvidenceTrendChart({ points }: { points: PublicEvidenceTre
 
           <details className="mt-4 border-t border-ink/10 pt-2" open={!hasVisibleData}>
             <summary className="min-h-11 cursor-pointer py-2 text-xs font-bold text-coral">ดูตารางและสถานะข้อมูล</summary>
-            <div className="overflow-x-auto">
+            <div aria-label="ตารางแนวโน้มรายการเข้าชมที่บันทึก" className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral" role="region" tabIndex={0}>
               <table className="w-full min-w-[420px] border-collapse text-left text-sm" aria-label="แนวโน้มรายการเข้าชมที่บันทึก">
                 <thead className="border-y border-ink/10 bg-background text-xs text-muted"><tr><th className="px-3 py-2.5 font-bold">วันที่</th><th className="px-3 py-2.5 text-right font-bold">รายการเข้าชม</th><th className="px-3 py-2.5 text-right font-bold">สถานะข้อมูล</th></tr></thead>
                 <tbody className="divide-y divide-ink/10">{points.map((point) => <tr key={point.isoDate}><th scope="row" className="px-3 py-3 font-bold">{point.label}</th><td className="px-3 py-3 text-right tabular-nums">{point.displayValue}</td><td className="px-3 py-3 text-right text-muted">{point.status === "suppressed" ? "ปกปิด cell เล็ก" : point.status === "no_data" ? "ไม่มีรายการ" : "แสดงได้"}</td></tr>)}</tbody>

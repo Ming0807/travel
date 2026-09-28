@@ -19,6 +19,7 @@ describe("attraction channel panel quality gates", () => {
     expect(screen.getByText("ฐานข้อมูลบางกลุ่มต่ำกว่าเกณฑ์ จึงยังไม่แสดงกราฟมุมมองนี้")).toBeInTheDocument();
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.getByText("ตารางผลลัพธ์และตัวหาร")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางผลลัพธ์ช่องทางเช็กอิน" })).toHaveAttribute("tabindex", "0");
   });
 
   it("blocks charts when the bounded query is incomplete", () => {

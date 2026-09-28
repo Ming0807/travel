@@ -72,7 +72,7 @@ export function AttractionChannelPanel({ data, incomplete = false }: { data: Cha
         </div> : <p className="my-5 border-l-2 border-amber-500 bg-amber-50 p-4 text-sm leading-6 text-amber-950">ฐานข้อมูลบางกลุ่มต่ำกว่าเกณฑ์ จึงยังไม่แสดงกราฟมุมมองนี้</p>}
         <details className="mt-4 border-t border-slate-100">
           <summary className="min-h-11 cursor-pointer py-3 text-sm font-bold text-orange-800">ตารางผลลัพธ์และตัวหาร</summary>
-          <div className="overflow-x-auto"><table className="w-full min-w-[420px] text-left text-sm">
+          <div aria-label="ตารางผลลัพธ์ช่องทางเช็กอิน" className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}><table className="w-full min-w-[420px] text-left text-sm">
             <thead><tr className="border-b border-slate-200"><th className="py-3">ช่องทาง</th><th>เริ่มเข้า</th><th>เช็กอิน</th><th>ใบประกาศ</th><th>แบบสำรวจ</th></tr></thead>
             <tbody>{data.channels.map((row) => <tr key={row.channel} className="border-b border-slate-100"><th className="py-3">{row.channel.toUpperCase()}</th><td>{display(row.entries)}</td><td>{display(row.linkedVisits)} / {display(row.entries)}</td><td>{display(row.certificates)} / {display(row.entries)}</td><td>{display(row.surveys)} / {display(row.entries)}</td></tr>)}</tbody>
           </table></div>

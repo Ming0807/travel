@@ -93,7 +93,7 @@ export function BarChartCard({
                 <button className="min-h-8 px-2 font-bold underline underline-offset-2" onClick={() => setSelectedLabel(null)} type="button">แสดงทั้งหมด</button>
               </div>
             ) : null}
-            <div className="overflow-x-auto">
+            <div aria-label={`ตาราง${title}`} className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}>
               <table className="w-full min-w-80 text-sm">
                 <thead><tr className="border-b border-slate-200 text-left text-xs text-slate-500"><th className="py-2 pr-4">รายการ</th><th className="py-2 pr-4">ฐานข้อมูล</th><th className="py-2 text-right">จำนวน</th><th className="py-2 pl-3 text-right">ตรวจรายละเอียด</th></tr></thead>
                 <tbody>{tableData.map((item, index) => <tr key={`table-${item.label}-${index}`} className="border-b border-slate-100"><td className="py-2 pr-4">{localizeDashboardLabel(item.label)}</td><td className="py-2 pr-4 text-xs text-slate-500">{item.note ?? "-"}</td><td className="py-2 text-right tabular-nums">{item.value.toLocaleString("th-TH")}</td><td className="py-1 pl-3 text-right"><button type="button" className="min-h-9 whitespace-nowrap px-2 text-xs font-bold text-[#B94727] underline-offset-2 hover:underline" onClick={() => setSelectedLabel(item.label)} aria-label={`ดูรายละเอียดเฉพาะ ${item.label}`}>ดูเฉพาะรายการนี้</button></td></tr>)}</tbody>

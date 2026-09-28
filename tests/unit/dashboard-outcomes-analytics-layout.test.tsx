@@ -124,6 +124,7 @@ describe("Outcome analytics detailed layouts", () => {
     expect(screen.getByText(/ไม่ใช่รายได้ที่ตรวจสอบแล้ว/)).toBeInTheDocument();
     expect(screen.getByText(/30 คำตอบ/)).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "รายละเอียดช่วงค่าใช้จ่าย" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางรายละเอียดช่วงค่าใช้จ่าย" })).toHaveAttribute("tabindex", "0");
     expect(screen.getByRole("table", { name: "รายละเอียดหมวดค่าใช้จ่าย" })).toBeInTheDocument();
   });
 
@@ -158,9 +159,11 @@ describe("Outcome analytics detailed layouts", () => {
     expect(screen.getAllByText("ยังไม่มีข้อมูล").length).toBeGreaterThanOrEqual(3);
     expect(screen.queryByText(/0(?:\.0)? \/ 5/)).not.toBeInTheDocument();
     expect(screen.getByRole("table", { name: "คะแนนประสบการณ์รายมิติ" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางคะแนนประสบการณ์รายมิติ" })).toHaveAttribute("tabindex", "0");
     expect(screen.getByRole("columnheader", { name: "ตอบ/ทั้งหมด" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Coverage" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ความพึงพอใจแยกตามสถานที่" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางความพึงพอใจแยกตามสถานที่" })).toHaveAttribute("tabindex", "0");
   });
 
   it("ไม่สรุปมิติที่ควรปรับปรุงจากตัวอย่างต่ำกว่าเกณฑ์และแสดงจำนวนคำตอบรายมิติ", () => {
@@ -190,6 +193,7 @@ describe("Outcome analytics detailed layouts", () => {
     expect(within(interpretation).getByText(/จุดที่ออกมากที่สุด/)).toBeInTheDocument();
     expect(screen.getAllByText(/ไม่ใช่จำนวนบุคคล/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("table", { name: "รายละเอียดเหตุการณ์แต่ละขั้น" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางรายละเอียดเหตุการณ์แต่ละขั้น" })).toHaveAttribute("tabindex", "0");
     fireEvent.click(screen.getByRole("button", { name: "ดูรายละเอียดเฉพาะ ส่งข้อมูลขั้นต่ำ" }));
     expect(screen.getByText("กำลังดูเฉพาะ ส่งข้อมูลขั้นต่ำ")).toBeInTheDocument();
   });

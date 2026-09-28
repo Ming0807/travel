@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BarChartCard } from "@/components/dashboard/BarChartCard";
+import { AttractionDistributionChart } from "@/components/dashboard/AttractionDistributionChart";
+import { AttractionScoreChart } from "@/components/dashboard/AttractionScoreChart";
 import { DashboardAlertBar } from "@/components/dashboard/DashboardAlertBar";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
@@ -420,6 +422,7 @@ describe("Dashboard UX ภาษาไทย", () => {
     );
     expect(screen.getByRole("heading", { name: "การเข้าชมแยกตามจังหวัด" })).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางการเข้าชมแยกตามจังหวัด" })).toHaveAttribute("tabindex", "0");
     expect(screen.getAllByText("12").length).toBeGreaterThan(0);
     expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
     expect(screen.getByText("ตอบ 12 / 20")).toBeInTheDocument();
@@ -495,6 +498,7 @@ describe("Dashboard UX ภาษาไทย", () => {
 
     expect(screen.getAllByText("ใช้งานแบบผู้เยี่ยมชม").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("table", { name: "ข้อมูลช่องทางระบุตัวตน" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางช่องทางระบุตัวตน" })).toHaveAttribute("tabindex", "0");
     expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
   });
 
@@ -513,8 +517,23 @@ describe("Dashboard UX ภาษาไทย", () => {
     expect(screen.getByText(/ไม่ใช่ยอดเปิดหน้าเว็บสาธารณะ/)).toBeInTheDocument();
     expect(screen.getByText(/ไม่ใช่จำนวนสแกน QR/)).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ข้อมูลแนวโน้มรายการเข้าชม" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางแนวโน้มรายการเข้าชม" })).toHaveAttribute("tabindex", "0");
     expect(screen.getAllByText("7").length).toBeGreaterThan(0);
     expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
+  });
+
+  it("ให้โฟกัสและเลื่อนตารางสำรองของกราฟรายสถานที่ด้วยคีย์บอร์ดได้", () => {
+    render(<>
+      <AttractionScoreChart metrics={[{ key: "safety_score", label: "ความปลอดภัย", value: 4, sampleSize: 30, suppressed: false }]} />
+      <AttractionDistributionChart
+        title="กลุ่มอายุรายสถานที่"
+        description="จำนวนคำตอบแยกตามอายุ"
+        rows={[{ label: "18-24", count: 30, percent: 100, sampleSize: 30, denominator: 30, suppressed: false }]}
+      />
+    </>);
+
+    expect(screen.getByRole("region", { name: "ตารางคุณภาพประสบการณ์" })).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("region", { name: "ตารางกลุ่มอายุรายสถานที่" })).toHaveAttribute("tabindex", "0");
   });
 
   it("ไม่แสดงเส้นแนวโน้มจากข้อมูลที่อ่านไม่ครบ", () => {

@@ -73,7 +73,7 @@ export function SatisfactionDetailTable({
 
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2">
         <div className="min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white">
-          <div className="overflow-x-auto">
+          <div aria-label="ตารางคะแนนประสบการณ์รายมิติ" className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}>
             <table aria-label="คะแนนประสบการณ์รายมิติ" className="w-full min-w-[720px] text-sm">
               <thead><tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600"><th className="px-4 py-3">มิติประสบการณ์</th><th className="px-4 py-3 text-right">คะแนนเฉลี่ย</th><th className="px-4 py-3 text-right">ตอบ/ทั้งหมด</th><th className="px-4 py-3 text-right">Coverage</th><th className="px-4 py-3 text-right">ขาด</th><th className="px-4 py-3">สถานะ</th></tr></thead>
               <tbody>
@@ -99,7 +99,7 @@ export function SatisfactionDetailTable({
         </div>
 
         <div className="min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white">
-          <div className="overflow-x-auto">
+          <div aria-label="ตารางความพึงพอใจแยกตามสถานที่" className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}>
             <table aria-label="ความพึงพอใจแยกตามสถานที่" className="w-full min-w-[620px] text-sm">
               <thead><tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600"><th className="px-4 py-3">อันดับ</th><th className="px-4 py-3">สถานที่</th><th className="px-4 py-3">จังหวัด</th><th className="px-4 py-3 text-right">คะแนนเฉลี่ย</th><th className="px-4 py-3 text-right">คำตอบ</th><th className="px-4 py-3 text-right">การเข้าชม</th></tr></thead>
               <tbody>

@@ -431,6 +431,11 @@ reload-safe filters
 easier debugging
 ```
 
+Dashboard evidence tables wider than their container must have a named,
+keyboard-focusable scroll region with a visible focus indicator on both admin
+and public views. This is in addition to the table's own accessible name and
+the chart's textual summary.
+
 ---
 
 ## 9. Date Filtering Rules

@@ -35,7 +35,7 @@ function DistributionTable({
 
   return (
     <div className="min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white">
-      <div className="overflow-x-auto">
+      <div aria-label={`ตาราง${ariaLabel}`} className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}>
         <table aria-label={ariaLabel} className="w-full min-w-[520px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600">

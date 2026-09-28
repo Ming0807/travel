@@ -76,7 +76,7 @@ export function AttractionPerformanceSection({ data }: { data: DashboardViewMode
         <section className="border-t border-slate-200 pt-5" aria-labelledby="attraction-detail-table-heading">
           <h2 id="attraction-detail-table-heading" className="text-base font-bold text-slate-900">ตารางตรวจสอบผลงานรายสถานที่</h2>
           <p className="mt-1 text-sm leading-6 text-slate-500">ความพึงพอใจแสดงเฉพาะเมื่อมีคำตอบ และต้องอ่านร่วมกับจำนวนผู้ตอบในคอลัมน์สุดท้าย</p>
-          <div className="mt-4 overflow-x-auto rounded-md border border-slate-200 bg-white">
+          <div aria-label="ตารางรายละเอียดผลงานรายสถานที่" className="mt-4 overflow-x-auto rounded-md border border-slate-200 bg-white outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}>
             <table className="w-full min-w-[760px] text-sm">
               <caption className="sr-only">รายละเอียดผลงานรายสถานที่</caption>
               <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-600">

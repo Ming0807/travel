@@ -27,7 +27,7 @@ function DetailSection({
       {items.length === 0 ? (
         <p className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">{emptyMessage}</p>
       ) : (
-        <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
+        <div aria-label={`ตารางรายละเอียด${title}`} className="overflow-x-auto rounded-md border border-slate-200 bg-white outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}>
           <table className="w-full min-w-96 text-sm">
             <caption className="sr-only">รายละเอียด{title}</caption>
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs text-slate-600">

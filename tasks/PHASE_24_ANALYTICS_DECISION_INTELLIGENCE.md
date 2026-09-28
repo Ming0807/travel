@@ -174,6 +174,12 @@ regions. Evidence and remaining acceptance gates are in
 
 ### Task 24.10: Responsive and Accessible Visual System
 
+2026-09-29 checkpoint: horizontally scrollable evidence tables across the
+admin charts/detail modules and public evidence dashboard have named,
+keyboard-focusable regions with a visible focus indicator. Component tests
+cover the major chart and detail-table surfaces. This does not close the
+authenticated cross-page keyboard/contrast or responsive release gate.
+
 2026-09-04 checkpoint: shared category/attraction bars now have a full-label
 mobile presentation, donut legends no longer widen small screens, and collapsed
 advanced filters retain their values. A loopback-only component harness checks

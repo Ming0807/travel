@@ -62,7 +62,7 @@ export function AttractionScoreChart({ metrics, improvementContext }: { metrics:
 
       <details className="mt-3 border-t border-slate-100 pt-2">
         <summary className="min-h-11 cursor-pointer py-2 text-xs font-semibold text-[#B94727]">ดูฐานคำตอบรายมิติ</summary>
-        <div className="overflow-x-auto">
+        <div aria-label="ตารางคุณภาพประสบการณ์" className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}>
           <table className="w-full min-w-[34rem] text-sm"><thead><tr className="border-b border-slate-200 text-left text-xs text-slate-500"><th className="py-2 pr-4">มิติ</th><th className="py-2 text-right">ฐาน</th><th className="py-2 text-right">คะแนน</th>{improvementContext ? <th className="py-2 pl-4 text-right">ดำเนินการ</th> : null}</tr></thead><tbody>{metrics.map((metric) => {
             const dimension = DIMENSION_BY_SCORE_KEY[metric.key];
             const canDraft = Boolean(improvementContext && dimension && !metric.suppressed && metric.value !== null && metric.value <= LOW_SCORE_THRESHOLD);

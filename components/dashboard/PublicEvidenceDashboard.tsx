@@ -162,7 +162,7 @@ export function PublicEvidenceDashboard({ evidence }: { evidence: PublicDashboar
               <h2 className="mt-2 text-2xl font-black">สถานที่ที่มีรายการเข้าชมในระบบ</h2>
               <p className="mt-2 text-sm leading-6 text-muted">แสดงเฉพาะสถานที่ที่มีอย่างน้อย {evidence.thresholds.publicCellMinimum} รายการ และคะแนนจะแสดงเมื่อมีคำตอบอย่างน้อย {evidence.thresholds.interpretationMinimum}</p>
               {evidence.topAttractions.length > 0 ? (
-                <div className="mt-6 overflow-x-auto border border-ink/10 bg-white">
+                <div aria-label="ตารางสถานที่ที่มีรายการเข้าชมในระบบ" className="mt-6 overflow-x-auto border border-ink/10 bg-white outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral" role="region" tabIndex={0}>
                   <table className="w-full min-w-[680px] border-collapse text-left text-sm" aria-label="สถานที่ที่มีรายการเข้าชมในระบบ">
                     <thead className="border-b border-ink/10 bg-ink text-xs text-white"><tr><th className="px-4 py-3 font-bold">สถานที่</th><th className="px-4 py-3 text-right font-bold">รายการเข้าชม</th><th className="px-4 py-3 text-right font-bold">ใบประกาศ</th><th className="px-4 py-3 text-right font-bold">ความพึงพอใจ</th></tr></thead>
                     <tbody className="divide-y divide-ink/10">

@@ -72,6 +72,7 @@ describe("Audience and attraction analytics layouts", () => {
     expect(screen.getByRole("region", { name: "หลักฐานประเทศต้นทาง" })).toHaveClass("xl:col-span-8");
     expect(screen.getByRole("region", { name: "บริบทวิธีเข้าใช้งาน" })).toHaveClass("xl:col-span-4");
     expect(screen.getByRole("table", { name: "รายละเอียดประเทศต้นทาง" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางรายละเอียดประเทศต้นทาง" })).toHaveAttribute("tabindex", "0");
     expect(screen.getByText("70 โปรไฟล์ · 70%")).toBeInTheDocument();
     expect(screen.getByText("50 โปรไฟล์ · 50%")).toBeInTheDocument();
     expect(screen.getByText(/รวมเกิน 100% ได้/)).toBeInTheDocument();
@@ -93,6 +94,7 @@ describe("Audience and attraction analytics layouts", () => {
     expect(screen.getByRole("region", { name: "หลักฐานรูปแบบการเดินทาง" })).toHaveClass("xl:col-span-8");
     expect(screen.getByRole("region", { name: "บริบทการค้างคืน" })).toHaveClass("xl:col-span-4");
     expect(screen.getByRole("table", { name: "รายละเอียดพาหนะที่ใช้เดินทาง" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางรายละเอียดพาหนะที่ใช้เดินทาง" })).toHaveAttribute("tabindex", "0");
   });
 
   it("แสดงผลงานสถานที่พร้อมสัดส่วนการกระจุกตัวที่ตรวจสอบได้", () => {
@@ -104,6 +106,7 @@ describe("Audience and attraction analytics layouts", () => {
     expect(screen.getByRole("region", { name: "บริบทการกระจายการเข้าชม" })).toHaveClass("xl:col-span-4");
     expect(screen.getByText("60.0% ของการเข้าชมในอันดับที่แสดง")).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "รายละเอียดผลงานรายสถานที่" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "ตารางรายละเอียดผลงานรายสถานที่" })).toHaveAttribute("tabindex", "0");
     expect(screen.getByText("ยังไม่มีข้อมูล", { selector: "td" })).toBeInTheDocument();
   });
 

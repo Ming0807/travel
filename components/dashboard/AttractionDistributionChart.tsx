@@ -63,7 +63,7 @@ export function AttractionDistributionChart({ title, description, rows }: { titl
       {rows.length > 0 ? (
         <details className="mt-3 border-t border-slate-100 pt-2">
           <summary className="min-h-11 cursor-pointer py-2 text-xs font-semibold text-[#B94727]">ดูเป็นตารางข้อมูล</summary>
-          <div className="overflow-x-auto">
+          <div aria-label={`ตาราง${title}`} className="overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B94727]" role="region" tabIndex={0}>
             <table className="w-full min-w-80 text-sm">
               <thead><tr className="border-b border-slate-200 text-left text-xs text-slate-500"><th className="py-2 pr-4">รายการ</th><th className="py-2 text-right">จำนวนและสัดส่วน</th></tr></thead>
               <tbody>{rows.map((row, index) => <tr key={`distribution-table-${row.label}-${index}`} className="border-b border-slate-100"><td className="py-2 pr-4">{row.label}</td><td className="py-2 text-right font-bold tabular-nums">{row.suppressed ? "ปกปิด" : `${row.count?.toLocaleString("th-TH")} (${row.percent}%)`}</td></tr>)}</tbody>

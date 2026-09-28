@@ -172,10 +172,28 @@ describe("public dashboard evidence page", () => {
     const { container } = render(await PublicDashboardPage());
 
     const table = screen.getByRole("table", { name: "แนวโน้มรายการเข้าชมที่บันทึก" });
+    expect(screen.getByRole("region", { name: "ตารางแนวโน้มรายการเข้าชมที่บันทึก" })).toHaveAttribute("tabindex", "0");
     expect(container.querySelector('[data-chart-engine="recharts"]')).toBeInTheDocument();
     expect(within(table).getByRole("columnheader", { name: "วันที่" })).toBeInTheDocument();
     expect(within(table).getByRole("columnheader", { name: "รายการเข้าชม" })).toBeInTheDocument();
     expect(within(table).getByText("น้อยกว่า 5")).toBeInTheDocument();
+  });
+
+  it("names and focuses the horizontally scrollable public evidence tables", async () => {
+    vi.mocked(publicDashboardService.getPublicDashboardEvidence).mockResolvedValue(makeEvidence({
+      visitorProfile: [{
+        key: "age", label: "กลุ่มอายุ", definition: "กลุ่มอายุผู้ตอบ", source: "tourists.age_group",
+        items: [{ label: "18-24", value: 8, displayValue: "8", percent: 1, status: "available" }],
+      }],
+      satisfaction: [{ key: "overall", label: "ภาพรวม", displayValue: "4.2 / 5", value: 4.2, status: "available", sampleSize: 30 }],
+      topAttractions: [{ label: "วัดหน้าถ้ำ", visitValue: 8, visitDisplayValue: "8", certificateDisplayValue: "6", satisfactionDisplayValue: "4.2 / 5", satisfactionSampleSize: 30 }],
+    }));
+
+    render(await PublicDashboardPage());
+
+    expect(screen.getByRole("region", { name: "ตารางกลุ่มอายุ" })).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("region", { name: "ตารางคุณภาพประสบการณ์" })).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("region", { name: "ตารางสถานที่ที่มีรายการเข้าชมในระบบ" })).toHaveAttribute("tabindex", "0");
   });
 
   it("uses honest no-data states instead of zero-filled metrics", async () => {
