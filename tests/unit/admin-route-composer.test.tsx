@@ -128,6 +128,16 @@ describe("admin route composer", () => {
     expect(mocks.toggleRoutePublishAction).toHaveBeenCalledWith(12);
   });
 
+  it("shows missing map coordinates and links to the affected attraction editors", () => {
+    render(<RouteVisualEditor route={route} stops={stops} attractions={attractions} />);
+
+    expect(screen.getByText(/ความพร้อมแผนที่ · 0\/2 จุดมีพิกัด/)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "ตรวจพิกัด" }).map((link) => link.getAttribute("href"))).toEqual([
+      "/admin/attractions/1/edit#location",
+      "/admin/attractions/2/edit#location",
+    ]);
+  });
+
   it("requires saving changed stops before publishing from review", () => {
     render(<RouteVisualEditor route={route} stops={stops} attractions={attractions} />);
     fireEvent.click(screen.getByRole("button", { name: "ลบ น้ำตกศรีพังงา ออกจากเส้นทาง" }));

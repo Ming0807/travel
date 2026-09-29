@@ -78,6 +78,9 @@ export default async function AdminRoutesPage({
         </FilterBar>
       }
     >
+      <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+        เส้นทางที่นำเข้าจาก seed เริ่มเป็นฉบับร่างและจะไม่แสดงในหน้าเว็บจนกดเผยแพร่ ตรวจรูปปก พิกัด และการเข้าถึงจริงของแต่ละจุดก่อนเปลี่ยนสถานะ
+      </p>
       {/* Desktop Table View */}
       <div className="hidden md:block">
               <DataTable columns={columns}>

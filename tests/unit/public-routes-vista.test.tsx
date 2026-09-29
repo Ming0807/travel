@@ -75,7 +75,7 @@ vi.mock("@/lib/repositories/destination-scope.repository", () => ({
 
 import { PublicRouteTimeline } from "@/components/routes/PublicRouteTimeline";
 import { PublicVistaGrid } from "@/components/vista/PublicVistaGrid";
-import { buildRouteDirectionsUrl, buildRouteStopMapUrl } from "@/lib/routes/public-route";
+import { buildRouteDirectionsFromCurrentUrl, buildRouteDirectionsUrl, buildRouteStopMapUrl } from "@/lib/routes/public-route";
 import {
   getPublicRouteDetail,
   listPublicRoutes,
@@ -164,6 +164,8 @@ describe("public routes repository", () => {
     expect(detail?.stops.map((stop) => stop.attractionSlug)).toEqual(["yala-old-town", "yala-park"]);
     expect(detail?.stops[0].stopNote).toBe("เริ่มเดินชมพื้นที่");
     expect(detail?.mapUrl).toContain("google.com/maps/dir");
+    expect(new URL(detail!.mapUrl!).searchParams.has("origin")).toBe(false);
+    expect(new URL(detail!.mapUrl!).searchParams.get("waypoints")).toBe("6.541,101.281");
     expect(detail?.mapSegments).toHaveLength(1);
     expect(state.routeSelects.some((selection) => selection.includes("stop_note_th"))).toBe(true);
   });
@@ -185,6 +187,31 @@ describe("public routes repository", () => {
     state.routeDetailResult = { data: null, error: { message: "offline" } };
     await expect(getPublicRouteDetail("one-day-yala")).rejects.toThrow("PUBLIC_ROUTE_DETAIL_FAILED");
   });
+
+  it("keeps a five-stop route available as a first-stop handoff plus one complete segment", async () => {
+    state.routeDetailResult = {
+      data: {
+        ...routeRow,
+        suggested_route_stops: Array.from({ length: 5 }, (_, index) => ({
+          day_number: 1,
+          display_order: index + 1,
+          stop_note_th: null,
+          attractions: publicAttraction({
+            attraction_id: index + 20,
+            slug: `stop-${index + 1}`,
+            latitude: 6.5 + index / 4,
+            longitude: 101.25 + index / 4,
+          }),
+        })),
+      },
+      error: null,
+    };
+
+    const detail = await getPublicRouteDetail("one-day-yala");
+    expect(detail?.mapUrl).toBeNull();
+    expect(detail?.mapSegments).toHaveLength(1);
+    expect(detail?.mapSegments[0]).toMatchObject({ startIndex: 0, endIndex: 4 });
+  });
 });
 
 describe("public route presentation", () => {
@@ -200,6 +227,17 @@ describe("public route presentation", () => {
       { latitude: 6.541, longitude: 101.281 },
       { latitude: null, longitude: 101.282 },
     ])).toBeNull();
+  });
+
+  it("starts a short itinerary at the visitor's current position without requesting browser geolocation", () => {
+    const stops = Array.from({ length: 4 }, (_, index) => ({ latitude: 6.5 + index / 4, longitude: 101.25 + index / 4 }));
+    const url = new URL(buildRouteDirectionsFromCurrentUrl(stops)!);
+    expect(url.searchParams.has("origin")).toBe(false);
+    expect(url.searchParams.get("waypoints")?.split("|")).toEqual(["6.5,101.25", "6.75,101.5", "7,101.75"]);
+    expect(url.searchParams.get("destination")).toBe("7.25,102");
+    expect(url.searchParams.get("dir_action")).toBe("navigate");
+    expect(buildRouteDirectionsFromCurrentUrl([...stops, stops[0]])).toBeNull();
+    expect(buildRouteDirectionsFromCurrentUrl([{ latitude: null, longitude: 101.2 }])).toBeNull();
   });
 
   it("opens a stored stop coordinate as a location, not driving directions", () => {
@@ -222,6 +260,9 @@ describe("public route presentation", () => {
     expect(screen.getByText("จุดที่ 2")).toBeVisible();
     expect(screen.getByRole("link", { name: "ดูพิกัดจุดที่ 1 ใน Google Maps" }))
       .toHaveAttribute("href", "https://www.google.com/maps/search/?api=1&query=6.5%2C101.2");
+    const navigationUrl = new URL(screen.getByRole("link", { name: "นำทางจากตำแหน่งปัจจุบันไปจุดที่ 1 ใน Google Maps" }).getAttribute("href")!);
+    expect(navigationUrl.searchParams.get("destination")).toBe("6.5,101.2");
+    expect(navigationUrl.searchParams.has("origin")).toBe(false);
   });
 });
 

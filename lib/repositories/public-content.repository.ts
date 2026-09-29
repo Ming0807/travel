@@ -33,7 +33,7 @@ import {
   sanitizeDestinationProvinceFilter,
 } from "@/lib/destinations/launch-scope";
 import {
-  buildRouteDirectionsUrl,
+  buildRouteDirectionsFromCurrentUrl,
   buildRouteDirectionsSegments,
   type RouteDirectionsSegment,
   safeExternalTourUrl,
@@ -2729,7 +2729,7 @@ export async function getPublicRouteDetail(slug: string): Promise<PublicRouteDet
       stopCount: mappedStops.length,
       imageUrl: publicManagedImage(row, thumbnailByStoragePath),
       imageAlt: publicImageAlt(row, routeName),
-      mapUrl: mapSegments.length === 1 ? buildRouteDirectionsUrl(mappedStops) : null,
+      mapUrl: mappedStops.length <= 4 ? buildRouteDirectionsFromCurrentUrl(mappedStops) : null,
       mapSegments,
       stops: mappedStops,
     };

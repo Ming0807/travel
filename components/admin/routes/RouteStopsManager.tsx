@@ -19,7 +19,7 @@ import {
 export type RouteAttractionOption = Pick<
   AdminAttractionRow,
   "attraction_id" | "name_th" | "name_en" | "province_name_th" | "is_active" | "is_published"
-> & { coverImageUrl?: string | null };
+> & Partial<Pick<AdminAttractionRow, "slug" | "latitude" | "longitude">> & { coverImageUrl?: string | null };
 
 export type NormalizedStop = {
   attractionId: number;

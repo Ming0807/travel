@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowSquareOut, ArrowUpRight, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
-import { buildRouteStopMapUrl, orderPublicRouteStops, type PublicRouteStop } from "@/lib/routes/public-route";
+import { buildRouteDirectionsFromCurrentUrl, buildRouteStopMapUrl, orderPublicRouteStops, type PublicRouteStop } from "@/lib/routes/public-route";
 
 export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
   const orderedStops = orderPublicRouteStops(stops);
@@ -54,6 +54,7 @@ export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
                 {dayStops.map((stop) => {
                   const stopIndex = orderedStops.indexOf(stop) + 1;
                   const mapUrl = buildRouteStopMapUrl(stop);
+                  const navigationUrl = buildRouteDirectionsFromCurrentUrl([stop]);
                   return (
                   <li id={`route-stop-${stopIndex}`} key={`${stop.dayNumber}-${stop.sequence}-${stop.attractionId}`} className="scroll-mt-24 border-b border-[#e6e2dc] last:border-b-0 target:bg-[#f8efe9]">
                     <Link
@@ -88,16 +89,27 @@ export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
                       </div>
                     </Link>
                     <div className="pb-5 sm:pl-[226px]">
-                      {mapUrl ? (
-                        <a
-                          href={mapUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`ดูพิกัดจุดที่ ${stopIndex} ใน Google Maps`}
-                          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38]"
-                        >
-                          ดูพิกัดใน Google Maps <ArrowSquareOut size={16} aria-hidden="true" />
-                        </a>
+                      {mapUrl && navigationUrl ? (
+                        <div className="flex flex-wrap gap-x-5 gap-y-1">
+                          <a
+                            href={navigationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`นำทางจากตำแหน่งปัจจุบันไปจุดที่ ${stopIndex} ใน Google Maps`}
+                            className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38]"
+                          >
+                            นำทางไปจุดนี้ <ArrowSquareOut size={16} aria-hidden="true" />
+                          </a>
+                          <a
+                            href={mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`ดูพิกัดจุดที่ ${stopIndex} ใน Google Maps`}
+                            className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38]"
+                          >
+                            ดูพิกัด <ArrowSquareOut size={16} aria-hidden="true" />
+                          </a>
+                        </div>
                       ) : <p className="text-sm text-[#687076]">ยังไม่มีพิกัดสำหรับจุดนี้</p>}
                     </div>
                   </li>

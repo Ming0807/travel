@@ -304,9 +304,14 @@ on-demand Leaflet map shows numbered markers from stored coordinates only;
 it does not draw or claim a road itinerary. OpenStreetMap tiles are attributed,
 and tile/load failures leave the stop list and external handoff available.
 Google Maps directions are available only when every stop has valid
-coordinates. Above five stops they are offered as overlapping segments to
-avoid mobile-browser waypoint truncation. With incomplete coordinates the
-page directs visitors to each attraction's own location details. Route and
+coordinates. For up to four stops the directions URL omits origin so Google
+Maps can use the visitor's current location, with at most three mobile
+waypoints. For longer routes a separate link leads from the visitor to the
+first stop, followed by overlapping segments of at most five stored stops.
+Each mapped stop also has an individual current-location navigation link.
+The external app may show a route preview instead of live navigation when
+location is unavailable. With incomplete coordinates the page shows a map
+empty state and directs visitors to each attraction's own location details. Route and
 stop media prefer managed thumbnails and always provide an honest fallback.
 
 The admin route flow is draft -> basic information -> eligible stops and daily
@@ -316,6 +321,10 @@ requires two distinct eligible stops, contiguous day/order numbering, and an
 active route before publication. Local unsaved edits block the Review publish
 button. Status changes use dedicated permission-checked Server Actions and
 show their rejection reason instead of silently failing.
+Review also shows an on-demand map preview or its missing-coordinate state,
+with links to the affected attraction location editors. Map readiness is
+separate from publication eligibility and does not imply that cave entrances
+or access conditions have been verified in the field.
 
 The embedded route forms use inline save bars rather than a global floating
 toolbar. Cover-drawer cancellation closes the drawer without navigation;

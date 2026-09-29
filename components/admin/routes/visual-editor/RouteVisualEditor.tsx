@@ -9,8 +9,10 @@ import { Drawer } from "@/components/admin/Drawer";
 import { AdminFormSection, AdminHelpPanel, AdminReadinessPanel } from "@/components/admin/forms/AdminFormUX";
 import { RouteForm } from "@/components/admin/routes/RouteForm";
 import { RouteStopsManager, type RouteAttractionOption } from "@/components/admin/routes/RouteStopsManager";
+import { RouteStopsMap } from "@/components/routes/RouteStopsMap";
 import { CoverForm } from "./SectionForms";
 import type { AdminRouteRow, AdminRouteStopRow } from "@/lib/repositories/admin-route.repository";
+import { hasValidRouteCoordinate } from "@/lib/routes/public-route";
 
 interface RouteVisualEditorProps {
   route: AdminRouteRow;
@@ -69,6 +71,32 @@ export function RouteVisualEditor({
         occurrences: items,
       }]));
   }, [attractionById, routeStops]);
+  const missingCoordinates = useMemo(() => {
+    const seen = new Set<number>();
+    return routeStops.flatMap((stop) => {
+      if (seen.has(stop.attraction_id)) return [];
+      seen.add(stop.attraction_id);
+      const attraction = attractionById.get(stop.attraction_id);
+      if (attraction && hasValidRouteCoordinate({ latitude: attraction.latitude ?? null, longitude: attraction.longitude ?? null })) return [];
+      return [{ id: stop.attraction_id, name: attraction?.name_th ?? stop.attraction_name_th ?? `สถานที่ #${stop.attraction_id}` }];
+    });
+  }, [attractionById, routeStops]);
+  const distinctStopCount = new Set(routeStops.map((stop) => stop.attraction_id)).size;
+  const previewStops = routeStops.map((stop) => {
+    const attraction = attractionById.get(stop.attraction_id);
+    return {
+      attractionId: stop.attraction_id,
+      dayNumber: stop.day_number,
+      sequence: stop.display_order,
+      attractionName: attraction?.name_th ?? stop.attraction_name_th ?? `สถานที่ #${stop.attraction_id}`,
+      attractionSlug: attraction?.slug ?? "",
+      attractionImage: null,
+      attractionImageAlt: "",
+      stopNote: stop.stop_note_th,
+      latitude: attraction?.latitude ?? null,
+      longitude: attraction?.longitude ?? null,
+    };
+  });
 
   const showDuplicateToast = duplicateMap.size > 0 && !toastDismissed;
 
@@ -228,7 +256,7 @@ export function RouteVisualEditor({
         <section id="review" aria-labelledby="review-heading" className="scroll-mt-36 space-y-3">
           <div>
             <h2 id="review-heading" className="text-lg font-black text-slate-900">ตรวจสอบ</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">ตรวจชื่อ ภาพ และจุดแวะก่อนเผยแพร่เส้นทาง</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">ตรวจชื่อ ภาพ จุดแวะ และความพร้อมของแผนที่ก่อนเผยแพร่เส้นทาง</p>
           </div>
           <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.65fr)]">
             <AdminFormSection title="ตัวอย่างเส้นทาง">
@@ -258,6 +286,7 @@ export function RouteVisualEditor({
                     ))}
                   </div>
                 ) : <p className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-500">ยังไม่มีจุดแวะที่บันทึกไว้</p>}
+                {stopCount > 0 ? <div className="border-t border-slate-200 pt-4"><RouteStopsMap stops={previewStops} /></div> : null}
                 {publicHref && route.is_published && route.is_active ? (
                   <Link href={publicHref} target="_blank" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:border-[#0A6B62] hover:text-[#0A6B62]"><ArrowSquareOut size={16} />ดูหน้าเส้นทางสาธารณะ</Link>
                 ) : <p className="text-xs leading-5 text-slate-500">หน้าเส้นทางสาธารณะจะแสดงเมื่อเส้นทางเปิดใช้งานและเผยแพร่แล้ว</p>}
@@ -266,6 +295,23 @@ export function RouteVisualEditor({
 
             <div className="space-y-4">
               <AdminReadinessPanel title="ตรวจข้อมูลเส้นทาง" items={readiness} />
+              {routeStops.length > 0 ? (
+                <AdminHelpPanel title={`ความพร้อมแผนที่ · ${distinctStopCount - missingCoordinates.length}/${distinctStopCount} จุดมีพิกัด`} tone={missingCoordinates.length > 0 ? "warning" : "info"}>
+                  {missingCoordinates.length > 0 ? (
+                    <>
+                      <p>แผนที่และปุ่มนำทางตลอดเส้นทางจะแสดงเมื่อทุกจุดมีพิกัดที่ตรวจสอบแล้ว พิกัดของตัวสถานที่อาจไม่ใช่ทางเข้าหรือจุดจอดรถ โดยเฉพาะถ้ำ</p>
+                      <ul className="mt-3 space-y-2">
+                        {missingCoordinates.map((attraction) => (
+                          <li key={attraction.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-amber-200 pt-2">
+                            <span className="min-w-0 break-words font-semibold">{attraction.name}</span>
+                            <Link href={`/admin/attractions/${attraction.id}/edit#location`} className="inline-flex min-h-10 items-center gap-1 text-sm font-bold underline underline-offset-4">ตรวจพิกัด <ArrowSquareOut size={15} aria-hidden="true" /></Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : <p>มีพิกัดทุกจุดแล้ว ตรวจตำแหน่งทางเข้า จุดนัดพบ และข้อจำกัดการเข้าถึงกับผู้ดูแลพื้นที่ก่อนเผยแพร่</p>}
+                </AdminHelpPanel>
+              ) : null}
               {duplicateMap.size > 0 ? (
                 <AdminHelpPanel title={`พบจุดแวะซ้ำ ${duplicateMap.size} แห่ง`} tone="warning">
                   <p>ไปที่จัดการจุดแวะพักเพื่อลบรายการซ้ำ</p>

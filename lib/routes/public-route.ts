@@ -21,6 +21,7 @@ export type RouteDirectionsSegment = {
 };
 
 const MAX_STOPS_PER_MAPS_URL = 5;
+const MAX_STOPS_FROM_CURRENT = 4;
 
 export function orderPublicRouteStops(stops: PublicRouteStop[]): PublicRouteStop[] {
   return stops.slice().sort((left, right) => left.dayNumber - right.dayNumber || left.sequence - right.sequence);
@@ -50,6 +51,22 @@ export function buildRouteDirectionsUrl(stops: PublicRouteCoordinate[]): string 
     destination: coordinateText(stops[stops.length - 1]),
   });
   const waypoints = stops.slice(1, -1);
+  if (waypoints.length > 0) {
+    params.set("waypoints", waypoints.map(coordinateText).join("|"));
+  }
+
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
+export function buildRouteDirectionsFromCurrentUrl(stops: PublicRouteCoordinate[]): string | null {
+  if (stops.length < 1 || stops.length > MAX_STOPS_FROM_CURRENT || !stops.every(hasValidRouteCoordinate)) return null;
+
+  const params = new URLSearchParams({
+    api: "1",
+    destination: coordinateText(stops[stops.length - 1]),
+    dir_action: "navigate",
+  });
+  const waypoints = stops.slice(0, -1);
   if (waypoints.length > 0) {
     params.set("waypoints", waypoints.map(coordinateText).join("|"));
   }

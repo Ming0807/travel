@@ -10,7 +10,7 @@ import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicRouteTimeline } from "@/components/routes/PublicRouteTimeline";
 import { RouteStopsMap } from "@/components/routes/RouteStopsMap";
 import { getPublicRouteDetail } from "@/lib/repositories/public-content.repository";
-import { hasValidRouteCoordinate } from "@/lib/routes/public-route";
+import { buildRouteDirectionsFromCurrentUrl, hasValidRouteCoordinate } from "@/lib/routes/public-route";
 
 export const revalidate = 60;
 
@@ -38,6 +38,9 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
   const hasMappedStops = route.stops.some(hasValidRouteCoordinate);
+  const firstStopNavigationUrl = route.stops.length > 0
+    ? buildRouteDirectionsFromCurrentUrl([route.stops[0]])
+    : null;
 
   return (
     <div className="min-h-screen bg-[#fffdfa] text-[#263036]">
@@ -115,6 +118,9 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
             <p className="mt-2 text-sm leading-6 text-[#5f6668]">
               พิกัดที่แสดงอาจเป็นตำแหน่งตัวสถานที่ ไม่ใช่ทางเข้าหรือที่จอดรถ โดยเฉพาะจุดแวะในถ้ำและบริเวณวัด กรุณาตรวจทางเข้าจริงก่อนออกเดินทาง
             </p>
+            {route.mapUrl || route.mapSegments.length > 0 ? (
+              <p className="mt-2 text-sm leading-6 text-[#5f6668]">Google Maps จะใช้ตำแหน่งอุปกรณ์เป็นต้นทางเมื่อพร้อมใช้งาน หากไม่พบตำแหน่ง ให้เลือกต้นทางในแอปก่อนเริ่มนำทาง</p>
+            ) : null}
             {route.mapUrl ? (
               <PublicButton
                 href={route.mapUrl}
@@ -122,13 +128,19 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
                 rel="noopener noreferrer"
                 className="mt-4 w-full gap-2"
               >
-                ตรวจเส้นทางใน Google Maps
+                นำทางจากตำแหน่งปัจจุบัน
                 <ArrowSquareOut size={17} weight="bold" aria-hidden="true" />
               </PublicButton>
-            ) : route.mapSegments.length > 1 ? (
+            ) : route.mapSegments.length > 0 ? (
               <div className="mt-4">
+                {firstStopNavigationUrl ? (
+                  <PublicButton href={firstStopNavigationUrl} target="_blank" rel="noopener noreferrer" className="mb-3 w-full gap-2">
+                    นำทางไปจุดแรกจากตำแหน่งปัจจุบัน
+                    <ArrowSquareOut size={17} weight="bold" aria-hidden="true" />
+                  </PublicButton>
+                ) : null}
                 <p className="text-sm font-semibold text-[#5f6668]">
-                  เส้นทางมีหลายจุดแวะ เปิดตรวจทีละช่วงเพื่อไม่ให้จุดใดหายไปบนมือถือ
+                  จากจุดแรก เปิดเส้นทางต่อทีละช่วงเพื่อไม่ให้จุดใดหายไปบนมือถือ
                 </p>
                 <ol className="mt-3 space-y-2">
                   {route.mapSegments.map((segment, index) => (

@@ -49,6 +49,23 @@
   line-height: 1.7;
 }
 
+.emptyState {
+  display: grid;
+  justify-items: start;
+  gap: .4rem;
+  margin-top: 1rem;
+  border: 1px dashed #d7c7bb;
+  border-radius: 6px;
+  padding: 1.25rem;
+  background: #faf5f0;
+  color: #5f6668;
+  font-size: .85rem;
+  line-height: 1.7;
+}
+
+.emptyState svg { color: #9b4e38; }
+.emptyTitle { color: #263036; font-weight: 800; }
+
 .mapFrame {
   position: relative;
   margin-top: 1rem;

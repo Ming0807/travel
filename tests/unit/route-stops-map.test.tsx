@@ -41,6 +41,13 @@ describe("route stop map", () => {
     );
   });
 
+  it("explains why a published route with no coordinates has no map", () => {
+    render(<RouteStopsMap stops={stops.map((stop) => ({ ...stop, latitude: null, longitude: null }))} />);
+    expect(screen.getByText("ยังแสดงแผนที่ไม่ได้")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "ดูแผนที่" })).not.toBeInTheDocument();
+    expect(leaflet.map).not.toHaveBeenCalled();
+  });
+
   it("omits invalid pins and tells visitors how many coordinates are missing", async () => {
     render(<RouteStopsMap stops={[...stops, { ...stops[0], attractionId: 3, latitude: null }]} />);
     expect(screen.getByText(/มี 1 จุดที่ยังไม่มีพิกัด/)).toBeVisible();

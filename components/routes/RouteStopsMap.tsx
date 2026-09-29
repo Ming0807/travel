@@ -94,7 +94,19 @@ export function RouteStopsMap({ stops }: { stops: PublicRouteStop[] }) {
     };
   }, [mappedStops, open]);
 
-  if (mappedStops.length === 0) return null;
+  if (mappedStops.length === 0) {
+    return (
+      <section aria-labelledby="route-map-heading" className={styles.section}>
+        <p className={styles.eyebrow}>LOCATION GUIDE</p>
+        <h2 id="route-map-heading" className={styles.heading}>ตำแหน่งจุดแวะ</h2>
+        <div className={styles.emptyState}>
+          <MapTrifold size={26} aria-hidden="true" />
+          <p className={styles.emptyTitle}>ยังแสดงแผนที่ไม่ได้</p>
+          <p>จุดแวะในเส้นทางนี้ยังไม่มีพิกัดที่บันทึกไว้ ดูข้อมูลแต่ละสถานที่และยืนยันทางเข้ากับผู้ดูแลพื้นที่ก่อนเดินทาง</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section aria-labelledby="route-map-heading" className={styles.section}>

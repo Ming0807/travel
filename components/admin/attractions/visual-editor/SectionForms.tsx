@@ -149,7 +149,7 @@ export function LocationForm({ attraction, onClose }: SectionFormProps) {
           </label>
         </div>
         <p className={helpClass}>
-          พิกัดช่วยให้ผู้ใช้ดูแผนที่ นำทาง และเช็คอินผ่าน QR ได้แม่นยำขึ้น โปรดใช้ค่า Decimal Degrees จาก Google Maps
+          พิกัดนี้ใช้แสดงหมุดและนำทางในเส้นทางแนะนำ โปรดใช้ค่า Decimal Degrees ของทางเข้าหรือจุดนัดพบที่ผู้ดูแลพื้นที่ยืนยันแล้ว โดยเฉพาะสถานที่ในถ้ำ และอธิบายทางเดินต่อในช่องวิธีการเดินทาง
         </p>
         <label className="block">
           <span className="text-sm font-bold text-slate-700">เวลาเปิดทำการ (Opening Hours)</span>

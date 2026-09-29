@@ -63,11 +63,15 @@ Evidence: [Local route QA](../docs/testing/PHASE_25_ROUTE_QA_2026-09-27.md).
 - [x] Prepare three unpublished route drafts referencing eight of the eleven approved places; retain the other three places without inventing access arrangements.
 - [x] Supply a read-only eleven-place coordinate/status report with source-site map comparisons; do not overwrite entrance coordinates with archaeological-site coordinates.
 - [x] Verify the transactional, idempotent seed in isolated PostgreSQL/WASM, including preservation of CMS edits and failure rollback (10 checks).
-- [ ] User runs the optional content seed and adds approved covers in CMS.
+- [x] User ran the optional content seed in production; three route records and their stops are present.
+- [ ] User adds approved covers in CMS and verifies each image after refresh.
+- [x] Surface missing attraction coordinates in route review, link to each attraction editor, and show an honest public map empty state.
+- [x] Use the visitor's current location in Google Maps handoff when the full route has at most four stops; provide a first-stop navigation link before mobile-safe route segments for longer itineraries.
 - [ ] Local caretakers verify entrances, cave access, meeting points, trip order and activity arrangements before publication.
 - [ ] Complete the real-data deployment checks in 25.5; technical readiness alone is not field-access approval.
 
 Content, citations and execution guide: [Na Tham curated routes](../docs/content/NA_THAM_CURATED_ROUTES.md).
+Read-only production data audit: [Phase 25 production route audit](../docs/testing/PHASE_25_PRODUCTION_ROUTE_AUDIT_2026-09-29.md).
 No schema migration or production database mutation is performed by this task.
 
 ## Out of scope

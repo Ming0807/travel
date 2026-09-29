@@ -47,11 +47,14 @@ export default async function EditAdminRoutePage({
   const stopCovers = new Map(stopCoverEntries);
   const attractionOptions: RouteAttractionOption[] = attractions.items.map((attraction) => ({
     attraction_id: attraction.attraction_id,
+    slug: attraction.slug,
     name_th: attraction.name_th,
     name_en: attraction.name_en,
     province_name_th: attraction.province_name_th,
     is_active: attraction.is_active && eligibleAttractionIds.has(attraction.attraction_id),
     is_published: attraction.is_published && eligibleAttractionIds.has(attraction.attraction_id),
+    latitude: attraction.latitude,
+    longitude: attraction.longitude,
     coverImageUrl: stopCovers.get(attraction.attraction_id) ?? null,
   }));
   const includedAttractionIds = new Set(attractionOptions.map((attraction) => attraction.attraction_id));
@@ -59,11 +62,14 @@ export default async function EditAdminRoutePage({
     if (includedAttractionIds.has(stop.attraction_id)) return;
     attractionOptions.push({
       attraction_id: stop.attraction_id,
+      slug: undefined,
       name_th: stop.attraction_name_th ?? `สถานที่ #${stop.attraction_id}`,
       name_en: null,
       province_name_th: null,
       is_active: false,
       is_published: false,
+      latitude: null,
+      longitude: null,
       coverImageUrl: stopCovers.get(stop.attraction_id) ?? null,
     });
     includedAttractionIds.add(stop.attraction_id);
