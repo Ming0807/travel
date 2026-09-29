@@ -8,7 +8,7 @@ Help visitors choose a small number of useful, truthful itineraries through the 
 
 ## Scope decisions
 
-- Start with the existing 11-12 approved attractions and a few curated routes. Do not invent filler places, prices, opening hours, travel times, or route popularity.
+- Start with the eleven slugs confirmed by the Na Tham catalog migration and a few curated routes. A twelfth requires explicit confirmation. Do not invent filler places, prices, opening hours, travel times, or route popularity.
 - One canonical attraction record supplies each stop's title, image, coordinates, and detail link. Route-specific copy is a short optional stop note.
 - The route directory remains readable with few entries; search and duration filters appear only when more than three routes are published.
 - The map displays stored attraction coordinates, not a drawn road or a claim about the best path. Google Maps directions are an external handoff. Split itineraries above five stops into overlapping segments so mobile waypoint limits do not silently omit stops.
@@ -55,6 +55,20 @@ Help visitors choose a small number of useful, truthful itineraries through the 
 - [ ] Confirm an administrator can create, edit, preview, publish, unpublish, and restore a route with the deployed database.
 
 Evidence: [Local route QA](../docs/testing/PHASE_25_ROUTE_QA_2026-09-27.md).
+
+### 25.6 Researched pilot content and access review (2026-09-29)
+
+- [x] Review the supplied GPT critique against existing code; retain canonical attraction reuse and the existing composer rather than duplicating their workflows.
+- [x] Research primary institutional sources for Na Tham heritage, cave sites and Simaya community activities.
+- [x] Prepare three unpublished route drafts referencing eight of the eleven approved places; retain the other three places without inventing access arrangements.
+- [x] Supply a read-only eleven-place coordinate/status report with source-site map comparisons; do not overwrite entrance coordinates with archaeological-site coordinates.
+- [x] Verify the transactional, idempotent seed in isolated PostgreSQL/WASM, including preservation of CMS edits and failure rollback (10 checks).
+- [ ] User runs the optional content seed and adds approved covers in CMS.
+- [ ] Local caretakers verify entrances, cave access, meeting points, trip order and activity arrangements before publication.
+- [ ] Complete the real-data deployment checks in 25.5; technical readiness alone is not field-access approval.
+
+Content, citations and execution guide: [Na Tham curated routes](../docs/content/NA_THAM_CURATED_ROUTES.md).
+No schema migration or production database mutation is performed by this task.
 
 ## Out of scope
 

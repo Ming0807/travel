@@ -24,11 +24,20 @@ createRoot(document.getElementById("root")!).render(
           { slug: "fixture-empty-cover", name: "เส้นทางที่ไม่มีภาพปก", description: "ตรวจ fallback โดยไม่สร้างข้อมูลปลอม", days: 1, stopCount: 2, imageUrl: null, imageAlt: "" },
         ]} />
       </section>
-      <section className="mt-10 max-w-3xl" aria-label="ลำดับจุดแวะทดสอบ">
-        <h2 className="mb-5 text-2xl font-bold">ลำดับการเดินทาง</h2>
-        <PublicRouteTimeline stops={stops} />
-        <RouteStopsMap stops={stops} />
-      </section>
+      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(300px,36%)] lg:items-start">
+        <section aria-label="ลำดับจุดแวะทดสอบ">
+          <h2 id="route-timeline-heading" className="mb-2 text-2xl font-bold">ลำดับการเดินทาง</h2>
+          <a href="#route-map-heading" className="mb-4 inline-flex min-h-11 items-center text-sm font-bold text-[#783823] underline lg:hidden">ดูตำแหน่งจุดแวะบนแผนที่</a>
+          <PublicRouteTimeline stops={stops} />
+        </section>
+        <aside className="border-y border-[#e6e2dc] py-6 lg:sticky lg:top-24 lg:border-l lg:border-y-0 lg:pl-6">
+          <RouteStopsMap stops={stops} />
+          <h2 className="mt-6 text-lg font-bold">ตรวจเส้นทางก่อนเดินทาง</h2>
+          <p className="mt-2 text-sm leading-6 text-[#5f6668]">พิกัดที่แสดงอาจเป็นตำแหน่งตัวสถานที่ ไม่ใช่ทางเข้าหรือที่จอดรถ โดยเฉพาะจุดแวะในถ้ำและบริเวณวัด กรุณาตรวจทางเข้าจริงก่อนออกเดินทาง</p>
+          <p className="mt-5 border-l-2 border-[#9b4e38] pl-3 text-sm font-semibold leading-6 text-[#5f6668]">พิกัดยังไม่ครบทุกจุด จึงไม่เปิดเส้นทางรวม ตรวจข้อมูลและพิกัดที่มีของแต่ละสถานที่ก่อนเดินทาง</p>
+          <a href="#route-timeline-heading" className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-[#783823] underline">กลับไปลำดับจุดแวะ</a>
+        </aside>
+      </div>
     </div>
   </main>,
 );

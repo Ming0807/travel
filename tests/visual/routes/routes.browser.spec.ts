@@ -9,6 +9,23 @@ test("public itinerary map is deferred, numbered, and usable", async ({ page }) 
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
+  const timeline = page.getByRole("region", { name: "ลำดับจุดแวะทดสอบ" });
+  const aside = page.locator("aside");
+  const timelineBox = await timeline.boundingBox();
+  const asideBox = await aside.boundingBox();
+  expect(timelineBox).not.toBeNull();
+  expect(asideBox).not.toBeNull();
+  await expect(aside.getByText(/ไม่ใช่ทางเข้าหรือที่จอดรถ/)).toBeVisible();
+  const mobileMapJump = timeline.getByRole("link", { name: "ดูตำแหน่งจุดแวะบนแผนที่" });
+  if (page.viewportSize()!.width >= 1024) {
+    expect(asideBox!.x).toBeGreaterThan(timelineBox!.x + timelineBox!.width);
+    await expect(aside).toHaveCSS("position", "sticky");
+    await expect(mobileMapJump).toBeHidden();
+  } else {
+    expect(asideBox!.y).toBeGreaterThan(timelineBox!.y + timelineBox!.height);
+    await expect(mobileMapJump).toBeVisible();
+    await expect(mobileMapJump).toHaveAttribute("href", "#route-map-heading");
+  }
   await expect(page.locator(".leaflet-container")).toHaveCount(0);
   await page.getByRole("button", { name: "ดูแผนที่", exact: true }).click();
   await expect(page.locator(".leaflet-marker-icon")).toHaveCount(2);
@@ -17,7 +34,12 @@ test("public itinerary map is deferred, numbered, and usable", async ({ page }) 
   await expect(page.getByText(/มี 1 จุดที่ยังไม่มีพิกัด/)).toBeVisible();
   await expect.poll(() => page.locator(".leaflet-tile").evaluateAll((tiles) => tiles.length > 0 && tiles.every((tile) => tile instanceof HTMLImageElement && tile.complete && tile.naturalWidth > 0)), { timeout: 15_000 }).toBe(true);
   await page.locator(".leaflet-marker-icon").first().click();
-  await expect(page.getByRole("link", { name: "1. สถานที่ทดสอบแรก", exact: true })).toHaveAttribute("href", "/attractions/fixture-first");
+  const popup = page.locator(".leaflet-popup-content");
+  await expect(popup.getByRole("link", { name: "1. สถานที่ทดสอบแรก", exact: true })).toHaveAttribute("href", "#route-stop-1");
+  await expect(popup.getByRole("link", { name: "ดูข้อมูลสถานที่", exact: true })).toHaveAttribute("href", "/attractions/fixture-first");
+  await popup.getByRole("link", { name: "1. สถานที่ทดสอบแรก", exact: true }).click();
+  await expect(page).toHaveURL(/#route-stop-1$/);
+  await expect(page.locator("#route-stop-1")).toBeInViewport();
   await page.getByRole("button", { name: "ซ่อนแผนที่", exact: true }).click();
   await expect(page.locator(".leaflet-container")).toHaveCount(0);
   await page.getByRole("button", { name: "ดูแผนที่", exact: true }).click();
@@ -74,5 +96,5 @@ test("tile network failure leaves stop details and markers available", async ({ 
   await page.getByRole("button", { name: "ดูแผนที่", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("ภาพแผนที่บางส่วนโหลดไม่สำเร็จ");
   await expect(page.locator(".leaflet-marker-icon")).toHaveCount(2);
-  await expect(page.getByRole("link", { name: /สถานที่ทดสอบแรก/ }).first()).toHaveAttribute("href", "/attractions/fixture-first");
+  await expect(page.getByRole("link", { name: "ดูพิกัดจุดที่ 1 ใน Google Maps" })).toHaveAttribute("href", "https://www.google.com/maps/search/?api=1&query=6.541%2C101.281");
 });

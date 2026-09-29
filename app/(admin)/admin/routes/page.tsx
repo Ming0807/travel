@@ -20,7 +20,7 @@ const columns = [
   { key: "name", label: "ชื่อเส้นทาง" },
   { key: "stops", label: "จำนวนจุดแวะ", className: "hidden md:table-cell text-center" },
   { key: "status", label: "สถานะ" },
-  { key: "actions", label: "", className: "w-32" },
+  { key: "actions", label: "", className: "w-52" },
 ];
 
 const statusOptions = [

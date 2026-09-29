@@ -5,21 +5,10 @@ import { MapTrifold } from "@phosphor-icons/react";
 import type { Map as LeafletMap } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-import { orderPublicRouteStops, type PublicRouteStop } from "@/lib/routes/public-route";
+import { hasValidRouteCoordinate, orderPublicRouteStops, type PublicRouteStop } from "@/lib/routes/public-route";
 import styles from "./RouteStopsMap.module.css";
 
 type MapStatus = "idle" | "loading" | "ready" | "error";
-
-function hasCoordinates(stop: PublicRouteStop) {
-  return typeof stop.latitude === "number"
-    && Number.isFinite(stop.latitude)
-    && stop.latitude >= -90
-    && stop.latitude <= 90
-    && typeof stop.longitude === "number"
-    && Number.isFinite(stop.longitude)
-    && stop.longitude >= -180
-    && stop.longitude <= 180;
-}
 
 export function RouteStopsMap({ stops }: { stops: PublicRouteStop[] }) {
   const [open, setOpen] = useState(false);
@@ -29,7 +18,7 @@ export function RouteStopsMap({ stops }: { stops: PublicRouteStop[] }) {
   const mapRef = useRef<LeafletMap | null>(null);
   const mappedStops = useMemo(() => orderPublicRouteStops(stops)
     .map((stop, index) => ({ stop, index }))
-    .filter(({ stop }) => hasCoordinates(stop)), [stops]);
+    .filter(({ stop }) => hasValidRouteCoordinate(stop)), [stops]);
 
   useEffect(() => {
     if (!open || mappedStops.length === 0) return;
@@ -68,9 +57,14 @@ export function RouteStopsMap({ stops }: { stops: PublicRouteStop[] }) {
         const width = Math.max(34, numbers.length * 8 + 16);
         const popup = document.createElement("div");
         items.forEach((item) => {
+          const jump = document.createElement("a");
+          jump.href = `#route-stop-${item.index + 1}`;
+          jump.textContent = `${item.index + 1}. ${item.stop.attractionName}`;
+          jump.className = styles.popupLink;
+          popup.appendChild(jump);
           const link = document.createElement("a");
           link.href = `/attractions/${encodeURIComponent(item.stop.attractionSlug)}`;
-          link.textContent = `${item.index + 1}. ${item.stop.attractionName}`;
+          link.textContent = "ดูข้อมูลสถานที่";
           link.className = styles.popupLink;
           popup.appendChild(link);
         });
@@ -128,16 +122,16 @@ export function RouteStopsMap({ stops }: { stops: PublicRouteStop[] }) {
       </div>
 
       <p className={styles.description}>
-        หมุดแสดงตำแหน่งจากข้อมูลสถานที่จริงตามลำดับจุดแวะ ไม่ใช่เส้นทางขับรถ
+        หมุดแสดงพิกัดสถานที่ตามลำดับจุดแวะ ไม่ใช่เส้นทางขับรถหรือจุดจอดรถ
         {mappedStops.length < stops.length ? ` มี ${stops.length - mappedStops.length} จุดที่ยังไม่มีพิกัด` : ""}
       </p>
 
       {open ? (
         <div id="route-stops-map" className={styles.mapFrame}>
           {status === "loading" ? <p className={styles.status}>กำลังโหลดแผนที่...</p> : null}
-          {status === "error" ? <p className={styles.status}>ยังโหลดแผนที่ไม่ได้ กรุณาใช้ลิงก์นำทางด้านล่าง</p> : null}
+          {status === "error" ? <p className={styles.status}>ยังโหลดแผนที่ไม่ได้ กรุณาดูพิกัดจากลิงก์ของแต่ละจุดแวะ</p> : null}
           <div ref={nodeRef} className={styles.map} aria-label="แผนที่ตำแหน่งจุดแวะ" />
-          {tileWarning ? <p role="status" className={styles.warning}>ภาพแผนที่บางส่วนโหลดไม่สำเร็จ ตรวจจุดแวะจากรายการด้านบนได้</p> : null}
+          {tileWarning ? <p role="status" className={styles.warning}>ภาพแผนที่บางส่วนโหลดไม่สำเร็จ ตรวจจุดแวะจากรายการสถานที่ได้</p> : null}
         </div>
       ) : <div id="route-stops-map" hidden />}
     </section>

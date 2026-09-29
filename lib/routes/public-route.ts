@@ -26,7 +26,7 @@ export function orderPublicRouteStops(stops: PublicRouteStop[]): PublicRouteStop
   return stops.slice().sort((left, right) => left.dayNumber - right.dayNumber || left.sequence - right.sequence);
 }
 
-function isValidCoordinate(stop: PublicRouteCoordinate) {
+export function hasValidRouteCoordinate(stop: PublicRouteCoordinate) {
   return typeof stop.latitude === "number"
     && Number.isFinite(stop.latitude)
     && stop.latitude >= -90
@@ -42,13 +42,12 @@ function coordinateText(stop: PublicRouteCoordinate) {
 }
 
 export function buildRouteDirectionsUrl(stops: PublicRouteCoordinate[]): string | null {
-  if (stops.length < 2 || stops.length > MAX_STOPS_PER_MAPS_URL || !stops.every(isValidCoordinate)) return null;
+  if (stops.length < 2 || stops.length > MAX_STOPS_PER_MAPS_URL || !stops.every(hasValidRouteCoordinate)) return null;
 
   const params = new URLSearchParams({
     api: "1",
     origin: coordinateText(stops[0]),
     destination: coordinateText(stops[stops.length - 1]),
-    travelmode: "driving",
   });
   const waypoints = stops.slice(1, -1);
   if (waypoints.length > 0) {
@@ -59,7 +58,7 @@ export function buildRouteDirectionsUrl(stops: PublicRouteCoordinate[]): string 
 }
 
 export function buildRouteDirectionsSegments(stops: PublicRouteCoordinate[]): RouteDirectionsSegment[] {
-  if (stops.length < 2 || !stops.every(isValidCoordinate)) return [];
+  if (stops.length < 2 || !stops.every(hasValidRouteCoordinate)) return [];
 
   const segments: RouteDirectionsSegment[] = [];
   for (let startIndex = 0; startIndex < stops.length - 1; startIndex += MAX_STOPS_PER_MAPS_URL - 1) {
@@ -69,6 +68,12 @@ export function buildRouteDirectionsSegments(stops: PublicRouteCoordinate[]): Ro
     segments.push({ startIndex, endIndex, url });
   }
   return segments;
+}
+
+export function buildRouteStopMapUrl(stop: PublicRouteCoordinate): string | null {
+  if (!hasValidRouteCoordinate(stop)) return null;
+  const params = new URLSearchParams({ api: "1", query: coordinateText(stop) });
+  return `https://www.google.com/maps/search/?${params.toString()}`;
 }
 
 export function safeExternalTourUrl(value: string | null | undefined): string | null {

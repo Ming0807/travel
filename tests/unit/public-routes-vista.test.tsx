@@ -75,7 +75,7 @@ vi.mock("@/lib/repositories/destination-scope.repository", () => ({
 
 import { PublicRouteTimeline } from "@/components/routes/PublicRouteTimeline";
 import { PublicVistaGrid } from "@/components/vista/PublicVistaGrid";
-import { buildRouteDirectionsUrl } from "@/lib/routes/public-route";
+import { buildRouteDirectionsUrl, buildRouteStopMapUrl } from "@/lib/routes/public-route";
 import {
   getPublicRouteDetail,
   listPublicRoutes,
@@ -189,15 +189,24 @@ describe("public routes repository", () => {
 
 describe("public route presentation", () => {
   it("builds directions only when every stop has valid coordinates", () => {
-    expect(buildRouteDirectionsUrl([
+    const url = buildRouteDirectionsUrl([
       { latitude: 6.541, longitude: 101.281 },
       { latitude: 6.542, longitude: 101.282 },
-    ])).toContain("origin=6.541%2C101.281");
+    ]);
+    expect(url).toContain("origin=6.541%2C101.281");
+    expect(url).not.toContain("travelmode=driving");
 
     expect(buildRouteDirectionsUrl([
       { latitude: 6.541, longitude: 101.281 },
       { latitude: null, longitude: 101.282 },
     ])).toBeNull();
+  });
+
+  it("opens a stored stop coordinate as a location, not driving directions", () => {
+    expect(buildRouteStopMapUrl({ latitude: 6.51, longitude: 101.21 }))
+      .toBe("https://www.google.com/maps/search/?api=1&query=6.51%2C101.21");
+    expect(buildRouteStopMapUrl({ latitude: null, longitude: 101.21 })).toBeNull();
+    expect(buildRouteStopMapUrl({ latitude: 91, longitude: 101.21 })).toBeNull();
   });
 
   it("groups repeated sequence numbers by day without duplicate keys or broken attraction links", () => {
@@ -211,6 +220,8 @@ describe("public route presentation", () => {
     expect(screen.getByRole("link", { name: /จุดแรก/ })).toHaveAttribute("href", "/attractions/first");
     expect(screen.getByRole("link", { name: /จุดสอง/ })).toHaveAttribute("href", "/attractions/second");
     expect(screen.getByText("จุดที่ 2")).toBeVisible();
+    expect(screen.getByRole("link", { name: "ดูพิกัดจุดที่ 1 ใน Google Maps" }))
+      .toHaveAttribute("href", "https://www.google.com/maps/search/?api=1&query=6.5%2C101.2");
   });
 });
 

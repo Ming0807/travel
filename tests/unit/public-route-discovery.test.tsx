@@ -77,6 +77,8 @@ describe("route timeline navigation", () => {
     const dayNav = screen.getByRole("navigation", { name: "เลือกวันในเส้นทาง" });
     expect(within(dayNav).getByRole("link", { name: "วันที่ 1" })).toHaveAttribute("href", "#route-day-1");
     expect(within(dayNav).getByRole("link", { name: "วันที่ 2" })).toHaveAttribute("href", "#route-day-2");
+    expect(screen.queryByRole("link", { name: /ดูพิกัดจุดที่/ })).not.toBeInTheDocument();
+    expect(screen.getAllByText("ยังไม่มีพิกัดสำหรับจุดนี้")).toHaveLength(2);
 
     rerender(<PublicRouteTimeline stops={[]} />);
     expect(screen.getByText("เส้นทางนี้ยังไม่มีจุดแวะที่เผยแพร่")).toBeVisible();

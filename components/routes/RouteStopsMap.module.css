@@ -1,7 +1,5 @@
 .section {
-  margin-top: 2.5rem;
-  border-top: 1px solid #e3e1dc;
-  padding-top: 1.75rem;
+  scroll-margin-top: 6rem;
 }
 
 .headingRow {
@@ -20,6 +18,7 @@
 
 .heading {
   margin-top: .25rem;
+  scroll-margin-top: 6rem;
   color: #263036;
   font-size: 1.45rem;
   font-weight: 800;
@@ -61,7 +60,11 @@
 
 .map {
   width: 100%;
-  height: clamp(290px, 37vw, 410px);
+  height: clamp(280px, 37vw, 340px);
+}
+
+@media (min-width: 1024px) {
+  .map { height: 250px; }
 }
 
 .status, .warning {

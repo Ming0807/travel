@@ -1,5 +1,20 @@
 # ROUTES_STRUCTURE.md
 
+## Na Tham Route Access Review (2026-09-29)
+
+`/routes/[slug]` places the numbered itinerary beside an on-demand map on desktop
+and stacks them with a map jump on mobile. Marker popups link back to their stop
+and separately to its attraction detail. Valid individual coordinates can open
+Google Maps even when a complete multi-stop route cannot be built. Direction
+URLs no longer force driving mode: cave/site coordinates are not verified road
+entrances. Explicit access guidance distinguishes markers from parking and
+requires checking actual entry conditions. No routing/ETA API was added.
+
+`/admin/routes` makes editing the primary labeled action and groups secondary
+commands in a native disclosure. Existing permission, publication readiness and
+archive confirmation actions remain unchanged. Three optional researched draft
+routes are documented in `docs/content/NA_THAM_CURATED_ROUTES.md`.
+
 ## NFC Public Location Verification
 
 `/checkin/[code]` and `/checkin/[code]/start` display NFC-specific verification

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowUpRight, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { ArrowSquareOut, ArrowUpRight, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
-import { orderPublicRouteStops, type PublicRouteStop } from "@/lib/routes/public-route";
+import { buildRouteStopMapUrl, orderPublicRouteStops, type PublicRouteStop } from "@/lib/routes/public-route";
 
 export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
   const orderedStops = orderPublicRouteStops(stops);
@@ -51,15 +51,18 @@ export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
               </div>
 
               <ol className="mt-2">
-                {dayStops.map((stop) => (
-                  <li key={`${stop.dayNumber}-${stop.sequence}-${stop.attractionId}`} className="border-b border-[#e6e2dc] last:border-b-0">
+                {dayStops.map((stop) => {
+                  const stopIndex = orderedStops.indexOf(stop) + 1;
+                  const mapUrl = buildRouteStopMapUrl(stop);
+                  return (
+                  <li id={`route-stop-${stopIndex}`} key={`${stop.dayNumber}-${stop.sequence}-${stop.attractionId}`} className="scroll-mt-24 border-b border-[#e6e2dc] last:border-b-0 target:bg-[#f8efe9]">
                     <Link
                       href={`/attractions/${stop.attractionSlug}`}
                       className="group grid gap-4 py-5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38] sm:grid-cols-[44px_150px_minmax(0,1fr)] sm:items-start"
                       aria-label={`ดูสถานที่ ${stop.attractionName}`}
                     >
                       <span className="hidden pt-1 text-2xl font-bold text-[#9b4e38] sm:block" aria-hidden="true">
-                        {String(orderedStops.indexOf(stop) + 1).padStart(2, "0")}
+                        {String(stopIndex).padStart(2, "0")}
                       </span>
                       <div className="max-w-[220px] sm:max-w-none">
                         <PublicMediaFrame
@@ -72,7 +75,7 @@ export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
                       </div>
                       <div className="min-w-0 self-center">
                         <p className="text-xs font-bold uppercase tracking-widest text-[#9b4e38]">
-                          จุดที่ {(orderedStops.indexOf(stop) + 1).toLocaleString("th-TH")}
+                          จุดที่ {stopIndex.toLocaleString("th-TH")}
                         </p>
                         <h4 className="mt-1 text-lg font-bold leading-7 text-[#263036] group-hover:text-[#9b4e38]">
                           {stop.attractionName}
@@ -84,8 +87,22 @@ export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
                         </p>
                       </div>
                     </Link>
+                    <div className="pb-5 sm:pl-[226px]">
+                      {mapUrl ? (
+                        <a
+                          href={mapUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`ดูพิกัดจุดที่ ${stopIndex} ใน Google Maps`}
+                          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38]"
+                        >
+                          ดูพิกัดใน Google Maps <ArrowSquareOut size={16} aria-hidden="true" />
+                        </a>
+                      ) : <p className="text-sm text-[#687076]">ยังไม่มีพิกัดสำหรับจุดนี้</p>}
+                    </div>
                   </li>
-                ))}
+                  );
+                })}
               </ol>
             </section>
           );

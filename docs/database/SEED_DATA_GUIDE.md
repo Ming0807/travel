@@ -1,5 +1,20 @@
 # SEED_DATA_GUIDE.md
 
+## Na Tham Curated Content (2026-09-29)
+
+Manual, opt-in content seed: `supabase/seed/na_tham_curated_routes.sql`.
+Run `supabase/seed/na_tham_routes_preflight.sql` first (read-only). The seed creates
+three unpublished route drafts with ten ordered stops referencing existing Na
+Tham attraction slugs. It never creates tourist activity or attraction rows and
+preserves existing routes in full on rerun. Missing/ineligible dependencies stop
+the transaction. Add covers and confirm entrance/map/access details in the CMS
+before publication. Source evidence, limitations, and execution steps:
+`docs/content/NA_THAM_CURATED_ROUTES.md`.
+
+Local SQL regression: `node scripts/verify-na-tham-route-seed.mjs`; optional
+isolated PGlite runtime setup is documented in that script. No production DB
+connection is accepted by the verifier.
+
 ## 1. Document Purpose
 
 This document defines the seed data strategy for the **Southern Border Tourism Data & Intelligence Platform**.

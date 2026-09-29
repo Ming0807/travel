@@ -10,6 +10,7 @@ import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicRouteTimeline } from "@/components/routes/PublicRouteTimeline";
 import { RouteStopsMap } from "@/components/routes/RouteStopsMap";
 import { getPublicRouteDetail } from "@/lib/repositories/public-content.repository";
+import { hasValidRouteCoordinate } from "@/lib/routes/public-route";
 
 export const revalidate = 60;
 
@@ -36,6 +37,7 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
     .split(/\r?\n/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
+  const hasMappedStops = route.stops.some(hasValidRouteCoordinate);
 
   return (
     <div className="min-h-screen bg-[#fffdfa] text-[#263036]">
@@ -78,7 +80,7 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
           </div>
         </header>
 
-        <div className="mt-11 grid gap-10 lg:grid-cols-[minmax(0,1fr)_290px] lg:items-start">
+        <div className="mt-11 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(300px,36%)] lg:items-start">
           <div>
             {paragraphs.length > 0 ? (
               <section aria-labelledby="route-overview-heading" className="border-b border-[#e6e2dc] pb-8">
@@ -96,22 +98,23 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
               <p className="mt-2 max-w-[65ch] text-sm leading-6 text-[#5f6668]">
                 ทีมงานจัดลำดับจุดแวะไว้ให้แล้ว เปิดแต่ละสถานที่เพื่อดูข้อมูลล่าสุดก่อนออกเดินทาง
               </p>
+              {hasMappedStops ? (
+                <a href="#route-map-heading" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38] lg:hidden">
+                  ดูตำแหน่งจุดแวะบนแผนที่
+                </a>
+              ) : null}
               <div className="mt-6">
                 <PublicRouteTimeline stops={route.stops} />
               </div>
             </section>
-
-            <RouteStopsMap stops={route.stops} />
           </div>
 
           <aside className="border-y border-[#e6e2dc] py-6 lg:sticky lg:top-24 lg:border-l lg:border-y-0 lg:pl-6">
-            <h2 className="text-lg font-bold">ออกเดินทางตามเส้นทาง</h2>
+            <RouteStopsMap stops={route.stops} />
+            <h2 className="mt-6 text-lg font-bold">ตรวจเส้นทางก่อนเดินทาง</h2>
             <p className="mt-2 text-sm leading-6 text-[#5f6668]">
-              เลือกดูจุดแวะก่อน แล้วเปิดนำทางเมื่อพร้อมเดินทางจริง
+              พิกัดที่แสดงอาจเป็นตำแหน่งตัวสถานที่ ไม่ใช่ทางเข้าหรือที่จอดรถ โดยเฉพาะจุดแวะในถ้ำและบริเวณวัด กรุณาตรวจทางเข้าจริงก่อนออกเดินทาง
             </p>
-            <a href="#route-timeline-heading" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#9b4e38]">
-              ดูลำดับจุดแวะ
-            </a>
             {route.mapUrl ? (
               <PublicButton
                 href={route.mapUrl}
@@ -119,13 +122,13 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
                 rel="noopener noreferrer"
                 className="mt-4 w-full gap-2"
               >
-                เปิดเส้นทางใน Google Maps
+                ตรวจเส้นทางใน Google Maps
                 <ArrowSquareOut size={17} weight="bold" aria-hidden="true" />
               </PublicButton>
             ) : route.mapSegments.length > 1 ? (
               <div className="mt-4">
                 <p className="text-sm font-semibold text-[#5f6668]">
-                  เส้นทางมีหลายจุดแวะ เปิดนำทางทีละช่วงเพื่อไม่ให้จุดใดหายไปบนมือถือ
+                  เส้นทางมีหลายจุดแวะ เปิดตรวจทีละช่วงเพื่อไม่ให้จุดใดหายไปบนมือถือ
                 </p>
                 <ol className="mt-3 space-y-2">
                   {route.mapSegments.map((segment, index) => (
@@ -145,9 +148,12 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
               </div>
             ) : (
               <p className="mt-5 border-l-2 border-[#9b4e38] pl-3 text-sm font-semibold leading-6 text-[#5f6668]">
-                พิกัดยังไม่ครบทุกจุด เปิดข้อมูลสถานที่แต่ละแห่งเพื่อดูตำแหน่งก่อนเดินทาง
+                พิกัดยังไม่ครบทุกจุด จึงไม่เปิดเส้นทางรวม ตรวจข้อมูลและพิกัดที่มีของแต่ละสถานที่ก่อนเดินทาง
               </p>
             )}
+            <a href="#route-timeline-heading" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#9b4e38]">
+              กลับไปลำดับจุดแวะ
+            </a>
           </aside>
         </div>
       </PublicPageFrame>

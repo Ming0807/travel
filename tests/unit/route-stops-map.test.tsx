@@ -54,4 +54,13 @@ describe("route stop map", () => {
     await waitFor(() => expect(leaflet.marker).toHaveBeenCalledOnce());
     expect(leaflet.divIcon).toHaveBeenCalledWith(expect.objectContaining({ html: "<span>1,2</span>" }));
   });
+
+  it("links map markers back to their numbered timeline stops", async () => {
+    render(<RouteStopsMap stops={stops} />);
+    fireEvent.click(screen.getByRole("button", { name: "ดูแผนที่" }));
+    await waitFor(() => expect(leaflet.marker).toHaveBeenCalledTimes(2));
+    const marker = leaflet.marker.mock.results[1].value;
+    const popup = marker.bindPopup.mock.calls[0][0] as HTMLElement;
+    expect(popup.querySelector('a[href="#route-stop-2"]')).toHaveTextContent("2. ถ้ำพระนอน");
+  });
 });
