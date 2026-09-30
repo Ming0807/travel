@@ -51,7 +51,7 @@ Help visitors choose a small number of useful, truthful itineraries through the 
 
 - [x] Run relevant unit tests, typecheck, lint, production build, and responsive browser checks after integration.
 - [x] Confirm the deployed cover/selection code release by production health and public/security HTTP smoke; dependency readiness remains unverified.
-- [ ] Check one real published Na Tham route in staging/production, including map coordinates and mobile directions. This requires an approved route with real stops and is not satisfied by mock data.
+- [x] Check one real published Na Tham route in production, including map coordinates and mobile directions URLs. Route 01 passed read-only Chromium checks with real CMS data and map tiles at five widths on 2026-10-01; actual device/app handoff remains in 25.7.
 - [ ] Confirm an administrator can create, edit, preview, publish, unpublish, and restore a route with the deployed database.
 
 Evidence: [Local route QA](../docs/testing/PHASE_25_ROUTE_QA_2026-09-27.md).
@@ -90,7 +90,7 @@ No schema migration or production database mutation is performed by this task.
 - [x] Reserve enough initial/reset map padding for controls to avoid obscuring markers on mobile and desktop.
 - [x] Add a read-only, reusable published-route check for real tiles, images, marker visibility and itinerary/directions parity at five widths.
 - [x] Pass 26 focused unit cases, 12 component-browser checks, typecheck, scoped lint and the production build; check route 01 against the local production build and real CMS data.
-- [ ] Confirm the patched deployed release and run the published-route check against production.
+- [x] Confirm the patched deployed release `05426a625ce6` and run the published-route check against production; all five widths passed with actual tiles and CMS data.
 
 Evidence: [Route explorer QA](../docs/testing/PHASE_25_ROUTE_EXPLORER_QA_2026-10-01.md).
 

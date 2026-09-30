@@ -43,8 +43,18 @@ No content, coordinates, schema, account, visit or research records were changed
 
 ## Deployment and remaining acceptance
 
-Patched release verification is pending. The repeatable check supports
-`ROUTE_QA_BASE_URL` and `ROUTE_QA_SLUG` for later published routes.
+Production health returned HTTP 200 with release `05426a625ce6` after push.
+The read-only published-route check then passed against
+`https://travel-zeta-lac.vercel.app` at all five widths, using actual map tiles
+and current CMS images/coordinates. The reset control covered no marker, each
+selected-stop directions URL matched the itinerary, and the complete-route URL
+included all three coordinates with no forced origin. No uncaught page errors
+or horizontal overflow were observed. The generated `report.json` records the
+target, timestamp and per-viewport values.
+
+The repeatable check supports `ROUTE_QA_BASE_URL` and `ROUTE_QA_SLUG` for later
+published routes. Production browser acceptance here closes the published-route
+software smoke gate only.
 
 Actual iPhone/Android Google Maps handoff, GPS behavior, caretaker-approved
 entrances, image editorial approval and authenticated CMS create/publish/
