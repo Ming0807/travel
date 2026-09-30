@@ -22,6 +22,11 @@ selection/upload and persisted publication require the authenticated app.
 Run the automated component-browser checks with
 `pnpm exec playwright test --config tests/visual/routes/playwright.config.ts`.
 They cover the three widths and save screenshots under `output/playwright/`.
+Open `http://127.0.0.1:4188/?explore` to inspect the in-page public route
+explorer with three mapped fixture stops. Its dotted connector is editorial
+order, not road geometry; choosing a stop or marker changes the selected
+detail and moves the map. The default fixture still checks the compact,
+on-demand version used in admin review.
 
 This component fixture does not replace production-data and authenticated
 admin acceptance gates in `tasks/PHASE_25_CURATED_NA_THAM_ROUTES.md`.

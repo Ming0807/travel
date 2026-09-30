@@ -74,6 +74,15 @@ Content, citations and execution guide: [Na Tham curated routes](../docs/content
 Read-only production data audit: [Phase 25 production route audit](../docs/testing/PHASE_25_PRODUCTION_ROUTE_AUDIT_2026-09-29.md).
 No schema migration or production database mutation is performed by this task.
 
+### 25.7 Embedded route explorer
+
+- [x] Put a full-width, in-page map before the detailed itinerary, preserving the existing compact admin preview.
+- [x] Draw numbered markers and dotted editorial-order connectors from stored attraction coordinates, without implying a road or walking route.
+- [x] Let visitors select stops from the map or ordered list, focus the map with reduced-motion support, and open the selected attraction or Google Maps directions.
+- [x] Keep the whole-route Google Maps handoff for routes with complete coordinates and break the visual connector at missing locations.
+- [x] Load map assets near the viewport; preserve usable content when tiles fail and allow a reset to the full extent.
+- [ ] Confirm route 01 on real iPhone and Android devices, including map panning, marker selection, current-location navigation, and the caretaker-approved access points.
+
 ## Out of scope
 
 No automatic route generation, road-distance ranking, fake review metrics, payment or booking, new attraction records, AI-authored itinerary claims, or study-participant tracking is introduced in this phase.

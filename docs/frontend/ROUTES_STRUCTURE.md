@@ -299,9 +299,15 @@ a successful empty result from a load failure. Each failure can be retried
 without losing either sanitized selection; the unaffected plan remains usable.
 
 `/routes/[slug]` groups stops by stored day and display order, includes any
-route-specific stop note, and links each stop to its attraction record. An
-on-demand Leaflet map shows numbered markers from stored coordinates only;
-it does not draw or claim a road itinerary. OpenStreetMap tiles are attributed,
+route-specific stop note, and links each stop to its attraction record. A
+full-width Leaflet explorer sits above the timeline with numbered markers,
+an ordered stop selector, and a selected-stop detail/navigation panel. The
+map is visible on the page and loads its Leaflet bundle/tiles when it nears
+the viewport. Straight dotted connectors show editorial stop order only,
+not a road, walking path, distance, or safety claim; gaps in stored coordinates
+break the connector rather than drawing across unknown stops. Selecting a stop
+highlights its marker and moves the map, with reduced-motion support. The
+compact admin review map remains on demand. OpenStreetMap tiles are attributed,
 and tile/load failures leave the stop list and external handoff available.
 Google Maps directions are available only when every stop has valid
 coordinates. For up to four stops the directions URL omits origin so Google

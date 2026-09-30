@@ -10,7 +10,7 @@ import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { PublicRouteTimeline } from "@/components/routes/PublicRouteTimeline";
 import { RouteStopsMap } from "@/components/routes/RouteStopsMap";
 import { getPublicRouteDetail } from "@/lib/repositories/public-content.repository";
-import { buildRouteDirectionsFromCurrentUrl, hasValidRouteCoordinate } from "@/lib/routes/public-route";
+import { buildRouteDirectionsFromCurrentUrl } from "@/lib/routes/public-route";
 
 export const revalidate = 60;
 
@@ -37,7 +37,6 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
     .split(/\r?\n/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
-  const hasMappedStops = route.stops.some(hasValidRouteCoordinate);
   const firstStopNavigationUrl = route.stops.length > 0
     ? buildRouteDirectionsFromCurrentUrl([route.stops[0]])
     : null;
@@ -83,7 +82,11 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
           </div>
         </header>
 
-        <div className="mt-11 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(300px,36%)] lg:items-start">
+        <div className="mt-11">
+          <RouteStopsMap stops={route.stops} presentation="explore" directionsUrl={route.mapUrl} />
+        </div>
+
+        <div className="mt-11 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(260px,30%)] lg:items-start">
           <div>
             {paragraphs.length > 0 ? (
               <section aria-labelledby="route-overview-heading" className="border-b border-[#e6e2dc] pb-8">
@@ -101,11 +104,6 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
               <p className="mt-2 max-w-[65ch] text-sm leading-6 text-[#5f6668]">
                 ทีมงานจัดลำดับจุดแวะไว้ให้แล้ว เปิดแต่ละสถานที่เพื่อดูข้อมูลล่าสุดก่อนออกเดินทาง
               </p>
-              {hasMappedStops ? (
-                <a href="#route-map-heading" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38] lg:hidden">
-                  ดูตำแหน่งจุดแวะบนแผนที่
-                </a>
-              ) : null}
               <div className="mt-6">
                 <PublicRouteTimeline stops={route.stops} />
               </div>
@@ -113,25 +111,14 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
           </div>
 
           <aside className="border-y border-[#e6e2dc] py-6 lg:sticky lg:top-24 lg:border-l lg:border-y-0 lg:pl-6">
-            <RouteStopsMap stops={route.stops} />
-            <h2 className="mt-6 text-lg font-bold">ตรวจเส้นทางก่อนเดินทาง</h2>
+            <h2 className="text-lg font-bold">ตรวจเส้นทางก่อนเดินทาง</h2>
             <p className="mt-2 text-sm leading-6 text-[#5f6668]">
               พิกัดที่แสดงอาจเป็นตำแหน่งตัวสถานที่ ไม่ใช่ทางเข้าหรือที่จอดรถ โดยเฉพาะจุดแวะในถ้ำและบริเวณวัด กรุณาตรวจทางเข้าจริงก่อนออกเดินทาง
             </p>
             {route.mapUrl || route.mapSegments.length > 0 ? (
               <p className="mt-2 text-sm leading-6 text-[#5f6668]">Google Maps จะใช้ตำแหน่งอุปกรณ์เป็นต้นทางเมื่อพร้อมใช้งาน หากไม่พบตำแหน่ง ให้เลือกต้นทางในแอปก่อนเริ่มนำทาง</p>
             ) : null}
-            {route.mapUrl ? (
-              <PublicButton
-                href={route.mapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 w-full gap-2"
-              >
-                นำทางจากตำแหน่งปัจจุบัน
-                <ArrowSquareOut size={17} weight="bold" aria-hidden="true" />
-              </PublicButton>
-            ) : route.mapSegments.length > 0 ? (
+            {!route.mapUrl && route.mapSegments.length > 0 ? (
               <div className="mt-4">
                 {firstStopNavigationUrl ? (
                   <PublicButton href={firstStopNavigationUrl} target="_blank" rel="noopener noreferrer" className="mb-3 w-full gap-2">
@@ -158,13 +145,13 @@ export default async function RouteDetailPage({ params }: { params: Promise<{ sl
                   ))}
                 </ol>
               </div>
-            ) : (
+            ) : !route.mapUrl ? (
               <p className="mt-5 border-l-2 border-[#9b4e38] pl-3 text-sm font-semibold leading-6 text-[#5f6668]">
                 พิกัดยังไม่ครบทุกจุด จึงไม่เปิดเส้นทางรวม ตรวจข้อมูลและพิกัดที่มีของแต่ละสถานที่ก่อนเดินทาง
               </p>
-            )}
-            <a href="#route-timeline-heading" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#9b4e38]">
-              กลับไปลำดับจุดแวะ
+            ) : null}
+            <a href="#route-map-heading" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#783823] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#9b4e38]">
+              กลับไปแผนที่เส้นทาง
             </a>
           </aside>
         </div>

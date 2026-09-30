@@ -24,6 +24,8 @@
   font-weight: 800;
 }
 
+.explorerSection .heading { font-size: 1.7rem; }
+
 .toggle {
   display: inline-flex;
   min-height: 44px;
@@ -75,10 +77,135 @@
   background: #e8eeeb;
 }
 
+.explorer {
+  display: grid;
+  margin-top: 1.25rem;
+  overflow: hidden;
+  border: 1px solid #ded9d3;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.explorer .mapFrame {
+  min-width: 0;
+  margin-top: 0;
+  border: 0;
+  border-radius: 0;
+}
+
 .map {
   width: 100%;
   height: clamp(280px, 37vw, 340px);
 }
+
+.explorerMap { height: 360px; }
+
+.resetView {
+  position: absolute;
+  z-index: 700;
+  top: 1rem;
+  right: 1rem;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: .4rem;
+  border: 1px solid #d8c9be;
+  border-radius: 4px;
+  padding: .45rem .8rem;
+  background: #fff;
+  box-shadow: 0 2px 12px #26303622;
+  color: #783823;
+  font-size: .85rem;
+  font-weight: 800;
+}
+
+.resetView:hover { background: #f8efe9; }
+.resetView:focus-visible { outline: 3px solid #9b4e38; outline-offset: 2px; }
+
+.explorerPanel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .9rem;
+  border-top: 1px solid #ded9d3;
+  padding: 1.15rem;
+  background: #fff;
+}
+
+.panelLabel, .selectedEyebrow {
+  color: #9b4e38;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.stopList { display: grid; gap: .35rem; }
+
+.stopButton {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: .65rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: .45rem .6rem;
+  background: #f7f7f5;
+  color: #263036;
+  text-align: left;
+  transition: background .18s ease-out, border-color .18s ease-out;
+}
+
+.stopButton:hover { background: #f8efe9; }
+.stopButton:focus-visible { outline: 3px solid #9b4e38; outline-offset: 2px; }
+.stopButtonActive { border-color: #b76850; background: #f8efe9; }
+.stopNumber { flex: 0 0 2rem; color: #9b4e38; font-weight: 900; }
+.stopName { min-width: 0; flex: 1; font-size: .88rem; font-weight: 800; line-height: 1.45; }
+.missingPin { font-size: .68rem; font-weight: 700; color: #875c21; }
+
+.selectedStop {
+  display: flex;
+  min-width: 0;
+  gap: .8rem;
+  border-top: 1px solid #e6e2dc;
+  padding-top: .95rem;
+}
+
+.selectedMedia { width: 76px; flex: 0 0 76px; }
+.selectedCopy { min-width: 0; }
+.selectedTitle { margin-top: .2rem; color: #263036; font-size: 1rem; font-weight: 900; line-height: 1.4; }
+.selectedNote { margin-top: .4rem; color: #5f6668; font-size: .78rem; line-height: 1.6; }
+.actionRow { display: flex; flex-wrap: wrap; gap: .45rem .9rem; }
+
+.secondaryAction {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: .25rem;
+  color: #783823;
+  font-size: .83rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.secondaryAction:focus-visible, .primaryAction:focus-visible { outline: 3px solid #9b4e38; outline-offset: 2px; }
+
+.primaryAction {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  border-radius: 4px;
+  padding: .65rem 1rem;
+  background: #a64831;
+  color: #fff;
+  font-size: .88rem;
+  font-weight: 900;
+  transition: background .18s ease-out;
+}
+
+.primaryAction:hover { background: #873821; }
 
 @media (min-width: 1024px) {
   .map { height: 250px; }
@@ -111,6 +238,20 @@
   color: #fff;
   font-size: .8rem;
   font-weight: 800;
+  transition: border-color .2s ease-out, background .2s ease-out, box-shadow .2s ease-out;
+}
+
+.markerActive {
+  border-color: #ffd596;
+  background: #073f37;
+  box-shadow: 0 0 0 4px #ffffffde, 0 3px 12px #17212b66;
+}
+
+.routeConnector { animation: routeReveal .45s ease-out both; }
+
+@keyframes routeReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .popupLink {
@@ -123,4 +264,21 @@
 @media (max-width: 420px) {
   .headingRow { align-items: start; flex-direction: column; }
   .toggle { width: 100%; }
+}
+
+@media (min-width: 900px) {
+  .explorer { grid-template-columns: minmax(0, 1fr) 320px; }
+  .explorerMap { height: 520px; }
+  .explorerPanel {
+    height: 520px;
+    overflow-y: auto;
+    border-top: 0;
+    border-left: 1px solid #ded9d3;
+  }
+  .primaryAction { margin-top: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .routeConnector { animation: none; }
+  .marker, .stopButton, .primaryAction { transition: none; }
 }

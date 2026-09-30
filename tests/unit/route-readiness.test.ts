@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { evaluateRouteReadiness } from "@/lib/routes/route-readiness";
-import { buildRouteDirectionsSegments, buildRouteDirectionsUrl } from "@/lib/routes/public-route";
+import { buildRouteConnectorSegments, buildRouteDirectionsSegments, buildRouteDirectionsUrl } from "@/lib/routes/public-route";
 
 const stops = [
   { attractionId: 1, dayNumber: 1, displayOrder: 1 },
@@ -55,5 +55,20 @@ describe("mobile-safe Google Maps directions", () => {
   it("does not silently skip stops with missing coordinates", () => {
     const incomplete = [...locations.slice(0, 5), { latitude: null, longitude: 101.9 }];
     expect(buildRouteDirectionsSegments(incomplete)).toEqual([]);
+  });
+});
+
+describe("editorial map connectors", () => {
+  it("connects ordered valid neighbors without jumping across an unmapped stop", () => {
+    expect(buildRouteConnectorSegments([
+      { latitude: 6.5, longitude: 101.2 },
+      { latitude: 6.51, longitude: 101.21 },
+      { latitude: null, longitude: null },
+      { latitude: 6.53, longitude: 101.23 },
+      { latitude: 6.54, longitude: 101.24 },
+    ])).toEqual([
+      [[6.5, 101.2], [6.51, 101.21]],
+      [[6.53, 101.23], [6.54, 101.24]],
+    ]);
   });
 });

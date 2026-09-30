@@ -12,9 +12,21 @@ const stops: PublicRouteStop[] = [
   { attractionId: 2, dayNumber: 1, sequence: 2, attractionName: "สถานที่ทดสอบที่ไม่มีพิกัด", attractionSlug: "fixture-second", attractionImage: null, attractionImageAlt: "", latitude: null, longitude: null },
   { attractionId: 3, dayNumber: 2, sequence: 1, attractionName: "สถานที่ทดสอบชื่อยาวสำหรับตรวจข้อความภาษาไทยบนอุปกรณ์มือถือ", attractionSlug: "fixture-third", attractionImage: image, attractionImageAlt: "ภาพสำหรับทดสอบ layout", latitude: 6.542, longitude: 101.282 },
 ];
+const completeStops = stops.map((stop, index) => index === 1
+  ? { ...stop, latitude: 6.5415, longitude: 101.2815, attractionImage: image }
+  : stop);
 
 createRoot(document.getElementById("root")!).render(
-  new URLSearchParams(window.location.search).has("admin") ? <AdminFixture /> : <main className="min-h-screen bg-[#fffdfa] px-4 py-6 text-[#263036] sm:px-8">
+  new URLSearchParams(window.location.search).has("admin") ? <AdminFixture /> : new URLSearchParams(window.location.search).has("explore") ? (
+    <main className="min-h-screen bg-[#fffdfa] px-4 py-6 text-[#263036] sm:px-8">
+      <div className="mx-auto max-w-6xl">
+        <p className="border-l-2 border-amber-500 pl-3 text-sm">UI fixture only. No database access or production evidence.</p>
+        <h1 className="mt-6 text-2xl font-bold">Route explorer QA</h1>
+        <div className="mt-8"><RouteStopsMap stops={completeStops} presentation="explore" directionsUrl="https://www.google.com/maps/dir/?api=1" /></div>
+        <div className="mt-10"><PublicRouteTimeline stops={completeStops} /></div>
+      </div>
+    </main>
+  ) : <main className="min-h-screen bg-[#fffdfa] px-4 py-6 text-[#263036] sm:px-8">
     <div className="mx-auto max-w-6xl">
       <p className="border-l-2 border-amber-500 pl-3 text-sm">UI fixture only. No database access or production evidence.</p>
       <h1 className="mt-6 text-2xl font-bold">Curated routes QA</h1>

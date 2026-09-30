@@ -38,6 +38,23 @@ export function hasValidRouteCoordinate(stop: PublicRouteCoordinate) {
     && stop.longitude <= 180;
 }
 
+export function buildRouteConnectorSegments(stops: PublicRouteCoordinate[]): Array<Array<[number, number]>> {
+  const segments: Array<Array<[number, number]>> = [];
+  let current: Array<[number, number]> = [];
+
+  for (const stop of stops) {
+    if (!hasValidRouteCoordinate(stop)) {
+      if (current.length > 1) segments.push(current);
+      current = [];
+      continue;
+    }
+    current.push([stop.latitude!, stop.longitude!]);
+  }
+  if (current.length > 1) segments.push(current);
+
+  return segments;
+}
+
 function coordinateText(stop: PublicRouteCoordinate) {
   return `${stop.latitude},${stop.longitude}`;
 }

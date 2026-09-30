@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const leaflet = vi.hoisted(() => {
-  const mapInstance = { fitBounds: vi.fn(), setView: vi.fn(), invalidateSize: vi.fn(), remove: vi.fn() };
+  const mapInstance = { fitBounds: vi.fn(), setView: vi.fn(), flyTo: vi.fn(), getZoom: vi.fn(() => 15), invalidateSize: vi.fn(), remove: vi.fn() };
   const bounds = { extend: vi.fn(), getCenter: vi.fn(() => ({ lat: 6.5, lng: 101.2 })) };
   return {
     map: vi.fn(() => mapInstance),
@@ -10,7 +10,8 @@ const leaflet = vi.hoisted(() => {
     tileLayer: vi.fn(() => ({ on: vi.fn().mockReturnThis(), addTo: vi.fn() })),
     latLng: vi.fn((lat: number, lng: number) => ({ lat, lng })),
     latLngBounds: vi.fn(() => bounds),
-    marker: vi.fn(() => ({ addTo: vi.fn().mockReturnThis(), bindPopup: vi.fn().mockReturnThis() })),
+    marker: vi.fn(() => ({ addTo: vi.fn().mockReturnThis(), bindPopup: vi.fn().mockReturnThis(), on: vi.fn().mockReturnThis(), getElement: vi.fn() })),
+    polyline: vi.fn(() => ({ addTo: vi.fn().mockReturnThis() })),
     divIcon: vi.fn((options: unknown) => options),
   };
 });
@@ -30,7 +31,7 @@ describe("route stop map", () => {
   it("does not load map tiles until a visitor opens the map", async () => {
     render(<RouteStopsMap stops={stops} />);
     expect(leaflet.map).not.toHaveBeenCalled();
-    expect(screen.getByText(/ไม่ใช่เส้นทางขับรถ/)).toBeVisible();
+    expect(screen.getByText(/ไม่ใช่ถนนหรือทางเดินจริง/)).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "ดูแผนที่" }));
     await waitFor(() => expect(leaflet.map).toHaveBeenCalledOnce());
@@ -53,6 +54,21 @@ describe("route stop map", () => {
     expect(screen.getByText(/มี 1 จุดที่ยังไม่มีพิกัด/)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "ดูแผนที่" }));
     await waitFor(() => expect(leaflet.marker).toHaveBeenCalledTimes(2));
+  });
+
+  it("shows an embedded route explorer with ordered dotted links and selectable stops", async () => {
+    render(<RouteStopsMap stops={stops} presentation="explore" directionsUrl="https://www.google.com/maps/dir/?api=1" />);
+    expect(screen.queryByRole("button", { name: "ดูแผนที่" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "สำรวจเส้นทางบนแผนที่" })).toBeVisible();
+    await waitFor(() => expect(leaflet.map).toHaveBeenCalledOnce());
+    expect(leaflet.polyline).toHaveBeenCalledWith(
+      [[6.5, 101.2], [6.51, 101.21]],
+      expect.objectContaining({ dashArray: "6 10", interactive: false }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /02.*ถ้ำพระนอน/ }));
+    await waitFor(() => expect(leaflet.map.mock.results[0].value.flyTo).toHaveBeenCalledWith([6.51, 101.21], 16, { duration: 0.55 }));
+    expect(screen.getByRole("button", { name: /02.*ถ้ำพระนอน/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("link", { name: /เปิดนำทางทั้งเส้นทาง/ })).toHaveAttribute("href", "https://www.google.com/maps/dir/?api=1");
   });
 
   it("groups stops at identical coordinates without moving their location", async () => {

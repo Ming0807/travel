@@ -49,6 +49,29 @@ test("public itinerary map is deferred, numbered, and usable", async ({ page }) 
   await page.screenshot({ path: `output/playwright/routes-public-final-${page.viewportSize()!.width}.png`, fullPage: true });
 });
 
+test("embedded route explorer stays visible and coordinates map selection with the stop list", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/?explore");
+  const explorer = page.getByRole("region", { name: "สำรวจเส้นทางบนแผนที่" });
+  await explorer.scrollIntoViewIfNeeded();
+  await expect(explorer.getByRole("heading", { name: "สำรวจเส้นทางบนแผนที่" })).toBeVisible();
+  await expect(explorer.getByRole("button", { name: "ดูแผนที่", exact: true })).toHaveCount(0);
+  await expect(page.locator(".leaflet-marker-icon")).toHaveCount(3);
+  await expect(page.locator(".leaflet-overlay-pane path")).toHaveCount(1);
+  await expect(explorer.getByText(/ไม่ใช่ถนนหรือทางเดินจริง/)).toBeVisible();
+  await explorer.getByRole("button", { name: /02.*สถานที่ทดสอบที่ไม่มีพิกัด/ }).click();
+  await expect(explorer.getByRole("button", { name: /02.*สถานที่ทดสอบที่ไม่มีพิกัด/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(explorer.getByText("จุดที่ 2")).toBeVisible();
+  await page.locator(".leaflet-marker-icon").last().click();
+  await expect(explorer.getByRole("button", { name: /03.*สถานที่ทดสอบชื่อยาว/ })).toHaveAttribute("aria-pressed", "true");
+  await explorer.getByRole("button", { name: "ดูทุกจุด" }).click();
+  await expect(explorer.getByRole("link", { name: /เปิดนำทางทั้งเส้นทาง/ })).toHaveAttribute("href", "https://www.google.com/maps/dir/?api=1");
+  await checkLayout(page);
+  expect(errors).toEqual([]);
+  await page.screenshot({ path: `output/playwright/routes-explorer-${page.viewportSize()!.width}.png`, fullPage: true });
+});
+
 test("admin edits can be saved repeatedly and drawers can be cancelled", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
