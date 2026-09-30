@@ -9,7 +9,7 @@ const errors = [];
 page.on("pageerror", (error) => errors.push(error.message));
 const output = "output/playwright/story-navigation";
 await mkdir(output, { recursive: true });
-const widths = [320, 360, 390, 480, 700, 768, 1024, 1240, 1280, 1440, 1920];
+const widths = [320, 360, 390, 480, 700, 768, 1024, 1160, 1161, 1200, 1240, 1280, 1440, 1920];
 let layouts = 0;
 async function noOverflow() {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
@@ -46,7 +46,7 @@ try {
         await page.keyboard.press("Escape");
         assert.equal(await trigger.evaluate((el) => el === document.activeElement), true);
       }
-      if (width <= 1240) {
+      if (width <= 1160) {
         await page.getByRole("button", { name: "เปิดเมนู", exact: true }).click();
         await page.getByRole("navigation", { name: "เมนูมือถือ" }).waitFor();
         await noOverflow();

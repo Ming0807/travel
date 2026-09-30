@@ -9,7 +9,7 @@ and recommendation editing are outside this fixture's scope.
 Variants: `?guest`, `?avatar`, `?editor`, `?editor&tourist`,
 `?editor&restricted`, `?editor&incomplete`.
 
-Review widths: 320, 360, 390, 480, 700, 768, 1024, 1240, 1280, 1440, 1920.
+Review widths: 320, 360, 390, 480, 700, 768, 1024, 1160, 1161, 1200, 1240, 1280, 1440, 1920.
 Check no header overlap/overflow, bounded long names, account dropdown bounds,
 mobile discovery navigation, ArrowDown/ArrowUp/Escape/outside pointer behavior,
 and a ready publisher's direct publication. Tourist stories must start moderation

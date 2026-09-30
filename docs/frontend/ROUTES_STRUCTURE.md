@@ -14,8 +14,9 @@ when overrides are empty, shows a live result preview and persists defaults with
 approval/publication/scheduling. The library has a named search input with immediate
 Enter search and reliable clearing while retaining the current status filters.
 
-The public header uses the homepage coral palette, bounded account controls,
-and a discovery menu at widths <=1240px. The account control remains available
+The public header retains its original palette, translucent background, 1280px
+content width, typography and rectangular account/login controls. Layout fixes bound
+the account name and use the original discovery menu at widths <=1160px. The account control remains available
 on mobile; <=480px it shows an avatar, with the full name in its menu. Wider screens
 truncate long names. Account links include profile, passport and story submission.
 Dropdowns support arrow keys, Escape, outside-pointer dismissal and focus restoration.

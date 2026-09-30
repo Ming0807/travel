@@ -24,8 +24,12 @@ Supports tourist engagement, travel behavior context and attraction discovery.
 
 ## Local evidence
 
-`tests/visual/story-navigation/browser-qa.mjs` checked 33 header layouts (guest,
-long name, avatar) across 320/360/390/480/700/768/1024/1240/1280/1440/1920px.
+`tests/visual/story-navigation/browser-qa.mjs` checked 42 header layouts (guest,
+long name, avatar) across 320/360/390/480/700/768/1024/1160/1161/1200/1240/1280/1440/1920px.
+The original navbar appearance is restored; only the account bounds, truncation,
+small-screen fit and interaction fixes remain. Tests include both sides of the
+original 1160px navigation breakpoint.
+The navbar restoration also passed 4 unit-test files / 38 tests and scoped ESLint.
 It checked the actual editor at 360/768/1440px, direct draft publication, moderation
 start, restricted editor handoff, automatic search preview/default persistence and missing-cover blocking. No horizontal overflow,
 header overlaps, offscreen account dropdowns or browser page errors were observed.
