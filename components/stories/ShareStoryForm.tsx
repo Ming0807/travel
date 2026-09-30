@@ -51,7 +51,7 @@ export function ShareStoryForm({ provinces }: { provinces: ProvinceOption[] }) {
         <p className="mb-2 text-xs font-bold uppercase text-teal">รับเรื่องแล้ว</p>
         <h2 className="mb-3 text-2xl font-black text-ink">ส่งให้ทีมตรวจสอบแล้ว</h2>
         <p className="mx-auto mb-8 max-w-lg text-base leading-7 text-muted">
-          เรื่องราวยังไม่เผยแพร่ทันที ทีมงานจะตรวจความเหมาะสมและความถูกต้องก่อนนำขึ้นหน้าเรื่องราว
+          เรื่องของคุณเข้าคิวตรวจในระบบผู้ดูแลแล้ว ยังไม่เผยแพร่ทันที ผู้ดูแลเว็บไซต์จะตรวจความเหมาะสมและความถูกต้องก่อนอนุมัติและเผยแพร่บนหน้าเรื่องราว
         </p>
         <Link
           href="/stories"

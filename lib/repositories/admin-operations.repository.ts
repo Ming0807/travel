@@ -72,7 +72,7 @@ export const adminOperationsRepository: AdminOperationsRepository = {
         .from("travel_stories")
         .select("story_id", { count: "exact", head: true })
         .eq("author_type", "tourist")
-        .eq("status", "submitted"),
+        .in("status", ["submitted", "in_review", "approved"]),
     );
   },
 

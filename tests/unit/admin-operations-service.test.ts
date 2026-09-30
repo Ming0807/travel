@@ -70,6 +70,7 @@ describe("admin operations service", () => {
       "scheduled-stories",
     ]);
     expect(result.actionRequiredCount).toBe(7);
+    expect(result.summaryMetrics).toContainEqual(expect.objectContaining({ id: "pending-stories", href: "/admin/stories/submissions?status=needs_action" }));
     expect(result.modules.flatMap((group) => group.items).map((item) => item.href)).toEqual([
       "/admin/stories",
       "/admin/messages",

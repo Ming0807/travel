@@ -47,7 +47,8 @@ export async function GET(request: NextRequest) {
     if (filters.authorType) query = query.eq("author_type", filters.authorType);
     if (filters.provinceId) query = query.eq("province_id", filters.provinceId);
     if (filters.topicId) query = query.eq("story_topic_links.topic_id", filters.topicId);
-    if (filters.status) query = query.eq("status", filters.status);
+    if (filters.status === "needs_action") query = query.in("status", ["submitted", "in_review", "approved"]);
+    else if (filters.status) query = query.eq("status", filters.status);
     if (filters.readiness === "ready") query = query.eq("content_quality_score", 100);
     if (filters.readiness === "needs_work") {
       query = query.or("content_quality_score.lt.100,content_quality_score.is.null");

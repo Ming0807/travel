@@ -101,7 +101,7 @@ export const adminStoryFiltersSchema = adminPaginationSchema
         value === "" || value === null || value === undefined
           ? undefined
           : value,
-      storyStatusSchema.optional(),
+      z.union([storyStatusSchema, z.literal("needs_action")]).optional(),
     ),
     readiness: z.enum(["ready", "needs_work", "unscored"]).optional(),
     dateFrom: optionalDateQuery,
@@ -130,7 +130,7 @@ export const adminStoryMutationSchema = z.object({
     .min(3, "Slug is required.")
     .max(200)
     .regex(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      /^[a-z0-9ก-๙]+(?:-[a-z0-9ก-๙]+)*$/,
       "Slug must be lowercase, URL-safe, and hyphen-separated.",
     ),
   excerpt: optionalText,
@@ -177,7 +177,7 @@ const editorialChangeSchema = z
       .trim()
       .min(3)
       .max(200)
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+      .regex(/^[a-z0-9ก-๙]+(?:-[a-z0-9ก-๙]+)*$/)
       .optional(),
     excerpt: z.string().trim().max(2_000).nullable().optional(),
     legacyContent: z.string().max(500_000).nullable().optional(),

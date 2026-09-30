@@ -2,7 +2,7 @@
 
 /* eslint-disable react/no-unescaped-entities */
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createStoryAction, updateStoryAction } from "@/app/actions/admin-story-actions";
@@ -28,7 +28,7 @@ type StoryFormState = {
 
 const FIELD_LABELS = {
   title: "ชื่อบทความ",
-  slug: "Slug",
+  slug: "ลิงก์ของเรื่อง",
   provinceId: "จังหวัด",
 };
 
@@ -36,16 +36,24 @@ function hasText(value: string | null | undefined) {
   return !!value?.trim();
 }
 
+function createStorySlug(title: string) {
+  const slug = title.trim().toLowerCase().replace(/[^a-z0-9ก-๙]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 200).replace(/-+$/g, "");
+  return slug && slug.length < 3 ? `story-${slug}` : slug;
+}
+
 export function StoryForm({ initialData, provinces }: StoryFormProps) {
   const router = useRouter();
   const isEditing = !!initialData;
+  const [title, setTitle] = useState(initialData?.title ?? "");
+  const [slug, setSlug] = useState(initialData?.slug ?? "");
+  const [hasCustomSlug, setHasCustomSlug] = useState(isEditing);
   const action = isEditing ? updateStoryAction.bind(null, initialData.story_id) : createStoryAction;
   const publicHref = isEditing && initialData?.slug ? `/stories/${initialData.slug}` : null;
   const parsedDocument = storyDocumentSchema.safeParse(initialData?.content_document);
 
   const readinessItems = [
-    { label: "ชื่อบทความ", complete: hasText(initialData?.title), help: "แสดงเป็นหัวข้อข่าวบนหน้า public" },
-    { label: "Slug (URL)", complete: hasText(initialData?.slug), help: publicHref ? publicHref : "จำเป็นสำหรับ URL หน้า public" },
+    { label: "ชื่อบทความ", complete: hasText(title), help: "แสดงเป็นหัวข้อเรื่องบนหน้าบ้าน" },
+    { label: "ลิงก์ของเรื่อง", complete: hasText(slug), help: slug ? `/stories/${slug}` : "สร้างอัตโนมัติเมื่อกรอกชื่อเรื่อง" },
     { label: "เกริ่นนำ", complete: hasText(initialData?.excerpt), help: "ใช้บนการ์ดบทความและใกล้หัวข้อข่าว" },
     { label: "เนื้อหา", complete: hasText(initialData?.content), help: "เนื้อหาบทความที่บันทึกแล้ว" },
     { label: "รูปภาพปก", complete: !!initialData?.cover_media, help: "จัดการรูปภาพปกผ่าน Media Library ในหน้าแก้ไขเรื่องราว" },
@@ -71,15 +79,13 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
 
   if (state?.success && !isEditing) {
     const newId = state.data?.id;
-    const slug = state.data?.slug;
     if (newId) {
       return (
         <SuccessNextSteps
-          title="สร้างบทความสำเร็จ!"
-          description="ระบบได้บันทึกข้อมูลบทความใหม่ของคุณเรียบร้อยแล้ว ขั้นตอนต่อไปคือการจัดการรูปภาพและเนื้อหาที่เกี่ยวข้อง"
+          title="บันทึกฉบับร่างแล้ว"
+          description="เพิ่มรูปปก ตรวจข้อมูลให้ครบ แล้วกดเผยแพร่ในหน้าแก้ไข ผู้ดูแลที่มีสิทธิ์เผยแพร่ไม่ต้องส่งตรวจอีกครั้ง"
           actions={[
-            { label: "จัดการรูปภาพของบทความ", href: `/admin/stories/${newId}/edit`, primary: true, icon: Image },
-            ...(slug ? [{ label: "แสดงตัวอย่างหน้า Public", href: `/stories/${slug}`, primary: false, icon: ArrowSquareOut }] : []),
+            { label: "เพิ่มรูปปกและเผยแพร่", href: `/admin/stories/${newId}/edit`, primary: true, icon: Image },
             { label: "จัดการเนื้อหาที่เกี่ยวข้อง", href: `/admin/stories/${newId}/edit`, primary: false, icon: MapPin },
             { label: "เขียนบทความใหม่", href: "/admin/stories/new", primary: false, icon: Plus },
             { label: "กลับไปหน้ารายการ", href: "/admin/stories", primary: false, icon: List }
@@ -98,20 +104,24 @@ export function StoryForm({ initialData, provinces }: StoryFormProps) {
         <div className="space-y-8 lg:col-span-8">
           <AdminFormSection title="ข้อมูลหลัก (Basic Info)">
             <div className="grid gap-4 md:grid-cols-2">
-              <FormInput label="ชื่อบทความ" name="title" defaultValue={initialData?.title} required error={fe("title")} className="md:col-span-2" />
+              <FormInput label="ชื่อบทความ" name="title" value={title} onChange={(event) => { setTitle(event.target.value); if (!hasCustomSlug) setSlug(createStorySlug(event.target.value)); }} required error={fe("title")} className="md:col-span-2" />
               <FormInput
-                label="Slug (สำหรับ URL)"
+                label="ลิงก์ของเรื่อง"
                 name="slug"
-                defaultValue={initialData?.slug}
+                value={slug}
                 required
-                pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
-                placeholder="e.g. pattani-central-mosque"
+                pattern="^[a-z0-9ก-๙]+(?:-[a-z0-9ก-๙]+)*$"
+                placeholder="สร้างจากชื่อเรื่องอัตโนมัติ"
+                maxLength={200}
+                help={isEditing ? "ลิงก์เดิมจะคงอยู่เมื่อแก้ชื่อเรื่อง เพื่อให้ลิงก์ที่เคยแชร์ยังใช้งานได้" : "ไม่ต้องกรอกซ้ำ รองรับชื่อภาษาไทยหรืออังกฤษ และแก้ลิงก์เองได้"}
                 onChange={(e) => {
-                  e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+                  setHasCustomSlug(true);
+                  setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9ก-๙-]/g, '-').replace(/-+/g, '-'));
                 }}
                 error={fe("slug")}
                 className="md:col-span-2"
               />
+              {!isEditing ? <button type="button" className="min-h-11 justify-self-start rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-[#0A6B62] hover:bg-slate-50 md:col-span-2" disabled={!title.trim() || isPending} onClick={() => { setSlug(createStorySlug(title)); setHasCustomSlug(false); }}>สร้างลิงก์จากชื่อเรื่อง</button> : null}
             </div>
           </AdminFormSection>
 

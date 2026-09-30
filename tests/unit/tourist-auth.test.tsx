@@ -11,8 +11,8 @@ vi.mock("@/lib/supabase/browser", () => ({
 
 // Mock Link component from next/link
 vi.mock("next/link", () => ({
-  default: ({ children, href, className, onClick }: { children: ReactNode; href: string; className?: string; onClick?: MouseEventHandler<HTMLAnchorElement> }) => (
-    <a href={href} className={className} onClick={onClick}>
+  default: ({ children, href, className, onClick, ...props }: React.ComponentProps<"a"> & { children: ReactNode; href: string; onClick?: MouseEventHandler<HTMLAnchorElement> }) => (
+    <a href={href} className={className} onClick={onClick} {...props}>
       {children}
     </a>
   ),
@@ -130,6 +130,22 @@ describe("UserNavMenu Component", () => {
     await waitFor(() => {
       expect(window.location.reload).toHaveBeenCalled();
     });
+  });
+
+  it("opens account links with ArrowDown and closes on an outside pointer", async () => {
+    mockSupabase.auth.getUser!.mockResolvedValue({ data: { user: { user_metadata: { full_name: "ชื่อผู้ใช้ยาวมากสำหรับตรวจเมนู" } } } });
+    render(<UserNavMenu />);
+    const trigger = await screen.findByRole("button", { name: /เปิดเมนูบัญชี/ });
+    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    expect(screen.getByRole("menuitem", { name: "โปรไฟล์ของฉัน" })).toHaveFocus();
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("recovers from an initial auth lookup failure", async () => {
+    mockSupabase.auth.getUser!.mockRejectedValue(new Error("offline"));
+    render(<UserNavMenu />);
+    expect(await screen.findByRole("link", { name: "เข้าสู่ระบบ" })).toBeInTheDocument();
   });
 });
 

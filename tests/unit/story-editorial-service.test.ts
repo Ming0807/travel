@@ -71,17 +71,30 @@ describe("story editorial service", () => {
     );
   });
 
-  it("blocks an invalid transition before calling persistence", async () => {
+  it("blocks tourist publication before moderation", async () => {
     const store = createStore();
 
     await expect(
       applyStoryEditorialChange({
         actorId: "admin-id",
-        current: completeState,
+        current: { ...completeState, authorType: "tourist", status: "submitted" },
         change: { targetStatus: "published" },
         store,
       })
     ).rejects.toMatchObject({ code: "INVALID_TRANSITION" });
+    expect(store.applyChange).not.toHaveBeenCalled();
+  });
+
+  it("publishes a ready team draft in one atomic audited revision", async () => {
+    const store = createStore();
+    await applyStoryEditorialChange({ actorId: "admin-id", current: completeState, change: { targetStatus: "published" }, store });
+    expect(store.applyChange).toHaveBeenCalledOnce();
+    expect(store.applyChange).toHaveBeenCalledWith(expect.objectContaining({ sourceAction: "publish", patch: expect.objectContaining({ status: "published" }) }));
+  });
+
+  it("still blocks direct publication when the cover is missing", async () => {
+    const store = createStore();
+    await expect(applyStoryEditorialChange({ actorId: "admin-id", current: { ...completeState, cover: null }, change: { targetStatus: "published" }, store })).rejects.toMatchObject({ code: "NOT_READY_FOR_PUBLISH" });
     expect(store.applyChange).not.toHaveBeenCalled();
   });
 

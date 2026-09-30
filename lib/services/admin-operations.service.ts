@@ -237,10 +237,10 @@ export async function getAdminOperationsViewModel(
   });
   addPriority(pendingStories, {
     id: "pending-stories",
-    label: "เรื่องรอการตรวจ",
-    description: "เรื่องจากนักท่องเที่ยวที่ยังไม่ได้เริ่มกระบวนการพิจารณา",
-    href: "/admin/stories/submissions?status=submitted",
-    actionLabel: "เริ่มตรวจเรื่อง",
+    label: "เรื่องนักเดินทางรอดำเนินการ",
+    description: "เรื่องที่รอตรวจ กำลังตรวจ หรืออนุมัติแล้วแต่ยังไม่เผยแพร่",
+    href: "/admin/stories/submissions?status=needs_action",
+    actionLabel: "เปิดคิวเรื่องราว",
     severity: "attention",
   });
   addPriority(pendingReviews, {
@@ -290,7 +290,7 @@ export async function getAdminOperationsViewModel(
       description: "รวมรายการที่ต้องติดตามตามสิทธิ์ของคุณ",
     },
   ];
-  if (pendingStories !== undefined) summaryMetrics.push({ id: "pending-stories", label: "เรื่องรออนุมัติ", value: pendingStories, href: "/admin/stories/submissions?status=submitted", description: "เรื่องจากนักท่องเที่ยวที่รอเริ่มตรวจ" });
+  if (pendingStories !== undefined) summaryMetrics.push({ id: "pending-stories", label: "เรื่องรอดำเนินการ", value: pendingStories, href: "/admin/stories/submissions?status=needs_action", description: "เรื่องที่รอตรวจ กำลังตรวจ หรือรอเผยแพร่" });
   if (unreadMessages !== undefined) summaryMetrics.push({ id: "unread-messages", label: "ข้อความยังไม่อ่าน", value: unreadMessages, href: "/admin/messages?status=unread", description: "ข้อความที่ทีมยังไม่ได้เปิดอ่าน" });
   if (scheduledStories !== undefined) summaryMetrics.push({ id: "scheduled-stories", label: "นัดเผยแพร่ 7 วัน", value: scheduledStories, href: "/admin/stories?status=scheduled", description: "เรื่องที่มีกำหนดเผยแพร่ใน 7 วันข้างหน้า" });
 

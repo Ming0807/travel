@@ -28,6 +28,7 @@ const cases: ExportParityCase[] = [
       "filters.search",
       'eq("province_id", filters.provinceId)',
       'eq("status", filters.status)',
+      'in("status", ["submitted", "in_review", "approved"])',
       'eq("is_published", filters.isPublished)',
     ],
   },

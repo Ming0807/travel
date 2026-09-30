@@ -22,8 +22,10 @@ import {
   type StoryDocument,
 } from "@/lib/content/story-document";
 import { getStoryStatusPresentation } from "@/lib/content/story-library";
+import { getVisibleStoryTransitions } from "@/lib/auth/story-editorial-permission";
+import { evaluateStoryReadiness } from "@/lib/content/story-readiness";
+import { getStoryReadinessAdminItems } from "@/lib/content/story-editorial-presentation";
 import {
-  getAllowedStoryTransitions,
   normalizeLegacyStoryStatus,
   type StoryStatus,
 } from "@/lib/content/story-workflow";
@@ -35,6 +37,7 @@ import {
 } from "@/lib/content/story-draft-recovery";
 
 type SectionFormProps = {
+  editorialPermissions?: readonly string[];
   story: AdminStoryRow;
   onClose: () => void;
   expectedUpdatedAt?: string;
@@ -146,10 +149,10 @@ export function HeaderForm({
               value={slug}
               onChange={(event) => setSlug(event.target.value.toLowerCase())}
               required
-              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+              pattern="[a-z0-9ก-๙]+(?:-[a-z0-9ก-๙]+)*"
             />
             <span className="mt-1 block text-xs leading-5 text-slate-500">
-              ใช้ตัวอักษรอังกฤษพิมพ์เล็ก ตัวเลข และขีดกลาง เช่น pattani-old-town
+              ใช้ภาษาไทยหรืออังกฤษตัวเล็ก ตัวเลข และขีดกลาง เช่น yala-old-town
             </span>
           </label>
         </div>
@@ -441,6 +444,7 @@ export function SettingsForm({
   onClose,
   expectedUpdatedAt = story.updated_at ?? story.created_at,
   onEditorialSaved,
+  editorialPermissions = ["story.update"],
 }: SectionFormProps) {
   const initialTopicIds = story.topic_ids ?? [];
   const [geographicScope, setGeographicScope] = useState<
@@ -468,10 +472,22 @@ export function SettingsForm({
   const status = getStoryStatusPresentation(story.status);
   const authorType = story.author_type === "tourist" ? "tourist" : "admin";
   const currentStatus = normalizeLegacyStoryStatus(authorType, story.status);
-  const allowedTransitions = getAllowedStoryTransitions(
+  const allowedTransitions = getVisibleStoryTransitions(
     authorType,
     currentStatus,
+    editorialPermissions,
   );
+  const canPublish = editorialPermissions.includes("system.all") || editorialPermissions.includes("story.publish");
+  const effectiveSeoTitle = seoTitle.trim() || story.title.trim().slice(0, 255);
+  const effectiveSeoDescription = seoDescription.trim() || story.excerpt?.trim().slice(0, 500) || "";
+  const readiness = evaluateStoryReadiness({
+    title: story.title, slug: story.slug, excerpt: story.excerpt,
+    contentDocument: story.content_document, legacyContent: story.content,
+    cover: story.cover_media ? { mediaId: story.cover_media.media_id, isActive: story.cover_media.is_active ?? false, altText: story.cover_media.alt_text_th ?? story.cover_media.alt_text_en } : null,
+    provinceId: provinceId ? Number(provinceId) : null, geographicScope,
+    topicIds, seoDescription: effectiveSeoDescription, usesGeneratedSeo: false,
+  });
+  const missingItems = getStoryReadinessAdminItems(readiness).filter((item) => !item.complete);
   const needsReviewNote =
     authorType === "tourist" && currentStatus === "in_review";
   const comparable = JSON.stringify({
@@ -516,12 +532,12 @@ export function SettingsForm({
         geographicScope,
         topicIds,
         primaryLanguage,
-        seoTitle: seoTitle.trim() || null,
-        seoDescription: seoDescription.trim() || null,
+        seoTitle: effectiveSeoTitle || null,
+        seoDescription: effectiveSeoDescription || null,
         scheduledAt: normalizedScheduledAt,
         changeSummary: "แก้ไขข้อมูลประกอบและ SEO",
       },
-    });
+    }).catch(() => ({ success: false, error: "ยังบันทึกข้อมูลไม่ได้ กรุณาตรวจการเชื่อมต่อแล้วลองอีกครั้ง", data: undefined }));
     setIsPending(false);
     if (!result.success || !result.data) {
       setError(result.error ?? "ยังบันทึกข้อมูลประกอบไม่ได้ กรุณาลองอีกครั้ง");
@@ -534,8 +550,8 @@ export function SettingsForm({
         geographic_scope: geographicScope,
         topic_ids: [...topicIds],
         primary_language: primaryLanguage,
-        seo_title: seoTitle.trim() || null,
-        seo_description: seoDescription.trim() || null,
+        seo_title: effectiveSeoTitle || null,
+        seo_description: effectiveSeoDescription || null,
         scheduled_at: normalizedScheduledAt,
         updated_at: result.data.updatedAt,
       },
@@ -544,10 +560,6 @@ export function SettingsForm({
   };
 
   const handleWorkflowTransition = async (targetStatus: StoryStatus) => {
-    if (isDirty) {
-      setError("บันทึกข้อมูลประกอบที่แก้ไขก่อนเปลี่ยนสถานะ");
-      return;
-    }
     const requiresNote =
       authorType === "tourist" &&
       (targetStatus === "changes_requested" || targetStatus === "rejected");
@@ -569,11 +581,18 @@ export function SettingsForm({
 
     setWorkflowPendingTarget(targetStatus);
     setError(null);
+    const saveSearchDefaults = ["approved", "published", "scheduled"].includes(targetStatus);
     const targetPresentation = getStoryStatusPresentation(targetStatus);
     const result = await saveStoryEditorialChangeAction({
       storyId: story.story_id,
       expectedUpdatedAt,
       change: {
+        ...(isDirty ? {
+          provinceId: geographicScope === "cross_province" || !provinceId ? null : Number(provinceId),
+          geographicScope, topicIds, primaryLanguage,
+          seoTitle: effectiveSeoTitle || null, seoDescription: effectiveSeoDescription || null,
+        } : {}),
+        ...(saveSearchDefaults ? { seoTitle: effectiveSeoTitle || null, seoDescription: effectiveSeoDescription || null } : {}),
         targetStatus,
         reviewNote: requiresNote ? reviewNote.trim() : null,
         ...(targetStatus === "scheduled"
@@ -581,7 +600,7 @@ export function SettingsForm({
           : {}),
         changeSummary: `เปลี่ยนสถานะเป็น ${targetPresentation.label}`,
       },
-    });
+    }).catch(() => ({ success: false, error: "ยังเปลี่ยนสถานะไม่ได้ กรุณาตรวจการเชื่อมต่อแล้วลองอีกครั้ง", data: undefined }));
     setWorkflowPendingTarget(null);
     if (!result.success || !result.data) {
       setError(
@@ -593,8 +612,16 @@ export function SettingsForm({
     onEditorialSaved?.({
       ...result.data,
       patch: {
+        ...(isDirty ? {
+          province_id: geographicScope === "cross_province" || !provinceId ? null : Number(provinceId),
+          geographic_scope: geographicScope, topic_ids: [...topicIds], primary_language: primaryLanguage,
+          seo_title: effectiveSeoTitle || null, seo_description: effectiveSeoDescription || null,
+        } : {}),
+        ...(saveSearchDefaults ? { seo_title: effectiveSeoTitle || null, seo_description: effectiveSeoDescription || null } : {}),
         status: targetStatus,
         is_published: targetStatus === "published",
+        published_at: targetStatus === "published" ? story.published_at ?? result.data.updatedAt : null,
+        scheduled_at: targetStatus === "scheduled" ? new Date(scheduledAt).toISOString() : null,
         updated_at: result.data.updatedAt,
       },
     });
@@ -606,12 +633,22 @@ export function SettingsForm({
       <div className="min-h-0 flex-1 space-y-7 overflow-y-auto p-6">
         <AdminFormErrorSummary error={error} />
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs font-bold text-slate-500">สถานะเวิร์กโฟลว์</p>
+          <p className="text-xs font-bold text-slate-500">การตรวจและเผยแพร่</p>
           <p className="mt-1 font-black text-[#073F37]">{status.label}</p>
           <p className="mt-1 text-xs leading-5 text-slate-500">
-            การส่งตรวจ อนุมัติ ตั้งเวลา และเผยแพร่ใช้ปุ่มเวิร์กโฟลว์โดยเฉพาะ
-            เพื่อป้องกันการข้ามขั้นตอน
+            {authorType === "tourist"
+              ? "เรื่องจากนักเดินทาง: ผู้ดูแลที่มีสิทธิ์ตรวจเรื่องราวพิจารณาและอนุมัติที่หน้านี้ จากนั้นผู้มีสิทธิ์เผยแพร่นำขึ้นหน้าบ้าน"
+              : canPublish
+                ? "คุณมีสิทธิ์เผยแพร่บทความทีมงานได้ทันทีเมื่อข้อมูลครบ หรือเลือกตั้งเวลาเผยแพร่ ไม่ต้องส่งให้ผู้ดูแลคนอื่นอนุมัติ"
+                : "ส่งให้ทีมผู้ดูแลที่มีสิทธิ์ตรวจเรื่องราวพิจารณาในคลังบทความ จากนั้นผู้มีสิทธิ์เผยแพร่จะนำขึ้นหน้าบ้าน"}
           </p>
+          {isDirty ? <p className="mt-2 text-xs text-slate-600">ข้อมูลประกอบที่แก้ไขจะบันทึกพร้อมคำสั่งที่เลือก</p> : null}
+          {missingItems.length ? (
+            <div className="mt-3 text-xs leading-5 text-amber-900">
+              <p className="font-bold">ยังเผยแพร่ไม่ได้ ต้องเพิ่ม: {missingItems.map((item) => item.label).join(" · ")}</p>
+              <p>ข้อมูลหลัก เนื้อหา และรูปปกแก้ได้จากหน้าแก้ไขบทความ ส่วนจังหวัด หัวข้อ และคำอธิบายค้นหาอยู่ด้านล่าง</p>
+            </div>
+          ) : null}
           {needsReviewNote ? (
             <label className="mt-4 block">
               <span className="text-xs font-bold text-slate-700">
@@ -638,7 +675,8 @@ export function SettingsForm({
                 const disabled =
                   isPending ||
                   workflowPendingTarget !== null ||
-                  isDirty ||
+                  (["approved", "published", "scheduled"].includes(targetStatus) && !readiness.readyForPublish) ||
+                  (targetStatus === "in_review" && !readiness.readyForReview) ||
                   (requiresNote && !reviewNote.trim()) ||
                   (targetStatus === "scheduled" && !scheduledAt);
                 return (
@@ -658,21 +696,18 @@ export function SettingsForm({
                   >
                     {workflowPendingTarget === targetStatus
                       ? "กำลังเปลี่ยนสถานะ..."
-                      : workflowActionLabels[targetStatus]}
+                      : targetStatus === "in_review"
+                        ? authorType === "tourist" ? "เริ่มตรวจเรื่อง" : "ส่งให้ทีมตรวจ"
+                        : workflowActionLabels[targetStatus]}
                   </button>
                 );
               })}
             </div>
           ) : (
             <p className="mt-3 text-xs font-bold text-slate-500">
-              สถานะนี้ไม่มีขั้นตอนถัดไป
+              บัญชีนี้ไม่มีสิทธิ์ดำเนินการขั้นตอนถัดไป ติดต่อผู้ดูแลระบบเพื่อจัดสิทธิ์
             </p>
           )}
-          {isDirty ? (
-            <p className="mt-3 text-xs font-bold text-amber-800">
-              บันทึกข้อมูลประกอบก่อนใช้คำสั่งเวิร์กโฟลว์
-            </p>
-          ) : null}
         </div>
 
         <fieldset className="space-y-3">
@@ -783,8 +818,8 @@ export function SettingsForm({
               ข้อมูลสำหรับการค้นหา
             </h3>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              ข้อความนี้ใช้กับ search engine และการแชร์ลิงก์
-              ไม่เปลี่ยนเนื้อหาบนหน้าบทความ
+              ใช้ชื่อเรื่องและเกริ่นนำให้อัตโนมัติ ไม่ต้องกรอกซ้ำ
+              หากต้องการข้อความเฉพาะสำหรับผลการค้นหาและการแชร์ลิงก์ ให้แก้ในช่องด้านล่าง
             </p>
           </div>
           <label className="block">
@@ -800,7 +835,7 @@ export function SettingsForm({
               placeholder={story.title}
             />
             <span className="mt-1 block text-xs text-slate-500">
-              {seoTitle.length}/255 ตัวอักษร
+              {seoTitle.trim() ? `${seoTitle.length}/255 ตัวอักษร` : "ใช้ชื่อเรื่องอัตโนมัติ"}
             </span>
           </label>
           <label className="block">
@@ -814,11 +849,21 @@ export function SettingsForm({
               onChange={(event) => setSeoDescription(event.target.value)}
               rows={4}
               maxLength={500}
+              placeholder={story.excerpt || "เพิ่มเกริ่นนำของเรื่อง เพื่อใช้เป็นคำอธิบายผลการค้นหา"}
             />
             <span className="mt-1 block text-xs text-slate-500">
-              {seoDescription.length}/500 ตัวอักษร
+              {seoDescription.trim() ? `${seoDescription.length}/500 ตัวอักษร` : "ใช้เกริ่นนำอัตโนมัติ"}
             </span>
           </label>
+          <button type="button" className="min-h-11 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-[#0A6B62] hover:bg-slate-50" onClick={() => { setSeoTitle(""); setSeoDescription(""); }} disabled={isPending || workflowPendingTarget !== null}>
+            ใช้ชื่อเรื่องและเกริ่นนำ
+          </button>
+          <div aria-label="ตัวอย่างผลการค้นหา" className="min-w-0 rounded-xl border border-slate-200 bg-white p-4">
+            <p className="text-xs font-bold text-slate-500">ตัวอย่างผลการค้นหา</p>
+            <p className="mt-3 break-all text-xs text-[#0A6B62]">/stories/{story.slug}</p>
+            <p className="mt-1 break-words text-base font-bold text-[#073F37]">{effectiveSeoTitle || "ชื่อเรื่องของคุณ"}</p>
+            <p className="mt-2 break-words text-sm leading-6 text-slate-600">{effectiveSeoDescription || "เพิ่มเกริ่นนำเพื่อให้ผู้อ่านรู้ว่าเรื่องนี้เกี่ยวกับอะไร"}</p>
+          </div>
         </div>
 
         <label className="block border-t border-slate-200 pt-6">
@@ -839,8 +884,8 @@ export function SettingsForm({
       </div>
       <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-4">
         <AdminSaveBar
-          isPending={isPending}
-          disabled={!isDirty}
+          isPending={isPending || workflowPendingTarget !== null}
+          disabled={!isDirty || workflowPendingTarget !== null}
           onCancel={onClose}
           onSubmit={handleSave}
           submitLabel="บันทึกข้อมูลประกอบ"

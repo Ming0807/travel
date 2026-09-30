@@ -57,11 +57,33 @@ Homepage Slot = selection of existing published content
 The approved P2 direction expands Story into a shared content platform with separate workflows:
 
 ```text
-Editorial article  draft -> review -> approval -> scheduled/published -> archived
+Editorial article  draft -> published/scheduled -> archived (publisher permission required)
+Optional handoff   draft -> review -> approval -> published/scheduled
 Traveler story     submitted -> moderation -> approved/rejected -> published -> archived
 ```
 
 Both workflows share Media Library, taxonomy, search, public rendering, and recommendation infrastructure. They must remain separate queues in admin UX.
+
+As of 2026-09-30, team publishers can publish ready drafts or team articles already
+in review directly. Review is a handoff for editors without publication rights.
+The editor's toolbar opens **เผยแพร่ / ตั้งค่า** for team articles and
+**ตรวจและอนุมัติ** for traveler submissions. Workflow buttons reflect resolved
+server permissions. Missing cover, alt text, geography, topics, SEO or core content
+is listed before a publication attempt. Edited metadata can be saved together with
+a workflow command in the same version-checked transaction.
+
+Traveler submissions are reviewed by admins with `story.review` in
+`/admin/stories/submissions`; publication still requires `story.publish` after
+approval. `/admin` counts submitted, in-review and approved-but-unpublished stories
+and links to `?status=needs_action`, whose paginated list and export use the same
+status set. The sidebar provides a direct traveler-review entry. Submitting or
+moderating a story invalidates the operations and submission pages. These are
+server-rendered counts, not push notifications or an assigned-reviewer system.
+
+New traveler URLs use a language-neutral UUID slug. Existing Thai permalinks are
+accepted by readiness and editor validation without changing their URLs. New
+stories are saved as drafts; the success screen directs the author to add a cover
+and publish in the editor instead of linking to an unpublished public URL.
 
 The editor uses hybrid structured content: TipTap JSON is the canonical editable document. New stories save both structured content and compatible HTML as a draft; cover selection happens in the edit view after creation. Public rendering sanitizes legacy HTML with managed `content-media` images and reduces other legacy content to inert text until an editor explicitly saves it as structured content. Public recommendations begin with curated relationships and deterministic relevance scoring. They must not be labeled AI.
 
@@ -131,6 +153,8 @@ Implemented baseline:
 - Unsaved story content is protected when admins use Cancel, the drawer close button, backdrop click, Escape, or browser navigation. Legacy HTML stories are normalized into structured content only after an explicit edit and save.
 - Story header and metadata drawers save only their own changed fields through the same atomic editorial action. The editor shares the newest optimistic version across drawers so sequential saves do not create false conflicts.
 - Story metadata uses controlled topics instead of a free-text category for recommendation/search signals, and includes geography, primary language, SEO, and scheduling intent.
+- Search metadata uses title/excerpt defaults and a live result preview; optional overrides can be reset without retyping. Defaults are persisted during approval/publication/scheduling. Story creation generates the URL from its Thai/English title and preserves existing public links during later title edits.
+- Library search accepts partial story titles or URLs, applies on typing or Enter, keeps other filters, and cancels pending searches when cleared.
 - Story status changes use the domain workflow actions rather than a direct status dropdown. Server-side readiness and permission checks remain authoritative.
 - The editor sidebar derives a Thai publish-readiness checklist and document outline from saved structured content, and shows revision history only when the current admin has `story.revision_read`.
 - Inline story images are selected from Media Library, require accessible alt text, and store the media asset UUID plus normalized storage path instead of an external URL. Canonical document version 2 supports this managed reference while version 1 numeric media references remain readable during migration.

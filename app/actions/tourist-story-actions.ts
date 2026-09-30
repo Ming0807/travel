@@ -168,14 +168,8 @@ export async function submitTouristStoryAction(formData: FormData) {
     const excerpt = content.slice(0, 150).replace(/\s+/g, " ").trim()
       + (content.length > 150 ? "..." : "");
 
-    // 5. Generate slug from title
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9ก-๙\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "")
-      + "-" + Date.now().toString().slice(-4);
+    // Language-neutral, collision-resistant URL accepted by editorial readiness.
+    const slug = `traveler-story-${crypto.randomUUID()}`;
 
     // 6. Verify province exists before inserting story
     const adminSupabase = createSupabaseServiceRoleClient();
@@ -249,6 +243,8 @@ export async function submitTouristStoryAction(formData: FormData) {
     }
 
     revalidatePath("/stories");
+    revalidatePath("/admin");
+    revalidatePath("/admin/stories/submissions");
     return { success: true, storyId: story.slug, status: "submitted" as const };
   } catch {
     return { success: false, error: "เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่" };

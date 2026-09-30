@@ -20,6 +20,11 @@ const completeStory = {
 };
 
 describe("story publishing readiness", () => {
+  it("accepts existing Thai tourist permalinks without forcing a URL change", () => {
+    const result = evaluateStoryReadiness({ ...completeStory, slug: "เที่ยวปัตตานี-1234" });
+    expect(result.readyForReview).toBe(true);
+    expect(result.readyForPublish).toBe(true);
+  });
   it("marks a complete story ready for review and publishing", () => {
     const result = evaluateStoryReadiness(completeStory);
 

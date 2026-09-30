@@ -23,7 +23,7 @@ Phase 08 focuses on admin CMS alignment. Full analytics, export workflows, LINE 
 | `story.update` | Edit permitted stories | super_admin, admin, province_admin, attraction_manager |
 | `story.publish` / `story.unpublish` | Change public visibility | super_admin, admin, province_admin, attraction_manager |
 | `story.review` | Review editorial and traveler submissions | super_admin, admin |
-| `story.schedule` | Schedule approved stories | super_admin, admin |
+| `story.schedule` | Schedule publish-ready team stories, including drafts | super_admin, admin |
 | `story.revision_read` | Read immutable revision history | super_admin, admin |
 | `story.revision_restore` | Restore a revision | super_admin, admin |
 | `story.taxonomy_manage` | Manage controlled topics and tags | super_admin, admin |

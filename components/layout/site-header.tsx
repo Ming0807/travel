@@ -60,7 +60,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               {item.label}<ArrowSquareOut aria-hidden="true" size={13} weight="bold" />
             </a>
           ) : (
-            <Link key={item.href} href={item.href} aria-current={pathname === item.href ? "page" : undefined}>
+            <Link key={item.href} href={item.href} aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined}>
               {item.label}
             </Link>
           ))}
@@ -68,7 +68,7 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
 
         <div className="ed-site-actions">
           <PublicGlobalSearch onOpen={() => setMenuOpen(false)} />
-          <div className="ed-site-account"><UserNavMenu /></div>
+          <div className="ed-site-account"><UserNavMenu onNavigate={() => setMenuOpen(false)} /></div>
           <PublicCheckinEntryLink className="ed-site-checkin">สแกน QR</PublicCheckinEntryLink>
           <button
             ref={menuButtonRef}
@@ -91,13 +91,13 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
               {item.label}<span>เว็บไซต์ภายนอก <ArrowSquareOut aria-hidden="true" size={15} /></span>
             </a>
           ) : (
-            <Link key={item.href} href={item.href} aria-current={pathname === item.href ? "page" : undefined} onClick={() => setMenuOpen(false)}>
+            <Link key={item.href} href={item.href} aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined} onClick={() => setMenuOpen(false)}>
               {item.label}
             </Link>
           ))}
           <Link href="/contact" onClick={() => setMenuOpen(false)}>ติดต่อเรา</Link>
           <Link href="/passport" onClick={() => setMenuOpen(false)}>Digital Passport</Link>
-          <div className="ed-site-mobile-account"><UserNavMenu mobile /></div>
+          <div className="ed-site-mobile-account"><UserNavMenu mobile onNavigate={() => setMenuOpen(false)} /></div>
           <PublicCheckinEntryLink className="ed-site-mobile-checkin" onClick={() => setMenuOpen(false)}>สแกน QR เช็กอิน</PublicCheckinEntryLink>
         </nav>
       ) : null}

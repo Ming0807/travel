@@ -56,6 +56,7 @@ export default async function EditAdminStoryPage({
   return (
     <StoryVisualEditor
       story={story}
+      editorialPermissions={guard.actor.permissions}
       provinces={provinces ?? []}
       topics={topics}
       revisions={revisionResult.items.map((revision) => ({

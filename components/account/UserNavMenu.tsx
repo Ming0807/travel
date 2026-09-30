@@ -1,195 +1,122 @@
 "use client";
 
-import { useState, useEffect, useId, useRef } from "react";
+import { useState, useEffect, useId, useRef, type KeyboardEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { UserCircle, SignOut, CaretDown, User as UserIcon } from "@phosphor-icons/react";
+import { UserCircle, SignOut, CaretDown, User as UserIcon, BookOpen, Article } from "@phosphor-icons/react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
-export function UserNavMenu({ mobile = false }: { mobile?: boolean }) {
+export function UserNavMenu({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [supabase] = useState(() => createSupabaseBrowserClient());
   const menuId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Initial fetch
+    let active = true;
+    let authChanged = false;
     supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
+      if (active && !authChanged) setUser(data.user);
+    }).catch(() => {
+      if (active && !authChanged) setUser(null);
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      authChanged = true;
+      if (!active) return;
+      setUser(session?.user ?? null);
       setLoading(false);
     });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => { active = false; subscription.unsubscribe(); };
   }, [supabase]);
 
   useEffect(() => {
     if (!menuOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        triggerRef.current?.focus();
-      }
+    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    const onOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setMenuOpen(false);
     };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    const onEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") { setMenuOpen(false); triggerRef.current?.focus(); }
+    };
+    document.addEventListener("pointerdown", onOutside);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("pointerdown", onOutside);
+      document.removeEventListener("keydown", onEscape);
+    };
   }, [menuOpen]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setMenuOpen(false);
-    window.location.reload();
-  };
-
-  if (loading) {
-    return <div className="h-10 w-24 animate-pulse rounded-md bg-ink/5" aria-hidden="true" />;
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setError(null);
+    try {
+      const result = await supabase.auth.signOut();
+      if (result.error) throw result.error;
+      setMenuOpen(false);
+      window.location.reload();
+    } catch {
+      setError("ยังออกจากระบบไม่ได้ กรุณาลองอีกครั้ง");
+    } finally { setSigningOut(false); }
   }
 
-  if (!user) {
-    if (mobile) {
-      return (
-        <Link
-          href="/auth/login"
-          className="mt-2 block rounded-md bg-ink px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-ink/90"
-        >
-          เข้าสู่ระบบ
-        </Link>
-      );
-    }
-    return (
-      <Link
-        href="/auth/login"
-        className="ml-2 rounded-md bg-ink px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-ink/90"
-      >
-        เข้าสู่ระบบ
-      </Link>
-    );
+  function handleMenuKeys(event: KeyboardEvent<HTMLDivElement>) {
+    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+    if (!items.length || !["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const index = items.indexOf(document.activeElement as HTMLElement);
+    const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+    items[next]?.focus();
   }
 
-  // Logged in view
-  const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "ผู้ใช้งาน";
-  const avatarUrl = user.user_metadata?.avatar_url;
+  function followLink() { setMenuOpen(false); onNavigate?.(); }
 
-  if (mobile) {
-    return (
-      <div className="mt-4 border-t border-ink/5 pt-4">
-        <div className="flex items-center gap-3 px-4 mb-4">
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt={displayName}
-              width={40}
-              height={40}
-              className="h-10 w-10 shrink-0 rounded-full border border-ink/10 object-cover"
-              unoptimized
-            />
-          ) : (
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ink/5 text-ink">
-              <UserIcon weight="fill" size={20} />
-            </div>
-          )}
-          <div className="flex-1 overflow-hidden">
-            <p className="truncate text-sm font-bold text-ink">{displayName}</p>
-            <p className="text-xs font-semibold text-slate-500">บัญชีที่เชื่อมต่อแล้ว</p>
-          </div>
-        </div>
-        <ul className="flex flex-col gap-1">
-          <li>
-            <Link
-              href="/profile"
-              className="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-bold text-ink hover:bg-ink/5"
-            >
-              <UserCircle size={20} weight="fill" />
-              โปรไฟล์ของฉัน
-            </Link>
-          </li>
-          <li>
-            <button
-              onClick={handleSignOut}
-              className="flex w-full items-center gap-3 rounded-md px-4 py-3 text-left text-sm font-bold text-red-600 hover:bg-red-50"
-            >
-              <SignOut size={20} weight="bold" />
-              ออกจากระบบ
-            </button>
-          </li>
-        </ul>
-      </div>
-    );
-  }
+  if (loading) return <div className="ed-account-loading animate-pulse" aria-hidden="true" />;
+  if (!user) return <Link href="/auth/login" onClick={onNavigate} className={`ed-account-login${mobile ? " ed-account-login-mobile" : ""}`}>เข้าสู่ระบบ</Link>;
 
-  return (
-    <div className="relative ml-2">
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setMenuOpen(!menuOpen)}
-        aria-label={menuOpen ? "ปิดเมนูบัญชี" : "เปิดเมนูบัญชี"}
-        aria-expanded={menuOpen}
-        aria-haspopup="menu"
-        aria-controls={menuId}
-        className="flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-ink/10 bg-white py-2 pl-2 pr-3 transition-colors hover:border-ink/20 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
-      >
-        {avatarUrl ? (
-          <Image
-            src={avatarUrl}
-            alt={displayName}
-            width={24}
-            height={24}
-            className="h-6 w-6 shrink-0 rounded-full object-cover"
-            unoptimized
-          />
-        ) : (
-          <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ink/10 text-ink">
-            <UserIcon weight="fill" size={14} />
-          </div>
-        )}
-        <span className="max-w-[100px] truncate text-sm font-bold text-ink">{displayName}</span>
-        <CaretDown size={12} weight="bold" className={`text-ink/50 shrink-0 transition-transform ${menuOpen ? "rotate-180" : ""}`} />
-      </button>
+  const name = user.user_metadata?.display_name || user.user_metadata?.full_name || user.user_metadata?.name;
+  const displayName = typeof name === "string" && name.trim() ? name.trim() : user.email?.split("@")[0] || "ผู้ใช้งาน";
+  const avatarUrl = typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
+  const avatar = <span className="ed-account-avatar">{avatarUrl
+    ? <Image src={avatarUrl} alt="" width={32} height={32} unoptimized />
+    : <UserIcon size={18} weight="fill" aria-hidden="true" />}</span>;
+  const links = [
+    { href: "/profile", label: "โปรไฟล์ของฉัน", icon: UserCircle },
+    { href: "/passport", label: "พาสปอร์ตของฉัน", icon: BookOpen },
+    { href: "/stories/share", label: "แบ่งปันเรื่องราว", icon: Article },
+  ];
+  const accountLinks = links.map(({ href, label, icon: Icon }) => (
+    <Link key={href} href={href} role={mobile ? undefined : "menuitem"} onClick={followLink} className="ed-account-link">
+      <Icon size={19} aria-hidden="true" />{label}
+    </Link>
+  ));
+  const signOut = <button type="button" role={mobile ? undefined : "menuitem"} disabled={signingOut} onClick={handleSignOut} className="ed-account-link ed-account-signout"><SignOut size={19} aria-hidden="true" />{signingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}</button>;
 
-      {menuOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 sm:hidden"
-            onClick={() => setMenuOpen(false)}
-          />
-          <div id={menuId} role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-md border border-ink/10 bg-white p-1.5 shadow-sm">
-            <div className="px-3 py-2 border-b border-ink/5 mb-1.5">
-              <p className="text-xs font-semibold text-slate-500">บัญชีผู้ใช้</p>
-              <p className="truncate text-sm font-bold text-ink mt-0.5">{displayName}</p>
-            </div>
-            <Link
-              href="/profile"
-              role="menuitem"
-              onClick={() => setMenuOpen(false)}
-              className="flex min-h-11 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-slate-50"
-            >
-              <UserCircle size={18} weight="fill" className="text-ink/60" />
-              โปรไฟล์ของฉัน
-            </Link>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={handleSignOut}
-              className="mt-0.5 flex min-h-11 w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
-            >
-              <SignOut size={18} weight="bold" className="text-red-500/80" />
-              ออกจากระบบ
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
+  if (mobile) return <div className="ed-account-mobile">
+    <div className="ed-account-identity">{avatar}<div><p title={displayName}>{displayName}</p><small>บัญชีนักเดินทาง</small></div></div>
+    {accountLinks}{signOut}{error ? <p role="alert" className="ed-account-error">{error}</p> : null}
+  </div>;
+
+  return <div ref={rootRef} className="ed-account" onBlur={(event) => {
+    if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) setMenuOpen(false);
+  }}>
+    <button ref={triggerRef} type="button" onClick={() => setMenuOpen(!menuOpen)} onKeyDown={(event) => {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); setMenuOpen(true); }
+    }} aria-label={`${menuOpen ? "ปิด" : "เปิด"}เมนูบัญชี ${displayName}`} aria-expanded={menuOpen} aria-haspopup="menu" aria-controls={menuId} className="ed-account-trigger">
+      {avatar}<span className="ed-account-name" title={displayName}>{displayName}</span><CaretDown size={13} weight="bold" aria-hidden="true" className="ed-account-caret" />
+    </button>
+    {menuOpen ? <div ref={menuRef} id={menuId} role="menu" aria-label="บัญชีนักเดินทาง" className="ed-account-dropdown" onKeyDown={handleMenuKeys}>
+      <div className="ed-account-identity"><div><small>บัญชีนักเดินทาง</small><p title={displayName}>{displayName}</p></div></div>
+      {accountLinks}{signOut}{error ? <p role="alert" className="ed-account-error">{error}</p> : null}
+    </div> : null}
+  </div>;
 }

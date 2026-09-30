@@ -87,6 +87,8 @@ export async function saveStoryEditorialChangeAction(
       targetStatus
     );
     const guard = await requirePermission(permission);
+    const metadataKeys = Object.keys(parsed.data.change).filter((key) => !["targetStatus", "reviewNote", "changeSummary", "scheduledAt"].includes(key));
+    if (permission !== "story.update" && metadataKeys.length) await requirePermission("story.update");
     const result = await applyStoryEditorialChange({
       actorId: guard.actor.adminId,
       current: { ...persistedState, updatedAt: parsed.data.expectedUpdatedAt },
@@ -109,6 +111,8 @@ export async function saveStoryEditorialChangeAction(
 
     revalidatePath("/admin/stories");
     revalidatePath(`/admin/stories/${parsed.data.storyId}/edit`);
+    revalidatePath("/admin/stories/submissions");
+    revalidatePath("/admin");
     revalidatePublicStoryContent(story.slug);
     return { success: true, data: result };
   } catch (error) {
@@ -242,25 +246,14 @@ export async function saveStoryCoverAction(input: unknown): Promise<ActionResult
 
 export async function changeStoryStatusAction(storyId: number, newStatus: string): Promise<ActionResult> {
   try {
+    await requirePermission("story.read");
     const current = await getAdminStoryById(storyId);
     if (!current) return { success: false, error: "ไม่พบเรื่องราวนี้ อาจถูกลบหรือย้ายแล้ว" };
-
-    const actionName = newStatus === 'published' ? 'story.publish' : 'story.unpublish';
-    const guard = await requirePermission(actionName as "story.publish" | "story.unpublish");
-
-    const updated = await updateAdminStoryStatus(storyId, { status: newStatus, is_published: newStatus === 'published' });
-    await logAdminMutation({
-      actor: guard.actor,
-      action: actionName as "story.publish" | "story.unpublish",
-      entityType: "travel_story",
-      entityId: storyId,
-      oldValues: { status: current.status },
-      newValues: { status: updated.status },
+    return await saveStoryEditorialChangeAction({
+      storyId,
+      expectedUpdatedAt: current.updated_at ?? current.created_at,
+      change: { targetStatus: newStatus },
     });
-
-    revalidatePath("/admin/stories");
-    revalidatePublicStoryContent(current.slug);
-    return { success: true };
   } catch (error) {
     if (error instanceof AdminAuthError) return { success: false, error: error.message };
     return { success: false, error: "ยังเปลี่ยนสถานะไม่ได้ กรุณาลองอีกครั้ง" };

@@ -7,7 +7,7 @@ import {
 
 describe("story workflow", () => {
   it("supports the editorial review, schedule, publish, and archive path", () => {
-    expect(getAllowedStoryTransitions("admin", "draft")).toEqual(["in_review", "archived"]);
+    expect(getAllowedStoryTransitions("admin", "draft")).toEqual(["published", "scheduled", "in_review", "archived"]);
     expect(evaluateStoryTransition({ authorType: "admin", from: "in_review", to: "approved" })).toEqual({
       allowed: true,
       code: "ALLOWED",
@@ -23,6 +23,12 @@ describe("story workflow", () => {
     ).toEqual({ allowed: true, code: "ALLOWED" });
     expect(evaluateStoryTransition({ authorType: "admin", from: "approved", to: "published" }).allowed).toBe(true);
     expect(evaluateStoryTransition({ authorType: "admin", from: "published", to: "archived" }).allowed).toBe(true);
+  });
+
+  it("allows team articles to publish directly, including articles already waiting for review", () => {
+    for (const from of ["draft", "in_review"] as const) {
+      expect(evaluateStoryTransition({ authorType: "admin", from, to: "published" }).allowed).toBe(true);
+    }
   });
 
   it("supports a separate tourist moderation path", () => {

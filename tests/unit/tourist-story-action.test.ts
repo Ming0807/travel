@@ -458,6 +458,7 @@ describe("submitTouristStoryAction — insert payload", () => {
     expect(payload.category).toBe("Story");
     expect(typeof payload.slug).toBe("string");
     expect((payload.slug as string).length).toBeGreaterThan(0);
+    expect(payload.slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
   });
 
   it("computes excerpt from safe content, truncating at 150 chars", async () => {

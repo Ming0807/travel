@@ -1,5 +1,21 @@
 # API_ENDPOINTS.md
 
+## Story workflow actions (2026-09-30)
+
+`saveStoryEditorialChangeAction` allows ready team drafts/in-review articles to
+publish or schedule directly with the existing dedicated permissions. Traveler
+transitions remain submitted -> in_review -> approved -> published. Publication
+does not bypass readiness, expected-version checks, immutable revisions or audits.
+When a workflow command also edits content/metadata it additionally requires
+`story.update`. The legacy status action delegates to this validated transaction.
+
+`submitTouristStoryAction` creates a UUID-based language-neutral slug and invalidates
+`/admin` and `/admin/stories/submissions` after successful insertion. Moderation
+invalidates those pages too. Story list/export filter `status=needs_action` maps
+to submitted, in_review and approved, with existing pagination/export limits.
+Thai legacy slugs are accepted by editor validation and readiness. No schema or
+database migration is required for these changes.
+
 ## NFC Evidence Inventory Action (Held)
 
 `getAdminNfcEvidenceInventoryAction({tagId,afterAssetId?})` checks current

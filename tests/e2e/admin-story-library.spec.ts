@@ -39,7 +39,7 @@ test.describe("Admin story library", () => {
     await expectNoHorizontalOverflow(page);
 
     await page.getByRole("link", { name: "เรื่องเล่านักเดินทาง" }).click();
-    await page.waitForURL("**/admin/stories/submissions");
+    await page.waitForURL("**/admin/stories/submissions?status=needs_action");
     await expect(page.getByRole("heading", { name: "เรื่องเล่าจากนักเดินทาง" })).toBeVisible();
     await expect(page.getByRole("link", { name: "เรื่องเล่านักเดินทาง" })).toHaveAttribute("aria-current", "page");
 

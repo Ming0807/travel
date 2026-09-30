@@ -36,6 +36,7 @@ type EditorSection =
   | null;
 
 interface StoryVisualEditorProps {
+  editorialPermissions?: readonly string[];
   story: AdminStoryRow;
   provinces: { province_id: number; province_name_th: string }[];
   topics?: {
@@ -70,6 +71,7 @@ export function StoryVisualEditor({
   revisions = [],
   recommendations = [],
   canManageRecommendations = false,
+  editorialPermissions = [],
   coverMediaId: initialCoverMediaId,
   coverMediaUrl: initialCoverMediaUrl,
 }: StoryVisualEditorProps) {
@@ -100,7 +102,12 @@ export function StoryVisualEditor({
         {
           revisionId: `local-${result.revisionNumber}`,
           revisionNumber: result.revisionNumber,
-          sourceAction: "save",
+          sourceAction: result.patch.status === "published" ? "publish"
+            : result.patch.status === "scheduled" ? "schedule"
+            : result.patch.status === "approved" ? "approve"
+            : result.patch.status === "in_review" ? "submit_review"
+            : result.patch.status === "archived" ? "archive"
+            : result.patch.status ? "moderate" : "save",
           changeSummary: null,
           createdAt: new Date().toISOString(),
         },
@@ -200,13 +207,13 @@ export function StoryVisualEditor({
   return (
     <div className="relative min-h-screen bg-background pb-20 text-slate-800">
       {/* Editor Toolbar */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/80 px-6 py-4 backdrop-blur-md">
-        <div className="flex items-center gap-4">
-          <Link href="/admin/stories" className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200">
+      <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <Link href={editorStory.author_type === "tourist" ? "/admin/stories/submissions?status=needs_action" : "/admin/stories"} aria-label="กลับไปคลังเรื่องราว" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition hover:bg-slate-200">
             <ArrowLeft size={20} weight="bold" />
           </Link>
-          <div>
-            <h1 className="text-lg font-black text-slate-800">ตัวแก้ไขบทความ: {title}</h1>
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-black text-slate-800 sm:text-lg">{title}</h1>
             <p className="text-xs font-bold text-slate-500">คุณกำลังแก้ไขหน้าตาแบบเดียวกับที่แสดงผลจริง</p>
           </div>
         </div>
@@ -218,7 +225,7 @@ export function StoryVisualEditor({
             onClick={() => setActiveSection("settings")}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
           >
-            ตั้งค่า / สถานะ
+            {editorStory.author_type === "tourist" ? "ตรวจและอนุมัติ" : "เผยแพร่ / ตั้งค่า"}
           </button>
         </div>
       </div>
@@ -468,6 +475,7 @@ export function StoryVisualEditor({
       <Drawer isOpen={activeSection === "settings"} onClose={() => setActiveSection(null)} title="ตั้งค่าหมวดหมู่และสถานะ" bodyClassName="p-0">
         <SettingsForm
           story={editorStory}
+          editorialPermissions={editorialPermissions}
           provinces={provinces}
           topics={topics}
           expectedUpdatedAt={editorialUpdatedAt}

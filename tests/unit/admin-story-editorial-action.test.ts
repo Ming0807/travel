@@ -168,6 +168,29 @@ describe("saveStoryEditorialChangeAction", () => {
     expect(getAdminStoryById).not.toHaveBeenCalled();
   });
 
+  it("denies publication before persistence when the actor lacks publication rights", async () => {
+    requirePermission.mockImplementation(async (permission) => {
+      if (permission === "story.publish") throw new Error("permission denied");
+      return { actor: { adminId: "admin-id" } };
+    });
+    const result = await saveStoryEditorialChangeAction({ storyId: 12, expectedUpdatedAt: current.updatedAt, change: { targetStatus: "published" } });
+    expect(result.success).toBe(false);
+    expect(requirePermission).toHaveBeenCalledWith("story.publish");
+    expect(applyChange).not.toHaveBeenCalled();
+  });
+
+  it("requires update permission when a publication also edits content", async () => {
+    requirePermission.mockImplementation(async (permission) => {
+      if (permission === "story.update") throw new Error("permission denied");
+      return { actor: { adminId: "admin-id" } };
+    });
+    const result = await saveStoryEditorialChangeAction({ storyId: 12, expectedUpdatedAt: current.updatedAt, change: { targetStatus: "published", title: "เรื่องใหม่" } });
+    expect(result.success).toBe(false);
+    expect(requirePermission).toHaveBeenCalledWith("story.publish");
+    expect(requirePermission).toHaveBeenCalledWith("story.update");
+    expect(applyChange).not.toHaveBeenCalled();
+  });
+
   it("protects and atomically replaces curated recommendations with an audit record", async () => {
     const before = [
       {

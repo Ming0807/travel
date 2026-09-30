@@ -1,5 +1,15 @@
 import type { PermissionKey } from "@/lib/auth/guards";
-import type { StoryAuthorType, StoryStatus } from "@/lib/content/story-workflow";
+import { getAllowedStoryTransitions, type StoryAuthorType, type StoryStatus } from "@/lib/content/story-workflow";
+
+export function getVisibleStoryTransitions(authorType: StoryAuthorType, status: StoryStatus, permissions: readonly string[]): StoryStatus[] {
+  const can = (permission: string) => permissions.includes("system.all") || permissions.includes(permission);
+  return getAllowedStoryTransitions(authorType, status).filter((target) => {
+    if (!can(requiredStoryEditorialPermission(authorType, status, target))) return false;
+    // Review is an optional handoff for team members who cannot publish themselves.
+    if (authorType === "admin" && (target === "in_review" || target === "approved") && can("story.publish")) return false;
+    return true;
+  });
+}
 
 export function requiredStoryEditorialPermission(
   authorType: StoryAuthorType,

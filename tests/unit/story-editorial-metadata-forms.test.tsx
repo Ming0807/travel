@@ -168,7 +168,7 @@ describe("story editorial metadata forms", () => {
       />
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "ส่งตรวจ" }));
+    await userEvent.click(screen.getByRole("button", { name: "ส่งให้ทีมตรวจ" }));
 
     await waitFor(() =>
       expect(mocks.saveEditorialChange).toHaveBeenCalledWith({
@@ -194,6 +194,7 @@ describe("story editorial metadata forms", () => {
   it("requires a review note before requesting changes to tourist UGC", () => {
     render(
       <SettingsForm
+        editorialPermissions={["story.update", "story.review"]}
         story={{
           ...story,
           author_type: "tourist",
@@ -209,5 +210,45 @@ describe("story editorial metadata forms", () => {
     expect(
       screen.getByRole("button", { name: "ขอข้อมูลเพิ่ม" })
     ).toBeDisabled();
+  });
+
+  it("shows direct publishing to publishers and explains missing readiness", () => {
+    render(<SettingsForm story={story} editorialPermissions={["story.update", "story.publish"]} onClose={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "เผยแพร่" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "ส่งให้ทีมตรวจ" })).not.toBeInTheDocument();
+    expect(screen.getByText(/ยังเผยแพร่ไม่ได้ ต้องเพิ่ม/)).toHaveTextContent("รูปภาพปก");
+  });
+
+  it("publishes a ready draft together with edited metadata in one action", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<SettingsForm story={{ ...story, seo_description: "คำอธิบายเดิม", cover_media: { media_id: 3, is_active: true, alt_text_th: "รูปปก", alt_text_en: null } }} editorialPermissions={["story.update", "story.publish"]} onClose={vi.fn()} />);
+    await userEvent.type(screen.getByLabelText("ชื่อสำหรับผลการค้นหา"), "ชื่อ SEO ใหม่");
+    await userEvent.click(screen.getByRole("button", { name: "เผยแพร่" }));
+    await waitFor(() => expect(mocks.saveEditorialChange).toHaveBeenCalledOnce());
+    expect(mocks.saveEditorialChange).toHaveBeenCalledWith(expect.objectContaining({ change: expect.objectContaining({ targetStatus: "published", seoTitle: "ชื่อ SEO ใหม่" }) }));
+    vi.restoreAllMocks();
+  });
+
+  it("previews and publishes using the story title and excerpt when search fields are empty", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<SettingsForm story={{ ...story, cover_media: { media_id: 3, is_active: true, alt_text_th: "รูปปก", alt_text_en: null } }} editorialPermissions={["story.update", "story.publish"]} onClose={vi.fn()} />);
+    expect(screen.getByLabelText("ตัวอย่างผลการค้นหา")).toHaveTextContent(story.title);
+    expect(screen.getByLabelText("ตัวอย่างผลการค้นหา")).toHaveTextContent(story.excerpt!);
+    expect(screen.getByRole("button", { name: "เผยแพร่" })).toBeEnabled();
+    await userEvent.click(screen.getByRole("button", { name: "เผยแพร่" }));
+    await waitFor(() => expect(mocks.saveEditorialChange).toHaveBeenCalledOnce());
+    expect(mocks.saveEditorialChange).toHaveBeenCalledWith(expect.objectContaining({ change: expect.objectContaining({ targetStatus: "published", seoTitle: story.title, seoDescription: story.excerpt }) }));
+    vi.restoreAllMocks();
+  });
+
+  it("allows custom search text and restores defaults without typing the story again", async () => {
+    render(<SettingsForm story={{ ...story, seo_title: "ชื่อกำหนดเอง", seo_description: "คำอธิบายกำหนดเอง" }} onClose={vi.fn()} />);
+    expect(screen.getByLabelText("ตัวอย่างผลการค้นหา")).toHaveTextContent("ชื่อกำหนดเอง");
+    await userEvent.click(screen.getByRole("button", { name: "ใช้ชื่อเรื่องและเกริ่นนำ" }));
+    expect(screen.getByLabelText("ตัวอย่างผลการค้นหา")).toHaveTextContent(story.title);
+    expect(screen.getByLabelText("ตัวอย่างผลการค้นหา")).toHaveTextContent(story.excerpt!);
+    await userEvent.click(screen.getByRole("button", { name: "บันทึกข้อมูลประกอบ" }));
+    await waitFor(() => expect(mocks.saveEditorialChange).toHaveBeenCalledOnce());
+    expect(mocks.saveEditorialChange).toHaveBeenCalledWith(expect.objectContaining({ change: expect.objectContaining({ seoTitle: story.title, seoDescription: story.excerpt }) }));
   });
 });

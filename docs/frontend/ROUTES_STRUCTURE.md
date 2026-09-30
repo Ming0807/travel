@@ -1,5 +1,28 @@
 # ROUTES_STRUCTURE.md
 
+## Story publishing and account navigation (2026-09-30)
+
+`/admin/stories/[id]/edit` exposes permission-scoped publication and moderation
+commands through its toolbar. Team publishers can publish directly from draft;
+traveler stories still require review and approval. The action queue is
+`/admin/stories/submissions?status=needs_action` and includes submitted, reviewing,
+and approved stories awaiting publication. The operations home links to that queue.
+
+Story creation generates a Thai/English URL from the title, supports manual overrides,
+and preserves existing URLs during title edits. Search metadata uses the title/excerpt
+when overrides are empty, shows a live result preview and persists defaults with
+approval/publication/scheduling. The library has a named search input with immediate
+Enter search and reliable clearing while retaining the current status filters.
+
+The public header uses the homepage coral palette, bounded account controls,
+and a discovery menu at widths <=1240px. The account control remains available
+on mobile; <=480px it shows an avatar, with the full name in its menu. Wider screens
+truncate long names. Account links include profile, passport and story submission.
+Dropdowns support arrow keys, Escape, outside-pointer dismissal and focus restoration.
+The mobile dropdown is fixed inside the viewport. Detail routes retain their active
+navigation section. Auth lookup failures resolve to a login control; sign-out
+failures show a retryable message instead of a false logout.
+
 ## Na Tham Route Access Review (2026-09-29)
 
 `/routes/[slug]` places the numbered itinerary beside an on-demand map on desktop

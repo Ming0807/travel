@@ -77,7 +77,7 @@ export function evaluateStoryReadiness(input: StoryReadinessInput): StoryReadine
     { key: "title", complete: hasText(input.title), requiredForReview: true, requiredForPublish: true },
     {
       key: "slug",
-      complete: typeof input.slug === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.slug),
+      complete: typeof input.slug === "string" && /^[a-z0-9ก-๙]+(?:-[a-z0-9ก-๙]+)*$/.test(input.slug),
       requiredForReview: true,
       requiredForPublish: true,
     },

@@ -24,8 +24,8 @@ export type StoryTransitionResult = {
 };
 
 const editorialTransitions: Record<EditorialStoryStatus, readonly EditorialStoryStatus[]> = {
-  draft: ["in_review", "archived"],
-  in_review: ["draft", "approved"],
+  draft: ["published", "scheduled", "in_review", "archived"],
+  in_review: ["published", "scheduled", "draft", "approved"],
   approved: ["draft", "scheduled", "published"],
   scheduled: ["draft", "published"],
   published: ["draft", "archived"],

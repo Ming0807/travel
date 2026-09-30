@@ -34,6 +34,7 @@ const editorialStatuses = [
 ];
 
 const submissionStatuses = [
+  { value: "needs_action", label: "งานค้างทั้งหมด" },
   { value: "submitted", label: "รอตรวจ" },
   { value: "in_review", label: "กำลังตรวจ" },
   { value: "changes_requested", label: "ขอข้อมูลเพิ่ม" },
@@ -135,7 +136,7 @@ export async function StoryLibraryPage({
               <Article size={18} /> บทความทีมงาน
             </Link>
             <Link
-              href="/admin/stories/submissions"
+              href="/admin/stories/submissions?status=needs_action"
               aria-current={!isEditorial ? "page" : undefined}
               className={`inline-flex min-h-11 items-center gap-2 border-b-2 px-3 text-sm font-bold transition ${
                 !isEditorial
@@ -146,6 +147,12 @@ export async function StoryLibraryPage({
               <ChatCircleText size={18} /> เรื่องเล่านักเดินทาง
             </Link>
           </nav>
+
+          {!isEditorial ? (
+            <p className="text-sm leading-6 text-slate-600">
+              ผู้ดูแลที่มีสิทธิ์ตรวจเรื่องราวเป็นผู้พิจารณา: เปิดเรื่อง → เริ่มตรวจ → อนุมัติ แล้วผู้มีสิทธิ์เผยแพร่นำขึ้นหน้าบ้าน หากยังขาดรูปปกหรือข้อมูลประกอบ ให้เติมตามรายการความพร้อมในหน้าแก้ไข
+            </p>
+          ) : null}
 
           <section aria-label="สรุปสถานะ" className="grid grid-cols-2 divide-x divide-y divide-slate-200 border-y border-slate-200 bg-white lg:grid-cols-4 lg:divide-y-0">
             {summaryItems(mode, summary).map((item) => (
@@ -166,8 +173,8 @@ export async function StoryLibraryPage({
           ) : null}
 
           <FilterBar>
-            <div className="min-w-[220px] flex-1">
-              <SearchInput placeholder="ค้นหาชื่อบทความหรือ slug" />
+            <div className="min-w-0 flex-1 sm:min-w-[220px]">
+              <SearchInput label="ค้นหาเรื่องราว" placeholder="พิมพ์ชื่อเรื่องหรือคำในลิงก์..." />
             </div>
             <FilterSelect
               label="สถานะ"

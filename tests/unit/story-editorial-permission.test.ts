@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { requiredStoryEditorialPermission } from "@/lib/auth/story-editorial-permission";
+import { getVisibleStoryTransitions, requiredStoryEditorialPermission } from "@/lib/auth/story-editorial-permission";
 
 describe("story editorial permission policy", () => {
+  it("shows publishing instead of review handoff to publishers", () => {
+    expect(getVisibleStoryTransitions("admin", "draft", ["story.update", "story.publish"])).toEqual(["published", "archived"]);
+    expect(getVisibleStoryTransitions("admin", "draft", ["story.update"])).toEqual(["in_review", "archived"]);
+    expect(getVisibleStoryTransitions("tourist", "in_review", ["story.update"])).toEqual([]);
+  });
   it("keeps ordinary editorial saves under story.update", () => {
     expect(requiredStoryEditorialPermission("admin", "draft", "draft")).toBe("story.update");
     expect(requiredStoryEditorialPermission("admin", "draft", "in_review")).toBe("story.update");

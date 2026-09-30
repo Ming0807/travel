@@ -7,12 +7,13 @@ const query = {
   range: vi.fn(),
   or: vi.fn(),
   eq: vi.fn(),
+  in: vi.fn(),
   gte: vi.fn(),
   lte: vi.fn(),
   then: (resolve: (value: typeof queryResult) => unknown) => Promise.resolve(queryResult).then(resolve),
 };
 
-for (const method of ["select", "order", "range", "or", "eq", "gte", "lte"] as const) {
+for (const method of ["select", "order", "range", "or", "eq", "in", "gte", "lte"] as const) {
   query[method].mockReturnValue(query);
 }
 
@@ -24,6 +25,12 @@ import { listAdminStories } from "@/lib/repositories/admin-story.repository";
 
 describe("admin story library repository", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("keeps newly submitted, reviewing, and approved stories in the actionable queue", async () => {
+    await listAdminStories({ page: 1, pageSize: 20, authorType: "tourist", status: "needs_action" });
+    expect(query.in).toHaveBeenCalledWith("status", ["submitted", "in_review", "approved"]);
+    expect(query.range).toHaveBeenCalledWith(0, 19);
+  });
 
   it("applies author, taxonomy, readiness, date, and escaped search filters server-side", async () => {
     await listAdminStories({
