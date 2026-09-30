@@ -1044,3 +1044,20 @@ display_name = certificate/passport display name after explicit confirmation
 Public leaderboard output may include only rank, public name, XP, level, stamp count, badge count, and whether the row belongs to the current tourist. It must not include `tourist_id`, provider IDs, guest tokens, certificate IDs, or visit history.
 
 Preference changes and withdrawal are handled atomically by `set_tourist_leaderboard_preference(...)` and recorded under `purpose_key = leaderboard_public_profile`.
+
+## 39. Passport UI and Active Collection Progress
+
+The passport renders its heading and navigation independently of the
+ownership-checked service result. Ready, no-identity, service failure and loading
+states share the same public shell. Guest-first collection and optional linking
+and recovery remain unchanged.
+
+The cover distinguishes lifetime stamps from active collection completion.
+Progress uses the sum of province active-earned counts against active targets;
+historical stamps must not inflate that percentage. The service already preserves
+historical earned stamps in its target view model; the UI renders those even when
+there are no active collection points. Province totals still count active points.
+
+No award timing, duplication, visit, identity, consent or database changes.
+See `docs/frontend/PASSPORT_ROUTE_EXPERIENCE.md` and
+`tasks/PHASE_17B_PASSPORT_ROUTE_EXPERIENCE.md` for UI acceptance and verification.

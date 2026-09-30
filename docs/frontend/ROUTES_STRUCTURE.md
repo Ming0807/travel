@@ -1638,3 +1638,13 @@ same aggregate to the chart, denominator table and summary CSV/XLSX export. Unsu
 post-entry filters expose a scoped clear action; incomplete/unavailable states do
 not show partial metrics. No new public route or rollout flag is introduced.
 See `docs/dashboard/EXECUTIVE_ENTRY_COHORT.md` for semantics and remaining QA gates.
+
+### Passport and route experience
+
+`/passport` now uses an immediate shared heading/navigation shell and Suspense
+for ownership-checked data, with a matching loading file. Lifetime stamps remain
+visible when active targets are zero; progress counts only active earned targets.
+Guest linking/recovery stays optional and service errors expose a safe retry.
+`/routes` loads card images lazily under the hero; `/routes/[slug]` uses
+`PublicRouteDetail` with map/itinerary shortcuts and compact mobile stop rows.
+See `docs/frontend/PASSPORT_ROUTE_EXPERIENCE.md` for states, motion and QA limits.

@@ -102,7 +102,7 @@ export function RouteDiscovery({ routes }: { routes: PublicRouteCardData[] }) {
             const index = routes.indexOf(route);
             return (
               <li className="route-directory__item" key={route.slug}>
-                <PublicRouteCard route={route} priority={index === 0} index={index + 1} />
+                <PublicRouteCard route={route} index={index + 1} />
               </li>
             );
           })}

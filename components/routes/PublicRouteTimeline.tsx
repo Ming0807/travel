@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowSquareOut, ArrowUpRight, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
 import { buildRouteDirectionsFromCurrentUrl, buildRouteStopMapUrl, orderPublicRouteStops, type PublicRouteStop } from "@/lib/routes/public-route";
+import "./routes-directory.css";
 
 export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
   const orderedStops = orderPublicRouteStops(stops);
@@ -59,18 +60,18 @@ export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
                   <li id={`route-stop-${stopIndex}`} key={`${stop.dayNumber}-${stop.sequence}-${stop.attractionId}`} className="scroll-mt-24 border-b border-[#e6e2dc] last:border-b-0 target:bg-[#f8efe9]">
                     <Link
                       href={`/attractions/${stop.attractionSlug}`}
-                      className="group grid gap-4 py-5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38] sm:grid-cols-[44px_150px_minmax(0,1fr)] sm:items-start"
+                      className="route-stop__link group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9b4e38]"
                       aria-label={`ดูสถานที่ ${stop.attractionName}`}
                     >
-                      <span className="hidden pt-1 text-2xl font-bold text-[#9b4e38] sm:block" aria-hidden="true">
+                      <span className="route-stop__number" aria-hidden="true">
                         {String(stopIndex).padStart(2, "0")}
                       </span>
-                      <div className="max-w-[220px] sm:max-w-none">
+                      <div className="route-stop__image">
                         <PublicMediaFrame
                           src={stop.attractionImage}
                           alt={stop.attractionImageAlt}
                           aspect="landscape"
-                          sizes="(max-width: 639px) 220px, 150px"
+                          sizes="(max-width: 639px) 96px, 150px"
                           fallbackLabel="ยังไม่มีรูปสถานที่"
                         />
                       </div>
@@ -88,7 +89,7 @@ export function PublicRouteTimeline({ stops }: { stops: PublicRouteStop[] }) {
                         </p>
                       </div>
                     </Link>
-                    <div className="pb-5 sm:pl-[226px]">
+                    <div className="route-stop__actions">
                       {mapUrl && navigationUrl ? (
                         <div className="flex flex-wrap gap-x-5 gap-y-1">
                           <a

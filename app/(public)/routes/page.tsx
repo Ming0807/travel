@@ -86,8 +86,6 @@ export default async function RoutesPage({ searchParams }: { searchParams: Promi
         actions={<Link href="/attractions">สำรวจสถานที่ <ArrowRight size={18} aria-hidden="true" /></Link>}
       />
       <PublicPageFrame variant="directory" className="pt-9 sm:pt-11">
-        <p className="border-l-2 border-[var(--public-coral)] pl-3 text-sm text-black/65">รายการที่เลือกเชื่อมกับเนื้อหาที่เผยแพร่จริง</p>
-
         {selectedSlugs.length > 0 ? selectedAttractions.loadError ? (
           <section className="mt-8" aria-label="สถานที่ที่เลือก">
             <PublicErrorState title="โหลดสถานที่ที่เลือกไม่สำเร็จ" description="ยังตรวจสอบสถานที่ในทริปไม่ได้ รายการที่เลือกยังอยู่ กรุณาลองโหลดอีกครั้ง"
@@ -104,6 +102,7 @@ export default async function RoutesPage({ searchParams }: { searchParams: Promi
         <section aria-labelledby="routes-result-heading" className="mt-9">
           <div className="border-b border-black/10 pb-4">
             <h2 id="routes-result-heading" className="text-2xl font-bold">แผนการเดินทางที่เผยแพร่</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-black/65">เลือกเส้นทางที่ใช่ แล้วดูแผนที่ ลำดับจุดแวะ และข้อมูลสถานที่ก่อนออกเดินทาง</p>
             {!routeState.loadError ? <PublicResultSummary count={routes.length} noun="เส้นทาง" className="mt-1" /> : null}
           </div>
 

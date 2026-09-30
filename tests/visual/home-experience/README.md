@@ -25,3 +25,19 @@ or `&loading`. Run `node tests/visual/home-experience/leaderboard-qa.mjs` for
 28 responsive state layouts, rolling-period controls, keyboard and reduced motion.
 These use synthetic public names/XP; ranking queries and consent actions are not
 called. Screenshots are stored in `output/playwright/leaderboard`.
+
+Passport/route variants have a separate entry at `/journey.html?passport` or
+`/journey.html?routes`, so they do not load the detail map into Home's entry bundle.
+Passport options: `&linked`, `&no-targets`, `&no-identity`, `&error`, `&loading`.
+Routes options: `&empty`, `&loading`, `&detail`. Run
+`node tests/visual/home-experience/journey-qa.mjs` for 70 layouts (320–1920px),
+historical stamps, active progress, search recovery, route anchors, lazy images,
+keyboard and reduced motion. The fixture omits account-link/recovery forms;
+server page tests separately verify those conditional components are retained.
+
+For an existing local production server on port 3100, run
+`node tests/visual/home-experience/journey-production-qa.mjs`. It checks six
+unauthenticated passport/routes/detail layouts at 390/1440px with read-only
+requests and intercepted external map tiles. Screenshots are stored in
+`output/playwright/journey`. No production timing improvements are inferred from
+the Vite fixture or these layout checks.
