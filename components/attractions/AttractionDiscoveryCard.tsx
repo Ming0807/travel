@@ -8,6 +8,7 @@ import { PublicMediaFrame } from "@/components/public/PublicMediaFrame";
 import { PublicMissingImage } from "@/components/public/directory/PublicMissingImage";
 import { TripShortlistButton } from "@/components/trip-shortlist/TripShortlistButton";
 import type { PublicAttractionCard } from "@/lib/repositories/public-content.repository";
+import "./attraction-experience.css";
 
 export function attractionReviewSummary(attraction: PublicAttractionCard) {
   if (attraction.reviewState === "unavailable") return "คะแนนรีวิวยังไม่พร้อมใช้งาน";
@@ -18,11 +19,11 @@ export function attractionReviewSummary(attraction: PublicAttractionCard) {
 }
 
 function categoryBadgeColor(category: string) {
-  if (/ธรรมชาติ/i.test(category)) return "bg-emerald-600/90 text-white";
+  if (/ธรรมชาติ/i.test(category)) return "bg-emerald-700 text-white";
   if (/อาหาร|ของฝาก|คาเฟ่/i.test(category)) return "bg-rose-600/90 text-white";
-  if (/พิพิธภัณฑ์|ประวัติศาสตร์/i.test(category)) return "bg-amber-600/90 text-white";
-  if (/วัฒนธรรม|ประเพณี|ชุมชน/i.test(category)) return "bg-orange-600/90 text-white";
-  return "bg-coral text-white";
+  if (/พิพิธภัณฑ์|ประวัติศาสตร์/i.test(category)) return "bg-amber-700 text-white";
+  if (/วัฒนธรรม|ประเพณี|ชุมชน/i.test(category)) return "bg-orange-700 text-white";
+  return "bg-[#b94727] text-white";
 }
 
 export function AttractionDiscoveryCard({
@@ -35,19 +36,19 @@ export function AttractionDiscoveryCard({
   const href = `/attractions/${attraction.slug}`;
 
   return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-orange-100/80 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-coral/40 hover:shadow-xl hover:shadow-orange-500/10">
+    <article className="attraction-discovery-card group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-orange-100/80 bg-white">
       {/* Photo Frame with Category Badge & Bookmark Button */}
       <div className="relative overflow-hidden bg-cream aspect-[16/10]">
         <Link
           href={href}
-          className="block h-full w-full focus-visible:outline-none"
+          className="attraction-discovery-card__media block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-coral"
         >
           {attraction.imageUrl ? (
             <PublicMediaFrame
               src={attraction.imageUrl}
               alt={attraction.imageAlt}
               aspect="landscape"
-              sizes="(max-width: 767px) calc(100vw - 2rem), (max-width: 1279px) calc(50vw - 3rem), 300px"
+              sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) calc(50vw - 2.125rem), (max-width: 1279px) calc(50vw - 12.625rem), 275px"
               priority={priority}
               fallbackLabel={`ยังไม่มีภาพของ${attraction.name}`}
             />
@@ -60,7 +61,7 @@ export function AttractionDiscoveryCard({
         {attraction.category ? (
           <div className="pointer-events-none absolute left-3 top-3 z-10">
             <span
-              className={`inline-block rounded-md px-2.5 py-0.5 text-[11px] font-black tracking-wide shadow-xs backdrop-blur-xs ${categoryBadgeColor(
+              className={`inline-block rounded-md px-2.5 py-0.5 text-[11px] font-black tracking-wide ${categoryBadgeColor(
                 attraction.category,
               )}`}
             >
@@ -74,7 +75,8 @@ export function AttractionDiscoveryCard({
           <TripShortlistButton
             slug={attraction.slug}
             label={attraction.name}
-            className="!min-h-9 !min-w-9 !rounded-full !border-white/40 !bg-white/90 !p-1.5 !text-ink shadow-sm backdrop-blur-xs hover:!bg-white hover:!text-coral"
+            showLabel={false}
+            className="attraction-control !min-h-11 !min-w-11 !rounded-full !border-white/40 !bg-white !p-1.5 !text-ink hover:!text-coral"
           />
         </div>
       </div>
@@ -85,7 +87,7 @@ export function AttractionDiscoveryCard({
         <h2 className="text-base font-black leading-snug text-ink transition-colors group-hover:text-coral">
           <Link
             href={href}
-            className="line-clamp-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+            className="line-clamp-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
           >
             {attraction.name}
           </Link>
@@ -111,7 +113,7 @@ export function AttractionDiscoveryCard({
         ) : null}
 
         {/* Rating and Review Summary */}
-        <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-muted">
+        <div className="mb-4 mt-3 flex flex-wrap items-center gap-1.5 text-xs font-bold text-muted">
           {attraction.reviewState === "available" && attraction.rating !== null ? (
             <span className="inline-flex items-center gap-1 text-amber-500 font-black">
               <Star size={14} weight="fill" className="text-amber-400" aria-hidden="true" />
@@ -122,15 +124,15 @@ export function AttractionDiscoveryCard({
         </div>
 
         {/* Footer 2-Button Action Bar */}
-        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-orange-100/60 pt-3">
+        <div className="mt-auto grid grid-cols-2 gap-2 border-t border-orange-100/60 pt-3">
           <Link
             href={href}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-ink/15 bg-white px-3 text-xs font-bold text-ink transition-colors hover:border-coral hover:bg-orange-50/50 hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+            className="attraction-control inline-flex min-h-11 items-center justify-center rounded-lg border border-ink/15 bg-white px-3 text-xs font-bold text-ink hover:border-coral hover:bg-orange-50/50 hover:text-coral focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
           >
             ดูรายละเอียด
           </Link>
           <PublicCheckinEntryLink
-            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-3 text-xs font-black text-white shadow-xs transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
+            className="attraction-control inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-[#b94727] px-3 text-xs font-black text-white hover:bg-[#96391f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral"
           >
             <QrCode size={15} weight="bold" aria-hidden="true" />
             <span>เริ่มเช็กอิน</span>

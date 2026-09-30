@@ -10,6 +10,11 @@ import {
   Stamp,
   Trophy,
   UserCircle,
+  ArrowRight,
+  Article,
+  Compass,
+  BookOpen,
+  QrCode,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { AccountLinkingTeaser } from "@/components/passport/AccountLinkingTeaser";
@@ -17,6 +22,9 @@ import { PublicButton } from "@/components/public/PublicButton";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
 import { LeaderboardPrivacyForm } from "@/components/profile/LeaderboardPrivacyForm";
 import type { BadgeDefinition, TouristBadge, XPLevelInfo } from "@/types/tourism";
+import { getDisplayInitials } from "@/lib/account/presentation";
+
+import "./tourist-profile.css";
 
 type ProfileData = {
   displayName: string;
@@ -88,19 +96,26 @@ export function TouristProfileView({ profile, xp, badges, allBadges }: TouristPr
   const earnedBadgeIds = new Set(badges.map((item) => item.badge.badgeId));
 
   return (
-    <main className="bg-[var(--public-canvas)] py-8 sm:py-12">
+    <main className="tourist-profile py-8 sm:py-12">
       <PublicPageFrame variant="listing">
-        <header className="border-b border-slate-300 pb-7">
-          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-sm font-semibold text-teal">พาสปอร์ตท่องเที่ยวของฉัน</p>
-              <h1 className="mt-2 text-3xl font-black text-ink sm:text-4xl">โปรไฟล์นักเดินทาง</h1>
-              <p className="mt-2 text-base text-slate-600">ตรวจสอบข้อมูล บัญชีที่เชื่อม และการแสดงชื่อสาธารณะได้จากหน้านี้</p>
-            </div>
-            <PublicButton href="/passport" variant="secondary">
-              ดูพาสปอร์ตและตราประทับ
-            </PublicButton>
+        <header className="tourist-profile-header">
+          <div className="tourist-profile-intro">
+            <h1>โปรไฟล์นักเดินทาง</h1>
+            <p>เก็บความทรงจำจากทุกการเดินทาง แล้วออกไปค้นพบยะลาต่อ</p>
           </div>
+          <div className="tourist-profile-identity">
+            <span className="tourist-profile-avatar" aria-hidden="true">{getDisplayInitials(profile.displayName)}</span>
+            <div className="tourist-profile-name">
+              <p>{profile.displayName}</p>
+              <span><MapPin size={16} aria-hidden="true" />{profile.origin}</span>
+              <span className="tourist-profile-account-status"><ShieldCheck size={16} aria-hidden="true" />{profile.isGuest ? "ผู้เยี่ยมชม · บันทึกบนเบราว์เซอร์นี้" : "เชื่อมบัญชีแล้ว"}</span>
+            </div>
+            <PublicButton href="/passport" variant="secondary" className="tourist-profile-passport"><BookOpen size={19} aria-hidden="true" />ดูพาสปอร์ตและตราประทับ</PublicButton>
+          </div>
+          <nav className="tourist-profile-journeys" aria-label="การเดินทางของฉัน">
+            <Link href="/attractions"><Compass size={22} aria-hidden="true" /><span>วางแผนเที่ยวต่อ<small>เลือกสถานที่ที่อยากไป</small></span><ArrowRight size={18} aria-hidden="true" /></Link>
+            <Link href="/stories/share"><Article size={22} aria-hidden="true" /><span>แบ่งปันเรื่องราว<small>เล่าประสบการณ์จากทริปของคุณ</small></span><ArrowRight size={18} aria-hidden="true" /></Link>
+          </nav>
         </header>
 
         <div className="grid gap-6 py-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)]">
@@ -113,7 +128,7 @@ export function TouristProfileView({ profile, xp, badges, allBadges }: TouristPr
                 <div className="min-w-0">
                   <h2 className="text-lg font-black text-ink">ข้อมูลสำหรับใบประกาศ</h2>
                   <p className="mt-1 text-sm leading-6 text-slate-600">ชื่อที่บันทึกไว้จะแสดงบนใบประกาศครั้งถัดไป</p>
-                  <p className="mt-4 break-words text-2xl font-black text-ink">{profile.displayName}</p>
+                  <p className="mt-3 break-words text-base font-semibold text-ink">{profile.displayName}</p>
                 </div>
               </div>
 
@@ -259,7 +274,7 @@ export function TouristProfileView({ profile, xp, badges, allBadges }: TouristPr
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-teal/10 text-teal">
                           <MapPin aria-hidden="true" size={20} weight="fill" />
                         </span>
-                        <span className="min-w-0 flex-1">
+                        <span className="min-w-0 flex-1 break-words">
                           <span className="block font-semibold text-ink">{certificate.attractionName}</span>
                           <span className="mt-1 block text-sm text-slate-600">
                             {certificate.provinceName} · {formatThaiDate(certificate.visitDate ?? certificate.generatedAt)}
@@ -271,7 +286,7 @@ export function TouristProfileView({ profile, xp, badges, allBadges }: TouristPr
                     return (
                       <li key={`${certificate.generatedAt}-${index}`}>
                         {certificate.attractionSlug ? (
-                          <Link href={`/attractions/${certificate.attractionSlug}`} className="flex min-h-16 items-center gap-3 py-4 hover:text-teal">
+                          <Link href={`/attractions/${certificate.attractionSlug}`} className="tourist-profile-record flex min-h-16 items-center gap-3 py-4 hover:text-teal">
                             {content}
                           </Link>
                         ) : (
@@ -286,6 +301,7 @@ export function TouristProfileView({ profile, xp, badges, allBadges }: TouristPr
           </div>
 
           <aside className="space-y-6">
+            <div className="tourist-profile-qr-note"><QrCode size={24} aria-hidden="true" /><p>เที่ยวถึงสถานที่แล้ว สแกน QR ที่ติดไว้ ณ สถานที่เพื่อเริ่มเช็กอินและบันทึกการเดินทาง</p></div>
             <section aria-labelledby="public-name-heading">
               <h2 id="public-name-heading" className="mb-3 flex items-center gap-2 text-xl font-black text-ink">
                 <ShieldCheck aria-hidden="true" size={23} className="text-teal" weight="fill" />

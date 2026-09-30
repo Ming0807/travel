@@ -37,12 +37,12 @@ export function AttractionHeader({
       </nav>
 
       <div className="flex flex-wrap gap-2 text-sm font-semibold">
-        <span className="inline-flex min-h-8 items-center gap-1.5 border border-slate-200 bg-white px-3 py-1 text-slate-700">
+        <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1 text-slate-700">
           <MapPin aria-hidden="true" size={16} weight="fill" className="text-[var(--public-coral)]" />
           {province}
         </span>
         {categories.map((category) => (
-          <span key={category} className="inline-flex min-h-8 items-center gap-1.5 border border-slate-200 bg-white px-3 py-1 text-slate-700">
+          <span key={category} className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-slate-700">
             <Tag aria-hidden="true" size={16} />
             {category}
           </span>

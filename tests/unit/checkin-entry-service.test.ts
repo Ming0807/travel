@@ -36,7 +36,7 @@ const session = {
   sessionId, checkinCodeId: 10, code: "yala-001", attractionId: 4, photoSpotId: null,
   campaignId: null, channel: "qr" as const, tagId: null, evidenceScope: "unknown" as const,
   researchStudyId: null, researchFrozenAt: null,
-  visitId: null, createdAt: "2026-09-04T10:00:00Z", expiresAt: "2026-09-04T12:00:00Z",
+  visitId: null, createdAt: new Date(Date.now() - 60_000).toISOString(), expiresAt: new Date(Date.now() + 60_000).toISOString(),
 };
 const disabled = { sessionsEnabled: false, nfcEnabled: false, hashSecret: null };
 const enabled = { sessionsEnabled: true, nfcEnabled: false, hashSecret: "x".repeat(32) };
@@ -107,12 +107,30 @@ describe("canonical check-in entry orchestration", () => {
     expect(readCheckinEntrySession).not.toHaveBeenCalled();
   });
 
-  it("allows direct legacy entry only when no flow was presented", async () => {
+  it("rejects removal of the flow ID while entry sessions are enabled", async () => {
+    await expect(resolveCheckinFlow({ code: "yala-001", flowId: null, browserId: null }))
+      .resolves.toEqual({ mode: "blocked", status: "unavailable" });
+    expect(resolveAndValidateCheckinCode).not.toHaveBeenCalled();
+  });
+
+  it("preserves legacy entry only while the session rollout is disabled", async () => {
+    vi.mocked(getCheckinEntryConfig).mockReturnValue(disabled);
     await expect(resolveCheckinFlow({ code: "yala-001", flowId: null, browserId: null }))
       .resolves.toEqual({ mode: "legacy", status: "valid", details });
-    vi.mocked(getCheckinEntryConfig).mockReturnValue(disabled);
     await expect(resolveCheckinFlow({ code: "yala-001", flowId: sessionId, browserId }))
       .resolves.toEqual({ mode: "blocked", status: "unavailable" });
+  });
+
+  it.each([
+    { expiresAt: new Date(Date.now() - 1_000).toISOString() },
+    { createdAt: new Date(Date.now() + 60_000).toISOString() },
+    { expiresAt: "invalid" },
+    { sessionId: "20000000-0000-4000-8000-000000000099" },
+  ])("rejects stale or mismatched entry evidence before loading public context %#", async (changes) => {
+    vi.mocked(readCheckinEntrySession).mockResolvedValue({ ...session, ...changes });
+    await expect(resolveCheckinFlow({ code: "yala-001", flowId: sessionId, browserId }))
+      .resolves.toEqual({ mode: "blocked", status: "unavailable" });
+    expect(resolveAndValidateCheckinCode).not.toHaveBeenCalled();
   });
 
   it("fails closed when session snapshots disagree with live context", async () => {

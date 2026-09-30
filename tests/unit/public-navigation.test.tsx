@@ -99,17 +99,14 @@ describe("public navigation", () => {
     expect(vista).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("keeps the check-in entry available in both desktop and mobile navigation", async () => {
+  it("keeps discovery and passport navigation without advertising a demo as QR scanning", async () => {
     mockPathname.mockReturnValue("/attractions");
     const user = userEvent.setup();
     render(<SiteHeader appName="ท่องเที่ยวยะลา" />);
     await user.click(screen.getByRole("button", { name: "เปิดเมนู" }));
 
-    const checkinActions = screen.getAllByRole("link", { name: /สแกน QR/ });
-    expect(checkinActions).toHaveLength(2);
-    checkinActions.forEach((action) => {
-      expect(action).toHaveAttribute("href", "/c");
-    });
+    expect(screen.queryByRole("link", { name: /สแกน QR/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Digital Passport" })).toHaveAttribute("href", "/passport");
   });
 
   it("opens the mobile menu, follows a route, and restores focus after Escape", async () => {

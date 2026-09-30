@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getCheckinCodeByCode,
-  listPublicDemoCheckinCodes,
   type CheckinCodeDetails,
 } from "@/lib/repositories/checkin.repository";
-import { resolvePublicDemoCheckinCode } from "@/lib/services/checkin.service";
+import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
 
 vi.mock("@/lib/auth/checkin-session", () => ({
   getCheckinSessionId: vi.fn(),
@@ -16,7 +15,6 @@ vi.mock("@/lib/repositories/funnel.repository", () => ({
 
 vi.mock("@/lib/repositories/checkin.repository", () => ({
   getCheckinCodeByCode: vi.fn(),
-  listPublicDemoCheckinCodes: vi.fn(),
 }));
 
 function details(code: string, isPublished = true): CheckinCodeDetails {
@@ -44,24 +42,30 @@ function details(code: string, isPublished = true): CheckinCodeDetails {
   };
 }
 
-describe("resolvePublicDemoCheckinCode", () => {
+describe("demo QR reward isolation", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
-  it("returns the first demo code that passes the same validation as a scanned QR", async () => {
-    vi.mocked(listPublicDemoCheckinCodes).mockResolvedValue(["DEMO-HIDDEN", "DEMO-CODE-123"]);
-    vi.mocked(getCheckinCodeByCode)
-      .mockResolvedValueOnce(details("DEMO-HIDDEN", false))
-      .mockResolvedValueOnce(details("DEMO-CODE-123"));
-
-    await expect(resolvePublicDemoCheckinCode()).resolves.toBe("DEMO-CODE-123");
+  it("blocks a labelled demo even when its direct canonical URL is opened", async () => {
+    vi.mocked(getCheckinCodeByCode).mockResolvedValue({
+      ...details("DEMO-CODE-123"), label: "Demo QR: Aiyerweng main viewpoint",
+    });
+    await expect(resolveAndValidateCheckinCode("DEMO-CODE-123"))
+      .resolves.toMatchObject({ status: "unavailable" });
   });
 
-  it("does not fall back to an arbitrary production check-in code", async () => {
-    vi.mocked(listPublicDemoCheckinCodes).mockResolvedValue([]);
+  it("keeps genuine venue codes available to guests", async () => {
+    vi.mocked(getCheckinCodeByCode).mockResolvedValue({ ...details("YLA-001"), label: "จุดชมวิว" });
+    await expect(resolveAndValidateCheckinCode("YLA-001"))
+      .resolves.toMatchObject({ status: "valid" });
+  });
 
-    await expect(resolvePublicDemoCheckinCode()).resolves.toBeNull();
-    expect(getCheckinCodeByCode).not.toHaveBeenCalled();
+  it("does not turn an unavailable code into an arbitrary production check-in code", async () => {
+    vi.mocked(getCheckinCodeByCode).mockResolvedValue(null);
+    await expect(resolveAndValidateCheckinCode("missing"))
+      .resolves.toEqual({ status: "not_found" });
+    expect(getCheckinCodeByCode).toHaveBeenCalledTimes(1);
+    expect(getCheckinCodeByCode).toHaveBeenCalledWith("missing");
   });
 });

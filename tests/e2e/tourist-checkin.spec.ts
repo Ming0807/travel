@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Tourist Check-in Flow', () => {
-  // Use a known demo checkin code that was seeded
-  const checkinCode = 'DEMO-CODE-123';
+  // Only an explicitly provisioned code in a disposable E2E database may create rewards.
+  const checkinCode = process.env.E2E_CHECKIN_CODE ?? '';
+  test.skip(!checkinCode, 'Set E2E_CHECKIN_CODE for a disposable non-demo venue fixture');
 
   test('should complete the entire check-in and certificate flow', async ({ page }) => {
     test.setTimeout(90000); // 90s timeout
@@ -22,7 +23,7 @@ test.describe('Tourist Check-in Flow', () => {
 
     // 1. Visit the QR Check-in Landing Page
     await page.goto(`/c/${checkinCode}`);
-    await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}$`));
+    await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}(?:\\?flow=[^&]+)?$`));
     await expect(page.locator('text=สร้างใบประกาศดิจิทัลฟรี')).toBeVisible();
     await page.click('text=สร้างใบประกาศของฉัน');
 

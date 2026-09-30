@@ -109,6 +109,18 @@ describe("POST /api/certificate/generate", () => {
     expect(mocks.processCertificateGeneration).not.toHaveBeenCalled();
   });
 
+  it("blocks an owned historical demo visit before upload or stamp award", async () => {
+    mocks.requireTouristVisitAccess.mockResolvedValueOnce({
+      visit: { attraction_id: 12, checkin_codes: { label: "Demo QR: trial" } },
+    });
+    const response = await POST(request({ visitId, base64Image: pngDataUrl }));
+    expect(response.status).toBe(409);
+    expect(await json(response)).toMatchObject({ code: "DEMO_CHECKIN_REWARD_BLOCKED" });
+    expect(mocks.uploadPrivateFile).not.toHaveBeenCalled();
+    expect(mocks.processCertificateGeneration).not.toHaveBeenCalled();
+    expect(mocks.assignStampForVisit).not.toHaveBeenCalled();
+  });
+
   it("rejects a photoId that belongs to another visit before upload", async () => {
     mocks.getPhotoById.mockResolvedValueOnce({
       photo_id: photoId,

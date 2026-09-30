@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AttractionReviews } from "@/components/attractions/attraction-reviews";
 import { AttractionGallery } from "@/components/attractions/attraction-gallery";
 import { AttractionHeader } from "@/components/attractions/attraction-header";
@@ -90,6 +90,27 @@ describe("AttractionHeader", () => {
 });
 
 describe("AttractionGallery", () => {
+  it("defers full-gallery images until opening the dialog and releases them on close", () => {
+    const { container } = render(
+      <AttractionGallery mainImage={null} attractionName="เมืองเก่า" gallery={Array.from({ length: 8 }, (_, index) => ({ url: `/gallery-${index}.webp`, alt: `รูป ${index}` }))} />,
+    );
+    expect(container.querySelector("dialog img")).not.toBeInTheDocument();
+    expect(container.querySelectorAll("img")).toHaveLength(3);
+    const dialog = container.querySelector("dialog")!;
+    const showModal = vi.fn(() => dialog.setAttribute("open", ""));
+    dialog.showModal = showModal;
+    fireEvent.click(screen.getByRole("button", { name: "ดูรูปทั้งหมด 8 รูป" }));
+    expect(showModal).toHaveBeenCalledOnce();
+    expect(container.querySelectorAll("dialog img")).toHaveLength(9);
+    fireEvent(dialog, new Event("close"));
+    expect(container.querySelector("dialog img")).not.toBeInTheDocument();
+  });
+
+  it("uses the full gallery width when only one usable photo is available", () => {
+    const { container } = render(<AttractionGallery mainImage={{ url: "/single.webp", alt: "รูปเดียว" }} gallery={[]} attractionName="เมืองเก่า" />);
+    expect(container.querySelector("[data-gallery-layout]")).toHaveAttribute("data-gallery-layout", "single");
+  });
+
   it("can bypass Next image optimization for authenticated admin previews", () => {
     const previewUrl =
       "/api/admin/media/preview?bucket=visit-photos&path=cloudinary%3Aimage%3Aauthenticated%3Av1%3Ajpg%3Acontent-media%2Fattraction%2F4%2Fcover";

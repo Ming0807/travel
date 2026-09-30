@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { ArrowSquareOut, Compass, List, X } from "@phosphor-icons/react/dist/ssr";
 
 import { UserNavMenu } from "@/components/account/UserNavMenu";
-import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 import { PublicGlobalSearch } from "@/components/layout/PublicGlobalSearch";
 import { VISTA_360_EXTERNAL_URL } from "@/constants/product";
 import { shouldHidePublicChrome } from "@/lib/navigation/public-route-mode";
@@ -69,7 +68,6 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
         <div className="ed-site-actions">
           <PublicGlobalSearch onOpen={() => setMenuOpen(false)} />
           <div className="ed-site-account"><UserNavMenu onNavigate={() => setMenuOpen(false)} /></div>
-          <PublicCheckinEntryLink className="ed-site-checkin">สแกน QR</PublicCheckinEntryLink>
           <button
             ref={menuButtonRef}
             type="button"
@@ -98,7 +96,6 @@ export function SiteHeader({ appName }: SiteHeaderProps) {
           <Link href="/contact" onClick={() => setMenuOpen(false)}>ติดต่อเรา</Link>
           <Link href="/passport" onClick={() => setMenuOpen(false)}>Digital Passport</Link>
           <div className="ed-site-mobile-account"><UserNavMenu mobile onNavigate={() => setMenuOpen(false)} /></div>
-          <PublicCheckinEntryLink className="ed-site-mobile-checkin" onClick={() => setMenuOpen(false)}>สแกน QR เช็กอิน</PublicCheckinEntryLink>
         </nav>
       ) : null}
     </header>

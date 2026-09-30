@@ -40,6 +40,7 @@ export async function getVisitById(visitId: string) {
     .from("visits")
     .select(`
       *,
+      checkin_codes (label),
       tourists (*),
       attractions (
         *,

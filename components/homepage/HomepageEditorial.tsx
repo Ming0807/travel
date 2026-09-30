@@ -16,6 +16,8 @@ import { VISTA_360_EXTERNAL_URL } from "@/constants/product";
 import { siteMediaImageUrl } from "@/lib/media/storage-paths";
 import type { PublicAccommodationCard, PublicRestaurantCard, PublicRouteCard, PublicStoryCard } from "@/lib/repositories/public-content.repository";
 import type { AttractionCard } from "@/types/tourism";
+import { HomepageMotion } from "./HomepageMotion";
+import { HomepageRouteMap } from "./HomepageRouteMap";
 
 const DEFAULT_HERO = "homepage/yala-hero-default.webp";
 const DEFAULT_BELONGING = "homepage/yala-belonging-default.webp";
@@ -35,7 +37,7 @@ type MediaSettings = {
   plannerCover?: string;
 };
 
-type HomepageEditorialProps = {
+export type HomepageEditorialProps = {
   hero: { title?: string; subtitle?: string; description?: string; images?: readonly string[] };
   media: MediaSettings;
   attractions: AttractionCard[];
@@ -76,7 +78,7 @@ function EditorialHeading({ eyebrow, title, description, id }: { eyebrow: string
   </div>;
 }
 
-function Hero({ hero }: Pick<HomepageEditorialProps, "hero">) {
+export function HomepageHero({ hero }: Pick<HomepageEditorialProps, "hero">) {
   const title = cleanHeroTitle(hero.title);
   const eyebrow = hero.subtitle && !/เมืองเล็ก|วางแผนการเดินทาง|Yala.*Pattani/i.test(hero.subtitle)
     ? hero.subtitle.replace(/<[^>]+>/g, " ").trim()
@@ -87,8 +89,7 @@ function Hero({ hero }: Pick<HomepageEditorialProps, "hero">) {
     ? hero.description.replace(/<[^>]+>/g, " ").trim()
     : "เช็กอินสถานที่สำคัญ สะสมตราประทับ รับใบประกาศดิจิทัล และร่วมเรียนรู้วิถีชีวิตวัฒนธรรมยะลาไปด้วยกัน";
   return <section className="ed-hero" aria-labelledby="ed-hero-title">
-    <Photo src={hero.images?.[0] || DEFAULT_HERO} alt="ภาพประกอบบรรยากาศภูเขาและหมอกยามเช้า" sizes="100vw" eager />
-    <div className="ed-hero-mobile-photo" aria-hidden="true"><Photo src={hero.images?.[0] || DEFAULT_HERO} alt="" sizes="100vw" /></div>
+    <div className="ed-hero-visual"><Photo src={hero.images?.[0] || DEFAULT_HERO} alt="ภาพประกอบบรรยากาศภูเขาและหมอกยามเช้า" sizes="100vw" eager /></div>
     <div className="ed-hero-veil" aria-hidden="true" />
     <div className="ed-hero-inner">
       <div className="ed-hero-copy">
@@ -96,7 +97,7 @@ function Hero({ hero }: Pick<HomepageEditorialProps, "hero">) {
         <h1 id="ed-hero-title"><span>{titleBefore.trim()}</span>{titleHighlight ? <em>ตำบลหน้าถ้ำ</em> : null}</h1>
         <p className="ed-hero-description">{description}</p>
         <div className="ed-hero-actions">
-          <PublicCheckinEntryLink className="ed-pill ed-pill-primary"><QrCode aria-hidden="true" size={18} /> สแกน QR เช็กอิน</PublicCheckinEntryLink>
+          <PublicCheckinEntryLink className="ed-pill ed-pill-primary"><QrCode aria-hidden="true" size={18} /> วิธีเช็กอินที่สถานที่</PublicCheckinEntryLink>
           <Link className="ed-pill ed-pill-outline" href="/attractions"><Compass aria-hidden="true" size={18} /> ดูสถานที่ทั้งหมด</Link>
           <a className="ed-pill ed-pill-outline" href={BLUEPRINT_PATH} target="_blank" rel="noopener noreferrer"><BookOpenText aria-hidden="true" size={18} /> คณะทำงาน</a>
         </div>
@@ -166,7 +167,7 @@ function Destinations({ attractions }: Pick<HomepageEditorialProps, "attractions
 function Routes({ routes, cover, unavailable }: { routes: PublicRouteCard[]; cover?: string; unavailable: boolean }) {
   return <section id="journeys" className="ed-routes" aria-labelledby="ed-routes-title"><Photo src={cover || DEFAULT_BELONGING} alt="ภาพประกอบบรรยากาศเส้นทางท่องเที่ยว" sizes="100vw" /><div className="ed-routes-veil" aria-hidden="true" /><div className="ed-container ed-routes-layout">
     <div className="ed-routes-intro"><p className="ed-eyebrow">THE JOURNEY MATTERS</p><h2 id="ed-routes-title" className="ed-title">เส้นทางท่องเที่ยว</h2><p>เที่ยวช้า ๆ ใส่ใจรายละเอียด แล้วปล่อยให้ยะลาเล่าเรื่อง</p><Link className="ed-pill ed-pill-light" href="/routes">ดูเส้นทางทั้งหมด <ArrowRight aria-hidden="true" size={18} /></Link></div>
-    {routes.length ? <div className="ed-route-cards">{routes.slice(0, 3).map((route) => <Link key={route.slug} href={`/routes/${route.slug}`} className="ed-route-card"><div className="ed-route-image"><Photo src={route.imageUrl} alt={route.imageAlt || route.name} sizes="(max-width: 700px) 75vw, 23vw" /></div><div className="ed-route-content"><h3>{route.name}</h3><p>{route.days} วัน · {route.stopCount} จุดแวะ</p><ArrowRight aria-hidden="true" size={18} /></div></Link>)}</div> : <div className="ed-routes-empty">{unavailable ? "ยังโหลดเส้นทางไม่ได้ในขณะนี้" : "เส้นทางที่เผยแพร่แล้วจะแสดงที่นี่"}</div>}
+    {routes.length ? <div className="ed-route-showcase"><div className="ed-route-cards" data-count={routes.length}>{routes.slice(0, 3).map((route) => <Link key={route.slug} href={`/routes/${route.slug}`} className="ed-route-card"><div className="ed-route-image"><Photo src={route.imageUrl} alt={route.imageAlt || route.name} sizes="(max-width: 700px) 75vw, 23vw" /></div><div className="ed-route-content"><h3>{route.name}</h3><p>{route.days} วัน · {route.stopCount} จุดแวะ</p><ArrowRight aria-hidden="true" size={18} /></div></Link>)}</div><HomepageRouteMap routes={routes.slice(0, 3).map(({ slug, name }) => ({ slug, name }))} /></div> : <div className="ed-routes-empty"><p>{unavailable ? "ยังโหลดเส้นทางไม่ได้ในขณะนี้" : "กำลังเตรียมเส้นทางท่องเที่ยวให้คุณ"}</p><Link href={unavailable ? "/routes" : "/attractions"}>{unavailable ? "ลองดูเส้นทางทั้งหมด" : "เริ่มจากสถานที่ท่องเที่ยว"} <ArrowRight aria-hidden="true" size={18} /></Link></div>}
   </div></section>;
 }
 
@@ -204,15 +205,18 @@ function Planner({ cover }: { cover?: string }) {
   </div></section>;
 }
 
-function Closing({ hero, stats }: Pick<HomepageEditorialProps, "hero" | "stats">) {
+function Closing({ hero, stats, evidence }: Pick<HomepageEditorialProps, "hero" | "stats"> & { evidence?: React.ReactNode }) {
   return <><section className="ed-closing" aria-labelledby="ed-closing-title"><Photo src={hero.images?.[2] || DEFAULT_BELONGING} alt="ภาพประกอบทิวเขาและหมอกยามเช้า" sizes="100vw" /><div className="ed-closing-veil" aria-hidden="true" /><div className="ed-container ed-closing-inner"><p>&ldquo;การเดินทางที่ดีที่สุด<br />คือการได้เห็นโลกกว้าง<br />และเข้าใจตัวเอง&rdquo;</p><div><span>READY FOR YOUR NEXT STORY?</span><h2 id="ed-closing-title">เรื่องต่อไปของคุณ เริ่มที่ยะลา</h2><PublicCheckinEntryLink className="ed-pill ed-pill-light"><QrCode aria-hidden="true" size={18} /> บันทึกการเดินทาง</PublicCheckinEntryLink><Link className="ed-closing-passport" href="/passport"><Stamp aria-hidden="true" size={17} /> เปิด Digital Passport</Link></div></div></section>
-    <section className="ed-evidence" aria-label="ข้อมูลสรุปจากระบบ"><div className="ed-container ed-evidence-inner"><p>ข้อมูลจากการเข้าร่วมและบันทึกในระบบ ไม่ใช่ยอดผู้เข้าชมเว็บไซต์</p>{stats.length ? <dl>{stats.map((stat) => <div key={stat.label}><dt>{stat.label}</dt><dd>{stat.value}</dd></div>)}</dl> : <span>ข้อมูลสรุปยังไม่พร้อมแสดง</span>}<Link href="/dashboard">ดูภาพรวมข้อมูล <ArrowRight aria-hidden="true" size={16} /></Link></div></section>
+    <section className="ed-evidence" aria-label="ข้อมูลสรุปจากระบบ"><div className="ed-container ed-evidence-inner"><p>ข้อมูลจากการเข้าร่วมและบันทึกในระบบ ไม่ใช่ยอดผู้เข้าชมเว็บไซต์</p>{evidence ?? <HomepageStats stats={stats} />}<Link href="/dashboard">ดูภาพรวมข้อมูล <ArrowRight aria-hidden="true" size={16} /></Link></div></section>
   </>;
 }
 
-export function HomepageEditorial({ hero, media, attractions, discoveryAttractions, restaurants, accommodations, cafeRestaurant, cafeCategorySlug, routes, stories, stats, routesUnavailable }: HomepageEditorialProps) {
-  return <main className="home-editorial">
-    <Hero hero={hero} />
+export function HomepageStats({ stats }: Pick<HomepageEditorialProps, "stats">) {
+  return stats.length ? <dl>{stats.map((stat) => <div key={stat.label}><dt>{stat.label}</dt><dd>{stat.value}</dd></div>)}</dl> : <span>ข้อมูลสรุปยังไม่พร้อมแสดง</span>;
+}
+
+export function HomepageSections({ hero, media, attractions, discoveryAttractions, restaurants, accommodations, cafeRestaurant, cafeCategorySlug, routes, stories, stats, routesUnavailable, evidence }: HomepageEditorialProps & { evidence?: React.ReactNode }) {
+  return <>
     <Discovery media={media} discoveryAttractions={discoveryAttractions} restaurants={restaurants} accommodations={accommodations} cafeRestaurant={cafeRestaurant} cafeCategorySlug={cafeCategorySlug} routes={routes} stories={stories} />
     <Belonging hero={hero} media={media} />
     <Destinations attractions={attractions} />
@@ -220,6 +224,10 @@ export function HomepageEditorial({ hero, media, attractions, discoveryAttractio
     <Stories stories={stories} />
     <Food restaurants={restaurants} cover={media.foodCover} />
     <Planner cover={media.plannerCover} />
-    <Closing hero={hero} stats={stats} />
-  </main>;
+    <Closing hero={hero} stats={stats} evidence={evidence} />
+  </>;
+}
+
+export function HomepageEditorial(props: HomepageEditorialProps) {
+  return <main className="home-editorial"><HomepageMotion /><HomepageHero hero={props.hero} /><HomepageSections {...props} /></main>;
 }

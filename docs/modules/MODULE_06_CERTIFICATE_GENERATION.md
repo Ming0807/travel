@@ -8,6 +8,16 @@
 
 ## 2. Module Purpose
 
+### Demo reward isolation (30 September 2026)
+
+Real issuance rejects Visits linked to a code labelled `Demo QR:` after the
+owner guard and before storage upload, certificate persistence or stamp award.
+This includes historical demo Visits. Existing owner downloads remain available.
+The server reads the code label in its existing Visit query; no browser-provided
+label is accepted. QR context is not proof of physical presence. See
+[`CHECKIN_PRESENCE_POLICY.md`](../security/CHECKIN_PRESENCE_POLICY.md) for the
+current safeguards and venue-verification plan.
+
 The Certificate Generation Module creates a digital certificate or travel memory card for tourists after they submit minimal data and upload a photo.
 
 This certificate is the main incentive that motivates tourists to participate in the data collection flow.

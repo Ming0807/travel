@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { TouristProfileView } from "@/components/profile/TouristProfileView";
+import ProfileLoading from "@/app/(tourist)/profile/loading";
 
 vi.mock("@/components/profile/LeaderboardPrivacyForm", () => ({
   LeaderboardPrivacyForm: () => <div data-testid="leaderboard-privacy">ตั้งค่าการแสดงชื่อ</div>,
@@ -50,6 +51,19 @@ const baseProps = {
 };
 
 describe("TouristProfileView", () => {
+  it("announces route loading without presenting placeholders as personal information", () => {
+    const { container } = render(<ProfileLoading />);
+    expect(screen.getByRole("status")).toHaveTextContent("กำลังโหลดโปรไฟล์นักเดินทาง");
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+  });
+  it("offers clear journeys and explains that check-in begins at the venue", () => {
+    render(<TouristProfileView {...baseProps} />);
+    expect(screen.getByRole("link", { name: /แบ่งปันเรื่องราว/ })).toHaveAttribute("href", "/stories/share");
+    expect(screen.getByRole("link", { name: /วางแผนเที่ยวต่อ/ })).toHaveAttribute("href", "/attractions");
+    expect(screen.getByText(/สแกน QR ที่ติดไว้ ณ สถานที่/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /รับใบประกาศ/ })).not.toBeInTheDocument();
+  });
   it("groups certificate, origin, public display, account, and privacy information", () => {
     render(<TouristProfileView {...baseProps} />);
 

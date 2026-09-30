@@ -34,8 +34,8 @@ export function AttractionDirectoryClient({
         {/* Attraction Cards Grid */}
         <div className="min-w-0">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-            {items.map((attraction, index) => (
-              <AttractionDiscoveryCard key={attraction.slug} attraction={attraction} priority={index < 2} />
+            {items.map((attraction) => (
+              <AttractionDiscoveryCard key={attraction.slug} attraction={attraction} />
             ))}
           </div>
         </div>

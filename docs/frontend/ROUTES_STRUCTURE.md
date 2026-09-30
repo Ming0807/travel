@@ -1,5 +1,10 @@
 # ROUTES_STRUCTURE.md
 
+Home motion, streaming/loading and route cards with an on-demand map are described
+in [HOME_MOTION_LOADING_ROUTES.md](HOME_MOTION_LOADING_ROUTES.md). Public attraction
+listing/detail motion, filters, lazy galleries and loading states are described
+in [PUBLIC_ATTRACTION_MOTION_LOADING.md](PUBLIC_ATTRACTION_MOTION_LOADING.md).
+
 ## Story publishing and account navigation (2026-09-30)
 
 `/admin/stories/[id]/edit` exposes permission-scoped publication and moderation
@@ -23,6 +28,13 @@ Dropdowns support arrow keys, Escape, outside-pointer dismissal and focus restor
 The mobile dropdown is fixed inside the viewport. Detail routes retain their active
 navigation section. Auth lookup failures resolve to a login control; sign-out
 failures show a retryable message instead of a false logout.
+
+The navbar no longer advertises the trial route as a QR scanner. Real check-in
+starts from the QR posted at the attraction. Account photos fall back to readable
+initials, and the dropdown shows the complete display name. `/profile` retains
+server-rendered identity, passport progress and explicit leaderboard consent,
+with discovery/story actions and an immediate route loading skeleton. See
+[Profile and account experience](PROFILE_ACCOUNT_EXPERIENCE.md) for behavior and QA.
 
 ## Na Tham Route Access Review (2026-09-29)
 
@@ -212,7 +224,7 @@ Good:
 
 The application should detect context after opening.
 
-Public buttons that offer a production-like trial use `/checkin/try`. That route resolves only an active code labelled `Demo QR:`, validates it with the same rules as a physical scan, and then redirects through `/c/[code]`. It must not link directly to `/checkin/[code]`, because the canonical QR route establishes the check-in session used by funnel tracking.
+Public check-in guidance links use `/checkin/try`, a static, zero-query guide to scanning at a venue. It no longer redirects into a demo code or issues rewards. Reserved `Demo QR:` codes and historical demo visits cannot create new certificates or stamps. Actual venue QR codes enter through `/c/[code]`; see `docs/security/CHECKIN_PRESENCE_POLICY.md` for remaining presence limitations and rollout conditions.
 
 ## 2.4 Use Slugs for Public Attractions
 

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Homepage } from "@/components/homepage/homepage";
+import { Suspense } from "react";
+import { HomepageLoading } from "@/components/homepage/HomepageLoading";
 
 export const revalidate = 60;
 
@@ -10,5 +12,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <Homepage />;
+  return <Suspense fallback={<HomepageLoading hero />}><Homepage /></Suspense>;
 }

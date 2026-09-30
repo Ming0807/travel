@@ -1,5 +1,6 @@
 import "server-only";
 import { requireTouristVisitAccess } from "@/lib/auth/guards";
+import { assertCheckinRewardEligible } from "@/lib/checkin/reward-eligibility";
 import { updateVisitStatus } from "@/lib/repositories/visit.repository";
 import { createCertificate, getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
 import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
@@ -18,6 +19,7 @@ export async function processCertificateGeneration(params: {
   certificatePath: string;
 }) {
   const { visit } = await requireTouristVisitAccess(params.visitId);
+  assertCheckinRewardEligible(visit);
 
   if (params.photoId) {
     const photo = await getPhotoById(params.photoId);

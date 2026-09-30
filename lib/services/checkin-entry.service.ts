@@ -121,7 +121,10 @@ export async function resolveCheckinFlow(input: {
     const config = getCheckinEntryConfig();
 
     if (input.flowId === null) {
-      return await resolveLegacy(input.code);
+      // An omitted form/query field must not disable an enabled security gate.
+      return config.sessionsEnabled
+        ? { mode: "blocked", status: "unavailable" }
+        : await resolveLegacy(input.code);
     }
 
     if (!config.sessionsEnabled
@@ -137,6 +140,17 @@ export async function resolveCheckinFlow(input: {
       browserHash: hashCheckinBrowserId(input.browserId, config.hashSecret),
       code: input.code,
     });
+    const createdAt = Date.parse(session.createdAt);
+    const expiresAt = Date.parse(session.expiresAt);
+    const now = Date.now();
+    if (session.sessionId !== input.flowId
+      || !Number.isFinite(createdAt)
+      || !Number.isFinite(expiresAt)
+      || createdAt > now
+      || expiresAt <= now
+      || expiresAt <= createdAt) {
+      return { mode: "blocked", status: "unavailable" };
+    }
     if (session.channel === "nfc" && !config.nfcEnabled) {
       return { mode: "blocked", status: "nfc_unavailable" };
     }

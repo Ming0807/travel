@@ -18,6 +18,16 @@ canonical integration and device QA are complete. See Phase 23 tasks and
 
 ## 2. Module Purpose
 
+### Presence policy update (30 September 2026)
+
+Static QR/NFC URLs establish entry context; they do not prove physical presence.
+`/checkin/try` provides instructions without redirecting to real collection.
+Reserved `Demo QR:` codes are blocked in check-in and certificate issuance.
+Enabled entry-session enforcement cannot be bypassed by omitting the flow field.
+It still requires the existing deployment rollout and is default-off. See
+[`CHECKIN_PRESENCE_POLICY.md`](../security/CHECKIN_PRESENCE_POLICY.md) for
+implemented checks and the separate venue-verification plan.
+
 The QR Check-in Module connects physical tourism locations to the digital tourism database.
 
 Tourists scan a QR code at an attraction or photo spot. The system resolves the QR code to a database record, loads the correct attraction context, and starts the tourist participation flow.
@@ -34,7 +44,7 @@ The module supports the main project objective:
 
 The QR code is not just a shortcut link. It is a data collection source.
 
-It tells the system:
+It provides entry context (self-reported associations, not verified attendance):
 
 - Which attraction the tourist visited
 - Which photo spot was used

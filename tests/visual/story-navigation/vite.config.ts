@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: { alias: [
     { find: "@/lib/supabase/browser", replacement: here("./auth.ts") },
     { find: "@/app/actions/admin-story-actions", replacement: here("./actions.ts") },
+    { find: "@/app/actions/leaderboard-preference-actions", replacement: here("./profile-actions.ts") },
     { find: "@/components/admin/forms/FormRichText", replacement: here("./editor-stubs.tsx") },
     { find: "@/components/admin/media/MediaPickerModal", replacement: here("./editor-stubs.tsx") },
     { find: "@/components/admin/stories/editor/StoryRecommendationManager", replacement: here("./editor-stubs.tsx") },

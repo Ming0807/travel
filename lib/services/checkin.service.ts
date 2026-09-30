@@ -1,9 +1,9 @@
 import "server-only";
 import { getCheckinSessionId } from "@/lib/auth/checkin-session";
+import { isDemoCheckinLabel } from "@/lib/checkin/reward-eligibility";
 import { isLiveDestinationProvince } from "@/lib/destinations/launch-scope";
 import {
   getCheckinCodeByCode,
-  listPublicDemoCheckinCodes,
   type CheckinCodeDetails,
 } from "@/lib/repositories/checkin.repository";
 import { recordFunnelEvent } from "@/lib/repositories/funnel.repository";
@@ -18,6 +18,11 @@ export async function resolveAndValidateCheckinCode(code: string): Promise<Resol
   
   if (!details) {
     return { status: "not_found" };
+  }
+
+  // Seed/trial QR codes must never enter the real tourist/visit/reward pipeline.
+  if (isDemoCheckinLabel(details.label)) {
+    return { status: "unavailable", details };
   }
 
   if (!details.is_active) {
@@ -45,17 +50,6 @@ export async function resolveAndValidateCheckinCode(code: string): Promise<Resol
   }
 
   return { status: "valid", details };
-}
-
-export async function resolvePublicDemoCheckinCode(): Promise<string | null> {
-  const candidateCodes = await listPublicDemoCheckinCodes();
-
-  for (const code of candidateCodes) {
-    const context = await resolveAndValidateCheckinCode(code);
-    if (context.status === "valid") return code;
-  }
-
-  return null;
 }
 
 export type FunnelEventName = 

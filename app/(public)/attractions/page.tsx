@@ -160,7 +160,7 @@ export default async function AttractionsPage({ searchParams }: { searchParams: 
                 <span>{hasFilters ? "ผลการค้นหา" : "สถานที่แนะนำ"}</span>
                 <span className="text-amber-500">❖</span>
               </div>
-              <h2 id="attraction-results-heading" className="mt-1 text-2xl font-black text-ink sm:text-3xl">
+              <h2 id="attraction-results-heading" className="mt-1 scroll-mt-28 text-2xl font-black text-ink sm:text-3xl">
                 {hasFilters ? "รายการสถานที่ที่ตรงกับเงื่อนไข" : "สถานที่แนะนำ"}
               </h2>
               <PublicResultSummary count={attractionPage.total} noun="สถานที่" className="mt-1 font-bold text-muted" />

@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireTouristVisitAccess, TouristAccessError } from "@/lib/auth/guards";
+import { assertCheckinRewardEligible, CheckinRewardEligibilityError } from "@/lib/checkin/reward-eligibility";
 import { getCertificateByVisitId } from "@/lib/repositories/certificate.repository";
 import { getPhotoById } from "@/lib/repositories/visit-photo.repository";
 import { processCertificateGeneration } from "@/lib/services/certificate.service";
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
     const visitId = visitIdResult.data;
     const access = await requireTouristVisitAccess(visitId);
     ownedVisitId = visitId;
+    assertCheckinRewardEligible(access.visit);
 
     const existingCertificate = await getCertificateByVisitId(visitId);
     if (existingCertificate) {
@@ -186,6 +188,10 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof TouristAccessError) {
       return errorResponse(error.code, error.message, error.code === "VISIT_ACCESS_DENIED" ? 403 : 404);
+    }
+
+    if (error instanceof CheckinRewardEligibilityError) {
+      return errorResponse(error.code, error.message, 409);
     }
 
     if (

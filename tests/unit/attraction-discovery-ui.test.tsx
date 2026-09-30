@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { AttractionDiscoveryCard } from "@/components/attractions/AttractionDiscoveryCard";
 import { AttractionDiscoveryCta } from "@/components/attractions/AttractionDiscoveryCta";
 import { AttractionDiscoveryFilters } from "@/components/attractions/AttractionDiscoveryFilters";
@@ -10,6 +10,9 @@ import {
   safeAttractionsBannerHref,
 } from "@/lib/attractions/discovery-copy";
 import { resolveAttractionTypeOptions } from "@/lib/attractions/discovery-query";
+
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 const baseAttraction: PublicAttractionCard = {
   slug: "aiyerweng-skywalk",
@@ -29,6 +32,21 @@ const baseAttraction: PublicAttractionCard = {
 };
 
 describe("AttractionDiscoveryFilters", () => {
+  it("navigates without reloading the shared shell and preserves the submitted filters", () => {
+    const { container } = render(<AttractionDiscoveryFilters query="ทะเลหมอก" selectedType="Nature" selectedDistrict="7" typeOptions={[{ value: "Nature", label: "ธรรมชาติ" }]} districtOptions={[{ value: "7", label: "เบตง" }]} />);
+    fireEvent.submit(container.querySelector("form")!);
+    const destination = new URL(push.mock.calls.at(-1)?.[0] as string, "http://localhost:3000");
+    expect(destination.pathname).toBe("/attractions");
+    expect(Object.fromEntries(destination.searchParams)).toEqual({ q: "ทะเลหมอก", type: "Nature", district: "7" });
+    expect(destination.hash).toBe("#attraction-results-heading");
+  });
+
+  it("keeps the search visible on mobile while hiding only the extra filters", () => {
+    const { container } = render(<AttractionDiscoveryFilters typeOptions={[]} districtOptions={[]} />);
+    expect(container.querySelector("form")).not.toHaveClass("hidden");
+    expect(screen.getByRole("button", { name: "ค้นหาสถานที่" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "เปิดตัวกรอง" })).toHaveAttribute("aria-controls", "attraction-extra-filters");
+  });
   it("renders visible Thai labels and submits only supported discovery parameters", () => {
     const { container } = render(
       <AttractionDiscoveryFilters
@@ -149,7 +167,7 @@ describe("AttractionDiscoveryCard", () => {
     expect(screen.getByText("4.7 จาก 38 รีวิว")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "ทะเลหมอกอัยเยอร์เวง" })).toHaveAttribute(
       "sizes",
-      "(max-width: 767px) calc(100vw - 2rem), (max-width: 1279px) calc(50vw - 3rem), 300px",
+      "(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) calc(50vw - 2.125rem), (max-width: 1279px) calc(50vw - 12.625rem), 275px",
     );
   });
 

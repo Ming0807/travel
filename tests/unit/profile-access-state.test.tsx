@@ -10,7 +10,7 @@ describe("ProfileAccessState", () => {
     expect(screen.getByRole("heading", { name: "ยังไม่พบพาสปอร์ตบนเบราว์เซอร์นี้" })).toBeVisible();
     expect(screen.getByText(/LINE, Chrome, Safari/)).toBeVisible();
     expect(screen.getByRole("link", { name: "เข้าสู่ระบบเพื่อค้นหาโปรไฟล์ที่เชื่อมไว้" })).toHaveAttribute("href", "/auth/login?next=%2Fprofile");
-    expect(screen.getByRole("link", { name: "เริ่มเช็กอินสถานที่" })).toHaveAttribute("href", "/attractions");
+    expect(screen.getByRole("link", { name: "ค้นหาสถานที่ท่องเที่ยว" })).toHaveAttribute("href", "/attractions");
   });
 
   it("preserves user confidence during a load failure", () => {

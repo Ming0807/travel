@@ -3,9 +3,10 @@
 import { useState, useEffect, useId, useRef, type KeyboardEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { UserCircle, SignOut, CaretDown, User as UserIcon, BookOpen, Article } from "@phosphor-icons/react";
+import { UserCircle, SignOut, CaretDown, BookOpen, Article, ArrowUpRight } from "@phosphor-icons/react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { getAccountDisplayName, getDisplayInitials } from "@/lib/account/presentation";
 
 export function UserNavMenu({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -13,6 +14,7 @@ export function UserNavMenu({ mobile = false, onNavigate }: { mobile?: boolean; 
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const [supabase] = useState(() => createSupabaseBrowserClient());
   const menuId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -83,12 +85,11 @@ export function UserNavMenu({ mobile = false, onNavigate }: { mobile?: boolean; 
   if (loading) return <div className="ed-account-loading animate-pulse" aria-hidden="true" />;
   if (!user) return <Link href="/auth/login" onClick={onNavigate} className={`ed-account-login${mobile ? " ed-account-login-mobile" : ""}`}>เข้าสู่ระบบ</Link>;
 
-  const name = user.user_metadata?.display_name || user.user_metadata?.full_name || user.user_metadata?.name;
-  const displayName = typeof name === "string" && name.trim() ? name.trim() : user.email?.split("@")[0] || "ผู้ใช้งาน";
+  const displayName = getAccountDisplayName(user);
   const avatarUrl = typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
-  const avatar = <span className="ed-account-avatar">{avatarUrl
-    ? <Image src={avatarUrl} alt="" width={32} height={32} unoptimized />
-    : <UserIcon size={18} weight="fill" aria-hidden="true" />}</span>;
+  const avatar = <span className="ed-account-avatar" aria-hidden="true">{avatarUrl && avatarUrl !== failedAvatarUrl
+    ? <Image src={avatarUrl} alt="" width={40} height={40} unoptimized onError={() => setFailedAvatarUrl(avatarUrl)} />
+    : getDisplayInitials(displayName)}</span>;
   const links = [
     { href: "/profile", label: "โปรไฟล์ของฉัน", icon: UserCircle },
     { href: "/passport", label: "พาสปอร์ตของฉัน", icon: BookOpen },
@@ -96,7 +97,7 @@ export function UserNavMenu({ mobile = false, onNavigate }: { mobile?: boolean; 
   ];
   const accountLinks = links.map(({ href, label, icon: Icon }) => (
     <Link key={href} href={href} role={mobile ? undefined : "menuitem"} onClick={followLink} className="ed-account-link">
-      <Icon size={19} aria-hidden="true" />{label}
+      <Icon size={19} aria-hidden="true" /><span>{label}</span><ArrowUpRight size={14} aria-hidden="true" className="ed-account-link-arrow" />
     </Link>
   ));
   const signOut = <button type="button" role={mobile ? undefined : "menuitem"} disabled={signingOut} onClick={handleSignOut} className="ed-account-link ed-account-signout"><SignOut size={19} aria-hidden="true" />{signingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}</button>;
@@ -115,7 +116,7 @@ export function UserNavMenu({ mobile = false, onNavigate }: { mobile?: boolean; 
       {avatar}<span className="ed-account-name" title={displayName}>{displayName}</span><CaretDown size={13} weight="bold" aria-hidden="true" className="ed-account-caret" />
     </button>
     {menuOpen ? <div ref={menuRef} id={menuId} role="menu" aria-label="บัญชีนักเดินทาง" className="ed-account-dropdown" onKeyDown={handleMenuKeys}>
-      <div className="ed-account-identity"><div><small>บัญชีนักเดินทาง</small><p title={displayName}>{displayName}</p></div></div>
+      <div className="ed-account-identity">{avatar}<div><p title={displayName}>{displayName}</p><small>บัญชีนักเดินทาง</small></div></div>
       {accountLinks}{signOut}{error ? <p role="alert" className="ed-account-error">{error}</p> : null}
     </div> : null}
   </div>;

@@ -156,7 +156,7 @@ export default async function AttractionDetailPage({ params }: AttractionDetailP
                   <p className="mt-4 max-w-[72ch] whitespace-pre-wrap text-base leading-8 text-slate-700">
                     {data.howToGetThere}
                   </p>
-                  <div className="mt-5 border border-slate-200 bg-white p-5">
+                  <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-start gap-3">
                         <MapPinLine aria-hidden="true" className="mt-0.5 shrink-0 text-[var(--public-coral)]" size={24} weight="fill" />
@@ -200,13 +200,13 @@ export default async function AttractionDetailPage({ params }: AttractionDetailP
               contactInfo={data.contactInfo}
             />
             {data.virtualTour ? (
-              <section className="border border-slate-200 bg-white p-5">
+              <section className="rounded-xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-2">
                   <Compass aria-hidden="true" size={22} weight="fill" className="text-[var(--public-teal)]" />
                   <h2 className="font-bold text-[var(--public-ink)]">ชมมุมมอง 360°</h2>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  เปิดสื่อพาโนรามาหรือทัวร์เสมือนจริงที่แอดมินเผยแพร่สำหรับสถานที่นี้
+                  สำรวจบรรยากาศรอบสถานที่ก่อนออกเดินทาง
                 </p>
                 <PublicButton
                   href={data.virtualTour.url}

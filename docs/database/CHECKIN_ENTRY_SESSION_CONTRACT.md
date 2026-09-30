@@ -16,6 +16,10 @@ There is no historical backfill and no URL-controlled classification. Collection
 context does not constitute consent or research inclusion.
 
 Begin/read/create-visit RPCs validate live assignment, expiry and browser binding.
+The application rejects stale/mismatched reads and, while sessions are enabled,
+missing flow IDs instead of falling back to legacy collection. These checks
+introduce no additional session read and do not prove physical presence. See
+`docs/security/CHECKIN_PRESENCE_POLICY.md` for the venue-verification plan.
 Begin serializes same-source requests and reuses a fixed two-hour session.
 Create-visit locks the session row, links one Visit and inserts one 50-point
 QR/NFC XP event transactionally. Replay by its tourist returns the same Visit;

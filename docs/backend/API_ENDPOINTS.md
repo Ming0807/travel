@@ -1,5 +1,19 @@
 # API_ENDPOINTS.md
 
+## Public Home map and demo reward protection (2026-09-30)
+
+`GET /api/public/routes/[slug]/map` returns public itinerary stops and a directions
+URL only after the existing route/stop publishing and live-destination checks.
+Success is cached for 60 seconds; hidden/unpublished routes return 404 and
+temporary failure returns a sanitized 503, both `no-store`. Home requests this
+endpoint only when the visitor opens the optional map.
+
+`POST /api/certificate/generate` returns `409 DEMO_CHECKIN_REWARD_BLOCKED` for
+historical `Demo QR:` visits before image upload, certificate persistence or
+stamp assignment. Owner download of already-created certificates stays available.
+See `docs/security/CHECKIN_PRESENCE_POLICY.md` for the implemented guards and
+remaining static-QR presence limitations.
+
 ## Story workflow actions (2026-09-30)
 
 `saveStoryEditorialChangeAction` allows ready team drafts/in-review articles to

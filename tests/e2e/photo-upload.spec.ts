@@ -3,14 +3,15 @@ import path from 'path';
 import fs from 'fs';
 
 test.describe('Tourist Photo Upload Flow', () => {
-  const checkinCode = 'DEMO-CODE-123';
+  const checkinCode = process.env.E2E_CHECKIN_CODE ?? '';
+  test.skip(!checkinCode, 'Set E2E_CHECKIN_CODE for a disposable non-demo venue fixture');
 
   test('should successfully upload a photo via the UI and navigate to certificate preview', async ({ page }) => {
     test.setTimeout(90000);
 
     // 1. Visit the QR Check-in Landing Page
     await page.goto(`/c/${checkinCode}`);
-    await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}$`));
+    await expect(page).toHaveURL(new RegExp(`/checkin/${checkinCode}(?:\\?flow=[^&]+)?$`));
     await expect(page.getByRole('link', { name: 'สร้างใบประกาศของฉัน' })).toBeVisible();
     await page.getByRole('link', { name: 'สร้างใบประกาศของฉัน' }).click();
 

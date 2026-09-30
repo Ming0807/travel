@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { AttractionSectionNavItem } from "@/lib/content/attraction-sections";
+import "./attraction-experience.css";
 
 type AttractionTabsProps = {
   sections: AttractionSectionNavItem[];
@@ -53,13 +54,15 @@ export function AttractionTabs({ sections, mobileLabel = "ไปยังส่�
 
   return (
     <>
-      <div className="sticky top-20 z-40 mb-10 hidden border-y border-slate-200 bg-white/95 py-3 backdrop-blur-md lg:block">
+      <div className="sticky top-20 z-20 mb-10 hidden border-y border-slate-200 bg-white py-3 lg:block">
         <nav className="flex flex-wrap items-center gap-2" aria-label="ส่วนเนื้อหาของสถานที่">
           {sections.map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => scrollToSection(tab.id)}
-              className={`min-h-10 rounded-[var(--public-radius-control)] border px-3 py-2 text-sm font-semibold transition-colors ${
+              aria-current={selectedTab === tab.id ? "location" : undefined}
+              className={`attraction-control min-h-11 rounded-[var(--public-radius-control)] border px-3 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] ${
                 selectedTab === tab.id
                   ? "border-[var(--public-teal)] bg-[var(--public-teal)] text-white"
                   : "border-slate-200 bg-white text-[var(--public-ink)] hover:border-[var(--public-teal)] hover:text-[var(--public-teal)]"
@@ -71,7 +74,7 @@ export function AttractionTabs({ sections, mobileLabel = "ไปยังส่�
         </nav>
       </div>
 
-      <div className="sticky top-[68px] z-30 mb-8 border-y border-slate-200 bg-white/95 py-3 backdrop-blur-md lg:hidden">
+      <div className="sticky top-[68px] z-20 mb-8 border-y border-slate-200 bg-white py-3 lg:hidden">
         <label htmlFor="attraction-section-jump" className="mb-2 block text-xs font-bold text-muted">
           {mobileLabel}
         </label>
@@ -80,7 +83,7 @@ export function AttractionTabs({ sections, mobileLabel = "ไปยังส่�
             id="attraction-section-jump"
             value={selectedTab}
             onChange={(event) => scrollToSection(event.target.value)}
-            className="min-h-12 w-full rounded-[var(--public-radius-control)] border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-[var(--public-ink)] outline-none transition focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/20"
+            className="attraction-control min-h-12 w-full rounded-[var(--public-radius-control)] border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-[var(--public-ink)] outline-none focus:border-[var(--public-teal)] focus:ring-2 focus:ring-[var(--public-teal)]/20"
           >
             {sections.map((tab) => (
               <option key={tab.id} value={tab.id}>

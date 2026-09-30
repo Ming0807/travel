@@ -122,10 +122,10 @@ export function HomepageHowItWorks({
         {/* Centered Orange CTA Button */}
         <div className="mt-10 text-center">
           <PublicCheckinEntryLink
-            aria-label="ทดลองใช้งานเช็กอิน"
+            aria-label="วิธีเช็กอินที่สถานที่"
             className="inline-flex min-h-11 items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-8 text-sm font-black text-white shadow-md shadow-orange-500/25 transition-all hover:scale-105 hover:shadow-orange-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
           >
-            เริ่มเช็กอิน <CaretRight aria-hidden="true" weight="bold" />
+            วิธีเช็กอินที่สถานที่ <CaretRight aria-hidden="true" weight="bold" />
           </PublicCheckinEntryLink>
         </div>
       </div>

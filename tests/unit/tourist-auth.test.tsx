@@ -147,6 +147,17 @@ describe("UserNavMenu Component", () => {
     render(<UserNavMenu />);
     expect(await screen.findByRole("link", { name: "เข้าสู่ระบบ" })).toBeInTheDocument();
   });
+
+  it("uses initials when the account picture fails without losing account navigation", async () => {
+    mockSupabase.auth.getUser!.mockResolvedValue({ data: { user: { user_metadata: { full_name: "Mali Traveler", avatar_url: "https://example.test/avatar.png" } } } });
+    const { container } = render(<UserNavMenu />);
+    const trigger = await screen.findByRole("button", { name: /เปิดเมนูบัญชี Mali Traveler/ });
+    fireEvent.error(container.querySelector("img")!);
+    expect(trigger).toHaveTextContent("MT");
+    expect(container.querySelector("img")).not.toBeInTheDocument();
+    fireEvent.click(trigger);
+    expect(screen.getByRole("menuitem", { name: "โปรไฟล์ของฉัน" })).toBeInTheDocument();
+  });
 });
 
 describe("TouristAuthGate Component", () => {

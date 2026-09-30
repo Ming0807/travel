@@ -1,17 +1,23 @@
 import "server-only";
 import { awardTouristStamp, getTouristStampByAttraction } from "@/lib/repositories/stamp.repository";
 import { getVisitById } from "@/lib/repositories/visit.repository";
+import { assertCheckinRewardEligible } from "@/lib/checkin/reward-eligibility";
 
 export type StampAwardResult =
   | { success: true; status: "earned"; stampId: string }
   | { success: true; status: "already_earned"; stampId: string }
   | { success: true; status: "no_active_stamp_definition" }
-  | { success: false; reason: "visit_not_found" | "stamp_award_failed" };
+  | { success: false; reason: "visit_not_found" | "stamp_award_failed" | "demo_checkin" };
 
 export async function assignStampForVisit(visitId: string): Promise<StampAwardResult> {
   const visit = await getVisitById(visitId);
   if (!visit) {
     return { success: false, reason: "visit_not_found" };
+  }
+  try {
+    assertCheckinRewardEligible(visit);
+  } catch {
+    return { success: false, reason: "demo_checkin" };
   }
 
   const visitContext = {

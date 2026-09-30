@@ -1,11 +1,21 @@
 import { createRoot } from "react-dom/client";
 import { SiteHeader } from "@/components/layout/site-header";
 import { StoryVisualEditor } from "@/components/admin/stories/visual-editor/StoryVisualEditor";
+import { TouristProfileView } from "@/components/profile/TouristProfileView";
+import { ProfileAccessState } from "@/components/profile/ProfileAccessState";
+import ProfileLoading from "@/app/(tourist)/profile/loading";
 import type { AdminStoryRow } from "@/lib/repositories/admin-story.repository";
 import "@/app/globals.css";
 import "../dashboard/fixture-fonts.css";
 
 const params = new URLSearchParams(window.location.search);
+const profile = {
+  displayName: "นักเดินทางชื่อยาวมากสำหรับทดสอบการจัดวางโปรไฟล์ทุกขนาดหน้าจอ", origin: "ยะลา", ageGroup: "25_34",
+  preferredLanguage: "th", preferredLanguageSource: "user_selected", leaderboardVisibility: "private" as const,
+  leaderboardAlias: null, isGuest: false, linkedProviders: ["google"],
+  passportSummary: { totalStampsEarned: 3, provinceProgress: [{ provinceName: "ยะลา", earnedCount: 3, totalCount: 12 }] },
+  certificateHistory: [{ generatedAt: "2026-09-30T00:00:00Z", visitDate: "2026-09-30", attractionName: "สกายวอล์กอัยเยอร์เวง", provinceName: "ยะลา", attractionSlug: "aiyerweng-skywalk" }],
+};
 const story: AdminStoryRow = {
   story_id: 42, title: "เรื่องเล่าจากยะลาที่มีชื่อยาวสำหรับตรวจการจัดวางหน้าจอ", slug: "fixture-yala-story",
   excerpt: "ข้อมูลสังเคราะห์สำหรับตรวจหน้าจอเท่านั้น", content: "<p>เรื่องราวการเดินทางสำหรับตรวจหน้าจอ ไม่มีข้อมูลผู้ใช้จริง</p>",
@@ -20,7 +30,7 @@ createRoot(document.getElementById("root")!).render(params.has("editor") ? <Stor
   story={story} editorialPermissions={params.has("restricted") ? ["story.update"] : ["system.all"]}
   provinces={[{ province_id: 1, province_name_th: "ยะลา" }]} topics={[{ id: 1, key: "culture", nameTh: "วัฒนธรรม", nameEn: "Culture" }]}
   coverMediaId={story.cover_media?.media_id} coverMediaUrl={story.cover_media ? "/site-media/homepage/yala-belonging-default.webp" : null}
-/> : <><SiteHeader appName="ท่องเที่ยวยะลา" /><main style={{ maxWidth: 1000, margin: "60px auto", padding: 24 }}>
+/> : <><SiteHeader appName="ท่องเที่ยวยะลา" />{params.has("profile") ? <TouristProfileView profile={profile} xp={{ currentXp: 250, currentLevel: 3, xpForCurrentLevel: 250, xpForNextLevel: 500, progress: .35 }} badges={[]} allBadges={[]} /> : params.has("profile-loading") ? <ProfileLoading /> : params.has("profile-empty") ? <ProfileAccessState kind="no_identity" /> : <main style={{ maxWidth: 1000, margin: "60px auto", padding: 24 }}>
   <p style={{ color: "#914630" }}>ข้อมูลสังเคราะห์สำหรับตรวจ UI</p><h1 style={{ fontSize: 32, fontWeight: 700 }}>ค้นพบยะลาผ่านเรื่องเล่า</h1>
   <p>ตรวจ navbar หลังล็อกอิน ชื่อยาว เมนูบัญชี และการใช้งานผ่านคีย์บอร์ด</p>
-</main></>);
+</main>}</>);

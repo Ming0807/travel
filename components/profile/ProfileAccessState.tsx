@@ -2,13 +2,14 @@ import { Compass, DeviceMobile, ShieldCheck, Warning } from "@phosphor-icons/rea
 
 import { PublicButton } from "@/components/public/PublicButton";
 import { PublicPageFrame } from "@/components/public/PublicPageFrame";
+import "./tourist-profile.css";
 
 export function ProfileAccessState({ kind }: { kind: "no_identity" | "error" }) {
   if (kind === "error") {
     return (
-      <main className="min-h-[70vh] bg-[var(--public-canvas)] py-10 sm:py-14">
+      <main className="tourist-profile min-h-[70vh] py-10 sm:py-14">
         <PublicPageFrame variant="detail">
-          <section role="alert" className="border border-rose-200 bg-white p-6 sm:p-8">
+          <section role="alert" className="rounded-xl border border-rose-200 bg-white p-6 sm:p-8">
             <Warning aria-hidden="true" className="text-[var(--public-coral)]" size={36} weight="fill" />
             <h1 className="mt-4 text-2xl font-black text-[var(--public-ink)]">โหลดโปรไฟล์ไม่สำเร็จ</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-black/65">
@@ -25,9 +26,9 @@ export function ProfileAccessState({ kind }: { kind: "no_identity" | "error" }) 
   }
 
   return (
-    <main className="min-h-[70vh] bg-[var(--public-canvas)] py-10 sm:py-14">
+    <main className="tourist-profile min-h-[70vh] py-10 sm:py-14">
       <PublicPageFrame variant="detail">
-        <section className="grid overflow-hidden border border-black/10 bg-white md:grid-cols-[minmax(0,1fr)_18rem]">
+        <section className="grid overflow-hidden rounded-xl border border-black/10 bg-white md:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="p-6 sm:p-8">
             <Compass aria-hidden="true" className="text-[var(--public-teal)]" size={38} weight="fill" />
             <h1 className="mt-4 text-2xl font-black text-[var(--public-ink)] sm:text-3xl">ยังไม่พบพาสปอร์ตบนเบราว์เซอร์นี้</h1>
@@ -36,7 +37,7 @@ export function ProfileAccessState({ kind }: { kind: "no_identity" | "error" }) 
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <PublicButton href="/auth/login?next=%2Fprofile">เข้าสู่ระบบเพื่อค้นหาโปรไฟล์ที่เชื่อมไว้</PublicButton>
-              <PublicButton href="/attractions" variant="secondary">เริ่มเช็กอินสถานที่</PublicButton>
+              <PublicButton href="/attractions" variant="secondary">ค้นหาสถานที่ท่องเที่ยว</PublicButton>
             </div>
           </div>
 

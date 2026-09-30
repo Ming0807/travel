@@ -568,6 +568,16 @@ describe("QR Check-in Flow Hardening", () => {
   });
 
   describe("Duplicate Stamp Prevention (assignStampForVisit)", () => {
+    it("cannot award a real stamp for a historical demo visit", async () => {
+      vi.mocked(getVisitById).mockResolvedValue({
+        tourist_id: "t1", attraction_id: 1, checkin_codes: { label: "Demo QR: trial" },
+      });
+      await expect(assignStampForVisit("demo-visit"))
+        .resolves.toEqual({ success: false, reason: "demo_checkin" });
+      expect(getTouristStampByAttraction).not.toHaveBeenCalled();
+      expect(awardTouristStamp).not.toHaveBeenCalled();
+    });
+
     it("returns already_earned if tourist already has the stamp", async () => {
       vi.mocked(getVisitById).mockResolvedValue({ tourist_id: "t1", attraction_id: 1 } as unknown as VisitRow);
       vi.mocked(getTouristStampByAttraction).mockResolvedValue({ stamp_id: "existing-id" } as unknown as TouristStampRow);

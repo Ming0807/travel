@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Images, X } from "@phosphor-icons/react";
 import type { PublicAttractionImage } from "@/lib/attractions/public-detail";
+import "./attraction-experience.css";
 
 type AttractionGalleryProps = {
   mainImage: PublicAttractionImage | null;
@@ -39,7 +40,7 @@ function GalleryImage({ image, alt, sizes, className, priority, unoptimized, onI
       src={image.url}
       alt={alt}
       fill
-      priority={priority}
+      preload={priority}
       sizes={sizes}
       unoptimized={unoptimized}
       className={className}
@@ -57,6 +58,7 @@ export function AttractionGallery({
 }: AttractionGalleryProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
   const [failedUrls, setFailedUrls] = useState<Set<string>>(() => new Set());
   const allImages = gallery.length > 0 ? gallery : mainImage ? [mainImage] : [];
   const images = allImages.filter((image) => !failedUrls.has(image.url));
@@ -74,13 +76,14 @@ export function AttractionGallery({
 
   const openImage = (index: number) => {
     setSelectedIndex(index);
+    setIsOpen(true);
     dialogRef.current?.showModal();
   };
 
   if (!primaryImage) {
     return (
       <div
-        className="mb-10 flex aspect-[4/3] items-center justify-center border border-slate-200 bg-slate-100 px-6 text-center text-sm font-semibold text-slate-600 sm:aspect-[16/8]"
+        className="mb-10 flex aspect-[4/3] items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-6 text-center text-sm font-semibold text-slate-600 sm:aspect-[16/8]"
         aria-label="ยังไม่มีรูปภาพของสถานที่นี้"
       >
         ยังไม่มีรูปภาพของสถานที่นี้
@@ -91,53 +94,53 @@ export function AttractionGallery({
   const sideImages = images.slice(1, 3);
 
   return (
-    <div className="mb-10 sm:mb-12">
-      <div className="grid gap-2 lg:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)]">
+    <div className="attraction-gallery mb-10 sm:mb-12">
+      <div data-gallery-layout={sideImages.length > 0 ? "multiple" : "single"} className={`grid gap-2 overflow-hidden rounded-xl ${sideImages.length > 0 ? "lg:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)]" : ""}`}>
         <button
           type="button"
           onClick={() => openImage(0)}
           aria-label={`เปิดภาพ ${primaryImage.alt || attractionName}`}
-          className="group relative aspect-[4/3] w-full overflow-hidden bg-slate-100 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] sm:aspect-[16/9] lg:aspect-auto lg:min-h-[460px]"
+          className={`attraction-gallery__photo group relative aspect-[4/3] w-full overflow-hidden bg-slate-100 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] sm:aspect-[16/9] ${sideImages.length > 0 ? "lg:aspect-auto lg:min-h-[460px]" : "lg:aspect-[16/7]"}`}
         >
           <GalleryImage
             image={primaryImage}
             alt={primaryImage.alt || attractionName}
             priority
             unoptimized={unoptimized}
-            sizes="(max-width: 1023px) calc(100vw - 2rem), 736px"
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+            sizes={sideImages.length > 0 ? "(max-width: 1023px) calc(100vw - 2rem), 736px" : "(max-width: 1023px) calc(100vw - 2rem), 1088px"}
+            className="object-cover"
             onInvalid={handleMediaError}
           />
         </button>
 
-        <div className="hidden gap-2 lg:grid lg:grid-rows-2">
+        {sideImages.length > 0 ? <div className="hidden gap-2 lg:grid lg:grid-rows-2">
           {sideImages.map((image, index) => (
             <button
               key={image.url}
               type="button"
               onClick={() => openImage(index + 1)}
               aria-label={`เปิดภาพ ${image.alt || `${attractionName} รูปที่ ${index + 2}`}`}
-              className={`group relative min-h-0 overflow-hidden bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] ${sideImages.length === 1 ? "row-span-2" : ""}`}
+              className={`attraction-gallery__photo group relative min-h-0 overflow-hidden bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)] ${sideImages.length === 1 ? "row-span-2" : ""}`}
             >
               <GalleryImage
                 image={image}
                 alt={image.alt || `${attractionName} รูปที่ ${index + 2}`}
                 sizes="352px"
                 unoptimized={unoptimized}
-                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                className="object-cover"
                 onInvalid={handleMediaError}
               />
             </button>
           ))}
-        </div>
+        </div> : null}
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-600">ภาพจากข้อมูลที่เผยแพร่ของสถานที่</p>
         <button
           type="button"
           onClick={() => openImage(0)}
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-[var(--public-ink)] transition-colors hover:border-[var(--public-teal)] hover:text-[var(--public-teal)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]"
+          className="attraction-control inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-[var(--public-ink)] hover:border-[var(--public-teal)] hover:text-[var(--public-teal)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--public-teal)]"
         >
           <Images aria-hidden="true" size={18} />
           ดูรูปทั้งหมด {images.length.toLocaleString("th-TH")} รูป
@@ -147,10 +150,10 @@ export function AttractionGallery({
       <dialog
         ref={dialogRef}
         aria-label={`รูปภาพ ${attractionName}`}
-        className="m-auto max-h-[92dvh] w-[min(94vw,1100px)] border-0 bg-transparent p-0 backdrop:bg-black/75"
-        onClose={() => setSelectedIndex(0)}
+        className="attraction-gallery__dialog m-auto max-h-[92dvh] w-[min(94vw,1100px)] overflow-y-auto rounded-xl border-0 bg-white p-0 backdrop:bg-black/75"
+        onClose={() => { setSelectedIndex(0); setIsOpen(false); }}
       >
-        <div className="bg-white p-3 sm:p-4">
+        {isOpen ? <div className="bg-white p-3 sm:p-4">
           <div className="mb-3 flex items-center justify-between gap-4">
             <p className="truncate text-sm font-semibold text-[var(--public-ink)]">
               {selected?.alt || attractionName}
@@ -169,7 +172,7 @@ export function AttractionGallery({
               <GalleryImage
                 image={selected}
                 alt={selected.alt || attractionName}
-                sizes="94vw"
+                sizes="(max-width: 1170px) 94vw, 1100px"
                 unoptimized={unoptimized}
                 className="object-contain"
                 onInvalid={handleMediaError}
@@ -199,7 +202,7 @@ export function AttractionGallery({
               ))}
             </div>
           ) : null}
-        </div>
+        </div> : null}
       </dialog>
     </div>
   );

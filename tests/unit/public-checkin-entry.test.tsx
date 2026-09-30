@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { redirect } from "next/navigation";
 import { HomepageHowItWorks } from "@/components/homepage/sections/HomepageHowItWorks";
 import TryCheckinPage from "@/app/(tourist)/checkin/try/page";
-import { resolvePublicDemoCheckinCode } from "@/lib/services/checkin.service";
+import { resolveAndValidateCheckinCode } from "@/lib/services/checkin.service";
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
 vi.mock("@/lib/services/checkin.service", () => ({
-  resolvePublicDemoCheckinCode: vi.fn(),
+  resolveAndValidateCheckinCode: vi.fn(),
 }));
 
 describe("public check-in entry", () => {
@@ -18,25 +18,23 @@ describe("public check-in entry", () => {
     vi.clearAllMocks();
   });
 
-  it("uses a hard navigation to the production-like check-in entry", () => {
+  it("uses a hard navigation to check-in guidance", () => {
     render(<HomepageHowItWorks />);
 
-    const link = screen.getByRole("link", { name: /ทดลองใช้งาน/ });
+    const link = screen.getByRole("link", { name: /วิธีเช็กอินที่สถานที่/ });
     expect(link).toHaveAttribute("href", "/checkin/try");
     expect(link.tagName).toBe("A");
   });
 
-  it("redirects a configured demo code through the canonical QR route", async () => {
-    vi.mocked(resolvePublicDemoCheckinCode).mockResolvedValue("DEMO-CODE-123");
+  it("never redirects a demo into a real visit or loads demo codes", async () => {
+    render(await TryCheckinPage());
 
-    await TryCheckinPage();
-
-    expect(redirect).toHaveBeenCalledWith("/c/DEMO-CODE-123");
+    expect(redirect).not.toHaveBeenCalled();
+    expect(resolveAndValidateCheckinCode).not.toHaveBeenCalled();
+    expect(screen.getByText(/ไม่สร้างข้อมูลการเข้าชม/)).toBeInTheDocument();
   });
 
   it("shows scan guidance instead of a broken code when no demo QR is available", async () => {
-    vi.mocked(resolvePublicDemoCheckinCode).mockResolvedValue(null);
-
     render(await TryCheckinPage());
 
     expect(screen.getByRole("heading", { name: "เริ่มรับใบประกาศที่จุดท่องเที่ยว" })).toBeInTheDocument();
