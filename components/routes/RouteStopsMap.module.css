@@ -247,6 +247,8 @@
   box-shadow: 0 0 0 4px #ffffffde, 0 3px 12px #17212b66;
 }
 
+.marker:focus-visible { outline: 3px solid #263036; outline-offset: 4px; }
+
 .routeConnector { animation: routeReveal .45s ease-out both; }
 
 @keyframes routeReveal {

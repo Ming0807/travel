@@ -71,6 +71,18 @@ describe("route stop map", () => {
     expect(screen.getByRole("link", { name: /เปิดนำทางทั้งเส้นทาง/ })).toHaveAttribute("href", "https://www.google.com/maps/dir/?api=1");
   });
 
+  it("returns to the selected stop when it is selected again after panning", async () => {
+    render(<RouteStopsMap stops={stops} presentation="explore" />);
+    await waitFor(() => expect(leaflet.map).toHaveBeenCalledOnce());
+    const map = leaflet.map.mock.results[0].value;
+    const stop = screen.getByRole("button", { name: /02.*ถ้ำพระนอน/ });
+    fireEvent.click(stop);
+    await waitFor(() => expect(map.flyTo).toHaveBeenCalledTimes(1));
+    map.flyTo.mockClear();
+    fireEvent.click(stop);
+    await waitFor(() => expect(map.flyTo).toHaveBeenCalledWith([6.51, 101.21], 16, { duration: 0.55 }));
+  });
+
   it("groups stops at identical coordinates without moving their location", async () => {
     render(<RouteStopsMap stops={[stops[0], { ...stops[1], latitude: stops[0].latitude, longitude: stops[0].longitude }]} />);
     fireEvent.click(screen.getByRole("button", { name: "ดูแผนที่" }));

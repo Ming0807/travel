@@ -83,6 +83,17 @@ No schema migration or production database mutation is performed by this task.
 - [x] Load map assets near the viewport; preserve usable content when tiles fail and allow a reset to the full extent.
 - [ ] Confirm route 01 on real iPhone and Android devices, including map panning, marker selection, current-location navigation, and the caretaker-approved access points.
 
+### 25.8 Post-release explorer reliability (2026-10-01)
+
+- [x] Reproduce and fix repeated selection failing to return to the current stop after map panning.
+- [x] Label markers with stop number/name, synchronize their selected state, and support Enter/Space with a visible focus outline.
+- [x] Reserve enough initial/reset map padding for controls to avoid obscuring markers on mobile and desktop.
+- [x] Add a read-only, reusable published-route check for real tiles, images, marker visibility and itinerary/directions parity at five widths.
+- [x] Pass 26 focused unit cases, 12 component-browser checks, typecheck, scoped lint and the production build; check route 01 against the local production build and real CMS data.
+- [ ] Confirm the patched deployed release and run the published-route check against production.
+
+Evidence: [Route explorer QA](../docs/testing/PHASE_25_ROUTE_EXPLORER_QA_2026-10-01.md).
+
 ## Out of scope
 
 No automatic route generation, road-distance ranking, fake review metrics, payment or booking, new attraction records, AI-authored itinerary claims, or study-participant tracking is introduced in this phase.

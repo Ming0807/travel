@@ -1,5 +1,17 @@
 # ROUTES_STRUCTURE.md
 
+## Route explorer verification (2026-10-01)
+
+Map markers expose the stop number and place name to assistive technology.
+Enter and Space select the same stop as a pointer click. Selecting the current
+stop again returns the map to its coordinates after panning; reduced-motion
+preferences continue to use an immediate map update. The initial/reset extent
+reserves room for the top-right reset button so it does not cover a marker.
+
+Published routes can be checked without database writes through
+`tests/visual/routes/production-qa.mjs`. Local production and deployed evidence
+is recorded in `docs/testing/PHASE_25_ROUTE_EXPLORER_QA_2026-10-01.md`.
+
 Public leaderboard entry points and styling are described in
 [LEADERBOARD_DISCOVERY.md](LEADERBOARD_DISCOVERY.md). The route and ranking logic
 remain active; all public participation still requires explicit opt-in.

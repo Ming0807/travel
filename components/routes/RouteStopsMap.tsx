@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowSquareOut, MapTrifold } from "@phosphor-icons/react";
 import type { LatLngBounds, Map as LeafletMap, Marker } from "leaflet";
@@ -20,9 +20,9 @@ type MapStatus = "idle" | "loading" | "ready" | "error";
 type MapPresentation = "compact" | "explore";
 
 function mapBoundsPadding(isExplorer: boolean) {
-  return isExplorer && window.innerWidth < 640
-    ? { paddingTopLeft: [36, 36] as [number, number], paddingBottomRight: [36, 100] as [number, number] }
-    : { padding: [48, 48] as [number, number] };
+  if (!isExplorer) return { padding: [48, 48] as [number, number] };
+  const sidePadding = window.innerWidth < 640 ? 36 : 48;
+  return { paddingTopLeft: [sidePadding, 88] as [number, number], paddingBottomRight: [sidePadding, 60] as [number, number] };
 }
 
 export function RouteStopsMap({
@@ -40,7 +40,7 @@ export function RouteStopsMap({
   const [status, setStatus] = useState<MapStatus>("idle");
   const [tileWarning, setTileWarning] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [hasSelected, setHasSelected] = useState(false);
+  const [focusRequest, setFocusRequest] = useState<{ index: number } | null>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const boundsRef = useRef<LatLngBounds | null>(null);
@@ -52,6 +52,10 @@ export function RouteStopsMap({
   const selectedStop = orderedStops[activeIndex] ?? orderedStops[0];
   const selectedNavigationUrl = selectedStop ? buildRouteDirectionsFromCurrentUrl([selectedStop]) : null;
   const showMap = isExplorer || open;
+  const selectStop = useCallback((index: number) => {
+    setActiveIndex(index);
+    setFocusRequest({ index });
+  }, []);
 
   useEffect(() => {
     if (!isExplorer || mappedStops.length === 0 || !nodeRef.current) return;
@@ -79,7 +83,7 @@ export function RouteStopsMap({
         zoomControl: false,
       });
       mapRef.current = map;
-      leaflet.control.zoom({ position: "bottomright" }).addTo(map);
+      leaflet.control.zoom({ position: "bottomright", zoomInTitle: "ซูมเข้า", zoomOutTitle: "ซูมออก" }).addTo(map);
 
       let tileErrors = 0;
       leaflet.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -143,16 +147,24 @@ export function RouteStopsMap({
           }),
           title: items.map((item) => `${item.index + 1}. ${item.stop.attractionName}`).join("; "),
         }).addTo(map).bindPopup(popup);
-        marker.on("click", () => {
-          setActiveIndex(indexes[0]);
-          setHasSelected(true);
-        });
+        marker.on("click", () => selectStop(indexes[0]));
         markers.push({ marker, indexes });
       });
       markersRef.current = markers;
 
       if (groups.size === 1) map.setView(bounds.getCenter(), 16);
       else map.fitBounds(bounds, { ...mapBoundsPadding(isExplorer), maxZoom: 17, animate: false });
+      // Leaflet creates marker elements only after the map has an initial view.
+      markers.forEach(({ marker, indexes }) => {
+        const markerElement = marker.getElement();
+        markerElement?.setAttribute("aria-label", indexes.map((index) => `จุดที่ ${index + 1} ${orderedStops[index].attractionName}`).join("; "));
+        markerElement?.addEventListener("keydown", (event) => {
+          if (event.key !== " " && event.key !== "Enter") return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (!event.repeat) marker.fire("click");
+        });
+      });
       requestAnimationFrame(() => { if (!disposed) map.invalidateSize(); });
       setStatus("ready");
     }).catch(() => {
@@ -166,21 +178,24 @@ export function RouteStopsMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [mappedStops, orderedStops, shouldLoad, showMap, isExplorer]);
+  }, [mappedStops, orderedStops, shouldLoad, showMap, isExplorer, selectStop]);
 
   useEffect(() => {
     if (status !== "ready" || !mapRef.current) return;
     markersRef.current.forEach(({ marker, indexes }) => {
-      marker.getElement()?.classList.toggle(styles.markerActive, isExplorer && indexes.includes(activeIndex));
+      const element = marker.getElement();
+      const selected = indexes.includes(activeIndex);
+      element?.classList.toggle(styles.markerActive, isExplorer && selected);
+      if (isExplorer) element?.setAttribute("aria-pressed", String(selected));
     });
-    if (!isExplorer || !hasSelected) return;
-    const stop = orderedStops[activeIndex];
+    if (!isExplorer || !focusRequest) return;
+    const stop = orderedStops[focusRequest.index];
     if (!stop || !hasValidRouteCoordinate(stop)) return;
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     const zoom = Math.max(mapRef.current.getZoom(), 16);
     if (reducedMotion) mapRef.current.setView([stop.latitude!, stop.longitude!], zoom, { animate: false });
     else mapRef.current.flyTo([stop.latitude!, stop.longitude!], zoom, { duration: 0.55 });
-  }, [activeIndex, hasSelected, isExplorer, orderedStops, status]);
+  }, [activeIndex, focusRequest, isExplorer, orderedStops, status]);
 
   if (mappedStops.length === 0) {
     return (
@@ -240,7 +255,7 @@ export function RouteStopsMap({
                 type="button"
                 onClick={() => {
                   if (!boundsRef.current || !mapRef.current) return;
-                  setHasSelected(false);
+                  setFocusRequest(null);
                   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
                   mapRef.current.fitBounds(boundsRef.current, { ...mapBoundsPadding(isExplorer), maxZoom: 17, animate: !reducedMotion, duration: 0.5 });
                 }}
@@ -262,7 +277,7 @@ export function RouteStopsMap({
                   <button
                     type="button"
                     aria-pressed={index === activeIndex}
-                    onClick={() => { setActiveIndex(index); setHasSelected(true); }}
+                    onClick={() => selectStop(index)}
                     className={`${styles.stopButton} ${index === activeIndex ? styles.stopButtonActive : ""}`}
                   >
                     <span className={styles.stopNumber}>{String(index + 1).padStart(2, "0")}</span>

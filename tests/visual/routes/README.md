@@ -30,3 +30,18 @@ on-demand version used in admin review.
 
 This component fixture does not replace production-data and authenticated
 admin acceptance gates in `tasks/PHASE_25_CURATED_NA_THAM_ROUTES.md`.
+
+The explorer checks also cover Enter/Space marker selection, a visible focus
+outline, repeated selection after panning, and reset controls not covering pins.
+
+## Published-route read-only check
+
+Run `node tests/visual/routes/production-qa.mjs` against a local production server
+on port 3100. To inspect a deployment, set `ROUTE_QA_BASE_URL` to that origin;
+`ROUTE_QA_SLUG` optionally selects another published route with complete coordinates.
+The default route is `na-tham-kampan-cave-learning`. This check reads pages only,
+loads real OpenStreetMap tiles, and never accepts research, creates visits or
+changes CMS data. It checks five widths (360/390/768/1024/1440), marker visibility,
+stop selection, image loading and Google Maps URL parity with the itinerary.
+Reports and screenshots are written to `output/playwright/routes-production/`.
+It verifies external handoff URLs, not a physical phone's Google Maps app or GPS.
