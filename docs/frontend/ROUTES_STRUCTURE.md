@@ -1,5 +1,9 @@
 # ROUTES_STRUCTURE.md
 
+Public leaderboard entry points and styling are described in
+[LEADERBOARD_DISCOVERY.md](LEADERBOARD_DISCOVERY.md). The route and ranking logic
+remain active; all public participation still requires explicit opt-in.
+
 Home motion, streaming/loading and route cards with an on-demand map are described
 in [HOME_MOTION_LOADING_ROUTES.md](HOME_MOTION_LOADING_ROUTES.md). Public attraction
 listing/detail motion, filters, lazy galleries and loading states are described

@@ -10,6 +10,7 @@ import {
   MapTrifold,
   QrCode,
   Stamp,
+  Trophy,
 } from "@phosphor-icons/react/dist/ssr";
 import { PublicCheckinEntryLink } from "@/components/checkin/PublicCheckinEntryLink";
 import { VISTA_360_EXTERNAL_URL } from "@/constants/product";
@@ -206,7 +207,7 @@ function Planner({ cover }: { cover?: string }) {
 }
 
 function Closing({ hero, stats, evidence }: Pick<HomepageEditorialProps, "hero" | "stats"> & { evidence?: React.ReactNode }) {
-  return <><section className="ed-closing" aria-labelledby="ed-closing-title"><Photo src={hero.images?.[2] || DEFAULT_BELONGING} alt="ภาพประกอบทิวเขาและหมอกยามเช้า" sizes="100vw" /><div className="ed-closing-veil" aria-hidden="true" /><div className="ed-container ed-closing-inner"><p>&ldquo;การเดินทางที่ดีที่สุด<br />คือการได้เห็นโลกกว้าง<br />และเข้าใจตัวเอง&rdquo;</p><div><span>READY FOR YOUR NEXT STORY?</span><h2 id="ed-closing-title">เรื่องต่อไปของคุณ เริ่มที่ยะลา</h2><PublicCheckinEntryLink className="ed-pill ed-pill-light"><QrCode aria-hidden="true" size={18} /> บันทึกการเดินทาง</PublicCheckinEntryLink><Link className="ed-closing-passport" href="/passport"><Stamp aria-hidden="true" size={17} /> เปิด Digital Passport</Link></div></div></section>
+  return <><section className="ed-closing" aria-labelledby="ed-closing-title"><Photo src={hero.images?.[2] || DEFAULT_BELONGING} alt="ภาพประกอบทิวเขาและหมอกยามเช้า" sizes="100vw" /><div className="ed-closing-veil" aria-hidden="true" /><div className="ed-container ed-closing-inner"><p>&ldquo;การเดินทางที่ดีที่สุด<br />คือการได้เห็นโลกกว้าง<br />และเข้าใจตัวเอง&rdquo;</p><div><span>READY FOR YOUR NEXT STORY?</span><h2 id="ed-closing-title">เรื่องต่อไปของคุณ เริ่มที่ยะลา</h2><PublicCheckinEntryLink className="ed-pill ed-pill-light"><QrCode aria-hidden="true" size={18} /> บันทึกการเดินทาง</PublicCheckinEntryLink><Link className="ed-closing-passport" href="/passport"><Stamp aria-hidden="true" size={17} /> เปิด Digital Passport</Link><Link className="ed-closing-passport" href="/leaderboard"><Trophy aria-hidden="true" size={17} /> ดูกระดานอันดับ</Link></div></div></section>
     <section className="ed-evidence" aria-label="ข้อมูลสรุปจากระบบ"><div className="ed-container ed-evidence-inner"><p>ข้อมูลจากการเข้าร่วมและบันทึกในระบบ ไม่ใช่ยอดผู้เข้าชมเว็บไซต์</p>{evidence ?? <HomepageStats stats={stats} />}<Link href="/dashboard">ดูภาพรวมข้อมูล <ArrowRight aria-hidden="true" size={16} /></Link></div></section>
   </>;
 }

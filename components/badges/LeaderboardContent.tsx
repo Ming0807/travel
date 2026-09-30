@@ -31,7 +31,7 @@ export function LeaderboardContent({ allTime, monthly, weekly, currentVisibility
             <h2 className="text-lg font-black text-ink">ระบบอันดับสาธารณะยังไม่พร้อม</h2>
             <p className="mt-2 text-sm leading-6 text-amber-950/80">
               {availability === "privacy_migration"
-                ? "ระบบกำลังรอการตั้งค่าความเป็นส่วนตัวของฐานข้อมูล จึงปิดการแสดงรายชื่อไว้ก่อนเพื่อป้องกันข้อมูลส่วนบุคคล"
+                ? "กำลังเตรียมการแสดงอันดับอย่างปลอดภัย จึงยังไม่แสดงรายชื่อในขณะนี้ กรุณาลองอีกครั้งภายหลัง"
                 : "ยังเชื่อมต่อข้อมูลคะแนนไม่ได้ในขณะนี้ คะแนนและความคืบหน้าของคุณไม่ได้สูญหาย"}
             </p>
             <Link href="/leaderboard" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-md border border-amber-700 px-4 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100">
@@ -44,11 +44,11 @@ export function LeaderboardContent({ allTime, monthly, weekly, currentVisibility
   }
 
   return (
-    <div>
+    <div className="leaderboard-results">
       <LeaderboardTable entries={entries} period={period} onPeriodChange={setPeriod} />
 
       {currentVisibility && (
-        <section className="mt-5 rounded-lg border border-ink/10 bg-white p-5" aria-labelledby="my-leaderboard-status">
+        <section className="leaderboard-my-status mt-5 rounded-lg border border-ink/10 bg-white p-5" aria-labelledby="my-leaderboard-status">
           <div className="flex items-start gap-4">
             <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-md ${currentVisibility === "private" ? "bg-ink/[0.06] text-ink/55" : "bg-coral/10 text-coral"}`}>
               {currentVisibility === "private" ? <LockKey size={22} weight="fill" aria-hidden="true" /> : <TrendUp size={22} weight="bold" aria-hidden="true" />}
@@ -67,6 +67,7 @@ export function LeaderboardContent({ allTime, monthly, weekly, currentVisibility
                 <>
                   <p className="mt-1 text-2xl font-black text-ink">{currentEntry ? `อันดับ ${currentEntry.rank}` : "ยังไม่ติด Top 100"}</p>
                   <p className="mt-1 text-sm leading-6 text-muted">ทำกิจกรรมท่องเที่ยวที่ร่วมรายการเพื่อสะสม XP และขยับอันดับของคุณ</p>
+                  <Link href="/profile#leaderboard-privacy" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-coral hover:underline">จัดการการแสดงผล <ArrowRight aria-hidden="true" size={16} /></Link>
                 </>
               )}
             </div>

@@ -202,6 +202,7 @@ export function TouristProfileView({ profile, xp, badges, allBadges }: TouristPr
                 <div className="text-right">
                   <p className="text-sm text-slate-600">ระดับ {xp.currentLevel}</p>
                   <p className="text-xl font-black text-teal">{xp.currentXp.toLocaleString("th-TH")} คะแนน</p>
+                  <Link href="/leaderboard" className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-coral hover:underline">ดูกระดานอันดับ <ArrowRight aria-hidden="true" size={16} /></Link>
                 </div>
               </div>
 

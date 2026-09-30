@@ -79,8 +79,9 @@ export async function SiteFooter() {
           <div>
             <h2 className="text-sm font-black uppercase tracking-wider text-ink">ช่วยเหลือ</h2>
             <ul className="mt-4 space-y-2.5 text-xs font-semibold text-muted sm:text-sm">
-              <li><PublicCheckinEntryLink className="transition-colors hover:text-coral">สแกน QR เช็กอิน</PublicCheckinEntryLink></li>
+              <li><PublicCheckinEntryLink className="transition-colors hover:text-coral">วิธีเช็กอินที่สถานที่</PublicCheckinEntryLink></li>
               <li><Link href="/passport" className="transition-colors hover:text-coral">Digital Passport</Link></li>
+              <li><Link href="/leaderboard" className="transition-colors hover:text-coral">กระดานอันดับนักเดินทาง</Link></li>
               <li><Link href="/about" className="transition-colors hover:text-coral">เกี่ยวกับโครงการ</Link></li>
               <li><Link href="/privacy" className="transition-colors hover:text-coral">นโยบายความเป็นส่วนตัว</Link></li>
               <li><Link href="/terms" className="transition-colors hover:text-coral">ข้อกำหนดการใช้งาน</Link></li>

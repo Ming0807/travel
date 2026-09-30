@@ -5,7 +5,7 @@ test.describe("public leaderboard", () => {
     const response = await page.goto("/leaderboard");
     expect(response?.status()).toBe(200);
 
-    await expect(page.getByRole("heading", { name: "กระดานผู้นำนักเดินทาง" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "กระดานอันดับนักเดินทาง" })).toBeVisible();
     await expect(page.getByText(/แสดงเฉพาะผู้ที่เลือกเข้าร่วมแบบสาธารณะ/)).toBeVisible();
     await expect(page.getByRole("button", { name: "ทั้งหมด" })).toHaveAttribute("aria-pressed", "true");
 

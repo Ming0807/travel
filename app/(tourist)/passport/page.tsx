@@ -99,6 +99,7 @@ export default async function PassportPage() {
             <p className="mt-3 text-sm leading-7 text-muted">
               ดูตราที่สะสมแล้ว วางแผนจุดหมายถัดไป และย้อนดูการเดินทางที่สร้างใบประกาศสำเร็จ
             </p>
+            <Link href="/leaderboard" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-coral hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-coral">ดูกระดานอันดับนักเดินทาง <ArrowRight aria-hidden="true" size={17} /></Link>
           </header>
 
           <div className="space-y-7">

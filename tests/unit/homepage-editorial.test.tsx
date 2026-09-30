@@ -37,6 +37,7 @@ describe("editorial homepage hero", () => {
     expect(screen.getAllByAltText("ตรามหาวิทยาลัยราชภัฏยะลา")).toHaveLength(2);
     expect(screen.getByAltText("ภาพประกอบบรรยากาศภูเขาและหมอกยามเช้า").getAttribute("src")).toContain("custom-hero.webp");
     expect(screen.getAllByAltText("ภาพประกอบบรรยากาศภูเขาและหมอกยามเช้า")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "ดูกระดานอันดับ" })).toHaveAttribute("href", "/leaderboard");
   });
 
   it("links real discovery categories to their filters and replaces an unavailable cafe with published lodging", () => {

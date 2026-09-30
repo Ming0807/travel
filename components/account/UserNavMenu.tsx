@@ -3,7 +3,7 @@
 import { useState, useEffect, useId, useRef, type KeyboardEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { UserCircle, SignOut, CaretDown, BookOpen, Article, ArrowUpRight } from "@phosphor-icons/react";
+import { UserCircle, SignOut, CaretDown, BookOpen, Article, ArrowUpRight, Trophy } from "@phosphor-icons/react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { getAccountDisplayName, getDisplayInitials } from "@/lib/account/presentation";
@@ -93,6 +93,7 @@ export function UserNavMenu({ mobile = false, onNavigate }: { mobile?: boolean; 
   const links = [
     { href: "/profile", label: "โปรไฟล์ของฉัน", icon: UserCircle },
     { href: "/passport", label: "พาสปอร์ตของฉัน", icon: BookOpen },
+    { href: "/leaderboard", label: "กระดานอันดับ", icon: Trophy },
     { href: "/stories/share", label: "แบ่งปันเรื่องราว", icon: Article },
   ];
   const accountLinks = links.map(({ href, label, icon: Icon }) => (

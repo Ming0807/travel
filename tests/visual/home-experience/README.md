@@ -19,3 +19,9 @@ Automated checks cover 320, 390, 768, 1024, 1440 and 1920px: overflow, one hero 
 three route cards, hover/focus, reduced motion, skeleton, deferred map requests/module,
 route switching/cache, error/retry, and visible HTML with JavaScript disabled.
 Screenshots are saved to `output/playwright/home-experience`.
+
+Leaderboard variants use `?leaderboard` with optional `&empty&private`, `&error`,
+or `&loading`. Run `node tests/visual/home-experience/leaderboard-qa.mjs` for
+28 responsive state layouts, rolling-period controls, keyboard and reduced motion.
+These use synthetic public names/XP; ranking queries and consent actions are not
+called. Screenshots are stored in `output/playwright/leaderboard`.

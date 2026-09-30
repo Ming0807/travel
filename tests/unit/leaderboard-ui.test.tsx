@@ -20,6 +20,14 @@ describe("LeaderboardContent", () => {
     expect(allTimeButton).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "30 วันล่าสุด" }));
     expect(screen.getByRole("button", { name: "30 วันล่าสุด" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("status")).toHaveTextContent("30 วันล่าสุด");
+  });
+
+  it("keeps rank numerals and the current participant visible in the ranking list", () => {
+    render(<LeaderboardContent allTime={[entry]} monthly={[]} weekly={[]} currentVisibility="alias" />);
+    expect(screen.getByRole("list", { name: "อันดับนักเดินทาง" })).toHaveTextContent("1");
+    expect(screen.getByRole("listitem")).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("link", { name: "จัดการการแสดงผล" })).toHaveAttribute("href", "/profile#leaderboard-privacy");
   });
 
   it("shows a safe Top 100 message instead of rank zero", () => {
